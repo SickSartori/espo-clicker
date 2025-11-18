@@ -168,29 +168,49 @@ function refreshAllStores() {
     updatePrestigeUI();
 }
 
-// MODIFICATA: Aggiorna solo Score, CPS e stato dei bottoni (LEGGERA - Loop 10fps)
 function updateUI() {
-    // ... (score e cps rimangono uguali)
-    scoreDisplay.textContent = formatNumber(gameState.score);
-    cpsDisplay.textContent = `BPS: ${cookiesPerSecond.toFixed(1).replace('.', ',')}`;
-
-    // 2. Aggiorna stato Disabled bottoni Edifici
-    for (const key in gameState.buildings) {
-        // Usa calculateBulkCost per vedere se possiamo permetterci il pacchetto da 1 o 10
-        const currentCost = calculateBulkCost(key, buyMultiplier);
-        const btn = document.getElementById(`buy-${key}`);
-        if (btn) {
-            btn.disabled = (gameState.score < currentCost);
-            
-            // Opzionale: cambia il testo del bottone
-            btn.textContent = `Compra ${buyMultiplier}x`;
+    // 1. Calcolo BPS Dinamico (Passivo + Attivo nell'ultimo secondo)
+    let activeBPS = 0;
+    const now = Date.now();
+    
+    // Somma il valore di tutti i click nell'ultimo secondo
+    for (let i = 0; i < clickHistory.length; i++) {
+        if (now - clickHistory[i].time < 1000) {
+            activeBPS += clickHistory[i].value;
         }
     }
     
-    // ... (il resto rimane uguale)
-    prestigeGainDisplay.textContent = calculatePrestigeGained();
+    let totalDisplayBPS = cookiesPerSecond + activeBPS;
+
+    // Aggiorna Score e BPS
+    scoreDisplay.textContent = formatNumber(gameState.score);
     
-    // ... loop per clickUpgrades e enhancements ...
+    // Mostra il BPS totale. Se smetti di cliccare, activeBPS scende a 0 e rimane solo il passivo.
+    cpsDisplay.textContent = `BPS: ${totalDisplayBPS.toFixed(1).replace('.', ',')}`;
+
+    // ... (Il resto della funzione rimane identico: gestione Bonus, Bottoni, Prestigio ecc.)
+    
+    // 2. Bonus (gestito come prima, solo Prestigio)
+    let baseBonus = gameState.prestigePoints * 0.01;
+    let synergyBonus = gameState.prestigeUpgrades.sinergia.count * gameData.prestigeUpgrades.sinergia.bonusPerLevel * gameState.prestigePoints;
+    let totalDisplayBonus = (baseBonus + synergyBonus) * 100;
+    
+    if (parseFloat(totalDisplayBonus.toFixed(1)) > 0) {
+        prestigeBonusDisplay.style.display = 'block';
+        prestigeBonusDisplay.textContent = `Bonus: +${totalDisplayBonus.toFixed(1)}%`;
+    } else {
+        prestigeBonusDisplay.style.display = 'none';
+    }
+
+    // 3. Aggiorna stato Disabled bottoni Edifici
+    for (const key in gameState.buildings) {
+        const currentCost = calculateBulkCost(key, buyMultiplier);
+        const btn = document.getElementById(`buy-${key}`);
+        if (btn) btn.disabled = (gameState.score < currentCost);
+    }
+    
+    // 4. Prestigio & 5. Negozi (tutto uguale a prima...)
+    prestigeGainDisplay.textContent = calculatePrestigeGained();
     for (const key in gameState.clickUpgrades) {
         const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
         if (btn && !gameState.clickUpgrades[key].purchased) {
@@ -218,19 +238,11 @@ function updatePrestigeUI() {
         prestigeStore.style.display = 'none';
     }
     
-    let baseBonus = gameState.prestigePoints * 0.01;
-    let synergyBonus = gameState.prestigeUpgrades.sinergia.count * gameData.prestigeUpgrades.sinergia.bonusPerLevel * gameState.prestigePoints;
-    let totalBonusPercent = (baseBonus + synergyBonus) * 100;
-    
-    let clickBonusPercent = (clickCPSBonus - 1) * 100;
-    let totalCombinedBonus = totalBonusPercent + clickBonusPercent;
-    
-    prestigeBonusDisplay.style.display = (totalCombinedBonus > 0) ? 'block' : 'none';
-    prestigeBonusDisplay.textContent = `Bonus: +${totalCombinedBonus.toFixed(1)}%`;
     
     prestigePointsDisplay.textContent = gameState.prestigePoints;
     prestigeGainDisplay.textContent = calculatePrestigeGained();
     
+    // ... (il resto della funzione con Sinergia, Accelerazione, Ticket rimane uguale) ...
     // Sinergia (a conteggio)
     const pDataS = gameData.prestigeUpgrades.sinergia;
     const pStateS = gameState.prestigeUpgrades.sinergia;
@@ -238,7 +250,7 @@ function updatePrestigeUI() {
     document.getElementById('count-sinergia').textContent = pStateS.count;
     document.getElementById('buy-sinergia').disabled = (gameState.prestigePoints < pDataS.baseCost);
     
-    // Accelerazione (acquisto singolo)
+    // Accelerazione
     const pDataA = gameData.prestigeUpgrades.accelerazione;
     const pStateA = gameState.prestigeUpgrades.accelerazione;
     const btnA = document.getElementById('buy-accelerazione');
@@ -250,7 +262,7 @@ function updatePrestigeUI() {
         btnA.disabled = (gameState.prestigePoints < pDataA.baseCost);
     }
     
-    // Ticket Premium (acquisto singolo)
+    // Ticket Premium
     const pDataT = gameData.prestigeUpgrades.ticketPremium;
     const pStateT = gameState.prestigeUpgrades.ticketPremium;
     const btnT = document.getElementById('buy-ticketPremium');

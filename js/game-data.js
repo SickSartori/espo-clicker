@@ -224,3 +224,5 @@ let isBluescreenActive = false;
 let bluescreenMultiplier = 1;
 let goldenBugChance = 0.001; 
 let goldenBugSpawnTime = 60000 + Math.random() * 120000;
+
+var clickHistory = [];

@@ -44,7 +44,7 @@ function calculatePrestigeBonus() {
 }
 
 function calculateClickCPSBonus() {
-    clickCPSBonus = 1 + (gameState.totalClicks / 1000 * 0.001);
+    clickCPSBonus = 1;
 }
 
 function recalculateCPS() {
@@ -105,42 +105,32 @@ function triggerBluescreen(multiplier) {
 
 
 function clickCookie(event) {
-    // --- FIX TASTIERA: Blocca input se non è un click del mouse ---
-    // Quando si usa Invio/Spazio, event.detail è 0. 
-    // Quando si usa il mouse, è 1 o più.
     if (event.detail === 0) return; 
-    
-    // Toglie il focus dal bottone per evitare che rimanga selezionato (rimuove il bordo blu/nero)
     if (clickerButton) clickerButton.blur();
-    // --------------------------------------------------------------
-
     playSound('sound-click');
     
+    // Calcolo valore click (codice esistente)
     let clickBonusPercent = 0.01;
-    if (gameState.clickUpgrades.clickDivino.purchased) {
-        clickBonusPercent = 0.02;
-    }
-    
+    if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
     let clickValuePercentBonus = 0;
     if (gameState.clickUpgrades.manoBionica.purchased) {
         clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent; 
     }
-    
     const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
     
+    // --- NUOVO: Aggiungi alla storia per il BPS dinamico ---
+    clickHistory.push({ time: Date.now(), value: currentClickValue });
+    // -------------------------------------------------------
+
     gameState.score += currentClickValue;
     gameState.totalScore += currentClickValue;
     gameState.lifetimeScore += currentClickValue;
     gameState.totalClicks++;
     
-    calculateClickCPSBonus();
-    
     showClickFeedback(event);
     
     clickerButton.classList.add('clicked');
-    setTimeout(() => {
-        clickerButton.classList.remove('clicked');
-    }, 100);
+    setTimeout(() => { clickerButton.classList.remove('clicked'); }, 100);
 
     updateUI();
 }
@@ -382,6 +372,12 @@ function gameLoop() {
     gameState.score += scoreToAdd;
     gameState.totalScore += scoreToAdd;
     gameState.lifetimeScore += scoreToAdd;
+    
+    // --- NUOVO: Rimuovi i click più vecchi di 1 secondo ---
+    const now = Date.now();
+    // Mantiene solo i click avvenuti negli ultimi 1000ms (1 secondo)
+    clickHistory = clickHistory.filter(click => now - click.time < 1000);
+    // ------------------------------------------------------
     
     checkAchievements();
     updateUI();

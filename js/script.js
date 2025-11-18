@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Loop di gioco (10 volte al secondo)
-        setInterval(gameLoop, 100);
+        setInterval(gameLoop, 33);
         // Loop di salvataggio (ogni 5 secondi)
         setInterval(saveGame, 5000);
         
