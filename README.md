@@ -1,4 +1,4 @@
-# 🚨 Espòòò Clicker: The Ultimate Bug-Farming Simulator 🚨
+# 🚨 Espòòò Clicker: The Ultimate Bug-Farming Simulator
 ### (v16 Refactor: The Bugs Never Die)
 
 > A clicker game similar to Cookie Clicker, but with a lot of bugs... literally.
