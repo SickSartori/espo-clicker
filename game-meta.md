@@ -1,57 +1,89 @@
-## ⚙️ Schema del Gameplay di Espòòò Clicker
+## 📄 Gameplay Estensivo di Espòòò Clicker
 
-Il gioco è un *clicker* incrementale in cui l'obiettivo è massimizzare la produzione di "Bug Risolti" (Bug), la valuta principale, attraverso click manuali e automazioni.
+**Espòòò Clicker** è un gioco di progressione incrementale (clicker/idle) il cui ciclo di gioco è incentrato sulla risoluzione di "Bug Risolti" attraverso l'interazione manuale e l'automazione. 
+Il gioco presenta sistemi di potenziamento a breve e lungo termine e meccaniche di *soft-reset* (Promozione) per un'espansione infinita.
 
-### I. Obiettivo e Valuta
+### I. Fase Iniziale e Core Loop
 
-| Elemento | Descrizione | Note |
+#### 1. Accesso e Inizializzazione
+All'avvio, il giocatore deve inserire un nome utente, necessario per il salvataggio dei progressi e la partecipazione al **Podio Online**. 
+Il gioco carica o crea un `gameState` iniziale, impostando il valore base di un click a 1 Bug.
+
+#### 2. Risoluzione Manuale (Clicking)
+Il fulcro del gioco è il pulsante centrale, raffigurante il manager Espòòò. Ogni click:
+* Incrementa il saldo attuale (`score`) e i punteggi cumulativi (`totalScore`, `lifetimeScore`).
+* Riproduce il suono `sound-click`.
+* Genera un feedback visivo che mostra i Bug guadagnati.
+* Il valore del click è influenzato da Potenziamenti Click, Bonus Promozione e dall'eventuale Moltiplicatore Blue Screen.
+
+#### 3. Produzione Automatica (BPS)
+Il gioco si basa sul calcolo dei **BPS (Bugs Per Second)**, che vengono automaticamente aggiunti al punteggio 10 volte al secondo (intervallo di 100ms) tramite la `gameLoop`.
+
+### II. Sistemi di Progressione
+
+La progressione è gestita attraverso tre diversi negozi che si sbloccano man mano che il giocatore accumula Bug e totalizza click.
+
+#### A. Squadra (Team)
+(Colonna Destra - Ex Edifici)
+
+Questi sono gli acquisti fondamentali per l'automazione.
+
+| Acquisto (Esempio) | Tipo di Acquisto | Costo e Meccanica |
 | :--- | :--- | :--- |
-| **Valuta Principale** | **Bug Risolti** (`score`) | Utilizzati per acquistare tutti gli upgrade e i potenziamenti del Team. |
-| **Punto di Partenza** | Dopo aver inserito il nome utente. | Inizia con un valore di click base di 1. |
+| **Stagista QA** | Elemento base del Team (BPS 0.1). | Il costo aumenta del **15%** per ogni unità già posseduta: $\text{Costo} = \text{Costo Base} \times 1.15^\text{Conteggio}$. |
+| **Squadra QA Junior** | Team più avanzato (BPS 8). | Ogni acquisto incrementa permanentemente il BPS totale del gioco. |
+| **Team AI Debug** | Acquisto finale (BPS 1400). | Il negozio scompare solo in caso di *Promozione*. |
 
-### II. Meccaniche di Produzione (BPS)
+#### B. Potenziamenti Click (Upgrade)
+(Colonna Sinistra - Potenziamenti Te Stesso)
 
-La produzione di Bug si divide tra risoluzione manuale (click) e automatica (BPS).
+Questi acquisti singoli migliorano sia la risoluzione manuale che, in alcuni casi, la produzione automatica.
 
-#### A. Risoluzione Manuale (Click)
-| Componente | Meccanica | Effetto Principale |
+| Potenziamento (Esempio) | Requisito di Sblocco | Effetto |
 | :--- | :--- | :--- |
-| **Click Base** | Cliccare sull'immagine del manager Espòòò. | Aggiunge Bug direttamente al saldo (`score`). |
-| **Potenziamenti Click** | Acquisti unici nella colonna sinistra. | Aumentano il valore base del click (`Caffè Forte`) o aggiungono una percentuale del BPS al valore del click (`Mano Bionica`, `Click Divino`). |
+| **Caffè Forte** | 10 Click Totali | Aggiunge un valore fisso al click base (+1). |
+| **Mano Bionica** | 1.000 Click Totali | Aggiunge l'**1%** del BPS corrente al valore di ogni click. |
+| **Click Divino** | 50.000 Click Totali | Migliora la Mano Bionica, portando il bonus BPS per click al **2%**. |
+| **Click Automatico** | 10.000 Click Totali | Aggiunge BPS extra pari al numero di `Stagisti QA` posseduti. |
+| **Hacking Etico** | 5.000 Click Totali | Raddoppia la probabilità di trovare Ticket Critici. |
 
-#### B. Produzione Automatica (BPS - Bugs Per Second)
-| Tipo di Acquisto | Esempio | Funzione | Costo |
-| :--- | :--- | :--- | :--- |
-| **Squadra (Team)** | `Stagista QA`, `Task Force Jira`, `Squadra Agile`. | Generano BPS costante. | Aumenta esponenzialmente del 15% per ogni unità acquistata. |
-| **Migliorie Team** | `Caffè Doppio`, `Framework Selenium`. | Potenziamenti unici che moltiplicano il BPS di un elemento del Team specifico (es. x2, x3). | Sbloccati solo dopo aver raggiunto un certo conteggio di quel dato elemento. |
+#### C. Migliorie Team (Enhancements)
+(Colonna Sinistra - Migliorie)
 
-**Formula BPS (Semplificata):**
-$$BPS = (\sum \text{BPS Team Base} \times \prod \text{Moltiplicatori}) \times \text{Bonus Promozione} \times \text{Bonus Click-CPS} \times \text{Bluescreen}$$
+Questi sono potenziamenti unici che moltiplicano la produttività di specifiche unità del Team (Squadra). La sezione è visibile solo quando ci sono elementi acquistabili.
 
+* **Sblocco:** Ogni miglioramento ha un costo in Bug e richiede un numero minimo di unità del Team specifico (`requiredCount`) (es. 1, 10, 25, 50 o 100 unità).
+* **Funzione:** Forniscono moltiplicatori (x2, x3, x4) al BPS generato dall'unità Team associata (es. `Caffè Doppio` moltiplica per 2 il BPS dello `Stagista QA`).
 
 ### III. Eventi Dinamici e Moltiplicatori
 
-| Evento | Descrizione | Impatto sul Gameplay |
+| Evento | Meccanica di Trigger | Bonus e Durata |
 | :--- | :--- | :--- |
-| **Ticket Critico** | Un'icona di Bug dorata appare casualmente. | Cliccarlo fornisce un grande bonus istantaneo basato su BPS e Click Value. |
-| **ERRORE DI SISTEMA!** | Evento raro (innescato in parte da numeri '404' nel punteggio/click). | Attiva il `bluescreenMultiplier` (x2-x4) per 30 secondi. |
+| **Ticket Critico (Golden Bug)** | Appare casualmente, con un timer di spawn di base di 60-180 secondi. | Cliccarlo concede un bonus istantaneo calcolato come `(BPS * 30) + (ClickValue * 10) + 10` Bug. |
+| **ERRORE DI SISTEMA! (Bluescreen)** | Ha una piccola probabilità di apparire, aumentata se il punteggio o i click totali contengono la sequenza **'404'**. | Applica un moltiplicatore di BPS e Click (fino a x4) per **30 secondi**, con sfondo Blue Screen e audio in loop. |
 
-### IV. Promozione (Prestige)
+### IV. Promozione (Prestige System)
 
-La Promozione è il meccanismo di soft-reset del gioco, necessario per la progressione a lungo termine.
+La Promozione è il sistema di *soft-reset* del gioco che introduce una valuta persistente.
 
-| Meccanica | Dettagli | Criteri e Effetti |
+#### 1. Calcolo e Reset
+* **Sblocco:** La sezione si sblocca quando i Bug Risolti Totali (`totalScore`) raggiungono **1.000.000**.
+* **Punti Promozione (PP):** Vengono guadagnati al reset tramite la formula: $\text{floor}(\sqrt{\frac{\text{Bug Risolti Totali}}{1.000.000}} \times 1.5)$.
+* **Reset:** Resetta tutto (score, Team, upgrade click), ma mantiene PP, Obiettivi, tempo di gioco e Potenziamenti Promozione.
+
+#### 2. Vantaggi Permanenti
+* **Bonus PP Base:** Ogni PP accumulato fornisce un moltiplicatore permanente dell'**1%** al BPS e al Click Value per le run future.
+* **Potenziamenti Promozione:** Acquistabili con i PP, forniscono vantaggi strategici persistenti:
+    * **Sinergia Manageriale:** Aumenta l'efficacia di ogni PP dello 0.1% aggiuntivo (Acquisto multiplo).
+    * **Accelerazione Iniziale:** Inizia ogni run con 1 `Stagista QA` gratuito.
+    * **Ticket Premium:** Dimezza il tempo di spawn dei Ticket Critici.
+
+### V. Meta-Progressione e Stato
+
+| Funzionalità | Descrizione | Persistenza |
 | :--- | :--- | :--- |
-| **Sblocco** | Punteggio totale di sempre (`totalScore`) raggiunge **1.000.000**. | |
-| **Punti Promozione (PP)** | Calcolati dalla formula: $\text{floor}(\sqrt{\frac{\text{Bug Risolti Totali}}{1.000.000}} \times 1.5)$. | Vengono mantenuti dopo il reset. |
-| **Reset** | Riporta il gioco allo stato iniziale (punteggio 0, Team 0, upgrade click persi). | Mantieni PP, Obiettivi e Potenziamenti Promozione. |
-| **Bonus PP** | Ogni PP fornisce un aumento cumulativo di base dell'**1%** al BPS e al Click Value. | |
-| **Potenziamenti Promozione** | Acquistati con i PP. | Forniscono bonus permanenti, come `Accelerazione Iniziale` (inizia con 1 Stagista QA gratuito). |
-
-### V. Progressi Secondari
-
-| Elemento | Funzione | Permanenza |
-| :--- | :--- | :--- |
-| **Obiettivi** (Achievements) | Sbloccati al raggiungimento di traguardi (es. 100 click, 1.000 bug). | Permanenti, mantenuti tra le run. |
-| **Statistiche** | Tracciano metriche come click totali, tempo di gioco, bug totali di sempre. | Permanenti. |
-| **Podio Online** | La classifica dei migliori punteggi e livelli Promozione, aggiornata ogni 30 secondi. | I dati vengono salvati su server. |
+| **Salvataggio** | Il gioco salva automaticamente lo stato locale (`gameState`) ogni 5 secondi. | Locale (`localStorage`). |
+| **Podio Online** | Il punteggio attuale e il livello Promozione sono inviati al server ogni 30 secondi. | Server MySQL. Il punteggio viene aggiornato solo se è un nuovo record. |
+| **Obiettivi (Achievements)** | Sbloccati al raggiungimento di pietre miliari specifiche (es. `primoClick`, `unodiTutto`). | Permanenti, anche dopo il Reset. |
+| **Statistiche** | Accessibile tramite modale, mostra metriche totali (tempo di gioco, click totali, bug di sempre, ecc.). | Permanenti. |
+| **Impostazioni** | Permette di regolare il volume e di resettare completamente il gioco, cancellando anche i punteggi dal Podio Online. | Locale (Volume) e Server (Punteggio). |
