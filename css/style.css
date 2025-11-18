@@ -182,24 +182,6 @@ body.bluescreen-active {
     text-align: center;
 }
 
-/* --- Rimossi tab a sinistra --- */
-/* --- Layout a Schede (Destra) --- */
-#store-nav {
-    display: none; /* NASCOSTO - Non più usato */
-}
-/* --- Fine Stili Schede Nascosti --- */
-
-
-/* Contenitore dei negozi */
-#store-content {
-    flex-grow: 1; 
-    overflow-y: auto; 
-    padding: 10px;
-    min-height: 0;
-}
-/* --- Fine Layout a Schede --- */
-
-
 /* --- Sezioni Negozi --- */
 .store-section {
     flex: 0 0 auto;
@@ -348,17 +330,6 @@ body.bluescreen-active {
 }
 
 /* --- Sezione Obiettivi (nel modale) --- */
-#achievement-section {
-    padding: 0;
-    flex-grow: 1; 
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-#achievement-section h2, #stats-section h2 { 
-    /* Spostato nel modale */
-    display: none;
-}
 #achievement-list {
     overflow-y: auto;
     display: flex;
@@ -395,7 +366,7 @@ body.bluescreen-active {
     color: #bdc3c7;
 }
 
-/* --- SEZIONE PRESTIGIO (In colonna sinistra) --- */
+/* --- SEZIONE PRESTIGIO --- */
 #prestige-section {
     padding: 20px;
     border-top: 2px solid rgba(74, 101, 130, 0.5);
@@ -484,13 +455,6 @@ body.bluescreen-active {
 }
 
 /* Stile Negozio Statistiche (nel modale) */
-#stats-section {
-    padding: 0; 
-}
-#stats-section h2 {
-    color: #ecf0f1;
-    border-bottom-color: #ecf0f1;
-}
 #stats-list {
     display: flex;
     flex-direction: column;
@@ -581,7 +545,7 @@ body.bluescreen-active {
     background: #7f9ebc;
 }
 
-/* --- NUOVO: Stili Bottoni e Modali Overlay --- */
+/* --- Stili Bottoni e Modali Overlay (ex settings.css) --- */
 #overlay-buttons-container {
     position: fixed;
     top: 20px;
@@ -669,7 +633,7 @@ body.bluescreen-active {
 /* Rende la lista scorrevole dentro il modale */
 .modal-content #achievement-list,
 .modal-content #stats-list,
-.modal-content #leaderboard-list { /* AGGIUNTO PODIO */
+.modal-content #leaderboard-list { 
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 10px;
@@ -681,7 +645,7 @@ body.bluescreen-active {
     to { opacity: 1; }
 }
 
-/* NUOVO: Stili per il modale IMPOSTAZIONI */
+/* Stili per il modale IMPOSTAZIONI */
 .settings-content {
     display: flex;
     flex-direction: column;
@@ -766,16 +730,6 @@ body.bluescreen-active {
     
     #store-content {
         overflow-y: visible;
-    }
-    #store-nav {
-        display: flex; /* Riattiva le schede su mobile */
-        padding: 5px;
-        flex-wrap: wrap;
-    }
-    .store-tab-btn {
-        font-size: 0.8rem;
-        padding: 8px 10px;
-        flex-grow: 1;
     }
     
     /* Bottoni overlay su mobile */

@@ -84,7 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Assicura che lo script principale sia stato caricato
-    if (!window.EspooClicker) {
+    if (window.EspooClicker) {
+        initPodio();
+    } else {
         // Aspetta che l'oggetto EspooClicker sia disponibile
         const checkInterval = setInterval(() => {
             if (window.EspooClicker) {
@@ -92,7 +94,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 initPodio();
             }
         }, 50); // Controlla ogni 50ms
-    } else {
-        initPodio();
     }
 });
