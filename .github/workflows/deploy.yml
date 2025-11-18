@@ -2,7 +2,9 @@ name: Deploy al Server FTP
 
 # 1. Quando eseguire il workflow
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - deploy
 
 # 2. Definisci il Job (l'attività)
 jobs:
