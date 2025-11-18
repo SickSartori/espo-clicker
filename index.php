@@ -39,7 +39,7 @@
         <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
         <button id="open-stats-btn" class="overlay-btn">📈 Statistiche</button>
         <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button>
-        <button id="open-leaderboard-btn" class="overlay-btn">🏆 Podio</button>
+        <button id="open-leaderboard-btn" class="overlay-btn">🏆 Classifica</button>
     </div>
 
     <div id="achievements-modal" class="modal-backdrop" style="display: none;">

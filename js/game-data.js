@@ -72,30 +72,26 @@ let gameState = {
 
 // Dati statici (costi, nomi, ecc.)
 const gameData = {
-    PRESTIGE_THRESHOLD: 100000000, // MODIFICATO: Ora a 100 Milioni
+    PRESTIGE_THRESHOLD: 10000000, // MODIFICATO: Ora a 10 Milioni
     
     buildings: {
-        // I primi rimangono accessibili per l'inizio veloce
-        assistenteQa:       { name: 'Assistente QA',       baseCost: 15,        cpsPerUnit: 0.1 },
-        jiraTicket:         { name: 'Jira Ticket',         baseCost: 100,       cpsPerUnit: 1 },
-        teamQa:             { name: 'Team QA',             baseCost: 1100,      cpsPerUnit: 8 },
+        // Inizio velocissimo
+        assistenteQa:       { name: 'Assistente QA',       baseCost: 10,        cpsPerUnit: 0.1 },
+        jiraTicket:         { name: 'Jira Ticket',         baseCost: 50,        cpsPerUnit: 1 },
+        teamQa:             { name: 'Team QA',             baseCost: 500,       cpsPerUnit: 8 },
+
+        automazioneTest:    { name: 'Automazione Test',    baseCost: 6000,      cpsPerUnit: 47 },
+        metodologiaAgile:   { name: 'Metodologia Agile',   baseCost: 50000,     cpsPerUnit: 260 },
         
-        // Fascia Media (10k - 100k)
-        automazioneTest:    { name: 'Automazione Test',    baseCost: 12000,     cpsPerUnit: 47 },
-        metodologiaAgile:   { name: 'Metodologia Agile',   baseCost: 130000,    cpsPerUnit: 260 },
+        // Fascia Alta (Il "ponte" verso il prestigio)
+        aiDebugger:         { name: 'AI Debugger',         baseCost: 400000,    cpsPerUnit: 1400 },
         
-        // Fascia Alta (Verso il milione)
-        aiDebugger:         { name: 'AI Debugger',         baseCost: 1400000,   cpsPerUnit: 1400 },
+        // Late Game (Ora accessibile PRIMA del prestigio per lo sprint finale)
+        quantumServer:      { name: 'Quantum Server',      baseCost: 6000000,   cpsPerUnit: 7800 },
         
-        // NUOVI EDIFICI (RI-BILANCIATI)
-        // Quantum Server ora è accessibile PRIMA del prestigio (20M vs 100M soglia)
-        quantumServer:      { name: 'Quantum Server',      baseCost: 20000000,  cpsPerUnit: 7800 },
-        
-        // Rete Galattica è un obiettivo "End-Run" (330M), serve un po' di grinding o il primo prestigio
-        reteNeuraleGalattica:{ name: 'Rete Galattica',     baseCost: 330000000, cpsPerUnit: 44000 },
-        
-        // Debug Temporale è puro Late Game (5 Miliardi)
-        debugTemporale:     { name: 'Debug Temporale',     baseCost: 5100000000,cpsPerUnit: 260000 }
+        // Obiettivi Post-Prestigio
+        reteNeuraleGalattica:{ name: 'Rete Galattica',     baseCost: 80000000,  cpsPerUnit: 44000 },
+        debugTemporale:     { name: 'Debug Temporale',     baseCost: 1500000000,cpsPerUnit: 260000 }
     },
     // ... (mantieni il resto: clickUpgrades, achievements, etc. invariati) ...
     clickUpgrades: {
