@@ -159,18 +159,38 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeGame() {
         buildStores(); 
         loadGame();
-        refreshAllStores();
+        // Se hai applicato la miglioria "Ottimizzazione", qui dovresti avere:
+        if (typeof refreshAllStores === 'function') refreshAllStores(); 
         updateUI(); 
         
         // Listener Principali
-        clickerButton.addEventListener('click', clickCookie);
-        goldenBug.addEventListener('click', clickGoldenBug);
-        prestigeBtn.addEventListener('click', performPrestige);
         
-        // Delegazione eventi per le COLONNE NEGOZIO
+        // Clicker Principale (la logica interna è già stata gestita in game-logic.js)
+        clickerButton.addEventListener('click', clickCookie);
+        
+        // Golden Bug (Impedisce tastiera)
+        goldenBug.addEventListener('click', (e) => {
+            if (e.detail === 0) return; // Blocca tastiera
+            clickGoldenBug();
+        });
+        
+        // Tasto Prestigio (Impedisce tastiera)
+        prestigeBtn.addEventListener('click', (e) => {
+            if (e.detail === 0) return; // Blocca tastiera
+            prestigeBtn.blur();         // Toglie il focus
+            performPrestige();
+        });
+        
+        // Delegazione eventi per la COLONNA SINISTRA (Potenziamenti Click & Migliorie)
         leftColumn.addEventListener('click', (e) => {
             const btn = e.target.closest('button.buy-btn');
             if (!btn) return;
+            
+            // --- FIX TASTIERA ---
+            if (e.detail === 0) return; // Ignora invio/spazio
+            btn.blur();                 // Rimuove il focus dal bottone
+            // --------------------
+            
             e.stopPropagation();
 
             if (btn.classList.contains('buy-click-btn')) {
@@ -181,9 +201,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Delegazione eventi per la COLONNA DESTRA (Edifici & Prestigio)
         rightColumn.addEventListener('click', (e) => {
             const btn = e.target.closest('button.buy-btn');
             if (!btn) return;
+            
+            // --- FIX TASTIERA ---
+            if (e.detail === 0) return; // Ignora invio/spazio
+            btn.blur();                 // Rimuove il focus dal bottone
+            // --------------------
+            
             e.stopPropagation();
 
             if (btn.classList.contains('buy-building-btn')) {

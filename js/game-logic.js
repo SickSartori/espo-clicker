@@ -90,6 +90,15 @@ function triggerBluescreen(multiplier) {
 
 
 function clickCookie(event) {
+    // --- FIX TASTIERA: Blocca input se non è un click del mouse ---
+    // Quando si usa Invio/Spazio, event.detail è 0. 
+    // Quando si usa il mouse, è 1 o più.
+    if (event.detail === 0) return; 
+    
+    // Toglie il focus dal bottone per evitare che rimanga selezionato (rimuove il bordo blu/nero)
+    if (clickerButton) clickerButton.blur();
+    // --------------------------------------------------------------
+
     playSound('sound-click');
     
     let clickBonusPercent = 0.01;
