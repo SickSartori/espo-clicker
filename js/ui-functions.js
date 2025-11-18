@@ -128,12 +128,9 @@ function buildStores() {
     }
 }
 
-function updateUI() {
-    // 1. Aggiorna Punteggio e BPS
-    scoreDisplay.textContent = formatNumber(gameState.score);
-    cpsDisplay.textContent = `BPS: ${cookiesPerSecond.toFixed(1).replace('.', ',')}`;
-
-    // 2. Aggiorna gli Edifici (sempre, per i requisiti)
+// NUOVA FUNZIONE: Aggiorna testi, costi e visibilità negozi (PESANTE - Chiamare solo su eventi)
+function refreshAllStores() {
+    // 1. Aggiorna testi Edifici (Costi e BPS)
     for (const key in gameState.buildings) {
         const currentCost = calculateBuildingCost(key);
         
@@ -145,21 +142,53 @@ function updateUI() {
             }
         }
         
-        document.getElementById(`name-${key}`).textContent = gameData.buildings[key].name;
+        // Aggiorna il DOM solo qui
         document.getElementById(`cost-${key}`).textContent = `Costo: ${formatNumber(currentCost)}`;
         document.getElementById(`bps-${key}`).textContent = `+${(buildingBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier).toFixed(1).replace('.', ',')} BPS cad.`;
         document.getElementById(`count-${key}`).textContent = gameState.buildings[key].count;
-        document.getElementById(`buy-${key}`).disabled = (gameState.score < currentCost);
+    }
+
+    // 2. Aggiorna Negozi completi (testi + visibilità)
+    updateClickStore();
+    updateEnhancementStore();
+    
+    // 3. Aggiorna parte statica del Prestigio
+    updatePrestigeUI();
+}
+
+// MODIFICATA: Aggiorna solo Score, CPS e stato dei bottoni (LEGGERA - Loop 10fps)
+function updateUI() {
+    // 1. Aggiorna Punteggio e BPS
+    scoreDisplay.textContent = formatNumber(gameState.score);
+    cpsDisplay.textContent = `BPS: ${cookiesPerSecond.toFixed(1).replace('.', ',')}`;
+
+    // 2. Aggiorna stato Disabled bottoni Edifici
+    for (const key in gameState.buildings) {
+        const currentCost = calculateBuildingCost(key);
+        const btn = document.getElementById(`buy-${key}`);
+        if (btn) btn.disabled = (gameState.score < currentCost);
     }
     
-    // 3. Aggiorna i Potenziamenti Click (sempre, per i requisiti)
-     updateClickStore();
+    // 3. Aggiorna Guadagno Prestigio (Dinamico)
+    prestigeGainDisplay.textContent = calculatePrestigeGained();
     
-    // 4. Aggiorna UI Prestigio (sempre, per i requisiti)
-    updatePrestigeUI();
+    // 4. Aggiorna stato Disabled bottoni Negozi (Senza ricreare tutto)
+    // Click Upgrades
+    for (const key in gameState.clickUpgrades) {
+        const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
+        if (btn && !gameState.clickUpgrades[key].purchased) {
+            btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
+        }
+    }
+    // Enhancements
+    for (const key in gameState.buildingEnhancements) {
+        const btn = document.querySelector(`#enh-upgrade-${key} .buy-btn`);
+        if (btn && !gameState.buildingEnhancements[key].purchased) {
+            btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
+        }
+    }
     
-    // 5. Aggiorna UI Migliorie (sempre, per i requisiti)
-    updateEnhancementStore();
+    // Nota: updateClickStore/EnhancementStore completi vengono chiamati solo in refreshAllStores()
 }
 
 function updatePrestigeUI() {

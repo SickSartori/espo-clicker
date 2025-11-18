@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8'; 
 
     function saveGame() {
+        gameState.lastSaveTimestamp = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
     }
     
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Carica il nome utente salvato separatamente (per il login)
+        // Carica il nome utente salvato separatamente
         const savedUsername = localStorage.getItem('espooClickerUsername');
         if (savedUsername) {
             gameState.user.username = savedUsername;
@@ -74,6 +75,37 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatePrestigeBonus();
         calculateClickCPSBonus();
         recalculateCPS();
+        
+        // --- NUOVO: CALCOLO PROGRESSO OFFLINE ---
+        if (gameState.lastSaveTimestamp) {
+            const now = Date.now();
+            // Calcola secondi passati (divisione per 1000)
+            const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
+
+            // Limite massimo offline (es. 8 ore = 28800 secondi)
+            const maxOfflineSeconds = 28800; 
+            const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
+
+            // Attiva solo se offline per almeno 10 secondi
+            if (effectiveSeconds > 10) { 
+                // cookiesPerSecond è già stato ricalcolato sopra
+                const earned = effectiveSeconds * cookiesPerSecond;
+
+                if (earned > 0) {
+                    gameState.score += earned;
+                    gameState.totalScore += earned;
+                    gameState.lifetimeScore += earned;
+                    
+                    // Mostra notifica dopo un secondo (per dare tempo alla UI di caricarsi)
+                    setTimeout(() => {
+                         if(window.EspooClicker && window.EspooClicker.showToast) {
+                             window.EspooClicker.showToast(`Bentornato! Hai guadagnato ${formatNumber(earned)} bug mentre dormivi.`);
+                         }
+                    }, 1000);
+                }
+            }
+        }
+        // ----------------------------------------
         
         if (gameState.clickUpgrades.hacking.purchased) {
             goldenBugChance *= 2;
@@ -127,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeGame() {
         buildStores(); 
         loadGame();
+        refreshAllStores();
         updateUI(); 
         
         // Listener Principali

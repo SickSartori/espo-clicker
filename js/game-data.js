@@ -10,6 +10,7 @@ let gameState = {
     totalGoldenBugsClicked: 0,
     totalPlayTime: 0,
     lifetimeScore: 0,
+    lastSaveTimestamp: Date.now(),
     
     user: {
         username: 'Giocatore',

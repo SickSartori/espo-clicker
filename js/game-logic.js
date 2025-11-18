@@ -63,7 +63,9 @@ function triggerBluescreen(multiplier) {
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
+    
     recalculateCPS();
+    refreshAllStores(); // AGGIUNTO: Aggiorna i testi BPS visualizzati
     
     eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
     eventMultiplierDisplay.style.display = 'block';
@@ -75,7 +77,10 @@ function triggerBluescreen(multiplier) {
         bluescreenMultiplier = 1;
         document.body.classList.remove('bluescreen-active');
         eventMultiplierDisplay.style.display = 'none'; 
+        
         recalculateCPS();
+        refreshAllStores(); // AGGIUNTO: Ripristina testi BPS
+        
         try {
             soundBluescreen.pause(); 
             soundBluescreen.currentTime = 0;
@@ -124,7 +129,10 @@ function buyBuilding(buildingKey) {
         playSound('sound-buy');
         gameState.score -= currentCost;
         state.count++;
+        
         recalculateCPS();
+        refreshAllStores(); // AGGIUNTO: Aggiorna UI lenta
+        window.EspooClicker.saveGame(); // AGGIUNTO: Salva subito
         updateUI();
     }
 }
@@ -149,6 +157,9 @@ function buyClickUpgrade(upgradeKey) {
         }
         
         state.purchased = true;
+        
+        refreshAllStores(); // AGGIUNTO
+        window.EspooClicker.saveGame(); // AGGIUNTO
         updateUI();
     }
 }
@@ -161,7 +172,10 @@ function buyBuildingEnhancement(enhanceKey) {
         playSound('sound-buy');
         gameState.score -= data.cost;
         state.purchased = true;
+        
         recalculateCPS();
+        refreshAllStores(); // AGGIUNTO
+        window.EspooClicker.saveGame(); // AGGIUNTO
         updateUI();
     }
 }
@@ -178,6 +192,9 @@ function buyPrestigeUpgrade(upgradeKey) {
             state.count++;
             calculatePrestigeBonus();
             recalculateCPS();
+            
+            refreshAllStores(); // AGGIUNTO
+            window.EspooClicker.saveGame(); // AGGIUNTO
             updateUI();
         }
     } else {
@@ -192,6 +209,9 @@ function buyPrestigeUpgrade(upgradeKey) {
             
             calculatePrestigeBonus();
             recalculateCPS();
+            
+            refreshAllStores(); // AGGIUNTO
+            window.EspooClicker.saveGame(); // AGGIUNTO
             updateUI();
         }
     }
@@ -242,10 +262,7 @@ Perderai tutti i bug, strumenti, e potenziamenti click, ma manterrai i tuoi obie
         
         gameState = newState;
         
-        // --- QUESTA È LA RIGA CORRETTA ---
-        window.EspooClicker.saveGame();
-        // -----------------------------------
-        
+        saveGame();
         location.reload();
     }
 }
