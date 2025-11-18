@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espòòò Clicker</title>
+    <title>Espòòò Clicker v16 (Refactor)</title>
     
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/podio.css">
+    <link rel="stylesheet" href="./css/modals.css">
     
     <link rel="icon" type="image/png" href="./image/favicon.png">
     
-    <script src="./js/script.js" defer></script>
-    <script src="./js/podio.js" defer></script>
+    <script src="./js/game-data.js" defer></script>
+    <script src="./js/ui-functions.js" defer></script>
+    <script src="./js/game-logic.js" defer></script>
+    <script src="./js/script.js" defer></script> <script src="./js/podio.js" defer></script>
+    <script src="./js/modals.js" defer></script>
 </head>
 <body>
 
@@ -186,9 +190,9 @@
         <img src="./image/bug.png" alt="Ticket Critico!">
     </div>  
 
-    <audio id="sound-click" src="./sounds/click.mp3" preload="auto"></audio>
-    <audio id="sound-buy" src="./sounds/buy.mp3" preload="auto"></audio>
-    <audio id="sound-achievement" src="./sounds/achievement.mp3" preload="auto"></audio>
+    <audio id="sound-click" src="./sounds/Click.mp3" preload="auto"></audio>
+    <audio id="sound-buy" src="./sounds/Buy.mp3" preload="auto"></audio>
+    <audio id="sound-achievement" src="./sounds/Achievement.mp3" preload="auto"></audio>
     <audio id="sound-bluescreen" src="./sounds/bluescreen.mp3" loop preload="auto"></audio>
 
 </body>
