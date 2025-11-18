@@ -7,6 +7,7 @@ let toastContainer, goldenBug, soundBluescreen, prestigeSection, prestigePointsD
 let prestigeGainDisplay, prestigeBtn, prestigeBonusDisplay, eventMultiplierDisplay;
 let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, rightColumn;
 let statsList, gameContainer, prestigeStore;
+let buyMultiplier = 1;
 
 
 // Aggiunge un listener per assicurarsi che l'HTML sia caricato prima di eseguire lo script
@@ -164,7 +165,38 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI(); 
         
         // Listener Principali
-        
+        const btn1x = document.getElementById('btn-1x');
+        const btn10x = document.getElementById('btn-10x');
+
+        btn1x.addEventListener('click', (e) => {
+            if (e.detail === 0) return; // Fix tastiera
+            btn1x.blur();
+            
+            buyMultiplier = 1;
+            
+            // Aggiorna stile
+            btn1x.style.backgroundColor = '#27ae60'; // Attivo (Verde)
+            btn10x.style.backgroundColor = '#34495e'; // Inattivo
+            
+            playSound('sound-click');
+            refreshAllStores(); // Aggiorna i prezzi visualizzati
+            updateUI();
+        });
+
+        btn10x.addEventListener('click', (e) => {
+            if (e.detail === 0) return; // Fix tastiera
+            btn10x.blur();
+
+            buyMultiplier = 10;
+            
+            // Aggiorna stile
+            btn10x.style.backgroundColor = '#27ae60'; // Attivo
+            btn1x.style.backgroundColor = '#34495e'; // Inattivo
+            
+            playSound('sound-click');
+            refreshAllStores(); // Aggiorna i prezzi visualizzati
+            updateUI();
+        });
         // Clicker Principale (la logica interna è già stata gestita in game-logic.js)
         clickerButton.addEventListener('click', clickCookie);
         

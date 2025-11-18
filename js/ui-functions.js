@@ -132,8 +132,10 @@ function buildStores() {
 function refreshAllStores() {
     // 1. Aggiorna testi Edifici (Costi e BPS)
     for (const key in gameState.buildings) {
-        const currentCost = calculateBuildingCost(key);
+        // Calcola il costo in base al moltiplicatore corrente (1 o 10)
+        const currentCost = calculateBulkCost(key, buyMultiplier);
         
+        // Calcola BPS (per unità singola, non cambia col moltiplicatore visivamente)
         let buildingBPS = gameData.buildings[key].cpsPerUnit;
         for (const enhanceKey in gameState.buildingEnhancements) {
             const eData = gameData.buildingEnhancements[enhanceKey];
@@ -142,53 +144,65 @@ function refreshAllStores() {
             }
         }
         
-        // Aggiorna il DOM solo qui
-        document.getElementById(`cost-${key}`).textContent = `Costo: ${formatNumber(currentCost)}`;
-        document.getElementById(`bps-${key}`).textContent = `+${(buildingBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier).toFixed(1).replace('.', ',')} BPS cad.`;
-        document.getElementById(`count-${key}`).textContent = gameState.buildings[key].count;
+        // Aggiorna DOM
+        const costEl = document.getElementById(`cost-${key}`);
+        const countEl = document.getElementById(`count-${key}`);
+        const bpsEl = document.getElementById(`bps-${key}`);
+        const nameEl = document.getElementById(`name-${key}`); // Utile se cambi i nomi
+
+        if (costEl) {
+            // Mostra "x10" nel testo se necessario
+            const prefix = buyMultiplier > 1 ? `${buyMultiplier}x ` : '';
+            costEl.textContent = `Costo: ${formatNumber(currentCost)}`;
+            // Opzionale: puoi aggiungere un'indicazione visiva del moltiplicatore nel testo
+            // costEl.textContent = `Costo (${buyMultiplier}x): ${formatNumber(currentCost)}`;
+        }
+        
+        if (bpsEl) bpsEl.textContent = `+${(buildingBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier).toFixed(1).replace('.', ',')} BPS cad.`;
+        if (countEl) countEl.textContent = gameState.buildings[key].count;
     }
 
-    // 2. Aggiorna Negozi completi (testi + visibilità)
+    // ... (il resto della funzione rimane uguale: updateClickStore, updatePrestigeUI ecc.)
     updateClickStore();
     updateEnhancementStore();
-    
-    // 3. Aggiorna parte statica del Prestigio
     updatePrestigeUI();
 }
 
 // MODIFICATA: Aggiorna solo Score, CPS e stato dei bottoni (LEGGERA - Loop 10fps)
 function updateUI() {
-    // 1. Aggiorna Punteggio e BPS
+    // ... (score e cps rimangono uguali)
     scoreDisplay.textContent = formatNumber(gameState.score);
     cpsDisplay.textContent = `BPS: ${cookiesPerSecond.toFixed(1).replace('.', ',')}`;
 
     // 2. Aggiorna stato Disabled bottoni Edifici
     for (const key in gameState.buildings) {
-        const currentCost = calculateBuildingCost(key);
+        // Usa calculateBulkCost per vedere se possiamo permetterci il pacchetto da 1 o 10
+        const currentCost = calculateBulkCost(key, buyMultiplier);
         const btn = document.getElementById(`buy-${key}`);
-        if (btn) btn.disabled = (gameState.score < currentCost);
+        if (btn) {
+            btn.disabled = (gameState.score < currentCost);
+            
+            // Opzionale: cambia il testo del bottone
+            btn.textContent = `Compra ${buyMultiplier}x`;
+        }
     }
     
-    // 3. Aggiorna Guadagno Prestigio (Dinamico)
+    // ... (il resto rimane uguale)
     prestigeGainDisplay.textContent = calculatePrestigeGained();
     
-    // 4. Aggiorna stato Disabled bottoni Negozi (Senza ricreare tutto)
-    // Click Upgrades
+    // ... loop per clickUpgrades e enhancements ...
     for (const key in gameState.clickUpgrades) {
         const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
         if (btn && !gameState.clickUpgrades[key].purchased) {
             btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
         }
     }
-    // Enhancements
     for (const key in gameState.buildingEnhancements) {
         const btn = document.querySelector(`#enh-upgrade-${key} .buy-btn`);
         if (btn && !gameState.buildingEnhancements[key].purchased) {
             btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
         }
     }
-    
-    // Nota: updateClickStore/EnhancementStore completi vengono chiamati solo in refreshAllStores()
 }
 
 function updatePrestigeUI() {

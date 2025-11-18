@@ -303,10 +303,11 @@ body.bluescreen-active {
 
 
 /* Stile potenziamenti click (Lista) */
-#click-upgrade-list { 
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+#click-upgrade-list, 
+#enhancement-list { 
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Crea 2 colonne di larghezza uguale */
+    gap: 10px; /* Spazio tra le card */
 }
 .click-upgrade {
     background-color: #2c5a42;
@@ -429,11 +430,7 @@ body.bluescreen-active {
     color: #1abc9c;
     border-bottom-color: #1abc9c;
 }
-#enhancement-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+
 .enhancement-upgrade {
     background-color: #2c4a4a;
     border: 1px solid #1abc9c;
@@ -695,6 +692,44 @@ body.bluescreen-active {
     margin: 0 0 15px 0;
 }
 
+.click-upgrade, 
+.enhancement-upgrade {
+    display: flex;
+    flex-direction: column; 
+    justify-content: space-between; /* Distribuisce lo spazio verticalmente */
+    height: 100%; 
+    box-sizing: border-box;
+    /* Sovrascrive eventuali margini vecchi */
+    margin-bottom: 0; 
+}
+
+/* Rende il bottone "Compra" largo quanto la card */
+.click-upgrade .buy-btn,
+.enhancement-upgrade .buy-btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* --- MODIFICA: NASCONDI BOTTONE "ACQUISTATO" --- */
+
+/* Se l'elemento ha la classe 'purchased' (aggiunta dal JS), nascondi il bottone */
+.click-upgrade.purchased .buy-btn,
+.enhancement-upgrade.purchased .buy-btn {
+    display: none !important;
+}
+
+/* Migliora lo stile della scritta "Posseduto" che rimane visibile */
+.click-upgrade.purchased .upgrade-cost,
+.enhancement-upgrade.purchased .upgrade-cost {
+    font-weight: bold;
+    color: #2ecc71; /* Verde brillante */
+    margin-top: auto; /* Spinge la scritta in fondo al box */
+    padding-top: 10px;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+
 
 /* --- Responsive Design per Mobile --- */
 @media (max-width: 1100px) { 
@@ -702,6 +737,11 @@ body.bluescreen-active {
         padding: 0;
         overflow-y: auto; 
     }
+    #click-upgrade-list, 
+    #enhancement-list {
+        grid-template-columns: 1fr; /* 1 colonna singola su mobile */
+    }
+
     #game-container {
         flex-direction: column;
         width: 100%;

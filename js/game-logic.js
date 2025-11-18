@@ -12,10 +12,25 @@ function playSound(id) {
 
 // --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
 
-function calculateBuildingCost(buildingKey) {
+function calculateBulkCost(buildingKey, amount) {
     const data = gameData.buildings[buildingKey];
     const state = gameState.buildings[buildingKey];
-    return Math.floor(data.baseCost * Math.pow(1.15, state.count));
+    const r = 1.15; // Il fattore di crescita del costo
+    
+    // Costo del PROSSIMO edificio singolo
+    const currentSingleCost = Math.floor(data.baseCost * Math.pow(r, state.count));
+    
+    if (amount === 1) {
+        return currentSingleCost;
+    } else {
+        // Formula somma geometrica: Costo * (r^amount - 1) / (r - 1)
+        const totalCost = currentSingleCost * (Math.pow(r, amount) - 1) / (r - 1);
+        return Math.floor(totalCost);
+    }
+}
+
+function calculateBuildingCost(buildingKey) {
+    return calculateBulkCost(buildingKey, 1);
 }
 
 function calculatePrestigeBonus() {
@@ -132,16 +147,19 @@ function clickCookie(event) {
 
 function buyBuilding(buildingKey) {
     const state = gameState.buildings[buildingKey];
-    const currentCost = calculateBuildingCost(buildingKey);
+    // Usa il moltiplicatore globale (1 o 10)
+    const currentCost = calculateBulkCost(buildingKey, buyMultiplier);
 
     if (gameState.score >= currentCost) {
         playSound('sound-buy');
         gameState.score -= currentCost;
-        state.count++;
+        
+        // Aggiunge il numero corretto di edifici
+        state.count += buyMultiplier;
         
         recalculateCPS();
-        refreshAllStores(); // AGGIUNTO: Aggiorna UI lenta
-        window.EspooClicker.saveGame(); // AGGIUNTO: Salva subito
+        refreshAllStores(); // Aggiorna i prezzi (che ora saranno aumentati)
+        window.EspooClicker.saveGame(); 
         updateUI();
     }
 }
@@ -316,7 +334,10 @@ function createNewGameState() {
         buildings: {
             assistenteQa: { count: 0 }, jiraTicket: { count: 0 },
             teamQa: { count: 0 }, automazioneTest: { count: 0 },
-            metodologiaAgile: { count: 0 }, aiDebugger: { count: 0 }
+            metodologiaAgile: { count: 0 }, aiDebugger: { count: 0 },
+            quantumServer: { count: 0 }, 
+            reteNeuraleGalattica: { count: 0 }, 
+            debugTemporale: { count: 0 }
         },
         clickUpgrades: {
             caffeForte: { purchased: false }, tastieraErgonomica: { purchased: false },
