@@ -3,7 +3,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    /* MODIFICA: Corretto il percorso */
+
     background-image: linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)), url('../image/background.jpg');
     background-size: cover;
     background-position: center;
@@ -15,9 +15,10 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+
+    padding: 65px 20px 20px 20px; 
     user-select: none;
-    overflow-y: hidden; 
+    overflow-y: hidden;
 }
 
 /* Stile per la schermata blu */
@@ -32,8 +33,11 @@ body.bluescreen-active {
 }
 
 #game-container {
-    width: 90%;
-    max-width: 1400px; 
+    margin-left: auto; 
+    margin-right: auto;
+    margin-top: 0;
+    width: 90%; 
+    max-width: 1400px;
     background-color: rgba(44, 62, 80, 0.85); 
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
@@ -41,8 +45,8 @@ body.bluescreen-active {
     flex-wrap: nowrap; 
     border: 1px solid rgba(74, 101, 130, 0.5); 
     transition: box-shadow 0.3s ease;
-    height: calc(100vh - 40px);
-    max-height: calc(100vh - 40px);
+    height: calc(100vh - 85px); /* Altezza totale 100vh - (65px top + 20px bottom) */
+    max-height: calc(100vh - 85px);
 }
 
 #game-container:hover {
@@ -85,6 +89,8 @@ body.bluescreen-active {
     position: relative;
     flex-grow: 1; 
     min-height: 450px; 
+    gap: 20px; /* Assicura spazio tra foto e numeri */
+    padding-top: 40px;
 }
 
 #click-feedback-container {
@@ -481,7 +487,7 @@ body.bluescreen-active {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1003; /* AUMENTATO: Deve stare sopra la barra di navigazione (che è 1002) */
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -545,12 +551,18 @@ body.bluescreen-active {
 /* --- Stili Bottoni e Modali Overlay (ex settings.css) --- */
 #overlay-buttons-container {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 0; /* Sposta in alto */
+    left: 0;
+    width: 100%; /* Larghezza intera */
     z-index: 1001;
     display: flex;
-    flex-direction: column; /* IMPILA I BOTTONI */
-    gap: 10px;
+    flex-direction: row; /* FIX CRITICO: Ora orizzontale */
+    justify-content: center; /* Centra i bottoni */
+    gap: 15px;
+    padding: 10px 20px;
+    background-color: #2c3e50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-sizing: border-box;
 }
 
 .overlay-btn {
@@ -565,7 +577,9 @@ body.bluescreen-active {
     font-weight: 600;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     transition: all 0.2s ease;
-    text-align: left; /* Allinea testo a sinistra */
+    flex-grow: 0;
+    width: auto;
+    text-align: center; /* Allinea testo a sinistra */
 }
 
 .overlay-btn:hover {

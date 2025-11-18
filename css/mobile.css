@@ -1,111 +1,54 @@
 /* --- STILI PER SMARTPHONE E TABLET VERTICALI --- */
 @media only screen and (max-width: 1024px) {
 
-    /* 1. Layout a Colonna Unica */
+    /* 1. Layout e Contenitore (Impila il gioco) */
     body {
         padding: 0;
-        overflow-y: auto; /* Abilita lo scroll generale */
-        height: auto;
+        padding-top: 65px; /* Spazio fisso sotto la barra nav */
+        overflow-y: auto;
     }
-
+    
     #game-container {
-        flex-direction: column; /* Impila le colonne */
+        flex-direction: column; 
         width: 100%;
-        max-width: 100%;
         height: auto;
         max-height: none;
         border-radius: 0;
-        border: none;
         box-shadow: none;
+        margin-left: 0; /* Assicura che sia a piena larghezza */
+        padding-bottom: 20px;
     }
 
-    .game-column {
-        width: 100%;
-        border-right: none !important;
-        border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-        flex: none; /* Rimuove flex-grow/shrink */
-        overflow-y: visible; /* Lascia che il contenuto allunghi la pagina */
+    /* 2. Bottoni Overlay (Rende la barra top compatta) */
+    #overlay-buttons-container {
+        padding: 8px 5px;
+        flex-wrap: wrap; 
+        gap: 5px;
+        justify-content: space-around;
         height: auto;
     }
 
-    /* 2. Ordine delle Colonne (Clicker al centro dello schermo, Negozi sotto) */
-    #left-column { order: 2; }   /* Potenziamenti */
-    #center-column { order: 1; } /* Clicker (Primo in alto) */
-    #right-column { order: 3; }  /* Edifici */
-
-    /* 3. Ottimizzazione Sezione Clicker */
-    #clicker-section {
-        min-height: 60vh; /* Occupa buona parte dello schermo iniziale */
-        padding: 20px 10px;
-    }
-
-    #clicker-btn {
-        width: 200px; /* Leggermente più piccolo */
-        height: 200px;
-    }
-    #manager-photo-normal, #manager-photo-clicked {
-        width: 190px;
-        height: 190px;
-    }
-
-    #score-display { font-size: 2.5rem; }
-
-    /* 4. Bottoni Overlay (Menu) */
-    #overlay-buttons-container {
-        position: fixed; /* Fisso in basso per facile accesso col pollice */
-        top: auto;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        flex-direction: row;
-        background-color: #2c3e50;
-        padding: 10px;
-        box-sizing: border-box;
-        border-top: 2px solid #34495e;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-        gap: 5px;
-        z-index: 1500;
-    }
-
     .overlay-btn {
-        flex: 1; /* Si dividono lo spazio equamente */
-        text-align: center;
-        padding: 12px 5px;
+        flex: 1; 
+        padding: 8px 5px;
         font-size: 0.8rem;
-        white-space: nowrap; /* Evita a capo */
-        border-radius: 6px;
-    }
-    
-    /* Spazio in fondo per non coprire il contenuto col menu fisso */
-    #game-container {
-        padding-bottom: 80px; 
     }
 
-    /* 5. Ottimizzazione Modali Mobile */
-    .modal-content {
-        width: 95%; /* Quasi tutto lo schermo */
-        max-height: 85vh; /* Non uscire dallo schermo */
-        padding: 20px;
-        border-radius: 12px;
-        margin-top: 0;
+    /* 3. Ordine e Separazione Colonne */
+    .game-column {
+        border-bottom: 2px solid rgba(74, 101, 130, 0.5);
+        height: auto;
+        flex: none;
     }
+    #left-column { order: 2; }
+    #center-column { order: 1; min-height: 40vh; }
+    #right-column { order: 3; border-bottom: none; }
     
-    .modal-content h2 { font-size: 1.5rem; }
-
-    .setting-item label { font-size: 0.85rem; }
-    
-    /* Input e Bottoni più facili da toccare */
-    input[type="text"], input[type="password"] {
-        padding: 15px;
-        font-size: 1rem;
-    }
-    
-    .buy-btn {
-        padding: 15px;
-    }
-    
-    /* Griglia Negozi su Mobile: 1 colonna o 2 strette */
+    /* 4. Ottimizzazione Varia */
     #click-upgrade-list, #enhancement-list {
-        grid-template-columns: 1fr; /* 1 per riga è più leggibile su mobile */
+        grid-template-columns: 1fr; 
+    }
+    .modal-content {
+        max-width: 95%;
     }
 }
