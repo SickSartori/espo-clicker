@@ -22,13 +22,8 @@ jobs:
       - name: Caricamento FTP su Server
         uses: SamKirkland/FTP-Deploy-Action@master
         with:
-          # Variabili di Ambiente Segrete (da configurare!)
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Path di Destinazione (es. /public_html/clicker/)
-          remote-directory: ${{ secrets.FTP_REMOTE_PATH }} 
-          # Path Locale da caricare (la root della repository)
+          server-dir: ${{ secrets.FTP_REMOTE_PATH }} 
           local-directory: ./
-          # Opzione per rimuovere file vecchi non presenti in questa commit
-          # lftpmode: "delete-first"
