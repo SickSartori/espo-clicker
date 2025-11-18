@@ -124,7 +124,10 @@ function clickCookie(event) {
 
     gameState.score += currentClickValue;
     gameState.totalScore += currentClickValue;
+    
+    // HIGHSCORE: Aggiorna il punteggio totale di sempre
     gameState.lifetimeScore += currentClickValue;
+    
     gameState.totalClicks++;
     
     showClickFeedback(event);
@@ -237,6 +240,7 @@ function buyPrestigeUpgrade(upgradeKey) {
 // --------- 5. FUNZIONI DI PRESTIGIO ---------
 
 function calculatePrestigeGained() {
+    // Calcola i punti basati solo sui bug accumulati in QUESTA run (totalScore)
     return Math.floor(Math.sqrt(gameState.totalScore / 1000000) * 1.5);
 }
 
@@ -249,9 +253,7 @@ async function performPrestige() {
 
     if (confirm(`Sei sicuro di voler resettare?
 Guadagnerai ${gained} Punti Promozione.
-Perderai tutti i bug, strumenti, e potenziamenti click, ma manterrai i tuoi obiettivi, punti e potenziamenti promozione.`)) {
-        
-        // RIMOSSO INVIO AL PODIO DA QUI
+Perderai tutti i bug e potenziamenti attuali, ma manterrai il tuo Highscore totale e i potenziamenti promozione.`)) {
         
         let newPrestigePoints = gameState.prestigePoints + gained;
         let oldAchievements = gameState.achievements;
@@ -259,9 +261,13 @@ Perderai tutti i bug, strumenti, e potenziamenti click, ma manterrai i tuoi obie
         let oldTotalResets = gameState.totalResets + 1;
         let oldGoldenBugs = gameState.totalGoldenBugsClicked;
         let oldPlayTime = gameState.totalPlayTime;
+        
+        // FONDAMENTALE: Mantiene il punteggio totale di sempre
         let oldLifetimeScore = gameState.lifetimeScore;
+        
         let oldUser = gameState.user; 
         
+        // Resetta lo stato (questo porta totalScore a 0, corretto per la nuova run)
         let newState = createNewGameState(); 
         
         newState.prestigePoints = newPrestigePoints;
@@ -270,7 +276,10 @@ Perderai tutti i bug, strumenti, e potenziamenti click, ma manterrai i tuoi obie
         newState.totalResets = oldTotalResets;
         newState.totalGoldenBugsClicked = oldGoldenBugs;
         newState.totalPlayTime = oldPlayTime;
+        
+        // Ripristina l'Highscore totale
         newState.lifetimeScore = oldLifetimeScore;
+        
         newState.user = oldUser; 
         
         if (newState.prestigeUpgrades.accelerazione.purchased) {
@@ -279,13 +288,19 @@ Perderai tutti i bug, strumenti, e potenziamenti click, ma manterrai i tuoi obie
         
         gameState = newState;
         
-        saveGame();
+        // --- FIX CRITICO: Usa window.EspooClicker.saveGame() invece di saveGame() ---
+        // saveGame() non è accessibile in questo scope, window.EspooClicker sì.
+        if (window.EspooClicker && window.EspooClicker.saveGame) {
+            window.EspooClicker.saveGame();
+        }
+        // --------------------------------------------------------------------------
+        
         location.reload();
     }
 }
 
 async function submitScoreToLeaderboard(username, score, prestigeLevel) {
-    if (score < 1000) return; 
+    if (score < 500) return; 
 
     try {
         const response = await fetch('./php/submit_score.php', { 
@@ -295,14 +310,12 @@ async function submitScoreToLeaderboard(username, score, prestigeLevel) {
             },
             body: JSON.stringify({
                 username: username,
-                score: Math.floor(score),
+                score: Math.floor(score), // Invia l'Highscore totale
                 prestigeLevel: prestigeLevel 
             })
         });
         if (response.ok) {
             console.log("Punteggio inviato al Podio!");
-        } else {
-            throw new Error('Risposta negativa dal server');
         }
     } catch (error) {
         console.error("Impossibile inviare il punteggio al podio:", error);
@@ -314,12 +327,12 @@ function createNewGameState() {
         score: 0,
         baseClickValue: 1,
         totalClicks: 0,
-        totalScore: 0,
+        totalScore: 0, // Punteggio della run corrente (si resetta)
         prestigePoints: 0,
         totalResets: 0,
         totalGoldenBugsClicked: 0,
         totalPlayTime: 0,
-        lifetimeScore: 0,
+        lifetimeScore: 0, // Highscore totale (da preservare)
         user: { username: 'Giocatore', masterVolume: 1.0 },
         buildings: {
             assistenteQa: { count: 0 }, jiraTicket: { count: 0 },
@@ -368,16 +381,17 @@ setInterval(() => {
 }, 1000);
 
 function gameLoop() {
-    const scoreToAdd = cookiesPerSecond / 10;
+    const scoreToAdd = cookiesPerSecond / 10; // 10 volte al secondo
+    
     gameState.score += scoreToAdd;
     gameState.totalScore += scoreToAdd;
+    
+    // HIGHSCORE: Aggiorna il punteggio totale di sempre
     gameState.lifetimeScore += scoreToAdd;
     
-    // --- NUOVO: Rimuovi i click più vecchi di 1 secondo ---
+    // Rimuovi i click più vecchi di 1 secondo
     const now = Date.now();
-    // Mantiene solo i click avvenuti negli ultimi 1000ms (1 secondo)
     clickHistory = clickHistory.filter(click => now - click.time < 1000);
-    // ------------------------------------------------------
     
     checkAchievements();
     updateUI();
@@ -450,6 +464,8 @@ function clickGoldenBug() {
     const bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
     gameState.score += bonus;
     gameState.totalScore += bonus;
+    
+    // HIGHSCORE: Aggiorna anche qui
     gameState.lifetimeScore += bonus;
     
     showToast(`Ticket Critico Risolto! +${formatNumber(bonus)} bug!`);

@@ -1,7 +1,9 @@
 <?php
 include 'db_connect.php';
 
-$sql = "SELECT username, score, timestamp FROM leaderboard ORDER BY score DESC LIMIT 10";
+// MODIFICA: Aggiunto 'prestigeLevel' alla SELECT per poterlo mostrare nel podio
+// MODIFICA: Aggiunto ordinamento secondario per prestigio in caso di pareggio
+$sql = "SELECT username, score, prestigeLevel, timestamp FROM leaderboard ORDER BY score DESC, prestigeLevel DESC LIMIT 10";
 $result = $conn->query($sql);
 
 $leaderboard = [];

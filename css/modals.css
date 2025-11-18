@@ -1,11 +1,11 @@
-/* --- Stili Bottoni e Modali Overlay --- */
+/* --- Stili Generali Modali e Overlay --- */
 #overlay-buttons-container {
     position: fixed;
     top: 20px;
     left: 20px;
     z-index: 1001;
     display: flex;
-    flex-direction: column; /* IMPILA I BOTTONI */
+    flex-direction: column;
     gap: 10px;
 }
 
@@ -21,7 +21,7 @@
     font-weight: 600;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     transition: all 0.2s ease;
-    text-align: left; /* Allinea testo a sinistra */
+    text-align: left;
 }
 
 .overlay-btn:hover {
@@ -30,147 +30,206 @@
     transform: translateY(-2px);
 }
 
+/* --- Struttura Modale --- */
 .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(0, 0, 0, 0.85); /* Sfondo più scuro per focus */
     z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
     animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(3px); /* Effetto sfocato moderno */
 }
 
 .modal-content {
     background-color: #2c3e50;
     width: 90%;
-    max-width: 600px;
-    border-radius: 12px;
-    border: 1px solid #5d7c9a;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    max-width: 500px; /* Leggermente più stretto per eleganza */
+    border-radius: 16px;
+    border: 1px solid #4a6582;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 20px;
+    padding: 25px;
     box-sizing: border-box;
+    color: #ecf0f1;
+}
+
+/* Titoli e Testi */
+.modal-content h2 {
+    text-align: center;
+    margin: 0 0 20px 0;
+    color: #fff;
+    font-size: 1.8rem;
+    border-bottom: 2px solid rgba(74, 101, 130, 0.3);
+    padding-bottom: 15px;
+}
+
+.modal-desc {
+    text-align: center;
+    color: #bdc3c7;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
 }
 
 .modal-close-btn {
     position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 2.5rem;
-    color: #bdc3c7;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    color: #7f8c8d;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    transition: color 0.2s;
     line-height: 1;
 }
-.modal-close-btn:hover {
-    color: #fff;
+.modal-close-btn:hover { color: #fff; }
+
+/* --- Input Fields (Stile Dark Mode) --- */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.modal-content h2 {
-    text-align: center;
-    margin-top: 0;
-    color: #fff;
-    border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-/* Rende la lista scorrevole dentro il modale */
+.setting-item label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input[type="text"], 
+input[type="password"],
+input[type="number"] {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 12px;
+    background-color: #1a252f; /* Sfondo scuro per input */
+    border: 1px solid #4a6582;
+    border-radius: 8px;
+    color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* --- Bottoni dentro i Modali --- */
+.modal-content .buy-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+.logout-btn {
+    background-color: #f39c12 !important; /* Arancione */
+    color: #fff;
+}
+.logout-btn:hover { background-color: #d35400 !important; }
+
+.danger-btn {
+    background-color: #c0392b !important; /* Rosso */
+}
+.danger-btn:hover { background-color: #a93226 !important; }
+
+/* --- Sezioni Gestione Account --- */
+.account-section {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 20px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.account-section h3 {
+    margin: 0;
+    color: #3498db;
+    font-size: 1.2rem;
+}
+
+.input-group-row {
+    display: flex;
+    gap: 10px;
+}
+
+.danger-zone {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #c0392b;
+    background-color: rgba(192, 57, 43, 0.1);
+    border-radius: 8px;
+}
+.danger-zone h3 {
+    color: #e74c3c;
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+}
+.danger-zone p {
+    font-size: 0.85rem;
+    color: #bdc3c7;
+    margin: 0 0 15px 0;
+}
+
+/* Scrollable Lists */
 .modal-content #achievement-list,
 .modal-content #stats-list,
 .modal-content #leaderboard-list {
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 10px;
-    max-height: 50vh; /* Altezza massima per lo scroll */
+    max-height: 50vh;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-/* Stili per il modale IMPOSTAZIONI */
-.settings-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-.setting-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.setting-item label {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #bdc3c7;
-}
-.setting-item input[type="text"] {
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
-    padding: 10px;
-    background-color: #34495e;
-    border: 1px solid #5d7c9a;
-    border-radius: 6px;
-    color: #ecf0f1;
-}
-.setting-item input[type="range"] {
-    cursor: pointer;
-}
-#save-settings-btn {
-    background-color: #2ecc71; /* Verde */
-}
-#save-settings-btn:hover {
-    background-color: #27ae60;
-}
-
-.danger-zone {
-    margin-top: 20px;
-    border-top: 2px solid #e74c3c;
-    padding-top: 15px;
-}
-.danger-zone h3 {
-    color: #e74c3c;
-    margin: 0 0 10px 0;
-}
-.danger-zone p {
-    font-size: 0.9rem;
-    color: #bdc3c7;
-    margin: 0 0 15px 0;
-}
-
-
-/* Responsive per Modali */
-@media (max-width: 1100px) {
-    /* Bottoni overlay su mobile */
-    #overlay-buttons-container {
-        padding: 10px;
-        position: static;
-        width: 100%;
-        box-sizing: border-box;
-        background-color: #2c3e50;
-        flex-direction: row; 
-    }
-    .overlay-btn {
-        width: 25%; /* Diviso 4 */
-        flex-grow: 1;
-        text-align: center;
-        padding: 8px 5px;
-        font-size: 0.8rem;
-    }
-    
-    /* Modali su mobile */
+/* Responsive */
+@media (max-width: 600px) {
     .modal-content {
         width: 95%;
-        height: 80%;
+        padding: 20px;
+    }
+    #overlay-buttons-container {
+        width: 100%;
+        padding: 10px;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        flex-direction: row;
+        background: #2c3e50;
+        border-top: 1px solid #4a6582;
+    }
+    .overlay-btn {
+        flex: 1;
+        padding: 10px 5px;
+        font-size: 0.8rem;
+        text-align: center;
     }
 }

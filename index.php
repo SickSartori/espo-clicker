@@ -8,29 +8,32 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/podio.css">
     <link rel="stylesheet" href="./css/modals.css">
+    <link rel="stylesheet" href="./css/mobile.css">
     
     <link rel="icon" type="image/png" href="./image/favicon.png">
     
-    <script src="./js/game-data.js" defer></script>
-    <script src="./js/ui-functions.js" defer></script>
-    <script src="./js/game-logic.js" defer></script>
-    <script src="./js/script.js" defer></script> <script src="./js/podio.js" defer></script>
-    <script src="./js/modals.js" defer></script>
+    
 </head>
 <body>
 
     <div id="toast-container"></div>
 
     <div id="login-modal" class="modal-backdrop" style="display: none;">
-        <div class="modal-content" style="max-width: 400px; height: auto;">
-            <h2>Benvenuto!</h2>
-            <p style="text-align: center; color: #bdc3c7;">Inserisci il tuo nome utente per iniziare e comparire nel podio.</p>
+        <div class="modal-content">
+            <h2>Accesso Account</h2>
+            <p class="modal-desc">
+                Inserisci le credenziali per giocare.<br>Se non hai un account, verrà creato ora.
+            </p>
             <div class="settings-content">
                 <div class="setting-item">
-                    <label for="login-username-input">Nome Utente</label>
-                    <input type="text" id="login-username-input" placeholder="Tuo Nome...">
+                    <label>Nome Utente</label>
+                    <input type="text" id="login-username-input" placeholder="Es. MasterBug">
                 </div>
-                <button id="login-btn" class="buy-btn">Entra</button>
+                <div class="setting-item">
+                    <label>Password</label>
+                    <input type="password" id="login-password-input" placeholder="••••••••">
+                </div>
+                <button id="login-btn" class="buy-btn">Entra / Registrati</button>
             </div>
         </div>
     </div>
@@ -66,18 +69,57 @@
             <h2>⚙️ Impostazioni</h2>
             
             <div class="settings-content">
-                
                 <div class="setting-item">
-                    <label for="volume-slider">Volume Generale (<span id="volume-display">100</span>%)</label>
+                    <label>Volume Generale (<span id="volume-display">100</span>%)</label>
                     <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
                 </div>
                 
-                <button id="save-settings-btn" class="buy-btn">Salva Impostazioni</button>
+                <button id="save-settings-btn" class="buy-btn" style="background-color: #27ae60;">Salva e Chiudi</button>
+
+                <div class="account-section">
+                    <h3>Account</h3>
+                    <p style="margin: 5px 0 10px 0; color: #bdc3c7;">
+                        Utente: <span id="current-username-display" style="color: #3498db; font-weight: bold;">...</span>
+                    </p>
+                    <button id="open-account-btn" class="buy-btn" style="background-color: #34495e; border: 1px solid #5d7c9a;">
+                        Gestione Credenziali & Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="account-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>🔐 Gestione Account</h2>
+            
+            <div class="settings-content">
                 
+                <div class="setting-item">
+                    <label>Cambia Nome Utente</label>
+                    <div class="input-group-row">
+                        <input type="text" id="new-username-input" placeholder="Nuovo Nome">
+                        <button id="change-username-btn" class="buy-btn" style="width: auto; margin: 0;">Salva</button>
+                    </div>
+                </div>
+
+                <div class="setting-item" style="margin-top: 10px;">
+                    <label>Cambia Password</label>
+                    <input type="password" id="old-password-input" placeholder="Vecchia Password" style="margin-bottom: 5px;">
+                    <input type="password" id="new-password-input" placeholder="Nuova Password">
+                    <button id="change-password-btn" class="buy-btn" style="margin-top: 5px;">Aggiorna Password</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;"></div>
+
+                <button id="logout-btn" class="buy-btn logout-btn">Cambia Utente (Logout)</button>
+
                 <div class="danger-zone">
-                    <h3>Zona Pericolosa</h3>
-                    <p>Questa azione è irreversibile e cancellerà tutti i tuoi progressi, inclusi Punti Promozione e Obiettivi, e rimuoverà i tuoi punteggi dal podio.</p>
-                    <button id="delete-save-btn" class="buy-btn danger-btn">CANCELLA SALVATAGGIO</button>
+                    <h3>⚠️ Zona Pericolosa</h3>
+                    <p>Eliminazione definitiva account.</p>
+                    <input type="password" id="delete-confirm-password" placeholder="Password di conferma">
+                    <button id="delete-save-btn" class="buy-btn danger-btn" style="margin-top: 10px;">ELIMINA ACCOUNT</button>
                 </div>
             </div>
         </div>
@@ -86,9 +128,9 @@
     <div id="leaderboard-modal" class="modal-backdrop" style="display: none;">
         <div class="modal-content">
             <button class="modal-close-btn">&times;</button>
-            <h2>🏆 Podio Online</h2>
+            <h2>🏆 Classifica</h2>
             <div id="leaderboard-list">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -305,5 +347,11 @@
     <audio id="sound-achievement" src="./sounds/Achievement.mp3" preload="auto"></audio>
     <audio id="sound-bluescreen" src="./sounds/bluescreen.mp3" loop preload="auto"></audio>
 
+    <script src="./js/game-data.js" defer></script>
+    <script src="./js/ui-functions.js" defer></script>
+    <script src="./js/game-logic.js" defer></script>
+    <script src="./js/script.js" defer></script> 
+    <script src="./js/podio.js" defer></script>
+    <script src="./js/modals.js" defer></script>
 </body>
 </html>

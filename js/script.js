@@ -8,6 +8,7 @@ let prestigeGainDisplay, prestigeBtn, prestigeBonusDisplay, eventMultiplierDispl
 let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, rightColumn;
 let statsList, gameContainer, prestigeStore;
 let buyMultiplier = 1;
+let currentUserPassword = null;
 
 
 // Aggiunge un listener per assicurarsi che l'HTML sia caricato prima di eseguire lo script
@@ -49,9 +50,29 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const SAVE_KEY = 'espotoolClickerSaveV8'; 
 
-    function saveGame() {
+    async function saveGame() {
         gameState.lastSaveTimestamp = Date.now();
+        
+        // 1. Salvataggio Locale (Backup rapido)
         localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+        
+        // 2. Salvataggio Cloud (Se abbiamo utente e password)
+        if (gameState.user.username && currentUserPassword) {
+            try {
+                await fetch('./php/save_progress.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: gameState.user.username,
+                        password: currentUserPassword,
+                        saveData: gameState // Invia tutto l'oggetto di gioco
+                    })
+                });
+                // Opzionale: console.log("Cloud Save OK");
+            } catch (e) {
+                console.error("Errore salvataggio cloud:", e);
+            }
+        }
     }
     
     function loadGame() {
@@ -150,7 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Loop di invio punteggio (ogni 30 secondi)
         setInterval(() => {
-            submitScoreToLeaderboard(gameState.user.username, gameState.score, gameState.prestigePoints);
+        // Usa totalResets invece di prestigePoints per avere un livello stabile che non scende spendendo
+        submitScoreToLeaderboard(gameState.user.username, gameState.lifetimeScore, gameState.totalResets);
         }, 30000); // 30000 ms = 30 secondi
 
         // Avvio spawn "Ticket Critico"
@@ -264,14 +286,28 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast: showToast,
         playSound: playSound,
         updateStatsUI: updateStatsUI,
-        formatNumber: formatNumber, 
-        setMasterVolume: (volume) => {
-            gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => {
-                audio.volume = gameState.user.masterVolume;
-            });
-        },
-        startGameRoutines: startGameRoutines
+        formatNumber: formatNumber,
+        // NUOVO: Setter per la password (chiamato dal login)
+        setPassword: (pwd) => { currentUserPassword = pwd; },
+        getPassword: () => currentUserPassword,
+        // -------------------------------------------------
+        setMasterVolume: (volume) => { /* ... */ },
+        startGameRoutines: startGameRoutines,
+        // Esponi la funzione per fare il merge del caricamento cloud
+        loadCloudData: (cloudJSON) => {
+            if (cloudJSON) {
+                try {
+                    const parsed = JSON.parse(cloudJSON);
+                    deepMerge(gameState, parsed);
+                    // Ricalcoli post-load
+                    calculatePrestigeBonus();
+                    calculateClickCPSBonus();
+                    recalculateCPS();
+                    updateUI();
+                    showToast("Progressi scaricati dal Cloud!");
+                } catch(e) { console.error("Errore parsing cloud save", e); }
+            }
+        }
     };
 
     // Avvia il gioco!

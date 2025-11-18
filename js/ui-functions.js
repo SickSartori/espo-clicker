@@ -343,8 +343,8 @@ function updateStatsUI() {
             <span class="stat-value">${formatNumber(gameState.totalScore)}</span>
         </div>
         <div class="stat-item">
-            <span class="stat-label">Bug (Totali di sempre)</span>
-            <span class="stat-value">${formatNumber(gameState.lifetimeScore)}</span>
+            <span class="stat-label" style="color: #f1c40f;">Highscore (Totale)</span>
+            <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
         </div>
         <div class="stat-item">
             <span class="stat-label">Click totali</span>
