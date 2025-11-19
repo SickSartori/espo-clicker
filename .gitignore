@@ -1,0 +1,27 @@
+# Log e File Temporanei
+*.log
+*.tmp
+/tmp/
+
+# Dipendenze
+# Decommentare se si usano Node.js (npm) o Composer
+# /node_modules
+# /vendor
+
+# File del Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# File dell'Editor e dell'IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# Database e Backup (per il deployment)
+# I file .php per la connessione al database sono inclusi 
+# perché fanno parte della struttura del progetto, ma in un progetto 
+# reale si ignorerebbe la configurazione con credenziali reali.
+*.sql
+*.sqlite
+dump.rdb
