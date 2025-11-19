@@ -6,14 +6,21 @@ let gameState = {
     totalClicks: 0,
     totalScore: 0,
     prestigePoints: 0,
+    lifetimePrestigePoints: 0,
     totalResets: 0,
     totalGoldenBugsClicked: 0,
     totalPlayTime: 0,
     lifetimeScore: 0,
+    lastSaveTimestamp: Date.now(),
     
     user: {
         username: 'Giocatore',
         masterVolume: 1.0
+    },
+    filterSettings: {
+        click: 'available',       // 'all' o 'available'
+        auto: 'available',        // Default: Disponibili
+        lab: 'available'          // Default: Disponibili
     },
     
     buildings: {
@@ -22,21 +29,30 @@ let gameState = {
         teamQa: { count: 0 },
         automazioneTest: { count: 0 },
         metodologiaAgile: { count: 0 },
-        aiDebugger: { count: 0 }
+        aiDebugger: { count: 0 },
+        quantumServer: { count: 0 },
+        reteNeuraleGalattica: { count: 0 },
+        debugTemporale: { count: 0 }
     },
     clickUpgrades: {
         caffeForte: { purchased: false },
         tastieraErgonomica: { purchased: false },
+        mouseGaming:          { purchased: false },
         manoBionica: { purchased: false },
+        ergonomiaEstrema:     { purchased: false },
         hacking: { purchased: false },
         doppioClick: { purchased: false }, 
+        aiClick:              { purchased: false },
         clickAutomatico: { purchased: false }, 
         clickDivino: { purchased: false } 
     },
     prestigeUpgrades: {
         sinergia: { count: 0 },
         accelerazione: { purchased: false },
-        ticketPremium: { purchased: false }
+        ticketPremium: { purchased: false },
+        outsourcing: { count: 0 },
+        paracadute: { purchased: false },
+        crunchTime: { purchased: false }
     },
     buildingEnhancements: {
         caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
@@ -68,22 +84,28 @@ let gameState = {
 
 // Dati statici (costi, nomi, ecc.)
 const gameData = {
-    PRESTIGE_THRESHOLD: 1000000, // 1 Milione
+    PRESTIGE_THRESHOLD: 10000000, 
     
     buildings: {
-        assistenteQa:       { name: 'Assistente QA',       baseCost: 15,    cpsPerUnit: 0.1 },
-        jiraTicket:         { name: 'Jira Ticket',         baseCost: 100,   cpsPerUnit: 1 },
-        teamQa:             { name: 'Team QA',             baseCost: 1100,  cpsPerUnit: 8 },
-        automazioneTest:    { name: 'Automazione Test',    baseCost: 12000, cpsPerUnit: 47 },
-        metodologiaAgile:   { name: 'Metodologia Agile',   baseCost: 130000,cpsPerUnit: 260 },
-        aiDebugger:         { name: 'AI Debugger',         baseCost: 1400000,cpsPerUnit: 1400 }
+        assistenteQa:       { name: 'Assistente QA',       baseCost: 10,        cpsPerUnit: 0.1 },
+        jiraTicket:         { name: 'Jira Ticket',         baseCost: 50,        cpsPerUnit: 1 },
+        teamQa:             { name: 'Team QA',             baseCost: 500,       cpsPerUnit: 8 },
+        automazioneTest:    { name: 'Automazione Test',    baseCost: 6000,      cpsPerUnit: 47 },
+        metodologiaAgile:   { name: 'Metodologia Agile',   baseCost: 50000,     cpsPerUnit: 260 },
+        aiDebugger:         { name: 'AI Debugger',         baseCost: 400000,    cpsPerUnit: 1400 },
+        quantumServer:      { name: 'Quantum Server',      baseCost: 6000000,   cpsPerUnit: 7800 },
+        reteNeuraleGalattica:{ name: 'Rete Galattica',     baseCost: 80000000,  cpsPerUnit: 44000 },
+        debugTemporale:     { name: 'Debug Temporale',     baseCost: 1500000000,cpsPerUnit: 260000 }
     },
     clickUpgrades: {
         caffeForte:           { name: 'Caffè Forte', desc: 'Aggiunge +1 al valore di ogni click.', cost: 100,  clickIncrease: 1, requiredClicks: 10 },
         tastieraErgonomica:   { name: 'Tastiera Ergonomica', desc: 'Aggiunge +5 al valore di ogni click.', cost: 500,  clickIncrease: 5, requiredClicks: 100 },
-        manoBionica:          { name: 'Mano Bionica', desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.', cost: 10000, clickIncrease: 0, requiredClicks: 1000 },
-        doppioClick:          { name: 'Doppio Click', desc: 'Raddoppia il valore base dei tuoi click.', cost: 50000, clickIncrease: 0, requiredClicks: 2500 },
+        mouseGaming:          { name: 'Mouse Gaming', desc: 'Aggiunge +10 al valore di ogni click.', cost: 2000, clickIncrease: 10, requiredClicks: 300 }, // REQUISITO: 300 Click
+        ergonomiaEstrema:     { name: 'Ergonomia Estrema', desc: 'Aggiunge +50 al valore di ogni click.', cost: 10000, clickIncrease: 50, requiredClicks: 1000 }, // REQUISITO: 1,500 Click
+        doppioClick:          { name: 'Doppio Click', desc: 'Raddoppia il valore base dei tuoi click.', cost: 25000, clickIncrease: 0, requiredClicks: 1500 },
+        manoBionica:          { name: 'Mano Bionica', desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.', cost: 50000, clickIncrease: 0, requiredClicks: 2500 },
         hacking:              { name: 'Hacking Etico', desc: 'Raddoppia la probabilità di trovare Ticket Critici.', cost: 100000, clickIncrease: 0, requiredClicks: 5000 },
+        aiClick:              { name: 'Intelligenza Artificiale', desc: 'Aggiunge +500 al valore di ogni click.', cost: 500000, clickIncrease: 500, requiredClicks: 7500 }, // REQUISITO: 7,500 Click
         clickAutomatico:      { name: 'Click Automatico', desc: 'Aggiunge BPS pari al numero di Assistenti QA.', cost: 250000, clickIncrease: 0, requiredClicks: 10000 },
         clickDivino:          { name: 'Click Divino', desc: 'La Mano Bionica ora guadagna il 2% dei BPS.', cost: 1000000, clickIncrease: 0, requiredClicks: 50000 }
     },
@@ -104,7 +126,28 @@ const gameData = {
     prestigeUpgrades: {
         sinergia: { name: 'Sinergia Manageriale', desc: 'Ogni punto promozione vale +0.1% in più.', baseCost: 1, bonusPerLevel: 0.001, isCounted: true },
         accelerazione: { name: 'Accelerazione Iniziale', desc: 'Inizia ogni nuova run con 1 Assistente QA gratuito.', baseCost: 2, isCounted: false },
-        ticketPremium: { name: 'Ticket Premium', desc: 'I Ticket Critici appaiono 2 volte più spesso.', baseCost: 5, isCounted: false }
+        ticketPremium: { name: 'Ticket Premium', desc: 'I Ticket Critici appaiono 2 volte più spesso.', baseCost: 5, isCounted: false },
+        
+        // --- NUOVI POTENZIAMENTI ---
+        outsourcing: { 
+            name: 'Outsourcing Selvaggio', 
+            desc: 'Riduce il costo base di tutti gli edifici dell\'1% per livello (Max 10).', 
+            baseCost: 10, 
+            isCounted: true,
+            maxLevel: 10 // Limite opzionale che gestiremo nella logica
+        },
+        paracadute: { 
+            name: 'Paracadute d\'Oro', 
+            desc: 'Inizi la nuova run conservando il 5% dei bug totali della run precedente.', 
+            baseCost: 25, 
+            isCounted: false 
+        },
+        crunchTime: { 
+            name: 'Crunch Time', 
+            desc: 'Sblocca abilità attiva: x3 BPS per 30s (Cooldown 5m).', 
+            baseCost: 50, 
+            isCounted: false 
+        }
     },
     buildingEnhancements: {
         caffeDoppio: { name: 'Caffè Doppio', desc: 'Assistenti QA x2 BPS.',
@@ -208,3 +251,8 @@ let isBluescreenActive = false;
 let bluescreenMultiplier = 1;
 let goldenBugChance = 0.001; 
 let goldenBugSpawnTime = 60000 + Math.random() * 120000;
+let crunchTimeMultiplier = 1; // 1 = normale, 3 = attivo
+let crunchTimeEndTime = 0;    // Timestamp fine effetto
+let crunchTimeCooldownEnd = 0; // Timestamp fine ricarica
+
+var clickHistory = [];

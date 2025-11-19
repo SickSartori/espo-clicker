@@ -1,15 +1,25 @@
 <?php
-$servername = "localhost";
-$username = "root"; // Utente standard di MAMP
-$password = "root"; // Password standard di MAMP (o vuota: "")
-$dbname = "my_espooclicker"; // Il database che hai creato
-$port = 3306;
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+header('Content-Type: application/json'); 
 
-// Crea connessione
-$conn = new mysqli($servername, $username, $password, $dbname);
+$configFile = __DIR__ . '/config.json';
 
-// Controlla connessione
-if ($conn->connect_error) {
-    die("Connessione fallita: " . $conn->connect_error);
+if (!file_exists($configFile)) {
+    echo json_encode(["status" => "error", "message" => "Config mancante"]);
+    exit;
 }
+
+$config = json_decode(file_get_contents($configFile), true);
+
+try {
+    $conn = new mysqli($config['servername'], $config['username'], $config['password'], $config['dbname'], $config['port']);
+    $conn->set_charset("utf8mb4");
+} catch (Exception $e) {
+    echo json_encode(["status" => "error", "message" => "Connessione DB fallita: " . $e->getMessage()]);
+    exit;
+}
+
+// Nomi tabelle corretti
+$table_users = 'users_' . $config['instancename'];
+$table_leaderboard = 'leaderboard_' . $config['instancename'];
 ?>

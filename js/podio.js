@@ -19,14 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardModal.style.display = 'flex';
         });
 
-        // Chiusura modale (gestita da script.js)
-
         // Funzione per caricare e mostrare la classifica
         async function loadLeaderboard() {
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
             
             try {
-                // MODIFICA: Corretto il percorso
                 const response = await fetch('./php/get_leaderboard.php');
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
@@ -44,10 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const item = document.createElement('div');
                     item.className = 'leaderboard-item';
                     
-                    let prestigeHTML = '';
-                    if (entry.prestigeLevel > 0) {
-                        prestigeHTML = ` <span style="color: #f1c40f; font-size: 0.8rem;"> (Liv. ${entry.prestigeLevel})</span>`;
-                    }
+                    // MODIFICA: Mostra sempre il livello, anche se è 0, per chiarezza
+                    // Usa entry.prestigeLevel || 0 per gestire eventuali null
+                    let level = entry.prestigeLevel || 0;
+                    let prestigeHTML = ` <span style="color: #f1c40f; font-size: 0.8rem;"> (Liv. ${level})</span>`;
 
                     item.innerHTML = `
                         <span class="leaderboard-rank">#${index + 1}</span>
@@ -58,8 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
             } catch (error) {
-                console.error('Impossibile caricare il podio:', error);
-                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">Impossibile caricare il podio.</span></div>';
+                console.error('Impossibile caricare la classifica:', error);
+                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">Impossibile caricare la classifica.</span></div>';
             }
         }
         

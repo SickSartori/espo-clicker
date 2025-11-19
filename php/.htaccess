@@ -1,0 +1,8 @@
+# Blocca l'accesso diretto a TUTTI i file che finiscono con .json
+<FilesMatch "\.json$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Impedisce la visualizzazione dell'elenco dei file
+Options -Indexes

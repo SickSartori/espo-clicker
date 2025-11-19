@@ -1,164 +1,308 @@
-// --------- 10. FUNZIONI MODALI E IMPOSTAZIONI ---------
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Riferimenti Modali
+    // --- RIFERIMENTI DOM ---
+    
+    // Bottoni Apertura Modali Principali
     const openAchievementsBtn = document.getElementById('open-achievements-btn');
     const openStatsBtn = document.getElementById('open-stats-btn');
     const openSettingsBtn = document.getElementById('open-settings-btn'); 
+    const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
+    
+    // Modali
     const achievementsModal = document.getElementById('achievements-modal');
     const statsModal = document.getElementById('stats-modal');
     const settingsModal = document.getElementById('settings-modal'); 
+    const leaderboardModal = document.getElementById('leaderboard-modal');
+    const accountModal = document.getElementById('account-modal'); // NUOVO MODALE
+    const loginModal = document.getElementById('login-modal');
     const allModals = document.querySelectorAll('.modal-backdrop');
     
-    // Riferimenti Impostazioni
+    // Liste Contenuto
+    const leaderboardList = document.getElementById('leaderboard-list');
+
+    // Input & Bottoni Interni
     const usernameInput = document.getElementById('username-input');
     const volumeSlider = document.getElementById('volume-slider');
     const volumeDisplay = document.getElementById('volume-display');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
-    const deleteSaveBtn = document.getElementById('delete-save-btn');
     
-    // Riferimenti Login Modale
-    const loginModal = document.getElementById('login-modal');
+    // Account & Login
+    const openAccountBtn = document.getElementById('open-account-btn'); // Bottone dentro Settings
     const loginButton = document.getElementById('login-btn');
     const loginInput = document.getElementById('login-username-input');
+    const loginPasswordInput = document.getElementById('login-password-input');
+    const logoutBtn = document.getElementById('logout-btn');
+    const changePassBtn = document.getElementById('change-password-btn');
+    const changeUserBtn = document.getElementById('change-username-btn');
+    const deleteSaveBtn = document.getElementById('delete-save-btn');
+    const deleteConfirmPass = document.getElementById('delete-confirm-password');
+    const currentUsernameDisplay = document.getElementById('current-username-display');
 
-    // Assicura che l'API del gioco sia pronta
-    function getGameAPI() {
-        if (window.EspooClicker) {
-            return window.EspooClicker;
-        } else {
-            console.error("Game API non trovata!");
-            return null; // Gestire questo caso se necessario
-        }
+    // API Gioco
+    function getGameAPI() { return window.EspooClicker || null; }
+
+    // --- 1. GESTIONE APERTURA/CHIUSURA MODALI ---
+
+    // Funzione generica per aprire
+    function openModal(modal) {
+        if(modal) modal.style.display = 'flex';
     }
+    
+    // Funzione generica per chiudere
+    function closeModal(modal) {
+        if(modal) modal.style.display = 'none';
+    }
+
+    // Listener Apertura
+    if(openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => openModal(achievementsModal));
+    
+    if(openStatsBtn) openStatsBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if (Game) Game.updateStatsUI(); 
+        openModal(statsModal);
+    });
+    
+    if(openSettingsBtn) openSettingsBtn.addEventListener('click', openSettingsModal);
+    
+    if(openLeaderboardBtn) openLeaderboardBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if (Game && Game.loadLeaderboard) Game.loadLeaderboard();
+        openModal(leaderboardModal);
+    });
+
+    // NUOVO: Apre il modale credenziali dalle impostazioni
+    if(openAccountBtn) openAccountBtn.addEventListener('click', () => {
+        closeModal(settingsModal); // Chiude impostazioni
+        openModal(accountModal);   // Apre gestione account
+    });
+
+    // --- FIX CHIUSURA: Ora chiude SOLO se premi la X o tasti specifici, NON il background ---
+    allModals.forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            // Se clicco sulla X di chiusura
+            if (e.target.classList.contains('modal-close-btn')) {
+                modal.style.display = 'none';
+            }
+            // RIMOSSO il check su 'modal-backdrop' così non si chiude cliccando fuori
+        });
+    });
+
+    // --- 2. LOGICA LOGIN E ACCOUNT ---
 
     function openSettingsModal() {
         const Game = getGameAPI();
         if (!Game) return;
         
         const userSettings = Game.getGameState().user;
-        // usernameInput.value = userSettings.username; // Rimosso
-        volumeSlider.value = userSettings.masterVolume;
-        volumeDisplay.textContent = Math.round(userSettings.masterVolume * 100);
-        settingsModal.style.display = 'flex';
-    }
-    
-    function updateVolume() {
-        const Game = getGameAPI();
-        if (!Game) return;
+        if(currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
         
-        Game.setMasterVolume(volumeSlider.value);
-        volumeDisplay.textContent = Math.round(volumeSlider.value * 100);
-        Game.playSound('sound-buy'); // Suona un "ding" per testare il volume
-    }
-    
-    function saveSettings() {
-        const Game = getGameAPI();
-        if (!Game) return;
-        
-        Game.setMasterVolume(parseFloat(volumeSlider.value));
-        Game.saveGame();
-        Game.showToast('Impostazioni salvate!');
-        settingsModal.style.display = 'none';
-    }
-    
-    async function deleteSave() {
-        const Game = getGameAPI();
-        if (!Game) return;
-
-        if (confirm('SEI SICURO? Questa azione è irreversibile e cancellerà tutti i tuoi progressi, inclusi Punti Promozione e Obiettivi.')) {
-            if (confirm('CONFERMA DEFINITIVA. Vuoi davvero cancellare tutto?')) {
-                
-                // Chiama il PHP per cancellare i punteggi dal podio
-                try {
-                    await fetch('./php/delete_user.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: Game.getGameState().user.username })
-                    });
-                } catch (e) {
-                    console.error("Impossibile cancellare i punteggi sul server:", e);
-                }
-                
-                // Cancella i dati locali
-                localStorage.removeItem('espotoolClickerSaveV8');
-                localStorage.removeItem('espooClickerUsername'); // Rimuove l'utente
-                
-                Game.showToast('Salvataggio cancellato. Riavvio in corso...');
-                settingsModal.style.display = 'none';
-                
-                setTimeout(() => {
-                    location.reload(true);
-                }, 1000); 
-            }
+        if(volumeSlider) {
+            volumeSlider.value = userSettings.masterVolume;
+            volumeDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
+        openModal(settingsModal);
     }
-    
-    function handleLogin() {
+
+    async function handleLogin() {
         const Game = getGameAPI();
         if (!Game) return;
 
-        const username = loginInput.value;
-        if (!username || username.trim() === '') {
-            alert('Per favore, inserisci un nome utente.');
+        const username = loginInput.value.trim();
+        const password = loginPasswordInput.value.trim();
+
+        if (!username || !password) {
+            alert('Inserisci Nome Utente e Password.');
             return;
         }
         
-        // Salva il nome utente
-        localStorage.setItem('espooClickerUsername', username);
-        Game.getGameState().user.username = username;
-        Game.saveGame(); // Salva lo stato iniziale con il nome utente
-        
-        // Nascondi il modale e avvia il gioco
-        loginModal.style.display = 'none';
-        Game.startGameRoutines();
+        loginButton.disabled = true;
+        loginButton.textContent = "Attendere...";
+
+        try {
+            const response = await fetch('./php/login_register.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const res = await response.json();
+
+            if (res.status === 'success') {
+                Game.getGameState().user.username = username;
+                Game.setPassword(password); 
+                sessionStorage.setItem('espooUser', username);
+                sessionStorage.setItem('espooPass', password);
+
+                if (res.action === 'register') {
+                    Game.showToast(`Benvenuto ${username}! Account creato.`);
+                    Game.saveGame(); 
+                } else if (res.action === 'login') {
+                    if (res.save_data) {
+                        Game.loadCloudData(res.save_data);
+                    } else {
+                        Game.saveGame();
+                    }
+                    Game.showToast(`Bentornato ${username}!`);
+                }
+
+                closeModal(loginModal);
+                Game.startGameRoutines();
+            } else {
+                alert("Errore: " + res.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Errore di connessione.");
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = "Entra / Registrati";
+        }
     }
 
-    // Aggiungi listener solo quando il DOM è pronto
-    
-    // Listener per i MODALI
-    openAchievementsBtn.addEventListener('click', () => {
-        achievementsModal.style.display = 'flex';
-    });
-    
-    openStatsBtn.addEventListener('click', () => {
+    function handleLogout() {
+        if(confirm("Vuoi cambiare utente? Il gioco verrà ricaricato.")) {
+            sessionStorage.clear();
+            location.reload();
+        }
+    }
+
+    async function handleChangeUsername() {
         const Game = getGameAPI();
-        if (Game) Game.updateStatsUI(); 
-        statsModal.style.display = 'flex';
-    });
-    
-    openSettingsBtn.addEventListener('click', openSettingsModal);
-    
-    allModals.forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close-btn')) {
-                modal.style.display = 'none';
+        const newName = document.getElementById('new-username-input').value.trim();
+        const password = Game.getPassword(); 
+
+        if (!newName) { alert("Inserisci un nuovo nome."); return; }
+        if (!password) { alert("Errore sessione."); return; }
+
+        if(!confirm(`Cambiare nome in "${newName}"?`)) return;
+
+        try {
+            const response = await fetch('./php/change_username.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: Game.getGameState().user.username,
+                    password: password,
+                    newUsername: newName
+                })
+            });
+            const res = await response.json();
+
+            if (res.status === 'success') {
+                Game.getGameState().user.username = newName;
+                sessionStorage.setItem('espooUser', newName);
+                Game.saveGame();
+                alert("Nome aggiornato!");
+                closeModal(accountModal); // Chiude il modale dopo successo
+            } else {
+                alert("Errore: " + res.message);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function handleChangePassword() {
+        const Game = getGameAPI();
+        const oldPass = document.getElementById('old-password-input').value;
+        const newPass = document.getElementById('new-password-input').value;
+        
+        if (!oldPass || !newPass) { alert("Compila le password."); return; }
+
+        try {
+            const response = await fetch('./php/change_password.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: Game.getGameState().user.username,
+                    oldPassword: oldPass,
+                    newPassword: newPass
+                })
+            });
+            const res = await response.json();
+            
+            if (res.status === 'success') {
+                Game.setPassword(newPass);
+                sessionStorage.setItem('espooPass', newPass);
+                alert("Password aggiornata!");
+                document.getElementById('old-password-input').value = '';
+                document.getElementById('new-password-input').value = '';
+            } else {
+                alert("Errore: " + res.message);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function deleteSave() {
+        const Game = getGameAPI();
+        const passwordConfirm = deleteConfirmPass.value;
+        
+        if (!passwordConfirm) { alert("Serve la password per cancellare."); return; }
+
+        if (confirm('Cancellare DEFINITIVAMENTE account e progressi?')) {
+             try {
+                const response = await fetch('./php/delete_user.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username: Game.getGameState().user.username,
+                        password: passwordConfirm 
+                    })
+                });
+                const res = await response.json();
+                
+                if (res.status === 'success') {
+                    localStorage.removeItem('espotoolClickerSaveV8');
+                    sessionStorage.clear();
+                    alert("Account eliminato. Addio!");
+                    location.reload();
+                } else {
+                    alert("Errore: " + res.message);
+                }
+            } catch (e) { console.error(e); }
+        }
+    }
+
+    // Listener Impostazioni
+    if(volumeSlider) {
+        volumeSlider.addEventListener('input', () => {
+            const Game = getGameAPI();
+            if (Game) {
+                Game.setMasterVolume(volumeSlider.value);
+                volumeDisplay.textContent = Math.round(volumeSlider.value * 100);
             }
         });
-    });
+    }
     
-    // Listener Modale Impostazioni
-    saveSettingsBtn.addEventListener('click', saveSettings);
-    deleteSaveBtn.addEventListener('click', deleteSave);
-    volumeSlider.addEventListener('input', updateVolume);
+    if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if(Game) {
+            Game.saveGame();
+            Game.showToast("Preferenze Salvate");
+        }
+        closeModal(settingsModal);
+    });
 
-    // Listener Modale Login
-    // Assicurati che l'API del gioco esista prima di aggiungere questi listener
+    // Listener Bottoni Account
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    if (changePassBtn) changePassBtn.addEventListener('click', handleChangePassword);
+    if (changeUserBtn) changeUserBtn.addEventListener('click', handleChangeUsername);
+    if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', deleteSave);
+
+    // AUTO-LOGIN
     const checkGameApi = setInterval(() => {
         if(window.EspooClicker) {
             clearInterval(checkGameApi);
-            
             const Game = window.EspooClicker;
-            const savedUsername = localStorage.getItem('espooClickerUsername');
             
-            if (savedUsername) {
-                Game.getGameState().user.username = savedUsername;
-                Game.startGameRoutines();
+            const sessUser = sessionStorage.getItem('espooUser');
+            const sessPass = sessionStorage.getItem('espooPass');
+            
+            if (sessUser && sessPass) {
+                loginInput.value = sessUser;
+                loginPasswordInput.value = sessPass;
+                handleLogin(); 
             } else {
-                loginModal.style.display = 'flex';
+                openModal(loginModal);
                 loginButton.addEventListener('click', handleLogin);
-                // Listener per Invio rimosso
             }
         }
-    }, 50); // Controlla se l'API è pronta
+    }, 50);
 });
