@@ -133,51 +133,224 @@
             </div>
         </div>
     </div>
+    <div id="prestige-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content contract-modal">
+            <button class="modal-close-btn">&times;</button>
+            
+            <div class="contract-header">
+                <h2>📜 Contratto di Promozione</h2>
+                <p>L'azienda ha notato il tuo eccellente lavoro.</p>
+            </div>
+
+            <div class="contract-body">
+                <div class="contract-columns">
+                    <div class="contract-column loss">
+                        <h3>📉 Cedi al Dipartimento</h3>
+                        <ul>
+                            <li>❌ Tutti i Bug attuali</li>
+                            <li>❌ Tutti gli Edifici</li>
+                            <li>❌ Potenziamenti Click/Auto</li>
+                        </ul>
+                    </div>
+
+                    <div class="contract-separator">
+                        <span>vs</span>
+                    </div>
+
+                    <div class="contract-column gain">
+                        <h3>📈 Il tuo Nuovo Pacchetto</h3>
+                        <div class="gain-item">
+                            <span class="gain-label">Nuovi Token Lab</span>
+                            <span id="contract-gain-token" class="gain-value">+0</span>
+                        </div>
+                        <div class="gain-item">
+                            <span class="gain-label">Nuovo Bonus Carriera</span>
+                            <span id="contract-gain-bonus" class="gain-value">+0%</span>
+                        </div>
+                        <p class="gain-note">Il Bonus Carriera è permanente!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contract-footer">
+                <button id="cancel-prestige-btn" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta Offerta</button>
+                <button id="confirm-prestige-btn" class="buy-btn prestige-btn signature-btn">
+                    ✍️ Firma e Accetta Promozione
+                </button>
+            </div>
+        </div>
+    </div>
 
 
     <div id="game-container">
 
         <div id="left-column" class="game-column">
-            
-            <div class="store-section" id="upgrade-store">
-                <h2>⚡ Potenzia Te Stesso</h2>
-                <div id="click-upgrade-list">
-                    </div>
-            </div>
+    
+    <div class="tabs-header">
+        <button class="tab-btn active" data-target="upgrade-store" id="tab-click">
+            ⚡ Click
+        </button>
+        <button class="tab-btn" data-target="enhancement-store" id="tab-auto">
+            ⚙️ Auto
+        </button>
+        <button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige">
+            ⭐ Lab
+        </button>
+    </div>
 
-            <div class="store-section" id="enhancement-store" style="display: none;">
-                <h2>⚙️ Migliorie Assistenti</h2>
-                <div id="enhancement-list">
-                    </div>
+    <div id="upgrade-store" class="tab-content active-tab">
+        <div class="section-header">
+            <h2>Potenziamenti Click</h2>
+            <button id="filter-btn-click" class="filter-btn" data-list="click-upgrade-list">
+                <span class="icon">👁️</span> <span class="text">Tutti</span>
+            </button>
+        </div>
+        <div id="click-upgrade-list"></div>
+        <div id="click-upgrade-empty" class="empty-state-msg" style="display: none;">
+            Nessun potenziamento disponibile.
+        </div>
+    </div>
+
+    <div id="enhancement-store" class="tab-content" style="display: none;">
+        <div class="section-header">
+            <h2>Migliorie Assistenti</h2>
+            <button id="filter-btn-auto" class="filter-btn" data-list="enhancement-list">
+                <span class="icon">👁️</span> <span class="text">Tutti</span>
+            </button>
+        </div>
+        <div id="enhancement-list"></div>
+        <div id="enhancement-empty" class="empty-state-msg" style="display: none;">
+            Nessuna miglioria disponibile.
+        </div>
+    </div>
+
+    <div id="prestige-wrapper" class="tab-content" style="display: none;">
+        
+        <div id="prestige-section" class="store-section" style="display: none; border-bottom: 2px solid rgba(74, 101, 130, 0.5); margin-bottom: 15px;">
+            <div class="prestige-info" style="text-align: center;">
+                <p style="font-size: 0.9rem; color: #bdc3c7;">Resettando ora otterrai:</p>
+                <p><span id="prestige-gain-display" style="font-size: 1.4rem; font-weight: bold; color: #2ecc71;">0</span> Punti</p>
             </div>
-            
-            <div id="prestige-section" style="display: none;"> <h2>🚀 Promozione</h2>
-                <div class="prestige-info">
-                    <p>Punti Promozione: <span id="prestige-points-display">0</span></p>
-                    <p>Resettando, otterrai <span id="prestige-gain-display">0</span> Punti Promozione.</p>
-                    <p>Ogni punto aumenta BPS e Click del 1% (cumulativo).</p>
-                </div>
-                <button id="prestige-btn" class="buy-btn danger-btn">Ottieni Promozione (Reset)</button>
-            </div>
+            <button id="prestige-btn" class="buy-btn danger-btn" style="margin-top: 10px;">Ottieni Promozione</button>
         </div>
 
-        <div id="center-column" class="game-column">
-            <div id="clicker-section">
-                <div id="click-feedback-container"></div>
-                <button id="clicker-btn" title="Risolvi un Bug!">
-                    <img id="manager-photo-clicked" src="./image/espo-click.png" alt="Click!" draggable="false">
-                    <img id="manager-photo-normal" src="./image/espo.png" alt="Espòòò" draggable="false">
+        <div id="prestige-store" style="display: block;">
+            <div class="section-header">
+                <h2 style="color: #f1c40f;">Laboratorio</h2>
+                <button id="filter-btn-lab" class="filter-btn" data-list="prestige-list-container">
+                    <span class="icon">👁️</span> <span class="text">Tutti</span>
                 </button>
-                <div id="score-label">Bug Risolti</div>
-                <div id="score-display">0</div>
-                <div id="cps-display">BPS: 0.0</div>
-                <div id="event-multiplier-display" style="display: none;"></div>
-                <div id="prestige-bonus-display" class="prestige-info" style="display: none;">Bonus: +0%</div>
+            </div>
+            
+            <div id="prestige-list-container">
+                <div id="upgrade-sinergia" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Sinergia Manageriale</span>
+                        <div class="upgrade-desc">Bonus Carriera sale più velocemente.</div>
+                        <div class="upgrade-cost">Costo: <span id="cost-sinergia">1</span> Pt</div>
+                    </div>
+                    <div class="upgrade-actions">
+                        <span id="count-sinergia" class="upgrade-count">0</span>
+                        <button id="buy-sinergia" class="buy-btn prestige-btn" data-upgrade-name="sinergia">Compra</button>
+                    </div>
+                </div>
+                
+                <div id="upgrade-accelerazione" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Accelerazione Iniziale</span>
+                        <div class="upgrade-desc">Start con 1 Assistente QA.</div>
+                        <div class="upgrade-cost">Costo: <span id="cost-accelerazione">2</span> Pt</div>
+                    </div>
+                    <button id="buy-accelerazione" class="buy-btn prestige-btn" data-upgrade-name="accelerazione">Compra</button>
+                </div>
+                
+                <div id="upgrade-ticketPremium" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Ticket Premium</span>
+                        <div class="upgrade-desc">Critici x2 più frequenti.</div>
+                        <div class="upgrade-cost">Costo: <span id="cost-ticketPremium">5</span> Pt</div>
+                    </div>
+                    <button id="buy-ticketPremium" class="buy-btn prestige-btn" data-upgrade-name="ticketPremium">Compra</button>
+                </div>
+
+                <div id="upgrade-outsourcing" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Outsourcing</span>
+                        <div class="upgrade-desc">-1% Costo Edifici/liv.</div>
+                        <div class="upgrade-cost">Costo: <span id="cost-outsourcing">10</span> Pt</div>
+                    </div>
+                    <div class="upgrade-actions">
+                        <span id="count-outsourcing" class="upgrade-count">0</span>
+                        <button id="buy-outsourcing" class="buy-btn prestige-btn" data-upgrade-name="outsourcing">Compra</button>
+                    </div>
+                </div>
+
+                <div id="upgrade-paracadute" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Paracadute d'Oro</span>
+                        <div class="upgrade-desc">Start con 5% bug precedenti.</div>
+                         <div class="upgrade-cost">Costo: <span id="cost-paracadute">25</span> Pt</div>
+                    </div>
+                    <button id="buy-paracadute" class="buy-btn prestige-btn" data-upgrade-name="paracadute">Compra</button>
+                </div>
+
+                <div id="upgrade-crunchTime" class="prestige-upgrade">
+                    <div class="upgrade-details">
+                        <span class="upgrade-name">Crunch Time</span>
+                        <div class="upgrade-desc">Abilità Attiva: BPS x3.</div>
+                         <div class="upgrade-cost">Costo: <span id="cost-crunchTime">50</span> Pt</div>
+                    </div>
+                    <button id="buy-crunchTime" class="buy-btn prestige-btn" data-upgrade-name="crunchTime">Compra</button>
+                </div>
+            </div> 
+            
+            <div id="prestige-empty" class="empty-state-msg" style="display: none;">
+                Tutti i potenziamenti Lab acquisiti!
             </div>
         </div>
+    </div>
+</div>
+
+    <div id="center-column" class="game-column">
+    <div id="clicker-section">
+
+        <div id="hud-stats-container" class="hud-stats-bar" style="display: none; animation: fadeIn 1s;">
+            
+            <div class="hud-item">
+                <span class="hud-label">Bonus Attivo</span>
+                <span id="display-career-bonus" class="hud-value" style="color: #f1c40f;">+0%</span>
+            </div>
+
+            <div class="hud-separator"></div>
+
+            <div class="hud-item">
+                <span class="hud-label">Token Lab</span>
+                <span id="display-spendable-points" class="hud-value">0</span>
+            </div>
+            
+        </div>
+
+        <div id="click-feedback-container"></div>
+        <button id="clicker-btn" title="Risolvi un Bug!">
+            <img id="manager-photo-clicked" src="./image/espo-click.png" alt="Click!" draggable="false">
+            <img id="manager-photo-normal" src="./image/espo.png" alt="Espòòò" draggable="false">
+        </button>
+        
+        <div id="score-label">Bug Risolti</div>
+        <div id="score-display">0</div>
+        <div id="cps-display">BPS: 0.0</div>
+
+        <button id="skill-crunchTime" class="skill-btn" style="display: none;">
+            🔥 CRUNCH TIME 🔥
+            <div class="skill-timer">Pronto!</div>
+        </button>
+
+        <div id="event-multiplier-display" style="display: none;"></div>
+        <div id="prestige-bonus-display" class="prestige-info" style="display: none;">Bonus: +0%</div>
+    </div>
+</div>
 
 
-        <div id="right-column" class="game-column">
 
         <div id="right-column" class="game-column">
             
@@ -188,6 +361,7 @@
                     <button id="btn-1x" class="buy-btn" style="background-color: #27ae60; flex: 1;">1x</button>
                     <button id="btn-10x" class="buy-btn" style="background-color: #34495e; flex: 1;">10x</button>
                 </div>
+
                 <div class="upgrade" id="item-assistenteQa">
                     <div class="upgrade-details">
                         <span id="name-assistenteQa" class="upgrade-name">Assistente QA</span>
@@ -295,48 +469,13 @@
                         <button id="buy-debugTemporale" class="buy-btn buy-building-btn" data-upgrade-name="debugTemporale">Compra</button>
                     </div>
                 </div>
-                </div>
-
-            <div class="store-section" id="prestige-store" style="display: none;">
-                <h2>⭐ Potenziamenti Promozione</h2>
-                
-                <div id="upgrade-sinergia" class="prestige-upgrade">
-                    <div class="upgrade-details">
-                        <span class="upgrade-name">Sinergia Manageriale</span>
-                        <div class="upgrade-cost">Costo: <span id="cost-sinergia">1</span> PP</div>
-                        <div class="upgrade-desc">Ogni punto promozione vale +0.1% in più.</div>
-                    </div>
-                    <div class="upgrade-actions">
-                        <span id="count-sinergia" class="upgrade-count">0</span>
-                        <button id="buy-sinergia" class="buy-btn prestige-btn" data-upgrade-name="sinergia">Compra</button>
-                    </div>
-                </div>
-                
-                <div id="upgrade-accelerazione" class="prestige-upgrade">
-                    <div class="upgrade-details">
-                        <span class="upgrade-name">Accelerazione Iniziale</span>
-                        <div class="upgrade-cost">Costo: <span id="cost-accelerazione">2</span> PP</div>
-                        <div class="upgrade-desc">Inizia ogni nuova run con 1 Assistente QA gratuito.</div>
-                    </div>
-                    <button id="buy-accelerazione" class="buy-btn prestige-btn" data-upgrade-name="accelerazione">Compra</button>
-                </div>
-                
-                <div id="upgrade-ticketPremium" class="prestige-upgrade">
-                    <div class="upgrade-details">
-                        <span class="upgrade-name">Ticket Premium</span>
-                        <div class="upgrade-cost">Costo: <span id="cost-ticketPremium">5</span> PP</div>
-                        <div class="upgrade-desc">I Ticket Critici appaiono 2 volte più spesso.</div>
-                    </div>
-                    <button id="buy-ticketPremium" class="buy-btn prestige-btn" data-upgrade-name="ticketPremium">Compra</button>
-                </div>
             </div>
-        
-        </div>
+            </div>
                        
         
         </div>
 
-    </div>
+    
     
     <div id="golden-bug" title="Un Ticket Critico! Clicca!">
         <img src="./image/bug.png" alt="Ticket Critico!">

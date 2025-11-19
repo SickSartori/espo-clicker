@@ -6,6 +6,7 @@ let gameState = {
     totalClicks: 0,
     totalScore: 0,
     prestigePoints: 0,
+    lifetimePrestigePoints: 0,
     totalResets: 0,
     totalGoldenBugsClicked: 0,
     totalPlayTime: 0,
@@ -15,6 +16,11 @@ let gameState = {
     user: {
         username: 'Giocatore',
         masterVolume: 1.0
+    },
+    filterSettings: {
+        click: 'available',       // 'all' o 'available'
+        auto: 'available',        // Default: Disponibili
+        lab: 'available'          // Default: Disponibili
     },
     
     buildings: {
@@ -40,7 +46,10 @@ let gameState = {
     prestigeUpgrades: {
         sinergia: { count: 0 },
         accelerazione: { purchased: false },
-        ticketPremium: { purchased: false }
+        ticketPremium: { purchased: false },
+        outsourcing: { count: 0 },
+        paracadute: { purchased: false },
+        crunchTime: { purchased: false }
     },
     buildingEnhancements: {
         caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
@@ -72,28 +81,19 @@ let gameState = {
 
 // Dati statici (costi, nomi, ecc.)
 const gameData = {
-    PRESTIGE_THRESHOLD: 10000000, // MODIFICATO: Ora a 10 Milioni
+    PRESTIGE_THRESHOLD: 10000000, 
     
     buildings: {
-        // Inizio velocissimo
         assistenteQa:       { name: 'Assistente QA',       baseCost: 10,        cpsPerUnit: 0.1 },
         jiraTicket:         { name: 'Jira Ticket',         baseCost: 50,        cpsPerUnit: 1 },
         teamQa:             { name: 'Team QA',             baseCost: 500,       cpsPerUnit: 8 },
-
         automazioneTest:    { name: 'Automazione Test',    baseCost: 6000,      cpsPerUnit: 47 },
         metodologiaAgile:   { name: 'Metodologia Agile',   baseCost: 50000,     cpsPerUnit: 260 },
-        
-        // Fascia Alta (Il "ponte" verso il prestigio)
         aiDebugger:         { name: 'AI Debugger',         baseCost: 400000,    cpsPerUnit: 1400 },
-        
-        // Late Game (Ora accessibile PRIMA del prestigio per lo sprint finale)
         quantumServer:      { name: 'Quantum Server',      baseCost: 6000000,   cpsPerUnit: 7800 },
-        
-        // Obiettivi Post-Prestigio
         reteNeuraleGalattica:{ name: 'Rete Galattica',     baseCost: 80000000,  cpsPerUnit: 44000 },
         debugTemporale:     { name: 'Debug Temporale',     baseCost: 1500000000,cpsPerUnit: 260000 }
     },
-    // ... (mantieni il resto: clickUpgrades, achievements, etc. invariati) ...
     clickUpgrades: {
         caffeForte:           { name: 'Caffè Forte', desc: 'Aggiunge +1 al valore di ogni click.', cost: 100,  clickIncrease: 1, requiredClicks: 10 },
         tastieraErgonomica:   { name: 'Tastiera Ergonomica', desc: 'Aggiunge +5 al valore di ogni click.', cost: 500,  clickIncrease: 5, requiredClicks: 100 },
@@ -120,7 +120,28 @@ const gameData = {
     prestigeUpgrades: {
         sinergia: { name: 'Sinergia Manageriale', desc: 'Ogni punto promozione vale +0.1% in più.', baseCost: 1, bonusPerLevel: 0.001, isCounted: true },
         accelerazione: { name: 'Accelerazione Iniziale', desc: 'Inizia ogni nuova run con 1 Assistente QA gratuito.', baseCost: 2, isCounted: false },
-        ticketPremium: { name: 'Ticket Premium', desc: 'I Ticket Critici appaiono 2 volte più spesso.', baseCost: 5, isCounted: false }
+        ticketPremium: { name: 'Ticket Premium', desc: 'I Ticket Critici appaiono 2 volte più spesso.', baseCost: 5, isCounted: false },
+        
+        // --- NUOVI POTENZIAMENTI ---
+        outsourcing: { 
+            name: 'Outsourcing Selvaggio', 
+            desc: 'Riduce il costo base di tutti gli edifici dell\'1% per livello (Max 10).', 
+            baseCost: 10, 
+            isCounted: true,
+            maxLevel: 10 // Limite opzionale che gestiremo nella logica
+        },
+        paracadute: { 
+            name: 'Paracadute d\'Oro', 
+            desc: 'Inizi la nuova run conservando il 5% dei bug totali della run precedente.', 
+            baseCost: 25, 
+            isCounted: false 
+        },
+        crunchTime: { 
+            name: 'Crunch Time', 
+            desc: 'Sblocca abilità attiva: x3 BPS per 30s (Cooldown 5m).', 
+            baseCost: 50, 
+            isCounted: false 
+        }
     },
     buildingEnhancements: {
         caffeDoppio: { name: 'Caffè Doppio', desc: 'Assistenti QA x2 BPS.',
@@ -224,5 +245,8 @@ let isBluescreenActive = false;
 let bluescreenMultiplier = 1;
 let goldenBugChance = 0.001; 
 let goldenBugSpawnTime = 60000 + Math.random() * 120000;
+let crunchTimeMultiplier = 1; // 1 = normale, 3 = attivo
+let crunchTimeEndTime = 0;    // Timestamp fine effetto
+let crunchTimeCooldownEnd = 0; // Timestamp fine ricarica
 
 var clickHistory = [];

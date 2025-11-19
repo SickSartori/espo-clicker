@@ -15,17 +15,27 @@ function playSound(id) {
 function calculateBulkCost(buildingKey, amount) {
     const data = gameData.buildings[buildingKey];
     const state = gameState.buildings[buildingKey];
-    const r = 1.15; // Il fattore di crescita del costo
+    const r = 1.15; 
     
-    // Costo del PROSSIMO edificio singolo
-    const currentSingleCost = Math.floor(data.baseCost * Math.pow(r, state.count));
+    // --- LOGICA OUTSOURCING (SCONTO) ---
+    let discountMultiplier = 1;
+    if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
+        // 1% di sconto per livello (max 30% per sicurezza, o illimitato se preferisci)
+        let discount = gameState.prestigeUpgrades.outsourcing.count * 0.01;
+        discountMultiplier = 1 - discount;
+    }
+    
+    // Applica sconto al costo base
+    let discountedBaseCost = data.baseCost * discountMultiplier;
+    
+    // Calcolo Costo
+    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
     
     if (amount === 1) {
-        return currentSingleCost;
+        return Math.max(1, currentSingleCost); // Mai meno di 1 bug
     } else {
-        // Formula somma geometrica: Costo * (r^amount - 1) / (r - 1)
         const totalCost = currentSingleCost * (Math.pow(r, amount) - 1) / (r - 1);
-        return Math.floor(totalCost);
+        return Math.max(amount, Math.floor(totalCost));
     }
 }
 
@@ -37,10 +47,10 @@ function calculatePrestigeBonus() {
     const pData = gameData.prestigeUpgrades;
     const pState = gameState.prestigeUpgrades;
     
-    let baseBonus = gameState.prestigePoints * 0.01;
-    let synergyBonus = pState.sinergia.count * pData.sinergia.bonusPerLevel * gameState.prestigePoints;
-    
+    let baseBonus = gameState.lifetimePrestigePoints * 0.01;
+    let synergyBonus = pState.sinergia.count * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
     prestigeBonus = 1 + baseBonus + synergyBonus;
+    
 }
 
 function calculateClickCPSBonus() {
@@ -71,7 +81,28 @@ function recalculateCPS() {
         baseCPS += gameState.buildings.assistenteQa.count; 
     }
     
-    cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+    cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
+}
+
+function activateCrunchTime() {
+    const now = Date.now();
+
+    // Se è già attivo o in cooldown, esci
+    if (now < crunchTimeCooldownEnd || now < crunchTimeEndTime) return;
+
+    // ATTIVA
+    crunchTimeMultiplier = 3;
+    crunchTimeEndTime = now + 30000; // Dura 30 secondi
+    crunchTimeCooldownEnd = now + 300000; // Ricarica 5 minuti (300s)
+
+    playSound('sound-achievement'); // O un suono più epico se ne hai
+
+    recalculateCPS();
+    refreshAllStores(); // Aggiorna i BPS visualizzati nei negozi
+    updateUI(); // Aggiorna subito la grafica
+
+    // Feedback visivo immediato
+    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x3! 🔥");
 }
 
 function triggerBluescreen(multiplier) {
@@ -244,59 +275,111 @@ function calculatePrestigeGained() {
     return Math.floor(Math.sqrt(gameState.totalScore / 1000000) * 1.5);
 }
 
-async function performPrestige() {
+// 1. Apre il modale e mostra i dati (NON Resetta ancora)
+function openPrestigeContract() {
     const gained = calculatePrestigeGained();
+    
     if (gained < 1) {
-        alert("Non guadagneresti nessun Punto Promozione. Continua a produrre!");
+        // Usa il toast invece dell'alert brutto
+        if(window.EspooClicker && window.EspooClicker.showToast) {
+            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!");
+        } else {
+            alert("Devi accumulare più bug per ottenere una promozione!");
+        }
         return;
     }
 
-    if (confirm(`Sei sicuro di voler resettare?
-Guadagnerai ${gained} Punti Promozione.
-Perderai tutti i bug e potenziamenti attuali, ma manterrai il tuo Highscore totale e i potenziamenti promozione.`)) {
-        
-        let newPrestigePoints = gameState.prestigePoints + gained;
-        let oldAchievements = gameState.achievements;
-        let oldPrestigeUpgrades = gameState.prestigeUpgrades;
-        let oldTotalResets = gameState.totalResets + 1;
-        let oldGoldenBugs = gameState.totalGoldenBugsClicked;
-        let oldPlayTime = gameState.totalPlayTime;
-        
-        // FONDAMENTALE: Mantiene il punteggio totale di sempre
-        let oldLifetimeScore = gameState.lifetimeScore;
-        
-        let oldUser = gameState.user; 
-        
-        // Resetta lo stato (questo porta totalScore a 0, corretto per la nuova run)
-        let newState = createNewGameState(); 
-        
-        newState.prestigePoints = newPrestigePoints;
-        newState.achievements = oldAchievements;
-        newState.prestigeUpgrades = oldPrestigeUpgrades;
-        newState.totalResets = oldTotalResets;
-        newState.totalGoldenBugsClicked = oldGoldenBugs;
-        newState.totalPlayTime = oldPlayTime;
-        
-        // Ripristina l'Highscore totale
-        newState.lifetimeScore = oldLifetimeScore;
-        
-        newState.user = oldUser; 
-        
-        if (newState.prestigeUpgrades.accelerazione.purchased) {
-            newState.buildings.assistenteQa.count = 1;
-        }
-        
-        gameState = newState;
-        
-        // --- FIX CRITICO: Usa window.EspooClicker.saveGame() invece di saveGame() ---
-        // saveGame() non è accessibile in questo scope, window.EspooClicker sì.
-        if (window.EspooClicker && window.EspooClicker.saveGame) {
-            window.EspooClicker.saveGame();
-        }
-        // --------------------------------------------------------------------------
-        
-        location.reload();
+    // Popola il modale con i dati
+    const tokenDisplay = document.getElementById('contract-gain-token');
+    const bonusDisplay = document.getElementById('contract-gain-bonus');
+    
+    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
+    
+    // Calcola il NUOVO bonus totale stimato per mostrarlo
+    // Nota: Usiamo i punti attuali + guadagnati per la stima
+    let currentLifetime = gameState.lifetimePrestigePoints || 0;
+    let estimatedLifetime = currentLifetime + gained;
+    
+    // Ricalcola bonus base + sinergia
+    let baseBonus = estimatedLifetime * 0.01;
+    let synergyCount = gameState.prestigeUpgrades.sinergia.count;
+    let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * estimatedLifetime;
+    let totalPercent = ((baseBonus + synergyBonus) * 100).toFixed(1);
+    
+    if (bonusDisplay) bonusDisplay.textContent = `Nuovo Totale: +${totalPercent}%`;
+
+    // APRI IL MODALE
+    const modal = document.getElementById('prestige-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+// 2. Esegue il reset (Chiamata dal bottone "Firma")
+async function executePrestige() {
+    const gained = calculatePrestigeGained();
+    
+    // --- LOGICA DI RESET (Uguale a prima, ma senza confirm) ---
+    
+    // 1. CALCOLI
+    let newPrestigePoints = gameState.prestigePoints + gained;
+    let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
+    let newLifetimePrestigePoints = currentLifetime + gained;
+
+    // Bonus Paracadute
+    let startBonusBugs = 0;
+    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.purchased) {
+        startBonusBugs = Math.floor(gameState.totalScore * 0.05); 
     }
+
+    // 2. BACKUP
+    let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements)); 
+    let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
+    let oldTotalResets = gameState.totalResets + 1;
+    let oldGoldenBugs = gameState.totalGoldenBugsClicked;
+    let oldPlayTime = gameState.totalPlayTime;
+    let oldLifetimeScore = gameState.lifetimeScore; 
+    let oldUser = gameState.user; 
+    
+    // 3. RESET STATO
+    let newState = createNewGameState(); 
+    
+    // 4. RIPRISTINO
+    newState.prestigePoints = newPrestigePoints;
+    newState.lifetimePrestigePoints = newLifetimePrestigePoints;
+    
+    if (startBonusBugs > 0) {
+        newState.score = startBonusBugs;
+        newState.totalScore = startBonusBugs; 
+    }
+
+    newState.achievements = oldAchievements;
+    newState.prestigeUpgrades = oldPrestigeUpgrades;
+    newState.totalResets = oldTotalResets;
+    newState.totalGoldenBugsClicked = oldGoldenBugs;
+    newState.totalPlayTime = oldPlayTime;
+    newState.lifetimeScore = oldLifetimeScore;
+    newState.user = oldUser;
+    newState.lastSaveTimestamp = Date.now();
+
+    if (newState.prestigeUpgrades.accelerazione.purchased) {
+        newState.buildings.assistenteQa.count = 1;
+    }
+    
+    // 5. SALVA E RIAVVIA
+    gameState = newState;
+    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+    
+    // Chiudi modale (visivamente, anche se ricaricheremo)
+    const modal = document.getElementById('prestige-modal');
+    if(modal) modal.style.display = 'none';
+
+    // Feedback immediato prima del reload
+    if(window.EspooClicker && window.EspooClicker.showToast) {
+        window.EspooClicker.showToast("Promozione Accettata! Riavvio in corso...");
+    }
+
+    if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
+    
+    setTimeout(() => location.reload(), 1000); // 1 secondo per leggere il toast
 }
 
 async function submitScoreToLeaderboard(username, score, prestigeLevel) {
@@ -329,10 +412,12 @@ function createNewGameState() {
         totalClicks: 0,
         totalScore: 0, // Punteggio della run corrente (si resetta)
         prestigePoints: 0,
+        lifetimePrestigePoints: 0,
         totalResets: 0,
         totalGoldenBugsClicked: 0,
         totalPlayTime: 0,
         lifetimeScore: 0, // Highscore totale (da preservare)
+        filterSettings: { click: 'available', auto: 'available', lab: 'available' },
         user: { username: 'Giocatore', masterVolume: 1.0 },
         buildings: {
             assistenteQa: { count: 0 }, jiraTicket: { count: 0 },
