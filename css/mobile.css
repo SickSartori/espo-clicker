@@ -1,0 +1,54 @@
+/* --- STILI PER SMARTPHONE E TABLET VERTICALI --- */
+@media only screen and (max-width: 1024px) {
+
+    /* 1. Layout e Contenitore (Impila il gioco) */
+    body {
+        padding: 0;
+        padding-top: 65px; /* Spazio fisso sotto la barra nav */
+        overflow-y: auto;
+    }
+    
+    #game-container {
+        flex-direction: column; 
+        width: 100%;
+        height: auto;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+        margin-left: 0; /* Assicura che sia a piena larghezza */
+        padding-bottom: 20px;
+    }
+
+    /* 2. Bottoni Overlay (Rende la barra top compatta) */
+    #overlay-buttons-container {
+        padding: 8px 5px;
+        flex-wrap: wrap; 
+        gap: 5px;
+        justify-content: space-around;
+        height: auto;
+    }
+
+    .overlay-btn {
+        flex: 1; 
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+
+    /* 3. Ordine e Separazione Colonne */
+    .game-column {
+        border-bottom: 2px solid rgba(74, 101, 130, 0.5);
+        height: auto;
+        flex: none;
+    }
+    #left-column { order: 2; }
+    #center-column { order: 1; min-height: 40vh; }
+    #right-column { order: 3; border-bottom: none; }
+    
+    /* 4. Ottimizzazione Varia */
+    #click-upgrade-list, #enhancement-list {
+        grid-template-columns: 1fr; 
+    }
+    .modal-content {
+        max-width: 95%;
+    }
+}

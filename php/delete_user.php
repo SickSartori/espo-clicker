@@ -1,25 +1,35 @@
 <?php
 include 'db_connect.php';
-
-// Prende i dati inviati dal JavaScript
+header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
-
 $username = $data['username'];
+$password = $data['password'];
 
-if (empty($username)) {
-    die(json_encode(["status" => "error", "message" => "Nome utente non fornito."]));
-}
+// Verifica credenziali
+$stmt = $conn->prepare("SELECT password_hash FROM $table_users WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$res = $stmt->get_result();
 
-// Prepara la query per evitare SQL Injection
-$stmt = $conn->prepare("DELETE FROM leaderboard WHERE username = ?");
-$stmt->bind_param("s", $username); // "s" per string
-
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Punteggi utente cancellati."]);
+if ($res->num_rows > 0) {
+    $row = $res->fetch_assoc();
+    if (password_verify($password, $row['password_hash'])) {
+        // 1. Cancella da USERS
+        $del1 = $conn->prepare("DELETE FROM $table_users WHERE username = ?");
+        $del1->bind_param("s", $username);
+        $del1->execute();
+        
+        // 2. Cancella da LEADERBOARD
+        $del2 = $conn->prepare("DELETE FROM $table_leaderboard WHERE username = ?");
+        $del2->bind_param("s", $username);
+        $del2->execute();
+        
+        echo json_encode(["status" => "success", "message" => "Account eliminato."]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Password errata."]);
+    }
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    echo json_encode(["status" => "error", "message" => "Utente non trovato."]);
 }
-
-$stmt->close();
 $conn->close();
 ?>

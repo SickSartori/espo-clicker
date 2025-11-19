@@ -1,0 +1,80 @@
+/* css/base.css - Stili base e comuni */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-image: linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)), url('../image/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 65px 20px 20px 20px;
+    user-select: none;
+    overflow-y: hidden;
+}
+
+/* Stile per la schermata blu */
+body.bluescreen-active {
+    background-image: url('../image/bluescreen.jpg');
+    transition: background-image 0.5s ease-in-out; 
+    color: #c0c0c0; 
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #34495e; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: #5d7c9a; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #7f9ebc; }
+
+/* Classi Comuni Bottoni */
+.buy-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.buy-btn:hover:not(:disabled) { background-color: #2980b9; }
+.buy-btn:disabled {
+    background-color: #5d7c9a;
+    color: #9cb3c9;
+    cursor: not-allowed;
+    text-shadow: none;
+}
+.buy-btn.danger-btn { background-color: #e74c3c; width: 100%; }
+.buy-btn.danger-btn:hover:not(:disabled) { background-color: #c0392b; }
+.buy-btn.owned {
+    background-color: rgba(44, 62, 80, 0.5) !important;
+    color: #2ecc71 !important;
+    border: 1px solid rgba(46, 204, 113, 0.3) !important;
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* Toast Notifications */
+#toast-container {
+    position: fixed;
+    top: 20px; right: 20px;
+    z-index: 1003;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+    background-color: #2ecc71; color: white;
+    padding: 15px 20px; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    animation: slideIn 0.3s ease-out forwards, fadeOut 0.5s ease-in 3s forwards;
+    border: 1px solid #6ee39a;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateX(100%); } }

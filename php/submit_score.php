@@ -12,19 +12,16 @@ if (empty($username) || !isset($score) || !isset($prestigeLevel)) {
     die(json_encode(["status" => "error", "message" => "Dati invalidi."]));
 }
 
-// NUOVA QUERY:
-// Prova a inserire. Se l'utente (chiave UNICA) esiste già:
-// 1. Aggiorna il punteggio SOLO SE il nuovo punteggio è maggiore (GREATEST).
-// 2. Aggiorna SEMPRE il prestigeLevel.
+// Inserimento o aggiornamento nella LEADERBOARD dinamica
 $stmt = $conn->prepare("
-    INSERT INTO leaderboard (username, score, prestigeLevel) 
+    INSERT INTO $table_leaderboard (username, score, prestigeLevel) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE 
     score = GREATEST(score, VALUES(score)),
     prestigeLevel = VALUES(prestigeLevel)
 ");
 
-$stmt->bind_param("sii", $username, $score, $prestigeLevel); // "sii" = string, integer, integer
+$stmt->bind_param("sii", $username, $score, $prestigeLevel);
 
 if ($stmt->execute()) {
     echo json_encode(["status" => "success", "message" => "Punteggio aggiornato!"]);
