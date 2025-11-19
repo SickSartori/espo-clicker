@@ -10,8 +10,8 @@ if (empty($username) || empty($password)) {
     die(json_encode(["status" => "error", "message" => "Dati mancanti."]));
 }
 
-// Cerca nella tabella USERS (non leaderboard)
-$stmt = $conn->prepare("SELECT password_hash, save_data FROM users WHERE username = ?");
+// Cerca nella tabella USERS dinamica
+$stmt = $conn->prepare("SELECT password_hash, save_data FROM $table_users WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -31,8 +31,8 @@ if ($result->num_rows > 0) {
 } else {
     // UTENTE NUOVO -> REGISTRAZIONE IN USERS
     $hashedPwd = password_hash($password, PASSWORD_DEFAULT);
-    // Inseriamo solo nome e password, il salvataggio arriverà dopo
-    $insert = $conn->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)");
+    
+    $insert = $conn->prepare("INSERT INTO $table_users (username, password_hash) VALUES (?, ?)");
     $insert->bind_param("ss", $username, $hashedPwd);
     
     if ($insert->execute()) {

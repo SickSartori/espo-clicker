@@ -5,7 +5,8 @@ $data = json_decode(file_get_contents('php://input'), true);
 $username = $data['username'];
 $password = $data['password'];
 
-$stmt = $conn->prepare("SELECT password_hash FROM users WHERE username = ?");
+// Verifica credenziali
+$stmt = $conn->prepare("SELECT password_hash FROM $table_users WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -14,12 +15,12 @@ if ($res->num_rows > 0) {
     $row = $res->fetch_assoc();
     if (password_verify($password, $row['password_hash'])) {
         // 1. Cancella da USERS
-        $del1 = $conn->prepare("DELETE FROM users WHERE username = ?");
+        $del1 = $conn->prepare("DELETE FROM $table_users WHERE username = ?");
         $del1->bind_param("s", $username);
         $del1->execute();
         
         // 2. Cancella da LEADERBOARD
-        $del2 = $conn->prepare("DELETE FROM leaderboard WHERE username = ?");
+        $del2 = $conn->prepare("DELETE FROM $table_leaderboard WHERE username = ?");
         $del2->bind_param("s", $username);
         $del2->execute();
         
