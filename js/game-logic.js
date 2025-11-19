@@ -142,6 +142,13 @@ function clickCookie(event) {
     
     clickerButton.classList.add('clicked');
     setTimeout(() => { clickerButton.classList.remove('clicked'); }, 100);
+    
+    // --- FIX: Aggiorna il negozio Click in tempo reale ---
+    if (typeof updateClickStore === 'function') {
+        updateClickStore();
+    }
+    // ----------------------------------------------------
+
     updateUI();
 }
 
