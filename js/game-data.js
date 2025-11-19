@@ -101,9 +101,9 @@ const gameData = {
         caffeForte:           { name: 'Caffè Forte', desc: 'Aggiunge +1 al valore di ogni click.', cost: 100,  clickIncrease: 1, requiredClicks: 10 },
         tastieraErgonomica:   { name: 'Tastiera Ergonomica', desc: 'Aggiunge +5 al valore di ogni click.', cost: 500,  clickIncrease: 5, requiredClicks: 100 },
         mouseGaming:          { name: 'Mouse Gaming', desc: 'Aggiunge +10 al valore di ogni click.', cost: 2000, clickIncrease: 10, requiredClicks: 300 }, // REQUISITO: 300 Click
-        manoBionica:          { name: 'Mano Bionica', desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.', cost: 10000, clickIncrease: 0, requiredClicks: 1000 },
-        ergonomiaEstrema:     { name: 'Ergonomia Estrema', desc: 'Aggiunge +50 al valore di ogni click.', cost: 25000, clickIncrease: 50, requiredClicks: 1500 }, // REQUISITO: 1,500 Click
-        doppioClick:          { name: 'Doppio Click', desc: 'Raddoppia il valore base dei tuoi click.', cost: 50000, clickIncrease: 0, requiredClicks: 2500 },
+        ergonomiaEstrema:     { name: 'Ergonomia Estrema', desc: 'Aggiunge +50 al valore di ogni click.', cost: 10000, clickIncrease: 50, requiredClicks: 1000 }, // REQUISITO: 1,500 Click
+        doppioClick:          { name: 'Doppio Click', desc: 'Raddoppia il valore base dei tuoi click.', cost: 25000, clickIncrease: 0, requiredClicks: 1500 },
+        manoBionica:          { name: 'Mano Bionica', desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.', cost: 50000, clickIncrease: 0, requiredClicks: 2500 },
         hacking:              { name: 'Hacking Etico', desc: 'Raddoppia la probabilità di trovare Ticket Critici.', cost: 100000, clickIncrease: 0, requiredClicks: 5000 },
         aiClick:              { name: 'Intelligenza Artificiale', desc: 'Aggiunge +500 al valore di ogni click.', cost: 500000, clickIncrease: 500, requiredClicks: 7500 }, // REQUISITO: 7,500 Click
         clickAutomatico:      { name: 'Click Automatico', desc: 'Aggiunge BPS pari al numero di Assistenti QA.', cost: 250000, clickIncrease: 0, requiredClicks: 10000 },
