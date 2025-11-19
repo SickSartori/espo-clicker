@@ -1,0 +1,61 @@
+/* css/layout.css - Layout e Griglia */
+
+#game-container {
+    margin: 0 auto;
+    width: 90%; max-width: 1400px;
+    background-color: rgba(44, 62, 80, 0.85); 
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    display: flex; flex-wrap: nowrap; 
+    border: 1px solid rgba(74, 101, 130, 0.5); 
+    transition: box-shadow 0.3s ease;
+    height: calc(100vh - 85px); 
+    max-height: calc(100vh - 85px);
+}
+
+#game-container:hover { box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6); }
+
+/* Colonne */
+.game-column {
+    display: flex; flex-direction: column;
+    min-height: 0;
+    border-right: 2px solid rgba(74, 101, 130, 0.5);
+    overflow-y: auto; height: 100%;
+}
+.game-column:last-child { border-right: none; }
+
+#left-column { flex: 1 1 340px; }
+#center-column { flex: 1.5 1 400px; overflow-y: hidden; }
+#right-column { flex: 1 1 340px; }
+
+/* Header dei tab (Click/Auto/Lab) */
+.tabs-header {
+    display: flex;
+    border-bottom: 2px solid rgba(74, 101, 130, 0.5);
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 10px 5px 0 5px;
+}
+.tab-btn {
+    flex: 1; background: none; border: none;
+    border-bottom: 3px solid transparent;
+    color: #bdc3c7; font-family: 'Inter', sans-serif;
+    font-weight: bold; padding: 10px 5px;
+    cursor: pointer; transition: all 0.3s ease; position: relative;
+}
+.tab-btn:hover { color: #fff; background-color: rgba(255, 255, 255, 0.05); }
+.tab-btn.active { color: #3498db; border-bottom-color: #3498db; }
+#tab-prestige.active { color: #f1c40f; border-bottom-color: #f1c40f; }
+
+.tab-btn.notify { color: #fff !important; animation: tabPulse 1.5s infinite; }
+.tab-btn.notify::after {
+    content: '!'; position: absolute; top: 5px; right: 5px;
+    background-color: #e74c3c; color: white; font-size: 0.7rem;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 5px #e74c3c;
+}
+@keyframes tabPulse {
+    0% { background-color: rgba(46, 204, 113, 0); }
+    50% { background-color: rgba(46, 204, 113, 0.3); }
+    100% { background-color: rgba(46, 204, 113, 0); }
+}
