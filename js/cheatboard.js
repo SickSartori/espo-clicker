@@ -210,7 +210,7 @@
         <!-- Bugs Control -->
         <div class="cheat-row">
             <div class="cheat-label">BUGS</div>
-            <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Amount">
+            <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Amount" min="0" value="0">
             <button id="btn-bugs-add" class="cheat-btn">Add</button>
             <button id="btn-bugs-set" class="cheat-btn set-btn">Set</button>
         </div>
@@ -218,7 +218,7 @@
         <!-- Clicks Control -->
         <div class="cheat-row">
             <div class="cheat-label">CLICKS</div>
-            <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Amount">
+            <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Amount" min="0" value="0">
             <button id="btn-clicks-add" class="cheat-btn">Add</button>
             <button id="btn-clicks-set" class="cheat-btn set-btn">Set</button>
         </div>
@@ -226,7 +226,7 @@
         <!-- BPS Control -->
         <div class="cheat-row">
             <div class="cheat-label">BPS</div>
-            <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="Amount">
+            <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="Amount" min="0" value="0">
             <button id="btn-bps-add" class="cheat-btn">Add</button>
             <button id="btn-bps-set" class="cheat-btn set-btn">Set</button>
         </div>
@@ -234,7 +234,10 @@
         <!-- Events Control -->
         <div class="cheat-row">
             <div class="cheat-label">EVENTS</div>
-            <button id="btn-event-404" class="cheat-btn" style="background: #e74c3c;">Trigger 404</button>
+            <div style="display: flex; gap: 5px;">
+                <input type="number" id="cheat-404-input" class="cheat-input" placeholder="Mult (404)" value="2" min="1" max="5" style="width: 140px; background: #e74c3c;">
+                <button id="btn-event-404" class="cheat-btn" style="background: #e74c3c;">Trigger 404</button>
+            </div>
             <button id="btn-event-golden" class="cheat-btn" style="background: #f1c40f; color: #000;">Golden Bug</button>
         </div>
 
@@ -272,8 +275,10 @@
     // --- EVENTS Logic ---
     document.getElementById('btn-event-404').addEventListener('click', () => {
         if (typeof triggerBluescreen === 'function') {
-            triggerBluescreen(404);
-            console.log('[Cheat] Triggered 404 Bluescreen.');
+            let mult = getVal('cheat-404-input');
+            if (mult === 0) mult = 404; // Default if empty or 0
+            triggerBluescreen(mult);
+            console.log(`[Cheat] Triggered 404 Bluescreen with multiplier ${mult}.`);
         } else {
             console.error('[Cheat] triggerBluescreen function not found.');
         }
