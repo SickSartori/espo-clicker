@@ -487,8 +487,8 @@ function spawnGoldenBug() {
     goldenBug.style.left = `${rect.left + x - offsetAreaAnimation}px`;
     goldenBug.style.top = `${rect.top + y - offsetAreaAnimation}px`;
     goldenBug.style.display = 'block';
-    //setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
-    //scheduleGoldenBug();
+    setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
+    scheduleGoldenBug();
 }
 
 function clickGoldenBug() {
