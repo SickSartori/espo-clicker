@@ -405,5 +405,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Dynamic Cheatboard Loader
+    fetch('js/cheatboard.js', { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                const script = document.createElement('script');
+                script.src = 'js/cheatboard.js';
+                document.body.appendChild(script);
+            }
+        })
+        .catch(e => { });
+
     initializeGame();
 });
