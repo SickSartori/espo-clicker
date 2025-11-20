@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     function initPodio() {
         // Riferimenti API dal gioco principale
         const Game = window.EspooClicker;
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Funzione per caricare e mostrare la classifica
         async function loadLeaderboard() {
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
-            
+
             try {
                 const response = await fetch('./php/get_leaderboard.php');
                 if (!response.ok) {
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 scores.forEach((entry, index) => {
                     const item = document.createElement('div');
                     item.className = 'leaderboard-item';
-                    
+
                     // MODIFICA: Mostra sempre il livello, anche se è 0, per chiarezza
                     // Usa entry.prestigeLevel || 0 per gestire eventuali null
                     let level = entry.prestigeLevel || 0;
@@ -59,11 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">Impossibile caricare la classifica.</span></div>';
             }
         }
-        
+
         // Funzione di utilità per la sicurezza (evita XSS)
         function escapeHTML(str) {
             if (typeof str !== 'string') return '';
-            return str.replace(/[&<>"']/g, function(m) {
+            return str.replace(/[&<>"']/g, function (m) {
                 return {
                     '&': '&amp;',
                     '<': '&lt;',
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }[m];
             });
         }
-        
+
         // Esponi la funzione di caricamento
         if (window.EspooClicker) {
             window.EspooClicker.loadLeaderboard = loadLeaderboard;
