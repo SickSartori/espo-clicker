@@ -41,8 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8';
 
     async function saveGame() {
-        gameState.lastSaveTimestamp = Date.now();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 
         if (gameState.isDeleting) return;
 
@@ -396,7 +394,21 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
+                    // 1. Reset pulito
+                    resetGameToDefault();
+
+                    // 2. Carica i dati (che potrebbero contenere il VECCHIO username)
                     deepMerge(gameState, JSON.parse(cloudJSON));
+
+                    // 3. [FIX CRITICO] Forza l'allineamento del nome utente
+                    // Se il JSON cloud ha un nome vecchio, lo sovrascriviamo con quello della sessione attuale
+                    const currentSessionUser = sessionStorage.getItem('espooUser');
+                    if (currentSessionUser && gameState.user.username !== currentSessionUser) {
+                        console.warn(`Fixing username mismatch: ${gameState.user.username} -> ${currentSessionUser}`);
+                        gameState.user.username = currentSessionUser;
+                    }
+
+                    // 4. Ricalcoli standard
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
@@ -404,6 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
                     updateUI();
+
+                    // 5. Sovrascrivi subito il localStorage per eliminare tracce del vecchio nome
+                    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+
                     showToast("Progressi scaricati dal Cloud!");
                 } catch (e) { console.error("Errore parsing cloud", e); }
             }

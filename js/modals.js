@@ -144,21 +144,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await response.json();
 
             if (res.status === 'success') {
-                Game.getGameState().user.username = username;
-                Game.setPassword(password);
+                // Imposta credenziali sessione
                 sessionStorage.setItem('espooUser', username);
                 sessionStorage.setItem('espooPass', password);
+                Game.setPassword(password);
 
                 if (res.action === 'register') {
+                    // --- NUOVO UTENTE: RESET TOTALE ---
+                    // 1. Pulisce localStorage vecchio
+                    localStorage.removeItem('espotoolClickerSaveV8');
+                    // 2. Resetta la variabile in memoria
+                    resetGameToDefault();
+                    // 3. Imposta il nuovo nome
+                    Game.getGameState().user.username = username;
+
                     Game.showToast(`Benvenuto ${username}! Account creato.`);
+                    // 4. Salva subito lo stato pulito
                     Game.saveGame();
+
+                    // 5. Aggiorna UI per mostrare tutto a 0
+                    if (typeof refreshAllStores === 'function') refreshAllStores();
+                    if (typeof updateUI === 'function') updateUI();
+
                 } else if (res.action === 'login') {
+                    // --- UTENTE ESISTENTE ---
                     if (res.save_data) {
                         Game.loadCloudData(res.save_data);
+                        Game.showToast(`Bentornato ${username}!`);
                     } else {
+                        // Caso raro: Login ma nessun dato salvato -> Reset
+                        localStorage.removeItem('espotoolClickerSaveV8');
+                        resetGameToDefault();
+                        Game.getGameState().user.username = username;
                         Game.saveGame();
+                        Game.showToast(`Bentornato ${username}! (Nuova Partita)`);
                     }
-                    Game.showToast(`Bentornato ${username}!`);
                 }
 
                 closeModal(loginModal);
@@ -178,17 +198,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleLogout() {
         if (confirm("Vuoi cambiare utente? Il gioco verrà ricaricato.")) {
             sessionStorage.clear();
+            localStorage.removeItem('espotoolClickerSaveV8'); // Rimuove il salvataggio locale
             location.reload();
         }
     }
 
     async function handleChangeUsername() {
         const Game = getGameAPI();
+        const currentName = Game.getGameState().user.username;
         const newName = document.getElementById('new-username-input').value.trim();
         const password = Game.getPassword();
 
         if (!newName) { alert("Inserisci un nuovo nome."); return; }
-        if (!password) { alert("Errore sessione."); return; }
+        if (newName === currentName) { alert("Inserisci un nome diverso da quello attuale."); return; } // NUOVO CHECK
+        if (!password) { alert("Errore sessione. Esegui di nuovo il login."); return; }
 
         if (!confirm(`Cambiare nome in "${newName}"?`)) return;
 
@@ -197,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username: Game.getGameState().user.username,
+                    username: currentName,
                     password: password,
                     newUsername: newName
                 })
@@ -205,11 +228,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await response.json();
 
             if (res.status === 'success') {
+                // 1. Aggiorna stato locale
                 Game.getGameState().user.username = newName;
+
+                // 2. Aggiorna sessione
                 sessionStorage.setItem('espooUser', newName);
-                Game.saveGame();
-                alert("Nome aggiornato!");
-                closeModal(accountModal); // Chiude il modale dopo successo
+
+                // 3. Aggiorna UI (Settings display)
+                if (currentUsernameDisplay) currentUsernameDisplay.textContent = newName;
+
+                // 4. SALVA SUBITO: Questo aggiornerà il JSON nel DB col nuovo nome
+                await Game.saveGame();
+
+                alert("Nome aggiornato correttamente!");
+                closeModal(accountModal);
             } else {
                 alert("Errore: " + res.message);
             }
@@ -254,6 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!passwordConfirm) { alert("Serve la password per cancellare."); return; }
 
         if (confirm('Cancellare DEFINITIVAMENTE account e progressi?')) {
+            // [FIX] Blocca salvataggi preventivamente
+            const currentState = Game.getGameState();
+            if (currentState) currentState.isDeleting = true;
+
             try {
                 const response = await fetch('./php/delete_user.php', {
                     method: 'POST',
@@ -267,16 +303,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await response.json();
 
                 if (res.status === 'success') {
-                    const currentState = Game.getGameState();
-                    if (currentState) currentState.isDeleting = true;
+                    // Pulizia totale
                     localStorage.removeItem('espotoolClickerSaveV8');
                     sessionStorage.clear();
                     alert("Account eliminato. Addio!");
                     location.reload();
                 } else {
+                    // Se fallisce, riabilita il salvataggio
+                    if (currentState) currentState.isDeleting = false;
                     alert("Errore: " + res.message);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                if (currentState) currentState.isDeleting = false;
+                console.error(e);
+            }
         }
     }
 

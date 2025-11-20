@@ -26,7 +26,7 @@ function formatNumber(num) {
 
     // 5. Se il numero è ENORME (oltre i Decilioni), usa notazione scientifica
     if (suffixIndex >= suffixes.length) {
-        return sign + num.toExponential(2).replace('.', ',');
+        return sign + num.toExponential(4).replace('.', ',');
     }
 
     // 6. Calcola il numero scalato
@@ -34,7 +34,7 @@ function formatNumber(num) {
     const scaledNum = num / Math.pow(1000, suffixIndex);
 
     // 7. Formatta con 2 decimali
-    let formatted = scaledNum.toFixed(2);
+    let formatted = scaledNum.toFixed(4);
 
     // Pulizia opzionale: se finisce con ",00" lo togliamo per pulizia
     if (formatted.endsWith('.00')) {
