@@ -230,6 +230,15 @@
             <button id="btn-bps-add" class="cheat-btn">Add</button>
             <button id="btn-bps-set" class="cheat-btn set-btn">Set</button>
         </div>
+
+        <!-- Events Control -->
+        <div class="cheat-row">
+            <div class="cheat-label">EVENTS</div>
+            <button id="btn-event-404" class="cheat-btn" style="background: #e74c3c;">Trigger 404</button>
+            <button id="btn-event-golden" class="cheat-btn" style="background: #f1c40f; color: #000;">Golden Bug</button>
+        </div>
+
+
     `;
 
     container.appendChild(handle);
@@ -259,6 +268,27 @@
             container.classList.toggle('open');
         }
     });
+
+    // --- EVENTS Logic ---
+    document.getElementById('btn-event-404').addEventListener('click', () => {
+        if (typeof triggerBluescreen === 'function') {
+            triggerBluescreen(404);
+            console.log('[Cheat] Triggered 404 Bluescreen.');
+        } else {
+            console.error('[Cheat] triggerBluescreen function not found.');
+        }
+    });
+
+    document.getElementById('btn-event-golden').addEventListener('click', () => {
+        if (typeof spawnGoldenBug === 'function') {
+            spawnGoldenBug();
+            console.log('[Cheat] Spawned Golden Bug.');
+        } else {
+            console.error('[Cheat] spawnGoldenBug function not found.');
+        }
+    });
+
+
 
     // --- BUGS Logic ---
     document.getElementById('btn-bugs-add').addEventListener('click', () => {
@@ -329,6 +359,13 @@
         if (typeof recalculateCPS === 'function') recalculateCPS(); // Re-apply with new bonus
         updateGameUI();
         console.log(`[Cheat] Set BPS to ${val} (Bonus: ${window.cheatBPSBonus}).`);
+    });
+
+    // --- Auto-Close Logic ---
+    document.querySelectorAll('.cheat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.classList.remove('open');
+        });
     });
 
 })();
