@@ -152,14 +152,46 @@ function clickCookie(event) {
     updateUI();
 }
 
-function buyBuilding(buildingKey) {
+function calculateMaxAffordable(buildingKey) {
     const state = gameState.buildings[buildingKey];
-    const currentCost = calculateBulkCost(buildingKey, buyMultiplier);
+    const data = gameData.buildings[buildingKey];
+    const r = 1.15;
+
+    // Calcolo sconto (copiato da calculateBulkCost)
+    let discountMultiplier = 1;
+    if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
+        let discount = gameState.prestigeUpgrades.outsourcing.count * 0.01;
+        discountMultiplier = 1 - discount;
+    }
+    let discountedBaseCost = data.baseCost * discountMultiplier;
+
+    // Costo del prossimo singolo edificio
+    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
+
+    if (gameState.score < currentSingleCost) return 0;
+
+    // Formula inversa della somma geometrica: n = log(1 + (Score * (r-1) / CostoBase)) / log(r)
+    // Serve a trovare quanti ne puoi comprare in blocco con i tuoi soldi attuali
+    const maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
+
+    return Math.max(0, maxAmount);
+}
+
+function buyBuilding(buildingKey) {
+    // Determina la quantità
+    let amount = buyMultiplier;
+    if (amount === 'MAX') {
+        amount = calculateMaxAffordable(buildingKey);
+        if (amount === 0) return; // Non puoi permettertene nemmeno uno
+    }
+
+    const state = gameState.buildings[buildingKey];
+    const currentCost = calculateBulkCost(buildingKey, amount);
 
     if (gameState.score >= currentCost) {
         playSound('sound-buy');
         gameState.score -= currentCost;
-        state.count += buyMultiplier;
+        state.count += amount; // Usa amount calcolato
         recalculateCPS();
         refreshAllStores();
         window.EspooClicker.saveGame();

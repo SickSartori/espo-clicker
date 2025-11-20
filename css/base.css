@@ -25,10 +25,20 @@ body.bluescreen-active {
     color: #c0c0c0;
 }
 
+* {
+    scrollbar-width: thin;
+    /* Per Firefox */
+    scrollbar-color: #5d7c9a #34495e;
+    /* Per Firefox */
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
+
+
+
 
 ::-webkit-scrollbar-track {
     background: #34495e;

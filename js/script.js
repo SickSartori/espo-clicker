@@ -131,19 +131,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let lastFrameTime = Date.now();
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
-        // FIX VELOCITÀ: Dividiamo per 30 (FPS) invece di 10
-        const scoreToAdd = cookiesPerSecond / 30;
+        const now = Date.now();
+        // Calcola quanto tempo è passato in secondi (es. 0.033s)
+        const deltaTime = (now - lastFrameTime) / 1000;
+        lastFrameTime = now;
+
+        // Se il salto temporale è troppo grande (es. pc in standby), limitalo per sicurezza o gestiscilo
+        if (deltaTime > 86400) return; // Ignora salti assurdi (bug prevenzione)
+
+        // Aggiungi il punteggio basato sul tempo ESATTO trascorso
+        const scoreToAdd = cookiesPerSecond * deltaTime;
 
         gameState.score += scoreToAdd;
         gameState.totalScore += scoreToAdd;
         gameState.lifetimeScore += scoreToAdd;
 
-        const now = Date.now();
-        clickHistory = clickHistory.filter(click => now - click.time < 1000);
+        // Gestione storico click (invariato)
+        const clickNow = Date.now();
+        clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
-        checkAchievements();
+        // [Ottimizzazione] Non serve chiamare checkAchievements() qui se hai già il setInterval separato
+        // checkAchievements(); 
+
         updateUI();
 
         // --- FIX STATISTICHE LIVE ---
@@ -177,9 +189,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
-        const btn1x = document.getElementById('btn-1x');
-        const btn10x = document.getElementById('btn-10x');
-        const toggleBtn = document.getElementById('toggle-purchased-btn');
+        const btns = {
+            '1x': document.getElementById('btn-1x'),
+            '5x': document.getElementById('btn-5x'),
+            '10x': document.getElementById('btn-10x'),
+            'MAX': document.getElementById('btn-max')
+        };
+
+        function setBuyMultiplier(value) {
+            buyMultiplier = value;
+
+            // Reset colori
+            for (let k in btns) {
+                if (btns[k]) btns[k].style.backgroundColor = '#34495e';
+            }
+
+            // Attiva quello giusto
+            const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
+            if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
+
+            playSound('sound-click');
+            refreshAllStores();
+            updateUI();
+        }
+        if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
+        if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
+        if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
+        if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
+
         const crunchBtn = document.getElementById('skill-crunchTime');
 
         const tabs = document.querySelectorAll('.tab-btn');
@@ -285,50 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
-        if (btn1x) btn1x.addEventListener('click', (e) => {
-            if (e.detail === 0) return; btn1x.blur();
-            buyMultiplier = 1;
-            btn1x.style.backgroundColor = '#27ae60'; btn10x.style.backgroundColor = '#34495e';
-            playSound('sound-click'); refreshAllStores(); updateUI();
-        });
-
-        if (btn10x) btn10x.addEventListener('click', (e) => {
-            if (e.detail === 0) return; btn10x.blur();
-            buyMultiplier = 10;
-            btn10x.style.backgroundColor = '#27ae60'; btn1x.style.backgroundColor = '#34495e';
-            playSound('sound-click'); refreshAllStores(); updateUI();
-        });
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                const list = document.getElementById('click-upgrade-list');
-                const btnIcon = toggleBtn.querySelector('.icon');
-                const btnText = toggleBtn.querySelector('.text');
-
-                // Toggle della classe
-                list.classList.toggle('hide-purchased-items');
-
-                // 1. Gestione Grafica Bottone
-                if (list.classList.contains('hide-purchased-items')) {
-                    toggleBtn.classList.add('active');
-                    btnIcon.textContent = '🛒';
-                    btnText.textContent = "Disponibili";
-                } else {
-                    toggleBtn.classList.remove('active');
-                    btnIcon.textContent = '👁️';
-                    btnText.textContent = "Tutti";
-                }
-
-                // 2. CONTROLLO STATO VUOTO (NUOVO)
-                // Richiamiamo updateClickStore per ricalcolare cosa è visibile
-                if (typeof updateClickStore === 'function') {
-                    updateClickStore();
-                }
-
-                if (window.EspooClicker && window.EspooClicker.playSound) {
-                    window.EspooClicker.playSound('sound-click');
-                }
-            });
-        }
         if (clickerButton) clickerButton.addEventListener('click', clickCookie);
 
         if (goldenBug) goldenBug.addEventListener('click', (e) => {

@@ -284,11 +284,24 @@ function checkTabNotifications() {
         tabPrestige.classList.remove('notify');
     }
 }
-// NUOVA FUNZIONE: Aggiorna testi, costi e visibilità negozi (PESANTE - Chiamare solo su eventi)
+
 function refreshAllStores() {
     // 1. Aggiorna Edifici (Colonna Destra)
     for (const key in gameState.buildings) {
-        const currentCost = calculateBulkCost(key, buyMultiplier);
+
+        // --- LOGICA MAX/MOLTIPLICATORE ---
+        let amountToBuy = buyMultiplier;
+        let isMax = false;
+
+        if (buyMultiplier === 'MAX') {
+            const max = calculateMaxAffordable(key);
+            // Se max è 0 (non ho soldi), mostriamo il costo di 1 (per far vedere quanto manca)
+            amountToBuy = max > 0 ? max : 1;
+            isMax = true;
+        }
+
+        const currentCost = calculateBulkCost(key, amountToBuy);
+        // ----------------------------------
 
         // Calcolo BPS
         let buildingBPS = gameData.buildings[key].cpsPerUnit;
@@ -304,9 +317,14 @@ function refreshAllStores() {
         const bpsEl = document.getElementById(`bps-${key}`);
         const countEl = document.getElementById(`count-${key}`);
 
-        // --- MODIFICA: Usa setAttribute 'data-tooltip' ---
         if (costEl) {
-            costEl.textContent = `Costo: ${formatNumber(currentCost)}`;
+            // Se è MAX, mostra quanti ne stai comprando nel testo, es: "Costo (+12): 1.5M"
+            // Se non puoi permettertelo (isMax e max=0), mostra solo "Costo" standard
+            let prefix = "Costo";
+            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
+
+            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
             costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
         }
 
@@ -314,9 +332,14 @@ function refreshAllStores() {
             bpsEl.textContent = `+${formatNumber(totalUnitBPS)} BPS cad.`;
             bpsEl.setAttribute('data-tooltip', totalUnitBPS.toLocaleString('it-IT'));
         }
-        // -------------------------------------------------
 
         if (countEl) countEl.textContent = gameState.buildings[key].count;
+
+        // Aggiorna stato disabilitato del bottone
+        const btn = document.getElementById(`buy-${key}`);
+        if (btn) {
+            btn.disabled = (gameState.score < currentCost);
+        }
     }
 
     updateClickStore();
