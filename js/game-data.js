@@ -12,6 +12,7 @@ let gameState = {
     totalPlayTime: 0,
     lifetimeScore: 0,
     lastSaveTimestamp: Date.now(),
+    lastBluescreenTimestamp: 0,
 
     user: {
         username: 'Giocatore',

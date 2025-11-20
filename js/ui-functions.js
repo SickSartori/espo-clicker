@@ -67,26 +67,43 @@ function showClickFeedback(event) {
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    let currentChance = 0.001;
+    // --- 1. LOGICA EVENTO 404 (BLUESCREEN) ---
+    const now = Date.now();
+    const COOLDOWN_404 = 300000; // 5 minuti di cooldown
+    const lastCrash = gameState.lastBluescreenTimestamp || 0;
+    const timeSinceLast = now - lastCrash;
+
+    // Controlla se c'è "404" nei punteggi
     const scoreString = Math.floor(gameState.score).toString();
     const clicksString = gameState.totalClicks.toString();
-    if (scoreString.includes('404') || clicksString.includes('404')) {
-        currentChance *= 2;
-    }
+    const has404 = scoreString.includes('404') || clicksString.includes('404');
 
-    if (Math.random() < currentChance && !isBluescreenActive && gameState.score >= 404) {
-        feedback.textContent = '404 Bug Not Found';
+    // La probabilità aumenta se hai "404", ma è zero se sei in cooldown o l'evento è già attivo
+    // 0.5% se hai 404, 0.05% altrimenti (molto raro)
+    let currentChance = has404 ? 0.005 : 0.0005;
+
+    if (timeSinceLast > COOLDOWN_404 && Math.random() < currentChance && !isBluescreenActive && gameState.score >= 404) {
+
+        // --- TRIGGER 404 ---
+        feedback.textContent = 'Error 404: Logic Not Found';
         feedback.style.color = '#facc15';
-        feedback.style.fontSize = '1rem';
+        feedback.style.fontSize = '1.2rem';
+        feedback.style.fontWeight = '900';
+        feedback.style.zIndex = '100'; // In primo piano
 
-        let dynamicMultiplier = 2;
-        if (gameState.totalScore >= 100000000) {
-            dynamicMultiplier = 3;
-        } else if (gameState.totalScore >= 1000000) {
-            dynamicMultiplier = 2.5;
-        }
+        // Calcolo Bonus Variabile (da 2x a 5x)
+        let baseMult = 2;
+        let variableMult = Math.random() * 3;
+        let dynamicMultiplier = Math.floor(baseMult + variableMult);
+
+        // Aggiorna timestamp e salva per il cooldown
+        gameState.lastBluescreenTimestamp = now;
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+
         triggerBluescreen(dynamicMultiplier);
+
     } else {
+        // --- FEEDBACK NORMALE (+Punti) ---
         let clickBonusPercent = 0.01;
         if (gameState.clickUpgrades.clickDivino.purchased) {
             clickBonusPercent = 0.02;
@@ -96,17 +113,37 @@ function showClickFeedback(event) {
             (gameState.clickUpgrades.manoBionica.purchased ? (cookiesPerSecond * clickBonusPercent) : 0);
 
         feedback.textContent = `+${formatNumber(currentClickValue)}`;
+        // Colore standard (rosso leggero come definito in CSS) o dorato se critico
     }
 
+    // --- 2. POSIZIONAMENTO DINAMICO ---
     const rect = feedbackContainer.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
 
-    feedback.style.left = `${x + (Math.random() - 0.5) * 40}px`;
-    feedback.style.top = `${y + (Math.random() - 0.5) * 40}px`;
+    // Se clicchi col mouse usa le coordinate, se usi tastiera (Invio) usa il centro
+    let x, y;
+    if (event.clientX && event.clientY) {
+        x = event.clientX - rect.left;
+        y = event.clientY - rect.top;
+    } else {
+        x = rect.width / 2;
+        y = rect.height / 2;
+    }
+
+    // Aggiungi variazione casuale per non sovrapporre i numeri
+    const randomX = (Math.random() - 0.5) * 60; // Spostamento laterale +/- 30px
+    const randomY = (Math.random() - 0.5) * 40; // Leggera variazione verticale
+    const randomRot = (Math.random() - 0.5) * 30; // Rotazione +/- 15 gradi
+
+    feedback.style.left = `${x + randomX}px`;
+    feedback.style.top = `${y + randomY}px`;
+
+    // Imposta variabili CSS per l'animazione (assumi che il CSS usi var(--tx) e var(--rot))
+    feedback.style.setProperty('--tx', `${randomX}px`);
+    feedback.style.setProperty('--rot', `${randomRot}deg`);
 
     feedbackContainer.appendChild(feedback);
 
+    // Rimuovi dopo l'animazione
     setTimeout(() => feedback.remove(), 1500);
 }
 
@@ -390,15 +427,13 @@ function updateUI() {
 }
 
 function updatePrestigeUI() {
-    // 1. GESTIONE VISIBILITÀ TAB LAB (Menu Sinistro)
-    // Appare solo se hai fatto almeno un reset o hai punti (cioè sei entrato nel mid-game)
+    // 1. GESTIONE VISIBILITÀ TAB E BOTTONE (Codice invariato)
     const tabLabButton = document.getElementById('tab-prestige');
     if (tabLabButton) {
         if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
             tabLabButton.style.display = 'inline-block';
         } else {
             tabLabButton.style.display = 'none';
-            // Se era attivo, switcha al primo tab
             if (tabLabButton.classList.contains('active')) {
                 const clickTab = document.getElementById('tab-click');
                 if (clickTab) clickTab.click();
@@ -406,25 +441,20 @@ function updatePrestigeUI() {
         }
     }
 
-    // 2. GESTIONE VISIBILITÀ BOTTONE PROMOZIONE (Barra in alto)
-    // Appare quando puoi fare prestigio
     const prestigeHubBtn = document.getElementById('open-prestige-hub-btn');
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
 
     if (prestigeHubBtn) {
-        // Lo mostriamo se puoi fare prestigio O se lo hai già fatto (per abitudine)
         if (canPrestige || hasPrestiged) {
             prestigeHubBtn.style.display = 'block';
-
-            // Effetto speciale se c'è una nuova promozione pronta
             if (canPrestige) {
                 prestigeHubBtn.style.animation = 'pulseButton 1.5s infinite';
-                prestigeHubBtn.style.borderColor = '#2ecc71'; // Verde acceso
+                prestigeHubBtn.style.borderColor = '#2ecc71';
                 prestigeHubBtn.textContent = "👑 PROMOZIONE PRONTA!";
             } else {
                 prestigeHubBtn.style.animation = 'none';
-                prestigeHubBtn.style.borderColor = '#9b59b6'; // Viola normale
+                prestigeHubBtn.style.borderColor = '#9b59b6';
                 prestigeHubBtn.textContent = "👑 Promozione";
             }
         } else {
@@ -432,49 +462,88 @@ function updatePrestigeUI() {
         }
     }
 
-    // 3. AGGIORNA CIFRA GUADAGNO (Nel Modale in alto)
+    // 2. AGGIORNA CIFRA GUADAGNO
     if (document.getElementById('prestige-gain-display')) {
         const gained = calculatePrestigeGained();
         document.getElementById('prestige-gain-display').textContent = formatNumber(gained);
-        document.getElementById('prestige-gain-display').title = gained.toLocaleString('it-IT');
+        document.getElementById('prestige-gain-display').setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
     }
 
-    // 4. AGGIORNA NEGOZIO LAB (Nel Tab Sinistro)
-    // La logica dei bottoni rimane identica
+    // 3. AGGIORNA NEGOZIO LAB (Con Ordinamento)
     const listContainer = document.getElementById('prestige-list-container');
     if (!listContainer) return;
 
+    // Funzione helper interna per aggiornare il singolo bottone
     const updateBtn = (id, data, state) => {
         const el = document.getElementById(`upgrade-${id}`);
         const btn = document.getElementById(`buy-${id}`);
-        if (!btn || !el) return;
+        if (!btn || !el) return null;
 
         let isCompleted = false;
         if (!data.isCounted && state.purchased) isCompleted = true;
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
 
+        // Determina Priorità
+        let priority = 0;
+        let cost = data.baseCost;
+
         if (isCompleted) {
             btn.textContent = "Posseduto";
             btn.className = "buy-btn prestige-btn owned";
             btn.disabled = true;
+            el.classList.add('purchased');
+            priority = 300; // In fondo
         } else {
             btn.innerHTML = "Compra";
             btn.className = "buy-btn prestige-btn";
-            btn.disabled = (gameState.prestigePoints < data.baseCost);
+            const canAfford = gameState.prestigePoints >= data.baseCost;
+            btn.disabled = !canAfford;
+            el.classList.remove('purchased');
+
+            // Prima quelli acquistabili (200), poi quelli costosi (210)
+            priority = canAfford ? 200 : 210;
         }
+
         const countEl = document.getElementById(`count-${id}`);
         if (countEl) countEl.textContent = state.count;
+
+        // Ritorna oggetto per ordinamento
+        return { el: el, priority: priority, cost: cost };
     };
 
     const pData = gameData.prestigeUpgrades;
     const pState = gameState.prestigeUpgrades;
+    const items = [];
 
-    updateBtn('sinergia', pData.sinergia, pState.sinergia);
-    updateBtn('accelerazione', pData.accelerazione, pState.accelerazione);
-    updateBtn('ticketPremium', pData.ticketPremium, pState.ticketPremium);
-    updateBtn('outsourcing', pData.outsourcing, pState.outsourcing);
-    updateBtn('paracadute', pData.paracadute, pState.paracadute);
-    updateBtn('crunchTime', pData.crunchTime, pState.crunchTime);
+    // Raccogli elementi aggiornati
+    const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
+    ids.forEach(id => {
+        const item = updateBtn(id, pData[id], pState[id]);
+        if (item) items.push(item);
+    });
+
+    // --- ORDINAMENTO ---
+    items.sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.cost - b.cost;
+    });
+
+    // --- APPLICAZIONE ---
+    const mode = gameState.filterSettings.globalFilter || 'available';
+    // Nota: Il Lab ignora il filtro "Locked" (mostra tutto in quel caso) o usa "All"
+
+    items.forEach(item => {
+        // Gestione visibilità semplice basata sul filtro globale
+        // Se "Già Presi" -> mostra solo priority 300
+        // Se "Acquistabili" -> mostra priority < 300
+        // Se "Tutti" -> mostra tutto
+        let show = true;
+        if (mode === 'available' && item.priority === 300) show = false;
+        if (mode === 'purchased' && item.priority < 300) show = false;
+
+        item.el.style.display = show ? 'flex' : 'none';
+        listContainer.appendChild(item.el);
+    });
 }
 
 
@@ -485,63 +554,104 @@ function updateEnhancementStore() {
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
-    // Check se esistono edifici (per evitare msg vuoto all'inizio)
+    // Check se esistono edifici
     let hasAnyBuilding = false;
     for (const key in gameState.buildings) {
         if (gameState.buildings[key].count > 0) { hasAnyBuilding = true; break; }
     }
+
+    // Array temporaneo per l'ordinamento
+    const items = [];
 
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
         const targetBuilding = gameState.buildings[data.targetBuilding];
         const el = document.getElementById(`enh-upgrade-${key}`);
+
         if (!el) continue;
 
         const btn = el.querySelector('.buy-btn');
         const progressBar = el.querySelector('.progress-bar-container');
 
-        // Stato
+        // Stato Logico
         const isPurchased = state.purchased;
         const isUnlocked = targetBuilding.count >= data.requiredCount;
+        const canAfford = gameState.score >= data.cost;
 
-        // 1. Reset
+        // Reset grafico
         el.classList.remove('purchased', 'locked-item');
         btn.style.display = 'none';
         progressBar.style.display = 'none';
 
-        // 2. Configura
+        // --- ASSEGNAZIONE PRIORITÀ ---
+        // Più basso è il numero, più in alto appare nella lista
+        let priority = 0;
+
         if (isPurchased) {
+            // 3. POSSEDUTI -> In Fondo (Priorità 300)
             el.classList.add('purchased');
             btn.textContent = "Posseduto";
             btn.disabled = true;
             btn.className = "buy-btn owned";
             btn.style.display = 'block';
+            priority = 300;
+
         } else if (isUnlocked) {
+            // 2. SBLOCCATI -> Al Centro (Priorità 200-210)
             btn.textContent = "Compra";
-            btn.disabled = (gameState.score < data.cost);
+            btn.disabled = !canAfford;
             btn.className = "buy-btn enhancement-btn";
             btn.style.display = 'block';
+
+            // Mettiamo prima quelli che puoi permetterti (200), poi quelli troppo costosi (210)
+            priority = canAfford ? 200 : 210;
+
         } else {
+            // 1. DA COMPIERE (Bloccati) -> In Cima (Priorità 0-100)
             el.classList.add('locked-item');
             progressBar.style.display = 'block';
+
             const current = targetBuilding.count;
             const target = data.requiredCount;
             const targetName = gameData.buildings[data.targetBuilding].name;
             let percent = Math.min((current / target) * 100, 100);
+            if (isNaN(percent)) percent = 0; // Sicurezza extra
+
             el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-            el.querySelector('.progress-text').textContent = `${current} / ${target} ${targetName}`;
+
+            const text = `${current} / ${target} ${targetName}`;
+            el.querySelector('.progress-text').textContent = text;
+            el.querySelector('.progress-text').title = text;
+
+            // Ordiniamo i bloccati: quelli quasi finiti (90%) stanno più in alto (10) di quelli appena iniziati (100)
+            priority = 100 - percent;
         }
 
-        // 3. Visibilità
+        // Visibilità (rispetta sempre il filtro globale)
         if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
             el.style.display = 'flex';
             visibleCount++;
+            items.push({ el: el, priority: priority, cost: data.cost });
         } else {
             el.style.display = 'none';
         }
     }
 
+    // --- ORDINAMENTO ---
+    items.sort((a, b) => {
+        // Prima ordina per gruppo di priorità (Bloccati < Sbloccati < Posseduti)
+        if (Math.floor(a.priority) !== Math.floor(b.priority)) {
+            return a.priority - b.priority;
+        }
+        // A parità di gruppo, ordina per costo (più economico prima)
+        return a.cost - b.cost;
+    });
+
+    // --- APPLICAZIONE AL DOM ---
+    items.forEach(item => list.appendChild(item.el));
+
+    // Messaggio vuoto
     const emptyMsg = document.getElementById('enhancement-empty');
     if (emptyMsg) {
         if (visibleCount === 0 && hasAnyBuilding) {
@@ -582,6 +692,9 @@ function updateClickStore() {
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
+    // Array per l'ordinamento
+    const items = [];
+
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
@@ -591,46 +704,79 @@ function updateClickStore() {
         const btn = el.querySelector('.buy-btn');
         const progressBar = el.querySelector('.progress-bar-container');
 
-        // Stato
+        // Stato Logico
         const isPurchased = state.purchased;
         const isUnlocked = gameState.totalClicks >= data.requiredClicks;
+        const canAfford = gameState.score >= data.cost;
 
-        // 1. Reset Classi
+        // Reset Classi
         el.classList.remove('purchased', 'locked-item');
         btn.style.display = 'none';
         progressBar.style.display = 'none';
 
-        // 2. Configura Elemento (Grafica)
+        // --- ASSEGNAZIONE PRIORITÀ ---
+        let priority = 0;
+
         if (isPurchased) {
+            // 3. POSSEDUTI -> In Fondo (300)
             el.classList.add('purchased');
             btn.textContent = "Posseduto";
             btn.disabled = true;
             btn.className = "buy-btn owned";
             btn.style.display = 'block';
+            priority = 300;
+
         } else if (isUnlocked) {
+            // 2. SBLOCCATI -> Al Centro (200/210)
             btn.textContent = "Compra";
-            btn.disabled = (gameState.score < data.cost);
+            btn.disabled = !canAfford;
             btn.className = "buy-btn buy-click-btn";
             btn.style.display = 'block';
+
+            // Prima quelli che puoi permetterti
+            priority = canAfford ? 200 : 210;
+
         } else {
+            // 1. DA COMPIERE (Bloccati) -> In Cima (0-100)
             el.classList.add('locked-item');
             progressBar.style.display = 'block';
+
             // Aggiorna barra
             const current = gameState.totalClicks;
             const target = data.requiredClicks;
+
             let percent = Math.min((current / target) * 100, 100);
+            if (isNaN(percent)) percent = 0; // Sicurezza extra
+
             el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-            el.querySelector('.progress-text').textContent = `Sblocco: ${formatNumber(current)} / ${formatNumber(target)}`;
+
+            const text = `Sblocco: ${formatNumber(current)} / ${formatNumber(target)}`;
+            el.querySelector('.progress-text').textContent = text;
+            el.querySelector('.progress-text').title = text;
+
+            // Ordine: Più sei vicino (90%), più in alto stai (10)
+            priority = 100 - percent;
         }
 
-        // 3. Visibilità (Usa helper)
+        // Visibilità
         if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
             el.style.display = 'flex';
             visibleCount++;
+            items.push({ el: el, priority: priority, cost: data.cost });
         } else {
             el.style.display = 'none';
         }
     }
+
+    // --- ORDINAMENTO E APPLICAZIONE ---
+    items.sort((a, b) => {
+        if (Math.floor(a.priority) !== Math.floor(b.priority)) {
+            return a.priority - b.priority;
+        }
+        return a.cost - b.cost;
+    });
+
+    items.forEach(item => list.appendChild(item.el));
 
     // Empty State
     const emptyMsg = document.getElementById('click-upgrade-empty');

@@ -388,20 +388,21 @@ setInterval(() => {
     gameState.totalPlayTime += 1;
 }, 1000);
 
+setInterval(() => {
+    checkAchievements();
+}, 1500);
+
 function gameLoop() {
-    const scoreToAdd = cookiesPerSecond / 10; // 10 volte al secondo
+    const scoreToAdd = cookiesPerSecond / 30;
 
     gameState.score += scoreToAdd;
     gameState.totalScore += scoreToAdd;
-
-    // HIGHSCORE: Aggiorna il punteggio totale di sempre
     gameState.lifetimeScore += scoreToAdd;
 
-    // Rimuovi i click più vecchi di 1 secondo
     const now = Date.now();
     clickHistory = clickHistory.filter(click => now - click.time < 1000);
 
-    checkAchievements();
+    // checkAchievements(); <--- RIMOSSO DA QUI
     updateUI();
 }
 
