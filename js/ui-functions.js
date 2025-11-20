@@ -4,45 +4,42 @@ function formatNumber(num) {
     // 1. Controllo validità
     if (num === undefined || num === null || isNaN(num)) return "0";
 
-    // 2. Gestione numeri negativi (utile per debug o errori di calcolo)
+    // 2. Gestione numeri negativi
     let sign = "";
     if (num < 0) {
         sign = "-";
         num = Math.abs(num);
     }
 
-    // 3. Se il numero è piccolo (< 1000), mostralo normale senza decimali
+    // 3. Numeri piccoli (< 1000): mostriamo i decimali solo se servono, max 2
     if (num < 1000) {
-        return sign + Math.floor(num).toString();
+        return sign + num.toLocaleString('it-IT', { maximumFractionDigits: 2 });
     }
 
-    // 4. Array dei suffissi (Standard Internazionale per giochi Idle)
-    // k=Mille, M=Milioni, B=Miliardi, T=Trilioni, Qa=Quadrilioni...
+    // 4. Array Suffissi
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
 
-    // Calcola l'indice del suffisso (ogni 3 zeri = +1 indice)
-    // Math.max(0, ...) serve per sicurezza su numeri 0-999 gestiti sopra
+    // 5. Calcolo Scala
     const suffixIndex = Math.floor(Math.log10(num) / 3);
 
-    // 5. Se il numero è ENORME (oltre i Decilioni), usa notazione scientifica
+    // 6. Numeri Enormi (Scientifici)
     if (suffixIndex >= suffixes.length) {
-        return sign + num.toExponential(4).replace('.', ',');
+        return sign + num.toExponential(2).replace('.', ',');
     }
 
-    // 6. Calcola il numero scalato
-    // Esempio: 1.500.000 (Index 2 'M') -> diventa 1.5
+    // 7. Calcolo numero scalato
     const scaledNum = num / Math.pow(1000, suffixIndex);
 
-    // 7. Formatta con 2 decimali
-    let formatted = scaledNum.toFixed(4);
+    // 8. FORMATTAZIONE DINAMICA (Il segreto per la pulizia)
+    // - Se è 1.xxx -> 3 decimali (es. 1,234 k)
+    // - Se è 12.xx -> 2 decimali (es. 12,34 k)
+    // - Se è 123.x -> 1 decimale  (es. 123,4 k)
+    let decimals = 2;
+    if (scaledNum < 10) decimals = 3;
+    else if (scaledNum < 100) decimals = 2;
+    else decimals = 1;
 
-    // Pulizia opzionale: se finisce con ",00" lo togliamo per pulizia
-    if (formatted.endsWith('.00')) {
-        formatted = formatted.slice(0, -3);
-    }
-
-    // Sostituisci il punto con la virgola (stile italiano) e aggiungi suffisso
-    return sign + formatted.replace('.', ',') + " " + suffixes[suffixIndex];
+    return sign + scaledNum.toFixed(decimals).replace('.', ',') + " " + suffixes[suffixIndex];
 }
 
 function formatTime(totalSeconds) {
@@ -344,11 +341,12 @@ function refreshAllStores() {
 
     updateClickStore();
     updateEnhancementStore();
-    updatePrestigeUI();
+    updatePrestigeStore();
+    updatePrestigeVisuals();
 }
 
 function updateUI() {
-    // 1. Calcolo BPS Dinamico (Passivo + Attivo nell'ultimo secondo)
+    // 1. Calcolo BPS Dinamico
     let activeBPS = 0;
     const now = Date.now();
     for (let i = 0; i < clickHistory.length; i++) {
@@ -356,37 +354,48 @@ function updateUI() {
     }
     let totalDisplayBPS = cookiesPerSecond + activeBPS;
 
-    // Aggiorna Score e BPS
+    // 2. Aggiorna Score e BPS (Principali)
     scoreDisplay.textContent = formatNumber(gameState.score);
-    scoreDisplay.setAttribute('data-tooltip', Math.floor(gameState.score).toLocaleString('it-IT'));
+    scoreDisplay.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
 
-    // Aggiorna BPS
     cpsDisplay.textContent = `BPS: ${formatNumber(totalDisplayBPS)}`;
-    cpsDisplay.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT'));
+    cpsDisplay.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
 
-    // ... (Il resto della funzione rimane identico: gestione Bonus, Bottoni, Prestigio ecc.)
+    // 3. GESTIONE HUD CENTRALE (Bonus & Token)
+    const hudContainer = document.getElementById('hud-stats-container');
+    const displayCareer = document.getElementById('display-career-bonus');
+    const displayTokens = document.getElementById('prestige-points-display'); // ID CORRETTO da col_center.php
 
-    // 2. Bonus (gestito come prima, solo Prestigio)
-    let baseBonus = gameState.prestigePoints * 0.01;
-    let synergyBonus = gameState.prestigeUpgrades.sinergia.count * gameData.prestigeUpgrades.sinergia.bonusPerLevel * gameState.prestigePoints;
-    let totalDisplayBonus = (baseBonus + synergyBonus) * 100;
+    // Mostra l'HUD solo se hai fatto prestigio o hai punti
+    if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
+        if (hudContainer) hudContainer.style.display = 'flex';
 
-    if (parseFloat(totalDisplayBonus.toFixed(1)) > 0) {
-        prestigeBonusDisplay.style.display = 'block';
-        prestigeBonusDisplay.textContent = `Bonus: +${totalDisplayBonus.toFixed(1)}%`;
+        // Calcolo Bonus Totale
+        let baseBonus = (gameState.lifetimePrestigePoints || 0) * 0.01;
+        let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
+        let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
+        let totalPercent = ((baseBonus + synergyBonus) * 100);
+
+        // Aggiorna valori HUD
+        if (displayCareer) {
+            displayCareer.textContent = `+${totalPercent.toFixed(1)}%`;
+        }
+        if (displayTokens) {
+            displayTokens.textContent = formatNumber(gameState.prestigePoints);
+            displayTokens.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));
+        }
     } else {
-        prestigeBonusDisplay.style.display = 'none';
+        if (hudContainer) hudContainer.style.display = 'none';
     }
 
-    // 3. Aggiorna stato Disabled bottoni Edifici
+    // 4. Aggiorna Bottoni e Stati (Codice standard)
     for (const key in gameState.buildings) {
         const currentCost = calculateBulkCost(key, buyMultiplier);
         const btn = document.getElementById(`buy-${key}`);
         if (btn) btn.disabled = (gameState.score < currentCost);
     }
 
-    // 4. Prestigio & 5. Negozi (tutto uguale a prima...)
-    prestigeGainDisplay.textContent = calculatePrestigeGained();
+    // Aggiorna altri negozi
     for (const key in gameState.clickUpgrades) {
         const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
         if (btn && !gameState.clickUpgrades[key].purchased) {
@@ -400,70 +409,44 @@ function updateUI() {
         }
     }
 
-    const displaySpendable = document.getElementById('display-spendable-points');
-    if (displaySpendable) {
-        displaySpendable.textContent = formatNumber(gameState.prestigePoints);
-        displaySpendable.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));
-    }
-
+    // 5. Skill Crunch Time
     const btnCrunch = document.getElementById('skill-crunchTime');
     if (btnCrunch) {
-        // 1. Visibilità: Mostra solo se l'upgrade è comprato
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
             btnCrunch.style.display = 'block';
-
-            const now = Date.now();
             const timerDiv = btnCrunch.querySelector('.skill-timer');
 
-            // 2. Stato: ATTIVO
             if (now < crunchTimeEndTime) {
                 const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
-                crunchTimeMultiplier = 3; // Assicuriamoci che sia 3
+                crunchTimeMultiplier = 3;
                 btnCrunch.className = 'skill-btn active';
-                btnCrunch.firstChild.textContent = "🔥 IN CORSO 🔥"; // Testo bottone
-                timerDiv.textContent = `${timeLeft}s rimanenti`;
-            }
-            // 3. Stato: COOLDOWN
-            else if (now < crunchTimeCooldownEnd) {
+                btnCrunch.firstChild.textContent = "🔥 IN CORSO 🔥";
+                timerDiv.textContent = `${timeLeft}s`;
+            } else if (now < crunchTimeCooldownEnd) {
                 const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-                crunchTimeMultiplier = 1; // Effetto finito
+                crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn cooldown';
                 btnCrunch.firstChild.textContent = "Ricarica...";
-
-                // Formatta minuti:secondi
                 const m = Math.floor(timeLeft / 60);
                 const s = timeLeft % 60;
                 timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
-            }
-            // 4. Stato: PRONTO
-            else {
+            } else {
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn';
                 btnCrunch.firstChild.textContent = "🔥 CRUNCH TIME 🔥";
-                timerDiv.textContent = "CLICCA PER ATTIVARE";
+                timerDiv.textContent = "CLICCA!";
             }
         } else {
             btnCrunch.style.display = 'none';
         }
     }
+
     checkTabNotifications();
 }
 
-function updatePrestigeUI() {
-    // 1. GESTIONE VISIBILITÀ TAB E BOTTONE (Codice invariato)
-    const tabLabButton = document.getElementById('tab-prestige');
-    if (tabLabButton) {
-        if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
-            tabLabButton.style.display = 'inline-block';
-        } else {
-            tabLabButton.style.display = 'none';
-            if (tabLabButton.classList.contains('active')) {
-                const clickTab = document.getElementById('tab-click');
-                if (clickTab) clickTab.click();
-            }
-        }
-    }
-
+// Funzione Leggera: Da chiamare nel GameLoop (Aggiorna solo testi e visibilità bottoni)
+function updatePrestigeVisuals() {
+    // 1. GESTIONE VISIBILITÀ BOTTONE HUB (Alto)
     const prestigeHubBtn = document.getElementById('open-prestige-hub-btn');
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
@@ -485,18 +468,48 @@ function updatePrestigeUI() {
         }
     }
 
-    // 2. AGGIORNA CIFRA GUADAGNO
-    if (document.getElementById('prestige-gain-display')) {
+    // 2. AGGIORNA CIFRA GUADAGNO (Modale)
+    const hubGainDisplay = document.getElementById('prestige-gain-display');
+    const btnGoToContract = document.getElementById('btn-go-to-contract');
+
+    if (hubGainDisplay && btnGoToContract) {
         const gained = calculatePrestigeGained();
-        document.getElementById('prestige-gain-display').textContent = formatNumber(gained);
-        document.getElementById('prestige-gain-display').setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
+
+        hubGainDisplay.textContent = formatNumber(gained);
+        hubGainDisplay.setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
+
+        if (gained < 1) {
+            btnGoToContract.textContent = "⚠️ Accumula più bug!";
+            btnGoToContract.disabled = true;
+            btnGoToContract.style.background = "#7f8c8d";
+            btnGoToContract.style.cursor = "not-allowed";
+            hubGainDisplay.style.color = "#e74c3c";
+        } else {
+            btnGoToContract.innerHTML = "📄 Visualizza Contratto";
+            btnGoToContract.disabled = false;
+            btnGoToContract.style.background = "linear-gradient(135deg, #8e44ad, #9b59b6)";
+            btnGoToContract.style.cursor = "pointer";
+            hubGainDisplay.style.color = "#2ecc71";
+        }
     }
 
-    // 3. AGGIORNA NEGOZIO LAB (Con Ordinamento)
+    // 3. AGGIORNA TAB LATERALE (Visibilità)
+    const tabLabButton = document.getElementById('tab-prestige');
+    if (tabLabButton) {
+        if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
+            tabLabButton.style.display = 'inline-block';
+        } else {
+            tabLabButton.style.display = 'none';
+        }
+    }
+}
+
+// Funzione Pesante: Da chiamare SOLO su eventi (Click, Acquisti, Init)
+function updatePrestigeStore() {
     const listContainer = document.getElementById('prestige-list-container');
     if (!listContainer) return;
 
-    // Funzione helper interna per aggiornare il singolo bottone
+    // Funzione helper interna
     const updateBtn = (id, data, state) => {
         const el = document.getElementById(`upgrade-${id}`);
         const btn = document.getElementById(`buy-${id}`);
@@ -506,7 +519,6 @@ function updatePrestigeUI() {
         if (!data.isCounted && state.purchased) isCompleted = true;
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
 
-        // Determina Priorità
         let priority = 0;
         let cost = data.baseCost;
 
@@ -515,22 +527,19 @@ function updatePrestigeUI() {
             btn.className = "buy-btn prestige-btn owned";
             btn.disabled = true;
             el.classList.add('purchased');
-            priority = 300; // In fondo
+            priority = 300;
         } else {
             btn.innerHTML = "Compra";
             btn.className = "buy-btn prestige-btn";
             const canAfford = gameState.prestigePoints >= data.baseCost;
             btn.disabled = !canAfford;
             el.classList.remove('purchased');
-
-            // Prima quelli acquistabili (200), poi quelli costosi (210)
             priority = canAfford ? 200 : 210;
         }
 
         const countEl = document.getElementById(`count-${id}`);
         if (countEl) countEl.textContent = state.count;
 
-        // Ritorna oggetto per ordinamento
         return { el: el, priority: priority, cost: cost };
     };
 
@@ -538,35 +547,34 @@ function updatePrestigeUI() {
     const pState = gameState.prestigeUpgrades;
     const items = [];
 
-    // Raccogli elementi aggiornati
     const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
     ids.forEach(id => {
         const item = updateBtn(id, pData[id], pState[id]);
         if (item) items.push(item);
     });
 
-    // --- ORDINAMENTO ---
     items.sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
         return a.cost - b.cost;
     });
 
-    // --- APPLICAZIONE ---
     const mode = gameState.filterSettings.globalFilter || 'available';
-    // Nota: Il Lab ignora il filtro "Locked" (mostra tutto in quel caso) o usa "All"
 
     items.forEach(item => {
-        // Gestione visibilità semplice basata sul filtro globale
-        // Se "Già Presi" -> mostra solo priority 300
-        // Se "Acquistabili" -> mostra priority < 300
-        // Se "Tutti" -> mostra tutto
         let show = true;
         if (mode === 'available' && item.priority === 300) show = false;
         if (mode === 'purchased' && item.priority < 300) show = false;
-
         item.el.style.display = show ? 'flex' : 'none';
+
+        // QUESTO È IL COLPEVOLE: Non facciamolo nel loop!
         listContainer.appendChild(item.el);
     });
+}
+
+// Funzione Ponte per retrocompatibilità
+function updatePrestigeUI() {
+    updatePrestigeVisuals();
+    updatePrestigeStore();
 }
 
 

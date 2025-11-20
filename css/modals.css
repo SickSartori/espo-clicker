@@ -255,16 +255,24 @@ input[type="number"] {
 
 /* --- STILI CONTRATTO PRESTIGIO --- */
 .contract-modal {
-    max-width: 700px;
-    /* Più largo degli altri modali */
+    max-width: 750px;
+    /* Un po' più largo per far respirare le colonne */
     background: linear-gradient(145deg, #2c3e50, #233040);
-    border: 1px solid #f1c40f;
-    /* Bordo Oro */
+    border: 2px solid #f1c40f;
+    /* Bordo dorato più evidente */
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
 }
 
 .contract-header h2 {
     color: #f1c40f !important;
     border-bottom-color: #f1c40f !important;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.contract-body {
+    padding: 10px 20px;
 }
 
 .contract-header p {
@@ -278,42 +286,65 @@ input[type="number"] {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    gap: 10px;
+    /* Forza stessa altezza */
+    gap: 20px;
+    /* Più spazio centrale */
     margin-bottom: 25px;
 }
 
 .contract-column {
     flex: 1;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
-/* Colonna Perdite */
 .contract-column.loss {
-    border: 1px solid rgba(231, 76, 60, 0.3);
+    border: 1px solid rgba(231, 76, 60, 0.4);
 }
 
 .contract-column.loss h3 {
     color: #e74c3c;
     margin-top: 0;
     border-bottom: 1px solid #e74c3c;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
+    padding-bottom: 10px;
+    font-size: 1.2rem;
+    text-align: center;
 }
 
 .contract-column.loss ul {
     list-style: none;
     padding: 0;
-    margin: 10px 0 0 0;
-    color: #c0392b;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    margin: 15px 0 0 0;
+    color: #ecf0f1;
+    /* Testo bianco per leggibilità */
+    font-size: 0.95rem;
+    line-height: 2;
+    /* Spaziatura righe */
+}
+
+.contract-column.loss ul li::before {
+    content: "❌ ";
+    margin-right: 5px;
+}
+
+/* Separatore VS */
+.contract-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    color: #7f8c8d;
+    font-size: 1.2rem;
+    opacity: 0.5;
 }
 
 /* Colonna Guadagni */
 .contract-column.gain {
-    border: 1px solid rgba(46, 204, 113, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.4);
     background-color: rgba(46, 204, 113, 0.05);
 }
 
@@ -321,8 +352,9 @@ input[type="number"] {
     color: #2ecc71;
     margin-top: 0;
     border-bottom: 1px solid #2ecc71;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
+    padding-bottom: 10px;
+    font-size: 1.2rem;
+    text-align: center;
 }
 
 .gain-item {
@@ -330,45 +362,41 @@ input[type="number"] {
     justify-content: space-between;
     align-items: center;
     margin-top: 15px;
-    padding: 10px;
+    padding: 12px;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .gain-label {
-    font-size: 0.9rem;
-    color: #ecf0f1;
+    font-size: 0.95rem;
+    color: #bdc3c7;
 }
 
 .gain-value {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: bold;
     color: #f1c40f;
+    text-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
 }
 
 .gain-note {
-    font-size: 0.8rem;
-    color: #bdc3c7;
-    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #95a5a6;
+    margin-top: auto;
+    /* Spinge in fondo */
+    padding-top: 15px;
     text-align: center;
     font-style: italic;
-}
-
-/* Separatore centrale "VS" */
-.contract-separator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #7f8c8d;
-    font-size: 0.9rem;
 }
 
 .contract-footer {
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-top: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .signature-btn {
@@ -461,9 +489,11 @@ input[type="number"] {
 
 /* --- MODALE CONTRATTO PRESTIGIO --- */
 .contract-modal {
-    max-width: 700px;
+    max-width: 750px;
     background: linear-gradient(145deg, #2c3e50, #233040);
-    border: 1px solid #f1c40f;
+    border: 2px solid #f1c40f;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    padding-bottom: 25px;
 }
 
 .contract-columns {
@@ -538,7 +568,13 @@ input[type="number"] {
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-top: 15px;
+    margin-top: 25px;
+    /* Aumentato da 20px */
+    padding-top: 20px;
+    /* Aumentato da 15px */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 .signature-btn {

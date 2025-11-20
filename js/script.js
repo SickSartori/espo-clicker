@@ -156,6 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateUI();
 
+        if (typeof updatePrestigeVisuals === 'function') {
+            updatePrestigeVisuals();
+        }
         // --- FIX STATISTICHE LIVE ---
         const statsModal = document.getElementById('stats-modal');
         if (statsModal && statsModal.style.display === 'flex') {
@@ -328,24 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.detail === 0) return; clickGoldenBug();
         });
 
-        if (prestigeBtn) {
-            // Rimuovi listener vecchi clonando il nodo (trick veloce)
-            const newPrestigeBtn = prestigeBtn.cloneNode(true);
-            prestigeBtn.parentNode.replaceChild(newPrestigeBtn, prestigeBtn);
-            prestigeBtn = newPrestigeBtn; // Aggiorna riferimento
-
-            prestigeBtn.addEventListener('click', (e) => {
-                if (e.detail === 0) return;
-                prestigeBtn.blur();
-                openPrestigeContract(); // <--- Chiama la nuova funzione di apertura
-            });
-        }
-        const confirmPrestigeBtn = document.getElementById('confirm-prestige-btn');
-        if (confirmPrestigeBtn) {
-            confirmPrestigeBtn.addEventListener('click', () => {
-                executePrestige(); // <--- Chiama la funzione di esecuzione
-            });
-        }
 
         // 3. Bottone "Rifiuta" nel Modale -> Chiude
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
@@ -356,22 +341,44 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (leftColumn) leftColumn.addEventListener('click', (e) => {
-            const btn = e.target.closest('button.buy-btn');
-            if (!btn) return;
-            if (e.detail === 0) return; btn.blur(); e.stopPropagation();
+        // --- GESTIONE CLICK UNIFICATA (GLOBALE) ---
+        // Intercetta i click su QUALSIASI bottone di acquisto nella pagina
+        document.addEventListener('click', (e) => {
+            // 1. Cerca se l'elemento cliccato (o un suo genitore) è un bottone di acquisto
+            const btn = e.target.closest('.buy-btn');
 
-            if (btn.classList.contains('buy-click-btn')) buyClickUpgrade(btn.dataset.upgradeName);
-            else if (btn.classList.contains('enhancement-btn')) buyBuildingEnhancement(btn.dataset.upgradeName);
-        });
+            // Se non ho cliccato un bottone, o se è disabilitato/posseduto, esci
+            if (!btn || btn.disabled || btn.classList.contains('owned')) return;
 
-        if (rightColumn) rightColumn.addEventListener('click', (e) => {
-            const btn = e.target.closest('button.buy-btn');
-            if (!btn) return;
-            if (e.detail === 0) return; btn.blur(); e.stopPropagation();
+            // Rimuovi il focus per estetica (toglie il bordo blu)
+            btn.blur();
 
-            if (btn.classList.contains('buy-building-btn')) buyBuilding(btn.dataset.upgradeName);
-            else if (btn.classList.contains('prestige-btn')) buyPrestigeUpgrade(btn.dataset.upgradeName);
+            // Recupera il nome dell'upgrade
+            const name = btn.getAttribute('data-upgrade-name');
+            if (!name) return; // Se non ha nome, ignora
+
+            // --- SMISTAMENTO LOGICA IN BASE ALLA CLASSE ---
+
+            if (btn.classList.contains('prestige-btn')) {
+                // CASO 1: LABORATORIO (Quello che non funzionava)
+                if (typeof buyPrestigeUpgrade === 'function') {
+                    buyPrestigeUpgrade(name);
+                } else {
+                    console.error("ERRORE: buyPrestigeUpgrade non trovata!");
+                }
+
+            } else if (btn.classList.contains('buy-click-btn')) {
+                // CASO 2: POTENZIAMENTI CLICK
+                if (typeof buyClickUpgrade === 'function') buyClickUpgrade(name);
+
+            } else if (btn.classList.contains('enhancement-btn')) {
+                // CASO 3: MIGLIORIE AUTO
+                if (typeof buyBuildingEnhancement === 'function') buyBuildingEnhancement(name);
+
+            } else if (btn.classList.contains('buy-building-btn')) {
+                // CASO 4: EDIFICI (ASSISTENTI)
+                if (typeof buyBuilding === 'function') buyBuilding(name);
+            }
         });
     }
 
@@ -380,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getGameState: () => gameState,
         saveGame: saveGame,
         showToast: showToast,
+
         playSound: playSound,
         updateStatsUI: updateStatsUI,
         formatNumber: formatNumber,
@@ -390,6 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('audio').forEach(audio => { audio.volume = gameState.user.masterVolume; });
         },
         startGameRoutines: startGameRoutines,
+        executePrestige: executePrestige,
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
