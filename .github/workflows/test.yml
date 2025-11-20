@@ -4,7 +4,7 @@ name: Deploy to test Server FTP 🛠️
 on:
   push:
     branches:
-      - deploy
+      - test
 
 # 2. Definisci il Job (l'attività)
 jobs:
