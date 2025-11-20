@@ -189,3 +189,33 @@ body.bluescreen-active {
     margin-bottom: -4px;
     z-index: 9999;
 }
+
+/* --- Github Link in basso a sinistra --- */
+#github-link-container {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 1000;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    user-select: text;
+}
+
+#github-link-container:hover {
+    opacity: 1;
+}
+
+#github-link-container a {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.github-icon {
+    height: 35px;
+    vertical-align: middle;
+}
