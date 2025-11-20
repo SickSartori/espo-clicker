@@ -66,4 +66,16 @@
     .modal-content {
         max-width: 95%;
     }
+
+    /* 5. OVERRIDE GITHUB ICONA per Mobile */
+    #github-link-container {
+        bottom: 20px;
+        right: 20px;
+        opacity: 0.3;
+    }
+
+    .github-icon {
+        width: 30px;
+        height: 30px;
+    }
 }

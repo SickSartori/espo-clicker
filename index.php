@@ -63,6 +63,12 @@
         <img src="./image/bug.png" alt="Ticket Critico!">
     </div>  
 
+    <div id="github-link-container">
+        <a href="https://github.com/SickSartori/espo-clicker/tree/develop" target="_blank" title="Repository GitHub">
+            <img src="./image/github-icon.svg" class="github-icon" alt="GitHub Logo">
+        </a>
+    </div>
+
     <audio id="sound-click" src="./sounds/Click.mp3" preload="auto"></audio>
     <audio id="sound-buy" src="./sounds/Buy.mp3" preload="auto"></audio>
     <audio id="sound-achievement" src="./sounds/Achievement.mp3" preload="auto"></audio>
