@@ -293,8 +293,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (prev) {
                             filterSelect.value = prev;
                             gameState.filterSettings.globalFilter = prev;
+
+                            filterSelect.removeAttribute('data-prev');
                         }
-                        // Se non c'era (es. avvio gioco), lascia quello corrente
+                        // Se non c'era (es. cambio diretto Click <-> Auto), lascia quello corrente
                     }
 
                     // Applica subito le modifiche visive
