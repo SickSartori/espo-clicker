@@ -14,6 +14,8 @@ function getInitialGameState() {
         lifetimeScore: 0,
         lastSaveTimestamp: Date.now(),
         lastBluescreenTimestamp: 0,
+        crunchTimeEndTime: 0,
+        crunchTimeCooldownEnd: 0,
 
         user: {
             username: 'Giocatore',

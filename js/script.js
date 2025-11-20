@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (gameState.isDeleting) return;
 
+        gameState.crunchTimeEndTime = crunchTimeEndTime;
+        gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+
         gameState.lastSaveTimestamp = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 
@@ -68,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedState) {
             try {
                 deepMerge(gameState, JSON.parse(savedState));
+                if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
+                if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
@@ -175,13 +180,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         setInterval(gameLoop, 33); // 30 FPS circa
-        setInterval(saveGame, 5000);
+        setInterval(saveGame, 5000); // Auto-save ogni 5s
 
         setInterval(() => {
             submitScoreToLeaderboard(gameState.user.username, gameState.lifetimeScore, gameState.totalResets);
         }, 30000);
 
         scheduleGoldenBug();
+
+        // [FIX SALVATAGGIO] Salva istantaneamente quando chiudi o ricarichi la pagina
+        window.addEventListener('beforeunload', () => {
+            // Chiamiamo saveGame() in modo sincrono per il localStorage
+            // (La parte cloud potrebbe non fare in tempo, ma il locale è garantito)
+            saveGame();
+        });
     }
 
     function initializeGame() {

@@ -390,9 +390,15 @@ function updateUI() {
 
     // 4. Aggiorna Bottoni e Stati (Codice standard)
     for (const key in gameState.buildings) {
-        const currentCost = calculateBulkCost(key, buyMultiplier);
+        let checkAmount = (buyMultiplier === 'MAX') ? 1 : buyMultiplier;
+
+        const currentCost = calculateBulkCost(key, checkAmount);
         const btn = document.getElementById(`buy-${key}`);
-        if (btn) btn.disabled = (gameState.score < currentCost);
+
+        if (btn) {
+            // Disabilita se non hai abbastanza punti
+            btn.disabled = (gameState.score < currentCost);
+        }
     }
 
     // Aggiorna altri negozi
@@ -818,19 +824,45 @@ function updateClickStore() {
 }
 
 function updateStatsUI() {
+    const statsList = document.getElementById('stats-list');
+    if (!statsList) return;
+
+    // Verifica soglia
+    const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
+    const progressColor = progress >= 100 ? '#2ecc71' : '#e74c3c';
+
     statsList.innerHTML = `
         <div class="stat-item">
             <span class="stat-label">Tempo di gioco totale</span>
             <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
         </div>
+        
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
+
         <div class="stat-item">
-            <span class="stat-label">Bug (Run attuale)</span>
-            <span class="stat-value">${formatNumber(gameState.totalScore)}</span>
+            <span class="stat-label">Bug Attuali (Spendibili)</span>
+            <span class="stat-value" style="color: #fff;">${formatNumber(gameState.score)}</span>
         </div>
+
         <div class="stat-item">
-            <span class="stat-label" style="color: #f1c40f;">Highscore (Totale)</span>
+            <span class="stat-label" style="color: #5dade2;">Highscore Livello (Run)</span>
+            <span class="stat-value" style="color: #5dade2;">${formatNumber(gameState.totalScore)}</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 0 10px;">
+            <div style="flex-grow: 1; height: 6px; background: #34495e; border-radius: 3px; overflow: hidden;">
+                <div style="width: ${progress}%; height: 100%; background: ${progressColor}; transition: width 0.5s;"></div>
+            </div>
+            <span style="font-size: 0.75rem; color: ${progressColor};">${progress.toFixed(1)}% (Target: 10M)</span>
+        </div>
+
+        <div class="stat-item">
+            <span class="stat-label" style="color: #f1c40f;">Highscore Carriera (Totale)</span>
             <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
         </div>
+
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
+
         <div class="stat-item">
             <span class="stat-label">Click totali</span>
             <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>

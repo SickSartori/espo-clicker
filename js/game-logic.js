@@ -77,17 +77,28 @@ function recalculateCPS() {
 
 function activateCrunchTime() {
     const now = Date.now();
+    // Se è attivo o in cooldown, esci
     if (now < crunchTimeCooldownEnd || now < crunchTimeEndTime) return;
 
-    crunchTimeMultiplier = 3;
+    // [MODIFICA] Potenza aumentata: da 3 a 7 (o 10 se vuoi esagerare)
+    crunchTimeMultiplier = 7;
+
+    // Durata: 30 secondi
     crunchTimeEndTime = now + 30000;
+
+    // Cooldown: 5 minuti (300.000 ms)
     crunchTimeCooldownEnd = now + 300000;
+
+    // Aggiorna subito il gameState per evitare exploit con F5 immediato
+    gameState.crunchTimeEndTime = crunchTimeEndTime;
+    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    if (window.EspooClicker) window.EspooClicker.saveGame(); // Salva su disco
 
     playSound('sound-achievement');
     recalculateCPS();
     refreshAllStores();
     updateUI();
-    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x3! 🔥");
+    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x7! 🔥");
 }
 
 function triggerBluescreen(multiplier) {
