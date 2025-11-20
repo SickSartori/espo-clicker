@@ -27,6 +27,7 @@
         <button id="open-stats-btn" class="overlay-btn">📈 Statistiche</button>
         <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button>
         <button id="open-leaderboard-btn" class="overlay-btn">🏆 Classifica</button>
+        <button id="open-prestige-hub-btn" class="overlay-btn" style="display: none; border-color: #9b59b6; color: #e8daef;">👑 Promozione</button>
     </div>
 
     <div id="game-container">
@@ -35,7 +36,16 @@
             <div class="tabs-header">
                 <button class="tab-btn active" data-target="upgrade-store" id="tab-click">⚡ Click</button>
                 <button class="tab-btn" data-target="enhancement-store" id="tab-auto">⚙️ Auto</button>
-                <button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige">⭐ Lab</button>
+                <button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige" style="display: none;">⭐ Lab</button>
+            </div>
+            
+            <div id="global-filter-section">
+                <select id="global-filter-select">
+                    <option value="available">🛒 Da Comprare (Disponibili)</option>
+                    <option value="locked">🔒 In Arrivo (Bloccati)</option>
+                    <option value="purchased">✅ Già Presi (Posseduti)</option>
+                    <option value="all">👁️ Mostra Tutto</option>
+                </select>
             </div>
 
             <?php include 'includes/tab_click.php'; ?>

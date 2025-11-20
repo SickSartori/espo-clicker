@@ -151,3 +151,26 @@
         </div>
     </div>
 </div>
+<div id="prestige-hub-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;"> <button class="modal-close-btn">&times;</button>
+        <h2 style="background-color: #4a235a; border-color: #8e44ad; color: #f1c40f;">👑 Ufficio Promozioni</h2>
+        
+        <div class="settings-content">
+            <div id="prestige-section" style="text-align: center; padding: 20px;">
+                <p style="color: #bdc3c7; font-size: 1.1rem;">Sei pronto per la promozione?</p>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin-bottom: 20px;">
+                    Perderai bug ed edifici, ma otterrai Token Lab e Bonus permanenti.
+                </p>
+                
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="margin: 0; color: #bdc3c7;">Guadagnerai:</p>
+                    <p><span id="prestige-gain-display" style="font-size: 2.5rem; font-weight: bold; color: #2ecc71;">0</span> Token</p>
+                </div>
+
+                <button id="prestige-btn" class="buy-btn danger-btn" style="background-color: #8e44ad; font-size: 1.2rem; padding: 15px;">
+                    ✍️ Firma e Accetta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
