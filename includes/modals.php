@@ -104,10 +104,39 @@
     </div>
 </div>
 
+<div id="prestige-hub-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 450px; border-color: #9b59b6;"> 
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background-color: #4a235a; border-bottom: 1px solid #9b59b6; color: #f1c40f; text-align: center;">
+            👑 Ufficio Promozioni
+        </h2>
+        
+        <div class="settings-content" style="text-align: center; padding: 30px 20px;">
+            <p style="color: #e0e0e0; font-size: 1.1rem; font-weight: bold; margin-bottom: 10px;">
+                Valutazione Carriera
+            </p>
+            <p style="color: #bdc3c7; font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">
+                L'azienda è pronta a offrirti una promozione.<br>
+                Vuoi visualizzare il contratto?
+            </p>
+            
+            <div style="background: rgba(155, 89, 182, 0.1); border: 1px solid #8e44ad; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <p style="margin: 0 0 5px 0; color: #d7bde2; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Stima Guadagno</p>
+                <p style="margin: 0; line-height: 1;">
+                    <span id="prestige-gain-display" style="font-size: 3rem; font-weight: 800; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);">0</span>
+                    <span style="font-size: 1.2rem; color: #2ecc71; font-weight: bold;"> Token</span>
+                </p>
+            </div>
+
+            <button id="btn-go-to-contract" class="buy-btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); border: none; font-size: 1.1rem; padding: 15px; width: 100%; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);">
+                📄 Visualizza Contratto
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="prestige-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content contract-modal">
-        <button class="modal-close-btn">&times;</button>
-        
         <div class="contract-header">
             <h2>📜 Contratto di Promozione</h2>
             <p>L'azienda ha notato il tuo eccellente lavoro.</p>
@@ -144,8 +173,8 @@
         </div>
 
         <div class="contract-footer">
-            <button id="cancel-prestige-btn" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta Offerta</button>
-            <button id="confirm-prestige-btn" class="buy-btn prestige-btn signature-btn">
+            <button id="btn-cancel-contract" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta e Torna Indietro</button>
+            <button id="btn-confirm-prestige" class="buy-btn prestige-btn signature-btn">
                 ✍️ Firma e Accetta Promozione
             </button>
         </div>

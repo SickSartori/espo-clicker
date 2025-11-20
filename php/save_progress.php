@@ -5,6 +5,11 @@ header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
 $username = $data['username'];
 $password = $data['password'];
+
+if (!isset($data['saveData'])) {
+    die(json_encode(["status" => "error", "message" => "Nessun dato di salvataggio."]));
+}
+
 $saveData = json_encode($data['saveData']); 
 
 // Verifica su USERS dinamica

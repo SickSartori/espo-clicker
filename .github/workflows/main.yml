@@ -9,26 +9,33 @@ on:
         required: false
         default: 'Uscita versione #.#'
 
-# 2. Definisci il Job (l'attività)
+# 2. Definizione del Job
 jobs:
-  deploy:
-    name: Distribuzione FTP
-    runs-on: ubuntu-latest # Esegui il job su una macchina virtuale Linux
+  deploy-production:
+    name: 🚀 Distribuzione Manuale FTP
+    runs-on: ubuntu-latest
 
-    # 3. Steps del Job
     steps:
-      # Step 1: Checkout del codice
-      - name: Checkout del codice sorgente
-        uses: actions/checkout@v4 # Scarica i file dalla repository
+      # Step 1: Scarica il codice dal branch selezionato nel menu a tendina
+      - name: Checkout del codice
+        uses: actions/checkout@v4
 
+      # Step 2: Forza la configurazione su PRODUCTION
       - name: 🔧 Set config to PRODUCTION
         run: |
+          echo "Impostazione ambiente su PRODUCTION..."
           jq '.instancename = "production"' php/config.json > php/config.tmp && mv php/config.tmp php/config.json
+          
+          # Verifica nei log (opzionale)
+          grep "instancename" php/config.json
 
-      # Step 2: Caricamento FTP
-      # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
-      # L'azione FTP caricherà direttamente tutti i file scaricati.
-      - name: Caricamento FTP su Server
+      # Step 3: Rimuovi file di sviluppo/cheat
+      - name: 🗑️ Rimuovi file di debug (cheatboard.js)
+        run: rm -f js/cheatboard.js
+
+      # Step 4: Caricamento FTP
+      # NOTA: Assicurati che FTP_REMOTE_PATH punti alla cartella di produzione (es. public_html)
+      - name: 📂 Caricamento FTP su Server
         uses: SamKirkland/FTP-Deploy-Action@master
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -38,3 +45,4 @@ jobs:
             **/.git*
             **/.git*/**
             .github/**
+            **/.DS_Store
