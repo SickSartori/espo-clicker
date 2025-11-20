@@ -1,85 +1,117 @@
 // --------- 1. DATI E STATO DEL GIOCO ---------
 
-let gameState = {
-    score: 0,
-    baseClickValue: 1,
-    totalClicks: 0,
-    totalScore: 0,
-    prestigePoints: 0,
-    lifetimePrestigePoints: 0,
-    totalResets: 0,
-    totalGoldenBugsClicked: 0,
-    totalPlayTime: 0,
-    lifetimeScore: 0,
-    lastSaveTimestamp: Date.now(),
-    lastBluescreenTimestamp: 0,
+function getInitialGameState() {
+    return {
+        score: 0,
+        baseClickValue: 1,
+        totalClicks: 0,
+        totalScore: 0,
+        prestigePoints: 0,
+        lifetimePrestigePoints: 0,
+        totalResets: 0,
+        totalGoldenBugsClicked: 0,
+        totalPlayTime: 0,
+        lifetimeScore: 0,
+        lastSaveTimestamp: Date.now(),
+        lastBluescreenTimestamp: 0,
+        crunchTimeEndTime: 0,
+        crunchTimeCooldownEnd: 0,
 
-    user: {
-        username: 'Giocatore',
-        masterVolume: 1.0
-    },
-    filterSettings: {
-        globalFilter: 'available' // Unica impostazione per tutto
-    },
+        user: {
+            username: 'Giocatore',
+            masterVolume: 1.0
+        },
+        filterSettings: {
+            globalFilter: 'available'
+        },
 
-    buildings: {
-        assistenteQa: { count: 0 },
-        jiraTicket: { count: 0 },
-        teamQa: { count: 0 },
-        automazioneTest: { count: 0 },
-        metodologiaAgile: { count: 0 },
-        aiDebugger: { count: 0 },
-        quantumServer: { count: 0 },
-        reteNeuraleGalattica: { count: 0 },
-        debugTemporale: { count: 0 }
-    },
-    clickUpgrades: {
-        caffeForte: { purchased: false },
-        tastieraErgonomica: { purchased: false },
-        mouseGaming: { purchased: false },
-        manoBionica: { purchased: false },
-        ergonomiaEstrema: { purchased: false },
-        hacking: { purchased: false },
-        doppioClick: { purchased: false },
-        aiClick: { purchased: false },
-        clickAutomatico: { purchased: false },
-        clickDivino: { purchased: false }
-    },
-    prestigeUpgrades: {
-        sinergia: { count: 0 },
-        accelerazione: { purchased: false },
-        ticketPremium: { purchased: false },
-        outsourcing: { count: 0 },
-        paracadute: { purchased: false },
-        crunchTime: { purchased: false }
-    },
-    buildingEnhancements: {
-        caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
-        scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
-        managerJunior: { purchased: false }, jiraAI: { purchased: false },
-        jiraCloud: { purchased: false }, jiraDataCenter: { purchased: false },
-        jiraPremium: { purchased: false }, jiraSelfHealing: { purchased: false },
-        scrum: { purchased: false }, teamLeader: { purchased: false },
-        certificazioneISTQB: { purchased: false }, bonusProduttivita: { purchased: false },
-        teamGlobale: { purchased: false }, selenium: { purchased: false },
-        cucumber: { purchased: false }, ciCd: { purchased: false },
-        docker: { purchased: false }, kubernetes: { purchased: false },
-        kanban: { purchased: false }, safe: { purchased: false },
-        productOwner: { purchased: false }, releaseTrain: { purchased: false },
-        devOps: { purchased: false }, deepLearning: { purchased: false },
-        machineLearning: { purchased: false }, retiNeurali: { purchased: false },
-        quantumComputing: { purchased: false }, skynet: { purchased: false }
-    },
-    achievements: {
-        primoClick: { unlocked: false },
-        centoClick: { unlocked: false },
-        milleBug: { unlocked: false },
-        primoAssistente: { unlocked: false },
-        dieciAssistenti: { unlocked: false },
-        unJira: { unlocked: false },
-        unodiTutto: { unlocked: false }
-    }
-};
+        buildings: {
+            assistenteQa: { count: 0 },
+            jiraTicket: { count: 0 },
+            teamQa: { count: 0 },
+            automazioneTest: { count: 0 },
+            metodologiaAgile: { count: 0 },
+            aiDebugger: { count: 0 },
+            quantumServer: { count: 0 },
+            reteNeuraleGalattica: { count: 0 },
+            debugTemporale: { count: 0 }
+        },
+        clickUpgrades: {
+            caffeForte: { purchased: false },
+            tastieraErgonomica: { purchased: false },
+            mouseGaming: { purchased: false },
+            manoBionica: { purchased: false },
+            ergonomiaEstrema: { purchased: false },
+            hacking: { purchased: false },
+            doppioClick: { purchased: false },
+            aiClick: { purchased: false },
+            clickAutomatico: { purchased: false },
+            clickDivino: { purchased: false }
+        },
+        prestigeUpgrades: {
+            sinergia: { count: 0 },
+            accelerazione: { purchased: false },
+            ticketPremium: { purchased: false },
+            outsourcing: { count: 0 },
+            paracadute: { purchased: false },
+            crunchTime: { purchased: false }
+        },
+        buildingEnhancements: {
+            // ... (Qui vanno tutte le tue 30 migliorie come prima) ...
+            // Per brevità, copiale dal tuo file originale, la struttura è identica
+            caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
+            scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
+            managerJunior: { purchased: false }, jiraAI: { purchased: false },
+            jiraCloud: { purchased: false }, jiraDataCenter: { purchased: false },
+            jiraPremium: { purchased: false }, jiraSelfHealing: { purchased: false },
+            scrum: { purchased: false }, teamLeader: { purchased: false },
+            certificazioneISTQB: { purchased: false }, bonusProduttivita: { purchased: false },
+            teamGlobale: { purchased: false }, selenium: { purchased: false },
+            cucumber: { purchased: false }, ciCd: { purchased: false },
+            docker: { purchased: false }, kubernetes: { purchased: false },
+            kanban: { purchased: false }, safe: { purchased: false },
+            productOwner: { purchased: false }, releaseTrain: { purchased: false },
+            devOps: { purchased: false }, deepLearning: { purchased: false },
+            machineLearning: { purchased: false }, retiNeurali: { purchased: false },
+            quantumComputing: { purchased: false }, skynet: { purchased: false }
+        },
+        achievements: {
+            primoClick: { unlocked: false },
+            centoClick: { unlocked: false },
+            milleBug: { unlocked: false },
+            primoAssistente: { unlocked: false },
+            dieciAssistenti: { unlocked: false },
+            unJira: { unlocked: false },
+            unodiTutto: { unlocked: false }
+        }
+    };
+}
+
+let gameState = getInitialGameState();
+
+function resetGameToDefault() {
+    // Sovrascriviamo le proprietà dell'oggetto esistente per non rompere i riferimenti
+    const freshState = getInitialGameState();
+
+    // Reset ricorsivo (Deep copy manuale o assegnazione)
+    // Nota: Assegniamo le proprietà principali
+    Object.assign(gameState, freshState);
+
+    // Poiché buildings e upgrades sono oggetti annidati, dobbiamo assicurarci che vengano resettati profondamente
+    // Il metodo più sicuro e brutale:
+    gameState.buildings = JSON.parse(JSON.stringify(freshState.buildings));
+    gameState.clickUpgrades = JSON.parse(JSON.stringify(freshState.clickUpgrades));
+    gameState.prestigeUpgrades = JSON.parse(JSON.stringify(freshState.prestigeUpgrades));
+    gameState.buildingEnhancements = JSON.parse(JSON.stringify(freshState.buildingEnhancements));
+    gameState.achievements = JSON.parse(JSON.stringify(freshState.achievements));
+    gameState.user = JSON.parse(JSON.stringify(freshState.user));
+
+    // Pulisce anche variabili calcolate globali in game-data
+    cookiesPerSecond = 0;
+    prestigeBonus = 1;
+    clickCPSBonus = 1;
+    clickHistory = [];
+}
 
 // Dati statici (costi, nomi, ecc.)
 const gameData = {

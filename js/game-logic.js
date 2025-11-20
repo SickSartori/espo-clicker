@@ -77,17 +77,28 @@ function recalculateCPS() {
 
 function activateCrunchTime() {
     const now = Date.now();
+    // Se è attivo o in cooldown, esci
     if (now < crunchTimeCooldownEnd || now < crunchTimeEndTime) return;
 
-    crunchTimeMultiplier = 3;
+    // [MODIFICA] Potenza aumentata: da 3 a 7 (o 10 se vuoi esagerare)
+    crunchTimeMultiplier = 7;
+
+    // Durata: 30 secondi
     crunchTimeEndTime = now + 30000;
+
+    // Cooldown: 5 minuti (300.000 ms)
     crunchTimeCooldownEnd = now + 300000;
+
+    // Aggiorna subito il gameState per evitare exploit con F5 immediato
+    gameState.crunchTimeEndTime = crunchTimeEndTime;
+    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    if (window.EspooClicker) window.EspooClicker.saveGame(); // Salva su disco
 
     playSound('sound-achievement');
     recalculateCPS();
     refreshAllStores();
     updateUI();
-    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x3! 🔥");
+    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x7! 🔥");
 }
 
 function triggerBluescreen(multiplier) {
@@ -465,16 +476,19 @@ function scheduleGoldenBug() {
 
 function spawnGoldenBug() {
     goldenBug.style.display = 'none';
-    const rect = gameContainer.getBoundingClientRect();
-    const spawnWidth = document.getElementById('left-column').clientWidth + document.getElementById('center-column').clientWidth;
-    const spawnHeight = document.getElementById('left-column').clientHeight;
-    const x = Math.random() * (spawnWidth - 50);
-    const y = Math.random() * (spawnHeight - 50);
-    goldenBug.style.left = `${rect.left + x}px`;
-    goldenBug.style.top = `${rect.top + y}px`;
+    let bugWidth = goldenBug.style.width;
+    let bugHeight = goldenBug.style.height;
+    const offsetAreaAnimation = 40;
+    const rect = document.getElementById('center-column').getBoundingClientRect();
+    const spawnWidth = rect.width;
+    const spawnHeight = rect.height;
+    const x = Math.random() * (spawnWidth - (bugWidth / 2));
+    const y = Math.random() * (spawnHeight - (bugHeight / 2));
+    goldenBug.style.left = `${rect.left + x - offsetAreaAnimation}px`;
+    goldenBug.style.top = `${rect.top + y - offsetAreaAnimation}px`;
     goldenBug.style.display = 'block';
-    setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
-    scheduleGoldenBug();
+    //setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
+    //scheduleGoldenBug();
 }
 
 function clickGoldenBug() {

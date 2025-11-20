@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8';
 
     async function saveGame() {
-        gameState.lastSaveTimestamp = Date.now();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 
         if (gameState.isDeleting) return;
+
+        gameState.crunchTimeEndTime = crunchTimeEndTime;
+        gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
 
         gameState.lastSaveTimestamp = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
@@ -70,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedState) {
             try {
                 deepMerge(gameState, JSON.parse(savedState));
+                if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
+                if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
@@ -158,6 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateUI();
 
+        if (typeof updatePrestigeVisuals === 'function') {
+            updatePrestigeVisuals();
+        }
         // --- FIX STATISTICHE LIVE ---
         const statsModal = document.getElementById('stats-modal');
         if (statsModal && statsModal.style.display === 'flex') {
@@ -174,13 +180,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         setInterval(gameLoop, 33); // 30 FPS circa
-        setInterval(saveGame, 5000);
+        setInterval(saveGame, 5000); // Auto-save ogni 5s
 
         setInterval(() => {
             submitScoreToLeaderboard(gameState.user.username, gameState.lifetimeScore, gameState.totalResets);
         }, 30000);
 
         scheduleGoldenBug();
+
+        // [FIX SALVATAGGIO] Salva istantaneamente quando chiudi o ricarichi la pagina
+        window.addEventListener('beforeunload', () => {
+            // Chiamiamo saveGame() in modo sincrono per il localStorage
+            // (La parte cloud potrebbe non fare in tempo, ma il locale è garantito)
+            saveGame();
+        });
     }
 
     function initializeGame() {
@@ -296,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             filterSelect.removeAttribute('data-prev');
                         }
-                        // Se non c'era (es. avvio gioco), lascia quello corrente
+                        // Se non c'era (es. cambio diretto Click <-> Auto), lascia quello corrente
                     }
 
                     // Applica subito le modifiche visive
@@ -330,24 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.detail === 0) return; clickGoldenBug();
         });
 
-        if (prestigeBtn) {
-            // Rimuovi listener vecchi clonando il nodo (trick veloce)
-            const newPrestigeBtn = prestigeBtn.cloneNode(true);
-            prestigeBtn.parentNode.replaceChild(newPrestigeBtn, prestigeBtn);
-            prestigeBtn = newPrestigeBtn; // Aggiorna riferimento
-
-            prestigeBtn.addEventListener('click', (e) => {
-                if (e.detail === 0) return;
-                prestigeBtn.blur();
-                openPrestigeContract(); // <--- Chiama la nuova funzione di apertura
-            });
-        }
-        const confirmPrestigeBtn = document.getElementById('confirm-prestige-btn');
-        if (confirmPrestigeBtn) {
-            confirmPrestigeBtn.addEventListener('click', () => {
-                executePrestige(); // <--- Chiama la funzione di esecuzione
-            });
-        }
 
         // 3. Bottone "Rifiuta" nel Modale -> Chiude
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
@@ -358,22 +353,44 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (leftColumn) leftColumn.addEventListener('click', (e) => {
-            const btn = e.target.closest('button.buy-btn');
-            if (!btn) return;
-            if (e.detail === 0) return; btn.blur(); e.stopPropagation();
+        // --- GESTIONE CLICK UNIFICATA (GLOBALE) ---
+        // Intercetta i click su QUALSIASI bottone di acquisto nella pagina
+        document.addEventListener('click', (e) => {
+            // 1. Cerca se l'elemento cliccato (o un suo genitore) è un bottone di acquisto
+            const btn = e.target.closest('.buy-btn');
 
-            if (btn.classList.contains('buy-click-btn')) buyClickUpgrade(btn.dataset.upgradeName);
-            else if (btn.classList.contains('enhancement-btn')) buyBuildingEnhancement(btn.dataset.upgradeName);
-        });
+            // Se non ho cliccato un bottone, o se è disabilitato/posseduto, esci
+            if (!btn || btn.disabled || btn.classList.contains('owned')) return;
 
-        if (rightColumn) rightColumn.addEventListener('click', (e) => {
-            const btn = e.target.closest('button.buy-btn');
-            if (!btn) return;
-            if (e.detail === 0) return; btn.blur(); e.stopPropagation();
+            // Rimuovi il focus per estetica (toglie il bordo blu)
+            btn.blur();
 
-            if (btn.classList.contains('buy-building-btn')) buyBuilding(btn.dataset.upgradeName);
-            else if (btn.classList.contains('prestige-btn')) buyPrestigeUpgrade(btn.dataset.upgradeName);
+            // Recupera il nome dell'upgrade
+            const name = btn.getAttribute('data-upgrade-name');
+            if (!name) return; // Se non ha nome, ignora
+
+            // --- SMISTAMENTO LOGICA IN BASE ALLA CLASSE ---
+
+            if (btn.classList.contains('prestige-btn')) {
+                // CASO 1: LABORATORIO (Quello che non funzionava)
+                if (typeof buyPrestigeUpgrade === 'function') {
+                    buyPrestigeUpgrade(name);
+                } else {
+                    console.error("ERRORE: buyPrestigeUpgrade non trovata!");
+                }
+
+            } else if (btn.classList.contains('buy-click-btn')) {
+                // CASO 2: POTENZIAMENTI CLICK
+                if (typeof buyClickUpgrade === 'function') buyClickUpgrade(name);
+
+            } else if (btn.classList.contains('enhancement-btn')) {
+                // CASO 3: MIGLIORIE AUTO
+                if (typeof buyBuildingEnhancement === 'function') buyBuildingEnhancement(name);
+
+            } else if (btn.classList.contains('buy-building-btn')) {
+                // CASO 4: EDIFICI (ASSISTENTI)
+                if (typeof buyBuilding === 'function') buyBuilding(name);
+            }
         });
     }
 
@@ -382,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getGameState: () => gameState,
         saveGame: saveGame,
         showToast: showToast,
+
         playSound: playSound,
         updateStatsUI: updateStatsUI,
         formatNumber: formatNumber,
@@ -392,11 +410,26 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('audio').forEach(audio => { audio.volume = gameState.user.masterVolume; });
         },
         startGameRoutines: startGameRoutines,
+        executePrestige: executePrestige,
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
+                    // 1. Reset pulito
+                    resetGameToDefault();
+
+                    // 2. Carica i dati (che potrebbero contenere il VECCHIO username)
                     deepMerge(gameState, JSON.parse(cloudJSON));
+
+                    // 3. [FIX CRITICO] Forza l'allineamento del nome utente
+                    // Se il JSON cloud ha un nome vecchio, lo sovrascriviamo con quello della sessione attuale
+                    const currentSessionUser = sessionStorage.getItem('espooUser');
+                    if (currentSessionUser && gameState.user.username !== currentSessionUser) {
+                        console.warn(`Fixing username mismatch: ${gameState.user.username} -> ${currentSessionUser}`);
+                        gameState.user.username = currentSessionUser;
+                    }
+
+                    // 4. Ricalcoli standard
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
@@ -404,6 +437,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
                     updateUI();
+
+                    // 5. Sovrascrivi subito il localStorage per eliminare tracce del vecchio nome
+                    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+
                     showToast("Progressi scaricati dal Cloud!");
                 } catch (e) { console.error("Errore parsing cloud", e); }
             }
