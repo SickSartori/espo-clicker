@@ -274,8 +274,8 @@
     cursor: pointer;
     z-index: 999;
     display: none;
-    animation: wobble 0.5s infinite, bugFloat 3s ease-in-out infinite;
     transition: all 0.3s;
+    animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
     filter: drop-shadow(0 0 10px #facc15);
 }
 
@@ -301,25 +301,49 @@
     user-select: text;
 }
 
-@keyframes bugFloat {
+@keyframes bugRandomWander {
     0% {
         transform: translate(0, 0) rotate(0deg);
     }
 
-    25% {
-        transform: translate(20px, -20px) rotate(5deg);
+    10% {
+        transform: translate(18px, -12px) rotate(25deg);
+    }
+
+    20% {
+        transform: translate(-15px, 10px) rotate(-15deg);
+    }
+
+    30% {
+        transform: translate(12px, 18px) rotate(45deg);
+    }
+
+    40% {
+        transform: translate(-20px, -5px) rotate(-30deg);
     }
 
     50% {
-        transform: translate(0, -40px) rotate(0deg);
+        transform: translate(8px, -18px) rotate(10deg);
     }
 
-    75% {
-        transform: translate(-20px, -20px) rotate(-5deg);
+    60% {
+        transform: translate(-12px, 15px) rotate(-20deg);
+    }
+
+    70% {
+        transform: translate(15px, -8px) rotate(30deg);
+    }
+
+    80% {
+        transform: translate(-18px, -15px) rotate(-40deg);
+    }
+
+    90% {
+        transform: translate(5px, 12px) rotate(15deg);
     }
 
     100% {
-        transform: translate(0, 0) rotate(0deg);
+        transform: translate(-10px, -20px) rotate(-10deg);
     }
 }
 

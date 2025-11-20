@@ -64,7 +64,7 @@
     </div>  
 
     <div id="github-link-container">
-        <a href="https://github.com/SickSartori/espo-clicker/tree/develop" target="_blank" title="Repository GitHub">
+        <a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
             <img src="./image/github-icon.svg" class="github-icon" alt="GitHub Logo">
         </a>
     </div>

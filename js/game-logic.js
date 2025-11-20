@@ -476,16 +476,19 @@ function scheduleGoldenBug() {
 
 function spawnGoldenBug() {
     goldenBug.style.display = 'none';
-    const rect = gameContainer.getBoundingClientRect();
-    const spawnWidth = document.getElementById('left-column').clientWidth + document.getElementById('center-column').clientWidth;
-    const spawnHeight = document.getElementById('left-column').clientHeight;
-    const x = Math.random() * (spawnWidth - 50);
-    const y = Math.random() * (spawnHeight - 50);
-    goldenBug.style.left = `${rect.left + x}px`;
-    goldenBug.style.top = `${rect.top + y}px`;
+    let bugWidth = goldenBug.style.width;
+    let bugHeight = goldenBug.style.height;
+    const offsetAreaAnimation = 40;
+    const rect = document.getElementById('center-column').getBoundingClientRect();
+    const spawnWidth = rect.width;
+    const spawnHeight = rect.height;
+    const x = Math.random() * (spawnWidth - (bugWidth / 2));
+    const y = Math.random() * (spawnHeight - (bugHeight / 2));
+    goldenBug.style.left = `${rect.left + x - offsetAreaAnimation}px`;
+    goldenBug.style.top = `${rect.top + y - offsetAreaAnimation}px`;
     goldenBug.style.display = 'block';
-    setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
-    scheduleGoldenBug();
+    //setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
+    //scheduleGoldenBug();
 }
 
 function clickGoldenBug() {
