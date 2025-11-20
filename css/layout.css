@@ -34,17 +34,17 @@
 }
 
 #left-column {
-    flex: 1 1 340px;
+    flex: 1 1 30%;
     overflow-y: hidden;
 }
 
 #center-column {
-    flex: 1.5 1 400px;
+    flex: 1.5 1 40%;
     overflow-y: hidden;
 }
 
 #right-column {
-    flex: 1 1 340px;
+    flex: 1 1 30%;
 }
 
 /* Header dei tab (Click/Auto/Lab) */
