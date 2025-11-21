@@ -312,6 +312,20 @@ function openPrestigeContract() {
 
 // 2. Esegue il reset (Chiamata dal bottone "Firma")
 async function executePrestige() {
+    const overlay = document.getElementById('prestige-transition-overlay');
+    const modal = document.getElementById('prestige-modal');
+
+    // 1. Chiudi modale contratto
+    if (modal) modal.style.display = 'none';
+
+    // 2. Avvia Animazione Overlay
+    if (overlay) {
+        overlay.style.display = 'flex';
+        // Timeout breve per permettere al browser di renderizzare il display:flex prima dell'opacity
+        setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
+    // 3. Calcoli di Prestigio (Back-end logic)
     const gained = calculatePrestigeGained();
     let newPrestigePoints = gameState.prestigePoints + gained;
     let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
@@ -322,6 +336,7 @@ async function executePrestige() {
         startBonusBugs = Math.floor(gameState.totalScore * 0.05);
     }
 
+    // Salva i dati che devono persistere
     let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
     let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
     let oldTotalResets = gameState.totalResets + 1;
@@ -330,8 +345,14 @@ async function executePrestige() {
     let oldLifetimeScore = gameState.lifetimeScore;
     let oldUser = gameState.user;
 
+    // ATTESA SCENICA (1.5 secondi)
+    // Diamo tempo all'utente di vedere l'animazione "Promozione in corso"
+    await new Promise(r => setTimeout(r, 1500));
+
+    // 4. RESET DELLO STATO (Soft Reset)
     let newState = createNewGameState();
 
+    // Re-inietta i dati persistenti
     newState.prestigePoints = newPrestigePoints;
     newState.lifetimePrestigePoints = newLifetimePrestigePoints;
 
@@ -349,22 +370,49 @@ async function executePrestige() {
     newState.user = oldUser;
     newState.lastSaveTimestamp = Date.now();
 
+    // Gestione bonus "Accelerazione" (Start con 1 QA)
     if (newState.prestigeUpgrades.accelerazione.purchased) {
         newState.buildings.assistenteQa.count = 1;
     }
 
+    // Sovrascrivi la variabile globale gameState
+    // Nota: Usiamo Object.assign per mantenere il riferimento dell'oggetto se necessario, 
+    // ma qui sostituiamo proprio le proprietà per sicurezza.
     gameState = newState;
-    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
-    const modal = document.getElementById('prestige-modal');
-    if (modal) modal.style.display = 'none';
+    // Reset Variabili Temporanee Logic
+    cookiesPerSecond = 0;
+    clickHistory = []; // Pulisce il grafico BPS
+    isBluescreenActive = false;
+    bluescreenMultiplier = 1;
+    document.body.classList.remove('bluescreen-active'); // Rimuove sfondo blu se c'era
+    try {
+        const soundBluescreen = document.getElementById('sound-bluescreen');
+        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
+    } catch (e) { }
 
-    if (window.EspooClicker && window.EspooClicker.showToast) {
-        window.EspooClicker.showToast("Promozione Accettata! Riavvio in corso...");
-    }
+    // 5. AGGIORNAMENTO UI TOTALE
+    calculatePrestigeBonus(); // Ricalcola i bonus base
+    calculateClickCPSBonus();
+    recalculateCPS();
+
+    // Forza il refresh grafico di tutti i negozi (resetta classi 'purchased', barre progresso, costi)
+    refreshAllStores();
+    updateUI();
+
+    // Salva il nuovo stato pulito
     if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
 
-    setTimeout(() => location.reload(), 1000);
+    // 6. Rimuovi Overlay
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            if (window.EspooClicker && window.EspooClicker.showToast) {
+                window.EspooClicker.showToast("Promozione completata! Buon lavoro!");
+            }
+        }, 500); // Aspetta la fine della transizione CSS (0.5s)
+    }
 }
 
 async function submitScoreToLeaderboard(username, score, prestigeLevel) {
@@ -395,9 +443,15 @@ function createNewGameState() {
             quantumServer: { count: 0 }, reteNeuraleGalattica: { count: 0 }, debugTemporale: { count: 0 }
         },
         clickUpgrades: {
-            caffeForte: { purchased: false }, tastieraErgonomica: { purchased: false },
-            manoBionica: { purchased: false }, hacking: { purchased: false },
-            doppioClick: { purchased: false }, clickAutomatico: { purchased: false },
+            caffeForte: { purchased: false },
+            tastieraErgonomica: { purchased: false },
+            mouseGaming: { purchased: false },       // MANCAVA
+            ergonomiaEstrema: { purchased: false },  // MANCAVA
+            manoBionica: { purchased: false },
+            hacking: { purchased: false },
+            doppioClick: { purchased: false },
+            aiClick: { purchased: false },           // MANCAVA
+            clickAutomatico: { purchased: false },
             clickDivino: { purchased: false }
         },
         prestigeUpgrades: {
