@@ -364,19 +364,16 @@ function updateUI() {
     // 3. GESTIONE HUD CENTRALE (Bonus & Token)
     const hudContainer = document.getElementById('hud-stats-container');
     const displayCareer = document.getElementById('display-career-bonus');
-    const displayTokens = document.getElementById('prestige-points-display'); // ID CORRETTO da col_center.php
+    const displayTokens = document.getElementById('prestige-points-display');
 
-    // Mostra l'HUD solo se hai fatto prestigio o hai punti
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer) hudContainer.style.display = 'flex';
 
-        // Calcolo Bonus Totale
         let baseBonus = (gameState.lifetimePrestigePoints || 0) * 0.01;
         let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
         let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
         let totalPercent = ((baseBonus + synergyBonus) * 100);
 
-        // Aggiorna valori HUD
         if (displayCareer) {
             displayCareer.textContent = `+${totalPercent.toFixed(1)}%`;
         }
@@ -388,20 +385,42 @@ function updateUI() {
         if (hudContainer) hudContainer.style.display = 'none';
     }
 
-    // 4. Aggiorna Bottoni e Stati (Codice standard)
+    // 4. Aggiorna Bottoni e Stati (CORRETTO PER MAX)
     for (const key in gameState.buildings) {
-        let checkAmount = (buyMultiplier === 'MAX') ? 1 : buyMultiplier;
 
-        const currentCost = calculateBulkCost(key, checkAmount);
+        // Logica Quantità Dinamica (presa da refreshAllStores)
+        let amountToBuy = buyMultiplier;
+        let isMax = false;
+
+        if (buyMultiplier === 'MAX') {
+            const max = calculateMaxAffordable(key);
+            // Se max è 0, impostiamo 1 per mostrare il costo del prossimo singolo acquisto
+            amountToBuy = max > 0 ? max : 1;
+            isMax = true;
+        }
+
+        const currentCost = calculateBulkCost(key, amountToBuy);
         const btn = document.getElementById(`buy-${key}`);
 
         if (btn) {
             // Disabilita se non hai abbastanza punti
             btn.disabled = (gameState.score < currentCost);
         }
+
+        // AGGIORNAMENTO TESTO COSTO IN TEMPO REALE
+        const costEl = document.getElementById(`cost-${key}`);
+        if (costEl) {
+            let prefix = "Costo";
+            // Se siamo in MAX e possiamo comprarne più di 1, mostra (+X)
+            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
+
+            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
+            costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
+        }
     }
 
-    // Aggiorna altri negozi
+    // Aggiorna altri negozi (rimane invariato)
     for (const key in gameState.clickUpgrades) {
         const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
         if (btn && !gameState.clickUpgrades[key].purchased) {
@@ -415,7 +434,7 @@ function updateUI() {
         }
     }
 
-    // 5. Skill Crunch Time
+    // 5. Skill Crunch Time (rimane invariato)
     const btnCrunch = document.getElementById('skill-crunchTime');
     if (btnCrunch) {
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
