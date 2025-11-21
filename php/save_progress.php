@@ -10,6 +10,8 @@ if (!isset($data['saveData'])) {
     die(json_encode(["status" => "error", "message" => "Nessun dato di salvataggio."]));
 }
 
+// Il client (browser) si occupa della versione dello stato di gioco e della migrazione dei dati.
+// Il server salva semplicemente il blob JSON ricevuto.
 $saveData = json_encode($data['saveData']); 
 
 // Verifica su USERS dinamica
