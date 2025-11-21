@@ -415,31 +415,43 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // 1. Reset pulito
-                    resetGameToDefault();
+                    // 1. Reset pulito dello stato interno
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
-                    // 2. Carica i dati (che potrebbero contenere il VECCHIO username)
+                    // 2. Pulisce la lista grafica per evitare duplicati o residui
+                    const achList = document.getElementById('achievement-list');
+                    if (achList) achList.innerHTML = '';
+
+                    // 3. Carica i dati dal Cloud
                     deepMerge(gameState, JSON.parse(cloudJSON));
 
-                    // 3. [FIX CRITICO] Forza l'allineamento del nome utente
-                    // Se il JSON cloud ha un nome vecchio, lo sovrascriviamo con quello della sessione attuale
+                    // 4. Fix allineamento Username
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser) {
-                        console.warn(`Fixing username mismatch: ${gameState.user.username} -> ${currentSessionUser}`);
                         gameState.user.username = currentSessionUser;
                     }
 
-                    // 4. Ricalcoli standard
+                    // 5. Ricalcoli matematici
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
 
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
+                    // 6. [NUOVO] Ridisegna gli obiettivi sbloccati
+                    // Questo è il pezzo che mancava: ripristina la grafica in base al salvataggio
+                    for (const key in gameState.achievements) {
+                        if (gameState.achievements[key].unlocked) {
+                            if (typeof renderAchievement === 'function') {
+                                renderAchievement(key);
+                            }
+                        }
+                    }
+
                     updateUI();
 
-                    // 5. Sovrascrivi subito il localStorage per eliminare tracce del vecchio nome
-                    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+                    // 7. Salva subito nel localStorage del nuovo PC
+                    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
                     showToast("Progressi scaricati dal Cloud!");
                 } catch (e) { console.error("Errore parsing cloud", e); }
