@@ -222,6 +222,10 @@ function checkTabNotifications() {
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
+
+        // FIX SICUREZZA: Se lo stato non esiste (bug di salvataggio), saltalo invece di crashare
+        if (!state) continue;
+
         // Se non comprato, sbloccato E ho abbastanza soldi
         if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score >= data.cost) {
             clickNotify = true;

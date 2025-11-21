@@ -89,6 +89,8 @@ function getInitialGameState() {
 
 let gameState = getInitialGameState();
 
+
+
 function resetGameToDefault() {
     // Sovrascriviamo le proprietà dell'oggetto esistente per non rompere i riferimenti
     const freshState = getInitialGameState();
