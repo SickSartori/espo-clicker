@@ -206,28 +206,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     // --- NUOVO UTENTE: RESET TOTALE ---
                     // 1. Pulisce localStorage vecchio
                     localStorage.removeItem('espotoolClickerSaveV8');
+
                     // 2. Resetta la variabile in memoria
-                    resetGameToDefault();
-                    // 3. Imposta il nuovo nome
+                    // Nota: assicurati che resetGameToDefault sia accessibile o usa Game.reset... se esposto
+                    // Se resetGameToDefault è globale (come sembra dallo script originale):
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                    // 3. [FIX IMPORTANTE] Pulisce la lista visiva degli obiettivi
+                    const achList = document.getElementById('achievement-list');
+                    if (achList) achList.innerHTML = '';
+
+                    // 4. Imposta il nuovo nome
                     Game.getGameState().user.username = username;
 
                     Game.showToast(`Benvenuto ${username}! Account creato.`);
-                    // 4. Salva subito lo stato pulito
+                    // 5. Salva subito lo stato pulito
                     Game.saveGame();
 
-                    // 5. Aggiorna UI per mostrare tutto a 0
+                    // 6. Aggiorna UI per mostrare tutto a 0
                     if (typeof refreshAllStores === 'function') refreshAllStores();
                     if (typeof updateUI === 'function') updateUI();
 
                 } else if (res.action === 'login') {
                     // --- UTENTE ESISTENTE ---
                     if (res.save_data) {
+                        // [FIX OPZIONALE] Anche qui, puliamo prima gli obiettivi vecchi per evitare duplicati/mix
+                        const achList = document.getElementById('achievement-list');
+                        if (achList) achList.innerHTML = '';
+
                         Game.loadCloudData(res.save_data);
                         Game.showToast(`Bentornato ${username}!`);
                     } else {
                         // Caso raro: Login ma nessun dato salvato -> Reset
                         localStorage.removeItem('espotoolClickerSaveV8');
-                        resetGameToDefault();
+                        if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                        // [FIX IMPORTANTE] Pulisce la lista visiva
+                        const achList = document.getElementById('achievement-list');
+                        if (achList) achList.innerHTML = '';
+
                         Game.getGameState().user.username = username;
                         Game.saveGame();
                         Game.showToast(`Bentornato ${username}! (Nuova Partita)`);
