@@ -147,9 +147,9 @@
                 <div class="contract-column loss">
                     <h3>📉 Cedi al Dipartimento</h3>
                     <ul>
-                        <li>❌ Tutti i Bug attuali</li>
-                        <li>❌ Tutti gli Edifici</li>
-                        <li>❌ Potenziamenti Click/Auto</li>
+                        <li> Tutti i Bug attuali</li>
+                        <li> Tutti i teams</li>
+                        <li> Potenziamenti Click/Auto</li>
                     </ul>
                 </div>
 

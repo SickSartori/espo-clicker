@@ -164,7 +164,7 @@ const gameData = {
         // --- NUOVI POTENZIAMENTI ---
         outsourcing: {
             name: 'Outsourcing Selvaggio',
-            desc: 'Riduce il costo base di tutti gli edifici dell\'1% per livello (Max 10).',
+            desc: 'Riduce il costo base di tutti gli Teams dell\'1% per livello (Max 10).',
             baseCost: 10,
             isCounted: true,
             maxLevel: 10 // Limite opzionale che gestiremo nella logica
