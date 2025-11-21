@@ -38,7 +38,7 @@
             <div id="upgrade-outsourcing" class="prestige-upgrade">
                 <div class="upgrade-details">
                     <span class="upgrade-name">Outsourcing</span>
-                    <div class="upgrade-desc">-1% Costo Edifici/liv.</div>
+                    <div class="upgrade-desc">-1% Costo Teams/liv.</div>
                     <div class="upgrade-cost">Costo: <span id="cost-outsourcing">10</span> Pt</div>
                 </div>
                 <div class="upgrade-actions">

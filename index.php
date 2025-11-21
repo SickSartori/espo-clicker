@@ -19,7 +19,13 @@
 <body>
 
     <div id="toast-container"></div>
-
+        <div id="prestige-transition-overlay" style="display: none;">
+        <div class="transition-content">
+            <div class="transition-icon">🚀</div>
+            <h2>PROMOZIONE IN CORSO...</h2>
+            <p>Ricalcolo dei benefit aziendali</p>
+        </div>
+    </div>
     <?php include 'includes/modals.php'; ?>
 
     <div id="overlay-buttons-container">
