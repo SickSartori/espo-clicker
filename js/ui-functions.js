@@ -251,9 +251,9 @@ function checkTabNotifications() {
         if (!state) continue;
         // ---------------------
 
-        const targetBuilding = gameState.buildings[data.targetBuilding];
+        const targetTeam = gameState.teams[data.targetTeam];
 
-        if (!state.purchased && targetBuilding.count >= data.requiredCount && gameState.score >= data.cost) {
+        if (!state.purchased && targetTeam.count >= data.requiredCount && gameState.score >= data.cost) {
             autoNotify = true;
             break;
         }
@@ -293,8 +293,8 @@ function checkTabNotifications() {
 }
 
 function refreshAllStores() {
-    // 1. Aggiorna Edifici (Colonna Destra)
-    for (const key in gameState.buildings) {
+    // 1. Aggiorna Teams (Colonna Destra)
+    for (const key in gameState.teams) {
 
         // --- LOGICA MAX/MOLTIPLICATORE ---
         let amountToBuy = buyMultiplier;
@@ -311,14 +311,14 @@ function refreshAllStores() {
         // ----------------------------------
 
         // Calcolo BPS
-        let buildingBPS = gameData.buildings[key].cpsPerUnit;
+        let teamBPS = gameData.teams[key].cpsPerUnit;
         for (const enhanceKey in gameState.buildingEnhancements) {
             const eData = gameData.buildingEnhancements[enhanceKey];
-            if (eData.targetBuilding === key && gameState.buildingEnhancements[enhanceKey].purchased) {
-                buildingBPS *= eData.multiplier;
+            if (eData.targetTeam === key && gameState.buildingEnhancements[enhanceKey].purchased) {
+                teamBPS *= eData.multiplier;
             }
         }
-        const totalUnitBPS = buildingBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+        const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
         const costEl = document.getElementById(`cost-${key}`);
         const bpsEl = document.getElementById(`bps-${key}`);
@@ -340,7 +340,7 @@ function refreshAllStores() {
             bpsEl.setAttribute('data-tooltip', totalUnitBPS.toLocaleString('it-IT'));
         }
 
-        if (countEl) countEl.textContent = gameState.buildings[key].count;
+        if (countEl) countEl.textContent = gameState.teams[key].count;
 
         // Aggiorna stato disabilitato del bottone
         const btn = document.getElementById(`buy-${key}`);
@@ -396,7 +396,7 @@ function updateUI() {
     }
 
     // 4. Aggiorna Bottoni e Stati (CORRETTO PER MAX)
-    for (const key in gameState.buildings) {
+    for (const key in gameState.teams) {
 
         // Logica Quantità Dinamica (presa da refreshAllStores)
         let amountToBuy = buyMultiplier;
@@ -539,73 +539,6 @@ function updatePrestigeVisuals() {
     }
 }
 
-// Funzione Pesante: Da chiamare SOLO su eventi (Click, Acquisti, Init)
-function updatePrestigeStore() {
-    const listContainer = document.getElementById('prestige-list-container');
-    if (!listContainer) return;
-
-    // Funzione helper interna
-    const updateBtn = (id, data, state) => {
-        const el = document.getElementById(`upgrade-${id}`);
-        const btn = document.getElementById(`buy-${id}`);
-        if (!btn || !el) return null;
-
-        let isCompleted = false;
-        if (!data.isCounted && state.purchased) isCompleted = true;
-        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
-
-        let priority = 0;
-        let cost = data.baseCost;
-
-        if (isCompleted) {
-            btn.textContent = "Posseduto";
-            btn.className = "buy-btn prestige-btn owned";
-            btn.disabled = true;
-            el.classList.add('purchased');
-            priority = 300;
-        } else {
-            btn.innerHTML = "Compra";
-            btn.className = "buy-btn prestige-btn";
-            const canAfford = gameState.prestigePoints >= data.baseCost;
-            btn.disabled = !canAfford;
-            el.classList.remove('purchased');
-            priority = canAfford ? 200 : 210;
-        }
-
-        const countEl = document.getElementById(`count-${id}`);
-        if (countEl) countEl.textContent = state.count;
-
-        return { el: el, priority: priority, cost: cost };
-    };
-
-    const pData = gameData.prestigeUpgrades;
-    const pState = gameState.prestigeUpgrades;
-    const items = [];
-
-    const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
-    ids.forEach(id => {
-        const item = updateBtn(id, pData[id], pState[id]);
-        if (item) items.push(item);
-    });
-
-    items.sort((a, b) => {
-        if (a.priority !== b.priority) return a.priority - b.priority;
-        return a.cost - b.cost;
-    });
-
-    const mode = gameState.filterSettings.globalFilter || 'available';
-
-    items.forEach(item => {
-        let show = true;
-        if (mode === 'available' && item.priority === 300) show = false;
-        if (mode === 'purchased' && item.priority < 300) show = false;
-        item.el.style.display = show ? 'flex' : 'none';
-
-        // QUESTO È IL COLPEVOLE: Non facciamolo nel loop!
-        listContainer.appendChild(item.el);
-    });
-}
-
 // Funzione Ponte per retrocompatibilità
 function updatePrestigeUI() {
     updatePrestigeVisuals();
@@ -620,10 +553,10 @@ function updateEnhancementStore() {
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
-    // Check se esistono edifici
+    // Check se esistono teams
     let hasAnyBuilding = false;
-    for (const key in gameState.buildings) {
-        if (gameState.buildings[key].count > 0) { hasAnyBuilding = true; break; }
+    for (const key in gameState.teams) {
+        if (gameState.teams[key].count > 0) { hasAnyBuilding = true; break; }
     }
 
     // Array temporaneo per l'ordinamento
@@ -632,7 +565,7 @@ function updateEnhancementStore() {
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
-        const targetBuilding = gameState.buildings[data.targetBuilding];
+        const targetTeam = gameState.teams[data.targetTeam];
         const el = document.getElementById(`enh-upgrade-${key}`);
 
         if (!el) continue;
@@ -642,7 +575,7 @@ function updateEnhancementStore() {
 
         // Stato Logico
         const isPurchased = state.purchased;
-        const isUnlocked = targetBuilding.count >= data.requiredCount;
+        const isUnlocked = targetTeam.count >= data.requiredCount;
         const canAfford = gameState.score >= data.cost;
 
         // Reset grafico
@@ -678,9 +611,9 @@ function updateEnhancementStore() {
             el.classList.add('locked-item');
             progressBar.style.display = 'block';
 
-            const current = targetBuilding.count;
+            const current = targetTeam.count;
             const target = data.requiredCount;
-            const targetName = gameData.buildings[data.targetBuilding].name;
+            const targetName = gameData.teams[data.targetTeam].name;
             let percent = Math.min((current / target) * 100, 100);
             if (isNaN(percent)) percent = 0; // Sicurezza extra
 

@@ -9,9 +9,9 @@ function playSound(id) {
 }
 
 // --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
-function calculateBulkCost(buildingKey, amount) {
-    const data = gameData.buildings[buildingKey];
-    const state = gameState.buildings[buildingKey];
+function calculateBulkCost(teamKey, amount) {
+    const data = gameData.teams[teamKey];
+    const state = gameState.teams[teamKey];
     const r = 1.15;
 
     let discountMultiplier = 1;
@@ -31,8 +31,8 @@ function calculateBulkCost(buildingKey, amount) {
     }
 }
 
-function calculateBuildingCost(buildingKey) {
-    return calculateBulkCost(buildingKey, 1);
+function calculateTeamCost(teamKey) {
+    return calculateBulkCost(teamKey, 1);
 }
 
 function calculatePrestigeBonus() {
@@ -51,25 +51,25 @@ function calculateClickCPSBonus() {
 function recalculateCPS() {
     let baseCPS = 0;
 
-    for (const key in gameState.buildings) {
-        const state = gameState.buildings[key];
-        const data = gameData.buildings[key];
+    for (const key in gameState.teams) {
+        const state = gameState.teams[key];
+        const data = gameData.teams[key];
 
-        let buildingBPS = state.count * data.cpsPerUnit;
+        let teamBPS = state.count * data.cpsPerUnit;
 
         for (const enhanceKey in gameState.buildingEnhancements) {
             const enhancementState = gameState.buildingEnhancements[enhanceKey];
             const enhancementData = gameData.buildingEnhancements[enhanceKey];
 
-            if (enhancementState.purchased && enhancementData.targetBuilding === key) {
-                buildingBPS *= enhancementData.multiplier;
+            if (enhancementState.purchased && enhancementData.targetTeam === key) {
+                teamBPS *= enhancementData.multiplier;
             }
         }
-        baseCPS += buildingBPS;
+        baseCPS += teamBPS;
     }
 
     if (gameState.clickUpgrades.clickAutomatico.purchased) {
-        baseCPS += gameState.buildings.assistenteQa.count;
+        baseCPS += gameState.teams.assistenteQa.count;
     }
 
     cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
@@ -163,9 +163,9 @@ function clickCookie(event) {
     updateUI();
 }
 
-function calculateMaxAffordable(buildingKey) {
-    const state = gameState.buildings[buildingKey];
-    const data = gameData.buildings[buildingKey];
+function calculateMaxAffordable(teamKey) {
+    const state = gameState.teams[teamKey];
+    const data = gameData.teams[teamKey];
     const r = 1.15;
 
     // Calcolo sconto (copiato da calculateBulkCost)
@@ -188,16 +188,16 @@ function calculateMaxAffordable(buildingKey) {
     return Math.max(0, maxAmount);
 }
 
-function buyBuilding(buildingKey) {
+function buyTeam(teamKey) {
     // Determina la quantità
     let amount = buyMultiplier;
     if (amount === 'MAX') {
-        amount = calculateMaxAffordable(buildingKey);
+        amount = calculateMaxAffordable(teamKey);
         if (amount === 0) return; // Non puoi permettertene nemmeno uno
     }
 
-    const state = gameState.buildings[buildingKey];
-    const currentCost = calculateBulkCost(buildingKey, amount);
+    const state = gameState.teams[teamKey];
+    const currentCost = calculateBulkCost(teamKey, amount);
 
     if (gameState.score >= currentCost) {
         playSound('sound-buy');
@@ -230,7 +230,7 @@ function buyClickUpgrade(upgradeKey) {
     }
 }
 
-function buyBuildingEnhancement(enhanceKey) {
+function buyTeamEnhancement(enhanceKey) {
     const state = gameState.buildingEnhancements[enhanceKey];
     const data = gameData.buildingEnhancements[enhanceKey];
 
@@ -310,7 +310,7 @@ function openPrestigeContract() {
     if (modal) modal.style.display = 'flex';
 }
 
-// 2. Esegue il reset (Chiamata dal bottone "Firma")
+// 2. Esegui il reset (Chiamata dal bottone "Firma")
 async function executePrestige() {
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
@@ -372,7 +372,7 @@ async function executePrestige() {
 
     // Gestione bonus "Accelerazione" (Start con 1 QA)
     if (newState.prestigeUpgrades.accelerazione.purchased) {
-        newState.buildings.assistenteQa.count = 1;
+        newState.teams.assistenteQa.count = 1;
     }
 
     // Sovrascrivi la variabile globale gameState
@@ -447,7 +447,7 @@ function createNewGameState() {
 
         user: { username: 'Giocatore', masterVolume: 1.0 },
 
-        buildings: {
+        teams: {
             assistenteQa: { count: 0 }, jiraTicket: { count: 0 }, teamQa: { count: 0 },
             automazioneTest: { count: 0 }, metodologiaAgile: { count: 0 }, aiDebugger: { count: 0 },
             quantumServer: { count: 0 }, reteNeuraleGalattica: { count: 0 }, debugTemporale: { count: 0 }
@@ -590,4 +590,3 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) document.title = 'I bug si accumulano... 🐞';
     else document.title = originalTitle;
 });
-

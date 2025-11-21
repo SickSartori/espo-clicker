@@ -70,7 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedState = localStorage.getItem(SAVE_KEY);
         if (savedState) {
             try {
-                deepMerge(gameState, JSON.parse(savedState));
+                const parsedState = JSON.parse(savedState);
+
+                // Gestione compatibilità vecchi salvataggi: "buildings" -> "teams"
+                if (parsedState.buildings && !parsedState.teams) {
+                    parsedState.teams = parsedState.buildings;
+                    delete parsedState.buildings;
+                }
+
+                deepMerge(gameState, parsedState);
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
@@ -385,11 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else if (btn.classList.contains('enhancement-btn')) {
                 // CASO 3: MIGLIORIE AUTO
-                if (typeof buyBuildingEnhancement === 'function') buyBuildingEnhancement(name);
+                if (typeof buyTeamEnhancement === 'function') buyTeamEnhancement(name);
 
             } else if (btn.classList.contains('buy-building-btn')) {
-                // CASO 4: EDIFICI (ASSISTENTI)
-                if (typeof buyBuilding === 'function') buyBuilding(name);
+                // CASO 4: TEAMS (Ex Edifici)
+                if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
     }
@@ -424,7 +432,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (achList) achList.innerHTML = '';
 
                     // 3. Merge dei dati (sovrascrive lo stato pulito con quello del cloud)
-                    deepMerge(gameState, JSON.parse(cloudJSON));
+                    const cloudState = JSON.parse(cloudJSON);
+
+                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    if (cloudState.buildings && !cloudState.teams) {
+                        cloudState.teams = cloudState.buildings;
+                        delete cloudState.buildings;
+                    }
+
+                    deepMerge(gameState, cloudState);
 
                     // 4. Fix Nome Utente (se diverso dalla sessione)
                     const currentSessionUser = sessionStorage.getItem('espooUser');

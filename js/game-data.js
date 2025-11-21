@@ -25,7 +25,7 @@ function getInitialGameState() {
             globalFilter: 'available'
         },
 
-        buildings: {
+        teams: {
             assistenteQa: { count: 0 },
             jiraTicket: { count: 0 },
             teamQa: { count: 0 },
@@ -101,7 +101,7 @@ function resetGameToDefault() {
 
     // Poiché buildings e upgrades sono oggetti annidati, dobbiamo assicurarci che vengano resettati profondamente
     // Il metodo più sicuro e brutale:
-    gameState.buildings = JSON.parse(JSON.stringify(freshState.buildings));
+    gameState.teams = JSON.parse(JSON.stringify(freshState.teams));
     gameState.clickUpgrades = JSON.parse(JSON.stringify(freshState.clickUpgrades));
     gameState.prestigeUpgrades = JSON.parse(JSON.stringify(freshState.prestigeUpgrades));
     gameState.buildingEnhancements = JSON.parse(JSON.stringify(freshState.buildingEnhancements));
@@ -119,7 +119,7 @@ function resetGameToDefault() {
 const gameData = {
     PRESTIGE_THRESHOLD: 10000000,
 
-    buildings: {
+    teams: {
         assistenteQa: { name: 'Assistente QA', baseCost: 10, cpsPerUnit: 0.1 },
         jiraTicket: { name: 'Jira Ticket', baseCost: 50, cpsPerUnit: 1 },
         teamQa: { name: 'Team QA', baseCost: 500, cpsPerUnit: 8 },
@@ -146,13 +146,13 @@ const gameData = {
         primoClick: { name: 'Primo Click!', desc: 'Hai risolto il tuo primo bug.', condition: () => gameState.totalClicks >= 1 },
         centoClick: { name: 'Dita Veloci', desc: 'Risolvi 100 bug manually.', condition: () => gameState.totalClicks >= 100 },
         milleBug: { name: 'Manager Serio', desc: 'Accumula 1.000 bug.', condition: () => gameState.score >= 1000 },
-        primoAssistente: { name: 'Assunzione', desc: 'Compra il tuo primo Assistente QA.', condition: () => gameState.buildings.assistenteQa.count >= 1 },
-        dieciAssistenti: { name: 'Piccolo Team', desc: 'Assumi 10 Assistenti QA.', condition: () => gameState.buildings.assistenteQa.count >= 10 },
-        unJira: { name: 'Organizzato', desc: 'Installa Jira.', condition: () => gameState.buildings.jiraTicket.count >= 1 },
+        primoAssistente: { name: 'Assunzione', desc: 'Compra il tuo primo Assistente QA.', condition: () => gameState.teams.assistenteQa.count >= 1 },
+        dieciAssistenti: { name: 'Piccolo Team', desc: 'Assumi 10 Assistenti QA.', condition: () => gameState.teams.assistenteQa.count >= 10 },
+        unJira: { name: 'Organizzato', desc: 'Installa Jira.', condition: () => gameState.teams.jiraTicket.count >= 1 },
         unodiTutto: {
             name: 'Full Stack!', desc: 'Possiedi almeno uno di ogni strumento/team.', condition: () => {
-                for (const key in gameState.buildings) {
-                    if (gameState.buildings[key].count === 0) return false;
+                for (const key in gameState.teams) {
+                    if (gameState.teams[key].count === 0) return false;
                 }
                 return true;
             }
@@ -187,123 +187,123 @@ const gameData = {
     buildingEnhancements: {
         caffeDoppio: {
             name: 'Caffè Doppio', desc: 'Assistenti QA x2 BPS.',
-            targetBuilding: 'assistenteQa', cost: 150, multiplier: 2, requiredCount: 1
+            targetTeam: 'assistenteQa', cost: 150, multiplier: 2, requiredCount: 1
         },
         caffeTriplo: {
             name: 'Caffè Triplo', desc: 'Assistenti QA x2 BPS.',
-            targetBuilding: 'assistenteQa', cost: 750, multiplier: 2, requiredCount: 10
+            targetTeam: 'assistenteQa', cost: 750, multiplier: 2, requiredCount: 10
         },
         scrivanieErgonomiche: {
             name: 'Scrivanie Ergonomiche', desc: 'Assistenti QA x3 BPS.',
-            targetBuilding: 'assistenteQa', cost: 5000, multiplier: 3, requiredCount: 25
+            targetTeam: 'assistenteQa', cost: 5000, multiplier: 3, requiredCount: 25
         },
         formazioneAvanzata: {
             name: 'Formazione Avanzata', desc: 'Assistenti QA x3 BPS.',
-            targetBuilding: 'assistenteQa', cost: 25000, multiplier: 3, requiredCount: 50
+            targetTeam: 'assistenteQa', cost: 25000, multiplier: 3, requiredCount: 50
         },
         managerJunior: {
             name: 'Manager Junior', desc: 'Assistenti QA x4 BPS.',
-            targetBuilding: 'assistenteQa', cost: 100000, multiplier: 4, requiredCount: 100
+            targetTeam: 'assistenteQa', cost: 100000, multiplier: 4, requiredCount: 100
         },
         jiraAI: {
             name: 'Jira AI', desc: 'Jira Ticket x2 BPS.',
-            targetBuilding: 'jiraTicket', cost: 1000, multiplier: 2, requiredCount: 1
+            targetTeam: 'jiraTicket', cost: 1000, multiplier: 2, requiredCount: 1
         },
         jiraCloud: {
             name: 'Jira Cloud', desc: 'Jira Ticket x2 BPS.',
-            targetBuilding: 'jiraTicket', cost: 5000, multiplier: 2, requiredCount: 10
+            targetTeam: 'jiraTicket', cost: 5000, multiplier: 2, requiredCount: 10
         },
         jiraDataCenter: {
             name: 'Jira Data Center', desc: 'Jira Ticket x3 BPS.',
-            targetBuilding: 'jiraTicket', cost: 40000, multiplier: 3, requiredCount: 25
+            targetTeam: 'jiraTicket', cost: 40000, multiplier: 3, requiredCount: 25
         },
         jiraPremium: {
             name: 'Jira Premium', desc: 'Jira Ticket x3 BPS.',
-            targetBuilding: 'jiraTicket', cost: 200000, multiplier: 3, requiredCount: 50
+            targetTeam: 'jiraTicket', cost: 200000, multiplier: 3, requiredCount: 50
         },
         jiraSelfHealing: {
             name: 'Jira Self-Healing', desc: 'Jira Ticket x4 BPS.',
-            targetBuilding: 'jiraTicket', cost: 1000000, multiplier: 4, requiredCount: 100
+            targetTeam: 'jiraTicket', cost: 1000000, multiplier: 4, requiredCount: 100
         },
         scrum: {
             name: 'Metodologia Scrum', desc: 'Team QA x2 BPS.',
-            targetBuilding: 'teamQa', cost: 11000, multiplier: 2, requiredCount: 1
+            targetTeam: 'teamQa', cost: 11000, multiplier: 2, requiredCount: 1
         },
         teamLeader: {
             name: 'Team Leader', desc: 'Team QA x2 BPS.',
-            targetBuilding: 'teamQa', cost: 55000, multiplier: 2, requiredCount: 10
+            targetTeam: 'teamQa', cost: 55000, multiplier: 2, requiredCount: 10
         },
         certificazioneISTQB: {
             name: 'Certificazione ISTQB', desc: 'Team QA x3 BPS.',
-            targetBuilding: 'teamQa', cost: 440000, multiplier: 3, requiredCount: 25
+            targetTeam: 'teamQa', cost: 440000, multiplier: 3, requiredCount: 25
         },
         bonusProduttivita: {
             name: 'Bonus Produttività', desc: 'Team QA x3 BPS.',
-            targetBuilding: 'teamQa', cost: 2200000, multiplier: 3, requiredCount: 50
+            targetTeam: 'teamQa', cost: 2200000, multiplier: 3, requiredCount: 50
         },
         teamGlobale: {
             name: 'Team Globale 24/7', desc: 'Team QA x4 BPS.',
-            targetBuilding: 'teamQa', cost: 11000000, multiplier: 4, requiredCount: 100
+            targetTeam: 'teamQa', cost: 11000000, multiplier: 4, requiredCount: 100
         },
         selenium: {
             name: 'Framework Selenium', desc: 'Automazione x2 BPS.',
-            targetBuilding: 'automazioneTest', cost: 120000, multiplier: 2, requiredCount: 1
+            targetTeam: 'automazioneTest', cost: 120000, multiplier: 2, requiredCount: 1
         },
         cucumber: {
             name: 'Cucumber (BDD)', desc: 'Automazione x2 BPS.',
-            targetBuilding: 'automazioneTest', cost: 600000, multiplier: 2, requiredCount: 10
+            targetTeam: 'automazioneTest', cost: 600000, multiplier: 2, requiredCount: 10
         },
         ciCd: {
             name: 'Pipeline CI/CD', desc: 'Automazione x3 BPS.',
-            targetBuilding: 'automazioneTest', cost: 4800000, multiplier: 3, requiredCount: 25
+            targetTeam: 'automazioneTest', cost: 4800000, multiplier: 3, requiredCount: 25
         },
         docker: {
             name: 'Container Docker', desc: 'Automazione x3 BPS.',
-            targetBuilding: 'automazioneTest', cost: 24000000, multiplier: 3, requiredCount: 50
+            targetTeam: 'automazioneTest', cost: 24000000, multiplier: 3, requiredCount: 50
         },
         kubernetes: {
             name: 'Orchestrazione Kubernetes', desc: 'Automazione x4 BPS.',
-            targetBuilding: 'automazioneTest', cost: 120000000, multiplier: 4, requiredCount: 100
+            targetTeam: 'automazioneTest', cost: 120000000, multiplier: 4, requiredCount: 100
         },
         kanban: {
             name: 'Board Kanban', desc: 'Metodologia Agile x2 BPS.',
-            targetBuilding: 'metodologiaAgile', cost: 1300000, multiplier: 2, requiredCount: 1
+            targetTeam: 'metodologiaAgile', cost: 1300000, multiplier: 2, requiredCount: 1
         },
         safe: {
             name: 'Framework SAFe', desc: 'Metodologia Agile x2 BPS.',
-            targetBuilding: 'metodologiaAgile', cost: 6500000, multiplier: 2, requiredCount: 10
+            targetTeam: 'metodologiaAgile', cost: 6500000, multiplier: 2, requiredCount: 10
         },
         productOwner: {
             name: 'Product Owner Dedicato', desc: 'Metodologia Agile x3 BPS.',
-            targetBuilding: 'metodologiaAgile', cost: 52000000, multiplier: 3, requiredCount: 25
+            targetTeam: 'metodologiaAgile', cost: 52000000, multiplier: 3, requiredCount: 25
         },
         releaseTrain: {
             name: 'Release Train', desc: 'Metodologia Agile x3 BPS.',
-            targetBuilding: 'metodologiaAgile', cost: 260000000, multiplier: 3, requiredCount: 50
+            targetTeam: 'metodologiaAgile', cost: 260000000, multiplier: 3, requiredCount: 50
         },
         devOps: {
             name: 'Cultura DevOps', desc: 'Metodologia Agile x4 BPS.',
-            targetBuilding: 'metodologiaAgile', cost: 1300000000, multiplier: 4, requiredCount: 100
+            targetTeam: 'metodologiaAgile', cost: 1300000000, multiplier: 4, requiredCount: 100
         },
         deepLearning: {
             name: 'Deep Learning', desc: 'AI Debugger x2 BPS.',
-            targetBuilding: 'aiDebugger', cost: 14000000, multiplier: 2, requiredCount: 1
+            targetTeam: 'aiDebugger', cost: 14000000, multiplier: 2, requiredCount: 1
         },
         machineLearning: {
             name: 'Machine Learning', desc: 'AI Debugger x2 BPS.',
-            targetBuilding: 'aiDebugger', cost: 70000000, multiplier: 2, requiredCount: 10
+            targetTeam: 'aiDebugger', cost: 70000000, multiplier: 2, requiredCount: 10
         },
         retiNeurali: {
             name: 'Reti Neurali', desc: 'AI Debugger x3 BPS.',
-            targetBuilding: 'aiDebugger', cost: 560000000, multiplier: 3, requiredCount: 25
+            targetTeam: 'aiDebugger', cost: 560000000, multiplier: 3, requiredCount: 25
         },
         quantumComputing: {
             name: 'Quantum Computing', desc: 'AI Debugger x3 BPS.',
-            targetBuilding: 'aiDebugger', cost: 2800000000, multiplier: 3, requiredCount: 50
+            targetTeam: 'aiDebugger', cost: 2800000000, multiplier: 3, requiredCount: 50
         },
         skynet: {
             name: 'Skynet', desc: 'AI Debugger x4 BPS.',
-            targetBuilding: 'aiDebugger', cost: 14000000000, multiplier: 4, requiredCount: 100
+            targetTeam: 'aiDebugger', cost: 14000000000, multiplier: 4, requiredCount: 100
         }
     }
 };
