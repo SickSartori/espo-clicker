@@ -37,6 +37,6 @@
         
         <div id="prestige-bonus-display" class="prestige-info" style="display: none;">Bonus: +0%</div>
 
-        <div id="version-display">Versione 2.3 beta</div>
+        <div id="version-display">Versione 2.4 beta</div>
     </div>
 </div>

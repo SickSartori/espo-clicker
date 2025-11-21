@@ -433,31 +433,45 @@ async function submitScoreToLeaderboard(username, score, prestigeLevel) {
 
 function createNewGameState() {
     return {
-        score: 0, baseClickValue: 1, totalClicks: 0, totalScore: 0, prestigePoints: 0,
-        lifetimePrestigePoints: 0, totalResets: 0, totalGoldenBugsClicked: 0, totalPlayTime: 0,
-        lifetimeScore: 0, filterSettings: { click: 'available', auto: 'available', lab: 'available' },
+        score: 0,
+        baseClickValue: 1,
+        totalClicks: 0,
+        totalScore: 0,
+        prestigePoints: 0,
+        lifetimePrestigePoints: 0,
+        totalResets: 0,
+        totalGoldenBugsClicked: 0,
+        totalPlayTime: 0,
+        lifetimeScore: 0,
+        filterSettings: { click: 'available', auto: 'available', lab: 'available' },
+
         user: { username: 'Giocatore', masterVolume: 1.0 },
+
         buildings: {
             assistenteQa: { count: 0 }, jiraTicket: { count: 0 }, teamQa: { count: 0 },
             automazioneTest: { count: 0 }, metodologiaAgile: { count: 0 }, aiDebugger: { count: 0 },
             quantumServer: { count: 0 }, reteNeuraleGalattica: { count: 0 }, debugTemporale: { count: 0 }
         },
+
+        // ERRORE ERA QUI: Mancavano mouseGaming, ergonomiaEstrema, aiClick
         clickUpgrades: {
             caffeForte: { purchased: false },
             tastieraErgonomica: { purchased: false },
-            mouseGaming: { purchased: false },       // MANCAVA
-            ergonomiaEstrema: { purchased: false },  // MANCAVA
+            mouseGaming: { purchased: false },       // AGGIUNTO
+            ergonomiaEstrema: { purchased: false },  // AGGIUNTO
             manoBionica: { purchased: false },
             hacking: { purchased: false },
             doppioClick: { purchased: false },
-            aiClick: { purchased: false },           // MANCAVA
+            aiClick: { purchased: false },           // AGGIUNTO
             clickAutomatico: { purchased: false },
             clickDivino: { purchased: false }
         },
+
         prestigeUpgrades: {
             sinergia: { count: 0 }, accelerazione: { purchased: false }, ticketPremium: { purchased: false },
             outsourcing: { count: 0 }, paracadute: { purchased: false }, crunchTime: { purchased: false }
         },
+
         buildingEnhancements: {
             caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
             scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
@@ -475,6 +489,8 @@ function createNewGameState() {
             machineLearning: { purchased: false }, retiNeurali: { purchased: false },
             quantumComputing: { purchased: false }, skynet: { purchased: false }
         },
+
+        // Mantiene gli achievement sbloccati (come da standard Prestige)
         achievements: gameState.achievements
     };
 }
