@@ -2,7 +2,6 @@
 
 function getInitialGameState() {
     return {
-        version: 3, // NUOVO: Aggiunta versione per la migrazione dello schema
         score: 0,
         baseClickValue: 1,
         totalClicks: 0,
@@ -108,9 +107,6 @@ function resetGameToDefault() {
     gameState.buildingEnhancements = JSON.parse(JSON.stringify(freshState.buildingEnhancements));
     gameState.achievements = JSON.parse(JSON.stringify(freshState.achievements));
     gameState.user = JSON.parse(JSON.stringify(freshState.user));
-
-    // Non è necessario copiare 'version' qui perché 'freshState' già contiene la versione corretta, 
-    // e Object.assign è stato chiamato sopra.
 
     // Pulisce anche variabili calcolate globali in game-data
     cookiesPerSecond = 0;

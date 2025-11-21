@@ -47,9 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
 
-        // Assicuriamoci che la versione corrente sia salvata
-        gameState.version = gameData.version;
-
         gameState.lastSaveTimestamp = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 
@@ -69,47 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Esegue la migrazione dello stato salvato a versioni precedenti al formato corrente (V3).
-     * @param {object} parsedState Lo stato del gioco caricato (locale o cloud).
-     * @returns {object} Lo stato migrato.
-     */
-    function migrateStateForVersioning(parsedState) {
-        let state = parsedState;
-        const currentVersion = 3;
-        const savedVersion = state.version || 0;
-
-        if (savedVersion < currentVersion) {
-            console.log(`Eseguo migrazione dello stato da V${savedVersion} a V${currentVersion}.`);
-        }
-
-        // --- Migrazione V0/V1/V2 -> V3 (Rinominazione 'buildings' a 'teams' e aggiunta 'version') ---
-        if (savedVersion < 3) {
-            // 1. Migra il campo "buildings" a "teams" (effettuato nell'ultimo refactoring)
-            if (state.buildings && !state.teams) {
-                state.teams = state.buildings;
-                delete state.buildings;
-            }
-            // 2. Assicura che le nuove chiavi non siano mancanti (utile per le versioni future)
-            const freshStateDefaults = getInitialGameState();
-            // Inietta le nuove sezioni/proprietà mancanti
-            deepMerge(state, freshStateDefaults);
-        }
-
-        // Assicura che la versione sia impostata al valore corrente
-        state.version = currentVersion;
-        return state;
-    }
-
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
         if (savedState) {
             try {
-                let parsedState = JSON.parse(savedState);
+                const parsedState = JSON.parse(savedState);
 
-                // --- ESEGUI LA MIGRAZIONE DELLO STATO ---
-                parsedState = migrateStateForVersioning(parsedState);
-                // ----------------------------------------
+                // Gestione compatibilità vecchi salvataggi: "buildings" -> "teams"
+                if (parsedState.buildings && !parsedState.teams) {
+                    parsedState.teams = parsedState.buildings;
+                    delete parsedState.buildings;
+                }
 
                 deepMerge(gameState, parsedState);
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
@@ -465,11 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (achList) achList.innerHTML = '';
 
                     // 3. Merge dei dati (sovrascrive lo stato pulito con quello del cloud)
-                    let cloudState = JSON.parse(cloudJSON);
+                    const cloudState = JSON.parse(cloudJSON);
 
-                    // --- ESEGUI LA MIGRAZIONE DELLO STATO CLOUD ---
-                    cloudState = migrateStateForVersioning(cloudState);
-                    // ----------------------------------------------
+                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    if (cloudState.buildings && !cloudState.teams) {
+                        cloudState.teams = cloudState.buildings;
+                        delete cloudState.buildings;
+                    }
 
                     deepMerge(gameState, cloudState);
 
