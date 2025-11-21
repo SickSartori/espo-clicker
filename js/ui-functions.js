@@ -215,6 +215,72 @@ function buildStores() {
         enhancementList.appendChild(el);
     }
 }
+function updatePrestigeStore() {
+    const listContainer = document.getElementById('prestige-list-container');
+    if (!listContainer) return;
+
+    // Funzione helper interna
+    const updateBtn = (id, data, state) => {
+        const el = document.getElementById(`upgrade-${id}`);
+        const btn = document.getElementById(`buy-${id}`);
+        if (!btn || !el) return null;
+
+        let isCompleted = false;
+        if (!data.isCounted && state.purchased) isCompleted = true;
+        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
+
+        let priority = 0;
+        let cost = data.baseCost;
+
+        if (isCompleted) {
+            btn.textContent = "Posseduto";
+            btn.className = "buy-btn prestige-btn owned";
+            btn.disabled = true;
+            el.classList.add('purchased');
+            priority = 300;
+        } else {
+            btn.innerHTML = "Compra";
+            btn.className = "buy-btn prestige-btn";
+            const canAfford = gameState.prestigePoints >= data.baseCost;
+            btn.disabled = !canAfford;
+            el.classList.remove('purchased');
+            priority = canAfford ? 200 : 210;
+        }
+
+        const countEl = document.getElementById(`count-${id}`);
+        if (countEl) countEl.textContent = state.count;
+
+        return { el: el, priority: priority, cost: cost };
+    };
+
+    const pData = gameData.prestigeUpgrades;
+    const pState = gameState.prestigeUpgrades;
+    const items = [];
+
+    const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
+    ids.forEach(id => {
+        const item = updateBtn(id, pData[id], pState[id]);
+        if (item) items.push(item);
+    });
+
+    items.sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.cost - b.cost;
+    });
+
+    const mode = gameState.filterSettings.globalFilter || 'available';
+
+    items.forEach(item => {
+        let show = true;
+        if (mode === 'available' && item.priority === 300) show = false;
+        if (mode === 'purchased' && item.priority < 300) show = false;
+        item.el.style.display = show ? 'flex' : 'none';
+
+        // QUESTO È IL COLPEVOLE: Non facciamolo nel loop!
+        listContainer.appendChild(item.el);
+    });
+}
+
 
 function checkTabNotifications() {
     // 1. Check Tab CLICK (Potenziamenti)

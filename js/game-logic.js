@@ -417,82 +417,55 @@ async function executePrestige() {
 
 async function submitScoreToLeaderboard(username, score, prestigeLevel) {
     if (score < 500) return;
+
+    // Recuperiamo la password dalla memoria volatile tramite l'API globale
+    const password = window.EspooClicker ? window.EspooClicker.getPassword() : null;
+
+    if (!password) {
+        console.warn("Impossibile inviare punteggio: Password sessione non trovata.");
+        return;
+    }
+
     try {
         const response = await fetch('./php/submit_score.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: username,
+                password: password, // Inviamo la password sicura
                 score: Math.floor(score),
                 prestigeLevel: prestigeLevel
             })
         });
-        if (response.ok) console.log("Punteggio inviato al Podio!");
-    } catch (error) { console.error("Impossibile inviare il punteggio al podio:", error); }
+        // Opzionale: gestire la risposta
+    } catch (error) { console.error("Errore invio classifica:", error); }
 }
 
 function createNewGameState() {
-    return {
-        score: 0,
-        baseClickValue: 1,
-        totalClicks: 0,
-        totalScore: 0,
-        prestigePoints: 0,
-        lifetimePrestigePoints: 0,
-        totalResets: 0,
-        totalGoldenBugsClicked: 0,
-        totalPlayTime: 0,
-        lifetimeScore: 0,
-        filterSettings: { click: 'available', auto: 'available', lab: 'available' },
+    // 1. Ottieni una copia fresca e COMPLETA dallo stato iniziale definito in game-data.js
+    // Questo assicura che se aggiungi nuovi edifici/upgrade lì, appariranno anche qui.
+    const freshState = getInitialGameState();
 
-        user: { username: 'Giocatore', masterVolume: 1.0 },
+    // Facciamo una deep copy per evitare riferimenti condivisi
+    const newState = JSON.parse(JSON.stringify(freshState));
 
-        teams: {
-            assistenteQa: { count: 0 }, jiraTicket: { count: 0 }, teamQa: { count: 0 },
-            automazioneTest: { count: 0 }, metodologiaAgile: { count: 0 }, aiDebugger: { count: 0 },
-            quantumServer: { count: 0 }, reteNeuraleGalattica: { count: 0 }, debugTemporale: { count: 0 }
-        },
+    // 2. Ripristina SOLO ciò che deve persistere tra i reset
+    // Mantiene gli achievement sbloccati (come da standard Prestige)
+    // Nota: Usiamo una copia sicura anche qui
+    newState.achievements = JSON.parse(JSON.stringify(gameState.achievements));
 
-        // ERRORE ERA QUI: Mancavano mouseGaming, ergonomiaEstrema, aiClick
-        clickUpgrades: {
-            caffeForte: { purchased: false },
-            tastieraErgonomica: { purchased: false },
-            mouseGaming: { purchased: false },       // AGGIUNTO
-            ergonomiaEstrema: { purchased: false },  // AGGIUNTO
-            manoBionica: { purchased: false },
-            hacking: { purchased: false },
-            doppioClick: { purchased: false },
-            aiClick: { purchased: false },           // AGGIUNTO
-            clickAutomatico: { purchased: false },
-            clickDivino: { purchased: false }
-        },
+    // Mantiene le impostazioni utente (volume, nome)
+    newState.user = JSON.parse(JSON.stringify(gameState.user));
 
-        prestigeUpgrades: {
-            sinergia: { count: 0 }, accelerazione: { purchased: false }, ticketPremium: { purchased: false },
-            outsourcing: { count: 0 }, paracadute: { purchased: false }, crunchTime: { purchased: false }
-        },
+    // Mantiene i filtri dei negozi
+    if (gameState.filterSettings) {
+        newState.filterSettings = JSON.parse(JSON.stringify(gameState.filterSettings));
+    }
 
-        buildingEnhancements: {
-            caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
-            scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
-            managerJunior: { purchased: false }, jiraAI: { purchased: false },
-            jiraCloud: { purchased: false }, jiraDataCenter: { purchased: false },
-            jiraPremium: { purchased: false }, jiraSelfHealing: { purchased: false },
-            scrum: { purchased: false }, teamLeader: { purchased: false },
-            certificazioneISTQB: { purchased: false }, bonusProduttivita: { purchased: false },
-            teamGlobale: { purchased: false }, selenium: { purchased: false },
-            cucumber: { purchased: false }, ciCd: { purchased: false },
-            docker: { purchased: false }, kubernetes: { purchased: false },
-            kanban: { purchased: false }, safe: { purchased: false },
-            productOwner: { purchased: false }, releaseTrain: { purchased: false },
-            devOps: { purchased: false }, deepLearning: { purchased: false },
-            machineLearning: { purchased: false }, retiNeurali: { purchased: false },
-            quantumComputing: { purchased: false }, skynet: { purchased: false }
-        },
+    // Nota: PrestigePoints e Upgrade Prestigio vengono reiniettati 
+    // esplicitamente dentro la funzione executePrestige(), quindi non serve farlo qui.
 
-        // Mantiene gli achievement sbloccati (come da standard Prestige)
-        achievements: gameState.achievements
-    };
+    return newState;
 }
 
 // --------- 7. LOOP DI GIOCO E OBIETTIVI ---------

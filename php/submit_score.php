@@ -1,34 +1,53 @@
 <?php
-include 'db_connect.php';
+require_once 'db_connect.php';
 
-// Prende i dati inviati dal JavaScript
-$data = json_decode(file_get_contents('php://input'), true);
+$input = file_get_contents('php://input');
+$data = json_decode($input, true);
 
-$username = $data['username'];
-$score = $data['score'];
-$prestigeLevel = $data['prestigeLevel'];
+$username = $data['username'] ?? '';
+$password = $data['password'] ?? ''; // Nuova richiesta
+$score = $data['score'] ?? 0;
+$prestigeLevel = $data['prestigeLevel'] ?? 0;
 
-if (empty($username) || !isset($score) || !isset($prestigeLevel)) {
-    die(json_encode(["status" => "error", "message" => "Dati invalidi."]));
+if (empty($username) || empty($password)) {
+    die(json_encode(["status" => "error", "message" => "Autenticazione mancante."]));
 }
 
-// Inserimento o aggiornamento nella LEADERBOARD dinamica
-$stmt = $conn->prepare("
-    INSERT INTO $table_leaderboard (username, score, prestigeLevel) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-    score = GREATEST(score, VALUES(score)),
-    prestigeLevel = VALUES(prestigeLevel)
-");
+// 1. VERIFICA IDENTITÀ (Cruciale)
+$check = $conn->prepare("SELECT password_hash FROM $table_users WHERE username = ?");
+$check->bind_param("s", $username);
+$check->execute();
+$res = $check->get_result();
 
-$stmt->bind_param("sii", $username, $score, $prestigeLevel);
+if ($row = $res->fetch_assoc()) {
+    if (password_verify($password, $row['password_hash'])) {
+        // Password corretta: Possiamo aggiornare la classifica
+        
+        $stmt = $conn->prepare("
+            INSERT INTO $table_leaderboard (username, score, prestigeLevel) 
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+            score = GREATEST(score, VALUES(score)),
+            prestigeLevel = GREATEST(prestigeLevel, VALUES(prestigeLevel))
+        ");
+        // Nota: ho aggiunto GREATEST anche per il livello prestigio per sicurezza
 
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Punteggio aggiornato!"]);
+        $stmt->bind_param("sii", $username, $score, $prestigeLevel);
+
+        if ($stmt->execute()) {
+            echo json_encode(["status" => "success", "message" => "Punteggio salvato."]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Errore DB."]);
+        }
+        $stmt->close();
+        
+    } else {
+        echo json_encode(["status" => "error", "message" => "Password errata - Score rifiutato."]);
+    }
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    echo json_encode(["status" => "error", "message" => "Utente non trovato."]);
 }
 
-$stmt->close();
+$check->close();
 $conn->close();
 ?>
