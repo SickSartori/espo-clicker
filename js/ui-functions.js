@@ -223,8 +223,10 @@ function checkTabNotifications() {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
 
-        // FIX SICUREZZA: Se lo stato non esiste (bug di salvataggio), saltalo invece di crashare
+        // --- FIX SICUREZZA ---
+        // Se per qualche motivo lo stato non esiste (es. salvataggio vecchio), lo saltiamo
         if (!state) continue;
+        // ---------------------
 
         // Se non comprato, sbloccato E ho abbastanza soldi
         if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score >= data.cost) {
@@ -233,11 +235,10 @@ function checkTabNotifications() {
         }
     }
     const tabClick = document.getElementById('tab-click');
-    // Notifica solo se il tab NON è attivo
     if (clickNotify && !tabClick.classList.contains('active')) {
         tabClick.classList.add('notify');
     } else if (tabClick.classList.contains('active')) {
-        tabClick.classList.remove('notify'); // Rimuovi se lo sto guardando
+        tabClick.classList.remove('notify');
     }
 
     // 2. Check Tab AUTO (Migliorie)
@@ -245,6 +246,11 @@ function checkTabNotifications() {
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
+
+        // --- FIX SICUREZZA ---
+        if (!state) continue;
+        // ---------------------
+
         const targetBuilding = gameState.buildings[data.targetBuilding];
 
         if (!state.purchased && targetBuilding.count >= data.requiredCount && gameState.score >= data.cost) {
