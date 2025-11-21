@@ -415,31 +415,31 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // 1. Reset pulito dello stato interno
+                    // 1. Reset dello stato in memoria per evitare mix di dati
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
-                    // 2. Pulisce la lista grafica per evitare duplicati o residui
+                    // 2. PULIZIA GRAFICA FONDAMENTALE
+                    // Rimuoviamo eventuali obiettivi mostrati dalla cache precedente
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // 3. Carica i dati dal Cloud
+                    // 3. Merge dei dati (sovrascrive lo stato pulito con quello del cloud)
                     deepMerge(gameState, JSON.parse(cloudJSON));
 
-                    // 4. Fix allineamento Username
+                    // 4. Fix Nome Utente (se diverso dalla sessione)
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser) {
                         gameState.user.username = currentSessionUser;
                     }
 
-                    // 5. Ricalcoli matematici
+                    // 5. Ricalcoli
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
-
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
-                    // 6. [NUOVO] Ridisegna gli obiettivi sbloccati
-                    // Questo è il pezzo che mancava: ripristina la grafica in base al salvataggio
+                    // 6. RENDERING OBIETTIVI (Il pezzo mancante)
+                    // Cicla gli achievement appena caricati e disegna quelli sbloccati
                     for (const key in gameState.achievements) {
                         if (gameState.achievements[key].unlocked) {
                             if (typeof renderAchievement === 'function') {
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     updateUI();
 
-                    // 7. Salva subito nel localStorage del nuovo PC
+                    // 7. Sovrascrivi immediatamente la cache locale col dato cloud fresco
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
                     showToast("Progressi scaricati dal Cloud!");

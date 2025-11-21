@@ -197,59 +197,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await response.json();
 
             if (res.status === 'success') {
-                // Imposta credenziali sessione
+                // 1. Imposta credenziali sessione
                 sessionStorage.setItem('espooUser', username);
                 sessionStorage.setItem('espooPass', password);
                 Game.setPassword(password);
 
+                // --- PULIZIA TOTALE PREVENTIVA DELL'INTERFACCIA ---
+                // Questo rimuove fisicamente i trofei vecchi dalla lista HTML
+                const achList = document.getElementById('achievement-list');
+                if (achList) achList.innerHTML = '';
+
+                // Pulisce anche la classifica se era aperta
+                const leadList = document.getElementById('leaderboard-list');
+                if (leadList) leadList.innerHTML = '';
+
                 if (res.action === 'register') {
-                    // --- NUOVO UTENTE: RESET TOTALE ---
-                    // 1. Pulisce localStorage vecchio
+                    // --- CASO NUOVO UTENTE ---
+
+                    // 1. Cancella il salvataggio locale del giocatore precedente
                     localStorage.removeItem('espotoolClickerSaveV8');
 
-                    // 2. Resetta la variabile in memoria
-                    // Nota: assicurati che resetGameToDefault sia accessibile o usa Game.reset... se esposto
-                    // Se resetGameToDefault è globale (come sembra dallo script originale):
-                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
+                    // 2. Esegui un HARD RESET dello stato (tutto a zero, inclusi achievement)
+                    if (typeof resetGameToDefault === 'function') {
+                        resetGameToDefault();
+                    }
 
-                    // 3. [FIX IMPORTANTE] Pulisce la lista visiva degli obiettivi
-                    const achList = document.getElementById('achievement-list');
-                    if (achList) achList.innerHTML = '';
-
-                    // 4. Imposta il nuovo nome
+                    // 3. Aggiorna il nome nel nuovo stato pulito
                     Game.getGameState().user.username = username;
 
                     Game.showToast(`Benvenuto ${username}! Account creato.`);
-                    // 5. Salva subito lo stato pulito
+
+                    // 4. Salva subito questo stato "vergine"
                     Game.saveGame();
 
-                    // 6. Aggiorna UI per mostrare tutto a 0
-                    if (typeof refreshAllStores === 'function') refreshAllStores();
-                    if (typeof updateUI === 'function') updateUI();
-
                 } else if (res.action === 'login') {
-                    // --- UTENTE ESISTENTE ---
-                    if (res.save_data) {
-                        // [FIX OPZIONALE] Anche qui, puliamo prima gli obiettivi vecchi per evitare duplicati/mix
-                        const achList = document.getElementById('achievement-list');
-                        if (achList) achList.innerHTML = '';
+                    // --- CASO LOGIN ESISTENTE ---
 
+                    if (res.save_data) {
+                        // Carica i dati dal cloud (la funzione loadCloudData ora gestirà il rendering)
                         Game.loadCloudData(res.save_data);
                         Game.showToast(`Bentornato ${username}!`);
                     } else {
-                        // Caso raro: Login ma nessun dato salvato -> Reset
+                        // Login riuscito ma nessun dato salvato nel DB? Reset come se fosse nuovo
                         localStorage.removeItem('espotoolClickerSaveV8');
                         if (typeof resetGameToDefault === 'function') resetGameToDefault();
-
-                        // [FIX IMPORTANTE] Pulisce la lista visiva
-                        const achList = document.getElementById('achievement-list');
-                        if (achList) achList.innerHTML = '';
-
                         Game.getGameState().user.username = username;
                         Game.saveGame();
-                        Game.showToast(`Bentornato ${username}! (Nuova Partita)`);
+                        Game.showToast(`Bentornato ${username}! (Nessun salvataggio trovato)`);
                     }
                 }
+
+                // 5. Aggiorna Grafica Negozi e UI
+                if (typeof refreshAllStores === 'function') refreshAllStores();
+                if (typeof updateUI === 'function') updateUI();
 
                 closeModal(loginModal);
                 Game.startGameRoutines();
