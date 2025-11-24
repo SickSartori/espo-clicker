@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSettingsBtn = document.getElementById('open-settings-btn');
     const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
 
+    const openSkinsBtn = document.getElementById('open-skins-btn');
+    const skinsModal = document.getElementById('skins-modal');
+
     const openPrestigeHubBtn = document.getElementById('open-prestige-hub-btn');
     const prestigeHubModal = document.getElementById('prestige-hub-modal');
 
@@ -110,7 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listener Apertura
-    if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => openModal(achievementsModal));
+    if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
+        // Disegna la lista aggiornata con barre di progresso
+        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        openModal(achievementsModal);
+    });
+    if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
+        // Chiama la funzione che disegna la griglia (definita in ui-functions.js)
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+
+        // Apre il modale
+        openModal(skinsModal);
+    });
 
     if (openPrestigeHubBtn) {
         openPrestigeHubBtn.addEventListener('click', () => {

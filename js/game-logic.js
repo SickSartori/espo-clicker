@@ -1,18 +1,60 @@
 // --------- 3. FUNZIONI AUDIO ---------
 function playSound(id) {
+    const sound = document.getElementById(id);
+    if (!sound) return;
+
+    // Verifica che l'utente abbia attivato il suono nelle impostazioni
+    if (gameState.user.masterVolume <= 0) return;
+
     try {
-        const sound = document.getElementById(id);
         sound.volume = gameState.user.masterVolume;
         sound.currentTime = 0;
-        sound.play();
-    } catch (e) { }
+
+        // Definiamo la promise esplicitamente
+        const playPromise = sound.play();
+
+        // Gestione moderna dei browser che bloccano l'autoplay
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                // Ignoriamo silenziosamente l'errore di autoplay
+                // (succede se l'utente non ha ancora interagito con la pagina)
+            });
+        }
+    } catch (e) {
+        // Catch generico per evitare crash
+        console.warn("Audio error ignorato:", e);
+    }
+}
+
+function applySkinVisuals(skinId) {
+    const data = gameData.skins[skinId];
+
+    // Se la skin non esiste (magari salvataggio vecchio), usa default
+    if (!data) {
+        applySkinVisuals('default');
+        return;
+    }
+
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+
+    if (photoNormal) {
+        photoNormal.src = `./image/${data.img}`;
+        // Rimuovi filtri residui se c'erano
+        photoNormal.style.filter = 'none';
+    }
+
+    if (photoClicked) {
+        photoClicked.src = `./image/${data.imgClick}`;
+        photoClicked.style.filter = 'none';
+    }
 }
 
 // --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
-    const r = 1.15;
+    const r = 1.20;
 
     let discountMultiplier = 1;
     if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
@@ -166,7 +208,7 @@ function clickCookie(event) {
 function calculateMaxAffordable(teamKey) {
     const state = gameState.teams[teamKey];
     const data = gameData.teams[teamKey];
-    const r = 1.15;
+    const r = 1.20;
 
     // Calcolo sconto (copiato da calculateBulkCost)
     let discountMultiplier = 1;
@@ -495,7 +537,13 @@ function gameLoop() {
 function checkAchievements() {
     for (const key in gameData.achievements) {
         const data = gameData.achievements[key];
+        // Se non esiste nel save, inizializzalo (retrocompatibilità)
+        if (!gameState.achievements[key]) {
+            gameState.achievements[key] = { unlocked: false };
+        }
+
         const state = gameState.achievements[key];
+
         if (!state.unlocked && data.condition()) {
             unlockAchievement(key);
         }
@@ -503,10 +551,41 @@ function checkAchievements() {
 }
 
 function unlockAchievement(key) {
-    playSound('sound-achievement');
+    const data = gameData.achievements[key];
     gameState.achievements[key].unlocked = true;
-    showToast(`Obiettivo Sbloccato: ${gameData.achievements[key].name}`);
-    renderAchievement(key);
+    gameState.achievements[key].unlockTime = Date.now(); // Salviamo quando è successo
+
+    // 1. Suono e Toast
+    playSound('sound-achievement');
+
+    let rewardMsg = "";
+
+    // 2. Erogazione PREMIO
+    if (data.reward) {
+        if (data.reward.type === 'bugs') {
+            gameState.score += data.reward.value;
+            gameState.totalScore += data.reward.value; // Conta per il prestigio
+            rewardMsg = ` (+${formatNumber(data.reward.value)} Bug)`;
+        }
+        else if (data.reward.type === 'prestige') {
+            gameState.prestigePoints += data.reward.value;
+            rewardMsg = ` (+${data.reward.value} Token Lab)`;
+        }
+        else if (data.reward.type === 'multiplier') {
+            // Qui dovresti avere una variabile globale per moltiplicatore achievement
+            // Aggiungi `achievementMultiplier` in game-data e usalo in recalculateCPS
+            // Esempio: gameState.achievementMultiplier = (gameState.achievementMultiplier || 1) * data.reward.value;
+            rewardMsg = ` (BPS x${data.reward.value} Permanente!)`;
+        }
+    }
+
+    window.EspooClicker.showToast(`🏆 Obiettivo: ${data.name}${rewardMsg}`);
+
+    // 3. Salva
+    window.EspooClicker.saveGame();
+
+    // 4. Aggiorna UI se il modale è aperto
+    updateAchievementsUI();
 }
 // --------- 8. TICKET CRITICO (GOLDEN BUG) ---------
 

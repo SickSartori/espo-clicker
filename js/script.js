@@ -91,6 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         lab: 'available'
                     };
                 }
+                if (gameData.achievements) {
+                    if (!gameState.achievements) gameState.achievements = {};
+                    for (const key in gameData.achievements) {
+                        if (!gameState.achievements[key]) {
+                            gameState.achievements[key] = { unlocked: false };
+                        }
+                    }
+                }
+                if (gameState.skins && gameState.skins.current) {
+                    if (typeof applySkinVisuals === 'function') {
+                        applySkinVisuals(gameState.skins.current);
+                    }
+                }
             } catch (e) { console.error("Errore loadGame:", e); }
         }
 
@@ -124,10 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
-
-        for (const key in gameState.achievements) {
-            if (gameState.achievements[key].unlocked) renderAchievement(key);
-        }
     }
 
     function deepMerge(target, source) {
@@ -423,15 +432,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // 1. Reset dello stato in memoria per evitare mix di dati
+                    // 1. Reset dello stato in memoria
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
-                    // 2. PULIZIA GRAFICA FONDAMENTALE
-                    // Rimuoviamo eventuali obiettivi mostrati dalla cache precedente
+                    // 2. Pulizia grafica
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // 3. Merge dei dati (sovrascrive lo stato pulito con quello del cloud)
+                    // 3. Merge dei dati
                     const cloudState = JSON.parse(cloudJSON);
 
                     // Gestione compatibilità cloud: "buildings" -> "teams"
@@ -442,31 +450,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     deepMerge(gameState, cloudState);
 
-                    // 4. Fix Nome Utente (se diverso dalla sessione)
+                    // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
+                    // Se skins è rotto o manca l'array unlocked, lo resettiamo forzatamente
+                    if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
+                        console.warn("Dati skin corrotti. Ripristino default.");
+                        gameState.skins = { current: 'default', unlocked: ['default'] };
+                    }
+                    // -------------------------------------------------
+
+                    // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser) {
                         gameState.user.username = currentSessionUser;
                     }
 
-                    // 5. Ricalcoli
+                    // ... (il resto della funzione rimane uguale: ricalcoli, updateUI, ecc.)
+                    // Assicurati di copiare il resto della funzione se non lo hai già
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
-                    // 6. RENDERING OBIETTIVI (Il pezzo mancante)
-                    // Cicla gli achievement appena caricati e disegna quelli sbloccati
-                    for (const key in gameState.achievements) {
-                        if (gameState.achievements[key].unlocked) {
-                            if (typeof renderAchievement === 'function') {
-                                renderAchievement(key);
-                            }
-                        }
-                    }
+                    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+                    if (typeof updateUI === 'function') updateUI();
 
-                    updateUI();
-
-                    // 7. Sovrascrivi immediatamente la cache locale col dato cloud fresco
+                    // 7. Sovrascrivi cache locale
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
                     showToast("Progressi scaricati dal Cloud!");

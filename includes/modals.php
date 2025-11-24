@@ -180,3 +180,22 @@
         </div>
     </div>
 </div>
+
+<div id="skins-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close-btn">&times;</button>
+        <h2>👕 Guardaroba</h2>
+        <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
+            Personalizza il tuo look.<br>Sblocca nuove skin completando obiettivi speciali!
+        </p>
+        
+        <div id="skins-grid" style="
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+            gap: 15px; 
+            padding: 20px; 
+            overflow-y: auto; 
+            max-height: 60vh;
+        "></div>
+    </div>
+</div>

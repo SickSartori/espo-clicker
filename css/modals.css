@@ -428,36 +428,113 @@ input[type="number"] {
 .achievement {
     background-color: #34495e;
     border: 1px solid #5d7c9a;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-    opacity: 0.6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    position: relative;
     transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
 }
 
+/* SBLOCCATO */
 .achievement.unlocked {
-    opacity: 1;
-    background-color: #27ae60;
+    background-color: rgba(39, 174, 96, 0.2);
+    /* Verde Trasparente */
     border-color: #2ecc71;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 10px rgba(46, 204, 113, 0.1);
+}
+
+/* BLOCCATO */
+.achievement.locked {
+    opacity: 0.8;
+    border-style: dashed;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* SEGRETO */
+.achievement.secret {
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-style: italic;
+    color: #7f8c8d;
+    padding: 10px;
+}
+
+.achievement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
 }
 
 .achievement-name {
-    font-weight: bold;
+    font-weight: 700;
     color: #fff;
-    font-size: 1rem;
-    margin-bottom: 4px;
+    font-size: 1.05rem;
 }
 
-.achievement-desc {
-    font-size: 0.85rem;
+.achievement.locked .achievement-name {
     color: #bdc3c7;
 }
 
-.achievement.unlocked .achievement-desc {
-    color: #f0f0f0;
+.achievement-desc {
+    font-size: 0.9rem;
+    color: #ecf0f1;
+    margin-bottom: 5px;
+}
+
+.achievement-flavor {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #95a5a6;
+    margin-bottom: 8px;
+}
+
+.achievement-reward {
+    font-size: 0.85rem;
+    color: #f1c40f;
+    font-weight: bold;
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* BARRA PROGRESSO */
+.ach-progress-container {
+    width: 100%;
+    height: 16px;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 8px;
+    border: 1px solid #4a6582;
+}
+
+.ach-progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2980b9);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.ach-progress-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+    font-weight: bold;
 }
 
 /* --- STATISTICHE --- */
