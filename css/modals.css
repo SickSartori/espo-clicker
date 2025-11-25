@@ -426,21 +426,28 @@ input[type="number"] {
 }
 
 .achievement {
-    background-color: #34495e;
-    border: 1px solid #5d7c9a;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    position: relative;
-    transition: all 0.3s ease;
+    border: 1px solid #4a6582;
+    /* Bordo sottile di base */
+    padding: 18px;
+    margin-bottom: 12px;
+    background-color: #2c3e50;
+    /* Sfondo card più scuro per contrasto */
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+.achievement:hover:not(.locked):not(.claimable) {
+    background-color: #3d5570;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), 0 0 5px #5dade2;
 }
 
 /* SBLOCCATO */
 .achievement.unlocked {
-    background-color: rgba(39, 174, 96, 0.2);
-    /* Verde Trasparente */
+    background-color: rgba(46, 204, 113, 0.1);
+    /* Sfondo verde tenue */
     border-color: #2ecc71;
-    box-shadow: 0 2px 10px rgba(46, 204, 113, 0.1);
 }
 
 /* BLOCCATO */
@@ -463,16 +470,46 @@ input[type="number"] {
 }
 
 .achievement-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
+}
+
+.achievement-header [data-tooltip]:hover::after {
+    /* Ancora il tooltip a destra */
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(0) !important;
+
+    /* Aggiungi un po' di margine per non toccare il bordo */
+    margin-right: -5px;
+}
+
+/* Fix per la freccetta (Before element) */
+.achievement-header [data-tooltip]:hover::before {
+    left: auto !important;
+    right: 18px !important;
+    /* Posiziona la freccetta sopra l'icona */
+    transform: translateX(0) !important;
 }
 
 .achievement-name {
-    font-weight: 700;
+    font-size: 1.3rem;
+    /* Titolo grande */
+    font-weight: 800;
     color: #fff;
-    font-size: 1.05rem;
+    letter-spacing: -0.5px;
+    flex-grow: 1;
+}
+
+.reward-badge-text {
+    font-size: 1.8rem;
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.8);
+    margin-left: 15px;
 }
 
 .achievement.locked .achievement-name {
@@ -481,7 +518,7 @@ input[type="number"] {
 
 .achievement-desc {
     font-size: 0.9rem;
-    color: #ecf0f1;
+    color: #bdc3c7;
     margin-bottom: 5px;
 }
 
@@ -505,21 +542,22 @@ input[type="number"] {
 
 /* BARRA PROGRESSO */
 .ach-progress-container {
-    width: 100%;
-    height: 16px;
-    background-color: #2c3e50;
-    border-radius: 8px;
+    height: 25px;
+    /* Più alta e visibile */
+    border: 1px solid #3498db;
+    background-color: #1a252f;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
     overflow: hidden;
     position: relative;
-    margin-top: 8px;
-    border: 1px solid #4a6582;
+    margin-top: 10px;
 }
 
 .ach-progress-bar {
-    height: 100%;
-    background: linear-gradient(to right, #3498db, #2980b9);
-    width: 0%;
-    transition: width 0.3s ease;
+    background: linear-gradient(to right, #3498db, #5dade2);
+    box-shadow: 0 0 10px #5dade2;
+    /* Glow interno */
+    transition: width 0.4s ease-out;
 }
 
 .ach-progress-text {
@@ -530,11 +568,18 @@ input[type="number"] {
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
+    /* FIX: Allinea a sinistra invece di centrare */
+    justify-content: flex-start;
+    /* Aggiungi padding per staccare il testo dal bordo */
+    padding-left: 10px;
+
+    font-size: 0.85rem;
+    font-weight: 600;
     color: #fff;
-    text-shadow: 0 1px 2px #000;
-    font-weight: bold;
+    text-shadow: 0 0 5px #000;
+    z-index: 2;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 /* --- STATISTICHE --- */
@@ -745,5 +790,333 @@ input[type="number"] {
 
     .contract-columns {
         flex-direction: column;
+    }
+}
+
+/* STILE BOTTONE RISCATTA */
+.claim-btn {
+    width: 100%;
+    padding: 10px 15px;
+    /* Più grande */
+    font-size: 1rem;
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+    color: #2c3e50;
+    font-weight: 800;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 0 #d35400;
+}
+
+.claim-btn:hover {
+    box-shadow: 0 4px 0 #d35400, 0 0 20px rgba(241, 196, 15, 0.5);
+    /* Glow al hover */
+    filter: brightness(1.1);
+}
+
+.claim-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #d35400;
+}
+
+.claim-btn .claim-hover,
+.claim-btn .claim-visible {
+    transition: all 0.1s ease-out;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+    /* Nascosto di default */
+}
+
+@keyframes pulseGold {
+    0% {
+        box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(241, 196, 15, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(241, 196, 15, 0);
+    }
+}
+
+.achievement.claimable {
+    border: 3px solid #f1c40f;
+    background-color: rgba(241, 196, 15, 0.15);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+    animation: achievementPulse 1.5s infinite alternate;
+}
+
+@keyframes achievementPulse {
+    from {
+        box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+    }
+
+    to {
+        box-shadow: 0 0 20px rgba(241, 196, 15, 0.9);
+    }
+}
+
+.achievement-done {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2ecc71;
+    text-align: right;
+}
+
+.achievement.achievement-secret {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px dashed #7f8c8d;
+    color: #7f8c8d;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.reward-badge {
+    font-size: 1.2rem;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+    /* Nascosto di default */
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.claim-btn .claim-visible {
+    display: inline-block;
+    /* Visibile di default */
+}
+
+/* Al passaggio del mouse: nascondi il premio, mostra RISCATTA */
+.claim-btn:hover .claim-visible {
+    display: none;
+}
+
+.claim-btn:hover .claim-hover {
+    display: inline-block;
+    font-weight: 900;
+    animation: pulseText 0.5s 2;
+}
+
+@keyframes pulseText {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.05);
+    }
+}
+
+/* --- SKIN SYSTEM --- */
+.skin-card {
+    border-width: 3px;
+    /* Spessore desiderato */
+    border-style: solid;
+    /* Forza il solido anche per bloccate */
+    transition: all 0.2s ease-in-out;
+    /* Rimuovi l'opacity 0.8 in linea per controllare meglio */
+    opacity: 1;
+}
+
+.skin-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    /* Invisibile di default */
+    transition: opacity 0.3s ease;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Mostra overlay al passaggio del mouse */
+.skin-card:hover .skin-overlay {
+    opacity: 1;
+}
+
+.skin-overlay-text {
+    font-size: 0.75rem;
+    color: #fff;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.skin-price {
+    color: #f1c40f;
+    font-weight: bold;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    border: 1px solid #f1c40f;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(241, 196, 15, 0.1);
+}
+
+/* Bordo dorato pulsante per le skin acquistabili */
+.skin-card.buyable:hover {
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.skin-card:hover:not(.locked) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.skin-card.rarity-common {
+    border-color: #7f8c8d;
+}
+
+.skin-card.rarity-rare {
+    border-color: #3498db;
+}
+
+.skin-card.rarity-epic {
+    border-color: #9b59b6;
+}
+
+.skin-card.rarity-legendary {
+    border-color: #f1c40f;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
+}
+
+.skin-card.rarity-common.unlocked {
+    border-color: #bdc3c7;
+    /* Grigio chiaro */
+}
+
+
+
+.skin-card.rarity-rare.unlocked {
+    border-color: #3498db;
+    /* Blu vivido */
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+
+
+.skin-card.rarity-epic.unlocked {
+    border-color: #9b59b6;
+    /* Viola acceso */
+    box-shadow: 0 0 12px rgba(155, 89, 182, 0.6);
+}
+
+
+.skin-card.rarity-legendary.unlocked {
+    animation: gold-pulse 2s infinite alternate ease-in-out;
+}
+
+.skin-card.rarity-legendary.unlocked:hover {
+    box-shadow: 0 0 30px rgba(255, 223, 0, 1) !important;
+}
+
+.skin-card.unlocked {
+    border-width: 3px;
+    /* Più spesso */
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    /* Ombra leggera di base */
+}
+
+/* Stili per le skin sbloccate/acquistabili al passaggio del mouse */
+.skin-card.unlocked:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.skin-card.rarity-legendary.unlocked:hover {
+    box-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
+}
+
+.skin-card.equipped {
+    border-color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
+    animation: none !important;
+    /* Non deve pulsare */
+}
+
+.skin-card.locked {
+    opacity: 0.6;
+    /* Scuro per indicare bloccato */
+    box-shadow: none;
+    cursor: default;
+}
+
+.skin-card.locked.buyable {
+    border-style: solid;
+    opacity: 0.9;
+    /* Più visibile rispetto alle achievement-locked */
+    cursor: pointer;
+}
+
+.skin-card.can-afford-border {
+    /* Sovrascrivi il border-color con l'oro solo se can-afford-border è presente */
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+    animation: gold-pulse 2s infinite alternate ease-in-out;
+}
+
+/* Hover: Mantiene l'animazione se puoi comprare, altrimenti colore normale */
+.skin-card.can-afford-border:hover {
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.8) !important;
+    transform: translateY(-3px) scale(1.02);
+}
+
+.skin-card.locked.buyable:hover {
+    box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+    border-color: #f1c40f;
+    /* Diventa oro al hover */
+    transform: translateY(-2px);
+}
+
+/* Se la skin è bloccata ma acquistabile, il lucchetto è dorato/giallo */
+.skin-card.locked .skin-price {
+    color: #f1c40f;
+    border-color: #f1c40f;
+    font-weight: 700;
+}
+
+.skin-price {
+    font-weight: bold;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    border: 1px solid;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    /* Testo bianco */
+}
+
+.skin-price.can-afford {
+    border-color: #2ecc71;
+    /* Verde se puoi permettertelo */
+    color: #2ecc71;
+    box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
+}
+
+/* --- ANIMAZIONI --- */
+
+@keyframes gold-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(255, 223, 0, 1);
+    }
+
+    100% {
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
     }
 }

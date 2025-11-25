@@ -29,65 +29,250 @@ function formatTime(totalSeconds) {
     return timeString;
 }
 
-// --- FUNZIONE SKIN CORRETTA E ROBUSTA ---
 function updateSkinsUI() {
     const grid = document.getElementById('skins-grid');
     if (!grid) return;
 
     grid.innerHTML = '';
 
-    // 1. Inizializzazione Sicura dell'oggetto
-    if (!gameState.skins || typeof gameState.skins !== 'object') {
-        gameState.skins = { unlocked: ['default'], current: 'default' };
-    }
-    // 2. Riparazione array unlocked se mancante
-    if (!Array.isArray(gameState.skins.unlocked)) {
-        gameState.skins.unlocked = ['default'];
-    }
-    // 3. Riparazione current skin
-    if (!gameState.skins.current) {
-        gameState.skins.current = 'default';
-    }
+    // Controlli di sicurezza dati
+    if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
+    if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
+    if (!gameState.skins.current) gameState.skins.current = 'default';
 
-    // Creiamo copie locali sicure per evitare letture undefined
     const safeUnlockedList = gameState.skins.unlocked;
     const currentSkin = gameState.skins.current;
 
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
-
-        // Controllo sicuro
         const isUnlocked = safeUnlockedList.includes(key);
         const isEquipped = currentSkin === key;
 
+        // Calcola se l'utente PUÒ acquistare la skin (has enough tokens)
+        const canBuy = !isUnlocked && data.cost && gameState.prestigePoints >= data.cost;
+        const isBuyable = data.cost !== undefined;
+
         const card = document.createElement('div');
-        card.className = `skin-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+
+        // FIX: Aggiunto la classe 'can-afford-border' solo se canBuy è TRUE
+        // Rimuoviamo la logica 'buyable' dall'inline-style.
+        card.className = `skin-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''} rarity-${data.rarity || 'common'} ${isBuyable ? 'buyable' : ''} ${canBuy ? 'can-afford-border' : ''}`;
+
+        // Determina il testo di sblocco (Hint o Costo)
+        let unlockText = data.unlockHint || "Sblocca completando l'obiettivo";
+        let priceHtml = "";
+
+        if (!isUnlocked && data.cost) {
+            unlockText = canBuy ? "Clicca per acquistare!" : "Acquista con Token Lab";
+            priceHtml = `<div class="skin-price ${canBuy ? 'can-afford' : ''}">💰 ${data.cost} Token</div>`;
+        }
+
+        // Stile CSS dinamico
+        const statusColor = isEquipped ? '#2ecc71' : (canBuy ? '#f1c40f' : (isUnlocked ? '#bdc3c7' : '#e74c3c'));
 
         card.style.cssText = `
-            border: 2px solid ${isEquipped ? '#2ecc71' : (isUnlocked ? '#bdc3c7' : '#4a6582')};
             border-radius: 8px; padding: 10px; text-align: center;
-            opacity: ${isUnlocked ? '1' : '0.5'}; cursor: ${isUnlocked ? 'pointer' : 'default'};
+            opacity: ${isUnlocked ? '1' : '0.8'}; 
+            cursor: pointer;
             background-color: ${isEquipped ? 'rgba(46, 204, 113, 0.1)' : 'transparent'};
             transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         `;
 
-        const imgSrc = data.img ? `./image/${data.img}` : './image/espo.png';
+        const imgSrc = isUnlocked
+            ? (data.img ? `./image/${data.img}` : './image/espo.png')
+            : './image/hidden.png';
+
         const imgStyle = `width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px;`;
-        const filterStyle = isUnlocked ? '' : 'filter: grayscale(100%) blur(1px);';
+        const displayName = data.name;
+        const displayStatus = isEquipped ? 'In uso' : (isBuyable ? 'Acquistabile' : (isUnlocked ? 'Sbloccata' : 'Bloccata'));
 
         card.innerHTML = `
-            <img src="${imgSrc}" style="${imgStyle} ${filterStyle}">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #fff;">${data.name}</div>
-            <div style="font-size: 0.7rem; color: #bdc3c7;">${isEquipped ? 'In uso' : (isUnlocked ? 'Seleziona' : 'Bloccato')}</div>
+            <img src="${imgSrc}" style="${imgStyle}">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #fff;">${displayName}</div>
+            <div style="font-size: 0.7rem; color: ${statusColor};">${displayStatus}</div>
+            
+            ${!isUnlocked ? `
+                <div class="skin-overlay">
+                    <div class="skin-overlay-text" style="font-weight: bold; color: ${statusColor}; margin-bottom: 5px;">${data.rarity.toUpperCase()}</div>
+                    <div class="skin-overlay-text">${unlockText}</div>
+                    ${priceHtml}
+                </div>
+            ` : ''}
         `;
 
-        if (isUnlocked) {
-            card.addEventListener('click', () => {
+        // ... (Listener Click) ...
+        card.addEventListener('click', () => {
+            if (isUnlocked) {
                 if (typeof equipSkin === 'function') equipSkin(key);
-            });
-        }
+            } else if (isBuyable) {
+                if (typeof buySkin === 'function') buySkin(key);
+            } else {
+                window.EspooClicker.showToast(data.unlockHint || "Completa l'obiettivo associato per sbloccare.", 'warning');
+                if (card.classList.contains('locked')) {
+                    card.style.transform = "translateX(5px)";
+                    setTimeout(() => card.style.transform = "translateX(0)", 100);
+                }
+            }
+        });
         grid.appendChild(card);
     }
+}
+
+
+function updateAchievementsUI() {
+    const list = document.getElementById('achievement-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    const items = [];
+    Object.keys(gameData.achievements).forEach(key => {
+        const data = gameData.achievements[key];
+        const state = gameState.achievements[key] || { unlocked: false, claimed: false };
+        if (state.claimed === undefined) state.claimed = false;
+
+        const isUnlocked = state.unlocked;
+        const isClaimed = state.claimed;
+
+        let progress = 0;
+        let currentVal = 0;
+
+        // Calcolo Valori e Progresso
+        if (!isUnlocked) {
+            if (data.type === 'click') currentVal = gameState.totalClicks;
+            else if (data.type === 'score') currentVal = gameState.totalScore;
+            else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
+            else if (data.type === 'time') currentVal = gameState.totalPlayTime;
+
+            if (data.target && data.target > 0) {
+                progress = Math.min(100, (currentVal / data.target) * 100);
+            }
+        } else {
+            progress = 100;
+        }
+
+        // Sorting Priority: Claimable (4) > In Progress (3, sorted by progress) > Completed (2) > Secret (1)
+        let priority = 0;
+        if (isUnlocked && !isClaimed && data.reward) { priority = 4; }
+        else if (!isUnlocked && !data.isSecret) { priority = 3; }
+        else if (isUnlocked) { priority = 2; }
+        else if (data.isSecret) { priority = 1; }
+
+        items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority });
+    });
+
+    // --- LOGICA DI ORDINAMENTO (Da Riscattare > Progresso > Completati) ---
+    items.sort((a, b) => {
+        if (b.priority !== a.priority) return b.priority - a.priority;
+        if (a.priority === 3 && b.priority === 3) return b.progress - a.progress; // Progresso
+        return a.data.name.localeCompare(b.data.name);
+    });
+    // --- FINE ORDINAMENTO ---
+
+
+    items.forEach(item => {
+        const { key, data, state, isUnlocked, isClaimed, progress, currentVal } = item;
+
+        // Placeholder for Secrets
+        if (data.isSecret && !isUnlocked) {
+            const secretEl = document.createElement('div');
+            secretEl.className = 'achievement achievement-secret';
+            secretEl.innerHTML = `<div class="achievement-icon">🔒</div><div class="achievement-info">??? (Segreto)</div>`;
+            list.appendChild(secretEl);
+            return;
+        }
+
+        const el = document.createElement('div');
+        const claimableClass = (isUnlocked && !isClaimed && data.reward) ? 'claimable' : '';
+        const statusClass = isUnlocked ? 'unlocked' : 'locked';
+
+        el.className = `achievement ${statusClass} ${claimableClass}`;
+
+
+        // --- PREPARAZIONE INFORMAZIONI PREMIO (Dettaglio) ---
+        let rewardIcon = '🏆';
+        let rewardDisplay = 'Gloria'; // Testo visibile nel bottone/tooltip
+        let rewardTooltip = 'Nessun premio materiale.'; // Dettaglio per l'attributo title
+
+        if (data.reward) {
+            if (data.reward.type === 'bugs') {
+                rewardIcon = '🐞';
+                rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
+                rewardTooltip = `Ricompensa: ${rewardDisplay}`;
+            }
+            else if (data.reward.type === 'skin') {
+                rewardIcon = '👕';
+                const skinName = (gameData.skins && gameData.skins[data.reward.id]) ? gameData.skins[data.reward.id].name : 'Skin Rara';
+                rewardDisplay = `Skin: ${skinName}`;
+                rewardTooltip = `Sblocca la Skin: ${skinName}`;
+            }
+            else if (data.reward.type === 'prestige') {
+                rewardIcon = '👑';
+                rewardDisplay = `${data.reward.value} Token Lab`;
+                rewardTooltip = `Ottieni: ${rewardDisplay}`;
+            }
+            else if (data.reward.type === 'multiplier') {
+                rewardIcon = '💻'; // CAMBIATO: da ⚡ a 💻 (Laptop)
+                rewardDisplay = `BPS x${data.reward.value}`;
+                rewardTooltip = `Bonus BPS Permanente`;
+            }
+        }
+
+        let actionHtml = '';
+
+        if (isUnlocked && !isClaimed && data.reward) {
+            // CASO 1: DA RISCATTARE (con premio)
+            actionHtml = `
+                <button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere il premio!">
+                    <span class="claim-visible">${rewardIcon} ${rewardDisplay}</span>
+                    <span class="claim-hover">RISCATTA ORA!</span>
+                </button>
+            `;
+        } else if (isClaimed || (isUnlocked && !data.reward)) {
+            // CASO 2: COMPLETATO / Già Riscattato
+            actionHtml = `<div class="achievement-done">✅ Completato</div>`;
+        } else {
+            // CASO 3: IN CORSO (Barra Progresso)
+            const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
+
+            // FIX: Mostra il tooltip del premio sulla barra di progresso
+            actionHtml = `
+                <div class="ach-progress-container" data-tooltip="${rewardTooltip}">
+                    <div class="ach-progress-bar" style="width: ${progress}%"></div>
+                    <span class="ach-progress-text">${progressStatusText}</span>
+                </div>
+            `;
+        }
+
+        const description = (data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc);
+
+        el.innerHTML = `
+            <div class="achievement-header">
+                <span class="achievement-name">${data.name}</span>
+                ${data.reward ? `<span class="reward-badge-text" data-tooltip="${rewardTooltip}">${rewardIcon}</span>` : ''}
+            </div>
+            <div class="achievement-desc">${description}</div>
+            ${data.flavor ? `<div class="achievement-flavor">"${data.flavor}"</div>` : ''}
+            
+            <div class="achievement-footer" style="margin-top: 10px;">
+                ${actionHtml}
+            </div>
+        `;
+
+        list.appendChild(el);
+
+        if (isUnlocked && !isClaimed && data.reward) {
+            const claimBtn = document.getElementById(`claim-${key}`);
+            if (claimBtn) {
+                claimBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof claimAchievementReward === 'function') claimAchievementReward(key);
+                });
+            }
+        }
+    });
 }
 
 function showClickFeedback(event) {
@@ -145,94 +330,26 @@ function showClickFeedback(event) {
     setTimeout(() => feedback.remove(), 1500);
 }
 
-function updateAchievementsUI() {
-    const list = document.getElementById('achievement-list');
-    if (!list || (list.style.display === 'none' && !document.getElementById('achievements-modal').style.display === 'flex')) return;
 
-    list.innerHTML = '';
 
-    const keys = Object.keys(gameData.achievements).sort((a, b) => {
-        const stateA = gameState.achievements[a] || { unlocked: false };
-        const stateB = gameState.achievements[b] || { unlocked: false };
-        if (stateA.unlocked && !stateB.unlocked) return -1;
-        if (!stateA.unlocked && stateB.unlocked) return 1;
-        return 0;
-    });
-
-    keys.forEach(key => {
-        const data = gameData.achievements[key];
-        const state = gameState.achievements[key] || { unlocked: false };
-        const isUnlocked = state.unlocked;
-
-        if (data.isSecret && !isUnlocked) {
-            const secretEl = document.createElement('div');
-            secretEl.className = 'achievement secret';
-            secretEl.innerHTML = `<div class="achievement-icon">🔒</div><div class="achievement-info">??? (Segreto)</div>`;
-            list.appendChild(secretEl);
-            return;
-        }
-
-        let progress = 0;
-        let currentVal = 0;
-        if (isUnlocked) {
-            progress = 100;
-        } else {
-            if (data.type === 'click') currentVal = gameState.totalClicks;
-            else if (data.type === 'score') currentVal = gameState.totalScore;
-            else if (data.type === 'building') currentVal = gameState.teams[data.buildingId].count;
-            else if (data.type === 'bps') currentVal = cookiesPerSecond;
-            else if (data.type === 'time') currentVal = gameState.totalPlayTime;
-
-            if (data.target && data.target > 0) {
-                progress = Math.min(100, (currentVal / data.target) * 100);
-            }
-        }
-
-        const el = document.createElement('div');
-        el.className = `achievement ${isUnlocked ? 'unlocked' : 'locked'}`;
-
-        let rewardHtml = '';
-        if (data.reward) {
-            let icon = '🎁';
-            if (data.reward.type === 'bugs') icon = '🐞';
-            if (data.reward.type === 'multiplier') icon = '⚡';
-            if (data.reward.type === 'prestige') icon = '👑';
-            if (data.reward.type === 'skin') icon = '👕';
-
-            let val = data.reward.value;
-            if (data.reward.type === 'bugs') val = formatNumber(val);
-            if (data.reward.type === 'skin' && gameData.skins[data.reward.id]) val = gameData.skins[data.reward.id].name;
-
-            rewardHtml = `<div class="achievement-reward">${icon} ${val}</div>`;
-        }
-
-        const description = (data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc);
-
-        el.innerHTML = `
-            <div class="achievement-header">
-                <span class="achievement-name">${data.name}</span>
-                ${isUnlocked ? '<span class="check-icon">✅</span>' : ''}
-            </div>
-            <div class="achievement-desc">${description}</div>
-            ${data.flavor ? `<div class="achievement-flavor">"${data.flavor}"</div>` : ''}
-            ${!isUnlocked && data.target ? `
-                <div class="ach-progress-container">
-                    <div class="ach-progress-bar" style="width: ${progress}%"></div>
-                    <span class="ach-progress-text">${formatNumber(currentVal)} / ${formatNumber(data.target)}</span>
-                </div>
-            ` : ''}
-            ${rewardHtml}
-        `;
-        list.appendChild(el);
-    });
-}
-
-function showToast(message) {
+function showToast(message, type = 'info') { // Aggiunto parametro type
     const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
+    toast.className = `toast toast-${type}`; // Classe dinamica
+
+    // Aggiungi Icona/Emoji basata sul tipo
+    let icon = '';
+    if (type === 'success') icon = '✅ ';
+    else if (type === 'error') icon = '❌ ';
+    else if (type === 'achievement') icon = '🏆 ';
+    else if (type === 'warning') icon = '⚠️ ';
+    else if (type === 'reward') icon = '🎁 '; // Per riscatti bug/token
+
+    // Usiamo innerHTML per iniettare l'icona
+    toast.innerHTML = icon + message;
     toastContainer.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+
+    // Durata totale dell'animazione (4 secondi)
+    setTimeout(() => toast.remove(), 4000);
 }
 
 function buildStores() {
@@ -432,6 +549,24 @@ function refreshAllStores() {
     updateEnhancementStore();
     updatePrestigeStore();
     updatePrestigeVisuals();
+}
+function updateBonusCounter() {
+    const counter = document.getElementById('bonus-counter-display');
+    const valueSpan = document.getElementById('combined-multiplier-value');
+
+    // La variabile prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
+    if (prestigeBonus > 1.05) { // Mostra solo se il bonus è significativo
+        if (counter) counter.style.display = 'block';
+        if (valueSpan) {
+            // Mostra il moltiplicatore totale con 2 decimali
+            valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
+
+            // Aggiungi anche un po' di stile per farlo risaltare
+            valueSpan.style.color = '#f1c40f';
+        }
+    } else {
+        if (counter) counter.style.display = 'none';
+    }
 }
 
 function updateUI() {

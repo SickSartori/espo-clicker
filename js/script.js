@@ -79,6 +79,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 deepMerge(gameState, parsedState);
+                if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
+                for (const key in gameData.buildingEnhancements) {
+                    if (!gameState.buildingEnhancements[key]) {
+                        // Copia lo stato di default (non acquistato)
+                        gameState.buildingEnhancements[key] = { purchased: false };
+                    }
+                }
+
+                // 2. Ripara Potenziamenti Click mancanti
+                if (!gameState.clickUpgrades) gameState.clickUpgrades = {};
+                for (const key in gameData.clickUpgrades) {
+                    if (!gameState.clickUpgrades[key]) {
+                        gameState.clickUpgrades[key] = { purchased: false };
+                    }
+                }
+
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
@@ -139,12 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
     }
 
+
     function deepMerge(target, source) {
         for (const key in source) {
             if (source.hasOwnProperty(key)) {
-                if (source[key] instanceof Object && !Array.isArray(source[key]) && target[key]) {
+                if (source[key] instanceof Object && !Array.isArray(source[key])) {
+                    if (!target[key]) target[key] = {}; // Crea l'oggetto se manca
                     deepMerge(target[key], source[key]);
-                } else if (target.hasOwnProperty(key)) {
+                } else {
                     target[key] = source[key];
                 }
             }
@@ -253,6 +271,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const contents = document.querySelectorAll('.tab-content');
 
         const globalFilterSelect = document.getElementById('global-filter-select');
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                // Se il focus è su un input di testo (es. chat, login), lascia fare
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                // Altrimenti blocca
+                e.preventDefault();
+            }
+        });
+
+        // Rimuovi focus dal clicker dopo ogni click per sicurezza
+        if (clickerButton) {
+            clickerButton.addEventListener('mouseup', () => clickerButton.blur());
+            clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+        }
 
         if (globalFilterSelect) {
             // 1. Imposta valore iniziale (dal salvataggio o default)

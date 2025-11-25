@@ -25,7 +25,33 @@ function playSound(id) {
         console.warn("Audio error ignorato:", e);
     }
 }
+// Funzione per acquistare Skin con Token Lab
+function buySkin(skinId) {
+    const data = gameData.skins[skinId];
 
+    // Controlli di sicurezza
+    if (!data || !data.cost || data.cost === 0) return;
+    if (gameState.skins.unlocked.includes(skinId)) return; // Già posseduta
+
+    if (gameState.prestigePoints >= data.cost) {
+        // Transazione
+        gameState.prestigePoints -= data.cost;
+        gameState.skins.unlocked.push(skinId);
+
+        if (typeof playSound === 'function') playSound('sound-buy');
+        window.EspooClicker.showToast(`👕 Skin Acquistata: ${data.name}!`, 'success');
+
+        // Equipaggia subito
+        equipSkin(skinId);
+
+        // Salva e aggiorna
+        window.EspooClicker.saveGame();
+        if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Aggiorna contatore token
+        if (typeof updateSkinsUI === 'function') updateSkinsUI(); // Aggiorna Guardaroba
+    } else {
+        window.EspooClicker.showToast(`❌ Token insufficienti! Te ne servono ${data.cost}.`, 'error');
+    }
+}
 function applySkinVisuals(skinId) {
     const data = gameData.skins[skinId];
 
@@ -57,6 +83,8 @@ function calculateBulkCost(teamKey, amount) {
     const r = 1.20;
 
     let discountMultiplier = 1;
+    let achievementsBPSBonus = 0;
+
     if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
         let discount = gameState.prestigeUpgrades.outsourcing.count * 0.01;
         discountMultiplier = 1 - discount;
@@ -82,8 +110,10 @@ function calculatePrestigeBonus() {
     const pState = gameState.prestigeUpgrades;
 
     let baseBonus = gameState.lifetimePrestigePoints * 0.01;
-    let synergyBonus = pState.sinergia.count * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
-    prestigeBonus = 1 + baseBonus + synergyBonus;
+    let synergyCount = pState.sinergia.count;
+    let synergyBonus = synergyCount * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
+
+    prestigeBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus; // <- Ora funziona
 }
 
 function calculateClickCPSBonus() {
@@ -93,24 +123,34 @@ function calculateClickCPSBonus() {
 function recalculateCPS() {
     let baseCPS = 0;
 
+    // Ciclo sui Teams
     for (const key in gameState.teams) {
+        // Sicurezza: Se il team esiste nel save ma non nei dati (o viceversa), salta
+        if (!gameState.teams[key] || !gameData.teams[key]) continue;
+
         const state = gameState.teams[key];
         const data = gameData.teams[key];
 
         let teamBPS = state.count * data.cpsPerUnit;
 
-        for (const enhanceKey in gameState.buildingEnhancements) {
-            const enhancementState = gameState.buildingEnhancements[enhanceKey];
-            const enhancementData = gameData.buildingEnhancements[enhanceKey];
+        // Ciclo sulle Migliorie (Enhancements)
+        // --- FIX CRASH: Iteriamo su gameData invece che su gameState ---
+        for (const enhanceKey in gameData.buildingEnhancements) {
+            // Sicurezza: Controlliamo se l'upgrade esiste nello stato attuale
+            if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
+                const enhancementState = gameState.buildingEnhancements[enhanceKey];
+                const enhancementData = gameData.buildingEnhancements[enhanceKey];
 
-            if (enhancementState.purchased && enhancementData.targetTeam === key) {
-                teamBPS *= enhancementData.multiplier;
+                if (enhancementState.purchased && enhancementData.targetTeam === key) {
+                    teamBPS *= enhancementData.multiplier;
+                }
             }
         }
         baseCPS += teamBPS;
     }
 
-    if (gameState.clickUpgrades.clickAutomatico.purchased) {
+    // Bonus Click Automatico
+    if (gameState.clickUpgrades && gameState.clickUpgrades.clickAutomatico && gameState.clickUpgrades.clickAutomatico.purchased) {
         baseCPS += gameState.teams.assistenteQa.count;
     }
 
@@ -321,7 +361,7 @@ function buyPrestigeUpgrade(upgradeKey) {
 // --------- 5. FUNZIONI DI PRESTIGIO ---------
 
 function calculatePrestigeGained() {
-    return Math.floor(Math.sqrt(gameState.totalScore / 1000000) * 1.7);
+    return Math.floor(Math.sqrt(gameState.totalScore / 2000000) * 1.0);
 }
 
 // 1. Apre il modale e mostra i dati (NON Resetta ancora)
@@ -512,6 +552,8 @@ function createNewGameState() {
 
 // --------- 7. LOOP DI GIOCO E OBIETTIVI ---------
 
+// --------- 7. LOOP DI GIOCO E OBIETTIVI ---------
+
 setInterval(() => {
     gameState.totalPlayTime += 1;
 }, 1000);
@@ -530,63 +572,116 @@ function gameLoop() {
     const now = Date.now();
     clickHistory = clickHistory.filter(click => now - click.time < 1000);
 
-    // checkAchievements(); <--- RIMOSSO DA QUI
     updateUI();
 }
 
 function checkAchievements() {
+    // FIX: Calcola il bonus BPS totale dagli obiettivi all'inizio
+    let totalAchBPSBonus = 0;
+    const isPostPrestige = gameState.totalResets > 0; // Check per il requisito di Prestigio
+
     for (const key in gameData.achievements) {
         const data = gameData.achievements[key];
-        // Se non esiste nel save, inizializzalo (retrocompatibilità)
+
+        // Inizializza se manca
         if (!gameState.achievements[key]) {
-            gameState.achievements[key] = { unlocked: false };
+            gameState.achievements[key] = { unlocked: false, claimed: false };
+        }
+        if (gameState.achievements[key].claimed === undefined) {
+            gameState.achievements[key].claimed = false;
         }
 
         const state = gameState.achievements[key];
 
+        // Se l'achievement ha un premio (data.reward) E non è post-prestigio, salta il check per ora.
+        // Questo impedisce che l'utente sblocchi i bonus BPS prima del primo reset.
+        if (data.reward && data.reward.type === 'multiplier' && !isPostPrestige) {
+            continue;
+        }
+
+        // 1. Sblocca se condizione vera e non ancora sbloccato
         if (!state.unlocked && data.condition()) {
             unlockAchievement(key);
         }
+
+        // 2. Calcola il Bonus BPS dagli achievement già RISCATTATI
+        if (state.claimed && data.reward && data.reward.type === 'multiplier') {
+            totalAchBPSBonus += (data.reward.value - 1); // Somma solo la parte bonus (es. x1.1 -> 0.1)
+        }
     }
+
+    // Aggiorna il bonus globale e ricalcola
+    achievementsBPSBonus = totalAchBPSBonus;
+    calculatePrestigeBonus(); // Chiama il ricalcolo combinato
 }
 
 function unlockAchievement(key) {
     const data = gameData.achievements[key];
     gameState.achievements[key].unlocked = true;
-    gameState.achievements[key].unlockTime = Date.now(); // Salviamo quando è successo
+    gameState.achievements[key].unlockTime = Date.now();
 
-    // 1. Suono e Toast
+    // FIX: Se NON c'è un premio, segnalo subito come riscattato/completato
+    if (!data.reward) {
+        gameState.achievements[key].claimed = true;
+    } else {
+        gameState.achievements[key].claimed = false;
+    }
+
     playSound('sound-achievement');
 
-    let rewardMsg = "";
+    // Messaggio diverso in base al premio
+    let msg = `🏆 Sbloccato: ${data.name}`;
+    if (data.reward) msg += " (Premio disponibile!)";
 
-    // 2. Erogazione PREMIO
+    window.EspooClicker.showToast(msg);
+
+    window.EspooClicker.saveGame();
+
+    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+}
+
+// NUOVA FUNZIONE: RISCATTA PREMIO
+function claimAchievementReward(key) {
+    const state = gameState.achievements[key];
+    const data = gameData.achievements[key];
+
+    if (!state || !state.unlocked || state.claimed) return;
+
+    // Applica il premio
     if (data.reward) {
+        let toastType = 'reward';
         if (data.reward.type === 'bugs') {
             gameState.score += data.reward.value;
-            gameState.totalScore += data.reward.value; // Conta per il prestigio
-            rewardMsg = ` (+${formatNumber(data.reward.value)} Bug)`;
+            gameState.totalScore += data.reward.value;
+            window.EspooClicker.showToast(`Riscattato: +${formatNumber(data.reward.value)} Bug!`, toastType);
         }
         else if (data.reward.type === 'prestige') {
             gameState.prestigePoints += data.reward.value;
-            rewardMsg = ` (+${data.reward.value} Token Lab)`;
+            window.EspooClicker.showToast(`Riscattato: +${data.reward.value} Token Lab!`, toastType);
+        }
+        else if (data.reward.type === 'skin') {
+            const skinId = data.reward.id;
+            if (!gameState.skins.unlocked.includes(skinId)) {
+                gameState.skins.unlocked.push(skinId);
+                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success'); // Skin è un successo!
+            }
         }
         else if (data.reward.type === 'multiplier') {
-            // Qui dovresti avere una variabile globale per moltiplicatore achievement
-            // Aggiungi `achievementMultiplier` in game-data e usalo in recalculateCPS
-            // Esempio: gameState.achievementMultiplier = (gameState.achievementMultiplier || 1) * data.reward.value;
-            rewardMsg = ` (BPS x${data.reward.value} Permanente!)`;
+            window.EspooClicker.showToast(`Riscattato: Bonus BPS Attivo!`, toastType);
         }
     }
 
-    window.EspooClicker.showToast(`🏆 Obiettivo: ${data.name}${rewardMsg}`);
+    // Segna come riscattato
+    state.claimed = true;
+    playSound('sound-buy');
 
-    // 3. Salva
+    recalculateCPS();
     window.EspooClicker.saveGame();
 
-    // 4. Aggiorna UI se il modale è aperto
-    updateAchievementsUI();
+    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+    if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
+
 // --------- 8. TICKET CRITICO (GOLDEN BUG) ---------
 
 let goldenBugTimer;

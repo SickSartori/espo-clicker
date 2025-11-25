@@ -16,7 +16,9 @@
             </div>
             
         </div>
-
+        <div id="bonus-counter-display" style="display: none;">
+            BONUS PERMANENTE: <span id="combined-multiplier-value">x1.00</span>
+        </div>
         <div id="click-feedback-container"></div>
         
         <button id="clicker-btn" title="Risolvi un Bug!">

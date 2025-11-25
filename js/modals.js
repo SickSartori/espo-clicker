@@ -431,11 +431,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', deleteSave);
 
     // AUTO-LOGIN
+    // Listener Tasto Invio nei campi Login
+    function setupEnterKey(inputElement, actionBtn) {
+        if (inputElement) {
+            inputElement.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    actionBtn.click();
+                }
+            });
+        }
+    }
+
+    setupEnterKey(loginInput, loginButton);
+    setupEnterKey(loginPasswordInput, loginButton);
+
+    // AUTO-LOGIN E INIZIALIZZAZIONE
     const checkGameApi = setInterval(() => {
         if (window.EspooClicker) {
             clearInterval(checkGameApi);
-            const Game = window.EspooClicker;
-
+            // ... resto del codice auto-login invariato ...
             const sessUser = sessionStorage.getItem('espooUser');
             const sessPass = sessionStorage.getItem('espooPass');
 

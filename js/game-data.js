@@ -1,5 +1,19 @@
 // --------- 1. DATI E STATO DEL GIOCO ---------
 
+// Variabili Globali (Spostate in alto per evitare errori di inizializzazione)
+let cookiesPerSecond = 0;
+let prestigeBonus = 1;
+let clickCPSBonus = 1;
+let isBluescreenActive = false;
+let bluescreenMultiplier = 1;
+let goldenBugChance = 0.001;
+let goldenBugSpawnTime = 60000 + Math.random() * 120000;
+let crunchTimeMultiplier = 1;
+let crunchTimeEndTime = 0;
+let crunchTimeCooldownEnd = 0;
+var clickHistory = [];
+let achievementsBPSBonus = 0;
+
 function getInitialGameState() {
     return {
         score: 0,
@@ -17,7 +31,6 @@ function getInitialGameState() {
         crunchTimeEndTime: 0,
         crunchTimeCooldownEnd: 0,
 
-        // --- GESTIONE SKIN (Solo Stato) ---
         skins: {
             current: 'default',
             unlocked: ['default']
@@ -79,7 +92,6 @@ function getInitialGameState() {
             machineLearning: { purchased: false }, retiNeurali: { purchased: false },
             quantumComputing: { purchased: false }, skynet: { purchased: false }
         },
-        // Inizializziamo achievements vuoti, verranno riempiti dalla logica di caricamento
         achievements: {}
     };
 }
@@ -90,7 +102,6 @@ function resetGameToDefault() {
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 
-    // Deep copy per oggetti annidati
     gameState.teams = JSON.parse(JSON.stringify(freshState.teams));
     gameState.clickUpgrades = JSON.parse(JSON.stringify(freshState.clickUpgrades));
     gameState.prestigeUpgrades = JSON.parse(JSON.stringify(freshState.prestigeUpgrades));
@@ -105,76 +116,67 @@ function resetGameToDefault() {
     clickHistory = [];
 }
 
+
+
 const gameData = {
     PRESTIGE_THRESHOLD: 50000000,
 
-    // --- DEFINIZIONE SKIN (Immagini) ---
     skins: {
-        // Base
+        // [COMMON] Base
         default: {
-            name: "Classico",
-            desc: "L'originale inconfondibile.",
-            img: "espo.png",
-            imgClick: "espo-click.png"
+            name: "Classico", desc: "L'originale inconfondibile.",
+            img: "espo.png", imgClick: "espo-click.png",
+            rarity: "common", bg: "background.jpg", clickEffect: "normal"
         },
-        // Meme & Fun
-        ricardo: {
-            name: "Flexpo",
-            desc: "Non c'è bug che tenga.",
-            img: "ricardo-milespo.png",
-            imgClick: "ricardo-milespo-click.png"
-        },
+        // [RARE] (Click/Tempo Facile)
         rick: {
-            name: "Rick Espley",
-            desc: "Never gonna give you up.",
-            img: "rick-espley.png",
-            imgClick: "rick-espley-click.png"
+            name: "Rick Espley", desc: "Never gonna give you up.",
+            img: "rick-espley.png", imgClick: "rick-espley-click.png",
+            rarity: "rare", unlockHint: "Raggiungi 5.000 click manuali.", clickEffect: "hearts"
         },
-        unicorn: {
-            name: "Espocorno",
-            desc: "Magia pura nel codice.",
-            img: "espocorno.png",
-            imgClick: "espocorno-click.png"
-        },
-
-        // Storici / Epici
         gladiator: {
-            name: "Esporator",
-            desc: "Al mio segnale, scatenate i click.",
-            img: "esporator.png",
-            imgClick: "esporator-click.png"
-        },
-        king: {
-            name: "Espo of Empires",
-            desc: "Il Re dei Bug.",
-            img: "espofempires.png",
-            imgClick: "espofempires-click.png"
+            name: "Esporator", desc: "Al mio segnale, scatenate i click.",
+            img: "esporator.png", imgClick: "esporator-click.png",
+            rarity: "rare", unlockHint: "Raggiungi 50.000 click manuali.", clickEffect: "fire"
         },
         geisha: {
-            name: "Esponese",
-            desc: "Eleganza orientale.",
-            img: "esponese.png",
-            imgClick: "esponese-click.png"
+            name: "Esponese", desc: "Eleganza orientale.",
+            img: "esponese.png", imgClick: "esponese-click.png",
+            rarity: "rare", unlockHint: "Gioca per 4 ore totali.", bg: "background_zen.jpg" // Nuovo background (ipotetico)
         },
 
-        // Speciali
-        jesus: {
-            name: "Gespo",
-            desc: "Il salvatore del database.",
-            img: "gespo.png",
-            imgClick: "gespo-click.png"
+        // [EPIC] (Acquisto / Progressi Maggiori)
+        king: {
+            name: "Espo of Empires", desc: "Il Re dei Bug.",
+            img: "espofempires.png", imgClick: "espofempires-click.png",
+            rarity: "epic", cost: 10, bg: "background_castle.jpg", clickEffect: "gold"
         },
         waifu: {
-            name: "Espowaifu",
-            desc: "Best girl.",
-            img: "espowaifu.png",
-            imgClick: "espowaifu-click.png"
+            name: "Espowaifu", desc: "Best girl.",
+            img: "espowaifu.png", imgClick: "espowaifu-click.png",
+            rarity: "epic", cost: 15, unlockHint: "Acquistabile per 15 Token Lab", clickEffect: "flowers"
+        },
+        unicorn: {
+            name: "Espocorno", desc: "Magia pura nel codice.",
+            img: "espocorno.png", imgClick: "espocorno-click.png",
+            rarity: "epic", unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'", clickEffect: "rainbow"
+        },
+
+        // [LEGENDARY] (Segreti / Endgame)
+        jesus: {
+            name: "Gespo", desc: "Il salvatore del database.",
+            img: "gespo.png", imgClick: "gespo-click.png",
+            rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'", clickEffect: "divine"
+        },
+        ricardo: {
+            name: "Flexpo", desc: "Non c'è bug che tenga.",
+            img: "ricardo-milespo.png", imgClick: "ricardo-milespo-click.png",
+            rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Hackerino'", clickEffect: "fire" // Riutilizza fire
         },
         dictator: {
-            name: "Adolf Espler",
-            desc: "Ordine e disciplina nel codice.",
-            img: "adolf-espler.png",
-            imgClick: "adolf-espler-click.png"
+            name: "Il Generale", desc: "Ordine e disciplina.",
+            img: "adolf-espler.png", imgClick: "adolf-espler-click.png",
+            rarity: "legendary", unlockHint: "Evento Segreto (Errore 404)", clickEffect: "error"
         }
     },
 
@@ -203,90 +205,105 @@ const gameData = {
         clickDivino: { name: 'Click Divino', desc: 'La Mano Bionica ora guadagna il 2% dei BPS.', cost: 1000000, clickIncrease: 0, requiredClicks: 50000 }
     },
 
-    // --- OBIETTIVI CON PREMI SKIN ---
     achievements: {
-        // --- CLICK ---
+        // TIER 1: DEBUGGER JUNIOR
         primoClick: {
-            name: 'Hello World!', desc: 'Effettua il tuo primo click manuale.', flavor: 'Tutto inizia da un singolo bit.',
-            type: 'click', target: 1, isSecret: false, reward: null,
+            name: 'Hello World!', desc: 'Effettua il tuo primo click manuale.', flavor: 'Il primo bug è sempre il più facile.',
+            type: 'click', target: 1, isSecret: false, reward: null, // Niente premio
             condition: () => gameState.totalClicks >= 1
         },
-        centoClick: {
-            name: 'Dita Calde', desc: 'Raggiungi 100 click totali.',
-            type: 'click', target: 100, isSecret: false,
-            reward: { type: 'skin', id: 'rick' }, // Skin Rick Roll
-            condition: () => gameState.totalClicks >= 100
-        },
-        clickMaster: {
-            name: 'Tastiera Fumante', desc: 'Raggiungi 10.000 click totali.',
-            type: 'click', target: 10000, isSecret: false,
-            reward: { type: 'skin', id: 'gladiator' }, // Skin Gladiatore
-            condition: () => gameState.totalClicks >= 10000
-        },
-
-        // --- PRODUZIONE & TEAMS ---
         primoTeam: {
-            name: 'Startupper', desc: 'Possiedi 10 Assistenti QA.',
+            name: 'Inception', desc: 'Possiedi 10 Assistenti QA.',
             type: 'building', buildingId: 'assistenteQa', target: 10, isSecret: false,
-            reward: { type: 'multiplier', value: 1.1 },
+            reward: { type: 'bugs', value: 5000 }, // CAMBIATO: Da multiplier a bugs
             condition: () => gameState.teams.assistenteQa.count >= 10
         },
+        jiraWarrior: {
+            name: 'Ticketing System', desc: 'Gestisci 25 Jira Ticket.',
+            type: 'building', buildingId: 'jiraTicket', target: 25, isSecret: false,
+            reward: { type: 'bugs', value: 2000 },
+            condition: () => gameState.teams.jiraTicket.count >= 25
+        },
+
+        // TIER 2: SPECIALIZZAZIONE
+        clickMaster: {
+            name: 'Rick Roll Patch', desc: 'Raggiungi 5.000 click manuali.',
+            type: 'click', target: 5000, isSecret: false,
+            reward: { type: 'skin', id: 'rick' },
+            condition: () => gameState.totalClicks >= 5000
+        },
+        codeMonkey: {
+            name: 'Code Monkey', desc: 'Accumula 50.000 bug totali.', type: 'score', target: 50000, isSecret: false,
+            reward: { type: 'bugs', value: 10000 },
+            condition: () => gameState.totalScore >= 50000
+        },
+        automationFirst: {
+            name: 'Automation First', desc: 'Raggiungi 10 Team QA.',
+            type: 'building', buildingId: 'teamQa', target: 10, isSecret: false,
+            reward: { type: 'bugs', value: 15000 }, // CAMBIATO: Da multiplier a bugs
+            condition: () => gameState.teams.teamQa.count >= 10
+        },
+
+
+        // TIER 3: ESPERTO
+        clickGod: {
+            name: 'Hardcoded Solution', desc: 'Raggiungi 50.000 click manuali.',
+            type: 'click', target: 50000, isSecret: false,
+            reward: { type: 'skin', id: 'gladiator' },
+            condition: () => gameState.totalClicks >= 50000
+        },
         middleManagement: {
-            name: 'Middle Management', desc: 'Assumi 50 Assistenti QA.',
-            type: 'building', buildingId: 'assistenteQa', target: 50, isSecret: false,
-            reward: { type: 'skin', id: 'waifu' }, // Skin Waifu
-            condition: () => gameState.teams.assistenteQa.count >= 50
+            name: 'Middle Management', desc: 'Assumi 100 Assistenti QA.',
+            type: 'building', buildingId: 'assistenteQa', target: 100, isSecret: false,
+            reward: { type: 'bugs', value: 50000 },
+            condition: () => gameState.teams.assistenteQa.count >= 100
         },
         fullStack: {
             name: 'Full Stack Agency', desc: 'Possiedi almeno 1 unità di ogni Team.',
             type: 'custom', target: 1, isSecret: false,
-            reward: { type: 'skin', id: 'unicorn' }, // Skin Unicorno
+            reward: { type: 'skin', id: 'unicorn' },
             condition: () => {
                 for (const key in gameState.teams) { if (gameState.teams[key].count === 0) return false; }
                 return true;
             }
         },
 
-        // --- SCORE ---
-        milleBug: {
-            name: 'Junior Dev', desc: 'Accumula 1.000 bug.', type: 'score', target: 1000, isSecret: false, reward: null,
-            condition: () => gameState.totalScore >= 1000
-        },
+        // TIER 4: ARCHITETTO
         milionario: {
-            name: 'Tech Lead', desc: 'Accumula 1.000.000 di bug.', type: 'score', target: 1000000, isSecret: false,
-            reward: { type: 'skin', id: 'king' }, // Skin Re
-            condition: () => gameState.totalScore >= 1000000
-        },
-        miliardario: {
-            name: 'Unicorno', desc: 'Accumula 1 Miliardo di bug.', type: 'score', target: 1000000000, isSecret: false,
-            reward: { type: 'prestige', value: 10 },
-            condition: () => gameState.totalScore >= 1000000000
-        },
-
-        // --- SPECIALI ---
-        errore404: {
-            name: 'Pagina Non Trovata', desc: '???', realDesc: 'Incontra il Blue Screen of Death.',
-            type: 'custom', target: 1, isSecret: true,
-            reward: { type: 'skin', id: 'dictator' }, // Skin Generale (Punizione)
-            condition: () => gameState.lastBluescreenTimestamp > 0
-        },
-        hacker: {
-            name: 'Hackerino', desc: '???', realDesc: 'Usa la Cheatboard.',
-            type: 'custom', target: 1, isSecret: true,
-            reward: { type: 'skin', id: 'ricardo' }, // Skin Ricardo (Flex)
-            condition: () => false
-        },
-        clickGod: {
-            name: 'Divinità del Mouse', desc: 'Raggiungi 100.000 click totali.',
-            type: 'click', target: 100000, isSecret: false,
-            reward: { type: 'skin', id: 'jesus' }, // Skin Gespo
-            condition: () => gameState.totalClicks >= 100000
+            name: 'Tech Lead', desc: 'Accumula 10 Milioni di bug.', type: 'score', target: 10000000, isSecret: false,
+            reward: { type: 'skin', id: 'king' },
+            condition: () => gameState.totalScore >= 10000000
         },
         geishaUnlock: {
             name: 'Zen Master', desc: 'Gioca per 4 ore totali.',
             type: 'time', target: 14400, isSecret: false,
             reward: { type: 'skin', id: 'geisha' },
             condition: () => gameState.totalPlayTime >= 14400
+        },
+        miliardario: {
+            name: 'System Architect', desc: 'Accumula 1 Miliardo di bug.', type: 'score', target: 1000000000, isSecret: false,
+            reward: { type: 'prestige', value: 10 },
+            condition: () => gameState.totalScore >= 1000000000
+        },
+
+        // TIER 5: SEGRETI
+        errore404: {
+            name: 'Page Not Found', desc: '???', realDesc: 'Incontra il Blue Screen of Death.',
+            type: 'custom', target: 1, isSecret: true,
+            reward: { type: 'skin', id: 'dictator' },
+            condition: () => gameState.lastBluescreenTimestamp > 0
+        },
+        hacker: {
+            name: 'Ransomware', desc: '???', realDesc: 'Usa la Cheatboard.',
+            type: 'custom', target: 1, isSecret: true,
+            reward: { type: 'skin', id: 'ricardo' },
+            condition: () => false
+        },
+        waifuUnlock: {
+            name: 'AI Supremacy', desc: '???', realDesc: 'Possiedi 100 AI Debugger.',
+            type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: true,
+            reward: { type: 'skin', id: 'waifu' },
+            condition: () => gameState.teams.aiDebugger.count >= 100
         }
     },
 
@@ -298,6 +315,7 @@ const gameData = {
         paracadute: { name: 'Paracadute d\'Oro', desc: 'Inizi con il 5% dei bug della run precedente.', baseCost: 100, isCounted: false },
         crunchTime: { name: 'Crunch Time', desc: 'Abilità Attiva: BPS x3 per 30s (Cooldown 5m).', baseCost: 200, isCounted: false }
     },
+
     buildingEnhancements: {
         caffeDoppio: { name: 'Caffè Doppio', desc: 'Assistenti QA x2 BPS.', targetTeam: 'assistenteQa', cost: 150, multiplier: 2, requiredCount: 1 },
         caffeTriplo: { name: 'Caffè Triplo', desc: 'Assistenti QA x2 BPS.', targetTeam: 'assistenteQa', cost: 750, multiplier: 2, requiredCount: 10 },
@@ -331,17 +349,3 @@ const gameData = {
         skynet: { name: 'Skynet', desc: 'AI Debugger x4 BPS.', targetTeam: 'aiDebugger', cost: 14000000000, multiplier: 4, requiredCount: 100 }
     }
 };
-
-// Variabili calcolate (non salvate)
-let cookiesPerSecond = 0;
-let prestigeBonus = 0;
-let clickCPSBonus = 1;
-let isBluescreenActive = false;
-let bluescreenMultiplier = 1;
-let goldenBugChance = 0.001;
-let goldenBugSpawnTime = 60000 + Math.random() * 120000;
-let crunchTimeMultiplier = 1;
-let crunchTimeEndTime = 0;
-let crunchTimeCooldownEnd = 0;
-
-var clickHistory = [];
