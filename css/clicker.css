@@ -80,6 +80,7 @@
     /* Si rimpicciolisce leggermente al click */
 }
 
+
 #manager-photo-normal,
 #manager-photo-clicked {
     width: 220px;
@@ -108,12 +109,20 @@
 
 /* Punteggi */
 #score-display {
-    font-size: 2.8rem;
-    font-weight: bold;
-    color: #ef4444;
+    font-size: 3.5rem;
+    /* Un po' più grande */
+    font-weight: 900;
+    color: #ff4757;
+    /* Un rosso più vivace */
     margin-top: 20px;
     z-index: 10;
-    text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+    /* Effetto Glow */
+    text-shadow: 0 0 15px rgba(255, 71, 87, 0.6), 2px 2px 0px rgba(0, 0, 0, 0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* O un font monospaziato per i numeri */
+    letter-spacing: 1px;
+    transition: transform 0.1s;
+    /* Per animazioni future */
 }
 
 #score-label {

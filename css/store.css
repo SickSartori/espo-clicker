@@ -94,6 +94,36 @@
     /* Un po' di aria dall'alto */
 }
 
+.upgrade {
+    background: linear-gradient(145deg, #2c3e50, #34495e);
+    /* Gradiente sottile */
+    border: none;
+    border-left: 4px solid #3498db;
+    /* Bordo colorato a sinistra per indicare "Tech" */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    margin-bottom: 12px;
+    /* Più spazio tra uno e l'altro */
+    padding: 12px 15px;
+}
+
+.upgrade .buy-btn {
+    border-radius: 20px;
+    /* Più arrotondato */
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 8px 15px;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+    /* Effetto 3D */
+    transition: all 0.1s;
+}
+
+.upgrade .buy-btn:active {
+    transform: translateY(4px);
+    /* Effetto pressione */
+    box-shadow: none;
+}
+
 /* Card Generica */
 .upgrade,
 .click-upgrade,

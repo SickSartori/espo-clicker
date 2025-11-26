@@ -51,20 +51,15 @@
     </div>
 </div>
     <?php include 'includes/modals.php'; ?>
-
+    
     <div id="overlay-buttons-container">
-        <button id="open-stats-btn" class="overlay-btn">📈 Statistiche</button>
-        
-        <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
-        
-        <button id="open-skins-btn" class="overlay-btn" style="border-color: #3498db; color: #aed6f1;">👕 Skin</button>
-        
-        <button id="open-leaderboard-btn" class="overlay-btn">🏆 Classifica</button>
-        
-        <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button>
-        
-        <button id="open-prestige-hub-btn" class="overlay-btn" style="display: none; border-color: #9b59b6; color: #e8daef;">👑 Promozione</button>
-    </div>
+    <button id="open-stats-btn" class="overlay-btn">📊 Statistiche</button>
+    <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
+    <button id="open-skins-btn" class="overlay-btn" style="...">🎭 Skin</button> 
+    <button id="open-leaderboard-btn" class="overlay-btn">🥇 Classifica</button>
+    <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button> 
+    <button id="open-prestige-hub-btn" class="overlay-btn" style="...">🚀 Promozione</button>
+</div>
 
     <div id="game-container">
 
