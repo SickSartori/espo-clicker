@@ -20,6 +20,9 @@ function getInitialGameState() {
         baseClickValue: 1,
         totalClicks: 0,
         totalScore: 0,
+        // NUOVO STATISTICA:
+        totalOfflineScore: 0,
+        // -----------------
         prestigePoints: 0,
         lifetimePrestigePoints: 0,
         totalResets: 0,
@@ -44,6 +47,7 @@ function getInitialGameState() {
             globalFilter: 'available'
         },
 
+        // ... (Lascia invariato tutto il resto: teams, upgrades, achievements, ecc.) ...
         teams: {
             assistenteQa: { count: 0 },
             jiraTicket: { count: 0 },
@@ -67,8 +71,6 @@ function getInitialGameState() {
             clickAutomatico: { purchased: false },
             clickDivino: { purchased: false }
         },
-
-
         prestigeUpgrades: {
             sinergia: { count: 0 },
             paracadute: { count: 0 },
@@ -76,15 +78,11 @@ function getInitialGameState() {
             contrattazione: { count: 0 },
             bugBounty: { count: 0 },
             eredita: { count: 0 },
-
             ticketPremium: { purchased: false },
             crunchTime: { purchased: false },
-
             outsourcing: { count: 0 },
             accelerazione: { purchased: false }
         },
-        // ------------------------
-
         buildingEnhancements: {
             caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
             scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
@@ -101,7 +99,8 @@ function getInitialGameState() {
             devOps: { purchased: false }, deepLearning: { purchased: false },
             machineLearning: { purchased: false }, retiNeurali: { purchased: false },
             quantumComputing: { purchased: false }, skynet: { purchased: false }
-        }
+        },
+        achievements: {}
     };
 }
 

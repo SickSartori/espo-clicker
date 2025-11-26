@@ -952,48 +952,116 @@ function updateClickStore() {
 function updateStatsUI() {
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
+
+    // --- CALCOLI PRELIMINARI ---
     const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
-    const progressColor = progress >= 100 ? '#2ecc71' : '#e74c3c';
+
+    // Calcolo Valore Click
+    let clickBonusPercent = 0.01;
+    if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
+    let clickValuePercentBonus = 0;
+    if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
+        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
+    }
+    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
+
+    // Dati Offline
+    const totalOffline = gameState.totalOfflineScore || 0;
+
+    // --- NUOVO: Calcolo Efficienza Offline ---
+    let offlineEff = 0.30; // Base 30%
+    if (gameState.prestigeUpgrades.serverAlwaysOn) {
+        offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+    }
+    if (offlineEff > 1.0) offlineEff = 1.0;
+    const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
+    // -----------------------------------------
+
+    // --- GENERAZIONE HTML ---
     statsList.innerHTML = `
-        <div class="stat-item">
-            <span class="stat-label">Tempo di gioco totale</span>
-            <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
-        </div>
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
-        <div class="stat-item">
-            <span class="stat-label">Bug Attuali (Spendibili)</span>
-            <span class="stat-value" style="color: #fff;">${formatNumber(gameState.score)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label" style="color: #5dade2;">Highscore Livello (Run)</span>
-            <span class="stat-value" style="color: #5dade2;">${formatNumber(gameState.totalScore)}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 0 10px;">
-            <div style="flex-grow: 1; height: 6px; background: #34495e; border-radius: 3px; overflow: hidden;">
-                <div style="width: ${progress}%; height: 100%; background: ${progressColor}; transition: width 0.5s;"></div>
+        <div class="stats-container">
+            
+            <div class="stats-section">
+                <div class="stats-header">💰 Economia Aziendale</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Bug Attuali (Wallet)</span>
+                        <span class="stat-value" style="color: #2ecc71;">${formatNumber(gameState.score)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Totale Run Attuale</span>
+                        <span class="stat-value">${formatNumber(gameState.totalScore)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Totale Carriera</span>
+                        <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Guadagnati Offline</span>
+                        <span class="stat-value" style="color: #3498db;">
+                            ${formatNumber(totalOffline)} 
+                            <span style="font-size: 0.8rem; color: #bdc3c7; font-weight: normal;">(${offlinePercentText})</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="stat-progress-wrapper">
+                    <div class="stat-progress-info">
+                        <span>Progresso Promozione</span>
+                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(1)}%</span>
+                    </div>
+                    <div class="stat-progress-bg">
+                        <div class="stat-progress-fill" style="width: ${progress}%;"></div>
+                    </div>
+                </div>
             </div>
-            <span style="font-size: 0.75rem; color: ${progressColor};">${progress.toFixed(1)}% (Target: 10M)</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label" style="color: #f1c40f;">Highscore Carriera (Totale)</span>
-            <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
-        </div>
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
-        <div class="stat-item">
-            <span class="stat-label">Click totali</span>
-            <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Ticket Critici cliccati</span>
-            <span class="stat-value">${formatNumber(gameState.totalGoldenBugsClicked)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Promozioni effettuate</span>
-            <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Punti Promozione</span>
-            <span class="stat-value">${formatNumber(gameState.prestigePoints)}</span>
+
+            <div class="stats-section">
+                <div class="stats-header">⚡ Performance & Tech</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Produzione (BPS)</span>
+                        <span class="stat-value">${formatNumber(cookiesPerSecond)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Valore Click</span>
+                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(currentClickValue)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Moltiplicatore Globale</span>
+                        <span class="stat-value">x${formatNumber(prestigeBonus)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Crit Chance</span>
+                        <span class="stat-value">${(goldenBugChance * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="stats-header">🎨 Profilo & Visuals</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Skin Equipaggiata</span>
+                        <span class="stat-value" style="text-transform: capitalize; color: #9b59b6;">
+                            ${(gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default')}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Tempo di Gioco</span>
+                        <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Click Totali</span>
+                        <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Promozioni (Reset)</span>
+                        <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
     `;
 }

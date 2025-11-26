@@ -208,11 +208,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Setup Bottone
         // Usiamo una funzione anonima con rimozione listener per evitare doppi click se ricarichi
+        // Dentro showOfflineModal in script.js ...
+
         const claimHandler = () => {
             // Aggiungi i punti
             gameState.score += amount;
             gameState.totalScore += amount;
             gameState.lifetimeScore += amount;
+
+            // --- NUOVO: Aggiorna statistica offline ---
+            if (!gameState.totalOfflineScore) gameState.totalOfflineScore = 0;
+            gameState.totalOfflineScore += amount;
+            // ------------------------------------------
 
             // Chiudi modale
             modal.style.display = 'none';
