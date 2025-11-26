@@ -136,7 +136,7 @@ const gameData = {
             img: "espo.png", imgClick: "espo-click.png",
             rarity: "common", bg: "background.jpg", clickEffect: "normal"
         },
-        // [RARE] (Click/Tempo Facile)
+        // [RARE]
         rick: {
             name: "Rick Espley", desc: "Never gonna give you up.",
             img: "rick-espley.png", imgClick: "rick-espley-click.png",
@@ -150,10 +150,10 @@ const gameData = {
         geisha: {
             name: "Esponese", desc: "Eleganza orientale.",
             img: "esponese.png", imgClick: "esponese-click.png",
-            rarity: "rare", unlockHint: "Gioca per 4 ore totali.", bg: "background_zen.jpg" // Nuovo background (ipotetico)
+            rarity: "rare", unlockHint: "Gioca per 4 ore totali.", bg: "background_zen.jpg"
         },
 
-        // [EPIC] (Acquisto / Progressi Maggiori)
+        // [EPIC]
         king: {
             name: "Espo of Empires", desc: "Il Re dei Bug.",
             img: "espofempires.png", imgClick: "espofempires-click.png",
@@ -162,7 +162,7 @@ const gameData = {
         waifu: {
             name: "Espowaifu", desc: "Best girl.",
             img: "espowaifu.png", imgClick: "espowaifu-click.png",
-            rarity: "epic", cost: 15, unlockHint: "Acquistabile per 15 Token Lab", clickEffect: "flowers"
+            rarity: "epic", cost: 15, unlockHint: "Sblocca l'obiettivo 'AI Supremacy'", clickEffect: "flowers"
         },
         unicorn: {
             name: "Espocorno", desc: "Magia pura nel codice.",
@@ -170,7 +170,7 @@ const gameData = {
             rarity: "epic", unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'", clickEffect: "rainbow"
         },
 
-        // [LEGENDARY] (Segreti / Endgame)
+        // [LEGENDARY]
         jesus: {
             name: "Gespo", desc: "Il salvatore del database.",
             img: "gespo.png", imgClick: "gespo-click.png",
@@ -179,12 +179,12 @@ const gameData = {
         ricardo: {
             name: "Flexpo", desc: "Non c'è bug che tenga.",
             img: "ricardo-milespo.png", imgClick: "ricardo-milespo-click.png",
-            rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Hackerino'", clickEffect: "fire" // Riutilizza fire
+            rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'White Hat'", clickEffect: "fire"
         },
         dictator: {
             name: "Adolf Espler", desc: "Ordine e disciplina.",
             img: "adolf-espler.png", imgClick: "adolf-espler-click.png",
-            rarity: "legendary", unlockHint: "Evento Segreto (Errore 404)", clickEffect: "error"
+            rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Page Not Found'", clickEffect: "error"
         }
     },
 
@@ -217,13 +217,13 @@ const gameData = {
         // TIER 1: DEBUGGER JUNIOR
         primoClick: {
             name: 'Hello World!', desc: 'Effettua il tuo primo click manuale.', flavor: 'Il primo bug è sempre il più facile.',
-            type: 'click', target: 1, isSecret: false, reward: null, // Niente premio
+            type: 'click', target: 1, isSecret: false, reward: null,
             condition: () => gameState.totalClicks >= 1
         },
         primoTeam: {
             name: 'Inception', desc: 'Possiedi 10 Assistenti QA.',
             type: 'building', buildingId: 'assistenteQa', target: 10, isSecret: false,
-            reward: { type: 'bugs', value: 5000 }, // CAMBIATO: Da multiplier a bugs
+            reward: { type: 'bugs', value: 5000 },
             condition: () => gameState.teams.assistenteQa.count >= 10
         },
         jiraWarrior: {
@@ -248,10 +248,9 @@ const gameData = {
         automationFirst: {
             name: 'Automation First', desc: 'Raggiungi 10 Team QA.',
             type: 'building', buildingId: 'teamQa', target: 10, isSecret: false,
-            reward: { type: 'bugs', value: 15000 }, // CAMBIATO: Da multiplier a bugs
+            reward: { type: 'bugs', value: 15000 },
             condition: () => gameState.teams.teamQa.count >= 10
         },
-
 
         // TIER 3: ESPERTO
         clickGod: {
@@ -294,21 +293,27 @@ const gameData = {
             condition: () => gameState.totalScore >= 1000000000
         },
 
-        // TIER 5: SEGRETI
+        // TIER 5: LEGGENDARI (MODIFICATI: Visibili e Ottenibili)
         errore404: {
-            name: 'Page Not Found', desc: '???', realDesc: 'Incontra il Blue Screen of Death.',
-            type: 'custom', target: 1, isSecret: true,
+            name: 'Page Not Found', desc: 'Incontra il Blue Screen of Death.',
+            type: 'custom', target: 1, isSecret: false, // Reso visibile
             reward: { type: 'skin', id: 'dictator' },
             condition: () => gameState.lastBluescreenTimestamp > 0
         },
         hacker: {
-            name: 'Ransomware', desc: '???', realDesc: 'Usa la Cheatboard.',
-            type: 'custom', target: 1, isSecret: true,
+            name: 'White Hat', desc: 'Acquista il potenziamento Hacking Etico.', // Sostituisce la Cheatboard
+            type: 'custom', target: 1, isSecret: false, // Reso visibile
             reward: { type: 'skin', id: 'ricardo' },
-            condition: () => false
+            condition: () => gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased
         },
-        waifuUnlock: { name: 'AI Supremacy', desc: '???', realDesc: 'Possiedi 100 AI Debugger.', type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: true, reward: { type: 'skin', id: 'waifu' }, condition: () => gameState.teams.aiDebugger.count >= 100 }
+        waifuUnlock: {
+            name: 'AI Supremacy', desc: 'Possiedi 100 AI Debugger.',
+            type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: false, // Reso visibile
+            reward: { type: 'skin', id: 'waifu' },
+            condition: () => gameState.teams.aiDebugger.count >= 100
+        }
     },
+
     prestigeUpgrades: {
         sinergia: { name: 'Sinergia Manageriale', desc: 'Ogni punto promozione vale +0.1% in più (Cumulativo).', baseCost: 5, bonusPerLevel: 0.001, isCounted: true },
         paracadute: { name: 'Paracadute d\'Oro', desc: 'Inizi la run con +2.000 Bug per livello.', baseCost: 25, isCounted: true, bonusPerLevel: 2000 },
