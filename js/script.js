@@ -66,6 +66,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FUNZIONE CHECK OFFLINE ---
+    function checkOfflineProgress() {
+        const modal = document.getElementById('offline-modal');
+
+        // Se non c'è timestamp (nuovo gioco), assicuriamoci che il modale sia chiuso
+        if (!gameState.lastSaveTimestamp) {
+            if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
+        const maxOfflineSeconds = 43200; // 12 ore max (aumentato da 8h)
+        const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
+
+        if (effectiveSeconds > 60) { // Mostra solo se via per almeno 1 minuto
+
+            // --- CALCOLO EFFICIENZA ---
+            let efficiency = 0.30; // Base 30%
+            // Controllo di sicurezza per evitare crash se l'upgrade non è ancora nel save
+            if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn) {
+                efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+            }
+            if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
+
+            // Guadagno Potenziale
+            const rawEarned = effectiveSeconds * cookiesPerSecond;
+            const realEarned = rawEarned * efficiency;
+
+            if (realEarned > 0) {
+                // Invece di aggiungere subito, mostriamo il modale
+                showOfflineModal(realEarned, efficiency);
+                return; // Usciamo, il modale è gestito
+            }
+        }
+
+        // Se arriviamo qui, non c'è guadagno valido. 
+        // Chiudiamo il modale se era rimasto aperto da un login precedente.
+        if (modal) modal.style.display = 'none';
+    }
+
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
         if (savedState) {
@@ -130,31 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateClickCPSBonus();
         recalculateCPS();
 
-        if (gameState.lastSaveTimestamp) {
-            const now = Date.now();
-            const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
-            const maxOfflineSeconds = 43200; // 12 ore max (aumentato da 8h)
-            const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
-
-            if (effectiveSeconds > 60) { // Mostra solo se via per almeno 1 minuto
-
-                // --- CALCOLO EFFICIENZA ---
-                let efficiency = 0.30; // Base 30%
-                if (gameState.prestigeUpgrades.serverAlwaysOn) {
-                    efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
-                }
-                if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
-
-                // Guadagno Potenziale
-                const rawEarned = effectiveSeconds * cookiesPerSecond;
-                const realEarned = rawEarned * efficiency;
-
-                if (realEarned > 0) {
-                    // Invece di aggiungere subito, mostriamo il modale
-                    showOfflineModal(realEarned, efficiency);
-                }
-            }
-        }
+        // --- MODIFICA: RIMOSSO IL CHECK OFFLINE QUI ---
+        // checkOfflineProgress(); 
+        // Lo eseguiamo solo dopo il login (vedi loadCloudData sotto)
+        // ----------------------------------------------
 
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
@@ -207,7 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.removeEventListener('click', claimHandler);
         };
 
-        btn.addEventListener('click', claimHandler);
+        // Rimuovi vecchi listener clonando il nodo (hack veloce per pulire eventi anonimi precedenti)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', claimHandler);
 
         // Mostra
         modal.style.display = 'flex';
@@ -234,9 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gestione storico click (invariato)
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
-
-        // [Ottimizzazione] Non serve chiamare checkAchievements() qui se hai già il setInterval separato
-        // checkAchievements(); 
 
         updateUI();
 
@@ -333,26 +354,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (globalFilterSelect) {
-            // 1. Imposta valore iniziale (dal salvataggio o default)
-            // Supporto retroattivo: se il salvataggio è vecchio e non ha 'globalFilter', usa 'available'
             const savedFilter = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.value = savedFilter;
-
-            // Aggiorna subito gameState per sicurezza
             gameState.filterSettings.globalFilter = savedFilter;
 
-            // 2. Event Listener cambio
             globalFilterSelect.addEventListener('change', (e) => {
                 const newValue = e.target.value;
-
-                // Salva
                 gameState.filterSettings.globalFilter = newValue;
-
-                // Applica modifiche
                 refreshAllStores();
                 saveGame();
-
-                // Feedback Audio
                 if (window.EspooClicker && window.EspooClicker.playSound) {
                     window.EspooClicker.playSound('sound-click');
                 }
@@ -361,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // 1. Logica Standard Tab (Active/Display)
                 tabs.forEach(t => t.classList.remove('active'));
                 contents.forEach(c => c.style.display = 'none');
 
@@ -371,61 +380,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tab.classList.remove('notify');
 
-                // --- 2. NUOVA LOGICA FILTRO LAB ---
                 const filterSelect = document.getElementById('global-filter-select');
 
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
-                        // CASO: Entro nel Laboratorio
-
-                        // a) Salvo il filtro che stavo usando (solo se il menu era attivo)
                         if (!filterSelect.disabled) {
                             filterSelect.setAttribute('data-prev', filterSelect.value);
                         }
-
-                        // b) Imposto su "Tutti" e Disabilito
                         filterSelect.value = 'all';
-                        filterSelect.disabled = true; // Diventa grigetto ma resta lì
-
-                        // c) Aggiorno lo stato del gioco (così refreshAllStores sa di mostrare tutto)
+                        filterSelect.disabled = true;
                         gameState.filterSettings.globalFilter = 'all';
-
                     } else {
-                        // CASO: Esco dal Laboratorio (Click o Auto)
-
-                        // a) Riabilito il menu
                         filterSelect.disabled = false;
-
-                        // b) Se c'era un filtro salvato, lo ripristino
                         const prev = filterSelect.getAttribute('data-prev');
                         if (prev) {
                             filterSelect.value = prev;
                             gameState.filterSettings.globalFilter = prev;
-
                             filterSelect.removeAttribute('data-prev');
                         }
-                        // Se non c'era (es. cambio diretto Click <-> Auto), lascia quello corrente
                     }
-
-                    // Applica subito le modifiche visive
                     refreshAllStores();
                 }
-                // ----------------------------------
-
-                // 3. Audio
                 if (e.isTrusted) {
                     playSound('sound-click');
                 }
             });
         });
 
-        // Questo click automatico ora non genererà l'errore audio
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
-                if (e.detail === 0) return; // Evita doppio click tastiera
+                if (e.detail === 0) return;
                 crunchBtn.blur();
                 activateCrunchTime();
             });
@@ -439,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
 
-        // 3. Bottone "Rifiuta" nel Modale -> Chiude
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
@@ -448,42 +434,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // --- GESTIONE CLICK UNIFICATA (GLOBALE) ---
-        // Intercetta i click su QUALSIASI bottone di acquisto nella pagina
         document.addEventListener('click', (e) => {
-            // 1. Cerca se l'elemento cliccato (o un suo genitore) è un bottone di acquisto
             const btn = e.target.closest('.buy-btn');
-
-            // Se non ho cliccato un bottone, o se è disabilitato/posseduto, esci
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
-
-            // Rimuovi il focus per estetica (toglie il bordo blu)
             btn.blur();
-
-            // Recupera il nome dell'upgrade
             const name = btn.getAttribute('data-upgrade-name');
-            if (!name) return; // Se non ha nome, ignora
-
-            // --- SMISTAMENTO LOGICA IN BASE ALLA CLASSE ---
+            if (!name) return;
 
             if (btn.classList.contains('prestige-btn')) {
-                // CASO 1: LABORATORIO (Quello che non funzionava)
-                if (typeof buyPrestigeUpgrade === 'function') {
-                    buyPrestigeUpgrade(name);
-                } else {
-                    console.error("ERRORE: buyPrestigeUpgrade non trovata!");
-                }
-
+                if (typeof buyPrestigeUpgrade === 'function') buyPrestigeUpgrade(name);
             } else if (btn.classList.contains('buy-click-btn')) {
-                // CASO 2: POTENZIAMENTI CLICK
                 if (typeof buyClickUpgrade === 'function') buyClickUpgrade(name);
-
             } else if (btn.classList.contains('enhancement-btn')) {
-                // CASO 3: MIGLIORIE AUTO
                 if (typeof buyTeamEnhancement === 'function') buyTeamEnhancement(name);
-
             } else if (btn.classList.contains('buy-building-btn')) {
-                // CASO 4: TEAMS (Ex Edifici)
                 if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
@@ -529,12 +493,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     deepMerge(gameState, cloudState);
 
                     // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
-                    // Se skins è rotto o manca l'array unlocked, lo resettiamo forzatamente
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
                         console.warn("Dati skin corrotti. Ripristino default.");
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
-                    // -------------------------------------------------
 
                     // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
@@ -542,8 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.user.username = currentSessionUser;
                     }
 
-                    // ... (il resto della funzione rimane uguale: ricalcoli, updateUI, ecc.)
-                    // Assicurati di copiare il resto della funzione se non lo hai già
                     calculatePrestigeBonus();
                     calculateClickCPSBonus();
                     recalculateCPS();
@@ -554,6 +514,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // 7. Sovrascrivi cache locale
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+
+                    // --- AGGIUNTA: Check offline subito dopo il login ---
+                    checkOfflineProgress();
+                    // --------------------------------------------------
 
                     showToast("Progressi scaricati dal Cloud!");
                 } catch (e) { console.error("Errore parsing cloud", e); }
