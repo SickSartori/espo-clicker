@@ -409,16 +409,27 @@ function updatePrestigeStore() {
     if (!listContainer) return;
 
     const updateBtn = (id, data, state) => {
+        // Se il dato non esiste (es. vecchio salvataggio o refuso), saltiamo per evitare crash
+        if (!data || !state) return null;
+
         const el = document.getElementById(`upgrade-${id}`);
         const btn = document.getElementById(`buy-${id}`);
+
+        // Se non c'è l'HTML corrispondente, saltiamo
         if (!btn || !el) return null;
 
         let isCompleted = false;
-        if (!data.isCounted && state.purchased) isCompleted = true;
+        // Se è a livelli e ha un max level raggiunto
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
+        // Se è singolo ed è già comprato
+        if (!data.isCounted && state.purchased) isCompleted = true;
 
         let priority = 0;
         let cost = data.baseCost;
+
+        // Calcolo costo dinamico per i livelli (se serve, altrimenti baseCost)
+        // Nota: nel tuo game-logic attuale usi baseCost fisso o logica custom, 
+        // qui manteniamo la visualizzazione coerente.
 
         if (isCompleted) {
             btn.textContent = "Posseduto";
@@ -434,30 +445,64 @@ function updatePrestigeStore() {
             el.classList.remove('purchased');
             priority = canAfford ? 200 : 210;
         }
+
+        // Aggiorna contatore livelli se esiste
         const countEl = document.getElementById(`count-${id}`);
-        if (countEl) countEl.textContent = state.count;
+        if (countEl && state) countEl.textContent = state.count || 0;
+
+        // Aggiorna costo visivo
+        const costEl = document.getElementById(`cost-${id}`);
+        if (costEl) costEl.textContent = formatNumber(data.baseCost);
+
         return { el: el, priority: priority, cost: cost };
     };
 
     const items = [];
-    const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
+
+    // --- QUESTA È LA LISTA AGGIORNATA DEI NUOVI POTENZIAMENTI ---
+    const ids = [
+        'sinergia',
+        'paracadute',
+        'serverAlwaysOn',
+        'contrattazione',
+        'bugBounty',
+        'eredita',
+        'ticketPremium',
+        'crunchTime'
+    ];
+    // Nota: Ho rimosso 'outsourcing' e 'accelerazione' che non esistono più nei nuovi dati
+    // -------------------------------------------------------------
+
     ids.forEach(id => {
-        const item = updateBtn(id, gameData.prestigeUpgrades[id], gameState.prestigeUpgrades[id]);
-        if (item) items.push(item);
+        // Controllo di sicurezza: passiamo i dati solo se esistono
+        if (gameData.prestigeUpgrades[id] && gameState.prestigeUpgrades[id]) {
+            const item = updateBtn(id, gameData.prestigeUpgrades[id], gameState.prestigeUpgrades[id]);
+            if (item) items.push(item);
+        }
     });
 
+    // Ordinamento e Visualizzazione
     items.sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
         return a.cost - b.cost;
     });
 
     const mode = gameState.filterSettings.globalFilter || 'available';
+
+    // Nascondi tutti prima
+    const allUpgrades = listContainer.querySelectorAll('.prestige-upgrade');
+    allUpgrades.forEach(el => el.style.display = 'none');
+
     items.forEach(item => {
         let show = true;
         if (mode === 'available' && item.priority === 300) show = false;
         if (mode === 'purchased' && item.priority < 300) show = false;
-        item.el.style.display = show ? 'flex' : 'none';
-        listContainer.appendChild(item.el);
+
+        // Se il filtro lo permette, mostriamo l'elemento e lo riordiniamo
+        if (show) {
+            item.el.style.display = 'flex';
+            listContainer.appendChild(item.el); // Sposta l'elemento in fondo (ordina visivamente)
+        }
     });
 }
 
@@ -592,7 +637,7 @@ function updateUI() {
         let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
         let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
         let totalPercent = ((baseBonus + synergyBonus) * 100);
-        if (displayCareer) displayCareer.textContent = `+${totalPercent.toFixed(1)}%`;
+        if (displayCareer) displayCareer.textContent = `+${formatNumber(totalPercent)}%`;
         if (displayTokens) {
             displayTokens.textContent = formatNumber(gameState.prestigePoints);
             displayTokens.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));

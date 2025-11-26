@@ -67,14 +67,24 @@ function getInitialGameState() {
             clickAutomatico: { purchased: false },
             clickDivino: { purchased: false }
         },
+
+
         prestigeUpgrades: {
             sinergia: { count: 0 },
-            accelerazione: { purchased: false },
+            paracadute: { count: 0 },
+            serverAlwaysOn: { count: 0 },
+            contrattazione: { count: 0 },
+            bugBounty: { count: 0 },
+            eredita: { count: 0 },
+
             ticketPremium: { purchased: false },
+            crunchTime: { purchased: false },
+
             outsourcing: { count: 0 },
-            paracadute: { purchased: false },
-            crunchTime: { purchased: false }
+            accelerazione: { purchased: false }
         },
+        // ------------------------
+
         buildingEnhancements: {
             caffeDoppio: { purchased: false }, caffeTriplo: { purchased: false },
             scrivanieErgonomiche: { purchased: false }, formazioneAvanzata: { purchased: false },
@@ -91,8 +101,7 @@ function getInitialGameState() {
             devOps: { purchased: false }, deepLearning: { purchased: false },
             machineLearning: { purchased: false }, retiNeurali: { purchased: false },
             quantumComputing: { purchased: false }, skynet: { purchased: false }
-        },
-        achievements: {}
+        }
     };
 }
 
@@ -174,7 +183,7 @@ const gameData = {
             rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Hackerino'", clickEffect: "fire" // Riutilizza fire
         },
         dictator: {
-            name: "Il Generale", desc: "Ordine e disciplina.",
+            name: "Adolf Espler", desc: "Ordine e disciplina.",
             img: "adolf-espler.png", imgClick: "adolf-espler-click.png",
             rarity: "legendary", unlockHint: "Evento Segreto (Errore 404)", clickEffect: "error"
         }
@@ -299,20 +308,17 @@ const gameData = {
             reward: { type: 'skin', id: 'ricardo' },
             condition: () => false
         },
-        waifuUnlock: {
-            name: 'AI Supremacy', desc: '???', realDesc: 'Possiedi 100 AI Debugger.',
-            type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: true,
-            reward: { type: 'skin', id: 'waifu' },
-            condition: () => gameState.teams.aiDebugger.count >= 100
-        }
+        waifuUnlock: { name: 'AI Supremacy', desc: '???', realDesc: 'Possiedi 100 AI Debugger.', type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: true, reward: { type: 'skin', id: 'waifu' }, condition: () => gameState.teams.aiDebugger.count >= 100 }
     },
-
     prestigeUpgrades: {
         sinergia: { name: 'Sinergia Manageriale', desc: 'Ogni punto promozione vale +0.1% in più (Cumulativo).', baseCost: 5, bonusPerLevel: 0.001, isCounted: true },
-        accelerazione: { name: 'Accelerazione Iniziale', desc: 'Inizia ogni nuova run con 1 Assistente QA gratuito.', baseCost: 10, isCounted: false },
+        paracadute: { name: 'Paracadute d\'Oro', desc: 'Inizi la run con +2.000 Bug per livello.', baseCost: 25, isCounted: true, bonusPerLevel: 2000 },
+        serverAlwaysOn: { name: 'Server Always-On', desc: 'Aumenta il guadagno offline dal 30% al 100% (+10%/liv).', baseCost: 50, isCounted: true, maxLevel: 7 },
+        contrattazione: { name: 'Contrattazione', desc: 'Riduce l\'aumento dei costi degli edifici (Scaling).', baseCost: 500, isCounted: true, maxLevel: 10 },
+        bugBounty: { name: 'Bug Bounty', desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.', baseCost: 75, isCounted: true },
+        eredita: { name: 'Eredità Strutturale', desc: 'Mantieni 1 "Assistente QA" per livello dopo il reset.', baseCost: 100, isCounted: true },
         ticketPremium: { name: 'Ticket Premium', desc: 'I Ticket Critici appaiono 2 volte più spesso.', baseCost: 25, isCounted: false },
         outsourcing: { name: 'Outsourcing Selvaggio', desc: 'Riduce il costo base dei Teams dell\'1% per livello.', baseCost: 50, isCounted: true, maxLevel: 10 },
-        paracadute: { name: 'Paracadute d\'Oro', desc: 'Inizi con il 5% dei bug della run precedente.', baseCost: 100, isCounted: false },
         crunchTime: { name: 'Crunch Time', desc: 'Abilità Attiva: BPS x3 per 30s (Cooldown 5m).', baseCost: 200, isCounted: false }
     },
 

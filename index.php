@@ -26,6 +26,30 @@
             <p>Ricalcolo dei benefit aziendali</p>
         </div>
     </div>
+    <div id="offline-modal" class="modal-backdrop" style="display: none; z-index: 3000;">
+    <div class="modal-content" style="text-align: center; border-color: #f39c12;">
+        <h2 style="color: #f39c12; border-bottom-color: #f39c12;">💤 Bentornato!</h2>
+        <div class="settings-content" style="padding: 30px;">
+            <p style="color: #bdc3c7; font-size: 1.1rem;">
+                Mentre eri via il team ha lavorato (un po').
+            </p>
+            
+            <div style="margin: 20px 0;">
+                <p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">Efficienza Server</p>
+                <div id="offline-efficiency-display" style="font-weight: bold; color: #3498db; font-size: 1.2rem;">30%</div>
+            </div>
+
+            <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #d35400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <span id="offline-earnings-display" style="font-size: 2.5rem; font-weight: 800; color: #f1c40f; text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);">0</span>
+                <span style="font-size: 1.2rem; color: #f1c40f;"> Bug</span>
+            </div>
+
+            <button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
+                💰 Riscatta Guadagni
+            </button>
+        </div>
+    </div>
+</div>
     <?php include 'includes/modals.php'; ?>
 
     <div id="overlay-buttons-container">

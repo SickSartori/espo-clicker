@@ -80,8 +80,12 @@ function applySkinVisuals(skinId) {
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
-    const r = 1.20;
-
+    let scalingBase = 1.20;
+    if (gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
+        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
+        scalingBase = Math.max(1.05, scalingBase - reduction);
+    }
+    const r = scalingBase;
     let discountMultiplier = 1;
     let achievementsBPSBonus = 0;
 
@@ -112,8 +116,10 @@ function calculatePrestigeBonus() {
     let baseBonus = gameState.lifetimePrestigePoints * 0.01;
     let synergyCount = pState.sinergia.count;
     let synergyBonus = synergyCount * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
+    const MAX_BONUS = 10000;
+    let calculatedBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus;
 
-    prestigeBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus; // <- Ora funziona
+    prestigeBonus = Math.min(calculatedBonus, MAX_BONUS);
 }
 
 function calculateClickCPSBonus() {
@@ -414,9 +420,13 @@ async function executePrestige() {
     let newLifetimePrestigePoints = currentLifetime + gained;
 
     let startBonusBugs = 0;
-    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.purchased) {
-        startBonusBugs = Math.floor(gameState.totalScore * 0.05);
+
+    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
+        // 2000 bug per livello
+        startBonusBugs = gameState.prestigeUpgrades.paracadute.count * 2000;
     }
+
+
 
     // Salva i dati che devono persistere
     let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
@@ -433,6 +443,11 @@ async function executePrestige() {
 
     // 4. RESET DELLO STATO (Soft Reset)
     let newState = createNewGameState();
+
+    if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
+        // Mantieni N Assistenti QA
+        newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
+    }
 
     // Re-inietta i dati persistenti
     newState.prestigePoints = newPrestigePoints;
@@ -718,9 +733,12 @@ function clickGoldenBug() {
     if (gameState.clickUpgrades.manoBionica.purchased) {
         clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
     }
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
-    const bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
-
+    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier);
+    let bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
+    if (gameState.prestigeUpgrades.bugBounty && gameState.prestigeUpgrades.bugBounty.count > 0) {
+        const bountyMult = 1 + (gameState.prestigeUpgrades.bugBounty.count * 0.20); // +20% per livello
+        bonus *= bountyMult;
+    }
     gameState.score += bonus;
     gameState.totalScore += bonus;
     gameState.lifetimeScore += bonus;

@@ -133,20 +133,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.lastSaveTimestamp) {
             const now = Date.now();
             const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
-            const maxOfflineSeconds = 28800;
+            const maxOfflineSeconds = 43200; // 12 ore max (aumentato da 8h)
             const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
 
-            if (effectiveSeconds > 10) {
-                const earned = effectiveSeconds * cookiesPerSecond;
-                if (earned > 0) {
-                    gameState.score += earned;
-                    gameState.totalScore += earned;
-                    gameState.lifetimeScore += earned;
-                    setTimeout(() => {
-                        if (window.EspooClicker && window.EspooClicker.showToast) {
-                            window.EspooClicker.showToast(`Bentornato! Hai guadagnato ${formatNumber(earned)} bug mentre dormivi.`);
-                        }
-                    }, 1000);
+            if (effectiveSeconds > 60) { // Mostra solo se via per almeno 1 minuto
+
+                // --- CALCOLO EFFICIENZA ---
+                let efficiency = 0.30; // Base 30%
+                if (gameState.prestigeUpgrades.serverAlwaysOn) {
+                    efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+                }
+                if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
+
+                // Guadagno Potenziale
+                const rawEarned = effectiveSeconds * cookiesPerSecond;
+                const realEarned = rawEarned * efficiency;
+
+                if (realEarned > 0) {
+                    // Invece di aggiungere subito, mostriamo il modale
+                    showOfflineModal(realEarned, efficiency);
                 }
             }
         }
@@ -167,6 +172,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+    }
+
+    function showOfflineModal(amount, efficiency) {
+        const modal = document.getElementById('offline-modal');
+        const displayAmount = document.getElementById('offline-earnings-display');
+        const displayEff = document.getElementById('offline-efficiency-display');
+        const btn = document.getElementById('btn-claim-offline');
+
+        if (!modal) return;
+
+        // Formatta i testi
+        displayAmount.textContent = formatNumber(amount);
+        displayEff.textContent = (efficiency * 100).toFixed(0) + "%";
+
+        // Setup Bottone
+        // Usiamo una funzione anonima con rimozione listener per evitare doppi click se ricarichi
+        const claimHandler = () => {
+            // Aggiungi i punti
+            gameState.score += amount;
+            gameState.totalScore += amount;
+            gameState.lifetimeScore += amount;
+
+            // Chiudi modale
+            modal.style.display = 'none';
+
+            // Salva e Feedback
+            window.EspooClicker.saveGame();
+            updateUI();
+            window.EspooClicker.showToast(`Hai riscattato ${formatNumber(amount)} bug!`, 'success');
+            window.EspooClicker.playSound('sound-buy');
+
+            // Rimuovi listener per pulizia
+            btn.removeEventListener('click', claimHandler);
+        };
+
+        btn.addEventListener('click', claimHandler);
+
+        // Mostra
+        modal.style.display = 'flex';
     }
 
     let lastFrameTime = Date.now();
