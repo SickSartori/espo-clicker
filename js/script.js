@@ -304,6 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeGame() {
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('dragstart', event => event.preventDefault());
+
         buildStores();
         loadGame();
         if (typeof refreshAllStores === 'function') refreshAllStores();
