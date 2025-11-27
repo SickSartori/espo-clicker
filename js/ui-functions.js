@@ -81,8 +81,8 @@ function updateSkinsUI() {
         `;
 
         const imgSrc = isUnlocked
-            ? (data.img ? `./image/${data.img}` : './image/espo.png')
-            : './image/hidden.png';
+            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.png')
+            : './assets/image/hidden.png';
 
         const imgStyle = `width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px;`;
         const displayName = data.name;
@@ -710,6 +710,7 @@ function updateUI() {
         }
     }
     checkTabNotifications();
+    checkOverlayNotifications();
 }
 
 function updatePrestigeVisuals() {
@@ -874,11 +875,11 @@ function applySkinVisuals(skinId) {
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
     if (photoNormal) {
-        photoNormal.src = `./image/${data.img}`;
+        photoNormal.src = `./assets/image/${data.img}`;
         photoNormal.style.filter = 'none';
     }
     if (photoClicked) {
-        photoClicked.src = `./image/${data.imgClick}`;
+        photoClicked.src = `./assets/image/${data.imgClick}`;
         photoClicked.style.filter = 'none';
     }
 }
@@ -946,6 +947,27 @@ function updateClickStore() {
     if (emptyMsg) {
         emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
         if (visibleCount === 0) setEmptyMessage(emptyMsg, mode);
+    }
+}
+
+function checkOverlayNotifications() {
+    // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
+    let hasClaimable = false;
+    for (const key in gameData.achievements) {
+        const state = gameState.achievements[key];
+        const data = gameData.achievements[key];
+
+        // Se è sbloccato, non ancora reclamato, e ha un premio definito
+        if (state && state.unlocked && !state.claimed && data.reward) {
+            hasClaimable = true;
+            break;
+        }
+    }
+
+    const achBtn = document.getElementById('open-achievements-btn');
+    if (achBtn) {
+        if (hasClaimable) achBtn.classList.add('notify-overlay');
+        else achBtn.classList.remove('notify-overlay');
     }
 }
 

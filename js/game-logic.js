@@ -52,29 +52,7 @@ function buySkin(skinId) {
         window.EspooClicker.showToast(`❌ Token insufficienti! Te ne servono ${data.cost}.`, 'error');
     }
 }
-function applySkinVisuals(skinId) {
-    const data = gameData.skins[skinId];
 
-    // Se la skin non esiste (magari salvataggio vecchio), usa default
-    if (!data) {
-        applySkinVisuals('default');
-        return;
-    }
-
-    const photoNormal = document.getElementById('manager-photo-normal');
-    const photoClicked = document.getElementById('manager-photo-clicked');
-
-    if (photoNormal) {
-        photoNormal.src = `./image/${data.img}`;
-        // Rimuovi filtri residui se c'erano
-        photoNormal.style.filter = 'none';
-    }
-
-    if (photoClicked) {
-        photoClicked.src = `./image/${data.imgClick}`;
-        photoClicked.style.filter = 'none';
-    }
-}
 
 // --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
 function calculateBulkCost(teamKey, amount) {
@@ -189,7 +167,15 @@ function activateCrunchTime() {
     window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x7! 🔥");
 }
 
+
 function triggerBluescreen(multiplier) {
+    // 1. CHECK SPECIALE PER RICK ESPLEY
+    if (gameState.skins.current === 'rick') {
+        triggerRickRoll(multiplier);
+        return; // Esci dalla funzione standard
+    }
+
+    // --- LOGICA STANDARD 404 (Blue Screen) ---
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
@@ -197,31 +183,123 @@ function triggerBluescreen(multiplier) {
     recalculateCPS();
     refreshAllStores();
 
-    eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
-    eventMultiplierDisplay.style.display = 'block';
+    if (eventMultiplierDisplay) {
+        eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
+        eventMultiplierDisplay.style.display = 'block';
+    }
     playSound('sound-bluescreen');
 
     setTimeout(() => {
-        isBluescreenActive = false;
-        bluescreenMultiplier = 1;
-        document.body.classList.remove('bluescreen-active');
-        eventMultiplierDisplay.style.display = 'none';
-
-        recalculateCPS();
-        refreshAllStores();
-        try {
-            soundBluescreen.pause();
-            soundBluescreen.currentTime = 0;
-        } catch (e) { }
+        stopBluescreenEffect();
     }, 30000);
+}
+
+
+function triggerRickRoll(multiplier) {
+    const video = document.getElementById('rick-roll-video');
+    if (!video) return;
+
+    // --- LOGICA BONUS ---
+    // Imposta il moltiplicatore (es. x2)
+    let rickMultiplier = Math.max(multiplier, 2);
+
+    isBluescreenActive = true;
+    bluescreenMultiplier = rickMultiplier;
+
+    // --- FIX CRUCIALE: Ricalcola subito i valori! ---
+    recalculateCPS(); // Aggiorna la matematica del BPS
+    updateUI();       // Aggiorna visivamente i numeri sullo schermo
+    // ------------------------------------------------
+
+    document.body.classList.add('rick-rolling');
+
+    // Mostra il badge del moltiplicatore
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) {
+        emDisplay.textContent = `🔥 RICK BONUS: BPS x${rickMultiplier} 🔥`;
+        emDisplay.style.display = 'block';
+    }
+
+    // Setup Video
+    video.style.display = 'block';
+    video.currentTime = 0;
+    video.volume = gameState.user.masterVolume;
+
+    try {
+        const bgMusic = document.getElementById('sound-bg');
+        if (bgMusic) bgMusic.pause();
+    } catch (e) { }
+
+    video.play().catch(e => console.warn("Autoplay bloccato", e));
+
+    window.EspooClicker.showToast(`🎵 NEVER GONNA GIVE YOU UP! 🎵`, 'achievement');
+
+    const videoClickHandler = (e) => { clickCookie(e); };
+    video.addEventListener('mousedown', videoClickHandler);
+    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+
+    const duration = 60000; // 1 Minuto
+
+    setTimeout(() => {
+        document.body.classList.remove('rick-rolling');
+        video.pause();
+        video.style.display = 'none';
+        video.removeEventListener('mousedown', videoClickHandler);
+        video.removeEventListener('touchstart', videoClickHandler);
+        stopBluescreenEffect();
+    }, duration);
+}
+
+// Funzione Helper per pulire (condivisa tra 404 normale e Rick)
+function stopBluescreenEffect() {
+    isBluescreenActive = false;
+    bluescreenMultiplier = 1;
+
+    document.body.classList.remove('bluescreen-active');
+
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) emDisplay.style.display = 'none';
+
+    recalculateCPS();
+    refreshAllStores();
+
+    try {
+        const soundBluescreen = document.getElementById('sound-bluescreen');
+        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
+    } catch (e) { }
 }
 
 
 function clickCookie(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
-    playSound('sound-click');
 
+    // --- 🔊 NUOVO: LOGICA AUDIO GLITCH ---
+    if (isBluescreenActive) {
+        const sound = document.getElementById('sound-click');
+        if (sound) {
+            // Cambia la velocità di riproduzione a caso tra 0.2x (lento/cupo) e 1.8x (veloce/acuto)
+            sound.playbackRate = 0.2 + Math.random() * 1.6;
+
+            // Opzionale: volume instabile per accentuare il glitch
+            // (mantiene il volume master come base massima)
+            sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
+
+            sound.currentTime = 0;
+            sound.play().catch(e => { }); // Ignora errori di autoplay
+        }
+    } else {
+        // Reset fondamentale: se l'evento finisce, il suono deve tornare normale!
+        const sound = document.getElementById('sound-click');
+        if (sound && sound.playbackRate !== 1) {
+            sound.playbackRate = 1;
+            sound.volume = gameState.user.masterVolume;
+        }
+        playSound('sound-click');
+    }
+    // ------------------------------------
+
+    // --- LOGICA PUNTEGGIO (Invariata) ---
     let clickBonusPercent = 0.01;
     if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
     let clickValuePercentBonus = 0;
@@ -237,17 +315,49 @@ function clickCookie(event) {
     gameState.lifetimeScore += currentClickValue;
     gameState.totalClicks++;
 
+    // --- EFFETTI VISIVI (Particelle, Feedback, ecc.) ---
+
+    // 1. Calcolo coordinate
+    let x, y;
+    if (event.clientX && event.clientY) {
+        const rect = document.getElementById('clicker-section').getBoundingClientRect();
+        // Coordinate assolute pagina per le particelle (append al body)
+        x = event.pageX;
+        y = event.pageY;
+    } else {
+        const rect = clickerButton.getBoundingClientRect();
+        x = rect.left + rect.width / 2;
+        y = rect.top + rect.height / 2;
+    }
+
+    // 2. Particelle (Se la funzione esiste)
+    if (typeof createClickParticles === 'function') {
+        // Calcolo relativo per il container feedback
+        const containerRect = document.getElementById('click-feedback-container').getBoundingClientRect();
+        const relX = (event.clientX || (x - window.scrollX)) - containerRect.left;
+        const relY = (event.clientY || (y - window.scrollY)) - containerRect.top;
+        createClickParticles(relX, relY);
+    }
+
+    // 3. Feedback Testuale
     showClickFeedback(event);
 
-    clickerButton.classList.add('clicked');
-    setTimeout(() => { clickerButton.classList.remove('clicked'); }, 100);
+    // 4. Animazione Bottone
+    clickerButton.classList.remove('click-shrink');
+    clickerButton.classList.remove('clicked'); // Reset preventivo
 
-    // --- FIX: Aggiorna il negozio Click in tempo reale ---
-    if (typeof updateClickStore === 'function') {
-        updateClickStore();
-    }
-    // ----------------------------------------------------
+    void clickerButton.offsetWidth; // Trigger reflow (resetta l'animazione)
 
+    clickerButton.classList.add('click-shrink'); // Effetto "rimbalzo"
+    clickerButton.classList.add('clicked');      // Effetto "cambio immagine" (CSS opacity)
+
+    setTimeout(() => {
+        clickerButton.classList.remove('click-shrink');
+        clickerButton.classList.remove('clicked'); // Torna all'immagine normale
+    }, 100); // 100ms di durata
+
+    // --- AGGIORNAMENTO UI ---
+    if (typeof updateClickStore === 'function') updateClickStore();
     updateUI();
 }
 
@@ -432,6 +542,7 @@ async function executePrestige() {
     let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
     let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
     let oldTotalResets = gameState.totalResets + 1;
+    let oldTotalClicks = gameState.totalClicks; // <--- NUOVO: Salva i click
     let oldGoldenBugs = gameState.totalGoldenBugsClicked;
     let oldPlayTime = gameState.totalPlayTime;
     let oldLifetimeScore = gameState.lifetimeScore;
@@ -461,6 +572,7 @@ async function executePrestige() {
     newState.achievements = oldAchievements;
     newState.prestigeUpgrades = oldPrestigeUpgrades;
     newState.totalResets = oldTotalResets;
+    newState.totalClicks = oldTotalClicks; // <--- NUOVO: Ripristina i click
     newState.totalGoldenBugsClicked = oldGoldenBugs;
     newState.totalPlayTime = oldPlayTime;
     newState.lifetimeScore = oldLifetimeScore;

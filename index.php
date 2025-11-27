@@ -14,10 +14,13 @@
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/mobile.css">
     
-    <link rel="icon" type="image/png" href="./image/favicon.png">
+    <link rel="icon" type="image/png" href="./assets/image/favicon.png">
 </head>
 <body>
-
+    <video id="rick-roll-video" style="display: none;" playsinline>
+        <source src="./assets/video/rick-espley-video.mp4" type="video/mp4">
+        Il tuo browser non supporta il video tag.
+    </video>
     <div id="toast-container"></div>
         <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">
@@ -91,19 +94,19 @@
     </div>
 
     <div id="golden-bug" title="Un Ticket Critico! Clicca!">
-        <img src="./image/bug.png" alt="Ticket Critico!">
+        <img src="./assets/image/bug.png" alt="Ticket Critico!">
     </div>  
 
     <div id="github-link-container">
         <a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
-            <img src="./image/github-icon.svg" class="github-icon" alt="GitHub Logo">
+            <img src="./assets/image/github-icon.svg" class="github-icon" alt="GitHub Logo">
         </a>
     </div>
 
-    <audio id="sound-click" src="./sounds/Click.mp3" preload="auto"></audio>
-    <audio id="sound-buy" src="./sounds/Buy.mp3" preload="auto"></audio>
-    <audio id="sound-achievement" src="./sounds/Achievement.mp3" preload="auto"></audio>
-    <audio id="sound-bluescreen" src="./sounds/bluescreen.mp3" loop preload="auto"></audio>
+    <audio id="sound-click" src="./assets/sounds/Click.mp3" preload="auto"></audio>
+    <audio id="sound-buy" src="./assets/sounds/Buy.mp3" preload="auto"></audio>
+    <audio id="sound-achievement" src="./assets/sounds/Achievement.mp3" preload="auto"></audio>
+    <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="auto"></audio>
 
     <script src="./js/game-data.js" defer></script>
     <script src="./js/ui-functions.js" defer></script>

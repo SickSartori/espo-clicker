@@ -310,6 +310,8 @@
     user-select: text;
 }
 
+
+
 @keyframes bugRandomWander {
     0% {
         transform: translate(0, 0) rotate(0deg);
@@ -393,5 +395,286 @@
 
     100% {
         transform: scale(1);
+    }
+}
+
+/* --- EFFETTO GLITCH 404 --- */
+
+/* Animazione di distorsione "tremolante" */
+@keyframes glitch-skew {
+    0% {
+        transform: skew(0deg);
+    }
+
+    20% {
+        transform: skew(-0.8deg);
+    }
+
+    40% {
+        transform: skew(0.8deg);
+    }
+
+    60% {
+        transform: skew(-0.2deg);
+    }
+
+    80% {
+        transform: skew(0.2deg);
+    }
+
+    100% {
+        transform: skew(0deg);
+    }
+}
+
+/* Animazione di inversione colori pulsante */
+@keyframes glitch-flash {
+    0% {
+        filter: invert(0);
+    }
+
+    50% {
+        filter: invert(1);
+    }
+
+    100% {
+        filter: invert(0);
+    }
+}
+
+/* Quando il body ha la classe bluescreen-active (evento 404 attivo) */
+body.bluescreen-active #game-container {
+    /* Applica la distorsione continua */
+    animation: glitch-skew 0.2s infinite linear;
+
+    /* Cambia leggermente i colori per renderli "sbagliati" */
+    filter: hue-rotate(180deg) contrast(1.2);
+
+    /* Aggiunge un bordo rosso di errore */
+    border: 2px solid red;
+    box-shadow: 0 0 20px red, inset 0 0 50px rgba(255, 0, 0, 0.2);
+}
+
+/* Rende i testi un po' più difficili da leggere durante l'errore */
+body.bluescreen-active h2,
+body.bluescreen-active span,
+body.bluescreen-active button {
+    text-shadow: 2px 0 red, -2px 0 blue;
+}
+
+/* Effetto speciale sul bottone principale durante il 404 */
+body.bluescreen-active #clicker-btn {
+    animation: glitch-flash 0.5s infinite;
+    /* Lampeggia invertendo i colori */
+}
+
+
+
+/* --- RICK ROLL MODE (RESPONSIVE & BPS) --- */
+
+/* Video Sfondo */
+#rick-roll-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 9998;
+}
+
+body.rick-rolling {
+    overflow: hidden;
+    background: #000;
+}
+
+/* 1. CONTAINER TRASPARENTE */
+body.rick-rolling #game-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+body.rick-rolling #center-column {
+    border: none !important;
+    overflow: visible !important;
+}
+
+/* 2. NASCONDI IL SUPERFLUO (Nota: Ho rimosso #cps-display da qui!) */
+body.rick-rolling #left-column,
+body.rick-rolling #right-column,
+body.rick-rolling #overlay-buttons-container,
+body.rick-rolling #github-link-container,
+body.rick-rolling #hud-stats-container,
+body.rick-rolling #bonus-counter-display,
+body.rick-rolling #score-label,
+body.rick-rolling #version-display,
+body.rick-rolling #prestige-bonus-display,
+body.rick-rolling .skill-btn {
+    opacity: 0 !important;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+/* --- HUD LATERALE DESTRO (STACK VERTICALE) --- */
+
+/* A. PUNTEGGIO TOTALE (In cima) */
+body.rick-rolling #score-display {
+    display: block !important;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+
+    font-size: 2.2rem;
+    color: #f1c40f;
+    text-shadow: 2px 2px 0 #000;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 5px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    margin: 0;
+    text-align: right;
+}
+
+/* B. BPS (Subito sotto il punteggio) */
+body.rick-rolling #cps-display {
+    display: block !important;
+    opacity: 1 !important;
+    position: fixed;
+    top: 85px;
+    /* Calcolato: 20px (top) + ~60px (altezza score) + 5px gap */
+    right: 20px;
+    z-index: 10000;
+
+    font-size: 1.3rem;
+    /* Ben visibile */
+    color: #3498db;
+    /* Blu ciano */
+    text-shadow: 1px 1px 0 #000;
+    font-weight: 700;
+
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    backdrop-filter: blur(4px);
+    margin: 0;
+    text-align: right;
+}
+
+/* C. BONUS ATTIVO (Piccolo, sotto il BPS) */
+body.rick-rolling #event-multiplier-display {
+    display: block !important;
+    opacity: 1 !important;
+    position: fixed;
+    top: 135px;
+    /* Calcolato: 85px (top bps) + ~40px (altezza bps) + 10px gap */
+    right: 20px;
+    z-index: 10000;
+
+    font-size: 0.9rem;
+    /* Più piccolo come richiesto */
+    color: #e74c3c;
+    /* Rosso */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 10px;
+    border-radius: 6px;
+    margin: 0;
+    pointer-events: none;
+    width: auto;
+}
+
+body.rick-rolling #click-feedback-container {
+    position: fixed !important;
+    /* Diventa fisso su tutto lo schermo */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    /* Sopra al video (9998) e al bottone (9999) */
+    pointer-events: none;
+    /* Lascia passare i click al video/bottone sotto */
+}
+
+/* 4. BOTTONE CLICKER (Piccolo in basso a destra) */
+body.rick-rolling #clicker-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 100px;
+    height: 100px;
+    z-index: 9999;
+    opacity: 1 !important;
+    pointer-events: auto;
+
+    /* Reset layout */
+    top: auto;
+    left: auto;
+    margin: 0;
+
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+    transform: scale(1);
+    transition: transform 0.1s;
+}
+
+body.rick-rolling #clicker-btn img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #fff;
+}
+
+body.rick-rolling #clicker-btn:active {
+    transform: scale(0.9);
+}
+
+/* Toast spostati a sinistra per non coprire l'HUD */
+body.rick-rolling #toast-container {
+    top: 20px !important;
+    left: 20px !important;
+    right: auto !important;
+    align-items: flex-start;
+}
+
+/* --- MOBILE --- */
+@media only screen and (max-width: 768px) {
+
+    /* Rimpicciolisci un po' tutto su mobile */
+    body.rick-rolling #score-display {
+        font-size: 1.5rem;
+        top: 10px;
+        right: 10px;
+    }
+
+    body.rick-rolling #cps-display {
+        font-size: 1rem;
+        top: 60px;
+        right: 10px;
+    }
+
+    body.rick-rolling #event-multiplier-display {
+        font-size: 0.8rem;
+        top: 100px;
+        right: 10px;
+    }
+
+    /* Bottone al centro in basso */
+    body.rick-rolling #clicker-btn {
+        width: 90px;
+        height: 90px;
+        right: 50%;
+        bottom: 20px;
+        transform: translateX(50%);
+    }
+
+    body.rick-rolling #clicker-btn:active {
+        transform: translateX(50%) scale(0.9);
     }
 }

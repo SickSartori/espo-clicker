@@ -36,6 +36,48 @@
     transform: translateY(-2px);
 }
 
+.overlay-btn {
+    position: relative;
+    /* Necessario per posizionare il pallino */
+}
+
+.overlay-btn.notify-overlay::after {
+    content: '!';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c;
+    /* Rosso */
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
+    animation: pulseNotify 1.5s infinite;
+    z-index: 10;
+    border: 2px solid #2c3e50;
+    /* Bordo per staccare dallo sfondo */
+}
+
+@keyframes pulseNotify {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* --- MODALI --- */
 .modal-backdrop {
     position: fixed;

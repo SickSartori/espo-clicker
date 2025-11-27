@@ -22,8 +22,8 @@
         <div id="click-feedback-container"></div>
         
         <button id="clicker-btn" title="Risolvi un Bug!">
-            <img id="manager-photo-clicked" src="./image/espo-click.png" alt="Click!" draggable="false">
-            <img id="manager-photo-normal" src="./image/espo.png" alt="Espòòò" draggable="false">
+            <img id="manager-photo-clicked" src="./assets/image/espo-click.png" alt="Click!" draggable="false">
+            <img id="manager-photo-normal" src="./assets/image/espo.png" alt="Espòòò" draggable="false">
         </button>
         
         <div id="score-label">Bug Risolti</div>
