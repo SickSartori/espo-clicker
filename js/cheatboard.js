@@ -1,376 +1,378 @@
 (function () {
-    // --- 0. Global Cheat State ---
+    // --- 0. Stato Globale Cheat ---
     window.cheatBPSBonus = 0;
 
-    // --- 1. Hook into Game Logic ---
-    // We wrap recalculateCPS to add our cheat bonus
+    // --- 1. Hook nella Logica di Gioco ---
     const originalRecalculateCPS = window.recalculateCPS || function () { };
 
     window.recalculateCPS = function () {
-        // Run original logic to get the "natural" CPS
         originalRecalculateCPS();
-
-        // Apply cheat bonus
         if (typeof cookiesPerSecond !== 'undefined') {
             cookiesPerSecond += window.cheatBPSBonus;
-            // Ensure it doesn't go negative
             if (cookiesPerSecond < 0) cookiesPerSecond = 0;
-        }
-
-        // Update UI (cpsDisplay is global)
-        if (typeof cpsDisplay !== 'undefined' && cpsDisplay) {
-            // We rely on the game loop or original function to update text, 
-            // but we can force it here if needed. 
-            // The original function usually updates the variable, and gameLoop updates UI.
         }
     };
 
-    // --- 2. Define CSS Styles ---
+    // --- 2. Stili (UI Moderna Dark/Neon) ---
     const styles = `
-        /* Cheatboard Container */
         #cheatboard-container {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 350px; /* Increased height for more controls */
-            background-color: rgba(20, 20, 20, 0.98);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(0, 212, 255, 0.3);
-            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.8);
-            z-index: 99999; /* Very high z-index */
-            transform: translateY(100%); /* Hidden by default */
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 400px;
+            background-color: rgba(15, 15, 20, 0.98);
+            backdrop-filter: blur(15px);
+            border-top: 2px solid #00ff9d;
+            box-shadow: 0 -10px 40px rgba(0, 255, 157, 0.1);
+            z-index: 99999;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', monospace;
             display: flex;
             flex-direction: column;
         }
 
-        /* Open State */
         #cheatboard-container.open {
             transform: translateY(0);
         }
 
-        /* Toggle Handle/Tab */
+        /* Linguetta */
         #cheatboard-handle {
             position: absolute;
-            top: -30px;
+            top: -35px;
             left: 50%;
             transform: translateX(-50%);
-            width: 140px;
-            height: 30px;
-            background-color: rgba(20, 20, 20, 0.98);
-            border-radius: 12px 12px 0 0;
-            border-top: 1px solid rgba(0, 212, 255, 0.3);
-            border-left: 1px solid rgba(0, 212, 255, 0.3);
-            border-right: 1px solid rgba(0, 212, 255, 0.3);
+            width: 160px;
+            height: 35px;
+            background: #00ff9d; /* Neon Green */
+            color: #000;
+            border-radius: 8px 8px 0 0;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5);
-            transition: background-color 0.2s;
-            color: #00d4ff;
-            font-weight: bold;
-            font-size: 0.8rem;
+            font-weight: 800;
+            font-size: 0.9rem;
             letter-spacing: 1px;
+            box-shadow: 0 -5px 15px rgba(0, 255, 157, 0.3);
+            transition: top 0.2s;
         }
-
+        
         #cheatboard-handle:hover {
-            background-color: rgba(40, 40, 40, 1);
-            color: #fff;
+            top: -40px; /* Piccolo effetto hover */
         }
 
-        /* Content Area */
+        #cheatboard-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+        }
+
+        #cheatboard-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00ff9d;
+            text-transform: uppercase;
+        }
+
+        #cheatboard-close {
+            cursor: pointer;
+            color: #ff4757;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Griglia Contenuto */
         #cheatboard-content {
             padding: 20px;
             flex: 1;
             overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Griglia Responsiva */
+            gap: 20px;
+            align-content: start;
+        }
+
+        /* Cards/Gruppi */
+        .cheat-group {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
         }
 
-        #cheatboard-title {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #00d4ff;
+        .cheat-group-title {
+            font-size: 0.8rem;
+            color: #888;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 2px solid rgba(0, 212, 255, 0.2);
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
         }
 
-        /* Control Rows */
-        .cheat-row {
+        /* Controlli */
+        .control-row {
             display: flex;
+            gap: 10px;
             align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .cheat-label {
-            width: 100px;
-            font-weight: bold;
-            color: #aaa;
-            font-size: 1rem;
         }
 
         .cheat-input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
             color: #fff;
-            padding: 8px 12px;
+            padding: 8px;
             border-radius: 4px;
-            width: 150px;
+            flex: 1;
             font-family: monospace;
-            font-size: 1.1rem;
         }
         
         .cheat-input:focus {
+            border-color: #00ff9d;
             outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
         }
 
         .cheat-btn {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            border: none;
+            background: #2c3e50;
+            border: 1px solid #34495e;
             color: #fff;
-            padding: 8px 20px;
+            padding: 8px 15px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.8rem;
             transition: all 0.2s;
             text-transform: uppercase;
-            font-size: 0.85rem;
-            min-width: 80px;
         }
 
         .cheat-btn:hover {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: #34495e;
+            border-color: #5dade2;
         }
 
-        .cheat-btn:active {
-            transform: translateY(0);
-        }
+        .cheat-btn.primary { background: rgba(0, 255, 157, 0.1); border-color: #00ff9d; color: #00ff9d; }
+        .cheat-btn.primary:hover { background: rgba(0, 255, 157, 0.2); }
+
+        .cheat-btn.danger { background: rgba(255, 71, 87, 0.1); border-color: #ff4757; color: #ff4757; }
+        .cheat-btn.danger:hover { background: rgba(255, 71, 87, 0.2); }
         
-        .cheat-btn.set-btn {
-            background: linear-gradient(135deg, #c0392b, #e74c3c);
-        }
-        
-        .cheat-btn.set-btn:hover {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-        }
+        .cheat-btn.gold { background: rgba(241, 196, 15, 0.1); border-color: #f1c40f; color: #f1c40f; }
+        .cheat-btn.gold:hover { background: rgba(241, 196, 15, 0.2); }
 
         /* Scrollbar */
-        #cheatboard-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        #cheatboard-content::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.2);
-        }
-        #cheatboard-content::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
-        #cheatboard-content::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.3);
-        }
+        #cheatboard-content::-webkit-scrollbar { width: 8px; }
+        #cheatboard-content::-webkit-scrollbar-track { background: #111; }
+        #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
     `;
 
-    // 3. Inject CSS
     const styleSheet = document.createElement("style");
-    styleSheet.type = "text/css";
     styleSheet.innerText = styles;
     document.head.appendChild(styleSheet);
 
-    // 4. Create HTML Structure
+    // 3. Struttura HTML
     const container = document.createElement('div');
     container.id = 'cheatboard-container';
 
-    const handle = document.createElement('div');
-    handle.id = 'cheatboard-handle';
-    handle.innerText = 'CHEAT BOARD';
-
-    const content = document.createElement('div');
-    content.id = 'cheatboard-content';
-
-    content.innerHTML = `
-        <div id="cheatboard-title">Admin Console</div>
-        
-        <!-- Bugs Control -->
-        <div class="cheat-row">
-            <div class="cheat-label">BUGS</div>
-            <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Amount" min="0" value="0">
-            <button id="btn-bugs-add" class="cheat-btn">Add</button>
-            <button id="btn-bugs-set" class="cheat-btn set-btn">Set</button>
+    container.innerHTML = `
+        <div id="cheatboard-handle">CONSOLE ADMIN</div>
+        <div id="cheatboard-header">
+            <span id="cheatboard-title">🔧 Strumenti Sviluppatore v3.0</span>
+            <span id="cheatboard-close">✕</span>
         </div>
+        <div id="cheatboard-content">
+            
+            <div class="cheat-group">
+                <div class="cheat-group-title">Economia</div>
+                
+                <div class="control-row">
+                    <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Quantità Bug" value="1000000">
+                    <button id="btn-bugs-add" class="cheat-btn primary">Agg. Bug</button>
+                </div>
+                
+                <div class="control-row">
+                    <input type="number" id="cheat-tokens-input" class="cheat-input" placeholder="Token Lab" value="100">
+                    <button id="btn-tokens-add" class="cheat-btn gold">Agg. Token</button>
+                </div>
 
-        <!-- Clicks Control -->
-        <div class="cheat-row">
-            <div class="cheat-label">CLICKS</div>
-            <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Amount" min="0" value="0">
-            <button id="btn-clicks-add" class="cheat-btn">Add</button>
-            <button id="btn-clicks-set" class="cheat-btn set-btn">Set</button>
-        </div>
-
-        <!-- BPS Control -->
-        <div class="cheat-row">
-            <div class="cheat-label">BPS</div>
-            <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="Amount" min="0" value="0">
-            <button id="btn-bps-add" class="cheat-btn">Add</button>
-            <button id="btn-bps-set" class="cheat-btn set-btn">Set</button>
-        </div>
-
-        <!-- Events Control -->
-        <div class="cheat-row">
-            <div class="cheat-label">EVENTS</div>
-            <div style="display: flex; gap: 5px;">
-                <input type="number" id="cheat-404-input" class="cheat-input" placeholder="Mult (404)" value="2" min="1" max="5" style="width: 140px; background: #e74c3c;">
-                <button id="btn-event-404" class="cheat-btn" style="background: #e74c3c;">Trigger 404</button>
+                <div class="control-row">
+                    <button id="btn-time-warp" class="cheat-btn">⏩ Salto Temporale (1h)</button>
+                </div>
             </div>
-            <button id="btn-event-golden" class="cheat-btn" style="background: #f1c40f; color: #000;">Golden Bug</button>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Statistiche</div>
+                
+                <div class="control-row">
+                    <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
+                    <button id="btn-clicks-add" class="cheat-btn">Agg. Click</button>
+                </div>
+
+                <div class="control-row">
+                    <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="Bonus BPS" value="1000">
+                    <button id="btn-bps-add" class="cheat-btn">Agg. BPS</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Eventi & Test</div>
+                
+                <div class="control-row">
+                    <input type="number" id="cheat-404-input" class="cheat-input" placeholder="Molt." value="3" style="width: 60px;">
+                    <button id="btn-event-404" class="cheat-btn danger">Avvia 404</button>
+                    <button id="btn-event-rick" class="cheat-btn danger">Rick Roll</button>
+                </div>
+
+                <div class="control-row">
+                    <button id="btn-event-golden" class="cheat-btn gold">Genera Golden Bug</button>
+                    <button id="btn-reset-cooldown" class="cheat-btn">Resetta Cooldown</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Sblocchi</div>
+                
+                <div class="control-row">
+                    <button id="btn-unlock-skins" class="cheat-btn primary" style="width: 100%">Sblocca Tutte Skin</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-unlock-ach" class="cheat-btn primary" style="width: 100%">Sblocca Obiettivi</button>
+                </div>
+            </div>
+
         </div>
-
-
     `;
 
-    container.appendChild(handle);
-    container.appendChild(content);
     document.body.appendChild(container);
 
-    // 5. Helpers
-    function getVal(id) {
-        const val = parseFloat(document.getElementById(id).value);
-        return isNaN(val) ? 0 : val;
-    }
+    // 4. Funzioni Helper
+    const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+    const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
+    const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast("🔧 " + msg, 'info'); };
 
-    function updateGameUI() {
-        if (typeof updateUI === 'function') updateUI();
-    }
+    // 5. Event Listeners
+    const handle = document.getElementById('cheatboard-handle');
+    const closeBtn = document.getElementById('cheatboard-close');
 
-    // 6. Event Listeners
+    const togglePanel = () => container.classList.toggle('open');
+    handle.addEventListener('click', togglePanel);
+    closeBtn.addEventListener('click', togglePanel);
 
-    // Toggle Panel
-    handle.addEventListener('click', () => {
-        container.classList.toggle('open');
+    // Scorciatoia CTRL+SHIFT+C
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'C') togglePanel();
     });
 
-    // Keyboard Shortcut
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-            container.classList.toggle('open');
+    // --- LOGICA BOTTONI ---
+
+    // Bugs
+    document.getElementById('btn-bugs-add').addEventListener('click', () => {
+        const val = getVal('cheat-bugs-input');
+        gameState.score += val;
+        gameState.totalScore += val;
+        gameState.lifetimeScore += val;
+        updateGame();
+        toast(`Aggiunti ${val} Bug`);
+    });
+
+    // Tokens (Prestige)
+    document.getElementById('btn-tokens-add').addEventListener('click', () => {
+        const val = getVal('cheat-tokens-input');
+        gameState.prestigePoints += val;
+        // Aggiorna anche lifetime se serve
+        if (gameState.lifetimePrestigePoints !== undefined) gameState.lifetimePrestigePoints += val;
+
+        if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
+        updateGame();
+        toast(`Aggiunti ${val} Token Lab`);
+    });
+
+    // Time Warp (1 Ora)
+    document.getElementById('btn-time-warp').addEventListener('click', () => {
+        if (cookiesPerSecond <= 0) { toast("BPS è 0! Impossibile viaggiare."); return; }
+        const seconds = 3600;
+        const gain = cookiesPerSecond * seconds;
+        gameState.score += gain;
+        gameState.totalScore += gain;
+        gameState.lifetimeScore += gain;
+        gameState.totalPlayTime += seconds; // Invecchia anche il save
+        updateGame();
+        toast(`Salto Temporale! (+${formatNumber(gain)} Bug)`);
+    });
+
+    // Clicks
+    document.getElementById('btn-clicks-add').addEventListener('click', () => {
+        const val = getVal('cheat-clicks-input');
+        gameState.totalClicks += val;
+        updateGame();
+        toast(`Aggiunti ${val} click manuali`);
+    });
+
+    // BPS Bonus
+    document.getElementById('btn-bps-add').addEventListener('click', () => {
+        const val = getVal('cheat-bps-input');
+        window.cheatBPSBonus += val;
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+        updateGame();
+        toast(`Bonus BPS +${val} attivato`);
+    });
+
+    // Eventi
+    document.getElementById('btn-event-404').addEventListener('click', () => {
+        const mult = getVal('cheat-404-input');
+        if (typeof triggerBluescreen === 'function') {
+            triggerBluescreen(mult);
+            toast(`Evento 404 avviato (x${mult})`);
         }
     });
 
-    // --- EVENTS Logic ---
-    document.getElementById('btn-event-404').addEventListener('click', () => {
-        if (typeof triggerBluescreen === 'function') {
-            let mult = getVal('cheat-404-input');
-            if (mult === 0) mult = 404; // Default if empty or 0
-            triggerBluescreen(mult);
-            console.log(`[Cheat] Triggered 404 Bluescreen with multiplier ${mult}.`);
-        } else {
-            console.error('[Cheat] triggerBluescreen function not found.');
+    document.getElementById('btn-event-rick').addEventListener('click', () => {
+        if (typeof triggerRickRoll === 'function') {
+            triggerRickRoll(3); // Default x3 per test
+            toast("Rick Roll avviato!");
         }
     });
 
     document.getElementById('btn-event-golden').addEventListener('click', () => {
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
-            console.log('[Cheat] Spawned Golden Bug.');
-        } else {
-            console.error('[Cheat] spawnGoldenBug function not found.');
+            toast("Golden Bug generato");
         }
     });
 
+    document.getElementById('btn-reset-cooldown').addEventListener('click', () => {
+        crunchTimeCooldownEnd = 0;
+        if (typeof updateUI === 'function') updateUI();
+        toast("Cooldown resettati!");
+    });
 
-
-    // --- BUGS Logic ---
-    document.getElementById('btn-bugs-add').addEventListener('click', () => {
-        if (typeof gameState !== 'undefined') {
-            const val = getVal('cheat-bugs-input');
-            gameState.score += val;
-            gameState.totalScore += val;
-            gameState.lifetimeScore += val;
-            updateGameUI();
-            console.log(`[Cheat] Added ${val} bugs.`);
+    // Sblocca Tutto
+    document.getElementById('btn-unlock-skins').addEventListener('click', () => {
+        for (let key in gameData.skins) {
+            if (!gameState.skins.unlocked.includes(key)) {
+                gameState.skins.unlocked.push(key);
+            }
         }
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+        toast("Tutte le skin sbloccate!");
     });
 
-    document.getElementById('btn-bugs-set').addEventListener('click', () => {
-        if (typeof gameState !== 'undefined') {
-            const val = getVal('cheat-bugs-input');
-            // Calculate difference to update stats correctly
-            const diff = val - gameState.score;
-
-            gameState.score = val;
-            gameState.totalScore += diff;
-            gameState.lifetimeScore += diff;
-
-            updateGameUI();
-            console.log(`[Cheat] Set bugs to ${val} (Diff: ${diff}).`);
+    document.getElementById('btn-unlock-ach').addEventListener('click', () => {
+        for (let key in gameData.achievements) {
+            if (!gameState.achievements[key]) gameState.achievements[key] = {};
+            gameState.achievements[key].unlocked = true;
+            // Opzionale: Non le segniamo come 'claimed' così puoi testare il riscatto
         }
-    });
-
-    // --- CLICKS Logic ---
-    document.getElementById('btn-clicks-add').addEventListener('click', () => {
-        if (typeof gameState !== 'undefined') {
-            const val = getVal('cheat-clicks-input');
-            gameState.totalClicks += val;
-            updateGameUI();
-            console.log(`[Cheat] Added ${val} clicks.`);
-        }
-    });
-
-    document.getElementById('btn-clicks-set').addEventListener('click', () => {
-        if (typeof gameState !== 'undefined') {
-            const val = getVal('cheat-clicks-input');
-            gameState.totalClicks = val;
-            updateGameUI();
-            console.log(`[Cheat] Set clicks to ${val}.`);
-        }
-    });
-
-    // --- BPS Logic ---
-    document.getElementById('btn-bps-add').addEventListener('click', () => {
-        const val = getVal('cheat-bps-input');
-        window.cheatBPSBonus += val;
-        if (typeof recalculateCPS === 'function') recalculateCPS();
-        updateGameUI();
-        console.log(`[Cheat] Added ${val} to BPS bonus.`);
-    });
-
-    document.getElementById('btn-bps-set').addEventListener('click', () => {
-        const val = getVal('cheat-bps-input');
-        // To set BPS to X, we need to know the "natural" BPS.
-        // We can temporarily reset bonus to 0, calc, then set bonus.
-        const oldBonus = window.cheatBPSBonus;
-        window.cheatBPSBonus = 0;
-        if (typeof recalculateCPS === 'function') recalculateCPS(); // This sets cookiesPerSecond to natural
-
-        const naturalCPS = cookiesPerSecond;
-        window.cheatBPSBonus = val - naturalCPS;
-
-        if (typeof recalculateCPS === 'function') recalculateCPS(); // Re-apply with new bonus
-        updateGameUI();
-        console.log(`[Cheat] Set BPS to ${val} (Bonus: ${window.cheatBPSBonus}).`);
-    });
-
-    // --- Auto-Close Logic ---
-    document.querySelectorAll('.cheat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.classList.remove('open');
-        });
+        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        toast("Tutti gli obiettivi sbloccati!");
     });
 
 })();
