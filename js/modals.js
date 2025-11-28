@@ -28,8 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Input & Bottoni Interni
     const usernameInput = document.getElementById('username-input');
-    const volumeSlider = document.getElementById('volume-slider');
-    const volumeDisplay = document.getElementById('volume-display');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
 
     // Account & Login
@@ -48,6 +46,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelContract = document.getElementById('btn-cancel-contract');
     const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     const prestigeModal = document.getElementById('prestige-modal');
+
+    // --- GESTIONE AUDIO AVANZATA ---
+
+    const masterSlider = document.getElementById('master-slider');
+    const sfxSlider = document.getElementById('sfx-slider');
+    const musicSlider = document.getElementById('music-slider');
+
+    const masterDisplay = document.getElementById('master-vol-display');
+    const sfxDisplay = document.getElementById('sfx-vol-display');
+    const musicDisplay = document.getElementById('music-vol-display');
+
+    // Funzione helper per aggiornare slider e stato
+    function setupAudioControl(slider, display, key, isMusic = false) {
+        if (!slider) return;
+
+        // [FIX] Definiamo Game qui dentro per evitare l'errore "Game is not defined"
+        const Game = window.EspooClicker;
+        if (!Game) return; // Sicurezza nel caso non sia ancora caricato
+
+        // 1. Inizializza valore dal salvataggio
+        slider.value = Game.getGameState().user[key];
+        if (display) display.textContent = Math.round(slider.value * 100);
+
+        // 2. Listener al cambio
+        slider.addEventListener('input', () => {
+            const val = parseFloat(slider.value);
+            Game.getGameState().user[key] = val;
+            if (display) display.textContent = Math.round(val * 100);
+
+            // Se è musica, aggiorna in tempo reale i loop attivi
+            if (isMusic || key === 'masterVolume') {
+                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+            }
+
+            // Feedback sonoro (solo per SFX o Master)
+            if (!isMusic) {
+                // Debounce piccolo per non spammare mentre trascini
+                // (Opzionale, qui facciamo un suono secco)
+                // Game.playSound('sound-click'); 
+            }
+        });
+    }
+
+    // Inizializza i 3 controlli (Assicuriamoci che EspooClicker sia pronto)
+    if (window.EspooClicker) {
+        setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+        setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+        setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+    } else {
+        // Fallback se caricato troppo presto
+        setTimeout(() => {
+            setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+            setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+            setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+        }, 100);
+    }
 
     if (btnGoToContract) {
         // Clone trick per rimuovere vecchi listener
@@ -180,9 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const userSettings = Game.getGameState().user;
         if (currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
 
-        if (volumeSlider) {
-            volumeSlider.value = userSettings.masterVolume;
-            volumeDisplay.textContent = Math.round(userSettings.masterVolume * 100);
+        if (masterSlider) {
+            masterSlider.value = userSettings.masterVolume;
+            masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
         openModal(settingsModal);
     }
@@ -405,12 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listener Impostazioni
-    if (volumeSlider) {
-        volumeSlider.addEventListener('input', () => {
+    if (masterSlider) {
+        masterSlider.addEventListener('input', () => {
             const Game = getGameAPI();
             if (Game) {
-                Game.setMasterVolume(volumeSlider.value);
-                volumeDisplay.textContent = Math.round(volumeSlider.value * 100);
+                Game.setMasterVolume(masterSlider.value);
+                if (masterDisplay) masterDisplay.textContent = Math.round(masterSlider.value * 100);
             }
         });
     }

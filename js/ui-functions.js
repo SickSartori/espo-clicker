@@ -711,6 +711,7 @@ function updateUI() {
     }
     checkTabNotifications();
     checkOverlayNotifications();
+
 }
 
 function updatePrestigeVisuals() {

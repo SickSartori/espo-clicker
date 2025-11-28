@@ -66,6 +66,8 @@
 
     <div id="game-container">
 
+        <button id="quick-mute-btn" title="Muta Tutto" style="position: absolute; bottom: 10px; left: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; z-index: 100;">🔊</button>
+
         <div id="left-column" class="game-column">
             <div class="tabs-header">
                 <button class="tab-btn active" data-target="upgrade-store" id="tab-click">⚡ Click</button>

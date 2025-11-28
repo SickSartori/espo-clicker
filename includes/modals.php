@@ -41,8 +41,18 @@
         
         <div class="settings-content">
             <div class="setting-item">
-                <label>Volume Generale (<span id="volume-display">100</span>%)</label>
-                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+                <label>🔊 Volume Master (<span id="master-vol-display">100</span>%)</label>
+                <input type="range" id="master-slider" min="0" max="1" step="0.1" value="1">
+            </div>
+
+            <div class="setting-item">
+                <label>🔔 Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
+                <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
+            </div>
+
+            <div class="setting-item">
+                <label>🎵 Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
+                <input type="range" id="music-slider" min="0" max="1" step="0.1" value="0.5">
             </div>
             
             <button id="save-settings-btn" class="buy-btn" style="background-color: #27ae60;">Salva e Chiudi</button>

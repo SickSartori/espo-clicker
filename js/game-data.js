@@ -41,7 +41,9 @@ function getInitialGameState() {
 
         user: {
             username: 'Giocatore',
-            masterVolume: 1.0
+            masterVolume: 0.8, // Volume generale (moltiplicatore)
+            sfxVolume: 1.0,    // Volume Effetti (Click, Buy, Toast)
+            musicVolume: 0.5   // Volume Musica/Ambiente (Blue Screen, Rick) - Più basso di default
         },
         filterSettings: {
             globalFilter: 'available'
@@ -177,7 +179,7 @@ const gameData = {
             rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'", clickEffect: "divine"
         },
         ricardo: {
-            name: "Flexpo", desc: "Non c'è bug che tenga.",
+            name: "Ricardo Milespo", desc: "Non c'è bug che tenga.",
             img: "ricardo-milespo.png", imgClick: "ricardo-milespo-click.png",
             rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'White Hat'", clickEffect: "fire"
         },

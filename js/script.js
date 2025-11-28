@@ -168,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedUsername) gameState.user.username = savedUsername;
 
         calculatePrestigeBonus();
-        calculateClickCPSBonus();
         recalculateCPS();
 
         // --- MODIFICA: RIMOSSO IL CHECK OFFLINE QUI ---
@@ -357,6 +356,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const muteBtn = document.getElementById('quick-mute-btn');
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => {
+                if (gameState.user.masterVolume > 0) {
+                    // Muta
+                    gameState.lastVolume = gameState.user.masterVolume; // Salva il volume precedente
+                    gameState.user.masterVolume = 0;
+                    muteBtn.textContent = '🔇';
+                } else {
+                    // Smuta
+                    gameState.user.masterVolume = gameState.lastVolume || 1.0;
+                    muteBtn.textContent = '🔊';
+                }
+                // Aggiorna slider nel modale se aperto
+                const mSlider = document.getElementById('master-slider');
+                if (mSlider) mSlider.value = gameState.user.masterVolume;
+
+                // Applica
+                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+            });
+        }
+
         // Rimuovi focus dal clicker dopo ogni click per sicurezza
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
@@ -515,7 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     calculatePrestigeBonus();
-                    calculateClickCPSBonus();
                     recalculateCPS();
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
@@ -525,6 +545,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 7. Sovrascrivi cache locale
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
+                    for (const key in gameData.achievements) {
+                        const achData = gameData.achievements[key];
+                        const achState = gameState.achievements[key];
+
+                        // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+                        if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
+                            const skinId = achData.reward.id;
+                            // Se la skin NON è nell'inventario, aggiungila ora
+                            if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
+                                console.log(`[Auto-Fix] Recuperata skin mancante: ${skinId}`);
+                                gameState.skins.unlocked.push(skinId);
+                            }
+                        }
+                    }
                     // --- AGGIUNTA: Check offline subito dopo il login ---
                     checkOfflineProgress();
                     // --------------------------------------------------

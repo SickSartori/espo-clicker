@@ -1,30 +1,51 @@
 // --------- 3. FUNZIONI AUDIO ---------
-function playSound(id) {
+// --------- 3. FUNZIONI AUDIO AVANZATE ---------
+
+// type può essere 'sfx' (default) o 'music'
+function playSound(id, type = 'sfx') {
     const sound = document.getElementById(id);
     if (!sound) return;
 
-    // Verifica che l'utente abbia attivato il suono nelle impostazioni
-    if (gameState.user.masterVolume <= 0) return;
+    // Calcolo Volume Finale: Master * Canale Specifico
+    const master = gameState.user.masterVolume;
+    const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
+
+    // Se il volume finale è 0, non fare nulla
+    if (master <= 0 || channel <= 0) {
+        sound.pause(); // Ferma se stava andando
+        return;
+    }
 
     try {
-        sound.volume = gameState.user.masterVolume;
-        sound.currentTime = 0;
+        sound.volume = master * channel;
 
-        // Definiamo la promise esplicitamente
-        const playPromise = sound.play();
-
-        // Gestione moderna dei browser che bloccano l'autoplay
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                // Ignoriamo silenziosamente l'errore di autoplay
-                // (succede se l'utente non ha ancora interagito con la pagina)
-            });
+        // Se è un effetto sonoro breve, resettalo per poterlo spamamre
+        if (type === 'sfx') {
+            sound.currentTime = 0;
         }
-    } catch (e) {
-        // Catch generico per evitare crash
-        console.warn("Audio error ignorato:", e);
-    }
+
+        const playPromise = sound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => { }); // Ignora errori autoplay
+        }
+    } catch (e) { console.warn("Audio error:", e); }
 }
+
+// Funzione per aggiornare i volumi dei loop in corso (es. BlueScreen, Rick Roll)
+function updateAmbientVolume() {
+    const master = gameState.user.masterVolume;
+    const music = gameState.user.musicVolume;
+    const finalVol = master * music;
+
+    // Aggiorna Blue Screen
+    const bluescreen = document.getElementById('sound-bluescreen');
+    if (bluescreen) bluescreen.volume = finalVol;
+
+    // Aggiorna Rick Roll Video
+    const rickVideo = document.getElementById('rick-roll-video');
+    if (rickVideo) rickVideo.volume = finalVol;
+}
+
 // Funzione per acquistare Skin con Token Lab
 function buySkin(skinId) {
     const data = gameData.skins[skinId];
@@ -58,21 +79,17 @@ function buySkin(skinId) {
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
+
+    // Logica Scaling (Contrattazione)
     let scalingBase = 1.20;
     if (gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
         let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
         scalingBase = Math.max(1.05, scalingBase - reduction);
     }
     const r = scalingBase;
-    let discountMultiplier = 1;
-    let achievementsBPSBonus = 0;
 
-    if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
-        let discount = gameState.prestigeUpgrades.outsourcing.count * 0.01;
-        discountMultiplier = 1 - discount;
-    }
+    let discountedBaseCost = data.baseCost;
 
-    let discountedBaseCost = data.baseCost * discountMultiplier;
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
 
     if (amount === 1) {
@@ -100,9 +117,7 @@ function calculatePrestigeBonus() {
     prestigeBonus = Math.min(calculatedBonus, MAX_BONUS);
 }
 
-function calculateClickCPSBonus() {
-    clickCPSBonus = 1;
-}
+
 
 function recalculateCPS() {
     let baseCPS = 0;
@@ -366,15 +381,8 @@ function calculateMaxAffordable(teamKey) {
     const data = gameData.teams[teamKey];
     const r = 1.20;
 
-    // Calcolo sconto (copiato da calculateBulkCost)
-    let discountMultiplier = 1;
-    if (gameState.prestigeUpgrades.outsourcing && gameState.prestigeUpgrades.outsourcing.count > 0) {
-        let discount = gameState.prestigeUpgrades.outsourcing.count * 0.01;
-        discountMultiplier = 1 - discount;
-    }
-    let discountedBaseCost = data.baseCost * discountMultiplier;
+    let discountedBaseCost = data.baseCost;
 
-    // Costo del prossimo singolo edificio
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
 
     if (gameState.score < currentSingleCost) return 0;
@@ -602,7 +610,6 @@ async function executePrestige() {
 
     // 5. AGGIORNAMENTO UI TOTALE
     calculatePrestigeBonus(); // Ricalcola i bonus base
-    calculateClickCPSBonus();
     recalculateCPS();
 
     // Forza il refresh grafico di tutti i negozi (resetta classi 'purchased', barre progresso, costi)
