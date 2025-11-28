@@ -21,6 +21,9 @@
         <source src="./assets/video/rick-espley-video.mp4" type="video/mp4">
         Il tuo browser non supporta il video tag.
     </video>
+    <video id="ricardo-video" style="display: none;" playsinline>
+        <source src="./assets/video/ricardo-milespo-video.mp4" type="video/mp4">
+    </video>
     <div id="toast-container"></div>
         <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">

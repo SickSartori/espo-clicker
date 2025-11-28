@@ -473,7 +473,8 @@ body.bluescreen-active #clicker-btn {
 /* --- RICK ROLL MODE (RESPONSIVE & BPS) --- */
 
 /* Video Sfondo */
-#rick-roll-video {
+#rick-roll-video,
+#ricardo-video {
     position: fixed;
     top: 0;
     left: 0;

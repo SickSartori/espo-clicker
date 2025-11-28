@@ -189,6 +189,10 @@ function triggerBluescreen(multiplier) {
         triggerRickRoll(multiplier);
         return; // Esci dalla funzione standard
     }
+    if (gameState.skins.current === 'ricardo') {
+        triggerRicardoEvent();
+        return;
+    }
 
     // --- LOGICA STANDARD 404 (Blue Screen) ---
     isBluescreenActive = true;
@@ -254,6 +258,63 @@ function triggerRickRoll(multiplier) {
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
     const duration = 60000; // 1 Minuto
+
+    setTimeout(() => {
+        document.body.classList.remove('rick-rolling');
+        video.pause();
+        video.style.display = 'none';
+        video.removeEventListener('mousedown', videoClickHandler);
+        video.removeEventListener('touchstart', videoClickHandler);
+        stopBluescreenEffect();
+    }, duration);
+}
+
+// EVENTO LEGGENDARIO: RICARDO MILESPO
+function triggerRicardoEvent() {
+    const video = document.getElementById('ricardo-video');
+    if (!video) return;
+
+    // --- LOGICA BONUS: Random tra 3x e 10x ---
+    // Math.random() * (max - min + 1) + min
+    let bonusMult = Math.floor(Math.random() * 8) + 3; // Genera da 3 a 10
+
+    isBluescreenActive = true;
+    bluescreenMultiplier = bonusMult;
+
+    // Ricalcola immediatamente i valori
+    recalculateCPS();
+    updateUI();
+
+    // Usiamo la stessa classe CSS di Rick per nascondere la UI (è perfetta)
+    document.body.classList.add('rick-rolling');
+
+    // Mostra il badge del moltiplicatore
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) {
+        emDisplay.textContent = `🔥 FLEX BONUS: BPS x${bonusMult} 🔥`;
+        emDisplay.style.display = 'block';
+    }
+
+    // Setup Video
+    video.style.display = 'block';
+    video.currentTime = 0;
+    video.volume = gameState.user.masterVolume;
+
+    try {
+        const bgMusic = document.getElementById('sound-bg');
+        if (bgMusic) bgMusic.pause();
+    } catch (e) { }
+
+    video.play().catch(e => console.warn("Autoplay bloccato", e));
+
+    window.EspooClicker.showToast(`💪 U GOT THAT (x${bonusMult}) 💪`, 'achievement');
+
+    const videoClickHandler = (e) => { clickCookie(e); };
+    video.addEventListener('mousedown', videoClickHandler);
+    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+
+    // DURATA: 45 Secondi
+    const duration = 45000;
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');

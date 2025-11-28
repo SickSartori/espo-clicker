@@ -124,6 +124,7 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap; /* Permette a più bottoni di andare a capo */
         }
 
         .cheat-input {
@@ -134,6 +135,7 @@
             border-radius: 4px;
             flex: 1;
             font-family: monospace;
+            min-width: 60px;
         }
         
         .cheat-input:focus {
@@ -152,6 +154,8 @@
             font-size: 0.8rem;
             transition: all 0.2s;
             text-transform: uppercase;
+            flex-grow: 1; /* I bottoni si allargano */
+            text-align: center;
         }
 
         .cheat-btn:hover {
@@ -185,7 +189,7 @@
     container.innerHTML = `
         <div id="cheatboard-handle">CONSOLE ADMIN</div>
         <div id="cheatboard-header">
-            <span id="cheatboard-title">🔧 Strumenti Sviluppatore v3.0</span>
+            <span id="cheatboard-title">🔧 Strumenti Sviluppatore v3.1</span>
             <span id="cheatboard-close">✕</span>
         </div>
         <div id="cheatboard-content">
@@ -226,9 +230,13 @@
                 <div class="cheat-group-title">Eventi & Test</div>
                 
                 <div class="control-row">
-                    <input type="number" id="cheat-404-input" class="cheat-input" placeholder="Molt." value="3" style="width: 60px;">
+                    <input type="number" id="cheat-404-input" class="cheat-input" placeholder="Molt." value="3" style="width: 50px;">
                     <button id="btn-event-404" class="cheat-btn danger">Avvia 404</button>
+                </div>
+                
+                <div class="control-row">
                     <button id="btn-event-rick" class="cheat-btn danger">Rick Roll</button>
+                    <button id="btn-event-ricardo" class="cheat-btn danger">Ricardo</button>
                 </div>
 
                 <div class="control-row">
@@ -287,9 +295,7 @@
     document.getElementById('btn-tokens-add').addEventListener('click', () => {
         const val = getVal('cheat-tokens-input');
         gameState.prestigePoints += val;
-        // Aggiorna anche lifetime se serve
         if (gameState.lifetimePrestigePoints !== undefined) gameState.lifetimePrestigePoints += val;
-
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
         updateGame();
         toast(`Aggiunti ${val} Token Lab`);
@@ -303,7 +309,7 @@
         gameState.score += gain;
         gameState.totalScore += gain;
         gameState.lifetimeScore += gain;
-        gameState.totalPlayTime += seconds; // Invecchia anche il save
+        gameState.totalPlayTime += seconds;
         updateGame();
         toast(`Salto Temporale! (+${formatNumber(gain)} Bug)`);
     });
@@ -336,8 +342,18 @@
 
     document.getElementById('btn-event-rick').addEventListener('click', () => {
         if (typeof triggerRickRoll === 'function') {
-            triggerRickRoll(3); // Default x3 per test
+            triggerRickRoll(3);
             toast("Rick Roll avviato!");
+        }
+    });
+
+    // --- NUOVO: TRIGGER RICARDO ---
+    document.getElementById('btn-event-ricardo').addEventListener('click', () => {
+        if (typeof triggerRicardoEvent === 'function') {
+            triggerRicardoEvent();
+            toast("Ricardo Flex avviato!");
+        } else {
+            toast("Funzione triggerRicardoEvent non trovata!");
         }
     });
 
@@ -369,7 +385,6 @@
         for (let key in gameData.achievements) {
             if (!gameState.achievements[key]) gameState.achievements[key] = {};
             gameState.achievements[key].unlocked = true;
-            // Opzionale: Non le segniamo come 'claimed' così puoi testare il riscatto
         }
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
         toast("Tutti gli obiettivi sbloccati!");
