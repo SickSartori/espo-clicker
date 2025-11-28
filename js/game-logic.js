@@ -184,17 +184,15 @@ function activateCrunchTime() {
 
 
 function triggerBluescreen(multiplier) {
-    // 1. CHECK SPECIALE PER RICK ESPLEY
     if (gameState.skins.current === 'rick') {
         triggerRickRoll(multiplier);
-        return; // Esci dalla funzione standard
+        return;
     }
     if (gameState.skins.current === 'ricardo') {
         triggerRicardoEvent();
         return;
     }
 
-    // --- LOGICA STANDARD 404 (Blue Screen) ---
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
@@ -206,7 +204,9 @@ function triggerBluescreen(multiplier) {
         eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
         eventMultiplierDisplay.style.display = 'block';
     }
-    playSound('sound-bluescreen');
+
+    // [FIX] Ora usa il canale 'music' (quindi rispetta lo slider Musica)
+    playSound('sound-bluescreen', 'music');
 
     setTimeout(() => {
         stopBluescreenEffect();
@@ -218,31 +218,27 @@ function triggerRickRoll(multiplier) {
     const video = document.getElementById('rick-roll-video');
     if (!video) return;
 
-    // --- LOGICA BONUS ---
-    // Imposta il moltiplicatore (es. x2)
     let rickMultiplier = Math.max(multiplier, 2);
 
     isBluescreenActive = true;
     bluescreenMultiplier = rickMultiplier;
 
-    // --- FIX CRUCIALE: Ricalcola subito i valori! ---
-    recalculateCPS(); // Aggiorna la matematica del BPS
-    updateUI();       // Aggiorna visivamente i numeri sullo schermo
-    // ------------------------------------------------
+    recalculateCPS();
+    updateUI();
 
     document.body.classList.add('rick-rolling');
 
-    // Mostra il badge del moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
         emDisplay.textContent = `🔥 RICK BONUS: BPS x${rickMultiplier} 🔥`;
         emDisplay.style.display = 'block';
     }
 
-    // Setup Video
     video.style.display = 'block';
     video.currentTime = 0;
-    video.volume = gameState.user.masterVolume;
+
+    // [FIX] Calcolo volume: Master * Musica
+    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
 
     try {
         const bgMusic = document.getElementById('sound-bg');
@@ -257,7 +253,7 @@ function triggerRickRoll(multiplier) {
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
-    const duration = 60000; // 1 Minuto
+    const duration = 60000;
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
@@ -274,31 +270,27 @@ function triggerRicardoEvent() {
     const video = document.getElementById('ricardo-video');
     if (!video) return;
 
-    // --- LOGICA BONUS: Random tra 3x e 10x ---
-    // Math.random() * (max - min + 1) + min
-    let bonusMult = Math.floor(Math.random() * 8) + 3; // Genera da 3 a 10
+    let bonusMult = Math.floor(Math.random() * 8) + 3;
 
     isBluescreenActive = true;
     bluescreenMultiplier = bonusMult;
 
-    // Ricalcola immediatamente i valori
     recalculateCPS();
     updateUI();
 
-    // Usiamo la stessa classe CSS di Rick per nascondere la UI (è perfetta)
     document.body.classList.add('rick-rolling');
 
-    // Mostra il badge del moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
         emDisplay.textContent = `🔥 FLEX BONUS: BPS x${bonusMult} 🔥`;
         emDisplay.style.display = 'block';
     }
 
-    // Setup Video
     video.style.display = 'block';
     video.currentTime = 0;
-    video.volume = gameState.user.masterVolume;
+
+    // [FIX] Calcolo volume: Master * Musica
+    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
 
     try {
         const bgMusic = document.getElementById('sound-bg');
@@ -307,13 +299,12 @@ function triggerRicardoEvent() {
 
     video.play().catch(e => console.warn("Autoplay bloccato", e));
 
-    window.EspooClicker.showToast(`💪 U GOT THAT (x${bonusMult}) 💪`, 'achievement');
+    window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
 
     const videoClickHandler = (e) => { clickCookie(e); };
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
-    // DURATA: 45 Secondi
     const duration = 45000;
 
     setTimeout(() => {
