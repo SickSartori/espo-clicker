@@ -1,44 +1,15 @@
 // --------- 6. FUNZIONI DI AGGIORNAMENTO UI ---------
 
 function formatNumber(num) {
-    // 1. Controllo validità
     if (num === undefined || num === null || isNaN(num)) return "0";
-
-    // 2. Gestione numeri negativi
     let sign = "";
-    if (num < 0) {
-        sign = "-";
-        num = Math.abs(num);
-    }
-
-    // 3. Numeri piccoli (< 1000): mostriamo i decimali solo se servono, max 2
-    if (num < 1000) {
-        return sign + num.toLocaleString('it-IT', { maximumFractionDigits: 2 });
-    }
-
-    // 4. Array Suffissi
+    if (num < 0) { sign = "-"; num = Math.abs(num); }
+    if (num < 1000) return sign + num.toLocaleString('it-IT', { maximumFractionDigits: 2 });
     const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
-
-    // 5. Calcolo Scala
     const suffixIndex = Math.floor(Math.log10(num) / 3);
-
-    // 6. Numeri Enormi (Scientifici)
-    if (suffixIndex >= suffixes.length) {
-        return sign + num.toExponential(2).replace('.', ',');
-    }
-
-    // 7. Calcolo numero scalato
+    if (suffixIndex >= suffixes.length) return sign + num.toExponential(2).replace('.', ',');
     const scaledNum = num / Math.pow(1000, suffixIndex);
-
-    // 8. FORMATTAZIONE DINAMICA (Il segreto per la pulizia)
-    // - Se è 1.xxx -> 3 decimali (es. 1,234 k)
-    // - Se è 12.xx -> 2 decimali (es. 12,34 k)
-    // - Se è 123.x -> 1 decimale  (es. 123,4 k)
-    let decimals = 2;
-    if (scaledNum < 10) decimals = 3;
-    else if (scaledNum < 100) decimals = 2;
-    else decimals = 1;
-
+    let decimals = scaledNum < 10 ? 3 : (scaledNum < 100 ? 2 : 1);
     return sign + scaledNum.toFixed(decimals).replace('.', ',') + " " + suffixes[suffixIndex];
 }
 
@@ -50,73 +21,295 @@ function formatTime(totalSeconds) {
     totalSeconds %= 3600;
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-
     let timeString = "";
     if (days > 0) timeString += `${days}g `;
     if (hours > 0 || days > 0) timeString += `${hours}h `;
     if (minutes > 0 || hours > 0 || days > 0) timeString += `${minutes}m `;
     timeString += `${seconds}s`;
-
     return timeString;
+}
+
+function updateSkinsUI() {
+    const grid = document.getElementById('skins-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    // Controlli di sicurezza dati
+    if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
+    if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
+    if (!gameState.skins.current) gameState.skins.current = 'default';
+
+    const safeUnlockedList = gameState.skins.unlocked;
+    const currentSkin = gameState.skins.current;
+
+    for (const key in gameData.skins) {
+        const data = gameData.skins[key];
+        const isUnlocked = safeUnlockedList.includes(key);
+        const isEquipped = currentSkin === key;
+
+        // Calcola se l'utente PUÒ acquistare la skin (has enough tokens)
+        const canBuy = !isUnlocked && data.cost && gameState.prestigePoints >= data.cost;
+        const isBuyable = data.cost !== undefined;
+
+        const card = document.createElement('div');
+
+        // FIX: Aggiunto la classe 'can-afford-border' solo se canBuy è TRUE
+        // Rimuoviamo la logica 'buyable' dall'inline-style.
+        card.className = `skin-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''} rarity-${data.rarity || 'common'} ${isBuyable ? 'buyable' : ''} ${canBuy ? 'can-afford-border' : ''}`;
+
+        // Determina il testo di sblocco (Hint o Costo)
+        let unlockText = data.unlockHint || "Sblocca completando l'obiettivo";
+        let priceHtml = "";
+
+        if (!isUnlocked && data.cost) {
+            unlockText = canBuy ? "Clicca per acquistare!" : "Acquista con Token Lab";
+            priceHtml = `<div class="skin-price ${canBuy ? 'can-afford' : ''}">💰 ${data.cost} Token</div>`;
+        }
+
+        // Stile CSS dinamico
+        const statusColor = isEquipped ? '#2ecc71' : (canBuy ? '#f1c40f' : (isUnlocked ? '#bdc3c7' : '#e74c3c'));
+
+        card.style.cssText = `
+            border-radius: 8px; padding: 10px; text-align: center;
+            opacity: ${isUnlocked ? '1' : '0.8'}; 
+            cursor: pointer;
+            background-color: ${isEquipped ? 'rgba(46, 204, 113, 0.1)' : 'transparent'};
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        `;
+
+        const imgSrc = isUnlocked
+            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.png')
+            : './assets/image/hidden.png';
+
+        const imgStyle = `width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px;`;
+        const displayName = data.name;
+        const displayStatus = isEquipped ? 'In uso' : (isBuyable ? 'Acquistabile' : (isUnlocked ? 'Sbloccata' : 'Bloccata'));
+
+        card.innerHTML = `
+            <img src="${imgSrc}" style="${imgStyle}">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #fff;">${displayName}</div>
+            <div style="font-size: 0.7rem; color: ${statusColor};">${displayStatus}</div>
+            
+            ${!isUnlocked ? `
+                <div class="skin-overlay">
+                    <div class="skin-overlay-text" style="font-weight: bold; color: ${statusColor}; margin-bottom: 5px;">${data.rarity.toUpperCase()}</div>
+                    <div class="skin-overlay-text">${unlockText}</div>
+                    ${priceHtml}
+                </div>
+            ` : ''}
+        `;
+
+        // ... (Listener Click) ...
+        card.addEventListener('click', () => {
+            if (isUnlocked) {
+                if (typeof equipSkin === 'function') equipSkin(key);
+            } else if (isBuyable) {
+                if (typeof buySkin === 'function') buySkin(key);
+            } else {
+                window.EspooClicker.showToast(data.unlockHint || "Completa l'obiettivo associato per sbloccare.", 'warning');
+                if (card.classList.contains('locked')) {
+                    card.style.transform = "translateX(5px)";
+                    setTimeout(() => card.style.transform = "translateX(0)", 100);
+                }
+            }
+        });
+        grid.appendChild(card);
+    }
+}
+
+
+function updateAchievementsUI() {
+    const list = document.getElementById('achievement-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    const items = [];
+    Object.keys(gameData.achievements).forEach(key => {
+        const data = gameData.achievements[key];
+        const state = gameState.achievements[key] || { unlocked: false, claimed: false };
+        if (state.claimed === undefined) state.claimed = false;
+
+        const isUnlocked = state.unlocked;
+        const isClaimed = state.claimed;
+
+        let progress = 0;
+        let currentVal = 0;
+
+        // Calcolo Valori e Progresso
+        if (!isUnlocked) {
+            if (data.type === 'click') currentVal = gameState.totalClicks;
+            else if (data.type === 'score') currentVal = gameState.totalScore;
+            else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
+            else if (data.type === 'time') currentVal = gameState.totalPlayTime;
+
+            if (data.target && data.target > 0) {
+                progress = Math.min(100, (currentVal / data.target) * 100);
+            }
+        } else {
+            progress = 100;
+        }
+
+        // Sorting Priority: Claimable (4) > In Progress (3, sorted by progress) > Completed (2) > Secret (1)
+        let priority = 0;
+        if (isUnlocked && !isClaimed && data.reward) { priority = 4; }
+        else if (!isUnlocked && !data.isSecret) { priority = 3; }
+        else if (isUnlocked) { priority = 2; }
+        else if (data.isSecret) { priority = 1; }
+
+        items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority });
+    });
+
+    // --- LOGICA DI ORDINAMENTO (Da Riscattare > Progresso > Completati) ---
+    items.sort((a, b) => {
+        if (b.priority !== a.priority) return b.priority - a.priority;
+        if (a.priority === 3 && b.priority === 3) return b.progress - a.progress; // Progresso
+        return a.data.name.localeCompare(b.data.name);
+    });
+    // --- FINE ORDINAMENTO ---
+
+
+    items.forEach(item => {
+        const { key, data, state, isUnlocked, isClaimed, progress, currentVal } = item;
+
+        // Placeholder for Secrets
+        if (data.isSecret && !isUnlocked) {
+            const secretEl = document.createElement('div');
+            secretEl.className = 'achievement achievement-secret';
+            secretEl.innerHTML = `<div class="achievement-icon">🔒</div><div class="achievement-info">??? (Segreto)</div>`;
+            list.appendChild(secretEl);
+            return;
+        }
+
+        const el = document.createElement('div');
+        const claimableClass = (isUnlocked && !isClaimed && data.reward) ? 'claimable' : '';
+        const statusClass = isUnlocked ? 'unlocked' : 'locked';
+
+        el.className = `achievement ${statusClass} ${claimableClass}`;
+
+
+        // --- PREPARAZIONE INFORMAZIONI PREMIO (Dettaglio) ---
+        let rewardIcon = '🏆';
+        let rewardDisplay = 'Gloria'; // Testo visibile nel bottone/tooltip
+        let rewardTooltip = 'Nessun premio materiale.'; // Dettaglio per l'attributo title
+
+        if (data.reward) {
+            if (data.reward.type === 'bugs') {
+                rewardIcon = '🐞';
+                rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
+                rewardTooltip = `Ricompensa: ${rewardDisplay}`;
+            }
+            else if (data.reward.type === 'skin') {
+                rewardIcon = '👕';
+                const skinName = (gameData.skins && gameData.skins[data.reward.id]) ? gameData.skins[data.reward.id].name : 'Skin Rara';
+                rewardDisplay = `Skin: ${skinName}`;
+                rewardTooltip = `Sblocca la Skin: ${skinName}`;
+            }
+            else if (data.reward.type === 'prestige') {
+                rewardIcon = '👑';
+                rewardDisplay = `${data.reward.value} Token Lab`;
+                rewardTooltip = `Ottieni: ${rewardDisplay}`;
+            }
+            else if (data.reward.type === 'multiplier') {
+                rewardIcon = '💻'; // CAMBIATO: da ⚡ a 💻 (Laptop)
+                rewardDisplay = `BPS x${data.reward.value}`;
+                rewardTooltip = `Bonus BPS Permanente`;
+            }
+        }
+
+        let actionHtml = '';
+
+        if (isUnlocked && !isClaimed && data.reward) {
+            // CASO 1: DA RISCATTARE (con premio)
+            actionHtml = `
+                <button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere il premio!">
+                    <span class="claim-visible">${rewardIcon} ${rewardDisplay}</span>
+                    <span class="claim-hover">RISCATTA ORA!</span>
+                </button>
+            `;
+        } else if (isClaimed || (isUnlocked && !data.reward)) {
+            // CASO 2: COMPLETATO / Già Riscattato
+            actionHtml = `<div class="achievement-done">✅ Completato</div>`;
+        } else {
+            // CASO 3: IN CORSO (Barra Progresso)
+            const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
+
+            // FIX: Mostra il tooltip del premio sulla barra di progresso
+            actionHtml = `
+                <div class="ach-progress-container" data-tooltip="${rewardTooltip}">
+                    <div class="ach-progress-bar" style="width: ${progress}%"></div>
+                    <span class="ach-progress-text">${progressStatusText}</span>
+                </div>
+            `;
+        }
+
+        const description = (data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc);
+
+        el.innerHTML = `
+            <div class="achievement-header">
+                <span class="achievement-name">${data.name}</span>
+                ${data.reward ? `<span class="reward-badge-text" data-tooltip="${rewardTooltip}">${rewardIcon}</span>` : ''}
+            </div>
+            <div class="achievement-desc">${description}</div>
+            ${data.flavor ? `<div class="achievement-flavor">"${data.flavor}"</div>` : ''}
+            
+            <div class="achievement-footer" style="margin-top: 10px;">
+                ${actionHtml}
+            </div>
+        `;
+
+        list.appendChild(el);
+
+        if (isUnlocked && !isClaimed && data.reward) {
+            const claimBtn = document.getElementById(`claim-${key}`);
+            if (claimBtn) {
+                claimBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof claimAchievementReward === 'function') claimAchievementReward(key);
+                });
+            }
+        }
+    });
 }
 
 function showClickFeedback(event) {
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // --- 1. LOGICA EVENTO 404 (BLUESCREEN) ---
+    // Evento 404
     const now = Date.now();
-    const COOLDOWN_404 = 300000; // 5 minuti di cooldown
+    const COOLDOWN_404 = 300000;
     const lastCrash = gameState.lastBluescreenTimestamp || 0;
     const timeSinceLast = now - lastCrash;
-
-    // Controlla se c'è "404" nei punteggi
     const scoreString = Math.floor(gameState.score).toString();
     const clicksString = gameState.totalClicks.toString();
     const has404 = scoreString.includes('404') || clicksString.includes('404');
-
-    // La probabilità aumenta se hai "404", ma è zero se sei in cooldown o l'evento è già attivo
-    // 0.5% se hai 404, 0.05% altrimenti (molto raro)
     let currentChance = has404 ? 0.005 : 0.0005;
 
     if (timeSinceLast > COOLDOWN_404 && Math.random() < currentChance && !isBluescreenActive && gameState.score >= 404) {
-
-        // --- TRIGGER 404 ---
         feedback.textContent = 'Error 404: Logic Not Found';
         feedback.style.color = '#facc15';
         feedback.style.fontSize = '1.2rem';
         feedback.style.fontWeight = '900';
-        feedback.style.zIndex = '100'; // In primo piano
-
-        // Calcolo Bonus Variabile (da 2x a 5x)
+        feedback.style.zIndex = '100';
         let baseMult = 2;
         let variableMult = Math.random() * 3;
         let dynamicMultiplier = Math.floor(baseMult + variableMult);
-
-        // Aggiorna timestamp e salva per il cooldown
         gameState.lastBluescreenTimestamp = now;
         if (window.EspooClicker) window.EspooClicker.saveGame();
-
-        triggerBluescreen(dynamicMultiplier);
-
+        if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
     } else {
-        // --- FEEDBACK NORMALE (+Punti) ---
         let clickBonusPercent = 0.01;
-        if (gameState.clickUpgrades.clickDivino.purchased) {
-            clickBonusPercent = 0.02;
-        }
-
+        if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
         const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) +
             (gameState.clickUpgrades.manoBionica.purchased ? (cookiesPerSecond * clickBonusPercent) : 0);
-
         feedback.textContent = `+${formatNumber(currentClickValue)}`;
-        // Colore standard (rosso leggero come definito in CSS) o dorato se critico
     }
 
-    // --- 2. POSIZIONAMENTO DINAMICO ---
     const rect = feedbackContainer.getBoundingClientRect();
-
-    // Se clicchi col mouse usa le coordinate, se usi tastiera (Invio) usa il centro
     let x, y;
     if (event.clientX && event.clientY) {
         x = event.clientX - rect.left;
@@ -125,238 +318,303 @@ function showClickFeedback(event) {
         x = rect.width / 2;
         y = rect.height / 2;
     }
-
-    // Aggiungi variazione casuale per non sovrapporre i numeri
-    const randomX = (Math.random() - 0.5) * 60; // Spostamento laterale +/- 30px
-    const randomY = (Math.random() - 0.5) * 40; // Leggera variazione verticale
-    const randomRot = (Math.random() - 0.5) * 30; // Rotazione +/- 15 gradi
+    const randomX = (Math.random() - 0.5) * 60;
+    const randomY = (Math.random() - 0.5) * 40;
+    const randomRot = (Math.random() - 0.5) * 30;
 
     feedback.style.left = `${x + randomX}px`;
     feedback.style.top = `${y + randomY}px`;
-
-    // Imposta variabili CSS per l'animazione (assumi che il CSS usi var(--tx) e var(--rot))
     feedback.style.setProperty('--tx', `${randomX}px`);
     feedback.style.setProperty('--rot', `${randomRot}deg`);
-
     feedbackContainer.appendChild(feedback);
-
-    // Rimuovi dopo l'animazione
     setTimeout(() => feedback.remove(), 1500);
 }
 
-function renderAchievement(key) {
-    const data = gameData.achievements[key];
-    const achElement = document.createElement('div');
-    achElement.className = 'achievement unlocked';
-    achElement.id = `ach-${key}`;
-    achElement.innerHTML = `
-        <div class="achievement-name">${data.name}</div>
-        <div class="achievement-desc">${data.desc}</div>`;
-    achievementList.prepend(achElement);
-}
 
-function showToast(message) {
+
+function showToast(message, type = 'info') { // Aggiunto parametro type
     const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
+    toast.className = `toast toast-${type}`; // Classe dinamica
+
+    // Aggiungi Icona/Emoji basata sul tipo
+    let icon = '';
+    if (type === 'success') icon = '✅ ';
+    else if (type === 'error') icon = '❌ ';
+    else if (type === 'achievement') icon = '🏆 ';
+    else if (type === 'warning') icon = '⚠️ ';
+    else if (type === 'reward') icon = '🎁 '; // Per riscatti bug/token
+
+    // Usiamo innerHTML per iniettare l'icona
+    toast.innerHTML = icon + message;
     toastContainer.appendChild(toast);
 
-    setTimeout(() => toast.remove(), 3500);
+    // Durata totale dell'animazione (4 secondi)
+    setTimeout(() => toast.remove(), 4000);
 }
 
-// FUNZIONE ANTI-FLICKER: Costruisce i negozi una sola volta
 function buildStores() {
-    // 1. Costruisci Potenziamenti Click
-    for (const key in gameData.clickUpgrades) {
-        const data = gameData.clickUpgrades[key];
-        const el = document.createElement('div');
-        el.className = 'click-upgrade';
-        el.id = `click-upgrade-${key}`;
-        // Nota: Rimuoviamo 'display: none' qui, la visibilità la gestisce l'update
-
-        el.innerHTML = `
-            <div class="upgrade-details">
-                <span class="upgrade-name">${data.name}</span>
-                <div class="upgrade-desc">${data.desc}</div>
-                <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
-            </div>
-            
-            <button class="buy-btn buy-click-btn" data-upgrade-name="${key}">Compra</button>
-            
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill"></div>
-                <span class="progress-text">Locked</span>
-            </div>
-        `;
-        clickUpgradeList.appendChild(el);
+    // Click Upgrades
+    const clickList = document.getElementById('click-upgrade-list');
+    if (clickList) {
+        clickList.innerHTML = ''; // Pulizia preventiva
+        for (const key in gameData.clickUpgrades) {
+            const data = gameData.clickUpgrades[key];
+            const el = document.createElement('div');
+            el.className = 'click-upgrade';
+            el.id = `click-upgrade-${key}`;
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span class="upgrade-name">${data.name}</span>
+                    <div class="upgrade-desc">${data.desc}</div>
+                    <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
+                </div>
+                <button class="buy-btn buy-click-btn" data-upgrade-name="${key}">Compra</button>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill"></div>
+                    <span class="progress-text">Locked</span>
+                </div>
+            `;
+            clickList.appendChild(el);
+        }
     }
 
-    // 2. Costruisci Migliorie Assistenti (Auto)
-    for (const key in gameData.buildingEnhancements) {
-        const data = gameData.buildingEnhancements[key];
-        const el = document.createElement('div');
-        el.className = 'enhancement-upgrade';
-        el.id = `enh-upgrade-${key}`;
-
-        el.innerHTML = `
-            <div class="upgrade-details">
-                <span class="upgrade-name">${data.name}</span>
-                <div class="upgrade-desc">${data.desc}</div>
-                <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
-            </div>
-            
-            <button class="buy-btn enhancement-btn" data-upgrade-name="${key}">Compra</button>
-            
-             <div class="progress-bar-container">
-                <div class="progress-bar-fill"></div>
-                <span class="progress-text">Locked</span>
-            </div>
-        `;
-        enhancementList.appendChild(el);
+    // Enhancements
+    const enhList = document.getElementById('enhancement-list');
+    if (enhList) {
+        enhList.innerHTML = '';
+        for (const key in gameData.buildingEnhancements) {
+            const data = gameData.buildingEnhancements[key];
+            const el = document.createElement('div');
+            el.className = 'enhancement-upgrade';
+            el.id = `enh-upgrade-${key}`;
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span class="upgrade-name">${data.name}</span>
+                    <div class="upgrade-desc">${data.desc}</div>
+                    <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
+                </div>
+                <button class="buy-btn enhancement-btn" data-upgrade-name="${key}">Compra</button>
+                 <div class="progress-bar-container">
+                    <div class="progress-bar-fill"></div>
+                    <span class="progress-text">Locked</span>
+                </div>
+            `;
+            enhList.appendChild(el);
+        }
     }
+}
+
+function updatePrestigeStore() {
+    const listContainer = document.getElementById('prestige-list-container');
+    if (!listContainer) return;
+
+    const updateBtn = (id, data, state) => {
+        // Se il dato non esiste (es. vecchio salvataggio o refuso), saltiamo per evitare crash
+        if (!data || !state) return null;
+
+        const el = document.getElementById(`upgrade-${id}`);
+        const btn = document.getElementById(`buy-${id}`);
+
+        // Se non c'è l'HTML corrispondente, saltiamo
+        if (!btn || !el) return null;
+
+        let isCompleted = false;
+        // Se è a livelli e ha un max level raggiunto
+        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
+        // Se è singolo ed è già comprato
+        if (!data.isCounted && state.purchased) isCompleted = true;
+
+        let priority = 0;
+        let cost = data.baseCost;
+
+        // Calcolo costo dinamico per i livelli (se serve, altrimenti baseCost)
+        // Nota: nel tuo game-logic attuale usi baseCost fisso o logica custom, 
+        // qui manteniamo la visualizzazione coerente.
+
+        if (isCompleted) {
+            btn.textContent = "Posseduto";
+            btn.className = "buy-btn prestige-btn owned";
+            btn.disabled = true;
+            el.classList.add('purchased');
+            priority = 300;
+        } else {
+            btn.innerHTML = "Compra";
+            btn.className = "buy-btn prestige-btn";
+            const canAfford = gameState.prestigePoints >= data.baseCost;
+            btn.disabled = !canAfford;
+            el.classList.remove('purchased');
+            priority = canAfford ? 200 : 210;
+        }
+
+        // Aggiorna contatore livelli se esiste
+        const countEl = document.getElementById(`count-${id}`);
+        if (countEl && state) countEl.textContent = state.count || 0;
+
+        // Aggiorna costo visivo
+        const costEl = document.getElementById(`cost-${id}`);
+        if (costEl) costEl.textContent = formatNumber(data.baseCost);
+
+        return { el: el, priority: priority, cost: cost };
+    };
+
+    const items = [];
+
+    // --- QUESTA È LA LISTA AGGIORNATA DEI NUOVI POTENZIAMENTI ---
+    const ids = [
+        'sinergia',
+        'paracadute',
+        'serverAlwaysOn',
+        'contrattazione',
+        'bugBounty',
+        'eredita',
+        'ticketPremium',
+        'crunchTime'
+    ];
+    // Nota: Ho rimosso 'outsourcing' e 'accelerazione' che non esistono più nei nuovi dati
+    // -------------------------------------------------------------
+
+    ids.forEach(id => {
+        // Controllo di sicurezza: passiamo i dati solo se esistono
+        if (gameData.prestigeUpgrades[id] && gameState.prestigeUpgrades[id]) {
+            const item = updateBtn(id, gameData.prestigeUpgrades[id], gameState.prestigeUpgrades[id]);
+            if (item) items.push(item);
+        }
+    });
+
+    // Ordinamento e Visualizzazione
+    items.sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.cost - b.cost;
+    });
+
+    const mode = gameState.filterSettings.globalFilter || 'available';
+
+    // Nascondi tutti prima
+    const allUpgrades = listContainer.querySelectorAll('.prestige-upgrade');
+    allUpgrades.forEach(el => el.style.display = 'none');
+
+    items.forEach(item => {
+        let show = true;
+        if (mode === 'available' && item.priority === 300) show = false;
+        if (mode === 'purchased' && item.priority < 300) show = false;
+
+        // Se il filtro lo permette, mostriamo l'elemento e lo riordiniamo
+        if (show) {
+            item.el.style.display = 'flex';
+            listContainer.appendChild(item.el); // Sposta l'elemento in fondo (ordina visivamente)
+        }
+    });
 }
 
 function checkTabNotifications() {
-    // 1. Check Tab CLICK (Potenziamenti)
+    // Click Tab
     let clickNotify = false;
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
-
-        // --- FIX SICUREZZA ---
-        // Se per qualche motivo lo stato non esiste (es. salvataggio vecchio), lo saltiamo
         if (!state) continue;
-        // ---------------------
-
-        // Se non comprato, sbloccato E ho abbastanza soldi
         if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score >= data.cost) {
-            clickNotify = true;
-            break;
+            clickNotify = true; break;
         }
     }
     const tabClick = document.getElementById('tab-click');
-    if (clickNotify && !tabClick.classList.contains('active')) {
-        tabClick.classList.add('notify');
-    } else if (tabClick.classList.contains('active')) {
-        tabClick.classList.remove('notify');
-    }
+    if (tabClick) clickNotify && !tabClick.classList.contains('active') ? tabClick.classList.add('notify') : tabClick.classList.remove('notify');
 
-    // 2. Check Tab AUTO (Migliorie)
+    // Auto Tab
     let autoNotify = false;
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
-
-        // --- FIX SICUREZZA ---
         if (!state) continue;
-        // ---------------------
-
-        const targetBuilding = gameState.buildings[data.targetBuilding];
-
-        if (!state.purchased && targetBuilding.count >= data.requiredCount && gameState.score >= data.cost) {
-            autoNotify = true;
-            break;
+        const targetTeam = gameState.teams[data.targetTeam];
+        if (!state.purchased && targetTeam.count >= data.requiredCount && gameState.score >= data.cost) {
+            autoNotify = true; break;
         }
     }
     const tabAuto = document.getElementById('tab-auto');
-    if (autoNotify && !tabAuto.classList.contains('active')) {
-        tabAuto.classList.add('notify');
-    } else if (tabAuto.classList.contains('active')) {
-        tabAuto.classList.remove('notify');
-    }
+    if (tabAuto) autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
-    // 3. Check Tab LAB (Prestigio)
+    // Prestige Tab
     let prestigeNotify = false;
-    // Controlla solo se il negozio è sbloccato
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
         for (const key in gameData.prestigeUpgrades) {
             const data = gameData.prestigeUpgrades[key];
             const state = gameState.prestigeUpgrades[key];
-
-            // Logica diversa per contabili e one-time
             if (data.isCounted) {
-                // Se è contabile (es. Sinergia), notifica sempre se puoi permettertelo
                 if (gameState.prestigePoints >= data.baseCost) prestigeNotify = true;
             } else {
-                // Se è one-time, notifica solo se non ce l'ho
                 if (!state.purchased && gameState.prestigePoints >= data.baseCost) prestigeNotify = true;
             }
             if (prestigeNotify) break;
         }
     }
     const tabPrestige = document.getElementById('tab-prestige');
-    if (prestigeNotify && !tabPrestige.classList.contains('active')) {
-        tabPrestige.classList.add('notify');
-    } else if (tabPrestige.classList.contains('active')) {
-        tabPrestige.classList.remove('notify');
-    }
+    if (tabPrestige) prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
 }
 
 function refreshAllStores() {
-    // 1. Aggiorna Edifici (Colonna Destra)
-    for (const key in gameState.buildings) {
-
-        // --- LOGICA MAX/MOLTIPLICATORE ---
+    for (const key in gameState.teams) {
         let amountToBuy = buyMultiplier;
         let isMax = false;
-
         if (buyMultiplier === 'MAX') {
             const max = calculateMaxAffordable(key);
-            // Se max è 0 (non ho soldi), mostriamo il costo di 1 (per far vedere quanto manca)
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
         }
-
         const currentCost = calculateBulkCost(key, amountToBuy);
-        // ----------------------------------
-
-        // Calcolo BPS
-        let buildingBPS = gameData.buildings[key].cpsPerUnit;
+        let teamBPS = gameData.teams[key].cpsPerUnit;
         for (const enhanceKey in gameState.buildingEnhancements) {
             const eData = gameData.buildingEnhancements[enhanceKey];
-            if (eData.targetBuilding === key && gameState.buildingEnhancements[enhanceKey].purchased) {
-                buildingBPS *= eData.multiplier;
+            if (eData.targetTeam === key && gameState.buildingEnhancements[enhanceKey].purchased) {
+                teamBPS *= eData.multiplier;
             }
         }
-        const totalUnitBPS = buildingBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+        const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
         const costEl = document.getElementById(`cost-${key}`);
         const bpsEl = document.getElementById(`bps-${key}`);
         const countEl = document.getElementById(`count-${key}`);
 
         if (costEl) {
-            // Se è MAX, mostra quanti ne stai comprando nel testo, es: "Costo (+12): 1.5M"
-            // Se non puoi permettertelo (isMax e max=0), mostra solo "Costo" standard
             let prefix = "Costo";
             if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
             else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
-
             costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
             costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
         }
-
         if (bpsEl) {
             bpsEl.textContent = `+${formatNumber(totalUnitBPS)} BPS cad.`;
             bpsEl.setAttribute('data-tooltip', totalUnitBPS.toLocaleString('it-IT'));
         }
-
-        if (countEl) countEl.textContent = gameState.buildings[key].count;
-
-        // Aggiorna stato disabilitato del bottone
+        if (countEl) countEl.textContent = gameState.teams[key].count;
         const btn = document.getElementById(`buy-${key}`);
-        if (btn) {
-            btn.disabled = (gameState.score < currentCost);
-        }
+        if (btn) btn.disabled = (gameState.score < currentCost);
     }
-
     updateClickStore();
     updateEnhancementStore();
     updatePrestigeStore();
     updatePrestigeVisuals();
 }
+function updateBonusCounter() {
+    const counter = document.getElementById('bonus-counter-display');
+    const valueSpan = document.getElementById('combined-multiplier-value');
+
+    // La variabile prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
+    if (prestigeBonus > 1.05) { // Mostra solo se il bonus è significativo
+        if (counter) counter.style.display = 'block';
+        if (valueSpan) {
+            // Mostra il moltiplicatore totale con 2 decimali
+            valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
+
+            // Aggiungi anche un po' di stile per farlo risaltare
+            valueSpan.style.color = '#f1c40f';
+        }
+    } else {
+        if (counter) counter.style.display = 'none';
+    }
+}
 
 function updateUI() {
-    // 1. Calcolo BPS Dinamico
     let activeBPS = 0;
     const now = Date.now();
     for (let i = 0; i < clickHistory.length; i++) {
@@ -364,28 +622,28 @@ function updateUI() {
     }
     let totalDisplayBPS = cookiesPerSecond + activeBPS;
 
-    // 2. Aggiorna Score e BPS (Principali)
     scoreDisplay.textContent = formatNumber(gameState.score);
     scoreDisplay.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
-
     cpsDisplay.textContent = `BPS: ${formatNumber(totalDisplayBPS)}`;
     cpsDisplay.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
 
-    // 3. GESTIONE HUD CENTRALE (Bonus & Token)
     const hudContainer = document.getElementById('hud-stats-container');
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
 
+
+
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer) hudContainer.style.display = 'flex';
-
         let baseBonus = (gameState.lifetimePrestigePoints || 0) * 0.01;
         let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
         let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
         let totalPercent = ((baseBonus + synergyBonus) * 100);
 
         if (displayCareer) {
-            displayCareer.textContent = `+${totalPercent.toFixed(1)}%`;
+            displayCareer.textContent = `x${formatNumber(prestigeBonus)}`;
+            let percent = ((prestigeBonus - 1) * 100).toFixed(0);
+            displayCareer.setAttribute('data-tooltip', `Bonus Prestigio: +${percent}%`);
         }
         if (displayTokens) {
             displayTokens.textContent = formatNumber(gameState.prestigePoints);
@@ -395,42 +653,27 @@ function updateUI() {
         if (hudContainer) hudContainer.style.display = 'none';
     }
 
-    // 4. Aggiorna Bottoni e Stati (CORRETTO PER MAX)
-    for (const key in gameState.buildings) {
-
-        // Logica Quantità Dinamica (presa da refreshAllStores)
+    for (const key in gameState.teams) {
         let amountToBuy = buyMultiplier;
         let isMax = false;
-
         if (buyMultiplier === 'MAX') {
             const max = calculateMaxAffordable(key);
-            // Se max è 0, impostiamo 1 per mostrare il costo del prossimo singolo acquisto
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
         }
-
         const currentCost = calculateBulkCost(key, amountToBuy);
         const btn = document.getElementById(`buy-${key}`);
-
-        if (btn) {
-            // Disabilita se non hai abbastanza punti
-            btn.disabled = (gameState.score < currentCost);
-        }
-
-        // AGGIORNAMENTO TESTO COSTO IN TEMPO REALE
+        if (btn) btn.disabled = (gameState.score < currentCost);
         const costEl = document.getElementById(`cost-${key}`);
         if (costEl) {
             let prefix = "Costo";
-            // Se siamo in MAX e possiamo comprarne più di 1, mostra (+X)
             if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
             else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
-
             costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
             costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
         }
     }
 
-    // Aggiorna altri negozi (rimane invariato)
     for (const key in gameState.clickUpgrades) {
         const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
         if (btn && !gameState.clickUpgrades[key].purchased) {
@@ -444,13 +687,11 @@ function updateUI() {
         }
     }
 
-    // 5. Skill Crunch Time (rimane invariato)
     const btnCrunch = document.getElementById('skill-crunchTime');
     if (btnCrunch) {
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
             btnCrunch.style.display = 'block';
             const timerDiv = btnCrunch.querySelector('.skill-timer');
-
             if (now < crunchTimeEndTime) {
                 const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
                 crunchTimeMultiplier = 3;
@@ -475,13 +716,13 @@ function updateUI() {
             btnCrunch.style.display = 'none';
         }
     }
-
     checkTabNotifications();
+    checkOverlayNotifications();
+    updateBonusCounter();
+
 }
 
-// Funzione Leggera: Da chiamare nel GameLoop (Aggiorna solo testi e visibilità bottoni)
 function updatePrestigeVisuals() {
-    // 1. GESTIONE VISIBILITÀ BOTTONE HUB (Alto)
     const prestigeHubBtn = document.getElementById('open-prestige-hub-btn');
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
@@ -503,16 +744,12 @@ function updatePrestigeVisuals() {
         }
     }
 
-    // 2. AGGIORNA CIFRA GUADAGNO (Modale)
     const hubGainDisplay = document.getElementById('prestige-gain-display');
     const btnGoToContract = document.getElementById('btn-go-to-contract');
-
     if (hubGainDisplay && btnGoToContract) {
         const gained = calculatePrestigeGained();
-
         hubGainDisplay.textContent = formatNumber(gained);
         hubGainDisplay.setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
-
         if (gained < 1) {
             btnGoToContract.textContent = "⚠️ Accumula più bug!";
             btnGoToContract.disabled = true;
@@ -527,174 +764,69 @@ function updatePrestigeVisuals() {
             hubGainDisplay.style.color = "#2ecc71";
         }
     }
-
-    // 3. AGGIORNA TAB LATERALE (Visibilità)
     const tabLabButton = document.getElementById('tab-prestige');
     if (tabLabButton) {
-        if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
-            tabLabButton.style.display = 'inline-block';
-        } else {
-            tabLabButton.style.display = 'none';
-        }
+        tabLabButton.style.display = (gameState.totalResets > 0 || gameState.prestigePoints > 0) ? 'inline-block' : 'none';
     }
 }
 
-// Funzione Pesante: Da chiamare SOLO su eventi (Click, Acquisti, Init)
-function updatePrestigeStore() {
-    const listContainer = document.getElementById('prestige-list-container');
-    if (!listContainer) return;
-
-    // Funzione helper interna
-    const updateBtn = (id, data, state) => {
-        const el = document.getElementById(`upgrade-${id}`);
-        const btn = document.getElementById(`buy-${id}`);
-        if (!btn || !el) return null;
-
-        let isCompleted = false;
-        if (!data.isCounted && state.purchased) isCompleted = true;
-        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
-
-        let priority = 0;
-        let cost = data.baseCost;
-
-        if (isCompleted) {
-            btn.textContent = "Posseduto";
-            btn.className = "buy-btn prestige-btn owned";
-            btn.disabled = true;
-            el.classList.add('purchased');
-            priority = 300;
-        } else {
-            btn.innerHTML = "Compra";
-            btn.className = "buy-btn prestige-btn";
-            const canAfford = gameState.prestigePoints >= data.baseCost;
-            btn.disabled = !canAfford;
-            el.classList.remove('purchased');
-            priority = canAfford ? 200 : 210;
-        }
-
-        const countEl = document.getElementById(`count-${id}`);
-        if (countEl) countEl.textContent = state.count;
-
-        return { el: el, priority: priority, cost: cost };
-    };
-
-    const pData = gameData.prestigeUpgrades;
-    const pState = gameState.prestigeUpgrades;
-    const items = [];
-
-    const ids = ['sinergia', 'accelerazione', 'ticketPremium', 'outsourcing', 'paracadute', 'crunchTime'];
-    ids.forEach(id => {
-        const item = updateBtn(id, pData[id], pState[id]);
-        if (item) items.push(item);
-    });
-
-    items.sort((a, b) => {
-        if (a.priority !== b.priority) return a.priority - b.priority;
-        return a.cost - b.cost;
-    });
-
-    const mode = gameState.filterSettings.globalFilter || 'available';
-
-    items.forEach(item => {
-        let show = true;
-        if (mode === 'available' && item.priority === 300) show = false;
-        if (mode === 'purchased' && item.priority < 300) show = false;
-        item.el.style.display = show ? 'flex' : 'none';
-
-        // QUESTO È IL COLPEVOLE: Non facciamolo nel loop!
-        listContainer.appendChild(item.el);
-    });
-}
-
-// Funzione Ponte per retrocompatibilità
 function updatePrestigeUI() {
     updatePrestigeVisuals();
     updatePrestigeStore();
 }
 
-
 function updateEnhancementStore() {
     const list = document.getElementById('enhancement-list');
     if (!list) return;
-
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
-
-    // Check se esistono edifici
     let hasAnyBuilding = false;
-    for (const key in gameState.buildings) {
-        if (gameState.buildings[key].count > 0) { hasAnyBuilding = true; break; }
+    for (const key in gameState.teams) {
+        if (gameState.teams[key].count > 0) { hasAnyBuilding = true; break; }
     }
-
-    // Array temporaneo per l'ordinamento
     const items = [];
-
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
-        const targetBuilding = gameState.buildings[data.targetBuilding];
+        const targetTeam = gameState.teams[data.targetTeam];
         const el = document.getElementById(`enh-upgrade-${key}`);
-
         if (!el) continue;
-
         const btn = el.querySelector('.buy-btn');
         const progressBar = el.querySelector('.progress-bar-container');
-
-        // Stato Logico
         const isPurchased = state.purchased;
-        const isUnlocked = targetBuilding.count >= data.requiredCount;
+        const isUnlocked = targetTeam.count >= data.requiredCount;
         const canAfford = gameState.score >= data.cost;
-
-        // Reset grafico
         el.classList.remove('purchased', 'locked-item');
         btn.style.display = 'none';
         progressBar.style.display = 'none';
-
-        // --- ASSEGNAZIONE PRIORITÀ ---
-        // Più basso è il numero, più in alto appare nella lista
         let priority = 0;
-
         if (isPurchased) {
-            // 3. POSSEDUTI -> In Fondo (Priorità 300)
             el.classList.add('purchased');
             btn.textContent = "Posseduto";
             btn.disabled = true;
             btn.className = "buy-btn owned";
             btn.style.display = 'block';
             priority = 300;
-
         } else if (isUnlocked) {
-            // 2. SBLOCCATI -> Al Centro (Priorità 200-210)
             btn.textContent = "Compra";
             btn.disabled = !canAfford;
             btn.className = "buy-btn enhancement-btn";
             btn.style.display = 'block';
-
-            // Mettiamo prima quelli che puoi permetterti (200), poi quelli troppo costosi (210)
             priority = canAfford ? 200 : 210;
-
         } else {
-            // 1. DA COMPIERE (Bloccati) -> In Cima (Priorità 0-100)
             el.classList.add('locked-item');
             progressBar.style.display = 'block';
-
-            const current = targetBuilding.count;
+            const current = targetTeam.count;
             const target = data.requiredCount;
-            const targetName = gameData.buildings[data.targetBuilding].name;
+            const targetName = gameData.teams[data.targetTeam].name;
             let percent = Math.min((current / target) * 100, 100);
-            if (isNaN(percent)) percent = 0; // Sicurezza extra
-
+            if (isNaN(percent)) percent = 0;
             el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-
             const text = `${current} / ${target} ${targetName}`;
             el.querySelector('.progress-text').textContent = text;
             el.querySelector('.progress-text').title = text;
-
-            // Ordiniamo i bloccati: quelli quasi finiti (90%) stanno più in alto (10) di quelli appena iniziati (100)
             priority = 100 - percent;
         }
-
-        // Visibilità (rispetta sempre il filtro globale)
         if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
             el.style.display = 'flex';
             visibleCount++;
@@ -703,21 +835,11 @@ function updateEnhancementStore() {
             el.style.display = 'none';
         }
     }
-
-    // --- ORDINAMENTO ---
     items.sort((a, b) => {
-        // Prima ordina per gruppo di priorità (Bloccati < Sbloccati < Posseduti)
-        if (Math.floor(a.priority) !== Math.floor(b.priority)) {
-            return a.priority - b.priority;
-        }
-        // A parità di gruppo, ordina per costo (più economico prima)
+        if (Math.floor(a.priority) !== Math.floor(b.priority)) return a.priority - b.priority;
         return a.cost - b.cost;
     });
-
-    // --- APPLICAZIONE AL DOM ---
     items.forEach(item => list.appendChild(item.el));
-
-    // Messaggio vuoto
     const emptyMsg = document.getElementById('enhancement-empty');
     if (emptyMsg) {
         if (visibleCount === 0 && hasAnyBuilding) {
@@ -731,16 +853,11 @@ function updateEnhancementStore() {
 
 function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
     switch (mode) {
-        case 'available': // 🛒 DA COMPRARE: Sbloccato E Non Acquistato
-            return isUnlocked && !isPurchased;
-        case 'locked':    // 🔒 IN ARRIVO: Non Sbloccato E Non Acquistato
-            return !isUnlocked && !isPurchased;
-        case 'purchased': // ✅ GIÀ PRESI: Solo Acquistati
-            return isPurchased;
-        case 'all':       // 👁️ TUTTO: Mostra sempre
-            return true;
-        default:
-            return isUnlocked && !isPurchased;
+        case 'available': return isUnlocked && !isPurchased;
+        case 'locked': return !isUnlocked && !isPurchased;
+        case 'purchased': return isPurchased;
+        case 'all': return true;
+        default: return isUnlocked && !isPurchased;
     }
 }
 
@@ -751,80 +868,77 @@ function setEmptyMessage(el, mode) {
     else el.textContent = "Niente da mostrare.";
 }
 
+// --- HELPERS PER SKIN ---
+function equipSkin(skinId) {
+    if (!gameState.skins.unlocked.includes(skinId)) return;
+    gameState.skins.current = skinId;
+    applySkinVisuals(skinId);
+    if (typeof playSound === 'function') playSound('sound-click');
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+    updateSkinsUI();
+}
+
+function applySkinVisuals(skinId) {
+    const data = gameData.skins[skinId];
+    if (!data) { applySkinVisuals('default'); return; }
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+    if (photoNormal) {
+        photoNormal.src = `./assets/image/${data.img}`;
+        photoNormal.style.filter = 'none';
+    }
+    if (photoClicked) {
+        photoClicked.src = `./assets/image/${data.imgClick}`;
+        photoClicked.style.filter = 'none';
+    }
+}
+
 function updateClickStore() {
     const list = document.getElementById('click-upgrade-list');
     if (!list) return;
-
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
-
-    // Array per l'ordinamento
     const items = [];
-
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
         const el = document.getElementById(`click-upgrade-${key}`);
         if (!el) continue;
-
         const btn = el.querySelector('.buy-btn');
         const progressBar = el.querySelector('.progress-bar-container');
-
-        // Stato Logico
         const isPurchased = state.purchased;
         const isUnlocked = gameState.totalClicks >= data.requiredClicks;
         const canAfford = gameState.score >= data.cost;
-
-        // Reset Classi
         el.classList.remove('purchased', 'locked-item');
         btn.style.display = 'none';
         progressBar.style.display = 'none';
-
-        // --- ASSEGNAZIONE PRIORITÀ ---
         let priority = 0;
-
         if (isPurchased) {
-            // 3. POSSEDUTI -> In Fondo (300)
             el.classList.add('purchased');
             btn.textContent = "Posseduto";
             btn.disabled = true;
             btn.className = "buy-btn owned";
             btn.style.display = 'block';
             priority = 300;
-
         } else if (isUnlocked) {
-            // 2. SBLOCCATI -> Al Centro (200/210)
             btn.textContent = "Compra";
             btn.disabled = !canAfford;
             btn.className = "buy-btn buy-click-btn";
             btn.style.display = 'block';
-
-            // Prima quelli che puoi permetterti
             priority = canAfford ? 200 : 210;
-
         } else {
-            // 1. DA COMPIERE (Bloccati) -> In Cima (0-100)
             el.classList.add('locked-item');
             progressBar.style.display = 'block';
-
-            // Aggiorna barra
             const current = gameState.totalClicks;
             const target = data.requiredClicks;
-
             let percent = Math.min((current / target) * 100, 100);
-            if (isNaN(percent)) percent = 0; // Sicurezza extra
-
+            if (isNaN(percent)) percent = 0;
             el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-
             const text = `Sblocco: ${formatNumber(current)} / ${formatNumber(target)}`;
             el.querySelector('.progress-text').textContent = text;
             el.querySelector('.progress-text').title = text;
-
-            // Ordine: Più sei vicino (90%), più in alto stai (10)
             priority = 100 - percent;
         }
-
-        // Visibilità
         if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
             el.style.display = 'flex';
             visibleCount++;
@@ -833,18 +947,11 @@ function updateClickStore() {
             el.style.display = 'none';
         }
     }
-
-    // --- ORDINAMENTO E APPLICAZIONE ---
     items.sort((a, b) => {
-        if (Math.floor(a.priority) !== Math.floor(b.priority)) {
-            return a.priority - b.priority;
-        }
+        if (Math.floor(a.priority) !== Math.floor(b.priority)) return a.priority - b.priority;
         return a.cost - b.cost;
     });
-
     items.forEach(item => list.appendChild(item.el));
-
-    // Empty State
     const emptyMsg = document.getElementById('click-upgrade-empty');
     if (emptyMsg) {
         emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
@@ -852,61 +959,140 @@ function updateClickStore() {
     }
 }
 
+function checkOverlayNotifications() {
+    // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
+    let hasClaimable = false;
+    for (const key in gameData.achievements) {
+        const state = gameState.achievements[key];
+        const data = gameData.achievements[key];
+
+        // Se è sbloccato, non ancora reclamato, e ha un premio definito
+        if (state && state.unlocked && !state.claimed && data.reward) {
+            hasClaimable = true;
+            break;
+        }
+    }
+
+    const achBtn = document.getElementById('open-achievements-btn');
+    if (achBtn) {
+        if (hasClaimable) achBtn.classList.add('notify-overlay');
+        else achBtn.classList.remove('notify-overlay');
+    }
+}
+
 function updateStatsUI() {
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
 
-    // Verifica soglia
+    // --- CALCOLI PRELIMINARI ---
     const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
-    const progressColor = progress >= 100 ? '#2ecc71' : '#e74c3c';
 
+    // Calcolo Valore Click
+    let clickBonusPercent = 0.01;
+    if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
+    let clickValuePercentBonus = 0;
+    if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
+        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
+    }
+    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
+
+    // Dati Offline
+    const totalOffline = gameState.totalOfflineScore || 0;
+
+    // --- NUOVO: Calcolo Efficienza Offline ---
+    let offlineEff = 0.30; // Base 30%
+    if (gameState.prestigeUpgrades.serverAlwaysOn) {
+        offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+    }
+    if (offlineEff > 1.0) offlineEff = 1.0;
+    const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
+    // -----------------------------------------
+
+    // --- GENERAZIONE HTML ---
     statsList.innerHTML = `
-        <div class="stat-item">
-            <span class="stat-label">Tempo di gioco totale</span>
-            <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
-        </div>
-        
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
-
-        <div class="stat-item">
-            <span class="stat-label">Bug Attuali (Spendibili)</span>
-            <span class="stat-value" style="color: #fff;">${formatNumber(gameState.score)}</span>
-        </div>
-
-        <div class="stat-item">
-            <span class="stat-label" style="color: #5dade2;">Highscore Livello (Run)</span>
-            <span class="stat-value" style="color: #5dade2;">${formatNumber(gameState.totalScore)}</span>
-        </div>
-        
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 0 10px;">
-            <div style="flex-grow: 1; height: 6px; background: #34495e; border-radius: 3px; overflow: hidden;">
-                <div style="width: ${progress}%; height: 100%; background: ${progressColor}; transition: width 0.5s;"></div>
+        <div class="stats-container">
+            
+            <div class="stats-section">
+                <div class="stats-header">💰 Economia Aziendale</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Bug Attuali (Wallet)</span>
+                        <span class="stat-value" style="color: #2ecc71;">${formatNumber(gameState.score)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Totale Run Attuale</span>
+                        <span class="stat-value">${formatNumber(gameState.totalScore)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Totale Carriera</span>
+                        <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Guadagnati Offline</span>
+                        <span class="stat-value" style="color: #3498db;">
+                            ${formatNumber(totalOffline)} 
+                            <span style="font-size: 0.8rem; color: #bdc3c7; font-weight: normal;">(${offlinePercentText})</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="stat-progress-wrapper">
+                    <div class="stat-progress-info">
+                        <span>Progresso Promozione</span>
+                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(2)}%</span>
+                    </div>
+                    <div class="stat-progress-bg">
+                        <div class="stat-progress-fill" style="width: ${progress}%;"></div>
+                    </div>
+                </div>
             </div>
-            <span style="font-size: 0.75rem; color: ${progressColor};">${progress.toFixed(1)}% (Target: 10M)</span>
-        </div>
 
-        <div class="stat-item">
-            <span class="stat-label" style="color: #f1c40f;">Highscore Carriera (Totale)</span>
-            <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
-        </div>
+            <div class="stats-section">
+                <div class="stats-header">⚡ Performance & Tech</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Produzione (BPS)</span>
+                        <span class="stat-value">${formatNumber(cookiesPerSecond)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Valore Click</span>
+                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(currentClickValue)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Moltiplicatore Globale</span>
+                        <span class="stat-value">x${formatNumber(prestigeBonus)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Crit Chance</span>
+                        <span class="stat-value">${(goldenBugChance * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+            </div>
 
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin: 10px 0;"></div>
+            <div class="stats-section">
+                <div class="stats-header">🎨 Profilo & Visuals</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Skin Equipaggiata</span>
+                        <span class="stat-value" style="text-transform: capitalize; color: #9b59b6;">
+                            ${(gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default')}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Tempo di Gioco</span>
+                        <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Click Totali</span>
+                        <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Promozioni (Reset)</span>
+                        <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
+                    </div>
+                </div>
+            </div>
 
-        <div class="stat-item">
-            <span class="stat-label">Click totali</span>
-            <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Ticket Critici cliccati</span>
-            <span class="stat-value">${formatNumber(gameState.totalGoldenBugsClicked)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Promozioni effettuate</span>
-            <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Punti Promozione</span>
-            <span class="stat-value">${formatNumber(gameState.prestigePoints)}</span>
         </div>
     `;
 }

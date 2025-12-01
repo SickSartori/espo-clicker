@@ -66,22 +66,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FUNZIONE CHECK OFFLINE ---
+    function checkOfflineProgress() {
+        const modal = document.getElementById('offline-modal');
+
+        // Se non c'è timestamp (nuovo gioco), assicuriamoci che il modale sia chiuso
+        if (!gameState.lastSaveTimestamp) {
+            if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
+        const maxOfflineSeconds = 43200; // 12 ore max (aumentato da 8h)
+        const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
+
+        if (effectiveSeconds > 60) { // Mostra solo se via per almeno 1 minuto
+
+            // --- CALCOLO EFFICIENZA ---
+            let efficiency = 0.30; // Base 30%
+            // Controllo di sicurezza per evitare crash se l'upgrade non è ancora nel save
+            if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn) {
+                efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+            }
+            if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
+
+            // Guadagno Potenziale
+            const rawEarned = effectiveSeconds * cookiesPerSecond;
+            const realEarned = rawEarned * efficiency;
+
+            if (realEarned > 0) {
+                // Invece di aggiungere subito, mostriamo il modale
+                showOfflineModal(realEarned, efficiency);
+                return; // Usciamo, il modale è gestito
+            }
+        }
+
+        // Se arriviamo qui, non c'è guadagno valido. 
+        // Chiudiamo il modale se era rimasto aperto da un login precedente.
+        if (modal) modal.style.display = 'none';
+    }
+
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
         if (savedState) {
             try {
-                deepMerge(gameState, JSON.parse(savedState));
+                const parsedState = JSON.parse(savedState);
+
+                if (parsedState.buildings && !parsedState.teams) {
+                    parsedState.teams = parsedState.buildings;
+                    delete parsedState.buildings;
+                }
+
+                deepMerge(gameState, parsedState);
+                if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
+                for (const key in gameData.buildingEnhancements) {
+                    if (!gameState.buildingEnhancements[key]) {
+                        gameState.buildingEnhancements[key] = { purchased: false };
+                    }
+                }
+
+                if (!gameState.clickUpgrades) gameState.clickUpgrades = {};
+                for (const key in gameData.clickUpgrades) {
+                    if (!gameState.clickUpgrades[key]) {
+                        gameState.clickUpgrades[key] = { purchased: false };
+                    }
+                }
+
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
                 if (!gameState.filterSettings) {
-                    gameState.filterSettings = {
-                        click: 'available',
-                        auto: 'available',
-                        lab: 'available'
-                    };
+                    gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
+                }
+                if (gameData.achievements) {
+                    if (!gameState.achievements) gameState.achievements = {};
+                    for (const key in gameData.achievements) {
+                        if (!gameState.achievements[key]) {
+                            gameState.achievements[key] = { unlocked: false };
+                        }
+                    }
+                }
+                if (gameState.skins && gameState.skins.current) {
+                    if (typeof applySkinVisuals === 'function') {
+                        applySkinVisuals(gameState.skins.current);
+                    }
                 }
             } catch (e) { console.error("Errore loadGame:", e); }
         }
@@ -90,81 +161,124 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedUsername) gameState.user.username = savedUsername;
 
         calculatePrestigeBonus();
-        calculateClickCPSBonus();
         recalculateCPS();
 
-        if (gameState.lastSaveTimestamp) {
-            const now = Date.now();
-            const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
-            const maxOfflineSeconds = 28800;
-            const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
+        // --- FIX AUTO-REPAIR SKIN (LOCALE) ---
+        for (const key in gameData.achievements) {
+            const achData = gameData.achievements[key];
+            const achState = gameState.achievements[key];
 
-            if (effectiveSeconds > 10) {
-                const earned = effectiveSeconds * cookiesPerSecond;
-                if (earned > 0) {
-                    gameState.score += earned;
-                    gameState.totalScore += earned;
-                    gameState.lifetimeScore += earned;
-                    setTimeout(() => {
-                        if (window.EspooClicker && window.EspooClicker.showToast) {
-                            window.EspooClicker.showToast(`Bentornato! Hai guadagnato ${formatNumber(earned)} bug mentre dormivi.`);
-                        }
-                    }, 1000);
+            // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+            if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
+                const skinId = achData.reward.id;
+                // Se la skin NON è nell'inventario, aggiungila ora
+                if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
+                    console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
+                    gameState.skins.unlocked.push(skinId);
                 }
             }
         }
+        // -------------------------------------
 
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
-
-        for (const key in gameState.achievements) {
-            if (gameState.achievements[key].unlocked) renderAchievement(key);
-        }
     }
+
 
     function deepMerge(target, source) {
         for (const key in source) {
             if (source.hasOwnProperty(key)) {
-                if (source[key] instanceof Object && !Array.isArray(source[key]) && target[key]) {
+                if (source[key] instanceof Object && !Array.isArray(source[key])) {
+                    if (!target[key]) target[key] = {}; // Crea l'oggetto se manca
                     deepMerge(target[key], source[key]);
-                } else if (target.hasOwnProperty(key)) {
+                } else {
                     target[key] = source[key];
                 }
             }
         }
     }
 
+    function showOfflineModal(amount, efficiency) {
+        const modal = document.getElementById('offline-modal');
+        const displayAmount = document.getElementById('offline-earnings-display');
+        const displayEff = document.getElementById('offline-efficiency-display');
+        const btn = document.getElementById('btn-claim-offline');
+
+        if (!modal) return;
+
+        // Formatta i testi
+        displayAmount.textContent = formatNumber(amount);
+        displayEff.textContent = (efficiency * 100).toFixed(0) + "%";
+
+        // Setup Bottone
+        // Usiamo una funzione anonima con rimozione listener per evitare doppi click se ricarichi
+        // Dentro showOfflineModal in script.js ...
+
+        const claimHandler = () => {
+            // Aggiungi i punti
+            gameState.score += amount;
+            gameState.totalScore += amount;
+            gameState.lifetimeScore += amount;
+
+            // --- NUOVO: Aggiorna statistica offline ---
+            if (!gameState.totalOfflineScore) gameState.totalOfflineScore = 0;
+            gameState.totalOfflineScore += amount;
+            // ------------------------------------------
+
+            // Chiudi modale
+            modal.style.display = 'none';
+
+            // Salva e Feedback
+            window.EspooClicker.saveGame();
+            updateUI();
+            window.EspooClicker.showToast(`Hai riscattato ${formatNumber(amount)} bug!`, 'success');
+            window.EspooClicker.playSound('sound-buy');
+
+            // Rimuovi listener per pulizia
+            btn.removeEventListener('click', claimHandler);
+        };
+
+        // Rimuovi vecchi listener clonando il nodo (hack veloce per pulire eventi anonimi precedenti)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', claimHandler);
+
+        // Mostra
+        modal.style.display = 'flex';
+    }
+
     let lastFrameTime = Date.now();
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
         const now = Date.now();
-        // Calcola quanto tempo è passato in secondi (es. 0.033s)
         const deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        // Se il salto temporale è troppo grande (es. pc in standby), limitalo per sicurezza o gestiscilo
-        if (deltaTime > 86400) return; // Ignora salti assurdi (bug prevenzione)
+        if (deltaTime > 86400) return;
 
-        // Aggiungi il punteggio basato sul tempo ESATTO trascorso
         const scoreToAdd = cookiesPerSecond * deltaTime;
 
         gameState.score += scoreToAdd;
         gameState.totalScore += scoreToAdd;
         gameState.lifetimeScore += scoreToAdd;
 
-        // Gestione storico click (invariato)
+        // AGGIORNAMENTO TEMPO DI GIOCO
+        gameState.totalPlayTime += deltaTime;
+
+        checkAchievements();
+
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
-
-        // [Ottimizzazione] Non serve chiamare checkAchievements() qui se hai già il setInterval separato
-        // checkAchievements(); 
 
         updateUI();
 
         if (typeof updatePrestigeVisuals === 'function') {
             updatePrestigeVisuals();
         }
-        // --- FIX STATISTICHE LIVE ---
+
+        // --- FIX FONDAMENTALE PER STATISTICHE LIVE ---
+        // Questo pezzo aggiorna il modale statistiche ogni frame se è aperto
         const statsModal = document.getElementById('stats-modal');
         if (statsModal && statsModal.style.display === 'flex') {
             if (typeof updateStatsUI === 'function') {
@@ -197,6 +311,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeGame() {
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('dragstart', event => event.preventDefault());
+
         buildStores();
         loadGame();
         if (typeof refreshAllStores === 'function') refreshAllStores();
@@ -237,27 +354,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const globalFilterSelect = document.getElementById('global-filter-select');
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                // Se il focus è su un input di testo (es. chat, login), lascia fare
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                // Altrimenti blocca
+                e.preventDefault();
+            }
+        });
+
+        const muteBtn = document.getElementById('quick-mute-btn');
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => {
+                if (gameState.user.masterVolume > 0) {
+                    // Muta
+                    gameState.lastVolume = gameState.user.masterVolume; // Salva il volume precedente
+                    gameState.user.masterVolume = 0;
+                    muteBtn.textContent = '🔇';
+                } else {
+                    // Smuta
+                    gameState.user.masterVolume = gameState.lastVolume || 1.0;
+                    muteBtn.textContent = '🔊';
+                }
+                // Aggiorna slider nel modale se aperto
+                const mSlider = document.getElementById('master-slider');
+                if (mSlider) mSlider.value = gameState.user.masterVolume;
+
+                // Applica
+                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+            });
+        }
+
+        // Rimuovi focus dal clicker dopo ogni click per sicurezza
+        if (clickerButton) {
+            clickerButton.addEventListener('mouseup', () => clickerButton.blur());
+            clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+        }
+
         if (globalFilterSelect) {
-            // 1. Imposta valore iniziale (dal salvataggio o default)
-            // Supporto retroattivo: se il salvataggio è vecchio e non ha 'globalFilter', usa 'available'
             const savedFilter = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.value = savedFilter;
-
-            // Aggiorna subito gameState per sicurezza
             gameState.filterSettings.globalFilter = savedFilter;
 
-            // 2. Event Listener cambio
             globalFilterSelect.addEventListener('change', (e) => {
                 const newValue = e.target.value;
-
-                // Salva
                 gameState.filterSettings.globalFilter = newValue;
-
-                // Applica modifiche
                 refreshAllStores();
                 saveGame();
-
-                // Feedback Audio
                 if (window.EspooClicker && window.EspooClicker.playSound) {
                     window.EspooClicker.playSound('sound-click');
                 }
@@ -266,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // 1. Logica Standard Tab (Active/Display)
                 tabs.forEach(t => t.classList.remove('active'));
                 contents.forEach(c => c.style.display = 'none');
 
@@ -276,61 +419,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tab.classList.remove('notify');
 
-                // --- 2. NUOVA LOGICA FILTRO LAB ---
                 const filterSelect = document.getElementById('global-filter-select');
 
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
-                        // CASO: Entro nel Laboratorio
-
-                        // a) Salvo il filtro che stavo usando (solo se il menu era attivo)
                         if (!filterSelect.disabled) {
                             filterSelect.setAttribute('data-prev', filterSelect.value);
                         }
-
-                        // b) Imposto su "Tutti" e Disabilito
                         filterSelect.value = 'all';
-                        filterSelect.disabled = true; // Diventa grigetto ma resta lì
-
-                        // c) Aggiorno lo stato del gioco (così refreshAllStores sa di mostrare tutto)
+                        filterSelect.disabled = true;
                         gameState.filterSettings.globalFilter = 'all';
-
                     } else {
-                        // CASO: Esco dal Laboratorio (Click o Auto)
-
-                        // a) Riabilito il menu
                         filterSelect.disabled = false;
-
-                        // b) Se c'era un filtro salvato, lo ripristino
                         const prev = filterSelect.getAttribute('data-prev');
                         if (prev) {
                             filterSelect.value = prev;
                             gameState.filterSettings.globalFilter = prev;
-
                             filterSelect.removeAttribute('data-prev');
                         }
-                        // Se non c'era (es. cambio diretto Click <-> Auto), lascia quello corrente
                     }
-
-                    // Applica subito le modifiche visive
                     refreshAllStores();
                 }
-                // ----------------------------------
-
-                // 3. Audio
                 if (e.isTrusted) {
                     playSound('sound-click');
                 }
             });
         });
 
-        // Questo click automatico ora non genererà l'errore audio
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
-                if (e.detail === 0) return; // Evita doppio click tastiera
+                if (e.detail === 0) return;
                 crunchBtn.blur();
                 activateCrunchTime();
             });
@@ -344,7 +465,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
 
-        // 3. Bottone "Rifiuta" nel Modale -> Chiude
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
@@ -353,43 +473,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // --- GESTIONE CLICK UNIFICATA (GLOBALE) ---
-        // Intercetta i click su QUALSIASI bottone di acquisto nella pagina
         document.addEventListener('click', (e) => {
-            // 1. Cerca se l'elemento cliccato (o un suo genitore) è un bottone di acquisto
             const btn = e.target.closest('.buy-btn');
-
-            // Se non ho cliccato un bottone, o se è disabilitato/posseduto, esci
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
-
-            // Rimuovi il focus per estetica (toglie il bordo blu)
             btn.blur();
-
-            // Recupera il nome dell'upgrade
             const name = btn.getAttribute('data-upgrade-name');
-            if (!name) return; // Se non ha nome, ignora
-
-            // --- SMISTAMENTO LOGICA IN BASE ALLA CLASSE ---
+            if (!name) return;
 
             if (btn.classList.contains('prestige-btn')) {
-                // CASO 1: LABORATORIO (Quello che non funzionava)
-                if (typeof buyPrestigeUpgrade === 'function') {
-                    buyPrestigeUpgrade(name);
-                } else {
-                    console.error("ERRORE: buyPrestigeUpgrade non trovata!");
-                }
-
+                if (typeof buyPrestigeUpgrade === 'function') buyPrestigeUpgrade(name);
             } else if (btn.classList.contains('buy-click-btn')) {
-                // CASO 2: POTENZIAMENTI CLICK
                 if (typeof buyClickUpgrade === 'function') buyClickUpgrade(name);
-
             } else if (btn.classList.contains('enhancement-btn')) {
-                // CASO 3: MIGLIORIE AUTO
-                if (typeof buyBuildingEnhancement === 'function') buyBuildingEnhancement(name);
-
+                if (typeof buyTeamEnhancement === 'function') buyTeamEnhancement(name);
             } else if (btn.classList.contains('buy-building-btn')) {
-                // CASO 4: EDIFICI (ASSISTENTI)
-                if (typeof buyBuilding === 'function') buyBuilding(name);
+                if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
     }
@@ -415,43 +513,63 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // 1. Reset pulito dello stato interno
+                    // 1. Reset dello stato in memoria
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
-                    // 2. Pulisce la lista grafica per evitare duplicati o residui
+                    // 2. Pulizia grafica
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // 3. Carica i dati dal Cloud
-                    deepMerge(gameState, JSON.parse(cloudJSON));
+                    // 3. Merge dei dati
+                    const cloudState = JSON.parse(cloudJSON);
 
-                    // 4. Fix allineamento Username
+                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    if (cloudState.buildings && !cloudState.teams) {
+                        cloudState.teams = cloudState.buildings;
+                        delete cloudState.buildings;
+                    }
+
+                    deepMerge(gameState, cloudState);
+
+                    // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
+                    if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
+                        console.warn("Dati skin corrotti. Ripristino default.");
+                        gameState.skins = { current: 'default', unlocked: ['default'] };
+                    }
+
+                    // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser) {
                         gameState.user.username = currentSessionUser;
                     }
 
-                    // 5. Ricalcoli matematici
                     calculatePrestigeBonus();
-                    calculateClickCPSBonus();
                     recalculateCPS();
-
                     if (typeof refreshAllStores === 'function') refreshAllStores();
 
-                    // 6. [NUOVO] Ridisegna gli obiettivi sbloccati
-                    // Questo è il pezzo che mancava: ripristina la grafica in base al salvataggio
-                    for (const key in gameState.achievements) {
-                        if (gameState.achievements[key].unlocked) {
-                            if (typeof renderAchievement === 'function') {
-                                renderAchievement(key);
+                    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+                    if (typeof updateUI === 'function') updateUI();
+
+                    // 7. Sovrascrivi cache locale
+                    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+
+                    for (const key in gameData.achievements) {
+                        const achData = gameData.achievements[key];
+                        const achState = gameState.achievements[key];
+
+                        // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+                        if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
+                            const skinId = achData.reward.id;
+                            // Se la skin NON è nell'inventario, aggiungila ora
+                            if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
+                                console.log(`[Auto-Fix] Recuperata skin mancante: ${skinId}`);
+                                gameState.skins.unlocked.push(skinId);
                             }
                         }
                     }
-
-                    updateUI();
-
-                    // 7. Salva subito nel localStorage del nuovo PC
-                    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+                    // --- AGGIUNTA: Check offline subito dopo il login ---
+                    checkOfflineProgress();
+                    // --------------------------------------------------
 
                     showToast("Progressi scaricati dal Cloud!");
                 } catch (e) { console.error("Errore parsing cloud", e); }
