@@ -684,15 +684,20 @@ async function executePrestige() {
     }
 }
 
-async function submitScoreToLeaderboard(username, score, prestigeLevel) {
-    if (score < 500) return;
+// In template/js/game-logic.js
 
-    // Recuperiamo la password dalla memoria volatile tramite l'API globale
+async function submitScoreToLeaderboard(username) {
+    // Nota: Score e Prestige non vengono più passati come parametri.
+    // Il server li prenderà dal salvataggio nel database per sicurezza.
+
     const password = window.EspooClicker ? window.EspooClicker.getPassword() : null;
 
-    if (!password) {
-        console.warn("Impossibile inviare punteggio: Password sessione non trovata.");
-        return;
+    if (!password || !username) return;
+
+    // Inviamo il salvataggio PRIMA di aggiornare la classifica per essere sicuri
+    // che il DB abbia i dati più freschi.
+    if (window.EspooClicker && window.EspooClicker.saveGame) {
+        await window.EspooClicker.saveGame();
     }
 
     try {
@@ -701,13 +706,15 @@ async function submitScoreToLeaderboard(username, score, prestigeLevel) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: username,
-                password: password, // Inviamo la password sicura
-                score: Math.floor(score),
-                prestigeLevel: prestigeLevel
+                password: password
+                // Non inviamo più score o prestigeLevel qui!
             })
         });
-        // Opzionale: gestire la risposta
-    } catch (error) { console.error("Errore invio classifica:", error); }
+        // const res = await response.json();
+        // console.log("Leaderboard sync:", res); // Debug opzionale
+    } catch (error) {
+        console.warn("Sync classifica fallito (offline?)");
+    }
 }
 
 function createNewGameState() {
