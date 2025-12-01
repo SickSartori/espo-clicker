@@ -209,6 +209,7 @@
         "></div>
     </div>
 </div>
+
 <div id="help-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
         <button class="modal-close-btn">&times;</button>
@@ -229,7 +230,7 @@
                 <h3 style="color: #2ecc71; margin-bottom: 5px;">2. Automazione (BPS)</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.
-                    <br><br>
+                    <br>
                     <strong>BPS (Bug Per Secondo):</strong> Indica quanti bug il tuo team risolve automaticamente ogni secondo, anche se non fai nulla.
                 </p>
             </div>
@@ -256,12 +257,37 @@
                 </p>
             </div>
 
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #e67e22; margin-bottom: 5px;">5. Matematica dei Bonus</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Come faccio a fare numeri enormi? Semplice: <strong>I Moltiplicatori si sommano!</strong>
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li><strong>Bonus Permanente:</strong> Deriva dai tuoi <em>Prestigio</em> e dagli <em>Obiettivi</em> sbloccati. È la tua base (es. x2.0).</li>
+                    <li><strong>Bonus Temporanei:</strong> Eventi (es. 404) e Abilità (Crunch Time x7).</li>
+                    <li><strong>Il Segreto:</strong> Se attivi tutto insieme, i bonus si moltiplicano!<br>
+                    <em>Esempio:</em> Base (x2) * Crunch Time (x7) = <strong>x14 Totale!</strong></li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #1abc9c; margin-bottom: 5px;">6. Account & Salvataggi</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    I tuoi dati sono al sicuro nel Cloud della Espò Solutions.
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>Puoi fare <strong>Login</strong> da qualsiasi dispositivo per recuperare i tuoi progressi.</li>
+                    <li>Il gioco salva automaticamente ogni 10 secondi.</li>
+                    <li>Se esci dal sito, guadagnerai comunque bug (Efficienza ridotta) fino a 12 ore.</li>
+                </ul>
+            </div>
+
             <div>
-                <h3 style="color: #e74c3c; margin-bottom: 5px;">5. Consigli Utili</h3>
+                <h3 style="color: #e74c3c; margin-bottom: 5px;">7. Consigli Utili</h3>
                 <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
                     <li>Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.</li>
                     <li>Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.</li>
-                    <li>Se chiudi il gioco, i tuoi dipendenti continueranno a lavorare (con efficienza ridotta). Torna spesso per riscuotere!</li>
+                    <li>Controlla la <strong>Classifica</strong> per vedere chi è il manager migliore!</li>
                 </ul>
             </div>
 

@@ -1,4 +1,3 @@
-// --------- 3. FUNZIONI AUDIO ---------
 // --------- 3. FUNZIONI AUDIO AVANZATE ---------
 
 // type può essere 'sfx' (default) o 'music'
@@ -44,6 +43,10 @@ function updateAmbientVolume() {
     // Aggiorna Rick Roll Video
     const rickVideo = document.getElementById('rick-roll-video');
     if (rickVideo) rickVideo.volume = finalVol;
+
+    // --- AGGIUNTA MANCANTE ---
+    const ricardoVideo = document.getElementById('ricardo-video');
+    if (ricardoVideo) ricardoVideo.volume = finalVol;
 }
 
 // Funzione per acquistare Skin con Token Lab
@@ -133,9 +136,7 @@ function recalculateCPS() {
         let teamBPS = state.count * data.cpsPerUnit;
 
         // Ciclo sulle Migliorie (Enhancements)
-        // --- FIX CRASH: Iteriamo su gameData invece che su gameState ---
         for (const enhanceKey in gameData.buildingEnhancements) {
-            // Sicurezza: Controlliamo se l'upgrade esiste nello stato attuale
             if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
                 const enhancementState = gameState.buildingEnhancements[enhanceKey];
                 const enhancementData = gameData.buildingEnhancements[enhanceKey];
@@ -640,7 +641,7 @@ async function executePrestige() {
     newState.lastSaveTimestamp = Date.now();
 
     // Gestione bonus "Accelerazione" (Start con 1 QA)
-    if (newState.prestigeUpgrades.accelerazione.purchased) {
+    if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
         newState.teams.assistenteQa.count = 1;
     }
 
@@ -737,29 +738,6 @@ function createNewGameState() {
 }
 
 // --------- 7. LOOP DI GIOCO E OBIETTIVI ---------
-
-// --------- 7. LOOP DI GIOCO E OBIETTIVI ---------
-
-setInterval(() => {
-    gameState.totalPlayTime += 1;
-}, 1000);
-
-setInterval(() => {
-    checkAchievements();
-}, 1500);
-
-function gameLoop() {
-    const scoreToAdd = cookiesPerSecond / 30;
-
-    gameState.score += scoreToAdd;
-    gameState.totalScore += scoreToAdd;
-    gameState.lifetimeScore += scoreToAdd;
-
-    const now = Date.now();
-    clickHistory = clickHistory.filter(click => now - click.time < 1000);
-
-    updateUI();
-}
 
 function checkAchievements() {
     // FIX: Calcola il bonus BPS totale dagli obiettivi all'inizio

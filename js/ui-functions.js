@@ -631,13 +631,20 @@ function updateUI() {
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
 
+
+
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer) hudContainer.style.display = 'flex';
         let baseBonus = (gameState.lifetimePrestigePoints || 0) * 0.01;
         let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
         let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
         let totalPercent = ((baseBonus + synergyBonus) * 100);
-        if (displayCareer) displayCareer.textContent = `+${formatNumber(totalPercent)}%`;
+
+        if (displayCareer) {
+            displayCareer.textContent = `x${formatNumber(prestigeBonus)}`;
+            let percent = ((prestigeBonus - 1) * 100).toFixed(0);
+            displayCareer.setAttribute('data-tooltip', `Bonus Prestigio: +${percent}%`);
+        }
         if (displayTokens) {
             displayTokens.textContent = formatNumber(gameState.prestigePoints);
             displayTokens.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));
@@ -711,6 +718,7 @@ function updateUI() {
     }
     checkTabNotifications();
     checkOverlayNotifications();
+    updateBonusCounter();
 
 }
 
@@ -1031,7 +1039,7 @@ function updateStatsUI() {
                 <div class="stat-progress-wrapper">
                     <div class="stat-progress-info">
                         <span>Progresso Promozione</span>
-                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(1)}%</span>
+                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(2)}%</span>
                     </div>
                     <div class="stat-progress-bg">
                         <div class="stat-progress-fill" style="width: ${progress}%;"></div>

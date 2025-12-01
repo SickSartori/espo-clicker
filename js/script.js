@@ -113,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const parsedState = JSON.parse(savedState);
 
-                // Gestione compatibilità vecchi salvataggi: "buildings" -> "teams"
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
@@ -123,12 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                 for (const key in gameData.buildingEnhancements) {
                     if (!gameState.buildingEnhancements[key]) {
-                        // Copia lo stato di default (non acquistato)
                         gameState.buildingEnhancements[key] = { purchased: false };
                     }
                 }
 
-                // 2. Ripara Potenziamenti Click mancanti
                 if (!gameState.clickUpgrades) gameState.clickUpgrades = {};
                 for (const key in gameData.clickUpgrades) {
                     if (!gameState.clickUpgrades[key]) {
@@ -142,11 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
                 if (!gameState.filterSettings) {
-                    gameState.filterSettings = {
-                        click: 'available',
-                        auto: 'available',
-                        lab: 'available'
-                    };
+                    gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
                 }
                 if (gameData.achievements) {
                     if (!gameState.achievements) gameState.achievements = {};
@@ -170,10 +163,22 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // --- MODIFICA: RIMOSSO IL CHECK OFFLINE QUI ---
-        // checkOfflineProgress(); 
-        // Lo eseguiamo solo dopo il login (vedi loadCloudData sotto)
-        // ----------------------------------------------
+        // --- FIX AUTO-REPAIR SKIN (LOCALE) ---
+        for (const key in gameData.achievements) {
+            const achData = gameData.achievements[key];
+            const achState = gameState.achievements[key];
+
+            // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+            if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
+                const skinId = achData.reward.id;
+                // Se la skin NON è nell'inventario, aggiungila ora
+                if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
+                    console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
+                    gameState.skins.unlocked.push(skinId);
+                }
+            }
+        }
+        // -------------------------------------
 
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
@@ -247,21 +252,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
         const now = Date.now();
-        // Calcola quanto tempo è passato in secondi (es. 0.033s)
         const deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        // Se il salto temporale è troppo grande (es. pc in standby), limitalo per sicurezza o gestiscilo
-        if (deltaTime > 86400) return; // Ignora salti assurdi (bug prevenzione)
+        if (deltaTime > 86400) return;
 
-        // Aggiungi il punteggio basato sul tempo ESATTO trascorso
         const scoreToAdd = cookiesPerSecond * deltaTime;
 
         gameState.score += scoreToAdd;
         gameState.totalScore += scoreToAdd;
         gameState.lifetimeScore += scoreToAdd;
 
-        // Gestione storico click (invariato)
+        // AGGIORNAMENTO TEMPO DI GIOCO
+        gameState.totalPlayTime += deltaTime;
+
+        checkAchievements();
+
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
@@ -270,7 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updatePrestigeVisuals === 'function') {
             updatePrestigeVisuals();
         }
-        // --- FIX STATISTICHE LIVE ---
+
+        // --- FIX FONDAMENTALE PER STATISTICHE LIVE ---
+        // Questo pezzo aggiorna il modale statistiche ogni frame se è aperto
         const statsModal = document.getElementById('stats-modal');
         if (statsModal && statsModal.style.display === 'flex') {
             if (typeof updateStatsUI === 'function') {

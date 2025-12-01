@@ -4,9 +4,9 @@
         <div id="hud-stats-container" class="hud-stats-bar" style="display: none; animation: fadeIn 1s;">
             
             <div class="hud-item">
-                <span class="hud-label">Bonus Attivo</span>
-                <span id="display-career-bonus" class="hud-value" style="color: #f1c40f;">+0%</span>
-            </div>
+                <span class="hud-label">Moltiplicatore</span> 
+                <span id="display-career-bonus" class="hud-value" style="color: #f1c40f;">x1.00</span>
+            </div>  
 
             <div class="hud-separator"></div>
 
@@ -16,9 +16,7 @@
             </div>
             
         </div>
-        <div id="bonus-counter-display" style="display: none;">
-            BONUS PERMANENTE: <span id="combined-multiplier-value">x1.00</span>
-        </div>
+    
         <div id="click-feedback-container"></div>
         
         <button id="clicker-btn" title="Risolvi un Bug!">

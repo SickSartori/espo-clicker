@@ -59,6 +59,7 @@
     <?php include 'includes/modals.php'; ?>
     
     <div id="overlay-buttons-container">
+    <button id="open-help-btn" class="overlay-btn" style="border-color: #f1c40f; color: #f1c40f;">❓ Guida</button>
     <button id="open-stats-btn" class="overlay-btn">📊 Statistiche</button>
     <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
     <button id="open-skins-btn" class="overlay-btn" style="...">🎭 Skin</button> 
