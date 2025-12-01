@@ -185,30 +185,50 @@ function activateCrunchTime() {
 
 
 function triggerBluescreen(multiplier) {
+    // 1. GESTIONE SKIN SPECIALI (con probabilità)
+
+    // Se hai Rick Espley equipaggiato
     if (gameState.skins.current === 'rick') {
-        triggerRickRoll(multiplier);
-        return;
-    }
-    if (gameState.skins.current === 'ricardo') {
-        triggerRicardoEvent();
-        return;
+        // 50% di probabilità di fare il Rick Roll
+        // L'altro 50% farà il normale Blue Screen (il codice prosegue sotto)
+        if (Math.random() < 0.5) {
+            triggerRickRoll(multiplier);
+            return;
+        }
     }
 
+    // Se hai Ricardo Milespo equipaggiato
+    if (gameState.skins.current === 'ricardo') {
+        // 50% di probabilità di fare il Ricardo Event
+        if (Math.random() < 0.5) {
+            triggerRicardoEvent();
+            return;
+        }
+    }
+
+    // 2. LOGICA STANDARD 404 (BLUE SCREEN)
+    // Se non è scattato l'evento speciale sopra, eseguiamo questo:
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
 
     recalculateCPS();
-    refreshAllStores();
 
-    if (eventMultiplierDisplay) {
-        eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
-        eventMultiplierDisplay.style.display = 'block';
+    // Aggiorna UI se esiste la funzione (gestisce il refresh grafico immediato)
+    if (typeof refreshAllStores === 'function') refreshAllStores();
+
+    // Mostra il moltiplicatore a schermo
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) {
+        emDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
+        emDisplay.style.display = 'block';
     }
 
+    // Suono Errore
     // [FIX] Ora usa il canale 'music' (quindi rispetta lo slider Musica)
     playSound('sound-bluescreen', 'music');
 
+    // Timer fine evento (30 secondi standard)
     setTimeout(() => {
         stopBluescreenEffect();
     }, 30000);
@@ -432,17 +452,47 @@ function clickCookie(event) {
 function calculateMaxAffordable(teamKey) {
     const state = gameState.teams[teamKey];
     const data = gameData.teams[teamKey];
-    const r = 1.20;
+
+    // --- FIX 1: CALCOLO DINAMICO DI R (Sincronizzato con Contrattazione) ---
+    // Prima era hardcodato a 1.20, ora legge il potenziamento reale
+    let scalingBase = 1.20;
+    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
+        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
+        scalingBase = Math.max(1.05, scalingBase - reduction);
+    }
+    const r = scalingBase;
+    // -------------------------------------------------------------------
 
     let discountedBaseCost = data.baseCost;
 
+    // Calcolo del costo del prossimo singolo edificio
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
 
+    // Se non puoi permetterti nemmeno uno, ritorna 0
     if (gameState.score < currentSingleCost) return 0;
 
-    // Formula inversa della somma geometrica: n = log(1 + (Score * (r-1) / CostoBase)) / log(r)
-    // Serve a trovare quanti ne puoi comprare in blocco con i tuoi soldi attuali
-    const maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
+    // --- FORMULA GEOMETRICA INVERSA ---
+    // CostoTotale = CostoBase * (r^n - 1) / (r - 1)
+    // Risolviamo per n
+
+    let maxAmount = 0;
+
+    // Caso limite matematico (se r fosse 1, ma qui è min 1.05)
+    if (Math.abs(r - 1) < 0.0000001) {
+        maxAmount = Math.floor(gameState.score / currentSingleCost);
+    } else {
+        maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
+    }
+
+    // Ricalcoliamo il costo esatto per la quantità trovata
+    let realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
+
+    // Se il costo supera i soldi (anche di poco), riduciamo la quantità di 1 finché non rientra
+    // Usiamo un while per sicurezza assoluta, ma di solito basta 1 iterazione.
+    while (maxAmount > 0 && Math.floor(realCost) > gameState.score) {
+        maxAmount--;
+        realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
+    }
 
     return Math.max(0, maxAmount);
 }

@@ -502,7 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
         getGameState: () => gameState,
         saveGame: saveGame,
         showToast: showToast,
-
         playSound: playSound,
         updateStatsUI: updateStatsUI,
         formatNumber: formatNumber,
@@ -514,6 +513,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
+
+        // --- NUOVO: Funzione per caricare la cheatboard su richiesta ---
+        loadCheatboard: () => {
+            // Evita di caricarlo due volte
+            if (document.querySelector('script[src="js/cheatboard.js"]')) return;
+
+            fetch('js/cheatboard.js', { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        const script = document.createElement('script');
+                        script.src = 'js/cheatboard.js';
+                        document.body.appendChild(script);
+                    }
+                })
+                .catch(e => { });
+        },
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {

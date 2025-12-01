@@ -128,15 +128,22 @@ const gameData = {
 
     skins: {
         default: { name: "Classico", desc: "L'originale inconfondibile.", img: "espo.png", imgClick: "espo-click.png", rarity: "common", bg: "background.jpg", clickEffect: "normal" },
-        gladiator: { name: "Esporator", desc: "Al mio segnale, scatenate i click.", img: "esporator.png", imgClick: "esporator-click.png", rarity: "rare", unlockHint: "Raggiungi 700 click manuali.", clickEffect: "fire" },
+
+        // UNLOCKABLE SKINS (Achievement Based)
+        gladiator: { name: "Esporator", desc: "Al mio segnale, scatenate i click.", img: "esporator.png", imgClick: "esporator-click.png", rarity: "rare", unlockHint: "Raggiungi 2.000 click manuali.", clickEffect: "fire" },
         geisha: { name: "Esponese", desc: "Eleganza orientale.", img: "esponese.png", imgClick: "esponese-click.png", rarity: "rare", unlockHint: "Gioca per 4 ore totali.", bg: "background_zen.jpg" },
         unicorn: { name: "Espocorno", desc: "Magia pura nel codice.", img: "espocorno.png", imgClick: "espocorno-click.png", rarity: "rare", unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'", clickEffect: "rainbow" },
+
+        // PREMIUM SKINS (Token Based - NO Unlock Hint, solo Costo)
         king: { name: "Espo of Empires", desc: "Il Re dei Bug.", img: "espofempires.png", imgClick: "espofempires-click.png", rarity: "epic", cost: 10, bg: "background_castle.jpg", clickEffect: "gold" },
-        waifu: { name: "Espowaifu", desc: "Best girl.", img: "espowaifu.png", imgClick: "espowaifu-click.png", rarity: "epic", cost: 15, unlockHint: "Sblocca l'obiettivo 'AI Supremacy'", clickEffect: "flowers" },
+        waifu: { name: "Espowaifu", desc: "Best girl.", img: "espowaifu.png", imgClick: "espowaifu-click.png", rarity: "epic", cost: 15, clickEffect: "flowers" }, // Rimosso unlockHint
+
         jesus: { name: "Gespo", desc: "Il salvatore del database.", img: "gespo.png", imgClick: "gespo-click.png", rarity: "epic", unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'", clickEffect: "divine" },
-        rick: { name: "Rick Espley", desc: "Never gonna give you up.", img: "rick-espley.png", imgClick: "rick-espley-click.png", rarity: "legendary", unlockHint: "Raggiungi 2.000 click manuali.", clickEffect: "hearts" },
+
+        // LEGENDARY SKINS (Hardcore Grind)
+        rick: { name: "Rick Espley", desc: "Never gonna give you up.", img: "rick-espley.png", imgClick: "rick-espley-click.png", rarity: "legendary", unlockHint: "Raggiungi 10.000 click manuali.", clickEffect: "hearts" },
         ricardo: { name: "Ricardo Milespo", desc: "Non c'è bug che tenga.", img: "ricardo-milespo.png", imgClick: "ricardo-milespo-click.png", rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'White Hat'", clickEffect: "fire" },
-        dictator: { name: "Adolf Espler", desc: "Ordine e disciplina.", img: "adolf-espler.png", imgClick: "adolf-espler-click.png", rarity: "legendary", unlockHint: "Sblocca l'obiettivo 'Page Not Found'", clickEffect: "error" }
+        dictator: { name: "Adolf Espler", desc: "Ordine e disciplina.", img: "adolf-espler.png", imgClick: "adolf-espler-click.png", rarity: "legendary", unlockHint: "Raggiungi 20.000 click manuali.", clickEffect: "error" }
     },
 
     teams: {
@@ -166,20 +173,42 @@ const gameData = {
 
     achievements: {
         primoClick: { name: 'Hello World!', desc: 'Effettua il tuo primo click manuale.', flavor: 'Il primo bug è sempre il più facile.', type: 'click', target: 1, isSecret: false, reward: null, condition: () => gameState.totalClicks >= 1 },
+
         primoTeam: { name: 'Inception', desc: 'Possiedi 10 Assistenti QA.', type: 'building', buildingId: 'assistenteQa', target: 10, isSecret: false, reward: { type: 'bugs', value: 5000 }, condition: () => gameState.teams.assistenteQa.count >= 10 },
+
         jiraWarrior: { name: 'Ticketing System', desc: 'Gestisci 25 Jira Ticket.', type: 'building', buildingId: 'jiraTicket', target: 25, isSecret: false, reward: { type: 'bugs', value: 2000 }, condition: () => gameState.teams.jiraTicket.count >= 25 },
-        clickMaster: { name: 'Rick Roll Patch', desc: 'Raggiungi 2.000 click manuali.', type: 'click', target: 2000, isSecret: false, reward: { type: 'skin', id: 'rick' }, condition: () => gameState.totalClicks >= 2000 },
+
+        // MODIFICATO: 10k Click per Rick Roll
+        clickMaster: { name: 'Rick Roll Patch', desc: 'Raggiungi 10.000 click manuali.', type: 'click', target: 10000, isSecret: false, reward: { type: 'skin', id: 'rick' }, condition: () => gameState.totalClicks >= 10000 },
+
         codeMonkey: { name: 'Code Monkey', desc: 'Accumula 50.000 bug totali.', type: 'score', target: 50000, isSecret: false, reward: { type: 'bugs', value: 10000 }, condition: () => gameState.totalScore >= 50000 },
+
         automationFirst: { name: 'Automation First', desc: 'Raggiungi 10 Team QA.', type: 'building', buildingId: 'teamQa', target: 10, isSecret: false, reward: { type: 'bugs', value: 15000 }, condition: () => gameState.teams.teamQa.count >= 10 },
-        clickGod: { name: 'Hardcoded Solution', desc: 'Raggiungi 700 click manuali.', type: 'click', target: 700, isSecret: false, reward: { type: 'skin', id: 'gladiator' }, condition: () => gameState.totalClicks >= 700 },
+
+        // MODIFICATO: 2k Click per Gladiator
+        clickGod: { name: 'Hardcoded Solution', desc: 'Raggiungi 2.000 click manuali.', type: 'click', target: 2000, isSecret: false, reward: { type: 'skin', id: 'gladiator' }, condition: () => gameState.totalClicks >= 2000 },
+
+        // NUOVO: 50k Click per Adolf (Dictator)
+        clickDictator: { name: 'Dittatore del Mouse', desc: 'Raggiungi 20.000 click manuali.', type: 'click', target: 20000, isSecret: false, reward: { type: 'skin', id: 'dictator' }, condition: () => gameState.totalClicks >= 20000 },
+
         middleManagement: { name: 'Middle Management', desc: 'Assumi 100 Assistenti QA.', type: 'building', buildingId: 'assistenteQa', target: 100, isSecret: false, reward: { type: 'bugs', value: 50000 }, condition: () => gameState.teams.assistenteQa.count >= 100 },
+
         fullStack: { name: 'Full Stack Agency', desc: 'Possiedi almeno 1 unità di ogni Team.', type: 'custom', target: 1, isSecret: false, reward: { type: 'skin', id: 'unicorn' }, condition: () => { for (const key in gameState.teams) { if (gameState.teams[key].count === 0) return false; } return true; } },
-        milionario: { name: 'Tech Lead', desc: 'Accumula 10 Milioni di bug.', type: 'score', target: 10000000, isSecret: false, reward: { type: 'skin', id: 'king' }, condition: () => gameState.totalScore >= 10000000 },
+
+        // MODIFICATO: Tech Lead ora da 5 Token invece della skin King (che è a pagamento)
+        milionario: { name: 'Tech Lead', desc: 'Accumula 10 Milioni di bug.', type: 'score', target: 10000000, isSecret: false, reward: { type: 'prestige', value: 5 }, condition: () => gameState.totalScore >= 10000000 },
+
         geishaUnlock: { name: 'Zen Master', desc: 'Gioca per 4 ore totali.', type: 'time', target: 14400, isSecret: false, reward: { type: 'skin', id: 'geisha' }, condition: () => gameState.totalPlayTime >= 14400 },
+
         miliardario: { name: 'System Architect', desc: 'Accumula 1 Miliardo di bug.', type: 'score', target: 1000000000, isSecret: false, reward: { type: 'prestige', value: 10 }, condition: () => gameState.totalScore >= 1000000000 },
-        errore404: { name: 'Page Not Found', desc: 'Incontra il Blue Screen of Death.', type: 'custom', target: 1, isSecret: false, reward: { type: 'skin', id: 'dictator' }, condition: () => gameState.lastBluescreenTimestamp > 0 },
+
+        // 404 ora da solo Bug, non più la skin leggendaria
+        errore404: { name: 'Page Not Found', desc: 'Incontra il Blue Screen of Death.', type: 'custom', target: 1, isSecret: false, reward: { type: 'bugs', value: 500000 }, condition: () => gameState.lastBluescreenTimestamp > 0 },
+
         hacker: { name: 'White Hat', desc: 'Acquista il potenziamento Hacking Etico.', type: 'custom', target: 1, isSecret: false, reward: { type: 'skin', id: 'ricardo' }, condition: () => gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased },
-        waifuUnlock: { name: 'AI Supremacy', desc: 'Possiedi 100 AI Debugger.', type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: false, reward: { type: 'skin', id: 'waifu' }, condition: () => gameState.teams.aiDebugger.count >= 100 }
+
+        // MODIFICATO: AI Supremacy ora da 5 Token invece della skin Waifu (che è a pagamento)
+        waifuUnlock: { name: 'AI Supremacy', desc: 'Possiedi 100 AI Debugger.', type: 'building', buildingId: 'aiDebugger', target: 100, isSecret: false, reward: { type: 'prestige', value: 5 }, condition: () => gameState.teams.aiDebugger.count >= 100 }
     },
 
     prestigeUpgrades: {
