@@ -209,3 +209,62 @@
         "></div>
     </div>
 </div>
+<div id="help-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <button class="modal-close-btn">&times;</button>
+        <h2>📘 Manuale del Dipendente</h2>
+        
+        <div class="settings-content" style="text-align: left; line-height: 1.6;">
+            
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #3498db; margin-bottom: 5px;">1. L'Obiettivo</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: 
+                    risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. 
+                    Più bug risolvi, più budget avrai per assumere aiuti.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #2ecc71; margin-bottom: 5px;">2. Automazione (BPS)</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.
+                    <br><br>
+                    <strong>BPS (Bug Per Secondo):</strong> Indica quanti bug il tuo team risolve automaticamente ogni secondo, anche se non fai nulla.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #f1c40f; margin-bottom: 5px;">3. Eventi & Anomalie</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Il sistema è instabile. Tieni gli occhi aperti per:
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>🐞 <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito per un bonus enorme!</li>
+                    <li>💻 <strong>Errore 404 (Blue Screen):</strong> Il sistema crasha! Durante l'errore, la produzione è moltiplicata (x2 o più).</li>
+                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari (come Rick o Ricardo) scatenano eventi musicali unici con moltiplicatori folli.</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #9b59b6; margin-bottom: 5px;">4. Laboratorio (Prestigio)</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.
+                    <br>
+                    <strong>Attenzione:</strong> Resettera i tuoi bug e i tuoi edifici, ma in cambio otterrai <strong>Token Lab</strong>.
+                    Usa i Token nel Laboratorio per comprare potenziamenti permanenti che renderanno la tua prossima partita velocissima.
+                </p>
+            </div>
+
+            <div>
+                <h3 style="color: #e74c3c; margin-bottom: 5px;">5. Consigli Utili</h3>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.</li>
+                    <li>Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.</li>
+                    <li>Se chiudi il gioco, i tuoi dipendenti continueranno a lavorare (con efficienza ridotta). Torna spesso per riscuotere!</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>

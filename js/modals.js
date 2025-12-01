@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSettingsBtn = document.getElementById('open-settings-btn');
     const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
 
+    const openHelpBtn = document.getElementById('open-help-btn');
+    const helpModal = document.getElementById('help-modal');
+
     const openSkinsBtn = document.getElementById('open-skins-btn');
     const skinsModal = document.getElementById('skins-modal');
 
@@ -171,6 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Disegna la lista aggiornata con barre di progresso
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
         openModal(achievementsModal);
+    });
+
+    if (openHelpBtn) openHelpBtn.addEventListener('click', () => {
+        openModal(helpModal);
     });
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         // Chiama la funzione che disegna la griglia (definita in ui-functions.js)
