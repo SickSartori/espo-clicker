@@ -643,7 +643,7 @@ function updateUI() {
         if (displayCareer) {
             displayCareer.textContent = `x${formatNumber(prestigeBonus)}`;
             let percent = ((prestigeBonus - 1) * 100).toFixed(0);
-            displayCareer.setAttribute('data-tooltip', `Bonus Prestigio: +${percent}%`);
+            displayCareer.setAttribute('data-tooltip', `Potenza Totale: x${formatNumber(prestigeBonus)}`);
         }
         if (displayTokens) {
             displayTokens.textContent = formatNumber(gameState.prestigePoints);

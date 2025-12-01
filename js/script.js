@@ -271,43 +271,48 @@ document.addEventListener('DOMContentLoaded', () => {
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
-        updateUI();
 
-        if (typeof updatePrestigeVisuals === 'function') {
-            updatePrestigeVisuals();
-        }
-
-        // --- FIX FONDAMENTALE PER STATISTICHE LIVE ---
-        // Questo pezzo aggiorna il modale statistiche ogni frame se è aperto
-        const statsModal = document.getElementById('stats-modal');
-        if (statsModal && statsModal.style.display === 'flex') {
-            if (typeof updateStatsUI === 'function') {
-                updateStatsUI();
-            }
-        }
     }
 
     // --------- 11. INIZIALIZZAZIONE ---------
     function startGameRoutines() {
+        // Volume audio iniziale
         document.querySelectorAll('audio').forEach(audio => {
             audio.volume = gameState.user.masterVolume;
         });
 
-        setInterval(gameLoop, 33); // 30 FPS circa
-        setInterval(saveGame, 5000); // Auto-save ogni 5s
+        // 1. LOGICA (30 FPS) - Usa il tuo nuovo gameLoop pulito
+        setInterval(gameLoop, 33);
 
+        // 2. GRAFICA (10 FPS) - Qui metti quello che hai tolto
         setInterval(() => {
-            submitScoreToLeaderboard(gameState.user.username, gameState.lifetimeScore, gameState.totalResets);
+            updateUI();
+
+            if (typeof updatePrestigeVisuals === 'function') {
+                updatePrestigeVisuals();
+            }
+
+            // Aggiorna statistiche modale solo se aperto
+            const statsModal = document.getElementById('stats-modal');
+            if (statsModal && statsModal.style.display === 'flex') {
+                if (typeof updateStatsUI === 'function') {
+                    updateStatsUI();
+                }
+            }
+        }, 100); // 100ms = 10 volte al secondo, fluido e leggero
+
+        // Auto-save (ogni 5s)
+        setInterval(saveGame, 5000);
+
+        // Classifica (ogni 30s) - Nota: rimosso score/prestige dai parametri come discusso per sicurezza
+        setInterval(() => {
+            submitScoreToLeaderboard(gameState.user.username);
         }, 30000);
 
         scheduleGoldenBug();
 
-        // [FIX SALVATAGGIO] Salva istantaneamente quando chiudi o ricarichi la pagina
-        window.addEventListener('beforeunload', () => {
-            // Chiamiamo saveGame() in modo sincrono per il localStorage
-            // (La parte cloud potrebbe non fare in tempo, ma il locale è garantito)
-            saveGame();
-        });
+        // Salvataggio alla chiusura
+        window.addEventListener('beforeunload', () => { saveGame(); });
     }
 
     function initializeGame() {
