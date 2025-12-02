@@ -107,18 +107,84 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     }
 
+    // Funzione Helper per il controllo versione
+    function checkSaveCompatibility(savedData) {
+        if (!window.GAME_VERSION) return true; // Dev safety
+
+        // 1. Salvataggi antichi (senza versione) -> Incompatibili
+        if (!savedData || !savedData.version) {
+            console.warn("Salvataggio Legacy: Reset richiesto.");
+            return false;
+        }
+
+        const current = window.GAME_VERSION;
+        const saved = savedData.version;
+
+        // 2. Controllo STAGE (Non mischiare Beta con Stable)
+        if (saved.stage !== current.stage) {
+            console.warn(`Mismatch Stage: Salvataggio ${saved.stage} vs Gioco ${current.stage}`);
+            return false;
+        }
+
+        // 3. Regola STABLE: Sempre compatibile in avanti
+        if (current.stage === 'stable') {
+            // Se siamo in stable, accettiamo anche major diverse (es. Save 1.0 su Gioco 2.0)
+            return true;
+        }
+
+        // 4. Regola BETA/ALPHA: Rottura su cambio Major
+        // Se siamo in beta, la versione Major deve coincidere.
+        if (saved.major !== current.major) {
+            console.warn(`Mismatch Major (Beta): v${saved.major} non compatibile con v${current.major}`);
+            return false;
+        }
+
+        return true; // Tutto ok (es. 3.0 -> 3.1)
+    }
+
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
+
         if (savedState) {
             try {
                 const parsedState = JSON.parse(savedState);
 
+                // --- 1. CONTROLLO COMPATIBILITÀ VERSIONE ---
+                if (!checkSaveCompatibility(parsedState)) {
+                    console.log("Versione incompatibile. Reset automatico.");
+                    // Avviso visivo
+                    setTimeout(() => {
+                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Reset Versione: ${parsedState.version?.stage || 'Legacy'} incompatibile!`, 'warning');
+                    }, 500);
+
+                    // Forza il salvataggio della nuova versione pulita
+                    saveGame();
+                    return; // Interrompi caricamento
+                }
+                // ------------------------------------------
+
+                // Gestione Migrazione Legacy (buildings -> teams)
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
                 }
 
+                // Fusione dei dati salvati con lo stato attuale
                 deepMerge(gameState, parsedState);
+
+                // --- 2. AGGIORNAMENTO VERSIONE ---
+                // Aggiorniamo la versione nel gioco caricato all'ultima versione del codice
+                // (Utile per aggiornamenti minori, es. caricare un save 3.0 su 3.1)
+                if (window.GAME_VERSION) {
+                    gameState.version = {
+                        major: window.GAME_VERSION.major,
+                        minor: window.GAME_VERSION.minor,
+                        stage: window.GAME_VERSION.stage
+                    };
+                }
+
+
+                // Inizializzazione oggetti mancanti (se aggiunti in nuove versioni)
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                 for (const key in gameData.buildingEnhancements) {
                     if (!gameState.buildingEnhancements[key]) {
@@ -133,14 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                // Ripristino variabili temporali e impostazioni
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
+
                 if (!gameState.filterSettings) {
                     gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
                 }
+
+                // Ripristino Achievements
                 if (gameData.achievements) {
                     if (!gameState.achievements) gameState.achievements = {};
                     for (const key in gameData.achievements) {
@@ -149,37 +220,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
+
+                // Applicazione Skin Visiva
                 if (gameState.skins && gameState.skins.current) {
                     if (typeof applySkinVisuals === 'function') {
                         applySkinVisuals(gameState.skins.current);
                     }
                 }
+
             } catch (e) { console.error("Errore loadGame:", e); }
         }
 
+        // Recupero username legacy se presente
         const savedUsername = localStorage.getItem('espooClickerUsername');
         if (savedUsername) gameState.user.username = savedUsername;
 
+        // Ricalcolo Bonus
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // --- FIX AUTO-REPAIR SKIN (LOCALE) ---
+        // --- FIX AUTO-REPAIR SKIN (Controllo coerenza) ---
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
 
-            // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+            // Se l'obiettivo è riscattato e dà una skin, assicuriamoci di averla
             if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
                 const skinId = achData.reward.id;
-                // Se la skin NON è nell'inventario, aggiungila ora
                 if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
                     console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
                     gameState.skins.unlocked.push(skinId);
                 }
             }
         }
-        // -------------------------------------
 
+        // Applicazione Effetti passivi al caricamento
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
     }
@@ -314,6 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Salvataggio alla chiusura
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
+
+
 
     function initializeGame() {
         // Prevenzione menu contestuale e trascinamento immagini
@@ -528,6 +605,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
+
+        // Mostra versione
+        const vDisplay = document.getElementById('version-display');
+        if (vDisplay && window.GAME_VERSION) {
+            vDisplay.textContent = window.GAME_VERSION.toString();
+            // Opzionale: Colore diverso per la beta
+            if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12'; // Arancione
+            if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71'; // Verde
+        }
     }
 
     // --------- API GLOBALE ---------
@@ -643,3 +729,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeGame();
 });
+

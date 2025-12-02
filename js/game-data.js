@@ -16,6 +16,11 @@ let achievementsBPSBonus = 0;
 
 function getInitialGameState() {
     return {
+        version: {
+            major: window.GAME_VERSION.major,
+            minor: window.GAME_VERSION.minor,
+            stage: window.GAME_VERSION.stage
+        },
         score: 0,
         baseClickValue: 1,
         totalClicks: 0,
