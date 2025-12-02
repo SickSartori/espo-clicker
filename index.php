@@ -58,15 +58,44 @@
 </div>
     <?php include 'includes/modals.php'; ?>
     
-    <div id="overlay-buttons-container">
-    <button id="open-help-btn" class="overlay-btn" style="border-color: #f1c40f; color: #f1c40f;">❓ Guida</button>
-    <button id="open-stats-btn" class="overlay-btn">📊 Statistiche</button>
-    <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
-    <button id="open-skins-btn" class="overlay-btn" style="...">🎭 Skin</button> 
-    <button id="open-leaderboard-btn" class="overlay-btn">🥇 Classifica</button>
-    <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button> 
-    <button id="open-prestige-hub-btn" class="overlay-btn" style="...">🚀 Promozione</button>
-</div>
+    <nav id="game-navbar">
+        <div class="nav-group left">
+            <button id="open-help-btn" class="nav-item" title="Guida">
+                <span class="nav-icon">❓</span>
+                <span class="nav-label">Guida</span>
+            </button>
+            <button id="open-stats-btn" class="nav-item" title="Statistiche">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Stats</span>
+            </button>
+        </div>
+
+        <div class="nav-group center">
+            <button id="open-achievements-btn" class="nav-item" title="Obiettivi">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Obiettivi</span>
+            </button>
+            <button id="open-skins-btn" class="nav-item" title="Guardaroba">
+                <span class="nav-icon">👕</span>
+                <span class="nav-label">Skin</span>
+            </button>
+            <button id="open-leaderboard-btn" class="nav-item" title="Classifica">
+                <span class="nav-icon">🥇</span>
+                <span class="nav-label">Classifica</span>
+            </button>
+        </div>
+
+        <div class="nav-group right">
+            <button id="open-prestige-hub-btn" class="nav-special-btn">
+                <span class="nav-icon">🚀</span> Promozione
+            </button>
+            <button id="open-settings-btn" class="nav-item" title="Opzioni">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Opzioni</span>
+            </button>
+            
+        </div>
+    </nav>
     <button id="quick-mute-btn" title="Muta Tutto">🔊</button>
     <div id="game-container">
 
@@ -113,7 +142,8 @@
     <audio id="sound-buy" src="./assets/sounds/Buy.mp3" preload="auto"></audio>
     <audio id="sound-achievement" src="./assets/sounds/Achievement.mp3" preload="auto"></audio>
     <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="auto"></audio>
-
+    
+    <script src="./js/version-config.js"></script>
     <script src="./js/game-data.js" defer></script>
     <script src="./js/ui-functions.js" defer></script>
     <script src="./js/game-logic.js" defer></script>

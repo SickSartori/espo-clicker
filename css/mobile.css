@@ -79,3 +79,65 @@
         height: 30px;
     }
 }
+
+@media only screen and (max-width: 1024px) {
+
+    /* Aggiorna il padding del body per la nuova navbar */
+    body {
+        padding-top: 70px;
+    }
+
+    /* Navbar Mobile Compatta */
+    #game-navbar {
+        height: 60px;
+        padding: 0 10px;
+        justify-content: space-around;
+        /* Distribuisce equamente */
+    }
+
+    /* Rimuovi i gruppi logici su mobile per usare tutto lo spazio */
+    .nav-group {
+        flex: unset;
+        width: auto;
+    }
+
+    .nav-group.center {
+        flex-grow: 1;
+        justify-content: center;
+        gap: 15px;
+        /* Più spazio tra le icone centrali */
+    }
+
+    /* Nascondi etichette testo, mostra solo icone */
+    .nav-label {
+        display: none;
+    }
+
+    .nav-item {
+        min-width: auto;
+        /* Rimuovi larghezza minima */
+        padding: 8px;
+    }
+
+    .nav-icon {
+        font-size: 1.6rem;
+        /* Icone più grandi per il tocco */
+        margin-bottom: 0;
+    }
+
+    /* Bottone Promozione Mobile */
+    .nav-special-btn {
+        padding: 8px;
+        font-size: 0;
+        /* Nasconde testo "Promozione" */
+        margin-left: 5px;
+        border-radius: 8px;
+    }
+
+    .nav-special-btn .nav-icon {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+
+    /* Opzionale: mostra icona razzo + "!" se c'è spazio, o solo icona */
+}
