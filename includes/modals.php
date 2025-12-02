@@ -41,8 +41,18 @@
         
         <div class="settings-content">
             <div class="setting-item">
-                <label>Volume Generale (<span id="volume-display">100</span>%)</label>
-                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+                <label>🔊 Volume Master (<span id="master-vol-display">100</span>%)</label>
+                <input type="range" id="master-slider" min="0" max="1" step="0.1" value="1">
+            </div>
+
+            <div class="setting-item">
+                <label>🔔 Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
+                <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
+            </div>
+
+            <div class="setting-item">
+                <label>🎵 Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
+                <input type="range" id="music-slider" min="0" max="1" step="0.1" value="0.5">
             </div>
             
             <button id="save-settings-btn" class="buy-btn" style="background-color: #27ae60;">Salva e Chiudi</button>
@@ -177,6 +187,110 @@
             <button id="btn-confirm-prestige" class="buy-btn prestige-btn signature-btn">
                 ✍️ Firma e Accetta Promozione
             </button>
+        </div>
+    </div>
+</div>
+
+<div id="skins-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close-btn">&times;</button>
+        <h2>👕 Guardaroba</h2>
+        <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
+            Personalizza il tuo look.<br>Sblocca nuove skin completando obiettivi speciali!
+        </p>
+        
+        <div id="skins-grid" style="
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+            gap: 15px; 
+            padding: 20px; 
+            overflow-y: auto; 
+            max-height: 60vh;
+        "></div>
+    </div>
+</div>
+
+<div id="help-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <button class="modal-close-btn">&times;</button>
+        <h2>📘 Manuale del Dipendente</h2>
+        
+        <div class="settings-content" style="text-align: left; line-height: 1.6;">
+            
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #3498db; margin-bottom: 5px;">1. L'Obiettivo</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: 
+                    risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. 
+                    Più bug risolvi, più budget avrai per assumere aiuti.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #2ecc71; margin-bottom: 5px;">2. Automazione (BPS)</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.
+                    <br>
+                    <strong>BPS (Bug Per Secondo):</strong> Indica quanti bug il tuo team risolve automaticamente ogni secondo, anche se non fai nulla.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #f1c40f; margin-bottom: 5px;">3. Eventi & Anomalie</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Il sistema è instabile. Tieni gli occhi aperti per:
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>🐞 <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito per un bonus enorme!</li>
+                    <li>💻 <strong>Errore 404 (Blue Screen):</strong> Il sistema crasha! Durante l'errore, la produzione è moltiplicata (x2 o più).</li>
+                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari (come Rick o Ricardo) scatenano eventi musicali unici con moltiplicatori folli.</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #9b59b6; margin-bottom: 5px;">4. Laboratorio (Prestigio)</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.
+                    <br>
+                    <strong>Attenzione:</strong> Resettera i tuoi bug e i tuoi edifici, ma in cambio otterrai <strong>Token Lab</strong>.
+                    Usa i Token nel Laboratorio per comprare potenziamenti permanenti che renderanno la tua prossima partita velocissima.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #e67e22; margin-bottom: 5px;">5. Matematica dei Bonus</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    Come faccio a fare numeri enormi? Semplice: <strong>I Moltiplicatori si sommano!</strong>
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li><strong>Bonus Permanente:</strong> Deriva dai tuoi <em>Prestigio</em> e dagli <em>Obiettivi</em> sbloccati. È la tua base (es. x2.0).</li>
+                    <li><strong>Bonus Temporanei:</strong> Eventi (es. 404) e Abilità (Crunch Time x7).</li>
+                    <li><strong>Il Segreto:</strong> Se attivi tutto insieme, i bonus si moltiplicano!<br>
+                    <em>Esempio:</em> Base (x2) * Crunch Time (x7) = <strong>x14 Totale!</strong></li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: #1abc9c; margin-bottom: 5px;">6. Account & Salvataggi</h3>
+                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
+                    I tuoi dati sono al sicuro nel Cloud della Espò Solutions.
+                </p>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>Puoi fare <strong>Login</strong> da qualsiasi dispositivo per recuperare i tuoi progressi.</li>
+                    <li>Il gioco salva automaticamente ogni 10 secondi.</li>
+                    <li>Se esci dal sito, guadagnerai comunque bug (Efficienza ridotta) fino a 12 ore.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 style="color: #e74c3c; margin-bottom: 5px;">7. Consigli Utili</h3>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
+                    <li>Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.</li>
+                    <li>Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.</li>
+                    <li>Controlla la <strong>Classifica</strong> per vedere chi è il manager migliore!</li>
+                </ul>
+            </div>
+
         </div>
     </div>
 </div>

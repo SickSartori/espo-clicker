@@ -24,15 +24,15 @@ Il gioco si basa sul calcolo dei **BPS (Bugs Per Second)**, che vengono automati
 La progressione è gestita attraverso tre diversi negozi che si sbloccano man mano che il giocatore accumula Bug e totalizza click.
 
 #### A. Squadra (Team)
-(Colonna Destra - Ex Edifici)
+(Colonna Destra - Teams)
 
 Questi sono gli acquisti fondamentali per l'automazione.
 
 | Acquisto (Esempio) | Tipo di Acquisto | Costo e Meccanica |
 | :--- | :--- | :--- |
-| **Stagista QA** | Elemento base del Team (BPS 0.1). | Il costo aumenta del **15%** per ogni unità già posseduta: $\text{Costo} = \text{Costo Base} \times 1.15^\text{Conteggio}$. |
+| **Assistente QA** | Elemento base del Team (BPS 0.1). | Il costo aumenta del **15%** per ogni unità già posseduta: $\text{Costo} = \text{Costo Base} \times 1.15^\text{Conteggio}$. |
 | **Squadra QA Junior** | Team più avanzato (BPS 8). | Ogni acquisto incrementa permanentemente il BPS totale del gioco. |
-| **Team AI Debug** | Acquisto finale (BPS 1400). | Il negozio scompare solo in caso di *Promozione*. |
+| **AI Debugger** | Acquisto finale (BPS 1400). | Il negozio scompare solo in caso di *Promozione*. |
 
 #### B. Potenziamenti Click (Upgrade)
 (Colonna Sinistra - Potenziamenti Te Stesso)
@@ -44,7 +44,7 @@ Questi acquisti singoli migliorano sia la risoluzione manuale che, in alcuni cas
 | **Caffè Forte** | 10 Click Totali | Aggiunge un valore fisso al click base (+1). |
 | **Mano Bionica** | 1.000 Click Totali | Aggiunge l'**1%** del BPS corrente al valore di ogni click. |
 | **Click Divino** | 50.000 Click Totali | Migliora la Mano Bionica, portando il bonus BPS per click al **2%**. |
-| **Click Automatico** | 10.000 Click Totali | Aggiunge BPS extra pari al numero di `Stagisti QA` posseduti. |
+| **Click Automatico** | 10.000 Click Totali | Aggiunge BPS extra pari al numero di `Assistenti QA` posseduti. |
 | **Hacking Etico** | 5.000 Click Totali | Raddoppia la probabilità di trovare Ticket Critici. |
 
 #### C. Migliorie Team (Enhancements)
@@ -53,7 +53,7 @@ Questi acquisti singoli migliorano sia la risoluzione manuale che, in alcuni cas
 Questi sono potenziamenti unici che moltiplicano la produttività di specifiche unità del Team (Squadra). La sezione è visibile solo quando ci sono elementi acquistabili.
 
 * **Sblocco:** Ogni miglioramento ha un costo in Bug e richiede un numero minimo di unità del Team specifico (`requiredCount`) (es. 1, 10, 25, 50 o 100 unità).
-* **Funzione:** Forniscono moltiplicatori (x2, x3, x4) al BPS generato dall'unità Team associata (es. `Caffè Doppio` moltiplica per 2 il BPS dello `Stagista QA`).
+* **Funzione:** Forniscono moltiplicatori (x2, x3, x4) al BPS generato dall'unità Team associata (es. `Caffè Doppio` moltiplica per 2 il BPS dell'Assistente QA).
 
 ### III. Eventi Dinamici e Moltiplicatori
 
@@ -75,7 +75,7 @@ La Promozione è il sistema di *soft-reset* del gioco che introduce una valuta p
 * **Bonus PP Base:** Ogni PP accumulato fornisce un moltiplicatore permanente dell'**1%** al BPS e al Click Value per le run future.
 * **Potenziamenti Promozione:** Acquistabili con i PP, forniscono vantaggi strategici persistenti:
     * **Sinergia Manageriale:** Aumenta l'efficacia di ogni PP dello 0.1% aggiuntivo (Acquisto multiplo).
-    * **Accelerazione Iniziale:** Inizia ogni run con 1 `Stagista QA` gratuito.
+    * **Accelerazione Iniziale:** Inizia ogni run con 1 `Assistente QA` gratuito.
     * **Ticket Premium:** Dimezza il tempo di spawn dei Ticket Critici.
 
 ### V. Meta-Progressione e Stato

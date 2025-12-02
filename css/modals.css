@@ -36,6 +36,48 @@
     transform: translateY(-2px);
 }
 
+.overlay-btn {
+    position: relative;
+    /* Necessario per posizionare il pallino */
+}
+
+.overlay-btn.notify-overlay::after {
+    content: '!';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c;
+    /* Rosso */
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
+    animation: pulseNotify 1.5s infinite;
+    z-index: 10;
+    border: 2px solid #2c3e50;
+    /* Bordo per staccare dallo sfondo */
+}
+
+@keyframes pulseNotify {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* --- MODALI --- */
 .modal-backdrop {
     position: fixed;
@@ -426,65 +468,263 @@ input[type="number"] {
 }
 
 .achievement {
-    background-color: #34495e;
-    border: 1px solid #5d7c9a;
+    border: 1px solid #4a6582;
+    /* Bordo sottile di base */
+    padding: 18px;
+    margin-bottom: 12px;
+    background-color: #2c3e50;
+    /* Sfondo card più scuro per contrasto */
     border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-    opacity: 0.6;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
 }
 
+.achievement:hover:not(.locked):not(.claimable) {
+    background-color: #3d5570;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), 0 0 5px #5dade2;
+}
+
+/* SBLOCCATO */
 .achievement.unlocked {
-    opacity: 1;
-    background-color: #27ae60;
+    background-color: rgba(46, 204, 113, 0.1);
+    /* Sfondo verde tenue */
     border-color: #2ecc71;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.achievement-name {
-    font-weight: bold;
-    color: #fff;
-    font-size: 1rem;
-    margin-bottom: 4px;
+/* BLOCCATO */
+.achievement.locked {
+    opacity: 0.8;
+    border-style: dashed;
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
-.achievement-desc {
-    font-size: 0.85rem;
-    color: #bdc3c7;
+/* SEGRETO */
+.achievement.secret {
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-style: italic;
+    color: #7f8c8d;
+    padding: 10px;
 }
 
-.achievement.unlocked .achievement-desc {
-    color: #f0f0f0;
-}
-
-/* --- STATISTICHE --- */
-.stat-item {
+.achievement-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
-    margin-bottom: 5px;
-    border-radius: 4px;
 }
 
-.stat-item:last-child {
-    border-bottom: none;
+.achievement-header [data-tooltip]:hover::after {
+    /* Ancora il tooltip a destra */
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(0) !important;
+
+    /* Aggiungi un po' di margine per non toccare il bordo */
+    margin-right: -5px;
 }
 
-.stat-label {
-    color: #bdc3c7;
-    font-size: 0.9rem;
+/* Fix per la freccetta (Before element) */
+.achievement-header [data-tooltip]:hover::before {
+    left: auto !important;
+    right: 18px !important;
+    /* Posiziona la freccetta sopra l'icona */
+    transform: translateX(0) !important;
 }
 
-.stat-value {
+.achievement-name {
+    font-size: 1.3rem;
+    /* Titolo grande */
+    font-weight: 800;
     color: #fff;
+    letter-spacing: -0.5px;
+    flex-grow: 1;
+}
+
+.reward-badge-text {
+    font-size: 1.8rem;
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.8);
+    margin-left: 15px;
+}
+
+.achievement.locked .achievement-name {
+    color: #bdc3c7;
+}
+
+.achievement-desc {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    margin-bottom: 5px;
+}
+
+.achievement-flavor {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #95a5a6;
+    margin-bottom: 8px;
+}
+
+.achievement-reward {
+    font-size: 0.85rem;
+    color: #f1c40f;
     font-weight: bold;
-    font-size: 1rem;
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* BARRA PROGRESSO */
+.ach-progress-container {
+    height: 25px;
+    /* Più alta e visibile */
+    border: 1px solid #3498db;
+    background-color: #1a252f;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    position: relative;
+    margin-top: 10px;
+}
+
+.ach-progress-bar {
+    background: linear-gradient(to right, #3498db, #5dade2);
+    box-shadow: 0 0 10px #5dade2;
+    /* Glow interno */
+    transition: width 0.4s ease-out;
+}
+
+.ach-progress-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    /* FIX: Allinea a sinistra invece di centrare */
+    justify-content: flex-start;
+    /* Aggiungi padding per staccare il testo dal bordo */
+    padding-left: 10px;
+
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 0 5px #000;
+    z-index: 2;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+/* --- STATISTICHE --- */
+
+/* Contenitore Principale */
+.stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Più aria tra le sezioni */
+}
+
+/* Card della Sezione */
+.stats-section {
+    background-color: rgba(0, 0, 0, 0.25);
+    /* Sfondo più scuro per contrasto */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    /* Spaziatura interna aumentata */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    /* Ombra per effetto profondità */
+}
+
+/* Titolo Sezione */
+.stats-header {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #f1c40f;
+    /* Oro */
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+}
+
+/* Griglia Dati (2 Colonne) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 20px;
+    /* Gap verticale 15px, orizzontale 20px */
+}
+
+/* Box Singola Statistica */
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-box .stat-label {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    /* Grigio più tenue per non distrarre */
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.stat-box .stat-value {
+    font-size: 1.1rem;
+    /* Valore più grande e leggibile */
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* --- BARRA PROGRESSO (Fix Visibilità) --- */
+.stat-progress-wrapper {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    /* Linea tratteggiata separatrice */
+}
+
+.stat-progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #bdc3c7;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.stat-progress-bg {
+    height: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    /* SFONDO MOLTO SCURO per farla vedere */
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    /* Gradiente verde */
+    transition: width 0.5s ease-out;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+    /* Leggero glow */
 }
 
 /* --- MODALE CONTRATTO PRESTIGIO --- */
@@ -668,5 +908,333 @@ input[type="number"] {
 
     .contract-columns {
         flex-direction: column;
+    }
+}
+
+/* STILE BOTTONE RISCATTA */
+.claim-btn {
+    width: 100%;
+    padding: 10px 15px;
+    /* Più grande */
+    font-size: 1rem;
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+    color: #2c3e50;
+    font-weight: 800;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 0 #d35400;
+}
+
+.claim-btn:hover {
+    box-shadow: 0 4px 0 #d35400, 0 0 20px rgba(241, 196, 15, 0.5);
+    /* Glow al hover */
+    filter: brightness(1.1);
+}
+
+.claim-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #d35400;
+}
+
+.claim-btn .claim-hover,
+.claim-btn .claim-visible {
+    transition: all 0.1s ease-out;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+    /* Nascosto di default */
+}
+
+@keyframes pulseGold {
+    0% {
+        box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(241, 196, 15, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(241, 196, 15, 0);
+    }
+}
+
+.achievement.claimable {
+    border: 3px solid #f1c40f;
+    background-color: rgba(241, 196, 15, 0.15);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+    animation: achievementPulse 1.5s infinite alternate;
+}
+
+@keyframes achievementPulse {
+    from {
+        box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+    }
+
+    to {
+        box-shadow: 0 0 20px rgba(241, 196, 15, 0.9);
+    }
+}
+
+.achievement-done {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2ecc71;
+    text-align: right;
+}
+
+.achievement.achievement-secret {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px dashed #7f8c8d;
+    color: #7f8c8d;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.reward-badge {
+    font-size: 1.2rem;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+    /* Nascosto di default */
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.claim-btn .claim-visible {
+    display: inline-block;
+    /* Visibile di default */
+}
+
+/* Al passaggio del mouse: nascondi il premio, mostra RISCATTA */
+.claim-btn:hover .claim-visible {
+    display: none;
+}
+
+.claim-btn:hover .claim-hover {
+    display: inline-block;
+    font-weight: 900;
+    animation: pulseText 0.5s 2;
+}
+
+@keyframes pulseText {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.05);
+    }
+}
+
+/* --- SKIN SYSTEM --- */
+.skin-card {
+    border-width: 3px;
+    /* Spessore desiderato */
+    border-style: solid;
+    /* Forza il solido anche per bloccate */
+    transition: all 0.2s ease-in-out;
+    /* Rimuovi l'opacity 0.8 in linea per controllare meglio */
+    opacity: 1;
+}
+
+.skin-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    /* Invisibile di default */
+    transition: opacity 0.3s ease;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Mostra overlay al passaggio del mouse */
+.skin-card:hover .skin-overlay {
+    opacity: 1;
+}
+
+.skin-overlay-text {
+    font-size: 0.75rem;
+    color: #fff;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.skin-price {
+    color: #f1c40f;
+    font-weight: bold;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    border: 1px solid #f1c40f;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(241, 196, 15, 0.1);
+}
+
+/* Bordo dorato pulsante per le skin acquistabili */
+.skin-card.buyable:hover {
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.skin-card:hover:not(.locked) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.skin-card.rarity-common {
+    border-color: #7f8c8d;
+}
+
+.skin-card.rarity-rare {
+    border-color: #3498db;
+}
+
+.skin-card.rarity-epic {
+    border-color: #9b59b6;
+}
+
+.skin-card.rarity-legendary {
+    border-color: #f1c40f;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
+}
+
+.skin-card.rarity-common.unlocked {
+    border-color: #bdc3c7;
+    /* Grigio chiaro */
+}
+
+
+
+.skin-card.rarity-rare.unlocked {
+    border-color: #3498db;
+    /* Blu vivido */
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+
+
+.skin-card.rarity-epic.unlocked {
+    border-color: #9b59b6;
+    /* Viola acceso */
+    box-shadow: 0 0 12px rgba(155, 89, 182, 0.6);
+}
+
+
+.skin-card.rarity-legendary.unlocked {
+    animation: gold-pulse 2s infinite alternate ease-in-out;
+}
+
+.skin-card.rarity-legendary.unlocked:hover {
+    box-shadow: 0 0 30px rgba(255, 223, 0, 1) !important;
+}
+
+.skin-card.unlocked {
+    border-width: 3px;
+    /* Più spesso */
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    /* Ombra leggera di base */
+}
+
+/* Stili per le skin sbloccate/acquistabili al passaggio del mouse */
+.skin-card.unlocked:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.skin-card.rarity-legendary.unlocked:hover {
+    box-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
+}
+
+.skin-card.equipped {
+    border-color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
+    animation: none !important;
+    /* Non deve pulsare */
+}
+
+.skin-card.locked {
+    opacity: 0.6;
+    /* Scuro per indicare bloccato */
+    box-shadow: none;
+    cursor: default;
+}
+
+.skin-card.locked.buyable {
+    border-style: solid;
+    opacity: 0.9;
+    /* Più visibile rispetto alle achievement-locked */
+    cursor: pointer;
+}
+
+.skin-card.can-afford-border {
+    /* Sovrascrivi il border-color con l'oro solo se can-afford-border è presente */
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+    animation: gold-pulse 2s infinite alternate ease-in-out;
+}
+
+/* Hover: Mantiene l'animazione se puoi comprare, altrimenti colore normale */
+.skin-card.can-afford-border:hover {
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.8) !important;
+    transform: translateY(-3px) scale(1.02);
+}
+
+.skin-card.locked.buyable:hover {
+    box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+    border-color: #f1c40f;
+    /* Diventa oro al hover */
+    transform: translateY(-2px);
+}
+
+/* Se la skin è bloccata ma acquistabile, il lucchetto è dorato/giallo */
+.skin-card.locked .skin-price {
+    color: #f1c40f;
+    border-color: #f1c40f;
+    font-weight: 700;
+}
+
+.skin-price {
+    font-weight: bold;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    border: 1px solid;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    /* Testo bianco */
+}
+
+.skin-price.can-afford {
+    border-color: #2ecc71;
+    /* Verde se puoi permettertelo */
+    color: #2ecc71;
+    box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
+}
+
+/* --- ANIMAZIONI --- */
+
+@keyframes gold-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(255, 223, 0, 1);
+    }
+
+    100% {
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
     }
 }

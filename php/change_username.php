@@ -57,19 +57,31 @@ $check->close();
 
 // 3. ESEGUI IL CAMBIO
 // A. Aggiorna tabella Account (USERS)
-$updateUser = $conn->prepare("UPDATE $table_users SET username = ? WHERE username = ?");
-$updateUser->bind_param("ss", $newUsername, $currentUsername);
+$cleanOrphan = $conn->prepare("DELETE FROM $table_leaderboard WHERE username = ?");
+$cleanOrphan->bind_param("s", $newUsername);
+$cleanOrphan->execute();
+$cleanOrphan->close();
 
-if ($updateUser->execute()) {
-    // B. Aggiorna tabella Classifica (LEADERBOARD)
-    // Nota: Usiamo IGNORE per evitare crash rari, ma l'update dovrebbe andare liscio
-    $updateLeaderboard = $conn->prepare("UPDATE IGNORE $table_leaderboard SET username = ? WHERE username = ?");
+// 4. ESEGUI IL CAMBIO
+$conn->begin_transaction(); // Usiamo una transazione per sicurezza
+
+try {
+    // A. Aggiorna Utente
+    $updateUser = $conn->prepare("UPDATE $table_users SET username = ? WHERE username = ?");
+    $updateUser->bind_param("ss", $newUsername, $currentUsername);
+    $updateUser->execute();
+    
+    // B. Aggiorna Classifica (Ora è sicuro perché abbiamo pulito eventuali conflitti)
+    $updateLeaderboard = $conn->prepare("UPDATE $table_leaderboard SET username = ? WHERE username = ?");
     $updateLeaderboard->bind_param("ss", $newUsername, $currentUsername);
     $updateLeaderboard->execute();
 
-    echo json_encode(["status" => "success", "message" => "Nome aggiornato con successo!"]);
-} else {
-    echo json_encode(["status" => "error", "message" => "Errore aggiornamento database: " . $conn->error]);
+    $conn->commit();
+    echo json_encode(["status" => "success", "message" => "Nome aggiornato ovunque!"]);
+
+} catch (Exception $e) {
+    $conn->rollback();
+    echo json_encode(["status" => "error", "message" => "Errore DB: " . $e->getMessage()]);
 }
 
 $conn->close();

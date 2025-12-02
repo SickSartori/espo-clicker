@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSettingsBtn = document.getElementById('open-settings-btn');
     const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
 
+    const openHelpBtn = document.getElementById('open-help-btn');
+    const helpModal = document.getElementById('help-modal');
+
+    const openSkinsBtn = document.getElementById('open-skins-btn');
+    const skinsModal = document.getElementById('skins-modal');
+
     const openPrestigeHubBtn = document.getElementById('open-prestige-hub-btn');
     const prestigeHubModal = document.getElementById('prestige-hub-modal');
 
@@ -25,8 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Input & Bottoni Interni
     const usernameInput = document.getElementById('username-input');
-    const volumeSlider = document.getElementById('volume-slider');
-    const volumeDisplay = document.getElementById('volume-display');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
 
     // Account & Login
@@ -45,6 +49,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelContract = document.getElementById('btn-cancel-contract');
     const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     const prestigeModal = document.getElementById('prestige-modal');
+
+    // --- GESTIONE AUDIO AVANZATA ---
+
+    const masterSlider = document.getElementById('master-slider');
+    const sfxSlider = document.getElementById('sfx-slider');
+    const musicSlider = document.getElementById('music-slider');
+
+    const masterDisplay = document.getElementById('master-vol-display');
+    const sfxDisplay = document.getElementById('sfx-vol-display');
+    const musicDisplay = document.getElementById('music-vol-display');
+
+    // Funzione helper per aggiornare slider e stato
+    function setupAudioControl(slider, display, key, isMusic = false) {
+        if (!slider) return;
+
+        // [FIX] Definiamo Game qui dentro per evitare l'errore "Game is not defined"
+        const Game = window.EspooClicker;
+        if (!Game) return; // Sicurezza nel caso non sia ancora caricato
+
+        // 1. Inizializza valore dal salvataggio
+        slider.value = Game.getGameState().user[key];
+        if (display) display.textContent = Math.round(slider.value * 100);
+
+        // 2. Listener al cambio
+        slider.addEventListener('input', () => {
+            const val = parseFloat(slider.value);
+            Game.getGameState().user[key] = val;
+            if (display) display.textContent = Math.round(val * 100);
+
+            // Se è musica, aggiorna in tempo reale i loop attivi
+            if (isMusic || key === 'masterVolume') {
+                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+            }
+
+            // Feedback sonoro (solo per SFX o Master)
+            if (!isMusic) {
+                // Debounce piccolo per non spammare mentre trascini
+                // (Opzionale, qui facciamo un suono secco)
+                // Game.playSound('sound-click'); 
+            }
+        });
+    }
+
+    // Inizializza i 3 controlli (Assicuriamoci che EspooClicker sia pronto)
+    if (window.EspooClicker) {
+        setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+        setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+        setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+    } else {
+        // Fallback se caricato troppo presto
+        setTimeout(() => {
+            setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+            setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+            setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+        }, 100);
+    }
 
     if (btnGoToContract) {
         // Clone trick per rimuovere vecchi listener
@@ -110,7 +170,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listener Apertura
-    if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => openModal(achievementsModal));
+    if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
+        // Disegna la lista aggiornata con barre di progresso
+        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        openModal(achievementsModal);
+    });
+
+    if (openHelpBtn) openHelpBtn.addEventListener('click', () => {
+        openModal(helpModal);
+    });
+    if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
+        // Chiama la funzione che disegna la griglia (definita in ui-functions.js)
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+
+        // Apre il modale
+        openModal(skinsModal);
+    });
 
     if (openPrestigeHubBtn) {
         openPrestigeHubBtn.addEventListener('click', () => {
@@ -166,9 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const userSettings = Game.getGameState().user;
         if (currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
 
-        if (volumeSlider) {
-            volumeSlider.value = userSettings.masterVolume;
-            volumeDisplay.textContent = Math.round(userSettings.masterVolume * 100);
+        if (masterSlider) {
+            masterSlider.value = userSettings.masterVolume;
+            masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
         openModal(settingsModal);
     }
@@ -197,42 +272,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await response.json();
 
             if (res.status === 'success') {
-                // Imposta credenziali sessione
+                // 1. Imposta credenziali sessione
                 sessionStorage.setItem('espooUser', username);
                 sessionStorage.setItem('espooPass', password);
                 Game.setPassword(password);
 
+                // --- PULIZIA TOTALE PREVENTIVA DELL'INTERFACCIA ---
+                // Questo rimuove fisicamente i trofei vecchi dalla lista HTML
+                const achList = document.getElementById('achievement-list');
+                if (achList) achList.innerHTML = '';
+
+                // Pulisce anche la classifica se era aperta
+                const leadList = document.getElementById('leaderboard-list');
+                if (leadList) leadList.innerHTML = '';
+
                 if (res.action === 'register') {
-                    // --- NUOVO UTENTE: RESET TOTALE ---
-                    // 1. Pulisce localStorage vecchio
+                    // --- CASO NUOVO UTENTE ---
+
+                    // 1. Cancella il salvataggio locale del giocatore precedente
                     localStorage.removeItem('espotoolClickerSaveV8');
-                    // 2. Resetta la variabile in memoria
-                    resetGameToDefault();
-                    // 3. Imposta il nuovo nome
+
+                    // 2. Esegui un HARD RESET dello stato (tutto a zero, inclusi achievement)
+                    if (typeof resetGameToDefault === 'function') {
+                        resetGameToDefault();
+                    }
+
+                    // 3. Aggiorna il nome nel nuovo stato pulito
                     Game.getGameState().user.username = username;
 
                     Game.showToast(`Benvenuto ${username}! Account creato.`);
-                    // 4. Salva subito lo stato pulito
+
+                    // 4. Salva subito questo stato "vergine"
                     Game.saveGame();
 
-                    // 5. Aggiorna UI per mostrare tutto a 0
-                    if (typeof refreshAllStores === 'function') refreshAllStores();
-                    if (typeof updateUI === 'function') updateUI();
-
                 } else if (res.action === 'login') {
-                    // --- UTENTE ESISTENTE ---
+                    // --- CASO LOGIN ESISTENTE ---
+
                     if (res.save_data) {
+                        // Carica i dati dal cloud (la funzione loadCloudData ora gestirà il rendering)
                         Game.loadCloudData(res.save_data);
                         Game.showToast(`Bentornato ${username}!`);
                     } else {
-                        // Caso raro: Login ma nessun dato salvato -> Reset
+                        // Login riuscito ma nessun dato salvato nel DB? Reset come se fosse nuovo
                         localStorage.removeItem('espotoolClickerSaveV8');
-                        resetGameToDefault();
+                        if (typeof resetGameToDefault === 'function') resetGameToDefault();
                         Game.getGameState().user.username = username;
                         Game.saveGame();
-                        Game.showToast(`Bentornato ${username}! (Nuova Partita)`);
+                        Game.showToast(`Bentornato ${username}! (Nessun salvataggio trovato)`);
                     }
                 }
+
+                // 5. Aggiorna Grafica Negozi e UI
+                if (typeof refreshAllStores === 'function') refreshAllStores();
+                if (typeof updateUI === 'function') updateUI();
 
                 closeModal(loginModal);
                 Game.startGameRoutines();
@@ -374,12 +466,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listener Impostazioni
-    if (volumeSlider) {
-        volumeSlider.addEventListener('input', () => {
+    if (masterSlider) {
+        masterSlider.addEventListener('input', () => {
             const Game = getGameAPI();
             if (Game) {
-                Game.setMasterVolume(volumeSlider.value);
-                volumeDisplay.textContent = Math.round(volumeSlider.value * 100);
+                Game.setMasterVolume(masterSlider.value);
+                if (masterDisplay) masterDisplay.textContent = Math.round(masterSlider.value * 100);
             }
         });
     }
@@ -400,11 +492,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', deleteSave);
 
     // AUTO-LOGIN
+    // Listener Tasto Invio nei campi Login
+    function setupEnterKey(inputElement, actionBtn) {
+        if (inputElement) {
+            inputElement.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    actionBtn.click();
+                }
+            });
+        }
+    }
+
+    setupEnterKey(loginInput, loginButton);
+    setupEnterKey(loginPasswordInput, loginButton);
+
+    // AUTO-LOGIN E INIZIALIZZAZIONE
     const checkGameApi = setInterval(() => {
         if (window.EspooClicker) {
             clearInterval(checkGameApi);
-            const Game = window.EspooClicker;
-
+            // ... resto del codice auto-login invariato ...
             const sessUser = sessionStorage.getItem('espooUser');
             const sessPass = sessionStorage.getItem('espooPass');
 

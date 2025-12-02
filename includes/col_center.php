@@ -4,9 +4,9 @@
         <div id="hud-stats-container" class="hud-stats-bar" style="display: none; animation: fadeIn 1s;">
             
             <div class="hud-item">
-                <span class="hud-label">Bonus Attivo</span>
-                <span id="display-career-bonus" class="hud-value" style="color: #f1c40f;">+0%</span>
-            </div>
+                <span class="hud-label">Moltiplicatore</span> 
+                <span id="display-career-bonus" class="hud-value" style="color: #f1c40f;">x1.00</span>
+            </div>  
 
             <div class="hud-separator"></div>
 
@@ -16,12 +16,12 @@
             </div>
             
         </div>
-
+    
         <div id="click-feedback-container"></div>
         
         <button id="clicker-btn" title="Risolvi un Bug!">
-            <img id="manager-photo-clicked" src="./image/espo-click.png" alt="Click!" draggable="false">
-            <img id="manager-photo-normal" src="./image/espo.png" alt="Espòòò" draggable="false">
+            <img id="manager-photo-clicked" src="./assets/image/espo-click.png" alt="Click!" draggable="false">
+            <img id="manager-photo-normal" src="./assets/image/espo.png" alt="Espòòò" draggable="false">
         </button>
         
         <div id="score-label">Bug Risolti</div>
@@ -37,6 +37,6 @@
         
         <div id="prestige-bonus-display" class="prestige-info" style="display: none;">Bonus: +0%</div>
 
-        <div id="version-display">Versione 2.3 beta</div>
+        <div id="version-display">Versione 3.0 beta</div>
     </div>
 </div>

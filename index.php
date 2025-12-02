@@ -14,10 +14,16 @@
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/mobile.css">
     
-    <link rel="icon" type="image/png" href="./image/favicon.png">
+    <link rel="icon" type="image/png" href="./assets/image/favicon.png">
 </head>
 <body>
-
+    <video id="rick-roll-video" style="display: none;" playsinline>
+        <source src="./assets/video/rick-espley-video.mp4" type="video/mp4">
+        Il tuo browser non supporta il video tag.
+    </video>
+    <video id="ricardo-video" style="display: none;" playsinline>
+        <source src="./assets/video/ricardo-milespo-video.mp4" type="video/mp4">
+    </video>
     <div id="toast-container"></div>
         <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">
@@ -26,17 +32,45 @@
             <p>Ricalcolo dei benefit aziendali</p>
         </div>
     </div>
-    <?php include 'includes/modals.php'; ?>
+    <div id="offline-modal" class="modal-backdrop" style="display: none; z-index: 3000;">
+    <div class="modal-content" style="text-align: center; border-color: #f39c12;">
+        <h2 style="color: #f39c12; border-bottom-color: #f39c12;">💤 Bentornato!</h2>
+        <div class="settings-content" style="padding: 30px;">
+            <p style="color: #bdc3c7; font-size: 1.1rem;">
+                Mentre eri via il team ha lavorato (un po').
+            </p>
+            
+            <div style="margin: 20px 0;">
+                <p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">Efficienza Server</p>
+                <div id="offline-efficiency-display" style="font-weight: bold; color: #3498db; font-size: 1.2rem;">30%</div>
+            </div>
 
-    <div id="overlay-buttons-container">
-        <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
-        <button id="open-stats-btn" class="overlay-btn">📈 Statistiche</button>
-        <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button>
-        <button id="open-leaderboard-btn" class="overlay-btn">🏆 Classifica</button>
-        <button id="open-prestige-hub-btn" class="overlay-btn" style="display: none; border-color: #9b59b6; color: #e8daef;">👑 Promozione</button>
+            <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #d35400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <span id="offline-earnings-display" style="font-size: 2.5rem; font-weight: 800; color: #f1c40f; text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);">0</span>
+                <span style="font-size: 1.2rem; color: #f1c40f;"> Bug</span>
+            </div>
+
+            <button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
+                💰 Riscatta Guadagni
+            </button>
+        </div>
     </div>
+</div>
+    <?php include 'includes/modals.php'; ?>
+    
+    <div id="overlay-buttons-container">
+    <button id="open-help-btn" class="overlay-btn" style="border-color: #f1c40f; color: #f1c40f;">❓ Guida</button>
+    <button id="open-stats-btn" class="overlay-btn">📊 Statistiche</button>
+    <button id="open-achievements-btn" class="overlay-btn">🏆 Obiettivi</button>
+    <button id="open-skins-btn" class="overlay-btn" style="...">🎭 Skin</button> 
+    <button id="open-leaderboard-btn" class="overlay-btn">🥇 Classifica</button>
+    <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button> 
+    <button id="open-prestige-hub-btn" class="overlay-btn" style="...">🚀 Promozione</button>
+</div>
 
     <div id="game-container">
+
+        <button id="quick-mute-btn" title="Muta Tutto" style="position: absolute; bottom: 10px; left: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; z-index: 100;">🔊</button>
 
         <div id="left-column" class="game-column">
             <div class="tabs-header">
@@ -66,19 +100,19 @@
     </div>
 
     <div id="golden-bug" title="Un Ticket Critico! Clicca!">
-        <img src="./image/bug.png" alt="Ticket Critico!">
+        <img src="./assets/image/bug.png" alt="Ticket Critico!">
     </div>  
 
     <div id="github-link-container">
         <a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
-            <img src="./image/github-icon.svg" class="github-icon" alt="GitHub Logo">
+            <img src="./assets/image/github-icon.svg" class="github-icon" alt="GitHub Logo">
         </a>
     </div>
 
-    <audio id="sound-click" src="./sounds/Click.mp3" preload="auto"></audio>
-    <audio id="sound-buy" src="./sounds/Buy.mp3" preload="auto"></audio>
-    <audio id="sound-achievement" src="./sounds/Achievement.mp3" preload="auto"></audio>
-    <audio id="sound-bluescreen" src="./sounds/bluescreen.mp3" loop preload="auto"></audio>
+    <audio id="sound-click" src="./assets/sounds/Click.mp3" preload="auto"></audio>
+    <audio id="sound-buy" src="./assets/sounds/Buy.mp3" preload="auto"></audio>
+    <audio id="sound-achievement" src="./assets/sounds/Achievement.mp3" preload="auto"></audio>
+    <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="auto"></audio>
 
     <script src="./js/game-data.js" defer></script>
     <script src="./js/ui-functions.js" defer></script>

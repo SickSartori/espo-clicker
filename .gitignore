@@ -26,3 +26,4 @@ Thumbs.db
 *.sqlite
 dump.rdb
 template
+test
