@@ -1,7 +1,7 @@
 <div id="prestige-wrapper" class="tab-content" style="display: none;">
     <div id="prestige-store" style="display: block;">
         <div class="section-header">
-            <h2 style="color: #f1c40f;">Laboratorio</h2>
+            <h2 style="color: #f1c40f;"><i class="fa-solid fa-flask-vial"></i> Laboratorio</h2>
         </div>
         
         <div id="prestige-list-container">

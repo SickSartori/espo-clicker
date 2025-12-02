@@ -1,7 +1,7 @@
 <div id="right-column" class="game-column">
             
             <div class="store-section" id="building-store">
-                <h2>👥 Teams</h2>
+                <h2><i class="fa-solid fa-users"></i> Teams</h2>
                 
                 <div id="buy-controls" style="display: flex; gap: 5px; margin-bottom: 15px; justify-content: center;">
                     <button id="btn-1x" class="buy-btn" style="background-color: #27ae60; flex: 1;">1x</button>

@@ -8,7 +8,7 @@ Questa documentazione analizza la struttura, la logica di gioco e il funzionamen
 
 Il progetto segue un'architettura **Client-Server**:
 * **Frontend (Client):** Gestisce tutta la logica di gioco (calcolo risorse, acquisti, eventi, rendering UI) in tempo reale tramite JavaScript. Lo stato è mantenuto in memoria e sincronizzato con `localStorage` e il Server.
-* **Backend (Server):** Espone API RESTful in PHP per autenticazione, salvataggio cloud e gestione della classifica globale.
+* **Backend (Server):** Espone API RESTful in PHP per autenticazione, salvataggio cloud, reset progressi e gestione della classifica globale.
 * **Database:** MySQL per memorizzare utenti, salvataggi (BLOB JSON) e punteggi.
 
 ---
@@ -17,10 +17,15 @@ Il progetto segue un'architettura **Client-Server**:
 
 Il cuore del gioco è suddiviso in diversi moduli JS caricati in `index.php`.
 
-### A. Gestione Dati (`game-data.js`)
+### A. Configurazione & Versioning (`version-config.js`)
+**[NUOVO]** Questo file è il punto di ingresso per la definizione della versione del gioco.
+* Definisce l'oggetto globale `GAME_VERSION` contenente `major`, `minor` e `stage` (es. *beta*, *stable*).
+* Funge da "Source of Truth" per i controlli di compatibilità dei salvataggi.
+
+### B. Gestione Dati (`game-data.js`)
 Questo file definisce lo "State" (stato mutabile) e la "Config" (dati statici).
 
-* **`gameState`**: Un oggetto gigante che contiene tutto ciò che deve essere salvato (punteggio, edifici posseduti, upgrade acquistati, statistiche totali, skin equipaggiata).
+* **`gameState`**: Un oggetto gigante che contiene tutto ciò che deve essere salvato (punteggio, edifici posseduti, upgrade acquistati, statistiche totali, skin equipaggiata, versione del salvataggio).
 * **`gameData`**: Contiene le costanti di gioco:
     * `teams`: Configurazioni edifici (costo base, BPS - Bug Per Second).
     * `clickUpgrades` & `buildingEnhancements`: Potenziamenti per click e automazione.
@@ -28,91 +33,93 @@ Questo file definisce lo "State" (stato mutabile) e la "Config" (dati statici).
     * `skins`: Configurazioni estetiche.
     * `prestigeUpgrades`: Potenziamenti acquistabili dopo il reset (Ascensione).
 
-### B. Motore di Gioco (`game-logic.js`)
+### C. Motore di Gioco (`game-logic.js`)
 Contiene la matematica e le regole di business.
 
 * **Funzioni Core:**
-    * `recalculateCPS()`: Ricalcola i **BPS** (Bug Per Second) totali. Itera su tutti i team posseduti, applica i moltiplicatori degli upgrade (`buildingEnhancements`), i bonus prestigio e i bonus eventi (es. Crunch Time, Bluescreen).
-    * `clickCookie(event)`: Gestisce il click manuale. Calcola il valore del click basandosi su `baseClickValue`, bonus prestigio e upgrade (es. "Mano Bionica" che aggiunge % dei BPS al click).
-    * `gameLoop()`: Eseguito 30 volte al secondo (da `script.js`). Aggiunge `cookiesPerSecond / 30` al punteggio totale.
-
+    * `recalculateCPS()`: Ricalcola i **BPS** (Bug Per Second) totali.
+    * `clickCookie(event)`: Gestisce il click manuale, applicando bonus ed eventi.
+    * `gameLoop()`: Eseguito 30 volte al secondo. Aggiunge le risorse e gestisce i timer.
 * **Sistema Economico:**
-    * `calculateBulkCost(id, amount)`: Calcola il prezzo cumulativo per comprare 1, 10 o 100 edifici usando la formula della somma geometrica.
-    * `buyTeam(id)`, `buyClickUpgrade(id)`, `buyPrestigeUpgrade(id)`: Gestiscono le transazioni, sottraendo risorse e aggiornando lo stato.
-
+    * `calculateBulkCost()`: Calcola i prezzi cumulativi (1x, 5x, 10x, MAX).
 * **Eventi:**
-    * `triggerBluescreen(multiplier)`: Attiva un evento "Blue Screen of Death" che moltiplica la produzione per un tempo limitato, cambiando visivamente il CSS.
-    * `activateCrunchTime()`: Attiva un'abilità temporanea (BPS x7 per 30s) con cooldown.
-    * `spawnGoldenBug()`: Gestisce l'apparizione casuale di un ticket dorato cliccabile per bonus immediati.
-
+    * `triggerBluescreen()`, `triggerRickRoll()`: Eventi casuali che modificano il moltiplicatore globale.
 * **Prestigio (Ascension):**
-    * `calculatePrestigeGained()`: Determina quanti Token Lab si ottengono resettando in base al punteggio attuale (formula radice quadrata).
-    * `executePrestige()`: Esegue il "Soft Reset". Resetta edifici e punteggi ma mantiene achievement, skin, token prestigio e upgrade prestigio.
+    * `executePrestige()`: Esegue il "Soft Reset". Mantiene Skin e Achievements, converte i Bug in Token Lab.
 
-### C. Gestione Interfaccia (`ui-functions.js`)
-Si occupa esclusivamente di manipolare il DOM.
+### D. Gestione Interfaccia (`ui-functions.js` & `modals.js`)
+Si occupa di manipolare il DOM e gestire le finestre.
 
-* `updateUI()`: Aggiorna punteggi, BPS e disabilita/abilita i bottoni d'acquisto in base alle risorse disponibili.
-* `refreshAllStores()`: Rigenera l'HTML delle liste acquisti (Edifici, Upgrade, Prestigio) quando cambiano filtri o stati.
-* `updateAchievementsUI()`: Disegna la lista obiettivi, gestendo barre di progresso e tasti "Riscatta".
-* `updateSkinsUI()`: Gestisce la griglia delle skin (bloccate/sbloccate/acquistabili).
-* `showToast(msg, type)`: Mostra notifiche a scomparsa in alto a destra.
+* **Navbar & Layout:** Gestisce la nuova barra di navigazione in alto (Dashboard style) e la responsività mobile.
+* **Aggiornamento UI:** `updateUI()`, `refreshAllStores()`, `updateSkinsUI()`.
+* **Modali:** Gestione apertura/chiusura finestre (Impostazioni, Account, Podio).
 
-### D. Main Controller (`script.js`)
+### E. Main Controller (`script.js`)
 Il punto d'ingresso che lega tutto.
 
-* **Inizializzazione:** Carica il salvataggio (`loadGame`), costruisce i negozi e avvia i loop.
-* **Game Loop:** Gestisce il `setInterval` principale a 30 FPS.
-* **Salvataggio:** Gestisce il salvataggio su `localStorage` e, se l'utente è loggato, invia il JSON al file PHP `save_progress.php`.
-* **Offline Progress:** Al caricamento, calcola quanto tempo è passato dall'ultimo save e assegna risorse "offline" (con efficienza ridotta).
+* **Inizializzazione:** Carica la configurazione, verifica la versione (`checkSaveCompatibility`), costruisce i negozi e avvia i loop.
+* **Salvataggio:** Gestisce il salvataggio su `localStorage` e cloud (`save_progress.php`).
 
 ---
 
 ## 🖥️ 3. Logica Backend (PHP & SQL)
 
-Il backend serve per la persistenza cloud e la componente sociale (classifiche).
+Il backend serve per la persistenza cloud e la sicurezza.
 
 ### Database (`databasecreation.sql`)
 * `users`: Tabella utenti (ID, username, password hash, save_data JSON).
 * `leaderboard`: Tabella classifiche (username, score massimo, livello prestigio).
+* **Multi-Environment:** Supporto per tabelle `_production` e `_dev` gestite da `config.json`.
 
 ### API Endpoints
-Tutti gli endpoint restituiscono JSON.
-
-1.  **Autenticazione (`login_register.php`):**
-    * Accetta JSON `{username, password}`.
-    * Se l'utente esiste: Verifica password (`password_verify`). Se corretta, restituisce il JSON del salvataggio (`save_data`).
-    * Se non esiste: Crea nuovo utente (`password_hash`) e restituisce successo.
-
-2.  **Salvataggio (`save_progress.php`):**
-    * Riceve l'intero oggetto `gameState` in JSON.
-    * Verifica la password dell'utente prima di sovrascrivere il campo `save_data` nel DB.
-
-3.  **Classifica (`submit_score.php` & `get_leaderboard.php`):**
-    * `submit_score`: Aggiorna la riga dell'utente nella tabella `leaderboard` solo se il nuovo punteggio è superiore al precedente (`ON DUPLICATE KEY UPDATE`).
-    * `get_leaderboard`: Esegue una `SELECT` ordinata per `prestigeLevel DESC, score DESC` limitata ai primi 10.
-
-4.  **Gestione Account:**
-    * `change_username.php`, `change_password.php`, `delete_user.php`: Eseguono operazioni CRUD sull'account previa verifica della password attuale.
+1.  **Auth (`login_register.php`):** Gestisce login e registrazione.
+2.  **Salvataggio (`save_progress.php`):** Riceve il JSON del `gameState` e lo salva nel DB.
+3.  **Reset (`reset_progress.php`):** **[NUOVO]** Imposta a `NULL` il salvataggio nel DB e rimuove l'utente dalla classifica, mantenendo l'account attivo. Richiede verifica password.
+4.  **Classifica (`submit_score.php`):** Aggiorna i punteggi per la leaderboard pubblica.
+5.  **Account:** Cambio username, password e cancellazione utente.
 
 ---
 
-## 🛠️ 4. Funzionalità Chiave Spiegate
+## 🚀 4. Funzionalità Chiave & Sistema di Gioco
 
-### Il Sistema di Prestigio
-Il gioco implementa un sistema di "Ascensione" (chiamato "Ufficio Promozioni").
-1.  Il giocatore accumula "Bug".
-2.  Superata una soglia (`PRESTIGE_THRESHOLD`), può resettare.
-3.  Il reset converte i guadagni totali in **Token Lab**.
-4.  I Token Lab si usano per comprare upgrade permanenti (`prestigeUpgrades`) che persistono tra i reset (es. bonus passivo, start con più risorse, mantenimento edifici).
+### Sistema di Prestigio (Laboratorio)
+Quando il giocatore accumula abbastanza risorse, può effettuare una "Promozione".
+* **Soft Reset:** Perde edifici e bug.
+* **Guadagno:** Ottiene **Token Lab**.
+* **Vantaggio:** Acquista upgrade permanenti che velocizzano le run successive.
 
-### Modello di Dati (JSON Blob)
-Il salvataggio non è strutturato in tabelle relazionali complesse per ogni edificio. Invece, l'intero stato JS (`gameState`) viene serializzato in una stringa JSON e salvato in una singola colonna `LONGTEXT` (`save_data`) nel database.
-* **Pro:** Estremamente flessibile. Aggiungere un nuovo edificio nel JS non richiede modifiche al DB.
-* **Contro:** Non si possono fare query SQL complesse sui dati di gioco (es. "trova tutti gli utenti con l'edificio X").
+### Sistema di Versioning & Compatibilità 📦
+Il gioco implementa un sistema intelligente per gestire gli aggiornamenti senza corrompere i salvataggi, definito in `version-config.js`.
 
-### Cheatboard (`cheatboard.js`)
-Un file separato iniettato dinamicamente che crea una console di amministrazione (attivabile con shortcut o via codice) per aggiungere risorse, resettare o testare eventi. Utile per il debugging.
+La logica di compatibilità (`checkSaveCompatibility` in `script.js`) segue queste regole:
+
+1.  **Stable Channel:**
+    * I salvataggi marcati come `stable` sono **sempre compatibili** con versioni future `stable`.
+    * *Esempio:* Save v1.0 -> Gioco v2.5 = **Compatibile**.
+
+2.  **Beta/Alpha Channel (Sviluppo):**
+    * La compatibilità è garantita solo se la **Major Version** coincide.
+    * Se la Major cambia, il salvataggio viene resettato automaticamente per evitare conflitti.
+    * *Esempio:* Save v3.0 Beta -> Gioco v3.1 Beta = **Compatibile**.
+    * *Esempio:* Save v3.5 Beta -> Gioco v4.0 Beta = **RESET (Incompatibile)**.
+
+3.  **Cross-Stage Protection:**
+    * Non è possibile caricare salvataggi Beta su Stable (e viceversa).
+    * *Esempio:* Save v3.9 Beta -> Gioco v1.0 Stable = **RESET**.
+
+### Gestione Reset & Hard Reset 🛡️
+Il gioco offre due livelli di pulizia dati:
+
+1.  **Reset Progressi (Utente):**
+    * Accessibile dalle Impostazioni.
+    * Richiede la **Password**.
+    * Cancella i progressi (Skin, Bug, Upgrade) ma **mantiene l'account** e il nome utente.
+    * Implementato via server (`reset_progress.php`).
+
+2.  **Hard Reset (Sviluppatore):**
+    * Accessibile dalla **Cheatboard**.
+    * Non richiede password (ma è nascosto).
+    * Cancella tutto istantaneamente e forza il ricaricamento.
 
 ---
 
@@ -120,24 +127,27 @@ Un file separato iniettato dinamicamente che crea una console di amministrazione
 ```text
 /
 ├── index.php              # Entry point HTML
-├── css/                   # Fogli di stile modulari
-│   ├── base.css           # Stili globali
-│   ├── clicker.css        # Area centrale
-│   ├── layout.css         # Griglia
+├── css/                   # Fogli di stile
+│   ├── base.css           # Stili globali e reset
+│   ├── layout.css         # Griglia e struttura colonne
+│   ├── clicker.css        # Area centrale (bottone, effetti)
+│   ├── store.css          # Negozi e card upgrade
+│   ├── modals.css         # Finestre e Navbar
 │   ├── mobile.css         # Media queries
-│   ├── store.css          # Negozi
 │   └── ...
 ├── js/                    # Logica Frontend
-│   ├── game-data.js       # Configurazione e Stato Iniziale
+│   ├── version-config.js  # [NUOVO] Configurazione versione
+│   ├── game-data.js       # Stato Iniziale e Costanti
 │   ├── game-logic.js      # Matematica e Regole
-│   ├── script.js          # Main Loop e Inizializzazione
+│   ├── script.js          # Controller e Caricamento
 │   ├── ui-functions.js    # Rendering DOM
-│   ├── modals.js          # Gestione finestre modali
+│   ├── modals.js          # Gestione finestre e Account
 │   ├── podio.js           # Logica Classifica
-│   └── cheatboard.js      # Strumenti Dev
+│   └── cheatboard.js      # Strumenti Dev (Console)
 ├── php/                   # API Backend
 │   ├── db_connect.php     # Connessione DB
 │   ├── login_register.php # Auth
 │   ├── save_progress.php  # Cloud Save
+│   ├── reset_progress.php # [NUOVO] Reset Dati
 │   └── ...
 └── template/image/ & sounds/ # Assets

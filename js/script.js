@@ -483,10 +483,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (gameState.user.masterVolume > 0) {
                     gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    muteBtn.textContent = '🔇';
+                    // Cambio Icona FontAwesome
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    muteBtn.textContent = '🔊';
+                    // Cambio Icona FontAwesome
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;

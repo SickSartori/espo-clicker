@@ -960,6 +960,6 @@ function clickGoldenBug() {
 
 let originalTitle = document.title;
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.title = 'I bug si accumulano... 🐞';
+    if (document.hidden) document.title = 'I bug si accumulano...';
     else document.title = originalTitle;
 });

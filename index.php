@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/mobile.css">
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="./assets/image/favicon.png">
 </head>
 <body>
@@ -61,59 +62,65 @@
     <nav id="game-navbar">
         <div class="nav-group left">
             <button id="open-help-btn" class="nav-item" title="Guida">
-                <span class="nav-icon">❓</span>
+                <i class="nav-icon fa-solid fa-circle-question"></i>
                 <span class="nav-label">Guida</span>
             </button>
             <button id="open-stats-btn" class="nav-item" title="Statistiche">
-                <span class="nav-icon">📊</span>
+                <i class="nav-icon fa-solid fa-chart-pie"></i>
                 <span class="nav-label">Stats</span>
             </button>
         </div>
 
         <div class="nav-group center">
             <button id="open-achievements-btn" class="nav-item" title="Obiettivi">
-                <span class="nav-icon">🏆</span>
+                <i class="nav-icon fa-solid fa-trophy"></i>
                 <span class="nav-label">Obiettivi</span>
             </button>
             <button id="open-skins-btn" class="nav-item" title="Guardaroba">
-                <span class="nav-icon">👕</span>
-                <span class="nav-label">Skin</span>
+                <i class="nav-icon fa-solid fa-shirt"></i> <span class="nav-label">Skin</span>
             </button>
             <button id="open-leaderboard-btn" class="nav-item" title="Classifica">
-                <span class="nav-icon">🥇</span>
+                <i class="nav-icon fa-solid fa-medal"></i>
                 <span class="nav-label">Classifica</span>
             </button>
         </div>
 
         <div class="nav-group right">
             <button id="open-prestige-hub-btn" class="nav-special-btn">
-                <span class="nav-icon">🚀</span> Promozione
+                <i class="nav-icon fa-solid fa-rocket"></i> Promozione
             </button>
             <button id="open-settings-btn" class="nav-item" title="Opzioni">
-                <span class="nav-icon">⚙️</span>
+                <i class="nav-icon fa-solid fa-gear"></i>
                 <span class="nav-label">Opzioni</span>
             </button>
-            
         </div>
     </nav>
-    <button id="quick-mute-btn" title="Muta Tutto">🔊</button>
+    <button id="quick-mute-btn" title="Muta Tutto">
+        <i class="fa-solid fa-volume-high"></i>
+    </button>
     <div id="game-container">
 
         
 
         <div id="left-column" class="game-column">
             <div class="tabs-header">
-                <button class="tab-btn active" data-target="upgrade-store" id="tab-click">⚡ Click</button>
-                <button class="tab-btn" data-target="enhancement-store" id="tab-auto">⚙️ Auto</button>
-                <button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige" style="display: none;">⭐ Lab</button>
+                <button class="tab-btn active" data-target="upgrade-store" id="tab-click">
+                    <i class="fa-solid fa-computer-mouse"></i> Click
+                </button>
+                <button class="tab-btn" data-target="enhancement-store" id="tab-auto">
+                    <i class="fa-solid fa-robot"></i> Auto
+                </button>
+                <button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige" style="display: none;">
+                    <i class="fa-solid fa-flask"></i> Lab
+                </button>
             </div>
             
             <div id="global-filter-section">
                 <select id="global-filter-select">
-                    <option value="available">🛒 Da Comprare (Disponibili)</option>
-                    <option value="locked">🔒 In Arrivo (Bloccati)</option>
-                    <option value="purchased">✅ Già Presi (Posseduti)</option>
-                    <option value="all">👁️ Mostra Tutto</option>
+                    <option value="available">Da Comprare (Disponibili)</option>
+                    <option value="locked">In Arrivo (Bloccati)</option>
+                    <option value="purchased">Già Presi (Posseduti)</option>
+                    <option value="all">Mostra Tutto</option>
                 </select>
             </div>
 
@@ -134,7 +141,7 @@
 
     <div id="github-link-container">
         <a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
-            <img src="./assets/image/github-icon.svg" class="github-icon" alt="GitHub Logo">
+            <i class="fa-brands fa-github" style="font-size: 2.5rem;"></i>
         </a>
     </div>
 

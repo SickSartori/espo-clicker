@@ -189,7 +189,7 @@
     container.innerHTML = `
         <div id="cheatboard-handle">CONSOLE ADMIN</div>
         <div id="cheatboard-header">
-            <span id="cheatboard-title">🔧 Strumenti Sviluppatore v3.1</span>
+            <span id="cheatboard-title"><i class="fa-solid fa-screwdriver-wrench"></i> Strumenti Sviluppatore v3.1</span>
             <span id="cheatboard-close">✕</span>
         </div>
         <div id="cheatboard-content">
@@ -257,7 +257,7 @@
                     <button id="btn-lock-ach" class="cheat-btn danger">Blocca Ach.</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
-                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;">⚠️ HARD RESET ⚠️</button>
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
                 </div>
             </div>
 
@@ -269,7 +269,7 @@
     // 4. Funzioni Helper
     const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
     const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
-    const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast("🔧 " + msg, 'info'); };
+    const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast('<i class="fa-solid fa-screwdriver-wrench"></i> ' + msg, 'info'); };
 
     // 5. Event Listeners
     const handle = document.getElementById('cheatboard-handle');

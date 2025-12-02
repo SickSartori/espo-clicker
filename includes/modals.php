@@ -1,6 +1,6 @@
 <div id="login-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
-        <h2>Accesso Account</h2>
+        <h2><i class="fa-solid fa-right-to-bracket"></i> Accesso Account</h2>
         <p class="modal-desc">
             Inserisci le credenziali per giocare.<br>Se non hai un account, verrà creato ora.
         </p>
@@ -21,7 +21,7 @@
 <div id="achievements-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>🏆 Obiettivi</h2>
+        <h2><i class="fa-solid fa-trophy"></i> Obiettivi</h2>
         <div id="achievement-list"></div>
     </div>
 </div>
@@ -29,7 +29,7 @@
 <div id="stats-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>📈 Statistiche</h2>
+        <h2><i class="fa-solid fa-chart-pie"></i> Statistiche</h2>
         <div id="stats-list"></div>
     </div>
 </div>
@@ -37,21 +37,21 @@
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>⚙️ Impostazioni</h2>
+        <h2><i class="fa-solid fa-sliders"></i> Impostazioni</h2>
         
         <div class="settings-content">
             <div class="setting-item">
-                <label>🔊 Volume Master (<span id="master-vol-display">100</span>%)</label>
+                <label><i class="fa-solid fa-volume-high"></i> Volume Master(<span id="master-vol-display">100</span>%)</label>
                 <input type="range" id="master-slider" min="0" max="1" step="0.1" value="1">
             </div>
 
             <div class="setting-item">
-                <label>🔔 Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
+                `<label><i class="fa-solid fa-bell"></i> Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
                 <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
             </div>
 
             <div class="setting-item">
-                <label>🎵 Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
+                <label><i class="fa-solid fa-music"></i> Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
                 <input type="range" id="music-slider" min="0" max="1" step="0.1" value="0.5">
             </div>
             
@@ -73,7 +73,7 @@
 <div id="account-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>🔐 Gestione Account</h2>
+        <h2><i class="fa-solid fa-user-shield"></i> Gestione Account</h2>
         
         <div class="settings-content">
             
@@ -97,7 +97,7 @@
             <button id="logout-btn" class="buy-btn logout-btn">Cambia Utente (Logout)</button>
 
             <div class="danger-zone">
-                <h3>⚠️ Zona Pericolosa</h3>
+                <h3><i class="fa-solid fa-triangle-exclamation"></i> Zona Pericolosa</h3>
                 
                 <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #c0392b;">
                     <p style="color: #e74c3c; font-weight: bold; margin-bottom: 5px;">Reset Progressi</p>
@@ -124,7 +124,7 @@
 <div id="leaderboard-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>🏆 Classifica</h2>
+        <h2><i class="fa-solid fa-medal"></i> Classifica</h2>
         <div id="leaderboard-list"></div>
     </div>
 </div>
@@ -133,7 +133,7 @@
     <div class="modal-content" style="max-width: 450px; border-color: #9b59b6;"> 
         <button class="modal-close-btn">&times;</button>
         <h2 style="background-color: #4a235a; border-bottom: 1px solid #9b59b6; color: #f1c40f; text-align: center;">
-            👑 Ufficio Promozioni
+            <i class="fa-solid fa-rocket"></i> Ufficio Promozioni
         </h2>
         
         <div class="settings-content" style="text-align: center; padding: 30px 20px;">
@@ -154,7 +154,7 @@
             </div>
 
             <button id="btn-go-to-contract" class="buy-btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); border: none; font-size: 1.1rem; padding: 15px; width: 100%; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);">
-                📄 Visualizza Contratto
+                <i class="fa-solid fa-file-signature"></i> Visualizza Contratto
             </button>
         </div>
     </div>
@@ -163,14 +163,14 @@
 <div id="prestige-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content contract-modal">
         <div class="contract-header">
-            <h2>📜 Contratto di Promozione</h2>
+            <h2><i class="fa-solid fa-file-contract"></i> Contratto di Promozione</h2>
             <p>L'azienda ha notato il tuo eccellente lavoro.</p>
         </div>
 
         <div class="contract-body">
             <div class="contract-columns">
                 <div class="contract-column loss">
-                    <h3>📉 Cedi al Dipartimento</h3>
+                    <h3><i class="fa-solid fa-arrow-trend-down"></i> Cedi al Dipartimento</h3>
                     <ul>
                         <li> Tutti i Bug attuali</li>
                         <li> Tutti i teams</li>
@@ -183,7 +183,7 @@
                 </div>
 
                 <div class="contract-column gain">
-                    <h3>📈 Il tuo Nuovo Pacchetto</h3>
+                    <h3><i class="fa-solid fa-arrow-trend-up"></i> Il tuo Nuovo Pacchetto</h3>
                     <div class="gain-item">
                         <span class="gain-label">Nuovi Token Lab</span>
                         <span id="contract-gain-token" class="gain-value">+0</span>
@@ -200,7 +200,7 @@
         <div class="contract-footer">
             <button id="btn-cancel-contract" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta e Torna Indietro</button>
             <button id="btn-confirm-prestige" class="buy-btn prestige-btn signature-btn">
-                ✍️ Firma e Accetta Promozione
+                <i class="fa-solid fa-signature"></i> Firma e Accetta Promozione
             </button>
         </div>
     </div>
@@ -209,7 +209,7 @@
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>👕 Guardaroba</h2>
+        <h2><i class="fa-solid fa-shirt"></i> Guardaroba</h2>
         <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
             Personalizza il tuo look.<br>Sblocca nuove skin completando obiettivi speciali!
         </p>
@@ -228,12 +228,12 @@
 <div id="help-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
         <button class="modal-close-btn">&times;</button>
-        <h2>📘 Manuale del Dipendente</h2>
+        <h2><i class="fa-solid fa-book-open"></i> Manuale del Dipendente</h2>
         
         <div class="settings-content" style="text-align: left; line-height: 1.6;">
             
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #3498db; margin-bottom: 5px;">1. L'Obiettivo</h3>
+                <h3 style="color: #3498db; margin-bottom: 5px;"><i class="fa-solid fa-bullseye"></i>1. L'Obiettivo</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: 
                     risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. 
@@ -242,7 +242,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #2ecc71; margin-bottom: 5px;">2. Automazione (BPS)</h3>
+                <h3 style="color: #2ecc71; margin-bottom: 5px;"><i class="fa-solid fa-robot"></i> 2. Automazione (BPS)</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.
                     <br>
@@ -251,19 +251,21 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #f1c40f; margin-bottom: 5px;">3. Eventi & Anomalie</h3>
+                <h3 style="color: #f1c40f; margin-bottom: 5px;"><i class="fa-solid fa-bolt"></i> 3. Eventi & Anomalie</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Il sistema è instabile. Tieni gli occhi aperti per:
                 </p>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
-                    <li>🐞 <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito per un bonus enorme!</li>
-                    <li>💻 <strong>Errore 404 (Blue Screen):</strong> Il sistema crasha! Durante l'errore, la produzione è moltiplicata (x2 o più).</li>
-                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari scatenano eventi musicali unici con moltiplicatori folli.</li>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px; list-style: none;">
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-bug" style="color:#f1c40f; width: 20px;"></i> <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito!</li>
+                    
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-display" style="color:#3498db; width: 20px;"></i> <strong>Errore 404:</strong> Il sistema crasha! Produzione moltiplicata.</li>
+                    
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-music" style="color:#e74c3c; width: 20px;"></i> <strong>Eventi Skin:</strong> Alcuni costumi leggendari scatenano eventi musicali.</li>
                 </ul>
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #9b59b6; margin-bottom: 5px;">4. Laboratorio (Prestigio)</h3>
+                <h3 style="color: #9b59b6; margin-bottom: 5px;"><i class="fa-solid fa-flask"></i> 4. Laboratorio (Prestigio)</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.
                     <br>
@@ -273,7 +275,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #e67e22; margin-bottom: 5px;">5. Matematica dei Bonus</h3>
+                <h3 style="color: #e67e22; margin-bottom: 5px;"><i class="fa-solid fa-calculator"></i> 5. Matematica dei Bonus</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Come faccio a fare numeri enormi? Semplice: <strong>I Moltiplicatori si sommano!</strong>
                 </p>
@@ -286,7 +288,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #1abc9c; margin-bottom: 5px;">6. Account & Salvataggi</h3>
+                <h3 style="color: #1abc9c; margin-bottom: 5px;"><i class="fa-solid fa-user"></i> 6. Account & Salvataggi</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     I tuoi dati sono al sicuro nel Cloud della Espò Solutions.
                 </p>
@@ -298,7 +300,7 @@
             </div>
 
             <div>
-                <h3 style="color: #e74c3c; margin-bottom: 5px;">7. Consigli Utili</h3>
+                <h3 style="color: #e74c3c; margin-bottom: 5px;"><i class="fa-solid fa-lightbulb"></i> 7. Consigli Utili</h3>
                 <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
                     <li>Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.</li>
                     <li>Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.</li>

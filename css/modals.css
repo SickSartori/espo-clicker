@@ -66,9 +66,16 @@
 }
 
 .nav-icon {
-    font-size: 1.4rem;
-    margin-bottom: 2px;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+    filter: none;
+    text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.nav-special-btn .nav-icon {
+    margin: 0;
+    margin-right: 6px;
+    font-size: 1rem;
 }
 
 .nav-label {
@@ -422,8 +429,13 @@ input[type="number"] {
 }
 
 .contract-column.loss ul li::before {
-    content: "❌ ";
-    margin-right: 5px;
+    /* Prima: content: "❌ "; */
+    content: "\f057";
+    /* Codice Unicode per fa-circle-xmark */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 8px;
+    color: #e74c3c;
 }
 
 /* Separatore VS */
@@ -1115,211 +1127,233 @@ input[type="number"] {
     }
 }
 
-/* --- SKIN SYSTEM --- */
-.skin-card {
-    border-width: 3px;
-    /* Spessore desiderato */
-    border-style: solid;
-    /* Forza il solido anche per bloccate */
-    transition: all 0.2s ease-in-out;
-    /* Rimuovi l'opacity 0.8 in linea per controllare meglio */
-    opacity: 1;
+/* --- SKIN SYSTEM (Fix Visibilità e Testi) --- */
+
+#skins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    padding-bottom: 40px;
 }
 
+/* Base Card */
+.skin-card {
+    background-color: #1e272e;
+    border-radius: 12px;
+    border: 1px solid #34495e;
+    /* Bordo base neutro */
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    padding-top: 30px;
+    /* Spazio per il badge */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Variabili Colore Rarità */
+.skin-card.rarity-common {
+    --r-color: #95a5a6;
+}
+
+.skin-card.rarity-rare {
+    --r-color: #3498db;
+}
+
+.skin-card.rarity-epic {
+    --r-color: #9b59b6;
+}
+
+.skin-card.rarity-legendary {
+    --r-color: #f1c40f;
+}
+
+/* --- 1. BADGE RARITÀ (SEMPRE ACCESO) --- */
+/* Questo rimane sempre colorato, anche se la card è bloccata */
+.skin-badge {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background-color: var(--r-color);
+    /* Usa sempre il colore vivo */
+    color: #1e272e;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    opacity: 1 !important;
+    /* Forza visibilità */
+}
+
+/* --- 2. GESTIONE STATO BLOCCATO --- */
+/* Spegniamo solo l'immagine, non il badge */
+.skin-card.locked .skin-img {
+    filter: grayscale(100%) brightness(0.6);
+    /* Immagine grigia e scura */
+    opacity: 0.7;
+}
+
+/* Il bordo della card bloccata rimane scuro/neutro finché non si sblocca */
+.skin-card.locked {
+    border-color: #34495e;
+}
+
+/* --- 3. GESTIONE STATO SBLOCCATO --- */
+/* Quando sbloccata, il bordo prende il colore della rarità */
+.skin-card.unlocked {
+    border-color: var(--r-color);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Hover su Sbloccata */
+.skin-card.unlocked:hover {
+    box-shadow: 0 0 15px var(--r-color);
+}
+
+/* --- 4. EQUIPAGGIATA --- */
+.skin-card.equipped {
+    border: 2px solid #2ecc71 !important;
+    background: rgba(46, 204, 113, 0.05);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2) !important;
+}
+
+/* --- 5. ACQUISTABILE (Animazione solo su hover per non disturbare) --- */
+.skin-card.buyable:hover {
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+}
+
+/* --- ELEMENTI INTERNI --- */
+
+.skin-img-container {
+    position: relative;
+    width: 65px;
+    /* Leggermente più piccola */
+    height: 65px;
+    margin-bottom: 8px;
+}
+
+.skin-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #2c3e50;
+    background: #151b22;
+    transition: filter 0.3s;
+}
+
+.skin-name-display {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ecf0f1;
+    margin-bottom: 2px;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skin-status-info {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+    margin-top: auto;
+}
+
+.equipped-icon {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #2ecc71;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    z-index: 5;
+}
+
+/* --- OVERLAY (FIX TESTI GRANDI) --- */
 .skin-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    background: rgba(15, 20, 25, 0.96);
+    /* Sfondo molto coprente */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    /* Invisibile di default */
-    transition: opacity 0.3s ease;
     padding: 10px;
+    /* Padding ridotto */
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s;
     box-sizing: border-box;
+    z-index: 9;
+    /* Sotto al badge (z-index 10) */
 }
 
-/* Mostra overlay al passaggio del mouse */
 .skin-card:hover .skin-overlay {
     opacity: 1;
 }
 
-.skin-overlay-text {
-    font-size: 0.75rem;
+/* Titolo Overlay */
+.skin-overlay h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.85rem;
+    /* Più piccolo */
     color: #fff;
-    text-align: center;
     line-height: 1.2;
 }
 
-.skin-price {
-    color: #f1c40f;
-    font-weight: bold;
-    margin-top: 5px;
-    font-size: 0.9rem;
-    border: 1px solid #f1c40f;
-    padding: 2px 6px;
-    border-radius: 4px;
+/* Descrizione Overlay */
+.skin-desc {
+    font-size: 0.7rem;
+    /* Testo piccolo */
+    color: #bdc3c7;
+    margin-bottom: 8px;
+    font-style: italic;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Max 2 righe */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Prezzo Overlay */
+.skin-price-tag {
     background: rgba(241, 196, 15, 0.1);
-}
-
-/* Bordo dorato pulsante per le skin acquistabili */
-.skin-card.buyable:hover {
-    border-color: #f1c40f !important;
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
-}
-
-.skin-card:hover:not(.locked) {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-.skin-card.rarity-common {
-    border-color: #7f8c8d;
-}
-
-.skin-card.rarity-rare {
-    border-color: #3498db;
-}
-
-.skin-card.rarity-epic {
-    border-color: #9b59b6;
-}
-
-.skin-card.rarity-legendary {
-    border-color: #f1c40f;
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
-}
-
-.skin-card.rarity-common.unlocked {
-    border-color: #bdc3c7;
-    /* Grigio chiaro */
-}
-
-
-
-.skin-card.rarity-rare.unlocked {
-    border-color: #3498db;
-    /* Blu vivido */
-    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
-}
-
-
-
-.skin-card.rarity-epic.unlocked {
-    border-color: #9b59b6;
-    /* Viola acceso */
-    box-shadow: 0 0 12px rgba(155, 89, 182, 0.6);
-}
-
-
-.skin-card.rarity-legendary.unlocked {
-    animation: gold-pulse 2s infinite alternate ease-in-out;
-}
-
-.skin-card.rarity-legendary.unlocked:hover {
-    box-shadow: 0 0 30px rgba(255, 223, 0, 1) !important;
-}
-
-.skin-card.unlocked {
-    border-width: 3px;
-    /* Più spesso */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-    /* Ombra leggera di base */
-}
-
-/* Stili per le skin sbloccate/acquistabili al passaggio del mouse */
-.skin-card.unlocked:hover {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-    transform: translateY(-2px);
-}
-
-.skin-card.rarity-legendary.unlocked:hover {
-    box-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
-}
-
-.skin-card.equipped {
-    border-color: #2ecc71 !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
-    animation: none !important;
-    /* Non deve pulsare */
-}
-
-.skin-card.locked {
-    opacity: 0.6;
-    /* Scuro per indicare bloccato */
-    box-shadow: none;
-    cursor: default;
-}
-
-.skin-card.locked.buyable {
-    border-style: solid;
-    opacity: 0.9;
-    /* Più visibile rispetto alle achievement-locked */
-    cursor: pointer;
-}
-
-.skin-card.rarity-legendary.can-afford-border {
-    /* Sovrascrivi il border-color con l'oro solo se can-afford-border è presente */
-    border-color: #f1c40f !important;
-    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
-    animation: gold-pulse 2s infinite alternate ease-in-out;
-}
-
-.skin-card.rarity-legendary.can-afford-border:hover {
-    box-shadow: 0 0 25px rgba(241, 196, 15, 0.8) !important;
-    transform: translateY(-3px) scale(1.02);
-}
-
-.skin-card.locked.buyable:hover {
-    box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
-    border-color: #f1c40f;
-    /* Diventa oro al hover */
-    transform: translateY(-2px);
-}
-
-/* Se la skin è bloccata ma acquistabile, il lucchetto è dorato/giallo */
-.skin-card.locked .skin-price {
+    border: 1px solid #f1c40f;
     color: #f1c40f;
-    border-color: #f1c40f;
-    font-weight: 700;
-}
-
-.skin-price {
-    font-weight: bold;
-    margin-top: 5px;
-    font-size: 0.9rem;
-    border: 1px solid;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.5);
-    color: #fff;
-    /* Testo bianco */
+    font-weight: bold;
+    font-size: 0.9rem;
+    /* Prezzo ben visibile ma non enorme */
+    margin-bottom: 2px;
 }
 
-.skin-price.can-afford {
-    border-color: #2ecc71;
-    /* Verde se puoi permettertelo */
-    color: #2ecc71;
-    box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
-}
-
-/* --- ANIMAZIONI --- */
-
-@keyframes gold-pulse {
-    0% {
-        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
-    }
-
-    50% {
-        box-shadow: 0 0 25px rgba(255, 223, 0, 1);
-    }
-
-    100% {
-        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
-    }
+/* Testo Azione (Clicca per...) */
+.skin-action-text {
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 4px;
 }
