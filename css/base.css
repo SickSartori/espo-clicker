@@ -1,12 +1,27 @@
 /* css/base.css - Stili base e comuni */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-image: linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)), url('../assets/image/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    /* Gradiente complesso a 4 colori */
+    background: linear-gradient(-45deg, #1a252f, #2c3e50, #141e30, #243b55);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+
     color: #e0e0e0;
     display: flex;
     justify-content: center;
@@ -16,6 +31,22 @@ body {
     padding: 65px 20px 20px 20px;
     user-select: none;
     overflow-y: hidden;
+}
+
+/* Overlay a griglia per effetto "Cyber" opzionale */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* Stile per la schermata blu */
@@ -323,4 +354,30 @@ body.bluescreen-active {
     width: 42px;
     height: 42px;
     vertical-align: middle;
+}
+
+#quick-mute-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 11000;
+    /* Sopra a tutto, anche ai video */
+    background-color: rgba(44, 62, 80, 0.8);
+    color: #fff;
+    border: 2px solid #5d7c9a;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+}
+
+#quick-mute-btn:hover {
+    background-color: #34495e;
+    transform: scale(1.1);
 }

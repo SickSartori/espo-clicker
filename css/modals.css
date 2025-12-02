@@ -960,6 +960,39 @@ input[type="number"] {
     }
 }
 
+@keyframes purple-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(155, 89, 182, 0.8);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(155, 89, 182, 1);
+    }
+
+    100% {
+        box-shadow: 0 0 15px rgba(155, 89, 182, 0.8);
+    }
+}
+
+.skin-card.rarity-epic.can-afford-border {
+    border-color: #9b59b6 !important;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
+    animation: purple-pulse 2s infinite alternate ease-in-out;
+}
+
+/* 3. Stato HOVER - UNIVERSALE PER EPICHE */
+/* Questa regola copre TUTTI gli stati: bloccata, acquistabile o già sbloccata/equipaggiata */
+.skin-card.rarity-epic:hover,
+.skin-card.rarity-epic.locked.buyable:hover,
+.skin-card.rarity-epic.unlocked:hover,
+.skin-card.rarity-epic.equipped:hover {
+    border-color: #9b59b6 !important;
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.9) !important;
+    transform: translateY(-3px) scale(1.02);
+    opacity: 1;
+    /* Assicura che sia ben visibile */
+}
+
 .achievement.claimable {
     border: 3px solid #f1c40f;
     background-color: rgba(241, 196, 15, 0.15);
@@ -1177,15 +1210,14 @@ input[type="number"] {
     cursor: pointer;
 }
 
-.skin-card.can-afford-border {
+.skin-card.rarity-legendary.can-afford-border {
     /* Sovrascrivi il border-color con l'oro solo se can-afford-border è presente */
     border-color: #f1c40f !important;
     box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
     animation: gold-pulse 2s infinite alternate ease-in-out;
 }
 
-/* Hover: Mantiene l'animazione se puoi comprare, altrimenti colore normale */
-.skin-card.can-afford-border:hover {
+.skin-card.rarity-legendary.can-afford-border:hover {
     box-shadow: 0 0 25px rgba(241, 196, 15, 0.8) !important;
     transform: translateY(-3px) scale(1.02);
 }

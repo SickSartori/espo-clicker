@@ -2,21 +2,26 @@
 
 #game-container {
     margin: 0 auto;
-    width: 90%;
-    max-width: 1400px;
-    background-color: rgba(44, 62, 80, 0.85);
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    width: 95%;
+    max-width: 1600px;
+
+    /* SFONDO SOLIDO E FLAT */
+    background-color: #1e272e;
+    /* Grigio scuro/blu solido */
+
+    /* Nessuna ombra esterna pesante, solo definizione */
+    border-radius: 8px;
+    /* Angoli meno arrotondati */
     display: flex;
     flex-wrap: nowrap;
-    border: 1px solid rgba(74, 101, 130, 0.5);
-    transition: box-shadow 0.3s ease;
+
+    /* Bordo sottile e pulito */
+    border: 1px solid #2c3e50;
+
     height: calc(100vh - 85px);
     max-height: calc(100vh - 85px);
-}
-
-#game-container:hover {
-    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Ombra minimal */
 }
 
 /* Colonne */
@@ -24,11 +29,16 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 2px solid rgba(74, 101, 130, 0.5);
     overflow-y: auto;
     height: 100%;
+
+    /* Separatori molto sottili */
+    border-right: 1px solid #2c3e50;
+    background-color: transparent;
+    /* Ereditano il colore flat del container */
 }
 
+/* Rimuovi bordo dall'ultima colonna */
 .game-column:last-child {
     border-right: none;
 }
@@ -40,7 +50,7 @@
 
 #center-column {
     flex: 1.5 1 40%;
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 
 #right-column {
@@ -50,33 +60,35 @@
 /* Header dei tab (Click/Auto/Lab) */
 .tabs-header {
     display: flex;
-    border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 10px 5px 0 5px;
+    background-color: #25323e;
+    /* Leggermente più chiaro del fondo */
+    border-bottom: 1px solid #2c3e50;
+    padding: 0;
 }
 
 .tab-btn {
     flex: 1;
     background: none;
     border: none;
-    border-bottom: 3px solid transparent;
-    color: #bdc3c7;
+    color: #95a5a6;
     font-family: 'Inter', sans-serif;
-    font-weight: bold;
-    padding: 10px 5px;
+    font-weight: 600;
+    padding: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
 }
 
 .tab-btn:hover {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.05);
+    color: #ecf0f1;
+    background-color: #2c3e50;
 }
 
 .tab-btn.active {
     color: #3498db;
     border-bottom-color: #3498db;
+    background-color: #1e272e;
+    /* Si fonde con la colonna */
 }
 
 #tab-prestige.active {

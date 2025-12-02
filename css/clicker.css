@@ -1,16 +1,23 @@
 /* css/clicker.css - Area Centrale di Gioco */
 
 #clicker-section {
-    padding: 30px;
+    /* Riduci il padding (era 30px o 40px) */
+    padding: 10px 20px;
+
     display: flex;
     flex-direction: column;
     justify-content: center;
+    /* Cambia in flex-start se preferisci che parta dall'alto */
     align-items: center;
     position: relative;
     flex-grow: 1;
     min-height: 450px;
-    gap: 20px;
-    padding-top: 40px;
+
+    /* Riduci il gap tra gli elementi (era 20px) */
+    gap: 10px;
+
+    /* Rimuovi o riduci il padding-top extra */
+    padding-top: 10px;
 }
 
 /* Feedback (+1 click) */
@@ -72,6 +79,7 @@
     position: relative;
     width: 230px;
     height: 230px;
+    flex-shrink: 0;
 
 }
 
@@ -87,18 +95,19 @@
     height: 220px;
     border-radius: 50%;
     object-fit: cover;
-    border: 5px solid #3498db;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+
     position: absolute;
     top: 0;
     left: 0;
-    transition: opacity 0.05s ease-out;
+
+    transition: none;
 }
 
 #manager-photo-clicked {
     opacity: 0;
 }
 
+/* Quando si clicca, lo scambio ora sarà netto e immediato */
 #clicker-btn.clicked #manager-photo-normal {
     opacity: 0;
 }
@@ -110,19 +119,20 @@
 /* Punteggi */
 #score-display {
     font-size: 3.5rem;
-    /* Un po' più grande */
     font-weight: 900;
     color: #ff4757;
-    /* Un rosso più vivace */
-    margin-top: 20px;
+
+    /* Aumenta il margine superiore o riducilo se vuoi compattare */
+    margin-top: 10px;
+
     z-index: 10;
-    /* Effetto Glow */
     text-shadow: 0 0 15px rgba(255, 71, 87, 0.6), 2px 2px 0px rgba(0, 0, 0, 0.5);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* O un font monospaziato per i numeri */
     letter-spacing: 1px;
     transition: transform 0.1s;
-    /* Per animazioni future */
+
+    /* Aggiungi position relative per sicurezza sullo z-index */
+    position: relative;
 }
 
 #score-label {
@@ -470,7 +480,7 @@ body.bluescreen-active #clicker-btn {
 
 
 
-/* --- RICK ROLL MODE (RESPONSIVE & BPS) --- */
+/* --- RICK ROLL / RICARDO MODE (Versione Ridotta Laterale) --- */
 
 /* Video Sfondo */
 #rick-roll-video,
@@ -481,51 +491,76 @@ body.bluescreen-active #clicker-btn {
     width: 100vw;
     height: 100vh;
     object-fit: cover;
-    z-index: 9998;
-}
-
-body.rick-rolling {
-    overflow: hidden;
+    z-index: 9000;
     background: #000;
 }
 
-/* 1. CONTAINER TRASPARENTE */
+body.rick-rolling {
+    overflow: hidden !important;
+}
+
+/* 1. CONTAINER GIOCO TRASPARENTE (Non interagibile) */
 body.rick-rolling #game-container {
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
+    pointer-events: none;
+    /* I click passano sotto */
+    transform: none !important;
+    /* Evita bug di posizionamento */
+}
+
+/* Nascondi colonne e elementi superflui */
+body.rick-rolling #left-column,
+body.rick-rolling #right-column,
+body.rick-rolling #hud-stats-container,
+body.rick-rolling #score-label,
+body.rick-rolling #version-display,
+body.rick-rolling #prestige-bonus-display,
+body.rick-rolling .skill-btn,
+body.rick-rolling #overlay-buttons-container,
+body.rick-rolling #github-link-container {
+    display: none !important;
 }
 
 body.rick-rolling #center-column {
+    background: transparent !important;
     border: none !important;
     overflow: visible !important;
 }
 
-/* 2. NASCONDI IL SUPERFLUO (Nota: Ho rimosso #cps-display da qui!) */
-body.rick-rolling #left-column,
-body.rick-rolling #right-column,
-body.rick-rolling #overlay-buttons-container,
-body.rick-rolling #github-link-container,
-body.rick-rolling #hud-stats-container,
-body.rick-rolling #bonus-counter-display,
-body.rick-rolling #score-label,
-body.rick-rolling #version-display,
-body.rick-rolling #prestige-bonus-display,
-body.rick-rolling .skill-btn {
-    opacity: 0 !important;
+/* --- FIX NUMERI CLICK (FEEDBACK) --- */
+/* Fondamentale: Lo rendiamo fisso sopra il video */
+body.rick-rolling #click-feedback-container {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10005 !important;
+    /* Sopra al video (9000) */
     pointer-events: none;
-    transition: opacity 0.5s ease;
+    /* Permette di cliccare attraverso */
+    overflow: visible !important;
 }
 
-/* --- HUD LATERALE DESTRO (STACK VERTICALE) --- */
+/* Assicuriamo che i numeri stessi siano visibili */
+body.rick-rolling .click-feedback {
+    z-index: 10006 !important;
+    opacity: 1 !important;
+}
 
-/* A. PUNTEGGIO TOTALE (In cima) */
+/* --- HUD EVENTO (Visibile sopra il video) --- */
+
+/* PUNTEGGIO */
 body.rick-rolling #score-display {
-    display: block !important;
-    position: fixed;
+    position: fixed !important;
     top: 20px;
     right: 20px;
-    z-index: 10000;
+    left: auto;
+    transform: none;
+    z-index: 10001;
+    display: block !important;
 
     font-size: 2.2rem;
     color: #f1c40f;
@@ -537,117 +572,84 @@ body.rick-rolling #score-display {
     backdrop-filter: blur(4px);
     margin: 0;
     text-align: right;
+    pointer-events: auto;
 }
 
-/* B. BPS (Subito sotto il punteggio) */
+/* BPS */
 body.rick-rolling #cps-display {
+    position: fixed !important;
+    top: 85px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    z-index: 10001;
     display: block !important;
     opacity: 1 !important;
-    position: fixed;
-    top: 85px;
-    /* Calcolato: 20px (top) + ~60px (altezza score) + 5px gap */
-    right: 20px;
-    z-index: 10000;
 
     font-size: 1.3rem;
-    /* Ben visibile */
     color: #3498db;
-    /* Blu ciano */
     text-shadow: 1px 1px 0 #000;
-    font-weight: 700;
-
     background: rgba(0, 0, 0, 0.6);
     padding: 4px 15px;
     border-radius: 8px;
-    border: 1px solid rgba(52, 152, 219, 0.3);
-    backdrop-filter: blur(4px);
     margin: 0;
     text-align: right;
 }
 
-/* C. BONUS ATTIVO (Piccolo, sotto il BPS) */
+/* BONUS ATTIVO */
 body.rick-rolling #event-multiplier-display {
-    display: block !important;
-    opacity: 1 !important;
-    position: fixed;
+    position: fixed !important;
     top: 135px;
-    /* Calcolato: 85px (top bps) + ~40px (altezza bps) + 10px gap */
     right: 20px;
-    z-index: 10000;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    z-index: 10001;
+    display: block !important;
 
     font-size: 0.9rem;
-    /* Più piccolo come richiesto */
     color: #e74c3c;
-    /* Rosso */
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
-
     background: rgba(0, 0, 0, 0.5);
-    padding: 2px 10px;
+    padding: 4px 10px;
     border-radius: 6px;
-    margin: 0;
-    pointer-events: none;
-    width: auto;
+    box-shadow: none;
 }
 
-body.rick-rolling #click-feedback-container {
-    position: fixed !important;
-    /* Diventa fisso su tutto lo schermo */
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10000;
-    /* Sopra al video (9998) e al bottone (9999) */
-    pointer-events: none;
-    /* Lascia passare i click al video/bottone sotto */
-}
-
-/* 4. BOTTONE CLICKER (Piccolo in basso a destra) */
+/* BOTTONE CLICKER */
 body.rick-rolling #clicker-btn {
-    position: fixed;
+    position: fixed !important;
     bottom: 30px;
     right: 30px;
+    left: auto;
+    transform: none;
     width: 100px;
     height: 100px;
-    z-index: 9999;
+    z-index: 10002;
     opacity: 1 !important;
-    pointer-events: auto;
-
-    /* Reset layout */
-    top: auto;
-    left: auto;
+    pointer-events: auto !important;
     margin: 0;
-
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
-    transform: scale(1);
-    transition: transform 0.1s;
 }
 
 body.rick-rolling #clicker-btn img {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    border: 3px solid #fff;
 }
 
-body.rick-rolling #clicker-btn:active {
-    transform: scale(0.9);
-}
-
-/* Toast spostati a sinistra per non coprire l'HUD */
+/* NOTIFICHE/TOAST */
 body.rick-rolling #toast-container {
-    top: 20px !important;
-    left: 20px !important;
+    display: flex !important;
+    opacity: 1 !important;
+    z-index: 11000 !important;
     right: auto !important;
-    align-items: flex-start;
+    left: 20px !important;
+    top: 20px !important;
+    pointer-events: none;
 }
 
-/* --- MOBILE --- */
+/* Mobile */
 @media only screen and (max-width: 768px) {
-
-    /* Rimpicciolisci un po' tutto su mobile */
     body.rick-rolling #score-display {
         font-size: 1.5rem;
         top: 10px;
@@ -661,21 +663,87 @@ body.rick-rolling #toast-container {
     }
 
     body.rick-rolling #event-multiplier-display {
-        font-size: 0.8rem;
         top: 100px;
         right: 10px;
     }
 
-    /* Bottone al centro in basso */
     body.rick-rolling #clicker-btn {
         width: 90px;
         height: 90px;
         right: 50%;
         bottom: 20px;
         transform: translateX(50%);
+        left: auto;
+    }
+}
+
+/* --- SFONDI DINAMICI SKIN --- */
+/* Queste classi vengono applicate via JS alle immagini del manager */
+
+.bg-common {
+    background: radial-gradient(circle, #bdc3c7 0%, #2c3e50 100%);
+    border: 4px solid #bdc3c7 !important;
+    /* Bordo Grigio Chiaro */
+    box-shadow: 0 0 15px rgba(189, 195, 199, 0.4);
+}
+
+.bg-rare {
+    background: radial-gradient(circle, #3498db 0%, #1a5276 100%);
+    border: 4px solid #3498db !important;
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+}
+
+.bg-epic {
+    background: radial-gradient(circle, #9b59b6 0%, #4a235a 100%);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.5);
+    border: 4px solid #8e44ad !important;
+    /* Bordo Viola */
+}
+
+.bg-legendary {
+    background: radial-gradient(circle, #f1c40f 0%, #b7950b 100%);
+    box-shadow: 0 0 35px rgba(241, 196, 15, 0.6);
+    animation: legendaryGlow 3s infinite alternate;
+    border: 4px solid #f1c40f !important;
+    /* Bordo Oro */
+}
+
+/* Sfondo speciale per Gesù/Divino */
+.bg-divine {
+    background: radial-gradient(circle, #fff 10%, #f1c40f 90%);
+    box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
+    border: 4px solid #fff !important;
+}
+
+@keyframes legendaryGlow {
+    from {
+        box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
     }
 
-    body.rick-rolling #clicker-btn:active {
-        transform: translateX(50%) scale(0.9);
+    to {
+        box-shadow: 0 0 40px rgba(241, 196, 15, 0.9);
+    }
+}
+
+
+@media screen and (max-height: 800px) {
+
+    #clicker-btn,
+    #manager-photo-normal,
+    #manager-photo-clicked {
+        width: 180px;
+        /* Riduciamo da 230 a 180 */
+        height: 180px;
+    }
+
+    #score-display {
+        font-size: 2.5rem;
+        /* Riduciamo il font */
+        margin-top: 5px;
+    }
+
+    #clicker-section {
+        gap: 5px;
+        /* Meno spazio tra gli elementi */
     }
 }
