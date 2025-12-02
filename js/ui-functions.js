@@ -276,48 +276,66 @@ function updateAchievementsUI() {
 }
 
 function showClickFeedback(event) {
+    // 1. Recupera il contenitore in modo sicuro
+    const feedbackContainer = document.getElementById('click-feedback-container');
+    if (!feedbackContainer) return;
+
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // Evento 404
+    // Logica Evento 404
     const now = Date.now();
     const COOLDOWN_404 = 300000;
     const lastCrash = gameState.lastBluescreenTimestamp || 0;
     const timeSinceLast = now - lastCrash;
-    const scoreString = Math.floor(gameState.score).toString();
-    const clicksString = gameState.totalClicks.toString();
-    const has404 = scoreString.includes('404') || clicksString.includes('404');
-    let currentChance = has404 ? 0.005 : 0.0005;
 
-    if (timeSinceLast > COOLDOWN_404 && Math.random() < currentChance && !isBluescreenActive && gameState.score >= 404) {
-        feedback.textContent = 'Error 404: Logic Not Found';
+    // Controllo esistenza variabili globali (sicurezza)
+    const isBlueScreen = (typeof isBluescreenActive !== 'undefined') ? isBluescreenActive : false;
+    const currentScore = gameState.score || 0;
+
+    if (timeSinceLast > COOLDOWN_404 && Math.random() < 0.0005 && !isBlueScreen && currentScore >= 404) {
+        feedback.textContent = 'Error 404';
         feedback.style.color = '#facc15';
         feedback.style.fontSize = '1.2rem';
         feedback.style.fontWeight = '900';
         feedback.style.zIndex = '100';
-        let baseMult = 2;
-        let variableMult = Math.random() * 3;
-        let dynamicMultiplier = Math.floor(baseMult + variableMult);
+
+        let dynamicMultiplier = Math.floor(2 + Math.random() * 3);
         gameState.lastBluescreenTimestamp = now;
+
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
     } else {
+        // Calcolo valore click
         let clickBonusPercent = 0.01;
-        if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
-        const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) +
-            (gameState.clickUpgrades.manoBionica.purchased ? (cookiesPerSecond * clickBonusPercent) : 0);
-        feedback.textContent = `+${formatNumber(currentClickValue)}`;
+        if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
+
+        // Recupera variabili globali o fallback a 1
+        const pBonus = (typeof prestigeBonus !== 'undefined') ? prestigeBonus : 1;
+        const bsMult = (typeof bluescreenMultiplier !== 'undefined') ? bluescreenMultiplier : 1;
+        const cps = (typeof cookiesPerSecond !== 'undefined') ? cookiesPerSecond : 0;
+
+        let val = (gameState.baseClickValue * pBonus * bsMult);
+        if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
+            val += (cps * clickBonusPercent);
+        }
+
+        feedback.textContent = `+${formatNumber(val)}`;
     }
 
+    // Calcolo Posizione
     const rect = feedbackContainer.getBoundingClientRect();
     let x, y;
-    if (event.clientX && event.clientY) {
+
+    if (event && event.clientX && event.clientY) {
         x = event.clientX - rect.left;
         y = event.clientY - rect.top;
     } else {
         x = rect.width / 2;
         y = rect.height / 2;
     }
+
+    // Variazione casuale
     const randomX = (Math.random() - 0.5) * 60;
     const randomY = (Math.random() - 0.5) * 40;
     const randomRot = (Math.random() - 0.5) * 30;
@@ -326,6 +344,7 @@ function showClickFeedback(event) {
     feedback.style.top = `${y + randomY}px`;
     feedback.style.setProperty('--tx', `${randomX}px`);
     feedback.style.setProperty('--rot', `${randomRot}deg`);
+
     feedbackContainer.appendChild(feedback);
     setTimeout(() => feedback.remove(), 1500);
 }
@@ -880,16 +899,37 @@ function equipSkin(skinId) {
 
 function applySkinVisuals(skinId) {
     const data = gameData.skins[skinId];
-    if (!data) { applySkinVisuals('default'); return; }
+    // Fallback a default se non esiste i dati
+    const skinData = data || gameData.skins['default'];
+
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
+
+    // Lista di tutte le classi di sfondo possibili per poterle rimuovere
+    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine'];
+
     if (photoNormal) {
-        photoNormal.src = `./assets/image/${data.img}`;
-        photoNormal.style.filter = 'none';
+        photoNormal.src = `./assets/image/${skinData.img}`;
+        photoNormal.style.filter = 'none'; // Reset filtri vecchi
+
+        // Rimuovi vecchi sfondi
+        photoNormal.classList.remove(...bgClasses);
+
+        // Aggiungi nuovo sfondo in base alla rarità O ID specifico
+        if (skinId === 'jesus') photoNormal.classList.add('bg-divine');
+        else if (skinData.rarity) photoNormal.classList.add(`bg-${skinData.rarity}`);
+        else photoNormal.classList.add('bg-common');
     }
+
     if (photoClicked) {
-        photoClicked.src = `./assets/image/${data.imgClick}`;
+        photoClicked.src = `./assets/image/${skinData.imgClick}`;
         photoClicked.style.filter = 'none';
+
+        // Applica lo stesso sfondo anche all'immagine "cliccata"
+        photoClicked.classList.remove(...bgClasses);
+        if (skinId === 'jesus') photoClicked.classList.add('bg-divine');
+        else if (skinData.rarity) photoClicked.classList.add(`bg-${skinData.rarity}`);
+        else photoClicked.classList.add('bg-common');
     }
 }
 

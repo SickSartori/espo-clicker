@@ -316,14 +316,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeGame() {
+        // Prevenzione menu contestuale e trascinamento immagini
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
-        buildStores();
-        loadGame();
+        // --- 1. CLEANUP INIZIALE (Fix post-reset) ---
+        // Rimuove classi residue di eventi che potrebbero bloccare la vista
+        document.body.classList.remove('rick-rolling', 'bluescreen-active');
+
+        // Assicura che il container di gioco sia visibile e cliccabile
+        const gContainer = document.getElementById('game-container');
+        if (gContainer) {
+            gContainer.style.opacity = '1';
+            gContainer.style.transform = 'none';
+            gContainer.style.pointerEvents = 'auto';
+        }
+
+        // --- 2. CARICAMENTO DATI ---
+        buildStores(); // Costruisce l'HTML dei negozi
+        loadGame();    // Carica il salvataggio (se esiste)
+
+        // --- 3. APPLICAZIONE VISIVA FORZATA ---
+        // Questo risolve il bug "CSS perso": applica sfondo e bordo della skin 
+        // anche se è una nuova partita (default) o dopo un reset.
+        if (typeof applySkinVisuals === 'function') {
+            applySkinVisuals(gameState.skins.current);
+        }
+
+        // Gestione filtro "Mostra Tutto" vs "Disponibili" dopo un reset
+        const globalFilterSelect = document.getElementById('global-filter-select');
+        if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
+            // Se non c'è salvataggio (reset), resetta il filtro a "Available"
+            globalFilterSelect.value = 'available';
+            gameState.filterSettings.globalFilter = 'available';
+        }
+
+        // Aggiorna tutta l'interfaccia
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
+        // --- 4. GESTIONE BOTTONI MOLTIPLICATORE (1x, 5x, MAX) ---
         const btns = {
             '1x': document.getElementById('btn-1x'),
             '5x': document.getElementById('btn-5x'),
@@ -334,12 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
         function setBuyMultiplier(value) {
             buyMultiplier = value;
 
-            // Reset colori
+            // Reset stile bottoni
             for (let k in btns) {
                 if (btns[k]) btns[k].style.backgroundColor = '#34495e';
             }
 
-            // Attiva quello giusto
+            // Attiva quello selezionato
             const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
             if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
 
@@ -347,59 +379,55 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshAllStores();
             updateUI();
         }
+
+        // Listener Moltiplicatori
         if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
         if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
         if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
 
+        // --- 5. ALTRI EVENT LISTENER ---
         const crunchBtn = document.getElementById('skill-crunchTime');
-
         const tabs = document.querySelectorAll('.tab-btn');
         const contents = document.querySelectorAll('.tab-content');
 
-        const globalFilterSelect = document.getElementById('global-filter-select');
-
+        // Blocca tasto Invio/Spazio (per evitare click automatici tenendo premuto)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-                // Se il focus è su un input di testo (es. chat, login), lascia fare
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-                // Altrimenti blocca
                 e.preventDefault();
             }
         });
 
+        // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
             muteBtn.addEventListener('click', () => {
                 if (gameState.user.masterVolume > 0) {
-                    // Muta
-                    gameState.lastVolume = gameState.user.masterVolume; // Salva il volume precedente
+                    gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
                     muteBtn.textContent = '🔇';
                 } else {
-                    // Smuta
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
                     muteBtn.textContent = '🔊';
                 }
-                // Aggiorna slider nel modale se aperto
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
-
-                // Applica
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
             });
         }
 
-        // Rimuovi focus dal clicker dopo ogni click per sicurezza
+        // Rimuovi focus dal clicker
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
         }
 
+        // Filtro Globale Negozi
         if (globalFilterSelect) {
             const savedFilter = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.value = savedFilter;
+            // Assicurati che lo stato rifletta il valore (specialmente post-reset)
             gameState.filterSettings.globalFilter = savedFilter;
 
             globalFilterSelect.addEventListener('change', (e) => {
@@ -413,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Gestione Tabs (Click, Auto, Lab)
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 tabs.forEach(t => t.classList.remove('active'));
@@ -424,8 +453,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tab.classList.remove('notify');
 
+                // Gestione specifica per il tab Prestigio (nasconde il filtro)
                 const filterSelect = document.getElementById('global-filter-select');
-
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
                         if (!filterSelect.disabled) {
@@ -451,9 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // Tab di default
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
+        // Skill Crunch Time
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
                 if (e.detail === 0) return;
@@ -462,14 +493,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-
+        // Click Principale
         if (clickerButton) clickerButton.addEventListener('click', clickCookie);
 
+        // Golden Bug
         if (goldenBug) goldenBug.addEventListener('click', (e) => {
             if (e.detail === 0) return; clickGoldenBug();
         });
 
-
+        // Bottone Annulla Prestigio (Modale)
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
@@ -478,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Delegazione Click per bottoni acquisto (gestisce anche elementi creati dinamicamente)
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;

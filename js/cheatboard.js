@@ -246,13 +246,18 @@
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Sblocchi</div>
+                <div class="cheat-group-title">Sblocchi & Reset</div>
                 
                 <div class="control-row">
-                    <button id="btn-unlock-skins" class="cheat-btn primary" style="width: 100%">Sblocca Tutte Skin</button>
+                    <button id="btn-unlock-skins" class="cheat-btn primary">Sblocca Skin</button>
+                    <button id="btn-lock-skins" class="cheat-btn danger">Blocca Skin</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-unlock-ach" class="cheat-btn primary" style="width: 100%">Sblocca Obiettivi</button>
+                    <button id="btn-unlock-ach" class="cheat-btn primary">Sblocca Ach.</button>
+                    <button id="btn-lock-ach" class="cheat-btn danger">Blocca Ach.</button>
+                </div>
+                <div class="control-row" style="margin-top: 10px;">
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;">⚠️ HARD RESET ⚠️</button>
                 </div>
             </div>
 
@@ -289,6 +294,58 @@
         gameState.lifetimeScore += val;
         updateGame();
         toast(`Aggiunti ${val} Bug`);
+    });
+
+    document.getElementById('btn-lock-skins').addEventListener('click', () => {
+        // Mantiene solo la skin di default
+        gameState.skins.unlocked = ['default'];
+        gameState.skins.current = 'default';
+
+        // Applica visivamente
+        if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
+
+        // Salva
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        updateGame();
+        toast("Tutte le skin bloccate (tranne default).");
+    });
+
+    // --- NUOVA LOGICA: BLOCCA OBIETTIVI ---
+    document.getElementById('btn-lock-ach').addEventListener('click', () => {
+        for (let key in gameData.achievements) {
+            if (gameState.achievements[key]) {
+                gameState.achievements[key].unlocked = false;
+                gameState.achievements[key].claimed = false;
+                gameState.achievements[key].unlockTime = 0;
+            }
+        }
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        updateGame();
+        toast("Tutti gli obiettivi bloccati.");
+    });
+
+    // --- NUOVA LOGICA: HARD RESET (Senza Password) ---
+    document.getElementById('btn-hard-reset').addEventListener('click', () => {
+        if (!confirm("Reset COMPLETO dei progressi? (Dev Mode)")) return;
+
+        // 1. Resetta lo stato in memoria usando la funzione globale
+        if (typeof resetGameToDefault === 'function') {
+            resetGameToDefault();
+            // Mantieni il nome utente attuale però
+            const currentUser = sessionStorage.getItem('espooUser') || 'Dev';
+            gameState.user.username = currentUser;
+        }
+
+        // 2. Forza il salvataggio immediato (sovrascrive il cloud con dati vuoti)
+        // Usa la password già in memoria nella sessione, quindi non la chiede.
+        if (window.EspooClicker) {
+            window.EspooClicker.saveGame().then(() => {
+                location.reload();
+            });
+        } else {
+            localStorage.removeItem('espotoolClickerSaveV8');
+            location.reload();
+        }
     });
 
     // Tokens (Prestige)

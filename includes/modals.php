@@ -98,9 +98,24 @@
 
             <div class="danger-zone">
                 <h3>⚠️ Zona Pericolosa</h3>
-                <p>Eliminazione definitiva account.</p>
-                <input type="password" id="delete-confirm-password" placeholder="Password di conferma">
-                <button id="delete-save-btn" class="buy-btn danger-btn" style="margin-top: 10px;">ELIMINA ACCOUNT</button>
+                
+                <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #c0392b;">
+                    <p style="color: #e74c3c; font-weight: bold; margin-bottom: 5px;">Reset Progressi</p>
+                    <p style="font-size: 0.85rem; margin-bottom: 10px;">
+                        Mantiene l'account ma cancella tutti i progressi, acquisti e statistiche.
+                    </p>
+                    <input type="password" id="reset-confirm-password" placeholder="Password per Reset" style="margin-bottom: 5px;">
+                    <button id="reset-progress-btn" class="buy-btn" style="background-color: #e67e22; width: 100%;">RESETTA TUTTO</button>
+                </div>
+
+                <div>
+                    <p style="color: #c0392b; font-weight: bold; margin-bottom: 5px;">Eliminazione Account</p>
+                    <p style="font-size: 0.85rem; margin-bottom: 10px;">
+                        Cancellazione definitiva di utente e dati.
+                    </p>
+                    <input type="password" id="delete-confirm-password" placeholder="Password per Eliminare">
+                    <button id="delete-save-btn" class="buy-btn danger-btn" style="margin-top: 10px;">ELIMINA ACCOUNT</button>
+                </div>
             </div>
         </div>
     </div>
@@ -243,7 +258,7 @@
                 <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
                     <li>🐞 <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito per un bonus enorme!</li>
                     <li>💻 <strong>Errore 404 (Blue Screen):</strong> Il sistema crasha! Durante l'errore, la produzione è moltiplicata (x2 o più).</li>
-                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari (come Rick o Ricardo) scatenano eventi musicali unici con moltiplicatori folli.</li>
+                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari scatenano eventi musicali unici con moltiplicatori folli.</li>
                 </ul>
             </div>
 

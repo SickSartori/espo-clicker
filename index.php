@@ -67,10 +67,10 @@
     <button id="open-settings-btn" class="overlay-btn">⚙️ Impostazioni</button> 
     <button id="open-prestige-hub-btn" class="overlay-btn" style="...">🚀 Promozione</button>
 </div>
-
+    <button id="quick-mute-btn" title="Muta Tutto">🔊</button>
     <div id="game-container">
 
-        <button id="quick-mute-btn" title="Muta Tutto" style="position: absolute; bottom: 10px; left: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; z-index: 100;">🔊</button>
+        
 
         <div id="left-column" class="game-column">
             <div class="tabs-header">

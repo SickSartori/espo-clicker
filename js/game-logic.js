@@ -652,8 +652,9 @@ async function executePrestige() {
     // Salva i dati che devono persistere
     let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
     let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
+    let oldSkins = JSON.parse(JSON.stringify(gameState.skins)); // <--- AGGIUNTO: Salva le skin attuali
     let oldTotalResets = gameState.totalResets + 1;
-    let oldTotalClicks = gameState.totalClicks; // <--- NUOVO: Salva i click
+    let oldTotalClicks = gameState.totalClicks;
     let oldGoldenBugs = gameState.totalGoldenBugsClicked;
     let oldPlayTime = gameState.totalPlayTime;
     let oldLifetimeScore = gameState.lifetimeScore;
@@ -682,8 +683,9 @@ async function executePrestige() {
 
     newState.achievements = oldAchievements;
     newState.prestigeUpgrades = oldPrestigeUpgrades;
+    newState.skins = oldSkins; // <--- AGGIUNTO: Ripristina le skin
     newState.totalResets = oldTotalResets;
-    newState.totalClicks = oldTotalClicks; // <--- NUOVO: Ripristina i click
+    newState.totalClicks = oldTotalClicks;
     newState.totalGoldenBugsClicked = oldGoldenBugs;
     newState.totalPlayTime = oldPlayTime;
     newState.lifetimeScore = oldLifetimeScore;

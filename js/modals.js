@@ -60,6 +60,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const sfxDisplay = document.getElementById('sfx-vol-display');
     const musicDisplay = document.getElementById('music-vol-display');
 
+    async function handleResetProgress() {
+        const Game = getGameAPI();
+        const resetPass = document.getElementById('reset-confirm-password').value;
+
+        if (!resetPass) { alert("Inserisci la password per resettare."); return; }
+
+        if (confirm("Sei sicuro? Perderai TUTTI i progressi (Skin, Upgrade, Bug). Questa azione è irreversibile.")) {
+
+            // 1. BLOCCA I SALVATAGGI AUTOMATICI
+            if (Game.getGameState()) {
+                Game.getGameState().isDeleting = true;
+            }
+
+            try {
+                const response = await fetch('./php/reset_progress.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: Game.getGameState().user.username,
+                        password: resetPass
+                    })
+                });
+                const res = await response.json();
+
+                if (res.status === 'success') {
+                    // 2. Resetta la memoria RAM (Opzionale ma pulito)
+                    if (typeof resetGameToDefault === 'function') {
+                        resetGameToDefault();
+                    }
+
+                    // 3. Cancella SOLO il salvataggio locale del gioco
+                    localStorage.removeItem('espotoolClickerSaveV8');
+
+                    // --- MODIFICA FONDAMENTALE: NON CANCELLARE LA SESSIONE ---
+                    // Rimuovendo queste righe, l'utente rimane loggato
+                    // sessionStorage.removeItem('espooUser'); 
+                    // sessionStorage.removeItem('espooPass');
+
+                    alert("Progressi resettati. Riavvio in corso...");
+
+                    // 4. Ricarica la pagina per applicare il 'Tabula Rasa'
+                    location.reload();
+                } else {
+                    // Errore? Riabilita i salvataggi
+                    if (Game.getGameState()) {
+                        Game.getGameState().isDeleting = false;
+                    }
+                    alert("Errore: " + res.message);
+                }
+            } catch (e) {
+                console.error(e);
+                if (Game.getGameState()) {
+                    Game.getGameState().isDeleting = false;
+                }
+                alert("Errore di connessione.");
+            }
+        }
+    }
+
+    // Listener per il nuovo bottone
+    const resetProgressBtn = document.getElementById('reset-progress-btn');
+    if (resetProgressBtn) resetProgressBtn.addEventListener('click', handleResetProgress);
+
     // Funzione helper per aggiornare slider e stato
     function setupAudioControl(slider, display, key, isMusic = false) {
         if (!slider) return;
@@ -179,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => {
         openModal(helpModal);
     });
+
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         // Chiama la funzione che disegna la griglia (definita in ui-functions.js)
         if (typeof updateSkinsUI === 'function') updateSkinsUI();
