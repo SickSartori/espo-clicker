@@ -1,22 +1,15 @@
 /* css/clicker.css - Area Centrale di Gioco */
 
 #clicker-section {
-    /* Riduci il padding (era 30px o 40px) */
     padding: 10px 20px;
-
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* Cambia in flex-start se preferisci che parta dall'alto */
     align-items: center;
     position: relative;
     flex-grow: 1;
     min-height: 450px;
-
-    /* Riduci il gap tra gli elementi (era 20px) */
     gap: 10px;
-
-    /* Rimuovi o riduci il padding-top extra */
     padding-top: 10px;
 }
 
@@ -43,8 +36,6 @@
     z-index: 11;
 }
 
-
-
 /* Bottone Clicker */
 #clicker-btn {
     background: none;
@@ -57,14 +48,11 @@
     width: 230px;
     height: 230px;
     flex-shrink: 0;
-
 }
 
 #clicker-btn:active {
     transform: scale(0.95);
-    /* Si rimpicciolisce leggermente al click */
 }
-
 
 #manager-photo-normal,
 #manager-photo-clicked {
@@ -72,11 +60,9 @@
     height: 220px;
     border-radius: 50%;
     object-fit: cover;
-
     position: absolute;
     top: 0;
     left: 0;
-
     transition: none;
 }
 
@@ -84,7 +70,7 @@
     opacity: 0;
 }
 
-/* Quando si clicca, lo scambio ora sarà netto e immediato */
+/* Scambio Immagine */
 #clicker-btn.clicked #manager-photo-normal {
     opacity: 0;
 }
@@ -98,17 +84,12 @@
     font-size: 3.5rem;
     font-weight: 900;
     color: #ff4757;
-
-    /* Aumenta il margine superiore o riducilo se vuoi compattare */
     margin-top: 10px;
-
     z-index: 10;
     text-shadow: 0 0 15px rgba(255, 71, 87, 0.6), 2px 2px 0px rgba(0, 0, 0, 0.5);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     letter-spacing: 1px;
     transition: transform 0.1s;
-
-    /* Aggiungi position relative per sicurezza sullo z-index */
     position: relative;
 }
 
@@ -161,34 +142,25 @@
 
 /* Skill Button (Crunch Time) */
 .skill-btn {
-    /* Gradiente più aggressivo */
     background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
     color: white;
     border: none;
-    /* Bordo luminoso sotto per effetto 3D */
     box-shadow: 0 3px 0 #a04000, 0 4px 10px rgba(230, 126, 34, 0.3);
-
     padding: 8px 30px;
     font-size: 1rem;
-
     margin-top: 20px;
     border-radius: 8px;
     font-family: 'Inter', sans-serif;
     font-weight: 500;
-
     cursor: pointer;
-
     margin-bottom: 10px;
-
     transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
     z-index: 20;
     text-transform: uppercase;
     width: auto;
-
     min-width: 220px;
-    /* Larghezza minima */
     letter-spacing: 1px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -206,7 +178,6 @@
 .skill-btn.active {
     background: linear-gradient(135deg, #c0392b, #e74c3c);
     box-shadow: 0 0 20px #e74c3c, 0 0 40px #c0392b;
-    /* Glow esterno */
     animation: pulseGlow 0.8s infinite alternate;
     border: 2px solid #fff;
 }
@@ -220,8 +191,6 @@
     border: 2px solid #2c3e50;
     transform: none !important;
 }
-
-
 
 /* Timer interno */
 .skill-timer {
@@ -285,24 +254,13 @@
     user-select: text;
 }
 
-
-
-
-
 /* --- EFFETTO GLITCH 404 --- */
-
-
 
 /* Quando il body ha la classe bluescreen-active (evento 404 attivo) */
 body.bluescreen-active #game-container {
-    /* Applica la distorsione continua */
     animation: glitch-skew 0.2s infinite linear;
-
     filter: hue-rotate(180deg) contrast(1.2);
-
-    /* --- FIX INTERSEZIONE BORDI --- */
     border: 1px solid rgba(255, 0, 0, 0.3);
-
     box-shadow:
         inset 0 0 0 3px red,
         inset 0 0 50px rgba(255, 0, 0, 0.5);
@@ -318,11 +276,8 @@ body.bluescreen-active #clicker-btn {
     animation: glitch-flash 0.5s infinite;
 }
 
+/* --- RICK ROLL / RICARDO MODE --- */
 
-
-/* --- RICK ROLL / RICARDO MODE (Versione Ridotta Laterale) --- */
-
-/* Video Sfondo */
 #rick-roll-video,
 #ricardo-video {
     position: fixed;
@@ -339,12 +294,10 @@ body.rick-rolling {
     overflow: hidden !important;
 }
 
-/* 1. CONTAINER GIOCO TRASPARENTE (Non interagibile) */
 body.rick-rolling #game-container {
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     filter: none !important;
@@ -372,8 +325,7 @@ body.rick-rolling #center-column {
     overflow: visible !important;
 }
 
-/* --- FIX NUMERI CLICK (FEEDBACK) --- */
-/* Fondamentale: Lo rendiamo fisso sopra il video */
+/* Fix Numeri Click */
 body.rick-rolling #click-feedback-container {
     position: fixed !important;
     top: 0;
@@ -381,21 +333,16 @@ body.rick-rolling #click-feedback-container {
     width: 100vw;
     height: 100vh;
     z-index: 10005 !important;
-    /* Sopra al video (9000) */
     pointer-events: none;
-    /* Permette di cliccare attraverso */
     overflow: visible !important;
 }
 
-/* Assicuriamo che i numeri stessi siano visibili */
 body.rick-rolling .click-feedback {
     z-index: 10006 !important;
     opacity: 1 !important;
 }
 
-/* --- HUD EVENTO (Visibile sopra il video) --- */
-
-/* PUNTEGGIO */
+/* HUD Evento */
 body.rick-rolling #score-display {
     position: fixed !important;
     top: 20px;
@@ -404,7 +351,6 @@ body.rick-rolling #score-display {
     transform: none;
     z-index: 10001;
     display: block !important;
-
     font-size: 2.2rem;
     color: #f1c40f;
     text-shadow: 2px 2px 0 #000;
@@ -418,7 +364,6 @@ body.rick-rolling #score-display {
     pointer-events: auto;
 }
 
-/* BPS */
 body.rick-rolling #cps-display {
     position: fixed !important;
     top: 85px;
@@ -428,7 +373,6 @@ body.rick-rolling #cps-display {
     z-index: 10001;
     display: block !important;
     opacity: 1 !important;
-
     font-size: 1.3rem;
     color: #3498db;
     text-shadow: 1px 1px 0 #000;
@@ -439,7 +383,6 @@ body.rick-rolling #cps-display {
     text-align: right;
 }
 
-/* BONUS ATTIVO */
 body.rick-rolling #event-multiplier-display {
     position: fixed !important;
     top: 135px;
@@ -449,7 +392,6 @@ body.rick-rolling #event-multiplier-display {
     transform: none;
     z-index: 10001;
     display: block !important;
-
     font-size: 0.9rem;
     color: #e74c3c;
     font-weight: 600;
@@ -460,7 +402,6 @@ body.rick-rolling #event-multiplier-display {
     box-shadow: none;
 }
 
-/* BOTTONE CLICKER */
 body.rick-rolling #clicker-btn {
     position: fixed !important;
     bottom: 30px;
@@ -480,7 +421,6 @@ body.rick-rolling #clicker-btn img {
     height: 100%;
 }
 
-/* NOTIFICHE/TOAST */
 body.rick-rolling #toast-container {
     display: flex !important;
     opacity: 1 !important;

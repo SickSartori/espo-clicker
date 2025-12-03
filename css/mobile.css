@@ -20,7 +20,22 @@
         padding-bottom: 20px;
     }
 
-    /* 2. Ordine e Separazione Colonne */
+    /* 2. Bottoni Overlay (Rende la barra top compatta) */
+    #overlay-buttons-container {
+        padding: 8px 5px;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: space-around;
+        height: auto;
+    }
+
+    .overlay-btn {
+        flex: 1;
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+
+    /* 3. Ordine e Separazione Colonne */
     .game-column {
         border-bottom: 2px solid rgba(74, 101, 130, 0.5);
         height: auto;
@@ -41,7 +56,7 @@
         border-bottom: none;
     }
 
-    /* 3. Navbar Mobile Compatta */
+    /* 4. Navbar Mobile Compatta */
     #game-navbar {
         height: 60px;
         padding: 0 10px;
@@ -88,7 +103,7 @@
         font-size: 1.4rem;
     }
 
-    /* 4. Ottimizzazioni Varie */
+    /* 5. Ottimizzazioni Varie */
     #click-upgrade-list,
     #enhancement-list {
         grid-template-columns: 1fr;
@@ -110,6 +125,11 @@
         bottom: 20px;
         right: 20px;
         opacity: 0.3;
+    }
+
+    .github-icon {
+        width: 30px;
+        height: 30px;
     }
 }
 
