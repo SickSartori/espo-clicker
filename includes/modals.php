@@ -1,20 +1,38 @@
 <div id="login-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
-        <h2><i class="fa-solid fa-right-to-bracket"></i> Accesso Account</h2>
-        <p class="modal-desc">
-            Inserisci le credenziali per giocare.<br>Se non hai un account, verrà creato ora.
-        </p>
-        <div class="settings-content">
-            <div class="setting-item">
-                <label>Nome Utente</label>
-                <input type="text" id="login-username-input" placeholder="Es. MasterBug">
+    <div class="modal-content" style="max-width: 380px; border-top: 4px solid #3498db;">
+        
+        <div style="text-align: center; padding: 30px 20px 10px 20px;">
+            <div style="font-size: 3.5rem; color: #3498db; margin-bottom: 15px; text-shadow: 0 0 20px rgba(52, 152, 219, 0.4);">
+                <i class="fa-solid fa-gamepad"></i>
             </div>
-            <div class="setting-item">
-                <label>Password</label>
-                <input type="password" id="login-password-input" placeholder="••••••••">
-            </div>
-            <button id="login-btn" class="buy-btn">Entra / Registrati</button>
+            <h2 style="background: none; border: none; padding: 0; font-size: 1.8rem; margin-bottom: 5px;">Espòòò Clicker</h2>
+            <p style="color: #95a5a6; font-size: 0.9rem; margin: 0;">
+                Accedi o crea un account per salvare i progressi nel cloud.
+            </p>
         </div>
+
+        <div class="settings-content" style="padding: 20px 30px 40px 30px;">
+            
+            <div class="input-stack">
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-user"></i></div>
+                    <input type="text" id="login-username-input" placeholder="Nome Utente">
+                </div>
+
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-lock"></i></div>
+                    <input type="password" id="login-password-input" placeholder="Password">
+                    <button class="toggle-pass-btn icon-only" data-target="login-password-input" tabindex="-1">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="login-btn" class="buy-btn save-btn" style="margin-top: 25px; height: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); gap: 10px;">
+                <i class="fa-solid fa-rocket"></i> Entra / Registrati
+            </button>
+            
+            </div>
     </div>
 </div>
 
