@@ -2,26 +2,23 @@
 
 #game-container {
     margin: 0 auto;
+
     width: 95%;
     max-width: 1600px;
+    background-color: rgba(30, 39, 46, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 
-    /* SFONDO SOLIDO E FLAT */
-    background-color: #1e272e;
-    /* Grigio scuro/blu solido */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
 
-    /* Nessuna ombra esterna pesante, solo definizione */
-    border-radius: 8px;
-    /* Angoli meno arrotondati */
     display: flex;
     flex-wrap: nowrap;
 
-    /* Bordo sottile e pulito */
-    border: 1px solid #2c3e50;
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
 
-    height: calc(100vh - 85px);
-    max-height: calc(100vh - 85px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    /* Ombra minimal */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* Colonne */
@@ -32,13 +29,10 @@
     overflow-y: auto;
     height: 100%;
 
-    /* Separatori molto sottili */
-    border-right: 1px solid #2c3e50;
     background-color: transparent;
-    /* Ereditano il colore flat del container */
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Rimuovi bordo dall'ultima colonna */
 .game-column:last-child {
     border-right: none;
 }
@@ -57,11 +51,9 @@
     flex: 1 1 30%;
 }
 
-/* Header dei tab (Click/Auto/Lab) */
 .tabs-header {
     display: flex;
     background-color: #25323e;
-    /* Leggermente più chiaro del fondo */
     border-bottom: 1px solid #2c3e50;
     padding: 0;
 }
@@ -77,6 +69,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border-bottom: 2px solid transparent;
+    position: relative;
 }
 
 .tab-btn:hover {
@@ -88,7 +81,6 @@
     color: #3498db;
     border-bottom-color: #3498db;
     background-color: #1e272e;
-    /* Si fonde con la colonna */
 }
 
 #tab-prestige.active {
@@ -97,37 +89,47 @@
 }
 
 .tab-btn.notify {
-    color: #fff !important;
-    animation: tabPulse 1.5s infinite;
+    animation: none !important;
+    background-color: transparent !important;
+    color: #95a5a6;
 }
 
 .tab-btn.notify::after {
-    content: '!';
+    content: '';
     position: absolute;
-    top: 5px;
-    right: 5px;
+
+    top: 8px;
+    left: 50%;
+    right: auto;
+
+    margin-left: 60px;
+
     background-color: #e74c3c;
-    color: white;
-    font-size: 0.7rem;
-    width: 16px;
-    height: 16px;
+
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 5px #e74c3c;
+
+    border: 1px solid #25323e;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
+
+    animation: dotPulse 2s infinite;
+    z-index: 5;
 }
 
-@keyframes tabPulse {
+@keyframes dotPulse {
     0% {
-        background-color: rgba(46, 204, 113, 0);
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
     }
 
-    50% {
-        background-color: rgba(46, 204, 113, 0.3);
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0);
     }
 
     100% {
-        background-color: rgba(46, 204, 113, 0);
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
     }
 }

@@ -46,7 +46,7 @@
             </div>
 
             <div class="setting-item">
-                `<label><i class="fa-solid fa-bell"></i> Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
+                <label><i class="fa-solid fa-bell"></i> Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
                 <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
             </div>
 
@@ -233,7 +233,7 @@
         <div class="settings-content" style="text-align: left; line-height: 1.6;">
             
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #3498db; margin-bottom: 5px;"><i class="fa-solid fa-bullseye"></i>1. L'Obiettivo</h3>
+                <h3 style="color: #3498db; margin-bottom: 5px;"><i class="fa-solid fa-bullseye"></i> 1. L'Obiettivo</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: 
                     risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. 

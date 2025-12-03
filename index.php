@@ -145,10 +145,15 @@
         </a>
     </div>
 
-    <audio id="sound-click" src="./assets/sounds/Click.mp3" preload="auto"></audio>
-    <audio id="sound-buy" src="./assets/sounds/Buy.mp3" preload="auto"></audio>
-    <audio id="sound-achievement" src="./assets/sounds/Achievement.mp3" preload="auto"></audio>
+    <audio id="sound-click" src="./assets/sounds/click.mp3" preload="auto"></audio>
+    <audio id="sound-buy" src="./assets/sounds/buy.mp3" preload="auto"></audio>
+    <audio id="sound-achievement" src="./assets/sounds/achievement.mp3" preload="auto"></audio>
     <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="auto"></audio>
+
+    <audio id="sound-error" src="./assets/sounds/error.mp3" preload="auto"></audio>
+    <audio id="sound-golden" src="./assets/sounds/golden.mp3" preload="auto"></audio>
+    <audio id="sound-prestige" src="./assets/sounds/prestige.mp3" preload="auto"></audio>
+    <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="auto"></audio>
     
     <script src="./js/version-config.js"></script>
     <script src="./js/game-data.js" defer></script>

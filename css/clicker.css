@@ -457,25 +457,24 @@ body.bluescreen-active #game-container {
     /* Applica la distorsione continua */
     animation: glitch-skew 0.2s infinite linear;
 
-    /* Cambia leggermente i colori per renderli "sbagliati" */
     filter: hue-rotate(180deg) contrast(1.2);
 
-    /* Aggiunge un bordo rosso di errore */
-    border: 2px solid red;
-    box-shadow: 0 0 20px red, inset 0 0 50px rgba(255, 0, 0, 0.2);
+    /* --- FIX INTERSEZIONE BORDI --- */
+    border: 1px solid rgba(255, 0, 0, 0.3);
+
+    box-shadow:
+        inset 0 0 0 3px red,
+        inset 0 0 50px rgba(255, 0, 0, 0.5);
 }
 
-/* Rende i testi un po' più difficili da leggere durante l'errore */
 body.bluescreen-active h2,
 body.bluescreen-active span,
 body.bluescreen-active button {
     text-shadow: 2px 0 red, -2px 0 blue;
 }
 
-/* Effetto speciale sul bottone principale durante il 404 */
 body.bluescreen-active #clicker-btn {
     animation: glitch-flash 0.5s infinite;
-    /* Lampeggia invertendo i colori */
 }
 
 
@@ -504,10 +503,13 @@ body.rick-rolling #game-container {
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    pointer-events: none;
-    /* I click passano sotto */
+
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
     transform: none !important;
-    /* Evita bug di posizionamento */
+    z-index: 9500 !important;
+    pointer-events: none;
 }
 
 /* Nascondi colonne e elementi superflui */

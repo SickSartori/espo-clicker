@@ -24,7 +24,6 @@
     align-items: center;
     gap: 5px;
     flex: 1;
-    /* Distribuisce lo spazio */
 }
 
 .nav-group.center {
@@ -117,25 +116,57 @@
 }
 
 /* Pallino Notifica (Badge) */
+.nav-item.notify-overlay {
+    animation: none !important;
+    transform: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent;
+}
+
+.nav-item.notify-overlay:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px) !important;
+}
+
+/* 2. Il Pallino Rosso (Badge) - Piccolo e Discreto */
 .nav-item.notify-overlay::after {
-    content: '!';
+    content: '';
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: #e74c3c;
-    color: white;
-    font-size: 0.65rem;
-    font-weight: bold;
-    width: 16px;
-    height: 16px;
+
+    top: 4px;
+    left: 55%;
+    right: auto;
+    margin-left: 12px;
+
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
-    animation: pulseNotify 1.5s infinite;
-    border: 2px solid #151b22;
-    /* Bordo scuro per staccare */
+
+    background-color: #e74c3c;
+    border: 1px solid #151b22;
+
+    animation: dotPulse 2s infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Animazione dedicata solo per il pallino */
+@keyframes dotPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+    }
+
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+    }
 }
 
 /* --- MODALI --- */
@@ -156,9 +187,7 @@
 
 .modal-desc {
     text-align: left;
-    /* Più leggibile */
     padding: 20px 40px 0 40px;
-    /* MODIFICATO: Molto più spazio ai lati */
     color: #bdc3c7;
     font-size: 0.95rem;
     margin: 0;
@@ -184,7 +213,6 @@
     text-align: center;
     margin: 0;
     padding: 25px 40px;
-    /* Allineato col resto */
     background-color: #34495e;
     border-radius: 16px 16px 0 0;
     border-bottom: 1px solid #4a6582;
@@ -309,16 +337,12 @@ input[type="number"] {
 .input-group-row .buy-btn {
     width: auto;
     padding: 0 25px;
-    /* Padding laterale specifico per questo bottone */
     margin: 0;
 }
 
-/* Migliora l'aspetto della zona pericolosa */
 .danger-zone {
     margin-top: 30px;
-    /* AUMENTATO: Era 20px */
     padding: 20px;
-    /* AUMENTATO: Era 15px */
     border: 1px solid #c0392b;
     background-color: rgba(192, 57, 43, 0.1);
     border-radius: 8px;
@@ -327,7 +351,6 @@ input[type="number"] {
 .danger-btn {
     background-color: #c0392b;
     margin-top: 15px;
-    /* Aggiunge spazio sopra il bottone elimina */
 }
 
 @keyframes fadeIn {
@@ -358,10 +381,8 @@ input[type="number"] {
 /* --- STILI CONTRATTO PRESTIGIO --- */
 .contract-modal {
     max-width: 750px;
-    /* Un po' più largo per far respirare le colonne */
     background: linear-gradient(145deg, #2c3e50, #233040);
     border: 2px solid #f1c40f;
-    /* Bordo dorato più evidente */
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
 }
 
@@ -388,9 +409,7 @@ input[type="number"] {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    /* Forza stessa altezza */
     gap: 20px;
-    /* Più spazio centrale */
     margin-bottom: 25px;
 }
 
@@ -422,14 +441,11 @@ input[type="number"] {
     padding: 0;
     margin: 15px 0 0 0;
     color: #ecf0f1;
-    /* Testo bianco per leggibilità */
     font-size: 0.95rem;
     line-height: 2;
-    /* Spaziatura righe */
 }
 
 .contract-column.loss ul li::before {
-    /* Prima: content: "❌ "; */
     content: "\f057";
     /* Codice Unicode per fa-circle-xmark */
     font-family: "Font Awesome 6 Free";
@@ -586,26 +602,21 @@ input[type="number"] {
 }
 
 .achievement-header [data-tooltip]:hover::after {
-    /* Ancora il tooltip a destra */
     left: auto !important;
     right: 0 !important;
     transform: translateX(0) !important;
 
-    /* Aggiungi un po' di margine per non toccare il bordo */
     margin-right: -5px;
 }
 
-/* Fix per la freccetta (Before element) */
 .achievement-header [data-tooltip]:hover::before {
     left: auto !important;
     right: 18px !important;
-    /* Posiziona la freccetta sopra l'icona */
     transform: translateX(0) !important;
 }
 
 .achievement-name {
     font-size: 1.3rem;
-    /* Titolo grande */
     font-weight: 800;
     color: #fff;
     letter-spacing: -0.5px;
@@ -663,8 +674,8 @@ input[type="number"] {
 .ach-progress-bar {
     background: linear-gradient(to right, #3498db, #5dade2);
     box-shadow: 0 0 10px #5dade2;
-    /* Glow interno */
     transition: width 0.4s ease-out;
+    height: 100%;
 }
 
 .ach-progress-text {
@@ -675,9 +686,7 @@ input[type="number"] {
     height: 100%;
     display: flex;
     align-items: center;
-    /* FIX: Allinea a sinistra invece di centrare */
     justify-content: flex-start;
-    /* Aggiungi padding per staccare il testo dal bordo */
     padding-left: 10px;
 
     font-size: 0.85rem;
@@ -1025,39 +1034,6 @@ input[type="number"] {
     }
 }
 
-@keyframes purple-pulse {
-    0% {
-        box-shadow: 0 0 15px rgba(155, 89, 182, 0.8);
-    }
-
-    50% {
-        box-shadow: 0 0 25px rgba(155, 89, 182, 1);
-    }
-
-    100% {
-        box-shadow: 0 0 15px rgba(155, 89, 182, 0.8);
-    }
-}
-
-.skin-card.rarity-epic.can-afford-border {
-    border-color: #9b59b6 !important;
-    box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
-    animation: purple-pulse 2s infinite alternate ease-in-out;
-}
-
-/* 3. Stato HOVER - UNIVERSALE PER EPICHE */
-/* Questa regola copre TUTTI gli stati: bloccata, acquistabile o già sbloccata/equipaggiata */
-.skin-card.rarity-epic:hover,
-.skin-card.rarity-epic.locked.buyable:hover,
-.skin-card.rarity-epic.unlocked:hover,
-.skin-card.rarity-epic.equipped:hover {
-    border-color: #9b59b6 !important;
-    box-shadow: 0 0 25px rgba(155, 89, 182, 0.9) !important;
-    transform: translateY(-3px) scale(1.02);
-    opacity: 1;
-    /* Assicura che sia ben visibile */
-}
-
 .achievement.claimable {
     border: 3px solid #f1c40f;
     background-color: rgba(241, 196, 15, 0.15);
@@ -1227,8 +1203,8 @@ input[type="number"] {
 
 /* --- 5. ACQUISTABILE (Animazione solo su hover per non disturbare) --- */
 .skin-card.buyable:hover {
-    border-color: #f1c40f !important;
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+    border-color: var(--r-color) !important;
+    box-shadow: 0 0 15px var(--r-color);
 }
 
 /* --- ELEMENTI INTERNI --- */

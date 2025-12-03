@@ -384,13 +384,13 @@ function showToast(message, type = 'info') { // Aggiunto parametro type
 
     // Aggiungi Icona/Emoji basata sul tipo
     let icon = '';
-    if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i> '; // ✅
-    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i> '; // ❌
-    else if (type === 'achievement') icon = '<i class="fa-solid fa-trophy"></i> '; // 🏆
-    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation"></i> '; // ⚠️
-    else if (type === 'reward') icon = '<i class="fa-solid fa-gift"></i> '; // 🎁
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i> ';
+    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i> ';
+    else if (type === 'achievement') icon = '<i class="fa-solid fa-trophy"></i> ';
+    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation"></i> ';
+    else if (type === 'reward') icon = '<i class="fa-solid fa-gift"></i> ';
+    else if (type === 'info') icon = '<i class="fa-solid fa-circle-info"></i> ';
 
-    // Usiamo innerHTML per iniettare l'icona
     toast.innerHTML = icon + message;
     toastContainer.appendChild(toast);
 

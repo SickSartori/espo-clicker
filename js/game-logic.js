@@ -2,30 +2,46 @@
 
 // type può essere 'sfx' (default) o 'music'
 function playSound(id, type = 'sfx') {
-    const sound = document.getElementById(id);
-    if (!sound) return;
+    const originalSound = document.getElementById(id);
+    if (!originalSound) return;
 
-    // Calcolo Volume Finale: Master * Canale Specifico
+    // Calcolo Volume Finale
     const master = gameState.user.masterVolume;
     const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
+    const finalVolume = master * channel;
 
-    // Se il volume finale è 0, non fare nulla
-    if (master <= 0 || channel <= 0) {
-        sound.pause(); // Ferma se stava andando
+    if (finalVolume <= 0) {
+        if (type === 'music') originalSound.pause();
         return;
     }
 
     try {
-        sound.volume = master * channel;
-
-        // Se è un effetto sonoro breve, resettalo per poterlo spamamre
         if (type === 'sfx') {
-            sound.currentTime = 0;
-        }
 
-        const playPromise = sound.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => { }); // Ignora errori autoplay
+            const soundClone = originalSound.cloneNode();
+            soundClone.volume = finalVolume;
+
+            const playPromise = soundClone.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        // Una volta finito, rimuovi il clone dalla memoria
+                        soundClone.addEventListener('ended', () => {
+                            soundClone.remove();
+                        });
+                    })
+                    .catch(e => {
+                        // Ignora errori di autoplay o interruzione
+                        console.warn("Audio clone error:", e);
+                    });
+            }
+        } else {
+            // --- MUSICA (Singola istanza) ---
+            originalSound.volume = finalVolume;
+            const playPromise = originalSound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => { });
+            }
         }
     } catch (e) { console.warn("Audio error:", e); }
 }
@@ -63,7 +79,7 @@ function buySkin(skinId) {
         gameState.skins.unlocked.push(skinId);
 
         if (typeof playSound === 'function') playSound('sound-buy');
-        window.EspooClicker.showToast(`👕 Skin Acquistata: ${data.name}!`, 'success');
+        window.EspooClicker.showToast("Skin Acquistata: " + data.name + "!", 'success');
 
         // Equipaggia subito
         equipSkin(skinId);
@@ -73,7 +89,8 @@ function buySkin(skinId) {
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Aggiorna contatore token
         if (typeof updateSkinsUI === 'function') updateSkinsUI(); // Aggiorna Guardaroba
     } else {
-        window.EspooClicker.showToast(`❌ Token insufficienti! Te ne servono ${data.cost}.`, 'error');
+        playSound('sound-error');
+        window.EspooClicker.showToast("Token insufficienti!", 'error');
     }
 }
 
@@ -516,6 +533,9 @@ function buyTeam(teamKey) {
         refreshAllStores();
         window.EspooClicker.saveGame();
         updateUI();
+    } else {
+        playSound('sound-error'); // <--- FEEDBACK NEGATIVO
+        window.EspooClicker.showToast("Bugs insufficienti!", 'error');
     }
 }
 
@@ -630,6 +650,7 @@ async function executePrestige() {
     // 2. Avvia Animazione Overlay
     if (overlay) {
         overlay.style.display = 'flex';
+        playSound('sound-prestige');
         // Timeout breve per permettere al browser di renderizzare il display:flex prima dell'opacity
         setTimeout(() => overlay.classList.add('active'), 10);
     }
@@ -905,7 +926,7 @@ function claimAchievementReward(key) {
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
 
-// --------- 8. TICKET CRITICO (GOLDEN BUG) ---------
+// --------- 8. BUG CRITICO (GOLDEN BUG) ---------
 
 let goldenBugTimer;
 function scheduleGoldenBug() {
@@ -932,7 +953,7 @@ function spawnGoldenBug() {
 }
 
 function clickGoldenBug() {
-    playSound('sound-achievement');
+    playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
 
     let clickBonusPercent = 0.01;
@@ -951,7 +972,7 @@ function clickGoldenBug() {
     gameState.totalScore += bonus;
     gameState.lifetimeScore += bonus;
 
-    showToast(`Ticket Critico Risolto! +${formatNumber(bonus)} bug!`);
+    window.EspooClicker.showToast(`Bug Critico Risolto! +${formatNumber(bonus)} bug!`, 'reward');
     goldenBug.style.display = 'none';
     updateUI();
 }
@@ -960,6 +981,7 @@ function clickGoldenBug() {
 
 let originalTitle = document.title;
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.title = 'I bug si accumulano...';
+    // Aggiungiamo l'emoji 🐞 qui perché il browser non supporta FontAwesome nel titolo tab
+    if (document.hidden) document.title = '🐞 I bug si accumulano...';
     else document.title = originalTitle;
 });
