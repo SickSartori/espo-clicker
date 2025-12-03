@@ -254,21 +254,222 @@
     flex-grow: 1;
 }
 
-.setting-item {
+/*-------------------------------------*/
+.settings-group {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.settings-group h3 {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    margin: 0 0 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Righe Slider */
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.setting-row label {
+    font-size: 0.9rem;
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100px;
+    /* Larghezza fissa label */
+}
+
+.slider-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+input[type=range] {
+    flex-grow: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #34495e;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #2c3e50;
+}
+
+.vol-value {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #3498db;
+    width: 40px;
+    text-align: right;
+}
+
+/* Account Link (dentro Settings) */
+.account-link-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(52, 152, 219, 0.1);
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
+.username-tag {
+    color: #3498db;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.settings-nav-btn {
+    background-color: #34495e;
+    width: auto;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+}
+
+/* --- INPUT CON BOTTONE INTEGRATO --- */
+.input-with-action,
+.password-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+}
+
+.input-with-action input,
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px;
+    /* Spazio per il bottone */
+}
+
+.action-btn,
+.toggle-pass-btn {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    width: 35px;
+    background: #34495e;
+    border: none;
+    border-radius: 6px;
+    color: #ecf0f1;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-btn:hover,
+.toggle-pass-btn:hover {
+    background: #4a6582;
+}
+
+/* Stack di Input (Password) */
+.input-stack {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 25px;
 }
 
-.setting-item label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #bdc3c7;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-left: 2px;
+.full-width-btn {
+    width: 100%;
+    margin-top: 10px;
 }
+
+.save-btn {
+    background-color: #27ae60;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* --- ZONA PERICOLOSA MODERNA --- */
+.danger-zone-modern {
+    margin-top: 25px;
+    background: rgba(192, 57, 43, 0.05);
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.danger-header {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.danger-desc {
+    font-size: 0.8rem;
+    color: #95a5a6;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.danger-input input {
+    border-color: #c0392b;
+    /* Bordo rosso */
+}
+
+.danger-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.danger-action-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.1s;
+}
+
+.danger-action-btn:active {
+    transform: translateY(2px);
+}
+
+.danger-action-btn.orange {
+    background-color: #e67e22;
+    box-shadow: 0 3px 0 #d35400;
+}
+
+.danger-action-btn.red {
+    background-color: #c0392b;
+    box-shadow: 0 3px 0 #922b21;
+}
+
+/*------------------------------------*/
 
 input[type="text"],
 input[type="password"],
@@ -316,13 +517,6 @@ input[type="number"] {
     margin-top: 10px;
 }
 
-.danger-zone {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #c0392b;
-    background-color: rgba(192, 57, 43, 0.1);
-    border-radius: 8px;
-}
 
 .input-group-row {
     display: flex;
@@ -1291,21 +1485,24 @@ input[type="number"] {
 
 /* Titolo Overlay */
 .skin-overlay h4 {
-    margin: 0 0 5px 0;
-    font-size: 0.85rem;
-    /* Più piccolo */
-    color: #fff;
-    line-height: 1.2;
+    margin: 0 0 3px 0;
+    font-size: 0.75rem;
+    /* Ridotto */
+    white-space: nowrap;
+    /* Evita a capo */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 /* Descrizione Overlay */
 .skin-desc {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    margin-bottom: 5px;
+    line-height: 1.1;
     /* Testo piccolo */
     color: #bdc3c7;
-    margin-bottom: 8px;
     font-style: italic;
-    line-height: 1.2;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     /* Max 2 righe */
@@ -1328,8 +1525,319 @@ input[type="number"] {
 
 /* Testo Azione (Clicca per...) */
 .skin-action-text {
-    font-size: 0.65rem;
-    font-weight: bold;
+    font-size: 0.6rem;
+    /* Molto piccolo e pulito */
+    font-weight: 800;
     text-transform: uppercase;
-    margin-top: 4px;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+}
+
+.settings-content::-webkit-scrollbar,
+#skins-grid::-webkit-scrollbar,
+#achievement-list::-webkit-scrollbar,
+#leaderboard-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-content::-webkit-scrollbar-track,
+#skins-grid::-webkit-scrollbar-track,
+#achievement-list::-webkit-scrollbar-track,
+#leaderboard-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb,
+#skins-grid::-webkit-scrollbar-thumb,
+#achievement-list::-webkit-scrollbar-thumb,
+#leaderboard-list::-webkit-scrollbar-thumb {
+    background: #5d7c9a;
+    border-radius: 3px;
+}
+
+.group-title {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+/* 1. INPUT GROUP MODERNI (Icona + Input + Bottone) */
+.input-group-modern {
+    display: flex;
+    align-items: center;
+    background-color: #1a252f;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    padding: 0;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+    overflow: hidden;
+    /* Per i bordi */
+}
+
+.input-group-modern .toggle-pass-btn {
+    position: static !important;
+    /* Annulla il vecchio absolute */
+    margin: 0;
+    width: 45px;
+    height: 45px;
+    border: none;
+    border-left: 1px solid #34495e;
+    /* Linea separatrice */
+    background: transparent;
+    color: #3498db;
+    cursor: pointer;
+    display: flex;
+    /* Centra l'icona */
+    align-items: center;
+    justify-content: center;
+}
+
+.input-group-modern .toggle-pass-btn:hover {
+    background-color: #34495e;
+    color: #fff;
+}
+
+.input-group-modern:focus-within {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.input-icon {
+    padding: 0 12px;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    height: 45px;
+    /* Altezza fissa riga */
+}
+
+.input-group-modern input {
+    border: none;
+    background: transparent;
+    padding: 0 10px;
+    height: 45px;
+    color: #fff;
+    flex-grow: 1;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.action-btn-small,
+.toggle-pass-btn {
+    background: transparent;
+    border: none;
+    border-left: 1px solid #34495e;
+    color: #3498db;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn-small:hover,
+.toggle-pass-btn:hover {
+    background-color: #3498db;
+    color: #fff;
+}
+
+/* 2. SLIDER MODERNI */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.slider-icon {
+    color: #bdc3c7;
+    width: 20px;
+    text-align: center;
+}
+
+.slider-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.slider-wrapper label {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.slider-value {
+    font-weight: bold;
+    color: #3498db;
+    font-size: 0.9rem;
+    width: 40px;
+    text-align: right;
+}
+
+.custom-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #34495e;
+    border-radius: 2px;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ecf0f1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #3498db;
+}
+
+/* 3. CARD ACCOUNT PREVIEW */
+.account-preview-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to right, rgba(52, 152, 219, 0.1), transparent);
+    border-left: 3px solid #3498db;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.acc-details small {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.acc-name {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.ghost-btn {
+    background: transparent;
+    border: 1px solid #5d7c9a;
+    width: auto;
+    padding: 6px 12px;
+    height: auto;
+    font-size: 0.85rem;
+
+    /* --- AGGIUNTO: Spazio tra icona e testo --- */
+    gap: 10px;
+}
+
+.ghost-btn:hover {
+    background: #34495e;
+}
+
+/* 4. BOTTONI OUTLINE & TEXT */
+.outline-btn {
+    background: transparent;
+    border: 1px solid #3498db;
+    color: #3498db;
+    height: 40px;
+}
+
+.outline-btn:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+.text-link-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    /* Rosso spento */
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.text-link-btn:hover {
+    opacity: 1;
+}
+
+/* 5. ZONA PERICOLOSA PRO */
+.danger-zone-pro {
+    margin-top: 20px;
+    background: #190a0a;
+    /* Molto scuro rossiccio */
+    border: 1px solid #c0392b;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.danger-header {
+    color: #c0392b;
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.danger-input {
+    border-color: #c0392b;
+    margin-bottom: 10px;
+}
+
+.danger-input .input-icon {
+    color: #c0392b;
+}
+
+.danger-buttons-row {
+    display: flex;
+    gap: 10px;
+}
+
+.danger-btn-small {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+}
+
+.danger-btn-small.orange {
+    background: #e67e22;
+}
+
+.danger-btn-small.orange:hover {
+    background: #d35400;
+}
+
+.danger-btn-small.red {
+    background: #c0392b;
+}
+
+.danger-btn-small.red:hover {
+    background: #a93226;
 }

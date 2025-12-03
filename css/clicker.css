@@ -189,19 +189,18 @@
     color: white;
     border: none;
     /* Bordo luminoso sotto per effetto 3D */
-    box-shadow: 0 4px 0 #a04000, 0 5px 15px rgba(230, 126, 34, 0.4);
+    box-shadow: 0 3px 0 #a04000, 0 4px 10px rgba(230, 126, 34, 0.3);
 
-    padding: 10px 20px;
-    /* Più grande */
-    border-radius: 50px;
+    padding: 8px 30px;
+    font-size: 1rem;
+
+    margin-top: 20px;
+    border-radius: 8px;
     font-family: 'Inter', sans-serif;
-    font-size: 1.2rem;
     font-weight: 500;
 
     cursor: pointer;
 
-    margin-top: 30px;
-    /* Più spazio dal contatore BPS */
     margin-bottom: 10px;
 
     transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
@@ -217,12 +216,9 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Effetto pressione */
 .skill-btn:active {
-    transform: translateY(4px);
-    /* Il bottone scende */
+    transform: translateY(3px);
     box-shadow: 0 0 0 #a04000, 0 2px 5px rgba(230, 126, 34, 0.4);
-    /* L'ombra 3D sparisce */
 }
 
 .skill-btn:hover {

@@ -35,88 +35,119 @@
 </div>
 
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 400px;">
         <button class="modal-close-btn">&times;</button>
-        <h2><i class="fa-solid fa-sliders"></i> Impostazioni</h2>
+        <h2><i class="fa-solid fa-sliders"></i> Configurazione</h2>
         
         <div class="settings-content">
-            <div class="setting-item">
-                <label><i class="fa-solid fa-volume-high"></i> Volume Master(<span id="master-vol-display">100</span>%)</label>
-                <input type="range" id="master-slider" min="0" max="1" step="0.1" value="1">
+            <div class="settings-group">
+                <h3 class="group-title">Audio & Suoni</h3>
+                
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-volume-high"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Master</label>
+                        <input type="range" id="master-slider" class="custom-slider" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <span id="master-vol-display" class="slider-value">100%</span>
+                </div>
+
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-bell"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Effetti</label>
+                        <input type="range" id="sfx-slider" class="custom-slider" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <span id="sfx-vol-display" class="slider-value">100%</span>
+                </div>
+
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-music"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Musica</label>
+                        <input type="range" id="music-slider" class="custom-slider" min="0" max="1" step="0.1" value="0.5">
+                    </div>
+                    <span id="music-vol-display" class="slider-value">50%</span>
+                </div>
             </div>
 
-            <div class="setting-item">
-                <label><i class="fa-solid fa-bell"></i> Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
-                <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
-            </div>
-
-            <div class="setting-item">
-                <label><i class="fa-solid fa-music"></i> Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
-                <input type="range" id="music-slider" min="0" max="1" step="0.1" value="0.5">
-            </div>
-            
-            <button id="save-settings-btn" class="buy-btn" style="background-color: #27ae60;">Salva e Chiudi</button>
-
-            <div class="account-section">
-                <h3>Account</h3>
-                <p style="margin: 5px 0 10px 0; color: #bdc3c7;">
-                    Utente: <span id="current-username-display" style="color: #3498db; font-weight: bold;">...</span>
-                </p>
-                <button id="open-account-btn" class="buy-btn" style="background-color: #34495e; border: 1px solid #5d7c9a;">
-                    Gestione Credenziali & Logout
+            <div class="account-preview-card">
+                <div class="acc-details">
+                    <small>Utente connesso</small>
+                    <div id="current-username-display" class="acc-name">...</div>
+                </div>
+                <button id="open-account-btn" class="buy-btn ghost-btn">
+                    <i class="fa-solid fa-user-gear"></i> Gestisci
                 </button>
             </div>
+
+            <button id="save-settings-btn" class="buy-btn save-btn">
+                <i class="fa-solid fa-check"></i> Salva Configurazione
+            </button>
         </div>
     </div>
 </div>
 
 <div id="account-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 450px;">
         <button class="modal-close-btn">&times;</button>
-        <h2><i class="fa-solid fa-user-shield"></i> Gestione Account</h2>
+        <h2><i class="fa-solid fa-id-card-clip"></i> Profilo Utente</h2>
         
         <div class="settings-content">
             
-            <div class="setting-item">
-                <label>Cambia Nome Utente</label>
-                <div class="input-group-row">
-                    <input type="text" id="new-username-input" placeholder="Nuovo Nome">
-                    <button id="change-username-btn" class="buy-btn" style="width: auto; margin: 0;">Salva</button>
+            <div class="settings-group">
+                <h3 class="group-title">Identità</h3>
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-user"></i></div>
+                    <input type="text" id="new-username-input" placeholder="Nuovo Nome Utente">
+                    <button id="change-username-btn" class="action-btn-small" title="Salva Nome"><i class="fa-solid fa-floppy-disk"></i></button>
                 </div>
             </div>
 
-            <div class="setting-item" style="margin-top: 10px;">
-                <label>Cambia Password</label>
-                <input type="password" id="old-password-input" placeholder="Vecchia Password" style="margin-bottom: 5px;">
-                <input type="password" id="new-password-input" placeholder="Nuova Password">
-                <button id="change-password-btn" class="buy-btn" style="margin-top: 5px;">Aggiorna Password</button>
+            <div class="settings-group">
+                <h3 class="group-title">Sicurezza</h3>
+                <div class="input-stack">
+                    <div class="input-group-modern">
+                        <div class="input-icon"><i class="fa-solid fa-lock"></i></div>
+                        <input type="password" id="old-password-input" placeholder="Vecchia Password">
+                        <button class="toggle-pass-btn icon-only" data-target="old-password-input"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <div class="input-group-modern">
+                        <div class="input-icon"><i class="fa-solid fa-key"></i></div>
+                        <input type="password" id="new-password-input" placeholder="Nuova Password">
+                        <button class="toggle-pass-btn icon-only" data-target="new-password-input"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <button id="change-password-btn" class="buy-btn outline-btn" style="margin-top: 5px;">Aggiorna Password</button>
+                </div>
             </div>
 
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;"></div>
+            <div style="text-align: center; margin: 15px 0;">
+                <button id="logout-btn" class="text-link-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> Disconnetti (Logout)
+                </button>
+            </div>
 
-            <button id="logout-btn" class="buy-btn logout-btn">Cambia Utente (Logout)</button>
-
-            <div class="danger-zone">
-                <h3><i class="fa-solid fa-triangle-exclamation"></i> Zona Pericolosa</h3>
+            <div class="danger-zone-pro">
+                <div class="danger-header">
+                    <i class="fa-solid fa-biohazard"></i> AREA CRITICA
+                </div>
                 
-                <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #c0392b;">
-                    <p style="color: #e74c3c; font-weight: bold; margin-bottom: 5px;">Reset Progressi</p>
-                    <p style="font-size: 0.85rem; margin-bottom: 10px;">
-                        Mantiene l'account ma cancella tutti i progressi, acquisti e statistiche.
-                    </p>
-                    <input type="password" id="reset-confirm-password" placeholder="Password per Reset" style="margin-bottom: 5px;">
-                    <button id="reset-progress-btn" class="buy-btn" style="background-color: #e67e22; width: 100%;">RESETTA TUTTO</button>
+                <div class="input-group-modern danger-input">
+                    <div class="input-icon danger"><i class="fa-solid fa-shield-halved"></i></div>
+                    <input type="password" id="danger-zone-password" placeholder="Password per confermare">
+                    <button class="toggle-pass-btn icon-only" data-target="danger-zone-password"><i class="fa-solid fa-eye"></i></button>
                 </div>
 
-                <div>
-                    <p style="color: #c0392b; font-weight: bold; margin-bottom: 5px;">Eliminazione Account</p>
-                    <p style="font-size: 0.85rem; margin-bottom: 10px;">
-                        Cancellazione definitiva di utente e dati.
-                    </p>
-                    <input type="password" id="delete-confirm-password" placeholder="Password per Eliminare">
-                    <button id="delete-save-btn" class="buy-btn danger-btn" style="margin-top: 10px;">ELIMINA ACCOUNT</button>
+                <div class="danger-buttons-row">
+                    <button id="reset-progress-btn" class="danger-btn-small orange" title="Resetta Progressi">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button id="delete-save-btn" class="danger-btn-small red" title="Elimina Account">
+                        <i class="fa-solid fa-trash-can"></i> Elimina
+                    </button>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

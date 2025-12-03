@@ -62,11 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleResetProgress() {
         const Game = getGameAPI();
-        const resetPass = document.getElementById('reset-confirm-password').value;
+        const resetPass = document.getElementById('danger-zone-password').value;
 
-        if (!resetPass) { alert("Inserisci la password per resettare."); return; }
+        if (!resetPass) { alert("Inserisci la password per confermare il reset."); return; }
 
-        if (confirm("Sei sicuro? Perderai TUTTI i progressi (Skin, Upgrade, Bug). Questa azione è irreversibile.")) {
+        if (confirm("Sei sicuro? Perderai TUTTI i progressi (Skin, Upgrade, Bug).")) {
 
             // 1. BLOCCA I SALVATAGGI AUTOMATICI
             if (Game.getGameState()) {
@@ -490,9 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteSave() {
         const Game = getGameAPI();
-        const passwordConfirm = deleteConfirmPass.value;
+        const passwordConfirm = document.getElementById('danger-zone-password').value;
 
-        if (!passwordConfirm) { alert("Serve la password per cancellare."); return; }
+        if (!passwordConfirm) { alert("Inserisci la password per confermare l'eliminazione."); return; }
 
         if (confirm('Cancellare DEFINITIVAMENTE account e progressi?')) {
             // [FIX] Blocca salvataggi preventivamente
@@ -528,6 +528,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    const toggleBtns = document.querySelectorAll('.toggle-pass-btn');
+
+    toggleBtns.forEach(btn => {
+        // Rimuoviamo vecchi listener per sicurezza (clone trick)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Evita comportamenti strani
+
+            const targetId = newBtn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = newBtn.querySelector('i');
+
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text'; // Mostra
+                    if (icon) {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    }
+                } else {
+                    input.type = 'password'; // Nascondi
+                    if (icon) {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                }
+            }
+        });
+    });
 
     // Listener Impostazioni
     if (masterSlider) {
