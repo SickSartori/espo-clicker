@@ -775,38 +775,42 @@ function updatePrestigeVisuals() {
 
     if (prestigeHubBtn) {
         if (canPrestige || hasPrestiged) {
-            prestigeHubBtn.style.display = 'block';
+            prestigeHubBtn.style.display = 'flex'; // Usa flex per allineare icona
+
             if (canPrestige) {
-                prestigeHubBtn.style.animation = 'pulseButton 1.5s infinite';
-                prestigeHubBtn.style.borderColor = '#2ecc71';
-                // USA innerHTML per le icone!
-                prestigeHubBtn.innerHTML = '<i class="fa-solid fa-crown"></i> PROMOZIONE PRONTA!';
+                // --- CASO: PRONTA! ---
+                // Aggiunge la classe per l'animazione CSS (definito in mobile.css)
+                prestigeHubBtn.classList.add('promotion-ready');
+
+                // Aggiorna HTML mantenendo la struttura icona + span
+                // Nota: Lo span su mobile sarà nascosto dal CSS
+                prestigeHubBtn.innerHTML = '<i class="nav-icon fa-solid fa-rocket"></i> <span>PRONTA!</span>';
             } else {
-                prestigeHubBtn.style.animation = 'none';
-                prestigeHubBtn.style.borderColor = '#9b59b6';
-                prestigeHubBtn.innerHTML = '<i class="fa-solid fa-crown"></i> Promozione';
+                // --- CASO: NON PRONTA (Ma visibile perché hai già prestiggiato) ---
+                prestigeHubBtn.classList.remove('promotion-ready');
+                prestigeHubBtn.style.animation = 'none'; // Reset vecchi stili inline se presenti
+
+                prestigeHubBtn.innerHTML = '<i class="nav-icon fa-solid fa-rocket"></i> <span>Promozione</span>';
             }
         } else {
             prestigeHubBtn.style.display = 'none';
         }
     }
 
+    // ... (resto della funzione per il modale hub invariato) ...
     const hubGainDisplay = document.getElementById('prestige-gain-display');
     const btnGoToContract = document.getElementById('btn-go-to-contract');
     if (hubGainDisplay && btnGoToContract) {
         const gained = calculatePrestigeGained();
         hubGainDisplay.textContent = formatNumber(gained);
-        hubGainDisplay.setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
 
         if (gained < 1) {
-            // Emoji ⚠️ sostituita
             btnGoToContract.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Accumula più bug!';
             btnGoToContract.disabled = true;
             btnGoToContract.style.background = "#7f8c8d";
             btnGoToContract.style.cursor = "not-allowed";
             hubGainDisplay.style.color = "#e74c3c";
         } else {
-            // Emoji 📄 sostituita
             btnGoToContract.innerHTML = '<i class="fa-solid fa-file-contract"></i> Visualizza Contratto';
             btnGoToContract.disabled = false;
             btnGoToContract.style.background = "linear-gradient(135deg, #8e44ad, #9b59b6)";

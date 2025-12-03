@@ -48,6 +48,13 @@
     width: 230px;
     height: 230px;
     flex-shrink: 0;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+#clicker-btn:focus {
+    outline: none;
 }
 
 #clicker-btn:active {

@@ -1,66 +1,69 @@
-/* --- STILI PER SMARTPHONE E TABLET VERTICALI --- */
+/* --- STILI PER SMARTPHONE E TABLET (Layout App Dark) --- */
 @media only screen and (max-width: 1024px) {
 
-    /* 1. Layout e Contenitore (Impila il gioco) */
+    /* 1. GLOBAL & SCROLL LOCK */
     body {
         padding: 0;
-        padding-top: 70px;
-        /* Spazio per navbar */
-        overflow-y: auto;
-    }
-
-    #game-container {
-        flex-direction: column;
+        padding-top: 60px;
+        /* Navbar Top */
+        padding-bottom: 70px;
+        /* Navbar Bottom */
+        overflow: hidden;
+        /* Blocca scroll pagina intera */
+        position: fixed;
         width: 100%;
-        height: auto;
-        max-height: none;
+        height: 100%;
+        background-color: #0f2027;
+        /* Sfondo scuro */
+    }
+
+    /* 2. CONTENITORE PRINCIPALE */
+    #game-container {
+        display: block;
+        width: 100%;
+        height: 100%;
+        /* Occupa tutto lo spazio disponibile tra le barre */
+        margin: 0;
+        border: none;
         border-radius: 0;
+        background: transparent;
         box-shadow: none;
-        margin-left: 0;
-        padding-bottom: 20px;
+        position: relative;
     }
 
-    /* 2. Bottoni Overlay (Rende la barra top compatta) */
-    #overlay-buttons-container {
-        padding: 8px 5px;
-        flex-wrap: wrap;
-        gap: 5px;
-        justify-content: space-around;
-        height: auto;
-    }
-
-    .overlay-btn {
-        flex: 1;
-        padding: 8px 5px;
-        font-size: 0.8rem;
-    }
-
-    /* 3. Ordine e Separazione Colonne */
+    /* 3. COLONNE (Viste come Tab) */
     .game-column {
-        border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-        height: auto;
-        flex: none;
+        display: none !important;
+        /* Nascoste di base */
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        /* Scroll interno */
+        overflow-x: hidden;
+        padding: 15px;
+        padding-bottom: 100px;
+        /* Spazio extra per non coprire l'ultimo elemento */
+        border: none;
+        box-sizing: border-box;
+        -webkit-overflow-scrolling: touch;
     }
 
-    #left-column {
-        order: 2;
+    /* Mostra solo la colonna attiva */
+    .game-column.mobile-active {
+        display: flex !important;
+        flex-direction: column;
+        animation: fadeIn 0.2s ease-out;
     }
 
-    #center-column {
-        order: 1;
-        min-height: 40vh;
-    }
-
-    #right-column {
-        order: 3;
-        border-bottom: none;
-    }
-
-    /* 4. Navbar Mobile Compatta */
+    /* 4. NAVBAR SUPERIORE */
     #game-navbar {
         height: 60px;
-        padding: 0 10px;
-        justify-content: space-around;
+        padding: 0 15px;
+        justify-content: space-between;
+        background: #151b22;
+        /* Scuro */
+        border-bottom: 1px solid #2c3e50;
+        z-index: 1001;
     }
 
     .nav-group {
@@ -68,116 +71,256 @@
         width: auto;
     }
 
-    .nav-group.center {
-        flex-grow: 1;
-        justify-content: center;
-        gap: 15px;
-    }
-
     .nav-label {
         display: none;
     }
 
-    /* Nascondi testi */
-
     .nav-item {
-        min-width: auto;
         padding: 8px;
+        min-width: 40px;
+        color: #bdc3c7;
     }
 
     .nav-icon {
-        font-size: 1.6rem;
-        margin-bottom: 0;
+        font-size: 1.4rem;
+        margin: 0;
     }
 
+    /* 5. BOTTONE PROMOZIONE (Icona Razzo Quadrata) */
     .nav-special-btn {
-        padding: 8px;
         font-size: 0;
-        /* Nasconde testo "Promozione" */
-        margin-left: 5px;
-        border-radius: 8px;
+        /* Nasconde testo */
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        border: 1px solid #a569bd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
+
+    .nav-special-btn span {
+        display: none;
+    }
+
+    /* Nasconde testo interno */
 
     .nav-special-btn .nav-icon {
-        margin: 0;
+        font-size: 1.3rem !important;
+        margin: 0 !important;
+        display: block !important;
+        color: #fff;
+    }
+
+    /* Stato "Pronta" (Verde Pulsante) */
+    .nav-special-btn.promotion-ready {
+        background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+        border-color: #fff !important;
+        animation: promoPulse 1s infinite alternate;
+        box-shadow: 0 0 15px #2ecc71;
+    }
+
+    @keyframes promoPulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 5px #2ecc71;
+        }
+
+        100% {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #2ecc71;
+        }
+    }
+
+    /* 6. BARRA INFERIORE (Bottom Nav) - SCURA */
+    #mobile-nav-bar {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        background: #151b22;
+        /* Scuro */
+        border-top: 1px solid #2c3e50;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 2000;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .mobile-nav-btn {
+        background: transparent;
+        border: none;
+        color: #7f8c8d;
+        /* Grigio */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s;
+    }
+
+    .mobile-nav-btn i {
         font-size: 1.4rem;
+        margin-bottom: 5px;
+        transition: transform 0.2s;
     }
 
-    /* 5. Ottimizzazioni Varie */
-    #click-upgrade-list,
-    #enhancement-list {
-        grid-template-columns: 1fr;
+    .mobile-nav-btn span {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
     }
 
-    .modal-content {
-        max-width: 95%;
+    .mobile-nav-btn.active {
+        color: #3498db;
+        /* Blu */
+        background: rgba(52, 152, 219, 0.05);
+    }
+
+    .mobile-nav-btn.active i {
+        transform: translateY(-3px);
+        color: #3498db;
+        text-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+    }
+
+    .mobile-nav-btn.active::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 30%;
+        right: 30%;
+        height: 2px;
+        background-color: #3498db;
+        box-shadow: 0 2px 10px #3498db;
+    }
+
+    /* 7. FIX CONTRATTO PRESTIGIO */
+    .contract-modal {
+        width: 95% !important;
+        max-height: 85vh;
+        /* Non uscire dallo schermo */
+        display: flex;
+        flex-direction: column;
+        padding: 0 !important;
+    }
+
+    .contract-body {
+        overflow-y: auto;
+        /* Scrolla il contenuto */
+        padding: 15px;
+        flex-grow: 1;
     }
 
     .contract-columns {
         flex-direction: column;
+        /* Una sotto l'altra */
+        gap: 15px;
     }
 
     .contract-separator {
-        margin: 10px 0;
+        margin: 5px 0;
+        transform: rotate(90deg);
+    }
+
+    .contract-footer {
+        padding: 15px;
+        background: #233040;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .contract-footer .buy-btn {
+        width: 100% !important;
+    }
+
+    /* 8. FIX MODALI (Z-Index sopra la navbar) */
+    .modal-backdrop {
+        z-index: 2100 !important;
+        /* Sopra la barra (2000) */
+        align-items: center;
+    }
+
+    .modal-content {
+        width: 92%;
+        max-height: 80vh;
+        margin: 0;
+    }
+
+    /* 9. VARIE */
+    #click-upgrade-list,
+    #enhancement-list {
+        grid-template-columns: 1fr !important;
+        gap: 8px;
+    }
+
+    #skins-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    /* Marquee (Testo Scorrevo) */
+    .upgrade-name,
+    .progress-text {
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .upgrade:active .upgrade-name {
+        animation: marqueeScroll 4s linear infinite alternate;
+    }
+
+    @keyframes marqueeScroll {
+        0% {
+            transform: translateX(0);
+        }
+
+        100% {
+            transform: translateX(calc(-100% + 50px));
+        }
+    }
+
+    .upgrade-details {
+        min-width: 0;
+        padding-right: 5px;
+    }
+
+    /* Mute in alto a sinistra */
+    #quick-mute-btn {
+        top: 70px !important;
+        left: 10px !important;
+        bottom: auto !important;
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        opacity: 0.7;
     }
 
     #github-link-container {
-        bottom: 20px;
-        right: 20px;
-        opacity: 0.3;
+        display: none;
     }
 
-    .github-icon {
-        width: 30px;
-        height: 30px;
-    }
-}
-
-/* Fix per schermi molto corti (laptop/landscape mobile) */
-@media screen and (max-height: 800px) {
-
-    #clicker-btn,
-    #manager-photo-normal,
-    #manager-photo-clicked {
-        width: 180px;
-        height: 180px;
-    }
-
-    #score-display {
-        font-size: 2.5rem;
-        margin-top: 5px;
-    }
-
-    #clicker-section {
-        gap: 5px;
-    }
-}
-
-/* Fix Eventi su Mobile */
-@media only screen and (max-width: 768px) {
-    body.rick-rolling #score-display {
-        font-size: 1.5rem;
-        top: 10px;
+    /* Versione in basso a destra sopra navbar */
+    #version-display {
+        position: fixed;
+        bottom: 75px;
         right: 10px;
-    }
-
-    body.rick-rolling #cps-display {
-        font-size: 1rem;
-        top: 60px;
-        right: 10px;
-    }
-
-    body.rick-rolling #event-multiplier-display {
-        top: 100px;
-        right: 10px;
-    }
-
-    body.rick-rolling #clicker-btn {
-        width: 90px;
-        height: 90px;
-        right: 50%;
-        bottom: 20px;
-        transform: translateX(50%);
-        left: auto;
+        z-index: 1500;
+        font-size: 0.65rem;
+        opacity: 0.4;
+        pointer-events: none;
     }
 }

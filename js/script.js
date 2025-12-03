@@ -520,6 +520,63 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
+
+        function setupMobileTabs() {
+            // Setta default (Console/Center)
+            if (window.innerWidth <= 1024) {
+                document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+                const center = document.getElementById('center-column');
+                if (center) center.classList.add('mobile-active');
+            }
+
+            mobileBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 1. Aggiorna stile bottoni
+                    mobileBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // 2. Cambia Vista
+                    const targetId = btn.getAttribute('data-target');
+
+                    // Nascondi tutte
+                    document.querySelectorAll('.game-column').forEach(col => {
+                        col.classList.remove('mobile-active');
+                        // Importante: forza display none via classe CSS, ma assicuriamoci che il JS non interferisca
+                        // La classe CSS .mobile-active gestisce il display: flex
+                    });
+
+                    // Mostra target
+                    const targetCol = document.getElementById(targetId);
+                    if (targetCol) {
+                        targetCol.classList.add('mobile-active');
+                        // Se è la colonna upgrade, forza un refresh visivo
+                        if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
+                    }
+
+                    playSound('sound-click');
+                });
+            });
+        }
+
+        setupMobileTabs();
+
+        // Gestione resize (se ruoti il telefono)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) {
+                // Reset per desktop: mostra tutto
+                document.querySelectorAll('.game-column').forEach(col => {
+                    col.classList.remove('mobile-active');
+                    col.style.display = ''; // Rimuovi stili inline
+                });
+            } else {
+                // Forza una vista attiva se nessuna lo è
+                if (!document.querySelector('.game-column.mobile-active')) {
+                    document.getElementById('center-column').classList.add('mobile-active');
+                }
+            }
+        });
+
         // Gestione Tabs (Click, Auto, Lab)
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {

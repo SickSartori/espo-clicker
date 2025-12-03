@@ -96,7 +96,7 @@
 
         <div class="nav-group right">
             <button id="open-prestige-hub-btn" class="nav-special-btn">
-                <i class="nav-icon fa-solid fa-rocket"></i> Promozione
+                <i class="nav-icon fa-solid fa-rocket"></i> <span>Promozione</span>
             </button>
             <button id="open-settings-btn" class="nav-item" title="Opzioni">
                 <i class="nav-icon fa-solid fa-gear"></i>
@@ -171,5 +171,22 @@
     <script src="./js/script.js" defer></script> 
     <script src="./js/podio.js" defer></script>
     <script src="./js/modals.js" defer></script>
+
+<div id="mobile-nav-bar">
+        <button class="mobile-nav-btn" data-target="left-column">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Upgrade</span>
+        </button>
+        
+        <button class="mobile-nav-btn active" data-target="center-column">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>Console</span>
+        </button>
+        
+        <button class="mobile-nav-btn" data-target="right-column">
+            <i class="fa-solid fa-users"></i>
+            <span>Team</span>
+        </button>
+    </div>
 </body>
 </html>
