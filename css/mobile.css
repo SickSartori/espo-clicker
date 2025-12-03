@@ -4,8 +4,8 @@
     /* 1. Layout e Contenitore (Impila il gioco) */
     body {
         padding: 0;
-        padding-top: 65px;
-        /* Spazio fisso sotto la barra nav */
+        padding-top: 70px;
+        /* Spazio per navbar */
         overflow-y: auto;
     }
 
@@ -17,26 +17,10 @@
         border-radius: 0;
         box-shadow: none;
         margin-left: 0;
-        /* Assicura che sia a piena larghezza */
         padding-bottom: 20px;
     }
 
-    /* 2. Bottoni Overlay (Rende la barra top compatta) */
-    #overlay-buttons-container {
-        padding: 8px 5px;
-        flex-wrap: wrap;
-        gap: 5px;
-        justify-content: space-around;
-        height: auto;
-    }
-
-    .overlay-btn {
-        flex: 1;
-        padding: 8px 5px;
-        font-size: 0.8rem;
-    }
-
-    /* 3. Ordine e Separazione Colonne */
+    /* 2. Ordine e Separazione Colonne */
     .game-column {
         border-bottom: 2px solid rgba(74, 101, 130, 0.5);
         height: auto;
@@ -57,45 +41,13 @@
         border-bottom: none;
     }
 
-    /* 4. Ottimizzazione Varia */
-    #click-upgrade-list,
-    #enhancement-list {
-        grid-template-columns: 1fr;
-    }
-
-    .modal-content {
-        max-width: 95%;
-    }
-
-    /* 5. OVERRIDE GITHUB ICONA per Mobile */
-    #github-link-container {
-        bottom: 20px;
-        right: 20px;
-        opacity: 0.3;
-    }
-
-    .github-icon {
-        width: 30px;
-        height: 30px;
-    }
-}
-
-@media only screen and (max-width: 1024px) {
-
-    /* Aggiorna il padding del body per la nuova navbar */
-    body {
-        padding-top: 70px;
-    }
-
-    /* Navbar Mobile Compatta */
+    /* 3. Navbar Mobile Compatta */
     #game-navbar {
         height: 60px;
         padding: 0 10px;
         justify-content: space-around;
-        /* Distribuisce equamente */
     }
 
-    /* Rimuovi i gruppi logici su mobile per usare tutto lo spazio */
     .nav-group {
         flex: unset;
         width: auto;
@@ -105,27 +57,24 @@
         flex-grow: 1;
         justify-content: center;
         gap: 15px;
-        /* Più spazio tra le icone centrali */
     }
 
-    /* Nascondi etichette testo, mostra solo icone */
     .nav-label {
         display: none;
     }
 
+    /* Nascondi testi */
+
     .nav-item {
         min-width: auto;
-        /* Rimuovi larghezza minima */
         padding: 8px;
     }
 
     .nav-icon {
         font-size: 1.6rem;
-        /* Icone più grandi per il tocco */
         margin-bottom: 0;
     }
 
-    /* Bottone Promozione Mobile */
     .nav-special-btn {
         padding: 8px;
         font-size: 0;
@@ -139,5 +88,76 @@
         font-size: 1.4rem;
     }
 
-    /* Opzionale: mostra icona razzo + "!" se c'è spazio, o solo icona */
+    /* 4. Ottimizzazioni Varie */
+    #click-upgrade-list,
+    #enhancement-list {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        max-width: 95%;
+    }
+
+    .contract-columns {
+        flex-direction: column;
+    }
+
+    .contract-separator {
+        margin: 10px 0;
+    }
+
+    #github-link-container {
+        bottom: 20px;
+        right: 20px;
+        opacity: 0.3;
+    }
+}
+
+/* Fix per schermi molto corti (laptop/landscape mobile) */
+@media screen and (max-height: 800px) {
+
+    #clicker-btn,
+    #manager-photo-normal,
+    #manager-photo-clicked {
+        width: 180px;
+        height: 180px;
+    }
+
+    #score-display {
+        font-size: 2.5rem;
+        margin-top: 5px;
+    }
+
+    #clicker-section {
+        gap: 5px;
+    }
+}
+
+/* Fix Eventi su Mobile */
+@media only screen and (max-width: 768px) {
+    body.rick-rolling #score-display {
+        font-size: 1.5rem;
+        top: 10px;
+        right: 10px;
+    }
+
+    body.rick-rolling #cps-display {
+        font-size: 1rem;
+        top: 60px;
+        right: 10px;
+    }
+
+    body.rick-rolling #event-multiplier-display {
+        top: 100px;
+        right: 10px;
+    }
+
+    body.rick-rolling #clicker-btn {
+        width: 90px;
+        height: 90px;
+        right: 50%;
+        bottom: 20px;
+        transform: translateX(50%);
+        left: auto;
+    }
 }

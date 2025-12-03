@@ -43,30 +43,7 @@
     z-index: 11;
 }
 
-@keyframes floatUpDynamic {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) rotate(var(--rot)) scale(1);
-    }
 
-    100% {
-        opacity: 0;
-        /* Sale verso l'alto (-100px) e si sposta lateralmente (var --tx) */
-        transform: translate(calc(-50% + var(--tx)), -150px) rotate(var(--rot)) scale(1.2);
-    }
-}
-
-@keyframes floatUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-150px) scale(1.2);
-    }
-}
 
 /* Bottone Clicker */
 #clicker-btn {
@@ -244,15 +221,7 @@
     transform: none !important;
 }
 
-@keyframes pulseGlow {
-    from {
-        box-shadow: 0 0 10px #e74c3c;
-    }
 
-    to {
-        box-shadow: 0 0 25px #e74c3c, 0 0 10px #fff;
-    }
-}
 
 /* Timer interno */
 .skill-timer {
@@ -318,135 +287,11 @@
 
 
 
-@keyframes bugRandomWander {
-    0% {
-        transform: translate(0, 0) rotate(0deg);
-    }
 
-    10% {
-        transform: translate(18px, -12px) rotate(25deg);
-    }
-
-    20% {
-        transform: translate(-15px, 10px) rotate(-15deg);
-    }
-
-    30% {
-        transform: translate(12px, 18px) rotate(45deg);
-    }
-
-    40% {
-        transform: translate(-20px, -5px) rotate(-30deg);
-    }
-
-    50% {
-        transform: translate(8px, -18px) rotate(10deg);
-    }
-
-    60% {
-        transform: translate(-12px, 15px) rotate(-20deg);
-    }
-
-    70% {
-        transform: translate(15px, -8px) rotate(30deg);
-    }
-
-    80% {
-        transform: translate(-18px, -15px) rotate(-40deg);
-    }
-
-    90% {
-        transform: translate(5px, 12px) rotate(15deg);
-    }
-
-    100% {
-        transform: translate(-10px, -20px) rotate(-10deg);
-    }
-}
-
-@keyframes pulseButton {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-@keyframes wobble {
-
-    0%,
-    100% {
-        transform: scale(1) rotate(0deg);
-    }
-
-    50% {
-        transform: scale(1.2) rotate(5deg);
-    }
-}
-
-@keyframes pulseButton {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
 
 /* --- EFFETTO GLITCH 404 --- */
 
-/* Animazione di distorsione "tremolante" */
-@keyframes glitch-skew {
-    0% {
-        transform: skew(0deg);
-    }
 
-    20% {
-        transform: skew(-0.8deg);
-    }
-
-    40% {
-        transform: skew(0.8deg);
-    }
-
-    60% {
-        transform: skew(-0.2deg);
-    }
-
-    80% {
-        transform: skew(0.2deg);
-    }
-
-    100% {
-        transform: skew(0deg);
-    }
-}
-
-/* Animazione di inversione colori pulsante */
-@keyframes glitch-flash {
-    0% {
-        filter: invert(0);
-    }
-
-    50% {
-        filter: invert(1);
-    }
-
-    100% {
-        filter: invert(0);
-    }
-}
 
 /* Quando il body ha la classe bluescreen-active (evento 404 attivo) */
 body.bluescreen-active #game-container {
@@ -644,104 +489,4 @@ body.rick-rolling #toast-container {
     left: 20px !important;
     top: 20px !important;
     pointer-events: none;
-}
-
-/* Mobile */
-@media only screen and (max-width: 768px) {
-    body.rick-rolling #score-display {
-        font-size: 1.5rem;
-        top: 10px;
-        right: 10px;
-    }
-
-    body.rick-rolling #cps-display {
-        font-size: 1rem;
-        top: 60px;
-        right: 10px;
-    }
-
-    body.rick-rolling #event-multiplier-display {
-        top: 100px;
-        right: 10px;
-    }
-
-    body.rick-rolling #clicker-btn {
-        width: 90px;
-        height: 90px;
-        right: 50%;
-        bottom: 20px;
-        transform: translateX(50%);
-        left: auto;
-    }
-}
-
-/* --- SFONDI DINAMICI SKIN --- */
-/* Queste classi vengono applicate via JS alle immagini del manager */
-
-.bg-common {
-    background: radial-gradient(circle, #bdc3c7 0%, #2c3e50 100%);
-    border: 4px solid #bdc3c7 !important;
-    /* Bordo Grigio Chiaro */
-    box-shadow: 0 0 15px rgba(189, 195, 199, 0.4);
-}
-
-.bg-rare {
-    background: radial-gradient(circle, #3498db 0%, #1a5276 100%);
-    border: 4px solid #3498db !important;
-    box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
-}
-
-.bg-epic {
-    background: radial-gradient(circle, #9b59b6 0%, #4a235a 100%);
-    box-shadow: 0 0 25px rgba(155, 89, 182, 0.5);
-    border: 4px solid #8e44ad !important;
-    /* Bordo Viola */
-}
-
-.bg-legendary {
-    background: radial-gradient(circle, #f1c40f 0%, #b7950b 100%);
-    box-shadow: 0 0 35px rgba(241, 196, 15, 0.6);
-    animation: legendaryGlow 3s infinite alternate;
-    border: 4px solid #f1c40f !important;
-    /* Bordo Oro */
-}
-
-/* Sfondo speciale per Gesù/Divino */
-.bg-divine {
-    background: radial-gradient(circle, #fff 10%, #f1c40f 90%);
-    box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
-    border: 4px solid #fff !important;
-}
-
-@keyframes legendaryGlow {
-    from {
-        box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
-    }
-
-    to {
-        box-shadow: 0 0 40px rgba(241, 196, 15, 0.9);
-    }
-}
-
-
-@media screen and (max-height: 800px) {
-
-    #clicker-btn,
-    #manager-photo-normal,
-    #manager-photo-clicked {
-        width: 180px;
-        /* Riduciamo da 230 a 180 */
-        height: 180px;
-    }
-
-    #score-display {
-        font-size: 2.5rem;
-        /* Riduciamo il font */
-        margin-top: 5px;
-    }
-
-    #clicker-section {
-        gap: 5px;
-        /* Meno spazio tra gli elementi */
-    }
 }
