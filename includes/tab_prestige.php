@@ -87,7 +87,9 @@
                     <div class="upgrade-desc">Critici x2 più frequenti.</div>
                     <div class="upgrade-cost">Costo: <span id="cost-ticketPremium">150</span> Pt</div>
                 </div>
-                <button id="buy-ticketPremium" class="buy-btn prestige-btn" data-upgrade-name="ticketPremium">Compra</button>
+                <div class="upgrade-actions">
+                    <button id="buy-ticketPremium" class="buy-btn prestige-btn" data-upgrade-name="ticketPremium">Compra</button>
+                </div>
             </div>
 
             <div id="upgrade-crunchTime" class="prestige-upgrade">
@@ -96,7 +98,9 @@
                     <div class="upgrade-desc">Abilità Attiva: BPS x7.</div>
                      <div class="upgrade-cost">Costo: <span id="cost-crunchTime">200</span> Pt</div>
                 </div>
-                <button id="buy-crunchTime" class="buy-btn prestige-btn" data-upgrade-name="crunchTime">Compra</button>
+                <div class="upgrade-actions">
+                    <button id="buy-crunchTime" class="buy-btn prestige-btn" data-upgrade-name="crunchTime">Compra</button>
+                </div>
             </div>
         </div> 
         

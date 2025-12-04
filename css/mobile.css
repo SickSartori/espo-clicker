@@ -480,9 +480,7 @@
         margin-bottom: 10px;
         padding: 10px;
         border-radius: 0 0 8px 8px;
-        /* Arrotonda solo sotto */
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-        /* Ombra per staccarlo visivamente */
     }
 
     #lab-wallet-amount {
@@ -490,23 +488,15 @@
     }
 
     #buy-controls {
-        /* Su mobile il padding della sezione è 10px (vedi mobile.css) */
-        /* Tiriamo indietro solo di 10px (o 15px se vuoi coprire anche il bordo colonna) */
         margin-left: -15px;
         margin-right: -15px;
-
-        /* Riduciamo il padding interno per dare più spazio ai bottoni */
         padding-left: 15px;
         padding-right: 15px;
-
-        /* Compensa il padding superiore della colonna mobile */
         top: -15px;
         margin-top: -15px;
         padding-top: 15px;
         padding-bottom: 15px;
-
         gap: 5px;
-        /* Meno spazio tra i bottoni su schermi piccoli */
     }
 
     .store-section {
@@ -519,22 +509,13 @@
         position: -webkit-sticky;
         position: sticky;
         top: -25px;
-        /* Stesso valore che hai usato per il Lab */
         z-index: 110;
-        /* Z-Index alto per stare sopra le liste */
-
         background-color: #14202b;
-        /* Sfondo solido scuro */
-
         margin-top: 0;
         margin-bottom: 10px;
         padding: 10px;
-
-        /* Arrotonda solo sotto per effetto "appeso" */
         border-radius: 0 0 8px 8px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-
-        /* Allargamento laterale (come fatto per i Moltiplicatori) */
         margin-left: -10px;
         margin-right: -10px;
         width: calc(100% + 20px);
@@ -545,48 +526,31 @@
         position: -webkit-sticky;
         position: sticky;
         top: -15px;
-        /* Si aggancia in alto compensando il padding della colonna */
         z-index: 120;
-        /* Sopra a tutto il resto */
-
         background-color: #14202b;
-        /* Sfondo scuro unico per il blocco */
-
-        /* Espansione laterale per coprire tutto */
         margin-left: -15px;
         margin-right: -15px;
         padding: 10px 15px;
-        /* Spazio interno */
-
-        /* Ombra sotto tutto il blocco */
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
-        /* Disposizione interna verticale */
         display: flex;
         flex-direction: column;
         gap: 8px;
-        /* Spazio preciso tra Saldo e Moltiplicatori */
-
         margin-bottom: 15px;
     }
 
-    /* Reset stile Wallet interno (ora è parte del blocco) */
     #teams-sticky-header .mobile-bug-wallet {
         position: static !important;
-        /* Non più sticky autonomo */
         box-shadow: none !important;
         margin: 0 !important;
         width: 100%;
         background: rgba(0, 0, 0, 0.3);
-        /* Sfondo leggermente diverso per contrasto */
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* Reset stile Controlli interni */
     #teams-sticky-header #buy-controls {
         position: static !important;
-        /* Non più sticky autonomo */
         top: auto !important;
         margin: 0 !important;
         padding: 0 !important;
