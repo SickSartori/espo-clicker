@@ -14,21 +14,21 @@
         }
     };
 
-    // --- 2. Stili (Sidebar Mobile Optimized & Touch Friendly) ---
+    // --- 2. Stili ---
     const styles = `
+        /* --- CONTAINER PRINCIPALE --- */
         #cheatboard-container {
             position: fixed;
             top: 0;
             left: 0;
-            /* Larghezza dinamica: 85% dello schermo su mobile, max 320px su desktop */
-            width: min(85vw, 320px);
-            height: 100vh; /* Tutta l'altezza */
-            background-color: rgba(10, 10, 18, 0.98); /* Sfondo molto scuro */
-            backdrop-filter: blur(12px);
-            border-right: 2px solid #00ff9d;
-            box-shadow: 10px 0 40px rgba(0, 255, 157, 0.15);
-            z-index: 99999; /* Sopra a tutto */
-            transform: translateX(-100%); /* Nascosto a sinistra di default */
+            width: 350px;
+            height: 100vh;
+            background-color: rgba(10, 10, 10, 0.95); /* Nero profondo semitrasparente */
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #333;
+            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             color: #e0e0e0;
             font-family: 'Consolas', 'Monaco', monospace;
@@ -37,149 +37,199 @@
         }
 
         #cheatboard-container.open {
-            transform: translateX(0); /* Mostra */
+            transform: translateX(0);
         }
 
-        /* Linguetta (Trigger Laterale) - Grande per il dito */
+        /* --- LINGUETTA (HANDLE) --- */
         #cheatboard-handle {
             position: absolute;
-            top: 20%; /* Posizione ergonomica */
-            right: -40px; /* Esce a destra del pannello */
-            width: 40px;  /* Più largo per facilitare il tocco */
-            height: 120px; /* Più lungo */
-            background: #00ff9d;
-            color: #000;
-            border-radius: 0 12px 12px 0;
+            top: 120px;
+            right: -40px;
+            width: 40px;
+            height: 40px;
+            background: #111;
+            color: #00ff9d;
+            border: 1px solid #333;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            writing-mode: vertical-rl; /* Testo verticale */
-            text-orientation: mixed;
-            font-weight: 900;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            box-shadow: 4px 0 15px rgba(0, 255, 157, 0.4);
-            transition: right 0.2s;
+            font-size: 1.2rem;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            opacity: 1;
         }
         
-        #cheatboard-handle:active {
-            right: -35px; /* Feedback visivo al tocco */
+        #cheatboard-handle:hover {
+            background: #222;
+            right: -45px;
+            color: #fff;
         }
 
+        #cheatboard-container.open #cheatboard-handle {
+            opacity: 0;
+            pointer-events: none;
+            right: 0;
+        }
+
+        /* --- HEADER & CONTENT --- */
         #cheatboard-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-bottom: 1px solid #222;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         #cheatboard-title { 
             font-size: 1rem; 
             font-weight: bold; 
             color: #00ff9d; 
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
+            letter-spacing: 1px;
         }
 
         #cheatboard-close { 
-            cursor: pointer; 
-            color: #ff4757; 
-            font-size: 1.5rem; /* X più grande */
-            padding: 5px;
+            cursor: pointer; color: #ff4757; font-size: 1.4rem; padding: 5px; transition: transform 0.2s;
         }
+        #cheatboard-close:hover { transform: scale(1.1); color: #ff6b81; }
 
-        /* Griglia Contenuto */
         #cheatboard-content {
-            padding: 15px;
+            padding: 20px;
             flex: 1;
             overflow-y: auto;
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            /* Padding extra in fondo per non coprire l'ultimo elemento su mobile (dietro navbar browser) */
-            padding-bottom: 100px; 
+            padding-bottom: 80px; 
         }
 
+        /* --- GRUPPI --- */
         .cheat-group {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 30, 30, 0.3);
+            border: 1px solid #333;
             border-radius: 8px;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .cheat-group-title { 
-            font-size: 0.75rem; 
+            font-size: 0.7rem; 
             color: #888; 
             text-transform: uppercase; 
-            margin-bottom: 5px; 
             font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+            margin-bottom: 5px;
         }
         
         .control-row { 
             display: flex; 
-            gap: 8px; 
+            gap: 10px; 
             align-items: center;
-            flex-wrap: wrap; /* Fondamentale su schermi stretti per mandare a capo se serve */
+            width: 100%; /* Occupa tutto lo spazio */
         }
         
-        /* Input ottimizzati per mobile */
+        /* --- INPUT --- */
         .cheat-input {
-            background: rgba(0, 0, 0, 0.4);
+            background: #080808;
             border: 1px solid #444;
-            color: #fff;
-            padding: 10px; /* Più spazio per digitare */
-            border-radius: 6px;
-            flex: 1;
-            font-size: 1rem; /* Font 16px evita lo zoom automatico su iOS */
-            min-width: 60px;
-        }
-        
-        .cheat-input:focus {
-            border-color: #00ff9d;
-            outline: none;
-        }
-        
-        /* Bottoni ottimizzati per il tocco */
-        .cheat-btn {
-            background: #2c3e50;
-            border: 1px solid #34495e;
-            color: #fff;
-            padding: 12px 15px; /* Area di tocco generosa */
-            border-radius: 6px;
-            cursor: pointer;
+            color: #00ff9d;
+            padding: 0 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            text-align: right;
             font-weight: bold;
-            font-size: 0.85rem;
+            height: 40px; /* Altezza fissa uniforme */
+            
+            /* FLEX: 1 qui è importante per bilanciare input e bottoni */
+            flex: 1; 
+            min-width: 0; /* Previene overflow */
+        }
+        
+        .cheat-input:focus { 
+            border-color: #00ff9d; 
+            outline: none; 
+            box-shadow: 0 0 8px rgba(0, 255, 157, 0.2);
+        }
+        
+        /* --- BOTTONI --- */
+        .cheat-btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #eee;
+            padding: 0 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            text-align: center;
             white-space: nowrap;
-            flex-grow: 1; /* Si espandono per riempire la riga */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            height: 40px; /* Stessa altezza degli input */
+            transition: all 0.1s;
+            
+            /* LA MODIFICA CHIAVE PER DESKTOP: */
+            flex: 1; 
         }
         
-        .cheat-btn:active {
-            transform: scale(0.96);
-        }
+        .cheat-btn:hover { background: #333; border-color: #666; }
+        .cheat-btn:active { transform: translateY(1px); }
         
-        .cheat-btn.primary { background: rgba(0, 255, 157, 0.15); border-color: #00ff9d; color: #00ff9d; }
-        .cheat-btn.danger { background: rgba(255, 71, 87, 0.15); border-color: #ff4757; color: #ff4757; }
-        .cheat-btn.gold { background: rgba(241, 196, 15, 0.15); border-color: #f1c40f; color: #f1c40f; }
+        /* Varianti Colore */
+        .cheat-btn.primary { border-color: #00ff9d; color: #00ff9d; background: rgba(0, 255, 157, 0.05); }
+        .cheat-btn.primary:hover { background: rgba(0, 255, 157, 0.15); }
+        
+        .cheat-btn.danger { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.05); }
+        .cheat-btn.danger:hover { background: rgba(255, 71, 87, 0.15); }
+        
+        .cheat-btn.gold { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
+        .cheat-btn.gold:hover { background: rgba(241, 196, 15, 0.15); }
 
-        /* Scrollbar personalizzata sottile */
-        #cheatboard-content::-webkit-scrollbar { width: 4px; }
-        #cheatboard-content::-webkit-scrollbar-track { background: #111; }
-        #cheatboard-content::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        /* Scrollbar sottile */
+        #cheatboard-content::-webkit-scrollbar { width: 5px; }
+        #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        /* --- MOBILE MEDIA QUERY (Invariato, ma essenziale) --- */
+        @media only screen and (max-width: 768px) {
+            #cheatboard-container {
+                width: 92%; 
+                max-width: none;
+            }
+
+            #cheatboard-handle {
+                top: 140px;
+                right: -35px;
+                width: 35px;
+                height: 40px;
+                font-size: 1rem;
+                background: rgba(20, 20, 20, 0.9);
+                border-left: 1px solid #00ff9d;
+            }
+
+            .control-row { flex-wrap: wrap; }
+            
+            .cheat-input { 
+                flex: 1 1 100%; 
+                margin-bottom: 5px;
+                height: 45px;
+            }
+            
+            .cheat-btn { 
+                flex: 1 1 100%; 
+                height: 50px;
+                font-size: 0.9rem;
+            }
+            
+            .control-row .cheat-btn:not(:first-child) { flex: 1; }
+        }
     `;
 
     const styleSheet = document.createElement("style");
@@ -191,7 +241,7 @@
     container.id = 'cheatboard-container';
 
     container.innerHTML = `
-        <div id="cheatboard-handle">DEV TOOLS</div>
+        <div id="cheatboard-handle"><i class="fa-solid fa-terminal"></i></div>
         <div id="cheatboard-header">
             <span id="cheatboard-title"><i class="fa-solid fa-terminal"></i> Admin Console</span>
             <span id="cheatboard-close"><i class="fa-solid fa-xmark"></i></span>
