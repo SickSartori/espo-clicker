@@ -677,7 +677,10 @@ function updateUI() {
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
 
-
+    const mobileWallets = document.querySelectorAll('.bug-wallet-amount');
+    mobileWallets.forEach(el => {
+        el.textContent = formatNumber(gameState.score);
+    });
 
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer) hudContainer.style.display = 'flex';
@@ -702,6 +705,11 @@ function updateUI() {
     if (labWallet) {
         // Usa formatNumber se vuoi "1k", oppure toLocaleString per "1.000"
         labWallet.textContent = formatNumber(gameState.prestigePoints);
+    }
+
+    const bugWallet = document.getElementById('bug-wallet-amount');
+    if (bugWallet) {
+        bugWallet.textContent = formatNumber(gameState.bugWallet);
     }
 
     for (const key in gameState.teams) {

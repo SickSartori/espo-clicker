@@ -2,6 +2,12 @@
     <div class="section-header">
         <h2><i class="fa-solid fa-arrow-pointer"></i>   Potenziamenti Click</h2>
     </div>
+    
+    <div class="mobile-bug-wallet">
+        <span class="label">Bug:</span>
+        <span class="bug-wallet-amount">0</span>
+    </div>
+    
     <div id="click-upgrade-list"></div>
     <div id="click-upgrade-empty" class="empty-state-msg" style="display: none;">
         Nessun potenziamento disponibile.

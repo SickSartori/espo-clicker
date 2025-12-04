@@ -514,6 +514,88 @@
         padding-right: 10px !important;
     }
 
+    .mobile-bug-wallet {
+        display: flex !important;
+        position: -webkit-sticky;
+        position: sticky;
+        top: -25px;
+        /* Stesso valore che hai usato per il Lab */
+        z-index: 110;
+        /* Z-Index alto per stare sopra le liste */
+
+        background-color: #14202b;
+        /* Sfondo solido scuro */
+
+        margin-top: 0;
+        margin-bottom: 10px;
+        padding: 10px;
+
+        /* Arrotonda solo sotto per effetto "appeso" */
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+
+        /* Allargamento laterale (come fatto per i Moltiplicatori) */
+        margin-left: -10px;
+        margin-right: -10px;
+        width: calc(100% + 20px);
+        box-sizing: border-box;
+    }
+
+    #teams-sticky-header {
+        position: -webkit-sticky;
+        position: sticky;
+        top: -15px;
+        /* Si aggancia in alto compensando il padding della colonna */
+        z-index: 120;
+        /* Sopra a tutto il resto */
+
+        background-color: #14202b;
+        /* Sfondo scuro unico per il blocco */
+
+        /* Espansione laterale per coprire tutto */
+        margin-left: -15px;
+        margin-right: -15px;
+        padding: 10px 15px;
+        /* Spazio interno */
+
+        /* Ombra sotto tutto il blocco */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        /* Disposizione interna verticale */
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        /* Spazio preciso tra Saldo e Moltiplicatori */
+
+        margin-bottom: 15px;
+    }
+
+    /* Reset stile Wallet interno (ora è parte del blocco) */
+    #teams-sticky-header .mobile-bug-wallet {
+        position: static !important;
+        /* Non più sticky autonomo */
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        /* Sfondo leggermente diverso per contrasto */
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Reset stile Controlli interni */
+    #teams-sticky-header #buy-controls {
+        position: static !important;
+        /* Non più sticky autonomo */
+        top: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100%;
+    }
+
     #toast-container {
         top: 75px !important;
         left: 50% !important;
