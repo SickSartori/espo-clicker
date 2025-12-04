@@ -479,15 +479,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
+            // Se il volume caricato è 0, metti subito l'icona Muto
+            if (gameState.user.masterVolume <= 0) {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            } else {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+
+            // Listener Click (questo c'era già, lascialo così)
             muteBtn.addEventListener('click', () => {
                 if (gameState.user.masterVolume > 0) {
                     gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    // Cambio Icona FontAwesome
+                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    // Cambio Icona FontAwesome
+                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
                 const mSlider = document.getElementById('master-slider');
@@ -721,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 3. Merge dei dati
                     const cloudState = JSON.parse(cloudJSON);
 
-                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    // Gestione compatibilità cloud
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
@@ -729,11 +737,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     deepMerge(gameState, cloudState);
 
-                    // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
+                    // --- FIX SICUREZZA SKIN ---
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
-                        console.warn("Dati skin corrotti. Ripristino default.");
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
+
+                    // --- FIX CRUCIALE: APPLICA LA SKIN VISIVAMENTE ---
+                    if (typeof applySkinVisuals === 'function') {
+                        applySkinVisuals(gameState.skins.current);
+                    }
+                    // -----------------------------------------------
 
                     // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
