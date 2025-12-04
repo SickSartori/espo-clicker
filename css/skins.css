@@ -251,3 +251,132 @@
     box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
     border: 4px solid #fff !important;
 }
+
+/*
+Natale
+*/
+body.theme-christmas {
+    /* Sfondo generale pagina: Gradiente Notte di Natale */
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), auto;
+}
+
+body.theme-christmas button,
+body.theme-christmas .buy-btn,
+body.theme-christmas .nav-item,
+body.theme-christmas .tab-btn {
+    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), pointer;
+}
+
+body.theme-christmas #clicker-btn {
+    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), pointer !important;
+}
+
+/* Modifica il contenitore principale del gioco */
+body.theme-christmas #game-container {
+    background-color: rgba(11, 60, 40, 0.9) !important;
+    /* Verde Pino Scuro Trasparente */
+    border: 2px solid #c0392b !important;
+    /* Bordo Rosso */
+    box-shadow: 0 0 30px rgba(192, 57, 43, 0.5);
+}
+
+/* Modifica le colonne laterali */
+body.theme-christmas .game-column {
+    border-right: 1px solid rgba(192, 57, 43, 0.3) !important;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Modifica Navbar */
+body.theme-christmas #game-navbar {
+    background: #1a0a0a !important;
+    /* Scuro rossiccio */
+    border-bottom: 2px solid #27ae60 !important;
+}
+
+/* Titoli delle sezioni */
+body.theme-christmas .store-section h2,
+body.theme-christmas .section-header h2 {
+    color: #e74c3c !important;
+    /* Rosso Natale */
+    text-shadow: 0 0 5px #fff;
+}
+
+/* Bottoni Compra (Verdi con bordo rosso) */
+body.theme-christmas .buy-btn:not(:disabled) {
+    background: linear-gradient(to bottom, #27ae60, #145a32) !important;
+    border: 1px solid #c0392b !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+body.theme-christmas .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #2ecc71, #1e8449) !important;
+    box-shadow: 0 0 15px #c0392b;
+}
+
+/* Punteggio */
+body.theme-christmas #score-display {
+    color: #ecf0f1 !important;
+    /* Bianco Ghiaccio */
+    text-shadow: 0 0 10px #e74c3c, 2px 2px 0 #000;
+}
+
+body.theme-christmas #cps-display {
+    color: #f1c40f !important;
+    /* Oro */
+}
+
+.skin-card.rarity-christmas {
+    --r-color: #e74c3c;
+    /* Rosso Natale Brillante */
+}
+
+/* Sfondo dietro al personaggio principale (Main Button) */
+.bg-christmas {
+    background: radial-gradient(circle, #fff 10%, #c0392b 90%);
+    box-shadow: 0 0 40px rgba(231, 76, 60, 0.8), 0 0 10px #fff;
+    border: 4px solid #fff !important;
+    animation: pulseGlow 2s infinite alternate;
+}
+
+/*
+
+/* --- NEVE (Corretta) --- */
+#snow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* Lascia passare i click */
+    z-index: 9999;
+    /* Sopra a tutto ma sotto i modali */
+    overflow: hidden;
+    display: none;
+    /* Nascosto di default */
+}
+
+.snowflake {
+    position: absolute;
+    top: -20px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-20px) translateX(0px);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: translateY(105vh) translateX(50px);
+        opacity: 0.2;
+    }
+}

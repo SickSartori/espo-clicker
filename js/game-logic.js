@@ -8,7 +8,17 @@ function playSound(id, type = 'sfx') {
     // Calcolo Volume Finale
     const master = gameState.user.masterVolume;
     const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
-    const finalVolume = master * channel;
+    let finalVolume = master * channel;
+
+    if (id === 'sound-achievement') {
+        finalVolume = finalVolume * 0.4;
+    }
+    if (id === 'sound-click') {
+        finalVolume = finalVolume * 0.4;
+    }
+    if (id === 'sound-buy') {
+        finalVolume = finalVolume * 0.4;
+    }
 
     if (finalVolume <= 0) {
         if (type === 'music') originalSound.pause();
@@ -54,17 +64,21 @@ function updateAmbientVolume() {
 
     // Aggiorna Blue Screen
     const bluescreen = document.getElementById('sound-bluescreen');
-    if (bluescreen) bluescreen.volume = finalVol;
+    if (bluescreen) bluescreen.volume = finalVol * 0.5;
 
     // Aggiorna Rick Roll Video
     const rickVideo = document.getElementById('rick-roll-video');
-    if (rickVideo) rickVideo.volume = finalVol;
+    if (rickVideo) rickVideo.volume = finalVol * 0.5;
 
     // --- AGGIUNTA MANCANTE ---
     const ricardoVideo = document.getElementById('ricardo-video');
-    if (ricardoVideo) ricardoVideo.volume = finalVol;
-}
+    if (ricardoVideo) ricardoVideo.volume = finalVol * 0.5;
 
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) {
+        snowAudio.volume = finalVol;
+    }
+}
 // Funzione per acquistare Skin con Token Lab
 function buySkin(skinId) {
     const data = gameData.skins[skinId];
@@ -897,7 +911,6 @@ function claimAchievementReward(key) {
 
     if (!state || !state.unlocked || state.claimed) return;
 
-    // Applica il premio
     if (data.reward) {
         let toastType = 'reward';
         if (data.reward.type === 'bugs') {
@@ -913,7 +926,8 @@ function claimAchievementReward(key) {
             const skinId = data.reward.id;
             if (!gameState.skins.unlocked.includes(skinId)) {
                 gameState.skins.unlocked.push(skinId);
-                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success'); // Skin è un successo!
+                // QUI SOLO MESSAGGIO TOAST, NESSUN EVENTO GRAFICO
+                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success');
             }
         }
         else if (data.reward.type === 'multiplier') {
@@ -921,17 +935,54 @@ function claimAchievementReward(key) {
         }
     }
 
-    // Segna come riscattato
     state.claimed = true;
     playSound('sound-buy');
-
     recalculateCPS();
     window.EspooClicker.saveGame();
-
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
 
+function triggerChristmasEvent(key) {
+    const overlay = document.getElementById('christmas-overlay');
+    const soundMerry = document.getElementById('sound-merry');
+
+    // 1. Mostra Overlay
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'fadeIn 0.5s';
+    }
+
+    // 2. Suona Buon Natale
+    if (soundMerry) {
+        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
+        soundMerry.play().catch(e => console.log(e));
+    }
+
+    // 3. Logica di riscatto (Backend)
+    const skinId = 'christmas';
+    if (!gameState.skins.unlocked.includes(skinId)) {
+        gameState.skins.unlocked.push(skinId);
+    }
+
+    gameState.achievements[key].claimed = true;
+
+    // 4. Equipaggia subito la skin (questo attiverà la neve e il loop audio tramite applySkinVisuals)
+    equipSkin(skinId);
+
+    // Salva
+    window.EspooClicker.saveGame();
+
+    // Aggiorna UI Achievement
+    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+
+    // 5. Nascondi dopo 4 secondi
+    setTimeout(() => {
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }, 4000);
+}
 // --------- 8. BUG CRITICO (GOLDEN BUG) ---------
 
 let goldenBugTimer;

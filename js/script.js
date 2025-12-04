@@ -479,28 +479,40 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
-            // Se il volume caricato è 0, metti subito l'icona Muto
+            // Setup Icona Iniziale
             if (gameState.user.masterVolume <= 0) {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
             } else {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
             }
 
-            // Listener Click (questo c'era già, lascialo così)
+            // Listener Click Modificato
             muteBtn.addEventListener('click', () => {
+                // 1. Logica Toggle Volume
                 if (gameState.user.masterVolume > 0) {
                     gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    // Suono di feedback quando RIATTIVI l'audio
+                    playSound('sound-click');
                 }
+
+                // 2. Aggiorna Slider se presente
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
+
+                // 3. Aggiorna tutti i loop ambientali (inclusa la musica di Natale)
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+
+                // 4. Check Forzato per Snowball (per sicurezza immediata)
+                const snowAudio = document.getElementById('sound-snowball');
+                if (snowAudio) {
+                    // Applica la regola del 20% anche qui
+                    snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+                }
             });
         }
 
@@ -695,7 +707,13 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => { audio.volume = gameState.user.masterVolume; });
+            document.querySelectorAll('audio').forEach(audio => {
+                if (audio.id === 'sound-snowball') {
+                    audio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 1.5;
+                } else {
+                    audio.volume = gameState.user.masterVolume;
+                }
+            });
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,

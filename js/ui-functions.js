@@ -45,7 +45,8 @@ function updateSkinsUI() {
         'common': 'COMUNE',
         'rare': 'RARA',
         'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA'
+        'legendary': 'LEGGENDARIA',
+        'christmas': 'NATALE'
     };
 
     for (const key in gameData.skins) {
@@ -348,6 +349,15 @@ function showClickFeedback(event) {
         }
 
         feedback.textContent = `+${formatNumber(val)}`;
+
+        if (document.body.classList.contains('theme-christmas')) {
+            // Alterna casualmente tra Rosso Natale e Verde Pino
+            feedback.style.color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
+            feedback.style.textShadow = '0 0 5px #fff'; // Alone bianco neve
+        } else {
+            // Colore Standard (modifica se il tuo default è diverso)
+            feedback.style.color = 'rgba(239, 68, 68, 0.7)';
+        }
     }
 
     // Calcolo Posizione
@@ -953,46 +963,193 @@ function setEmptyMessage(el, mode) {
 // --- HELPERS PER SKIN ---
 function equipSkin(skinId) {
     if (!gameState.skins.unlocked.includes(skinId)) return;
+
+    // --- LOGICA EVENTO NATALE ---
+    // Scatta SOLO se la skin è 'christmas' E siamo nel periodo giusto (funzione in game-data.js)
+    if (skinId === 'christmas' && typeof isChristmasSeason === 'function' && isChristmasSeason()) {
+        triggerChristmasOverlay(); // Mostra overlay + chiude modale
+    }
+
     gameState.skins.current = skinId;
-    applySkinVisuals(skinId);
+
+    // Applica grafica e suoni loop (questo funziona sempre, anche fuori stagione)
+    applySkinVisuals(skinId, true);
+
     if (typeof playSound === 'function') playSound('sound-click');
     if (window.EspooClicker) window.EspooClicker.saveGame();
     updateSkinsUI();
 }
 
-function applySkinVisuals(skinId) {
+function triggerChristmasOverlay() {
+    const overlay = document.getElementById('christmas-overlay');
+    const soundMerry = document.getElementById('sound-merry');
+
+    // --- NUOVO: Chiudi il modale Skin immediatamente ---
+    const skinsModal = document.getElementById('skins-modal');
+    if (skinsModal) {
+        skinsModal.style.display = 'none';
+    }
+
+    // 1. Mostra Overlay
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'fadeIn 0.5s';
+    }
+
+    // 2. Suona "Merry Christmas" (Solo una volta all'equipaggiamento)
+    if (soundMerry) {
+        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
+        soundMerry.currentTime = 0;
+        soundMerry.play().catch(e => { });
+    }
+
+    // 3. Nascondi dopo 4 secondi
+    setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+    }, 4000);
+}
+
+let christmasAudioInitialized = false;
+
+function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
-    // Fallback a default se non esiste i dati
     const skinData = data || gameData.skins['default'];
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
-    // Lista di tutte le classi di sfondo possibili per poterle rimuovere
-    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine'];
+    // Riferimenti Audio e Grafica Natale
+    const snowContainer = document.getElementById('snow-container');
+    const snowAudio = document.getElementById('sound-snowball');
 
+    const goldenBugImg = document.querySelector('#golden-bug img');
+
+    // Reset Classi
+    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
+
+    // 1. GESTIONE TEMA NATALIZIO
+    if (skinId === 'christmas') {
+        document.body.classList.add('theme-christmas');
+
+        // A. Attiva Neve (Se non c'è già)
+        if (snowContainer) {
+            snowContainer.style.display = 'block';
+            // Rigenera solo se vuoto per evitare accumulo al refresh rapido
+            if (snowContainer.innerHTML === '') {
+                createSnowflakes();
+            }
+        }
+        if (goldenBugImg) {
+            // Puoi caricare un'immagine 'gift.png' o usare temporaneamente questa URL esterna o un placeholder
+            // Se hai un'immagine locale usa: ./assets/image/gift.png
+            goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
+        }
+        // B. Attiva Audio Loop (Gestione Refresh e Autoplay)
+        if (snowAudio) {
+            snowAudio.loop = true; // Assicura loop infinito
+            // Volume basso come richiesto (20% del volume musica impostato)
+            const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+            snowAudio.volume = targetVol;
+
+            // Tentativo di riproduzione immediata
+            const playPromise = snowAudio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Autoplay bloccato dal browser. In attesa di interazione...");
+                    // Se bloccato, aggiungi listener one-shot al body per sbloccarlo al primo click
+                    if (!christmasAudioInitialized) {
+                        const unlockAudio = () => {
+                            snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+                            snowAudio.play();
+                            christmasAudioInitialized = true; // Evita doppi trigger
+                            document.body.removeEventListener('click', unlockAudio);
+                            document.body.removeEventListener('touchstart', unlockAudio);
+                        };
+                        document.body.addEventListener('click', unlockAudio);
+                        document.body.addEventListener('touchstart', unlockAudio);
+                    }
+                });
+            }
+        }
+
+
+    } else {
+        // DISATTIVAZIONE TEMA (Se cambio skin)
+        document.body.classList.remove('theme-christmas');
+
+        if (goldenBugImg) {
+            goldenBugImg.src = './assets/image/bug.png';
+        }
+
+        // Spegni Neve
+        if (snowContainer) {
+            snowContainer.style.display = 'none';
+            snowContainer.innerHTML = ''; // Pulisce per risparmiare memoria
+        }
+
+        // Spegni Audio
+        if (snowAudio) {
+            snowAudio.pause();
+            snowAudio.currentTime = 0;
+            christmasAudioInitialized = false;
+        }
+    }
+
+    // 2. GESTIONE IMMAGINI STANDARD
     if (photoNormal) {
         photoNormal.src = `./assets/image/${skinData.img}`;
-        photoNormal.style.filter = 'none'; // Reset filtri vecchi
-
-        // Rimuovi vecchi sfondi
+        photoNormal.style.filter = 'none';
         photoNormal.classList.remove(...bgClasses);
 
-        // Aggiungi nuovo sfondo in base alla rarità O ID specifico
         if (skinId === 'jesus') photoNormal.classList.add('bg-divine');
         else if (skinData.rarity) photoNormal.classList.add(`bg-${skinData.rarity}`);
+        else if (skinId === 'christmas') photoNormal.classList.add('bg-christmas'); // Ridondante ma sicuro
         else photoNormal.classList.add('bg-common');
     }
 
     if (photoClicked) {
         photoClicked.src = `./assets/image/${skinData.imgClick}`;
         photoClicked.style.filter = 'none';
-
-        // Applica lo stesso sfondo anche all'immagine "cliccata"
         photoClicked.classList.remove(...bgClasses);
         if (skinId === 'jesus') photoClicked.classList.add('bg-divine');
         else if (skinData.rarity) photoClicked.classList.add(`bg-${skinData.rarity}`);
+        else if (skinId === 'christmas') photoClicked.classList.add('bg-christmas');
         else photoClicked.classList.add('bg-common');
+    }
+}
+
+// Nuova funzione helper per creare i fiocchi (Aggiungila alla fine del file ui-functions.js)
+function createSnowflakes() {
+    const container = document.getElementById('snow-container');
+    if (!container) return;
+
+    const numberOfSnowflakes = 60; // Numero fiocchi
+
+    for (let i = 0; i < numberOfSnowflakes; i++) {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+
+        // Randomizza dimensioni
+        const size = Math.random() * 5 + 3 + 'px';
+        snowflake.style.width = size;
+        snowflake.style.height = size;
+
+        // Posizione orizzontale casuale
+        snowflake.style.left = Math.random() * 100 + 'vw';
+
+        // Durata caduta casuale (tra 5s e 12s per effetto naturale)
+        const duration = Math.random() * 7 + 5;
+        snowflake.style.animationDuration = duration + 's';
+
+        // Ritardo casuale negativo: fa sì che alcuni fiocchi inizino già a metà schermo
+        // Questo evita l'effetto "tutti partono insieme dall'alto" al refresh
+        snowflake.style.animationDelay = (Math.random() * -20) + 's';
+
+        // Opacità casuale
+        snowflake.style.opacity = Math.random() * 0.7 + 0.3;
+
+        container.appendChild(snowflake);
     }
 }
 

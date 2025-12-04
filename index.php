@@ -35,13 +35,21 @@
         <source src="./assets/video/ricardo-milespo-video.mp4" type="video/mp4">
     </video>
     <div id="toast-container"></div>
-        <div id="prestige-transition-overlay" style="display: none;">
+    <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">
             <div class="transition-icon">🚀</div>
             <h2>PROMOZIONE IN CORSO...</h2>
             <p>Ricalcolo dei benefit aziendali</p>
         </div>
     </div>
+    
+    <div id="christmas-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #c0392b; z-index: 10000; justify-content: center; align-items: center; flex-direction: column; color: white;">
+        <h1 id="christmas-title" style="font-size: 4rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5); animation: pulseButton 1s infinite;">🎄 BUON NATALE! 🎄</h1>
+        <p id="christmas-subtitle" style="font-size: 1.5rem;">Skin Espo Natale Equipaggiata!</p>
+    </div>
+
+    <div id="snow-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: none;"></div>
+
     <div id="offline-modal" class="modal-backdrop" style="display: none; z-index: 3000;">
     <div class="modal-content" style="text-align: center; border-color: #f39c12;">
         <h2 style="color: #f39c12; border-bottom-color: #f39c12;">💤 Bentornato!</h2>
@@ -163,6 +171,9 @@
     <audio id="sound-golden" src="./assets/sounds/golden.mp3" preload="auto"></audio>
     <audio id="sound-prestige" src="./assets/sounds/prestige.mp3" preload="auto"></audio>
     <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="auto"></audio>
+
+    <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="auto"></audio>
+<audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="auto"></audio>
     
     <script src="./js/version-config.js"></script>
     <script src="./js/game-data.js" defer></script>
