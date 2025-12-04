@@ -1,0 +1,638 @@
+/**
+ * Classi Comuni Bottoni
+ */
+.buy-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    height: 50px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.buy-btn:hover:not(:disabled) {
+    background-color: #2980b9;
+}
+
+.buy-btn:disabled {
+    background-color: #5d7c9a;
+    color: #9cb3c9;
+    cursor: not-allowed;
+    text-shadow: none;
+}
+
+.buy-btn.danger-btn {
+    background-color: #e74c3c;
+}
+
+.buy-btn.danger-btn:hover:not(:disabled) {
+    background-color: #c0392b;
+}
+
+.buy-btn.owned {
+    background-color: rgba(44, 62, 80, 0.5) !important;
+    color: #2ecc71 !important;
+    border: 1px solid rgba(46, 204, 113, 0.3) !important;
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/*
+ * Classi Danger Bottone
+ */
+
+.danger-btn {
+    background-color: #c0392b;
+    margin-top: 15px;
+}
+
+.danger-btn-small {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+}
+
+.danger-btn-small.orange {
+    background: #e67e22;
+}
+
+.danger-btn-small.orange:hover {
+    background: #d35400;
+}
+
+.danger-btn-small.red {
+    background: #c0392b;
+}
+
+.danger-btn-small.red:hover {
+    background: #a93226;
+}
+
+.danger-zone-modern {
+    margin-top: 25px;
+    background: rgba(192, 57, 43, 0.05);
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.danger-header {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.danger-desc {
+    font-size: 0.8rem;
+    color: #95a5a6;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.danger-input input {
+    border-color: #c0392b;
+    /* Bordo rosso */
+}
+
+.danger-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.danger-action-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.1s;
+}
+
+.danger-action-btn:active {
+    transform: translateY(2px);
+}
+
+.danger-action-btn.orange {
+    background-color: #e67e22;
+    box-shadow: 0 3px 0 #d35400;
+}
+
+.danger-action-btn.red {
+    background-color: #c0392b;
+    box-shadow: 0 3px 0 #922b21;
+}
+
+.danger-zone {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #c0392b;
+    background-color: rgba(192, 57, 43, 0.1);
+    border-radius: 8px;
+}
+
+
+
+/*
+ * Classi Ghost Bottone
+ */
+
+.ghost-btn {
+    background: transparent;
+    border: 1px solid #5d7c9a;
+    width: auto;
+    padding: 6px 12px;
+    height: auto;
+    font-size: 0.85rem;
+    gap: 10px;
+}
+
+.ghost-btn:hover {
+    background: #34495e;
+}
+
+/*
+ * Classi Outline Bottone
+ */
+
+.outline-btn {
+    background: transparent;
+    border: 1px solid #3498db;
+    color: #3498db;
+    height: 40px;
+}
+
+.outline-btn:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+/*
+ * Classi Link Testo
+ */
+
+.text-link-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    /* Rosso spento */
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.text-link-btn:hover {
+    opacity: 1;
+}
+
+/*
+ * Classi Range Input
+ */
+
+input[type=range] {
+    flex-grow: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #34495e;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #2c3e50;
+}
+
+/*
+ * Classi Input
+ */
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    padding: 15px;
+    background-color: #1a252f;
+    border: 1px solid #4a6582;
+    border-radius: 8px;
+    color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    height: 50px;
+}
+
+
+/* 
+ * Classi Input Group Moderno (Icona + Input + Bottone)
+ */
+
+.input-group-modern {
+    display: flex;
+    align-items: center;
+    background-color: #1a252f;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    padding: 0;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.input-group-modern .toggle-pass-btn {
+    position: static !important;
+    margin: 0;
+    width: 45px;
+    height: 45px;
+    border: none;
+    border-left: 1px solid #34495e;
+    background: transparent;
+    color: #3498db;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-group-modern .toggle-pass-btn:hover {
+    background-color: #34495e;
+    color: #fff;
+}
+
+.input-group-modern:focus-within {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.input-icon {
+    padding: 0 12px;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    height: 45px;
+}
+
+.input-group-modern input {
+    border: none;
+    background: transparent;
+    padding: 0 10px;
+    height: 45px;
+    color: #fff;
+    flex-grow: 1;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.input-group-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.input-group-row input {
+    flex-grow: 1;
+}
+
+.input-group-row .buy-btn {
+    width: auto;
+    padding: 0 25px;
+    margin: 0;
+}
+
+.input-with-action,
+.password-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+}
+
+.input-with-action input,
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px;
+}
+
+
+
+.input-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/*
+ * Classi Action Button
+ */
+.action-btn,
+.toggle-pass-btn {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    width: 35px;
+    background: #34495e;
+    border: none;
+    border-radius: 6px;
+    color: #ecf0f1;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-btn:hover,
+.toggle-pass-btn:hover {
+    background: #4a6582;
+}
+
+.action-btn-small,
+.toggle-pass-btn {
+    background: transparent;
+    border: none;
+    border-left: 1px solid #34495e;
+    color: #3498db;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn-small:hover,
+.toggle-pass-btn:hover {
+    background-color: #3498db;
+    color: #fff;
+}
+
+/*
+ * Classi Slider Custom
+ */
+.custom-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #34495e;
+    border-radius: 2px;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ecf0f1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #3498db;
+}
+
+/*
+ * Classi Slider Moderno
+ */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.slider-icon {
+    color: #bdc3c7;
+    width: 20px;
+    text-align: center;
+}
+
+.slider-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.slider-wrapper label {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.slider-value {
+    font-weight: bold;
+    color: #3498db;
+    font-size: 0.9rem;
+    width: 40px;
+    text-align: right;
+}
+
+.slider-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/*
+    Classi Claim
+*/
+
+.claim-btn {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 1rem;
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+    color: #2c3e50;
+    font-weight: 800;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 0 #d35400;
+}
+
+.claim-btn:hover {
+    box-shadow: 0 4px 0 #d35400, 0 0 20px rgba(241, 196, 15, 0.5);
+    filter: brightness(1.1);
+}
+
+.claim-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #d35400;
+}
+
+.claim-btn .claim-hover,
+.claim-btn .claim-visible {
+    transition: all 0.1s ease-out;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+}
+
+.claim-btn .claim-hover {
+    display: none;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.claim-btn .claim-visible {
+    display: inline-block;
+}
+
+.claim-btn:hover .claim-visible {
+    display: none;
+}
+
+.claim-btn:hover .claim-hover {
+    display: inline-block;
+    font-weight: 900;
+    animation: pulseText 0.5s 2;
+}
+
+
+/*
+ * Classi Toast Container
+ */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    /* Z-Index molto alto per stare sopra i modali */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Più spazio tra le notifiche */
+    pointer-events: none;
+}
+
+/*
+ * Classi Toast
+ */
+.toast {
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: default;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease-out;
+    pointer-events: auto;
+    animation: slideIn 0.4s cubic-bezier(0.1, 0.9, 0.2, 1.2) forwards,
+        fadeOut 0.5s ease-in 3.5s forwards;
+}
+
+.toast-success {
+    background-color: #2ecc71;
+    color: white;
+    border: 2px solid #6ee39a;
+}
+
+.toast-error {
+    background-color: #e74c3c;
+    color: white;
+    border: 2px solid #c0392b;
+    animation: shake 0.4s, slideIn 0.4s, fadeOut 0.5s ease-in 3.5s forwards;
+}
+
+.toast-achievement {
+    background: linear-gradient(135deg, #f1c40f, #e67e22);
+    color: #2c3e50;
+    border: 2px solid #f39c12;
+    font-weight: 800;
+    text-shadow: none;
+    box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
+    animation: slideIn 0.4s ease-out, fadeOut 0.5s ease-in 3.5s forwards, pulseAchievement 0.8s 2;
+}
+
+.toast-reward {
+    background-color: #3498db;
+    color: white;
+    border: 2px solid #5dade2;
+}
+
+.toast-info {
+    background-color: #7f8c8d;
+    color: white;
+    border: 2px solid #95a5a6;
+}
+
+/*
+ * Classi Tooltip
+ */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(44, 62, 80, 0.95);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #f1c40f;
+    font-size: 0.9rem;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 9999;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    margin-bottom: 8px;
+}
+
+[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #f1c40f;
+    margin-bottom: -4px;
+    z-index: 9999;
+}

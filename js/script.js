@@ -107,18 +107,84 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     }
 
+    // Funzione Helper per il controllo versione
+    function checkSaveCompatibility(savedData) {
+        if (!window.GAME_VERSION) return true; // Dev safety
+
+        // 1. Salvataggi antichi (senza versione) -> Incompatibili
+        if (!savedData || !savedData.version) {
+            console.warn("Salvataggio Legacy: Reset richiesto.");
+            return false;
+        }
+
+        const current = window.GAME_VERSION;
+        const saved = savedData.version;
+
+        // 2. Controllo STAGE (Non mischiare Beta con Stable)
+        if (saved.stage !== current.stage) {
+            console.warn(`Mismatch Stage: Salvataggio ${saved.stage} vs Gioco ${current.stage}`);
+            return false;
+        }
+
+        // 3. Regola STABLE: Sempre compatibile in avanti
+        if (current.stage === 'stable') {
+            // Se siamo in stable, accettiamo anche major diverse (es. Save 1.0 su Gioco 2.0)
+            return true;
+        }
+
+        // 4. Regola BETA/ALPHA: Rottura su cambio Major
+        // Se siamo in beta, la versione Major deve coincidere.
+        if (saved.major !== current.major) {
+            console.warn(`Mismatch Major (Beta): v${saved.major} non compatibile con v${current.major}`);
+            return false;
+        }
+
+        return true; // Tutto ok (es. 3.0 -> 3.1)
+    }
+
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
+
         if (savedState) {
             try {
                 const parsedState = JSON.parse(savedState);
 
+                // --- 1. CONTROLLO COMPATIBILITÀ VERSIONE ---
+                if (!checkSaveCompatibility(parsedState)) {
+                    console.log("Versione incompatibile. Reset automatico.");
+                    // Avviso visivo
+                    setTimeout(() => {
+                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Reset Versione: ${parsedState.version?.stage || 'Legacy'} incompatibile!`, 'warning');
+                    }, 500);
+
+                    // Forza il salvataggio della nuova versione pulita
+                    saveGame();
+                    return; // Interrompi caricamento
+                }
+                // ------------------------------------------
+
+                // Gestione Migrazione Legacy (buildings -> teams)
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
                 }
 
+                // Fusione dei dati salvati con lo stato attuale
                 deepMerge(gameState, parsedState);
+
+                // --- 2. AGGIORNAMENTO VERSIONE ---
+                // Aggiorniamo la versione nel gioco caricato all'ultima versione del codice
+                // (Utile per aggiornamenti minori, es. caricare un save 3.0 su 3.1)
+                if (window.GAME_VERSION) {
+                    gameState.version = {
+                        major: window.GAME_VERSION.major,
+                        minor: window.GAME_VERSION.minor,
+                        stage: window.GAME_VERSION.stage
+                    };
+                }
+
+
+                // Inizializzazione oggetti mancanti (se aggiunti in nuove versioni)
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                 for (const key in gameData.buildingEnhancements) {
                     if (!gameState.buildingEnhancements[key]) {
@@ -133,14 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                // Ripristino variabili temporali e impostazioni
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
+
                 if (!gameState.filterSettings) {
                     gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
                 }
+
+                // Ripristino Achievements
                 if (gameData.achievements) {
                     if (!gameState.achievements) gameState.achievements = {};
                     for (const key in gameData.achievements) {
@@ -149,37 +220,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
+
+                // Applicazione Skin Visiva
                 if (gameState.skins && gameState.skins.current) {
                     if (typeof applySkinVisuals === 'function') {
                         applySkinVisuals(gameState.skins.current);
                     }
                 }
+
             } catch (e) { console.error("Errore loadGame:", e); }
         }
 
+        // Recupero username legacy se presente
         const savedUsername = localStorage.getItem('espooClickerUsername');
         if (savedUsername) gameState.user.username = savedUsername;
 
+        // Ricalcolo Bonus
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // --- FIX AUTO-REPAIR SKIN (LOCALE) ---
+        // --- FIX AUTO-REPAIR SKIN (Controllo coerenza) ---
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
 
-            // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+            // Se l'obiettivo è riscattato e dà una skin, assicuriamoci di averla
             if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
                 const skinId = achData.reward.id;
-                // Se la skin NON è nell'inventario, aggiungila ora
                 if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
                     console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
                     gameState.skins.unlocked.push(skinId);
                 }
             }
         }
-        // -------------------------------------
 
+        // Applicazione Effetti passivi al caricamento
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
     }
@@ -315,15 +390,49 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
 
+
+
     function initializeGame() {
+        // Prevenzione menu contestuale e trascinamento immagini
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
-        buildStores();
-        loadGame();
+        // --- 1. CLEANUP INIZIALE (Fix post-reset) ---
+        // Rimuove classi residue di eventi che potrebbero bloccare la vista
+        document.body.classList.remove('rick-rolling', 'bluescreen-active');
+
+        // Assicura che il container di gioco sia visibile e cliccabile
+        const gContainer = document.getElementById('game-container');
+        if (gContainer) {
+            gContainer.style.opacity = '1';
+            gContainer.style.transform = 'none';
+            gContainer.style.pointerEvents = 'auto';
+        }
+
+        // --- 2. CARICAMENTO DATI ---
+        buildStores(); // Costruisce l'HTML dei negozi
+        loadGame();    // Carica il salvataggio (se esiste)
+
+        // --- 3. APPLICAZIONE VISIVA FORZATA ---
+        // Questo risolve il bug "CSS perso": applica sfondo e bordo della skin 
+        // anche se è una nuova partita (default) o dopo un reset.
+        if (typeof applySkinVisuals === 'function') {
+            applySkinVisuals(gameState.skins.current);
+        }
+
+        // Gestione filtro "Mostra Tutto" vs "Disponibili" dopo un reset
+        const globalFilterSelect = document.getElementById('global-filter-select');
+        if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
+            // Se non c'è salvataggio (reset), resetta il filtro a "Available"
+            globalFilterSelect.value = 'available';
+            gameState.filterSettings.globalFilter = 'available';
+        }
+
+        // Aggiorna tutta l'interfaccia
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
+        // --- 4. GESTIONE BOTTONI MOLTIPLICATORE (1x, 5x, MAX) ---
         const btns = {
             '1x': document.getElementById('btn-1x'),
             '5x': document.getElementById('btn-5x'),
@@ -334,12 +443,12 @@ document.addEventListener('DOMContentLoaded', () => {
         function setBuyMultiplier(value) {
             buyMultiplier = value;
 
-            // Reset colori
+            // Reset stile bottoni
             for (let k in btns) {
                 if (btns[k]) btns[k].style.backgroundColor = '#34495e';
             }
 
-            // Attiva quello giusto
+            // Attiva quello selezionato
             const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
             if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
 
@@ -347,59 +456,65 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshAllStores();
             updateUI();
         }
+
+        // Listener Moltiplicatori
         if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
         if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
         if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
 
+        // --- 5. ALTRI EVENT LISTENER ---
         const crunchBtn = document.getElementById('skill-crunchTime');
-
         const tabs = document.querySelectorAll('.tab-btn');
         const contents = document.querySelectorAll('.tab-content');
 
-        const globalFilterSelect = document.getElementById('global-filter-select');
-
+        // Blocca tasto Invio/Spazio (per evitare click automatici tenendo premuto)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-                // Se il focus è su un input di testo (es. chat, login), lascia fare
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-                // Altrimenti blocca
                 e.preventDefault();
             }
         });
 
+        // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
+            // Se il volume caricato è 0, metti subito l'icona Muto
+            if (gameState.user.masterVolume <= 0) {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            } else {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+
+            // Listener Click (questo c'era già, lascialo così)
             muteBtn.addEventListener('click', () => {
                 if (gameState.user.masterVolume > 0) {
-                    // Muta
-                    gameState.lastVolume = gameState.user.masterVolume; // Salva il volume precedente
+                    gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    muteBtn.textContent = '🔇';
+                    // Cambio Icona
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
-                    // Smuta
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    muteBtn.textContent = '🔊';
+                    // Cambio Icona
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
-                // Aggiorna slider nel modale se aperto
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
-
-                // Applica
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
             });
         }
 
-        // Rimuovi focus dal clicker dopo ogni click per sicurezza
+        // Rimuovi focus dal clicker
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
         }
 
+        // Filtro Globale Negozi
         if (globalFilterSelect) {
             const savedFilter = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.value = savedFilter;
+            // Assicurati che lo stato rifletta il valore (specialmente post-reset)
             gameState.filterSettings.globalFilter = savedFilter;
 
             globalFilterSelect.addEventListener('change', (e) => {
@@ -413,6 +528,64 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
+
+        function setupMobileTabs() {
+            // Setta default (Console/Center)
+            if (window.innerWidth <= 1024) {
+                document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+                const center = document.getElementById('center-column');
+                if (center) center.classList.add('mobile-active');
+            }
+
+            mobileBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 1. Aggiorna stile bottoni
+                    mobileBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // 2. Cambia Vista
+                    const targetId = btn.getAttribute('data-target');
+
+                    // Nascondi tutte
+                    document.querySelectorAll('.game-column').forEach(col => {
+                        col.classList.remove('mobile-active');
+                        // Importante: forza display none via classe CSS, ma assicuriamoci che il JS non interferisca
+                        // La classe CSS .mobile-active gestisce il display: flex
+                    });
+
+                    // Mostra target
+                    const targetCol = document.getElementById(targetId);
+                    if (targetCol) {
+                        targetCol.classList.add('mobile-active');
+                        // Se è la colonna upgrade, forza un refresh visivo
+                        if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
+                    }
+
+                    playSound('sound-click');
+                });
+            });
+        }
+
+        setupMobileTabs();
+
+        // Gestione resize (se ruoti il telefono)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) {
+                // Reset per desktop: mostra tutto
+                document.querySelectorAll('.game-column').forEach(col => {
+                    col.classList.remove('mobile-active');
+                    col.style.display = ''; // Rimuovi stili inline
+                });
+            } else {
+                // Forza una vista attiva se nessuna lo è
+                if (!document.querySelector('.game-column.mobile-active')) {
+                    document.getElementById('center-column').classList.add('mobile-active');
+                }
+            }
+        });
+
+        // Gestione Tabs (Click, Auto, Lab)
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 tabs.forEach(t => t.classList.remove('active'));
@@ -424,8 +597,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tab.classList.remove('notify');
 
+                // Gestione specifica per il tab Prestigio (nasconde il filtro)
                 const filterSelect = document.getElementById('global-filter-select');
-
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
                         if (!filterSelect.disabled) {
@@ -451,9 +624,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // Tab di default
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
+        // Skill Crunch Time
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
                 if (e.detail === 0) return;
@@ -462,14 +637,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-
+        // Click Principale
         if (clickerButton) clickerButton.addEventListener('click', clickCookie);
 
+        // Golden Bug
         if (goldenBug) goldenBug.addEventListener('click', (e) => {
             if (e.detail === 0) return; clickGoldenBug();
         });
 
-
+        // Bottone Annulla Prestigio (Modale)
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
@@ -478,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Delegazione Click per bottoni acquisto (gestisce anche elementi creati dinamicamente)
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
@@ -495,6 +672,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
+
+        // Mostra versione
+        const vDisplay = document.getElementById('version-display');
+        if (vDisplay && window.GAME_VERSION) {
+            vDisplay.textContent = window.GAME_VERSION.toString();
+            // Opzionale: Colore diverso per la beta
+            if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12'; // Arancione
+            if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71'; // Verde
+        }
     }
 
     // --------- API GLOBALE ---------
@@ -502,7 +688,6 @@ document.addEventListener('DOMContentLoaded', () => {
         getGameState: () => gameState,
         saveGame: saveGame,
         showToast: showToast,
-
         playSound: playSound,
         updateStatsUI: updateStatsUI,
         formatNumber: formatNumber,
@@ -514,6 +699,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
+
+        // --- NUOVO: Funzione per caricare la cheatboard su richiesta ---
+        loadCheatboard: () => {
+            // Evita di caricarlo due volte
+            if (document.querySelector('script[src="js/cheatboard.js"]')) return;
+
+            fetch('js/cheatboard.js', { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        const script = document.createElement('script');
+                        script.src = 'js/cheatboard.js';
+                        document.body.appendChild(script);
+                    }
+                })
+                .catch(e => { });
+        },
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
@@ -528,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 3. Merge dei dati
                     const cloudState = JSON.parse(cloudJSON);
 
-                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    // Gestione compatibilità cloud
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
@@ -536,11 +737,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     deepMerge(gameState, cloudState);
 
-                    // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
+                    // --- FIX SICUREZZA SKIN ---
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
-                        console.warn("Dati skin corrotti. Ripristino default.");
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
+
+                    // --- FIX CRUCIALE: APPLICA LA SKIN VISIVAMENTE ---
+                    if (typeof applySkinVisuals === 'function') {
+                        applySkinVisuals(gameState.skins.current);
+                    }
+                    // -----------------------------------------------
 
                     // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
@@ -595,3 +801,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeGame();
 });
+

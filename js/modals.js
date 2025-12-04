@@ -14,9 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSkinsBtn = document.getElementById('open-skins-btn');
     const skinsModal = document.getElementById('skins-modal');
 
-    const openPrestigeHubBtn = document.getElementById('open-prestige-hub-btn');
-    const prestigeHubModal = document.getElementById('prestige-hub-modal');
-
     // Modali
     const achievementsModal = document.getElementById('achievements-modal');
     const statsModal = document.getElementById('stats-modal');
@@ -45,9 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteConfirmPass = document.getElementById('delete-confirm-password');
     const currentUsernameDisplay = document.getElementById('current-username-display');
 
-    const btnGoToContract = document.getElementById('btn-go-to-contract');
-    const btnCancelContract = document.getElementById('btn-cancel-contract');
-    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     const prestigeModal = document.getElementById('prestige-modal');
 
     // --- GESTIONE AUDIO AVANZATA ---
@@ -59,6 +53,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const masterDisplay = document.getElementById('master-vol-display');
     const sfxDisplay = document.getElementById('sfx-vol-display');
     const musicDisplay = document.getElementById('music-vol-display');
+
+    async function handleResetProgress() {
+        const Game = getGameAPI();
+        const resetPass = document.getElementById('danger-zone-password').value;
+
+        if (!resetPass) { alert("Inserisci la password per confermare il reset."); return; }
+
+        if (confirm("Sei sicuro? Perderai TUTTI i progressi (Skin, Upgrade, Bug).")) {
+
+            // 1. BLOCCA I SALVATAGGI AUTOMATICI
+            if (Game.getGameState()) {
+                Game.getGameState().isDeleting = true;
+            }
+
+            try {
+                const response = await fetch('./php/reset_progress.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: Game.getGameState().user.username,
+                        password: resetPass
+                    })
+                });
+                const res = await response.json();
+
+                if (res.status === 'success') {
+                    // 2. Resetta la memoria RAM (Opzionale ma pulito)
+                    if (typeof resetGameToDefault === 'function') {
+                        resetGameToDefault();
+                    }
+
+                    // 3. Cancella SOLO il salvataggio locale del gioco
+                    localStorage.removeItem('espotoolClickerSaveV8');
+
+                    // --- MODIFICA FONDAMENTALE: NON CANCELLARE LA SESSIONE ---
+                    // Rimuovendo queste righe, l'utente rimane loggato
+                    // sessionStorage.removeItem('espooUser'); 
+                    // sessionStorage.removeItem('espooPass');
+
+                    alert("Progressi resettati. Riavvio in corso...");
+
+                    // 4. Ricarica la pagina per applicare il 'Tabula Rasa'
+                    location.reload();
+                } else {
+                    // Errore? Riabilita i salvataggi
+                    if (Game.getGameState()) {
+                        Game.getGameState().isDeleting = false;
+                    }
+                    alert("Errore: " + res.message);
+                }
+            } catch (e) {
+                console.error(e);
+                if (Game.getGameState()) {
+                    Game.getGameState().isDeleting = false;
+                }
+                alert("Errore di connessione.");
+            }
+        }
+    }
+
+    // Listener per il nuovo bottone
+    const resetProgressBtn = document.getElementById('reset-progress-btn');
+    if (resetProgressBtn) resetProgressBtn.addEventListener('click', handleResetProgress);
 
     // Funzione helper per aggiornare slider e stato
     function setupAudioControl(slider, display, key, isMusic = false) {
@@ -106,51 +163,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     }
 
-    if (btnGoToContract) {
-        // Clone trick per rimuovere vecchi listener
-        const newBtn = btnGoToContract.cloneNode(true);
-        btnGoToContract.parentNode.replaceChild(newBtn, btnGoToContract);
 
-        newBtn.addEventListener('click', () => {
-            closeModal(prestigeHubModal); // Chiudi Hub
 
-            // Chiama la funzione del gioco che calcola i dati e apre il contratto
+    const openPrestigeBtn = document.getElementById('open-prestige-hub-btn');
+    if (openPrestigeBtn) {
+        openPrestigeBtn.onclick = function (e) {
+            e.preventDefault();
             if (typeof openPrestigeContract === 'function') {
-                openPrestigeContract(); // Questa funzione (in game-logic.js) apre #prestige-modal
-            } else {
-                // Fallback manuale se la funzione non esistesse
-                if (prestigeModal) openModal(prestigeModal);
+                openPrestigeContract();
             }
-        });
+        };
     }
 
-    // 3. STEP 2 (Annulla): Dal Contratto torna indietro (o chiude)
-    if (btnCancelContract) {
-        const newBtn = btnCancelContract.cloneNode(true);
-        btnCancelContract.parentNode.replaceChild(newBtn, btnCancelContract);
-
-        newBtn.addEventListener('click', () => {
-            closeModal(prestigeModal);
-            // Opzionale: Riapri l'hub se vuoi tornare indietro
-            // openModal(prestigeHubModal); 
-        });
-    }
-
-    // 4. STEP 2 (Conferma): Esegui il Reset
+    // Listener per il bottone di conferma DENTRO il modale
+    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     if (btnConfirmPrestige) {
-        const newBtn = btnConfirmPrestige.cloneNode(true);
-        btnConfirmPrestige.parentNode.replaceChild(newBtn, btnConfirmPrestige);
+        const newConfirm = btnConfirmPrestige.cloneNode(true);
+        btnConfirmPrestige.parentNode.replaceChild(newConfirm, btnConfirmPrestige);
 
-        newBtn.addEventListener('click', () => {
-            // Chiudi tutto
-            closeModal(prestigeModal);
+        newConfirm.addEventListener('click', () => {
+            // Chiudi modale
+            const modal = document.getElementById('prestige-modal');
+            if (modal) modal.style.display = 'none';
 
-            // Esegui
-            if (window.EspooClicker && window.EspooClicker.executePrestige) {
-                window.EspooClicker.executePrestige();
-            } else if (typeof executePrestige === 'function') {
-                executePrestige();
-            }
+            // Esegui reset
+            if (typeof executePrestige === 'function') executePrestige();
         });
     }
 
@@ -179,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => {
         openModal(helpModal);
     });
+
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         // Chiama la funzione che disegna la griglia (definita in ui-functions.js)
         if (typeof updateSkinsUI === 'function') updateSkinsUI();
@@ -187,19 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(skinsModal);
     });
 
-    if (openPrestigeHubBtn) {
-        openPrestigeHubBtn.addEventListener('click', () => {
-            // Aggiorna la UI del prestigio prima di aprire
-            const Game = getGameAPI();
-            if (Game && Game.getGameState) {
-                // Forza un aggiornamento UI per vedere i punti corretti
-                if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // se globale
-                // Oppure
-                Game.saveGame(); // Hack rapido per refreshare stati
-            }
-            openModal(prestigeHubModal);
-        });
-    }
+
 
     if (openStatsBtn) openStatsBtn.addEventListener('click', () => {
         const Game = getGameAPI();
@@ -426,9 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteSave() {
         const Game = getGameAPI();
-        const passwordConfirm = deleteConfirmPass.value;
+        const passwordConfirm = document.getElementById('danger-zone-password').value;
 
-        if (!passwordConfirm) { alert("Serve la password per cancellare."); return; }
+        if (!passwordConfirm) { alert("Inserisci la password per confermare l'eliminazione."); return; }
 
         if (confirm('Cancellare DEFINITIVAMENTE account e progressi?')) {
             // [FIX] Blocca salvataggi preventivamente
@@ -464,6 +490,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    const toggleBtns = document.querySelectorAll('.toggle-pass-btn');
+
+    toggleBtns.forEach(btn => {
+        // Rimuoviamo vecchi listener per sicurezza (clone trick)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Evita comportamenti strani
+
+            const targetId = newBtn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = newBtn.querySelector('i');
+
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text'; // Mostra
+                    if (icon) {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    }
+                } else {
+                    input.type = 'password'; // Nascondi
+                    if (icon) {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                }
+            }
+        });
+    });
 
     // Listener Impostazioni
     if (masterSlider) {

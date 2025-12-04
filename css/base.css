@@ -1,44 +1,63 @@
-/* css/base.css - Stili base e comuni */
+/* css/base.css - Stili base, reset e sfondo */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-image: linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)), url('../assets/image/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Rendering Font Ottimizzato */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+
+    background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #240b36);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
     color: #e0e0e0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 65px 20px 20px 20px;
+    padding: 65px 10px 0 10px;
     user-select: none;
-    overflow-y: hidden;
+    overflow: hidden;
+    position: relative;
 }
 
-/* Stile per la schermata blu */
+/* Overlay a griglia Cyber */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 100s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
+
+/* Stile per la schermata blu (override sfondo) */
 body.bluescreen-active {
     background-image: url('../assets/image/bluescreen.jpg');
     transition: background-image 0.5s ease-in-out;
     color: #c0c0c0;
 }
 
+/* Scrollbar Globali */
 * {
     scrollbar-width: thin;
-    /* Per Firefox */
     scrollbar-color: #5d7c9a #34495e;
-    /* Per Firefox */
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
-
-
-
 
 ::-webkit-scrollbar-track {
     background: #34495e;
@@ -54,245 +73,7 @@ body.bluescreen-active {
     background: #7f9ebc;
 }
 
-#bonus-counter-display {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #5dade2;
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #bdc3c7;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-}
-
-/* Classi Comuni Bottoni */
-.buy-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.buy-btn:hover:not(:disabled) {
-    background-color: #2980b9;
-}
-
-.buy-btn:disabled {
-    background-color: #5d7c9a;
-    color: #9cb3c9;
-    cursor: not-allowed;
-    text-shadow: none;
-}
-
-.buy-btn.danger-btn {
-    background-color: #e74c3c;
-    width: 100%;
-}
-
-.buy-btn.danger-btn:hover:not(:disabled) {
-    background-color: #c0392b;
-}
-
-.buy-btn.owned {
-    background-color: rgba(44, 62, 80, 0.5) !important;
-    color: #2ecc71 !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    cursor: default !important;
-    pointer-events: none;
-}
-
-/* Toast Notifications */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    /* Z-Index molto alto per stare sopra i modali */
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    /* Più spazio tra le notifiche */
-    pointer-events: none;
-}
-
-.toast {
-    /* Base */
-    padding: 15px 25px;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: default;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease-out;
-    pointer-events: auto;
-
-    /* Animazione di entrata (più "elastica") e uscita */
-    animation: slideIn 0.4s cubic-bezier(0.1, 0.9, 0.2, 1.2) forwards,
-        fadeOut 0.5s ease-in 3.5s forwards;
-    /* Durata totale 4s */
-}
-
-/* Base Animazioni */
-@keyframes slideIn {
-    from {
-        transform: translateX(120%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
-/* Animazione per gli ERRORI: shake */
-@keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    20%,
-    60% {
-        transform: translateX(-5px);
-    }
-
-    40%,
-    80% {
-        transform: translateX(5px);
-    }
-}
-
-/* Animazione per ACHIEVEMENTS: leggero pop dorato */
-@keyframes pulseAchievement {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-
-/* --- CLASSI SPECIFICHE --- */
-
-/* Successo Generico (Login, Acquisto Skin, Salvataggio) */
-.toast-success {
-    background-color: #2ecc71;
-    color: white;
-    border: 2px solid #6ee39a;
-}
-
-/* Errore (Token insufficienti, Login fallito) */
-.toast-error {
-    background-color: #e74c3c;
-    color: white;
-    border: 2px solid #c0392b;
-    /* Aggiunge la vibrazione */
-    animation: shake 0.4s, slideIn 0.4s, fadeOut 0.5s ease-in 3.5s forwards;
-}
-
-/* Obiettivo Sbloccato */
-.toast-achievement {
-    background: linear-gradient(135deg, #f1c40f, #e67e22);
-    /* Gradiente Oro/Arancione */
-    color: #2c3e50;
-    border: 2px solid #f39c12;
-    font-weight: 800;
-    text-shadow: none;
-    /* Effetto glow e pulsazione */
-    box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
-    animation: slideIn 0.4s ease-out, fadeOut 0.5s ease-in 3.5s forwards, pulseAchievement 0.8s 2;
-}
-
-/* Riscatto Premio (Bug, Token) */
-.toast-reward {
-    background-color: #3498db;
-    color: white;
-    border: 2px solid #5dade2;
-}
-
-/* Info (Caricamento, ecc.) */
-.toast-info {
-    background-color: #7f8c8d;
-    color: white;
-    border: 2px solid #95a5a6;
-}
-
-[data-tooltip] {
-    position: relative;
-    cursor: help;
-    /* Cambia il cursore per indicare info */
-}
-
-/* Il box che appare */
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    /* Prende il testo dall'attributo HTML */
-    position: absolute;
-    bottom: 100%;
-    /* Appare sopra l'elemento */
-    left: 50%;
-    transform: translateX(-50%);
-    /* Centra orizzontalmente */
-
-    background-color: rgba(44, 62, 80, 0.95);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid #f1c40f;
-    /* Bordo dorato */
-
-    font-size: 0.9rem;
-    font-weight: bold;
-    white-space: nowrap;
-    z-index: 9999;
-    /* Assicura che stia sopra a tutto */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    /* Non interferisce col mouse */
-    margin-bottom: 8px;
-    /* Spazio dall'elemento */
-}
-
-/* Freccetta del tooltip (opzionale, per estetica) */
-[data-tooltip]:hover::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #f1c40f;
-    margin-bottom: -4px;
-    z-index: 9999;
-}
-
+/* Link Github */
 #github-link-container {
     position: fixed;
     bottom: 15px;
@@ -319,8 +100,33 @@ body.bluescreen-active {
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
-.github-icon {
-    width: 42px;
-    height: 42px;
-    vertical-align: middle;
+/* Bottone Mute Fisso */
+#quick-mute-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 11000;
+    background-color: rgba(44, 62, 80, 0.8);
+    color: #fff;
+    border: 2px solid #5d7c9a;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+}
+
+#quick-mute-btn:hover {
+    background-color: #34495e;
+    transform: scale(1.1);
+}
+
+/* --- FIX IMPORTANTE: NASCONDI BARRA MOBILE SU DESKTOP --- */
+#mobile-nav-bar {
+    display: none;
 }
