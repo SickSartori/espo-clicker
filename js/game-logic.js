@@ -613,28 +613,34 @@ function calculatePrestigeGained() {
 
 // 1. Apre il modale e mostra i dati (NON Resetta ancora)
 function openPrestigeContract() {
+    // 1. Controlla se è possibile fare prestigio
     const gained = calculatePrestigeGained();
+
+    // Se guadagno è 0, NON aprire, o mostra toast di avviso
     if (gained < 1) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!");
-        } else {
-            alert("Devi accumulare più bug per ottenere una promozione!");
+            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!", "error");
         }
         return;
     }
+
+    // 2. Popola i dati nel NUOVO modale unico
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
+
     if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
 
+    // Calcolo anteprima bonus futuro
     let currentLifetime = gameState.lifetimePrestigePoints || 0;
     let estimatedLifetime = currentLifetime + gained;
     let baseBonus = estimatedLifetime * 0.01;
-    let synergyCount = gameState.prestigeUpgrades.sinergia.count;
-    let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * estimatedLifetime;
+    let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
+    let synergyBonus = synergyCount * (gameData.prestigeUpgrades.sinergia.bonusPerLevel || 0.001) * estimatedLifetime;
     let totalPercent = ((baseBonus + synergyBonus) * 100).toFixed(1);
 
     if (bonusDisplay) bonusDisplay.textContent = `Nuovo Totale: +${totalPercent}%`;
 
+    // 3. Mostra il modale unico
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'flex';
 }

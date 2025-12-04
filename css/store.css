@@ -242,26 +242,79 @@
     flex-direction: row !important;
     align-items: center !important;
     gap: 10px;
-    background-color: #4a235a !important;
-    border-color: #8e44ad !important;
+    background: linear-gradient(145deg, #1a1020, #2c1a35) !important;
+    border: 1px solid #8e44ad !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+    gap: 15px;
 }
 
 .prestige-upgrade:hover {
-    background-color: #5b2c6f !important;
+    background: linear-gradient(145deg, #2c1a35, #3d244a) !important;
+    border-color: #f1c40f !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(142, 68, 173, 0.3) !important;
 }
 
 .prestige-upgrade .upgrade-name {
     color: #e8daef !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.prestige-upgrade .upgrade-desc {
+    color: #af7ac5 !important;
 }
 
 .prestige-upgrade .upgrade-cost {
-    color: #d2b4de !important;
+    color: #f1c40f !important;
+    font-weight: bold;
 }
 
 .prestige-upgrade .buy-btn {
+    background: linear-gradient(to bottom, #f1c40f, #d4ac0d) !important;
+    color: #1a1a1a !important;
+    border: 1px solid #b7950b !important;
+    font-weight: 800;
+    text-shadow: none;
+    min-width: 100px;
+}
+
+.prestige-upgrade .buy-btn:disabled {
+    background: #34495e !important;
+    /* Grigio scuro */
+    border: 1px solid #4a6582 !important;
+    color: #7f8c8d !important;
+    /* Testo spento */
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    animation: none !important;
+    opacity: 0.6;
+}
+
+.prestige-upgrade .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #f7dc6f, #f1c40f) !important;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
+}
+
+.prestige-upgrade .buy-btn.owned {
+    /* Stile Colori (quello che abbiamo appena fatto) */
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid #2ecc71 !important;
+    color: #2ecc71 !important;
+    box-shadow: none !important;
+    cursor: default !important;
+    opacity: 0.8;
     width: auto !important;
-    min-width: 80px;
-    background-color: #8e44ad;
+    min-width: 0 !important;
+    flex-grow: 0 !important;
+    padding: 4px 12px !important;
+    font-size: 0.75rem !important;
+}
+
+.prestige-upgrade .buy-btn.owned::before {
+    content: "✓ ";
+    margin-right: 4px;
 }
 
 /* Filtri ed Empty State */
@@ -354,6 +407,37 @@
     padding: 0 10px;
     box-sizing: border-box;
     max-width: 100%;
+}
+
+#lab-wallet-container {
+    /* Nascondi di default (per PC) */
+    display: none;
+
+    /* Mantieni lo stile estetico per quando verrà riattivato su mobile */
+    background: rgba(241, 196, 15, 0.1);
+    border: 1px solid rgba(241, 196, 15, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.lab-wallet-label {
+    color: #bdc3c7;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+#lab-wallet-amount {
+    color: #f1c40f;
+    /* Oro */
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
 }
 
 @media screen and (max-width: 1360px) {

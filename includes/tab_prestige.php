@@ -3,6 +3,10 @@
         <div class="section-header">
             <h2 style="color: #f1c40f;"><i class="fa-solid fa-flask-vial"></i> Laboratorio</h2>
         </div>
+        <div id="lab-wallet-container">
+            <span class="lab-wallet-label">TOKEN DISPONIBILI:</span>
+            <span id="lab-wallet-amount">0</span>
+        </div>
         
         <div id="prestige-list-container">
             <div id="upgrade-sinergia" class="prestige-upgrade">

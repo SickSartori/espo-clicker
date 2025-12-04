@@ -14,9 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSkinsBtn = document.getElementById('open-skins-btn');
     const skinsModal = document.getElementById('skins-modal');
 
-    const openPrestigeHubBtn = document.getElementById('open-prestige-hub-btn');
-    const prestigeHubModal = document.getElementById('prestige-hub-modal');
-
     // Modali
     const achievementsModal = document.getElementById('achievements-modal');
     const statsModal = document.getElementById('stats-modal');
@@ -45,9 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteConfirmPass = document.getElementById('delete-confirm-password');
     const currentUsernameDisplay = document.getElementById('current-username-display');
 
-    const btnGoToContract = document.getElementById('btn-go-to-contract');
-    const btnCancelContract = document.getElementById('btn-cancel-contract');
-    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     const prestigeModal = document.getElementById('prestige-modal');
 
     // --- GESTIONE AUDIO AVANZATA ---
@@ -169,51 +163,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     }
 
-    if (btnGoToContract) {
-        // Clone trick per rimuovere vecchi listener
-        const newBtn = btnGoToContract.cloneNode(true);
-        btnGoToContract.parentNode.replaceChild(newBtn, btnGoToContract);
 
-        newBtn.addEventListener('click', () => {
-            closeModal(prestigeHubModal); // Chiudi Hub
 
-            // Chiama la funzione del gioco che calcola i dati e apre il contratto
+    const openPrestigeBtn = document.getElementById('open-prestige-hub-btn');
+    if (openPrestigeBtn) {
+        openPrestigeBtn.onclick = function (e) {
+            e.preventDefault();
             if (typeof openPrestigeContract === 'function') {
-                openPrestigeContract(); // Questa funzione (in game-logic.js) apre #prestige-modal
-            } else {
-                // Fallback manuale se la funzione non esistesse
-                if (prestigeModal) openModal(prestigeModal);
+                openPrestigeContract();
             }
-        });
+        };
     }
 
-    // 3. STEP 2 (Annulla): Dal Contratto torna indietro (o chiude)
-    if (btnCancelContract) {
-        const newBtn = btnCancelContract.cloneNode(true);
-        btnCancelContract.parentNode.replaceChild(newBtn, btnCancelContract);
-
-        newBtn.addEventListener('click', () => {
-            closeModal(prestigeModal);
-            // Opzionale: Riapri l'hub se vuoi tornare indietro
-            // openModal(prestigeHubModal); 
-        });
-    }
-
-    // 4. STEP 2 (Conferma): Esegui il Reset
+    // Listener per il bottone di conferma DENTRO il modale
+    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
     if (btnConfirmPrestige) {
-        const newBtn = btnConfirmPrestige.cloneNode(true);
-        btnConfirmPrestige.parentNode.replaceChild(newBtn, btnConfirmPrestige);
+        const newConfirm = btnConfirmPrestige.cloneNode(true);
+        btnConfirmPrestige.parentNode.replaceChild(newConfirm, btnConfirmPrestige);
 
-        newBtn.addEventListener('click', () => {
-            // Chiudi tutto
-            closeModal(prestigeModal);
+        newConfirm.addEventListener('click', () => {
+            // Chiudi modale
+            const modal = document.getElementById('prestige-modal');
+            if (modal) modal.style.display = 'none';
 
-            // Esegui
-            if (window.EspooClicker && window.EspooClicker.executePrestige) {
-                window.EspooClicker.executePrestige();
-            } else if (typeof executePrestige === 'function') {
-                executePrestige();
-            }
+            // Esegui reset
+            if (typeof executePrestige === 'function') executePrestige();
         });
     }
 
@@ -251,19 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(skinsModal);
     });
 
-    if (openPrestigeHubBtn) {
-        openPrestigeHubBtn.addEventListener('click', () => {
-            // Aggiorna la UI del prestigio prima di aprire
-            const Game = getGameAPI();
-            if (Game && Game.getGameState) {
-                // Forza un aggiornamento UI per vedere i punti corretti
-                if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // se globale
-                // Oppure
-                Game.saveGame(); // Hack rapido per refreshare stati
-            }
-            openModal(prestigeHubModal);
-        });
-    }
+
 
     if (openStatsBtn) openStatsBtn.addEventListener('click', () => {
         const Game = getGameAPI();

@@ -698,6 +698,11 @@ function updateUI() {
     } else {
         if (hudContainer) hudContainer.style.display = 'none';
     }
+    const labWallet = document.getElementById('lab-wallet-amount');
+    if (labWallet) {
+        // Usa formatNumber se vuoi "1k", oppure toLocaleString per "1.000"
+        labWallet.textContent = formatNumber(gameState.prestigePoints);
+    }
 
     for (const key in gameState.teams) {
         let amountToBuy = buyMultiplier;
@@ -762,6 +767,19 @@ function updateUI() {
             btnCrunch.style.display = 'none';
         }
     }
+    const tabPrestige = document.getElementById('tab-prestige');
+    if (tabPrestige) {
+        // Mostra il tab se hai fatto almeno un reset O hai punti prestigio (attuali o storici)
+        if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
+            // Usa 'block' o 'flex' a seconda di come gestisci i bottoni, solitamente block per i button standard
+            if (tabPrestige.style.display === 'none') {
+                tabPrestige.style.display = 'block';
+            }
+        } else {
+            tabPrestige.style.display = 'none';
+        }
+    }
+
     checkTabNotifications();
     checkOverlayNotifications();
     updateBonusCounter();
@@ -769,60 +787,62 @@ function updateUI() {
 }
 
 function updatePrestigeVisuals() {
-    const prestigeHubBtn = document.getElementById('open-prestige-hub-btn');
+    const prestigeBtn = document.getElementById('open-prestige-hub-btn');
+    if (!prestigeBtn) return;
+
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
 
-    if (prestigeHubBtn) {
-        if (canPrestige || hasPrestiged) {
-            prestigeHubBtn.style.display = 'flex'; // Usa flex per allineare icona
-
-            if (canPrestige) {
-                // --- CASO: PRONTA! ---
-                // Aggiunge la classe per l'animazione CSS (definito in mobile.css)
-                prestigeHubBtn.classList.add('promotion-ready');
-
-                // Aggiorna HTML mantenendo la struttura icona + span
-                // Nota: Lo span su mobile sarà nascosto dal CSS
-                prestigeHubBtn.innerHTML = '<i class="nav-icon fa-solid fa-rocket"></i> <span>PRONTA!</span>';
-            } else {
-                // --- CASO: NON PRONTA (Ma visibile perché hai già prestiggiato) ---
-                prestigeHubBtn.classList.remove('promotion-ready');
-                prestigeHubBtn.style.animation = 'none'; // Reset vecchi stili inline se presenti
-
-                prestigeHubBtn.innerHTML = '<i class="nav-icon fa-solid fa-rocket"></i> <span>Promozione</span>';
-            }
-        } else {
-            prestigeHubBtn.style.display = 'none';
-        }
+    // Se non deve essere visibile, nascondilo e basta
+    if (!canPrestige && !hasPrestiged) {
+        if (prestigeBtn.style.display !== 'none') prestigeBtn.style.display = 'none';
+        return;
     }
 
-    // ... (resto della funzione per il modale hub invariato) ...
-    const hubGainDisplay = document.getElementById('prestige-gain-display');
-    const btnGoToContract = document.getElementById('btn-go-to-contract');
-    if (hubGainDisplay && btnGoToContract) {
-        const gained = calculatePrestigeGained();
-        hubGainDisplay.textContent = formatNumber(gained);
+    // Assicuriamoci che sia visibile
+    if (prestigeBtn.style.display !== 'flex') prestigeBtn.style.display = 'flex';
 
-        if (gained < 1) {
-            btnGoToContract.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Accumula più bug!';
-            btnGoToContract.disabled = true;
-            btnGoToContract.style.background = "#7f8c8d";
-            btnGoToContract.style.cursor = "not-allowed";
-            hubGainDisplay.style.color = "#e74c3c";
-        } else {
-            btnGoToContract.innerHTML = '<i class="fa-solid fa-file-contract"></i> Visualizza Contratto';
-            btnGoToContract.disabled = false;
-            btnGoToContract.style.background = "linear-gradient(135deg, #8e44ad, #9b59b6)";
-            btnGoToContract.style.cursor = "pointer";
-            hubGainDisplay.style.color = "#2ecc71";
-        }
+    // Recupera (o crea se mancano) gli elementi interni SENZA distruggere tutto
+    let icon = prestigeBtn.querySelector('.nav-icon');
+    let label = prestigeBtn.querySelector('span');
+
+    // Se il bottone è vuoto (primo avvio), creiamo la struttura una volta sola
+    if (!icon || !label) {
+        prestigeBtn.innerHTML = '<i class="nav-icon"></i> <span></span>';
+        icon = prestigeBtn.querySelector('.nav-icon');
+        label = prestigeBtn.querySelector('span');
     }
-    const tabLabButton = document.getElementById('tab-prestige');
-    if (tabLabButton) {
-        tabLabButton.style.display = (gameState.totalResets > 0 || gameState.prestigePoints > 0) ? 'inline-block' : 'none';
+
+    if (canPrestige) {
+        // --- STATO: PRONTA! (Verde) ---
+        // Aggiungiamo la classe solo se non c'è già, per evitare reflow inutili
+        if (!prestigeBtn.classList.contains('promotion-ready')) {
+            prestigeBtn.classList.add('promotion-ready');
+            prestigeBtn.style.cursor = "pointer";
+
+            // Aggiorna icona e testo
+            icon.className = 'nav-icon fa-solid fa-circle-check';
+            label.textContent = 'PRONTA!';
+        }
+    } else {
+        // --- STATO: IN PROGRESS (Viola/Standard) ---
+        if (prestigeBtn.classList.contains('promotion-ready')) {
+            prestigeBtn.classList.remove('promotion-ready');
+            prestigeBtn.style.cursor = "default";
+            icon.className = 'nav-icon fa-solid fa-rocket';
+        }
+
+        // Calcolo percentuale
+        const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 99).toFixed(0);
+        const newText = `${progress}%`;
+
+        // Aggiorna il testo SOLO se è cambiato (risparmia risorse)
+        if (label.textContent !== newText) {
+            label.textContent = newText;
+        }
     }
 }
+
 
 function updatePrestigeUI() {
     updatePrestigeVisuals();

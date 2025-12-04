@@ -251,9 +251,9 @@
 }
 
 #version-display {
-    position: absolute;
+    position: fixed;
     bottom: 10px;
-    right: 15px;
+    right: 48.9%;
     font-size: 0.75rem;
     color: #95a5a6;
     opacity: 0.6;

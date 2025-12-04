@@ -210,47 +210,58 @@
 </div>
 
 <div id="prestige-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content contract-modal">
-        <div class="contract-header">
-            <h2><i class="fa-solid fa-file-contract"></i> Contratto di Promozione</h2>
-            <p>L'azienda ha notato il tuo eccellente lavoro.</p>
-        </div>
+    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #f1c40f; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+        
+        <button class="modal-close-btn">&times;</button>
+        
+        <h2 style="background: #233040; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.2); padding: 20px;">
+            <i class="fa-solid fa-certificate"></i> Promozione
+        </h2>
 
-        <div class="contract-body">
-            <div class="contract-columns">
-                <div class="contract-column loss">
-                    <h3><i class="fa-solid fa-arrow-trend-down"></i> Cedi al Dipartimento</h3>
-                    <ul>
-                        <li> Tutti i Bug attuali</li>
-                        <li> Tutti i teams</li>
-                        <li> Potenziamenti Click/Auto</li>
-                    </ul>
+        <div class="settings-content" style="padding: 30px 25px;">
+            
+            <p style="
+                color: #ff6b6b; 
+                font-weight: 800; 
+                font-size: 0.95rem; 
+                margin-bottom: 25px; 
+                line-height: 1.5; 
+                background: rgba(255, 0, 0, 0.1); 
+                padding: 10px; 
+                border-radius: 8px; 
+                border: 1px solid rgba(255, 107, 107, 0.3);">
+                <i class="fa-solid fa-triangle-exclamation"></i> Accettando la promozione, l'azienda resetterà i tuoi Bug ed Edifici per riassegnarti ad un nuovo progetto.
+            </p>
+
+            <div style="background: #1e272e; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #34495e;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">OTTERRAI SUBITO</div>
+                
+                <div style="font-size: 3rem; font-weight: 900; color: #2ecc71; text-shadow: 0 0 20px rgba(46, 204, 113, 0.2); line-height: 1;">
+                    <span id="contract-gain-token">+0</span>
                 </div>
+                <div style="color: #2ecc71; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px;">Token Lab</div>
 
-                <div class="contract-separator">
-                    <span>vs</span>
-                </div>
-
-                <div class="contract-column gain">
-                    <h3><i class="fa-solid fa-arrow-trend-up"></i> Il tuo Nuovo Pacchetto</h3>
-                    <div class="gain-item">
-                        <span class="gain-label">Nuovi Token Lab</span>
-                        <span id="contract-gain-token" class="gain-value">+0</span>
-                    </div>
-                    <div class="gain-item">
-                        <span class="gain-label">Nuovo Bonus Carriera</span>
-                        <span id="contract-gain-bonus" class="gain-value">+0%</span>
-                    </div>
-                    <p class="gain-note">Il Bonus Carriera è permanente!</p>
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                    <div style="font-size: 0.8rem; color: #bdc3c7;">Bonus Carriera Totale</div>
+                    <div id="contract-gain-bonus" style="font-size: 1.2rem; color: #f1c40f; font-weight: 800;">Nuovo Totale: +0%</div>
                 </div>
             </div>
-        </div>
 
-        <div class="contract-footer">
-            <button id="btn-cancel-contract" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta e Torna Indietro</button>
-            <button id="btn-confirm-prestige" class="buy-btn prestige-btn signature-btn">
-                <i class="fa-solid fa-signature"></i> Firma e Accetta Promozione
+            <button id="btn-confirm-prestige" class="buy-btn" style="
+                background: linear-gradient(135deg, #f1c40f, #e67e22); 
+                color: #2c3e50; 
+                font-weight: 800; 
+                width: 100%; 
+                height: 55px; 
+                font-size: 1.2rem; 
+                box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+                border-radius: 8px;">
+                <i class="fa-solid fa-signature"></i> Firma e Accetta
             </button>
+            
+            <p style="font-size: 0.8rem; color: #5d7c9a; margin-top: 20px;">
+                I potenziamenti del Lab e le Skin rimarranno salvati.
+            </p>
         </div>
     </div>
 </div>

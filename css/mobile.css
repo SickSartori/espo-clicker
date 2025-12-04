@@ -300,13 +300,23 @@
 
     /* Mute in alto a sinistra */
     #quick-mute-btn {
-        top: 70px !important;
-        left: 10px !important;
+        /* Reset della posizione attuale */
+        top: auto !important;
         bottom: auto !important;
-        width: 35px;
-        height: 35px;
-        font-size: 1rem;
-        opacity: 0.7;
+        position: fixed !important;
+        bottom: 85px !important;
+        left: 15px !important;
+
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+
+        /* Stile */
+        background-color: rgba(21, 27, 34, 0.9);
+        border: 1px solid #4a6582;
+        opacity: 0.8;
+        z-index: 1900;
+        /* Sotto i modali ma sopra il resto */
     }
 
     #github-link-container {
@@ -322,5 +332,189 @@
         font-size: 0.65rem;
         opacity: 0.4;
         pointer-events: none;
+    }
+
+    .hud-stats-bar {
+        width: auto !important;
+        max-width: 85%;
+        margin: 10px auto 15px auto !important;
+        padding: 6px 20px !important;
+        gap: 20px !important;
+        border-radius: 25px !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .hud-label {
+        font-size: 0.6rem !important;
+        margin-bottom: 2px;
+    }
+
+    .hud-value {
+        font-size: 1rem !important;
+    }
+
+    .hud-separator {
+        display: none !important;
+    }
+
+    #skill-crunchTime {
+        min-width: 0 !important;
+        width: auto !important;
+        display: inline-block !important;
+        padding: 8px 25px !important;
+        font-size: 0.9rem !important;
+        margin-top: 10px !important;
+        margin-bottom: 5px !important;
+    }
+
+    #skill-crunchTime .skill-timer {
+        font-size: 0.75rem !important;
+        margin-top: 2px !important;
+    }
+
+    .prestige-upgrade {
+        flex-direction: column !important;
+        /* Elementi uno sotto l'altro */
+        align-items: stretch !important;
+        /* Occupa tutta la larghezza */
+        height: auto !important;
+        /* Altezza adattabile */
+        padding: 15px !important;
+        /* Più spazio interno */
+        gap: 10px !important;
+        /* Spazio tra testo e bottoni */
+    }
+
+    /* 2. Gestione Testi (Parte Alta) */
+    .prestige-upgrade .upgrade-details {
+        width: 100%;
+        text-align: left;
+        /* Allinea a sinistra per leggibilità */
+        margin-right: 0 !important;
+    }
+
+    /* Forza il titolo a non essere tagliato brutalmente */
+    .prestige-upgrade .upgrade-name {
+        font-size: 1rem !important;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Permetti alla descrizione di andare a capo e non sovrapporsi */
+    .prestige-upgrade .upgrade-desc {
+        white-space: normal !important;
+        /* FONDAMENTALE: testo a capo */
+        font-size: 0.85rem !important;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        color: #d2b4de !important;
+        /* Lilla chiaro per contrasto */
+        max-width: 100%;
+    }
+
+    .prestige-upgrade .upgrade-cost {
+        font-size: 0.9rem !important;
+        font-weight: bold;
+    }
+
+    .prestige-upgrade .upgrade-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        margin-top: 5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prestige-upgrade .upgrade-count {
+        font-size: 1.2rem !important;
+        font-weight: bold;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prestige-upgrade .upgrade-count::before {
+        content: "Liv. ";
+        font-size: 0.7rem;
+        color: #bdc3c7;
+        vertical-align: middle;
+        text-transform: uppercase;
+        margin-right: 4px;
+    }
+
+    .prestige-upgrade .buy-btn {
+        margin: 0 !important;
+        height: 40px !important;
+    }
+
+    .prestige-upgrade .buy-btn:not(.owned) {
+        min-width: 110px;
+    }
+
+    .prestige-upgrade .buy-btn.owned {
+        width: auto !important;
+        align-self: center !important;
+        flex-grow: 0 !important;
+        min-width: unset !important;
+        margin-left: auto !important;
+        padding: 4px 10px !important;
+    }
+
+    #lab-wallet-container {
+        display: flex !important;
+        position: -webkit-sticky;
+        position: sticky;
+        top: -25px;
+        z-index: 100;
+
+        background-color: #14202b;
+
+        margin: 0;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 0 0 8px 8px;
+        /* Arrotonda solo sotto */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        /* Ombra per staccarlo visivamente */
+    }
+
+    #lab-wallet-amount {
+        font-size: 1.3rem;
+    }
+
+    #toast-container {
+        top: 75px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        width: auto !important;
+        max-width: 90% !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .toast {
+        padding: 6px 16px !important;
+        font-size: 0.8rem !important;
+        border-radius: 50px !important;
+        opacity: 0.8 !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+        border-width: 1px !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    .toast i {
+        font-size: 0.9rem !important;
+        margin-right: 6px !important;
     }
 }

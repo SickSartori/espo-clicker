@@ -78,9 +78,9 @@
 
 /* Bottone Speciale (Promozione) */
 .nav-special-btn {
-    background: linear-gradient(135deg, #8e44ad, #9b59b6);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #bdc3c7;
+    border: 1px solid #4a6582;
     border-radius: 6px;
     padding: 8px 16px;
     font-weight: 700;
@@ -88,11 +88,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 0 #71368a, 0 5px 10px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    transition: all 0.1s;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
     margin-left: 15px;
     text-transform: uppercase;
+    opacity: 0.8;
 }
 
 .nav-special-btn:hover {
@@ -104,6 +104,28 @@
 .nav-special-btn:active {
     transform: translateY(2px);
     box-shadow: 0 2px 0 #71368a;
+}
+
+.nav-special-btn.promotion-ready {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    color: white !important;
+    border: 1px solid #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    animation: promotionGlow 1.5s infinite alternate;
+    pointer-events: auto !important;
+    /* Forza la cliccabilità */
+}
+
+.nav-special-btn.promotion-ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
+    filter: brightness(1.1);
+}
+
+.nav-special-btn.promotion-ready:active {
+    transform: translateY(1px);
 }
 
 .nav-item.notify-overlay {
