@@ -489,6 +489,31 @@
         font-size: 1.3rem;
     }
 
+    #buy-controls {
+        /* Su mobile il padding della sezione è 10px (vedi mobile.css) */
+        /* Tiriamo indietro solo di 10px (o 15px se vuoi coprire anche il bordo colonna) */
+        margin-left: -15px;
+        margin-right: -15px;
+
+        /* Riduciamo il padding interno per dare più spazio ai bottoni */
+        padding-left: 15px;
+        padding-right: 15px;
+
+        /* Compensa il padding superiore della colonna mobile */
+        top: -15px;
+        margin-top: -15px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+
+        gap: 5px;
+        /* Meno spazio tra i bottoni su schermi piccoli */
+    }
+
+    .store-section {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
     #toast-container {
         top: 75px !important;
         left: 50% !important;

@@ -68,10 +68,30 @@
 }
 
 #buy-controls {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    box-sizing: border-box;
+    width: auto;
+    margin-left: -30px;
+    margin-right: -30px;
+    padding: 10px 30px;
+
+    /* 5. Stile Visivo */
+    background-color: #25323e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+
+    /* 6. Layout interno */
     display: flex;
     gap: 10px;
+    /* Spazio tra i bottoni */
+    justify-content: center;
     margin-bottom: 20px;
-    justify-content: flex-start;
+    border-radius: 0;
+    /* Importante per l'effetto "barra piena" */
 }
 
 .section-header {
