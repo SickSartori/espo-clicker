@@ -278,14 +278,21 @@ const gameData = {
     PRESTIGE_THRESHOLD: 50000000,
 
     skins: {
-        default: { name: "Classico", desc: "L'originale inconfondibile.", img: "espo.png", imgClick: "espo-click.png", rarity: "common", bg: "background.jpg", clickEffect: "normal" },
+        default: {
+            name: "Classico",
+            desc: "L'originale inconfondibile.",
+            img: "espo.webp",
+            imgClick: "espo-click.webp",
+            rarity: "common",
+            clickEffect: "normal"
+        },
 
         // UNLOCKABLE SKINS (Achievement Based)
         christmas: {
             name: "Espo Natale",
             desc: "Oh Oh Oh! Risolviamo questi bug sotto l'albero.",
-            img: "esponatale.png",
-            imgClick: "esponatale-click.png",
+            img: "esponatale.webp",
+            imgClick: "esponatale-click.webp",
             rarity: "christmas",
             unlockHint: "Riscatta l'obiettivo 'Buon Natale'!",
             clickEffect: "snow",
@@ -295,8 +302,8 @@ const gameData = {
         gladiator: {
             name: "Esporator",
             desc: "Al mio segnale, scatenate i click.",
-            img: "esporator.png",
-            imgClick: "esporator-click.png",
+            img: "esporator.webp",
+            imgClick: "esporator-click.webp",
             rarity: "rare",
             unlockHint: "Raggiungi 2.000 click manuali.",
             clickEffect: "fire"
@@ -304,17 +311,16 @@ const gameData = {
         geisha: {
             name: "Esponese",
             desc: "Eleganza orientale.",
-            img: "esponese.png",
-            imgClick: "esponese-click.png",
+            img: "esponese.webp",
+            imgClick: "esponese-click.webp",
             rarity: "rare",
             unlockHint: "Gioca per 4 ore totali.",
-            bg: "background_zen.jpg"
         },
         unicorn: {
             name: "Espocorno",
             desc: "Magia pura nel codice.",
-            img: "espocorno.png",
-            imgClick: "espocorno-click.png",
+            img: "espocorno.webp",
+            imgClick: "espocorno-click.webp",
             rarity: "rare",
             unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'",
             clickEffect: "rainbow"
@@ -325,18 +331,17 @@ const gameData = {
         king: {
             name: "Espo of Empires",
             desc: "Il Re dei Bug.",
-            img: "espofempires.png",
-            imgClick: "espofempires-click.png",
+            img: "espofempires.webp",
+            imgClick: "espofempires-click.webp",
             rarity: "epic",
             cost: 10,
-            bg: "background_castle.jpg",
             clickEffect: "gold"
         },
         waifu: {
             name: "Espowaifu",
             desc: "Best girl.",
-            img: "espowaifu.png",
-            imgClick: "espowaifu-click.png",
+            img: "espowaifu.webp",
+            imgClick: "espowaifu-click.webp",
             rarity: "epic",
             cost: 15,
             clickEffect: "flowers"
@@ -345,8 +350,8 @@ const gameData = {
         jesus: {
             name: "Gespo",
             desc: "Il salvatore del database.",
-            img: "gespo.png",
-            imgClick: "gespo-click.png",
+            img: "gespo.webp",
+            imgClick: "gespo-click.webp",
             rarity: "epic",
             unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
             clickEffect: "divine"
@@ -356,8 +361,8 @@ const gameData = {
         rick: {
             name: "Rick Espley",
             desc: "Never gonna give you up.",
-            img: "rick-espley.png",
-            imgClick: "rick-espley-click.png",
+            img: "rick-espley.webp",
+            imgClick: "rick-espley-click.webp",
             rarity: "legendary",
             unlockHint: "Raggiungi 10.000 click manuali.",
             clickEffect: "hearts"
@@ -365,8 +370,8 @@ const gameData = {
         ricardo: {
             name: "Ricardo Milespo",
             desc: "Non c'è bug che tenga.",
-            img: "ricardo-milespo.png",
-            imgClick: "ricardo-milespo-click.png",
+            img: "ricardo-milespo.webp",
+            imgClick: "ricardo-milespo-click.webp",
             rarity: "legendary",
             unlockHint: "Sblocca l'obiettivo 'White Hat'",
             clickEffect: "fire"
@@ -374,8 +379,8 @@ const gameData = {
         dictator: {
             name: "Adolf Espler",
             desc: "Ordine e disciplina.",
-            img: "adolf-espler.png",
-            imgClick: "adolf-espler-click.png",
+            img: "adolf-espler.webp",
+            imgClick: "adolf-espler-click.webp",
             rarity: "legendary",
             unlockHint: "Raggiungi 20.000 click manuali.",
             clickEffect: "error"

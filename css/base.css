@@ -44,7 +44,7 @@ body::before {
 
 /* Stile per la schermata blu (override sfondo) */
 body.bluescreen-active {
-    background-image: url('../assets/image/bluescreen.jpg');
+    background-image: url('../assets/image/bluescreen.webp');
     transition: background-image 0.5s ease-in-out;
     color: #c0c0c0;
 }
@@ -130,6 +130,8 @@ body.bluescreen-active {
 #mobile-nav-bar {
     display: none;
 }
+
+
 
 /* --- EFFETTO CRUNCH TIME (FIAMME) --- */
 
