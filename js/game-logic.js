@@ -218,65 +218,62 @@ function activateCrunchTime() {
 function triggerBluescreen(multiplier) {
     // 1. GESTIONE SKIN SPECIALI (con probabilità)
 
+function triggerBluescreen(multiplier) {
     // Se hai Rick Espley equipaggiato
     if (gameState.skins.current === 'rick') {
-        // 50% di probabilità di fare il Rick Roll
-        // L'altro 50% farà il normale Blue Screen (il codice prosegue sotto)
-        if (Math.random() < 0.5) {
-            triggerRickRoll(multiplier);
+        // 80% Probabilità Rick Roll (molto alta)
+        // 20% Probabilità Errore 404 standard
+        if (Math.random() < 0.8) {
+            triggerRickRoll();
             return;
         }
     }
 
     // Se hai Ricardo Milespo equipaggiato
     if (gameState.skins.current === 'ricardo') {
-        // 50% di probabilità di fare il Ricardo Event
-        if (Math.random() < 0.5) {
+        // 80% Probabilità Ricardo Flex (molto alta)
+        if (Math.random() < 0.8) {
             triggerRicardoEvent();
             return;
         }
     }
 
-    // 2. LOGICA STANDARD 404 (BLUE SCREEN)
-    // Se non è scattato l'evento speciale sopra, eseguiamo questo:
+    // --- LOGICA STANDARD 404 (Se non scattano gli eventi speciali) ---
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
 
     recalculateCPS();
-
-    // Aggiorna UI se esiste la funzione (gestisce il refresh grafico immediato)
     if (typeof refreshAllStores === 'function') refreshAllStores();
 
-    // Mostra il moltiplicatore a schermo
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
         emDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
         emDisplay.style.display = 'block';
     }
 
-    // Suono Errore
-    // [FIX] Ora usa il canale 'music' (quindi rispetta lo slider Musica)
+    // Suono Errore 404 (Glitch)
     playSound('sound-bluescreen', 'music');
 
-    // Timer fine evento (30 secondi standard)
     setTimeout(() => {
         stopBluescreenEffect();
     }, 30000);
 }
 
 
-function triggerRickRoll(multiplier) {
+// 2. RICK ROLL (5x - 12x)
+function triggerRickRoll() {
     const video = document.getElementById('rick-roll-video');
     if (!video) return;
 
-    let rickMultiplier = Math.max(multiplier, 2);
+    // MOLTIPLICATORE: Da 5x a 12x
+    let rickMultiplier = Math.floor(Math.random() * 8) + 5;
 
     isBluescreenActive = true;
     bluescreenMultiplier = rickMultiplier;
 
     recalculateCPS();
-    updateUI();
+    if (typeof updateUI === 'function') updateUI();
 
     document.body.classList.add('rick-rolling');
 
@@ -289,8 +286,8 @@ function triggerRickRoll(multiplier) {
     video.style.display = 'block';
     video.currentTime = 0;
 
-    // [FIX] Calcolo volume: Master * Musica
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+    // Volume ridotto al 60% della musica
+    video.volume = gameState.user.masterVolume * gameState.user.musicVolume * 0.6;
 
     try {
         const bgMusic = document.getElementById('sound-bg');
@@ -299,13 +296,13 @@ function triggerRickRoll(multiplier) {
 
     video.play().catch(e => console.warn("Autoplay bloccato", e));
 
-    window.EspooClicker.showToast(`🎵 NEVER GONNA GIVE YOU UP! 🎵`, 'achievement');
+    window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
 
     const videoClickHandler = (e) => { clickCookie(e); };
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
-    const duration = 60000;
+    const duration = 60000; // 60 secondi
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
@@ -317,18 +314,35 @@ function triggerRickRoll(multiplier) {
     }, duration);
 }
 
-// EVENTO LEGGENDARIO: RICARDO MILESPO
+// 3. RICARDO FLEX (5x - 12x + No Ripetizione Video)
 function triggerRicardoEvent() {
-    const video = document.getElementById('ricardo-video');
+    const allVideos = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
+
+    // Spegni video precedenti
+    allVideos.forEach(id => {
+        const v = document.getElementById(id);
+        if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+    });
+
+    // Filtra per non ripetere l'ultimo
+    let availableVideos = allVideos.filter(id => id !== lastRicardoVideoId);
+    if (availableVideos.length === 0) availableVideos = allVideos;
+
+    // Scelta casuale
+    const selectedId = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+    lastRicardoVideoId = selectedId;
+
+    const video = document.getElementById(selectedId);
     if (!video) return;
 
-    let bonusMult = Math.floor(Math.random() * 8) + 3;
+    // MOLTIPLICATORE: Da 5x a 12x
+    let bonusMult = Math.floor(Math.random() * 8) + 5;
 
     isBluescreenActive = true;
     bluescreenMultiplier = bonusMult;
 
     recalculateCPS();
-    updateUI();
+    if (typeof updateUI === 'function') updateUI();
 
     document.body.classList.add('rick-rolling');
 
@@ -341,8 +355,8 @@ function triggerRicardoEvent() {
     video.style.display = 'block';
     video.currentTime = 0;
 
-    // [FIX] Calcolo volume: Master * Musica
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+    // Volume ridotto al 60% della musica
+    video.volume = gameState.user.masterVolume * gameState.user.musicVolume * 0.6;
 
     try {
         const bgMusic = document.getElementById('sound-bg');
@@ -357,14 +371,23 @@ function triggerRicardoEvent() {
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
-    const duration = 45000;
+    const duration = 45000; // 45 secondi
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
-        video.pause();
-        video.style.display = 'none';
-        video.removeEventListener('mousedown', videoClickHandler);
-        video.removeEventListener('touchstart', videoClickHandler);
+
+        // Pulizia completa
+        allVideos.forEach(id => {
+            const v = document.getElementById(id);
+            if (v) {
+                v.pause();
+                v.style.display = 'none';
+                v.currentTime = 0;
+                v.removeEventListener('mousedown', videoClickHandler);
+                v.removeEventListener('touchstart', videoClickHandler);
+            }
+        });
+
         stopBluescreenEffect();
     }, duration);
 }
@@ -393,26 +416,41 @@ function clickCookie(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
 
-    // --- 🔊 NUOVO: LOGICA AUDIO GLITCH ---
+    // --- 🔊 GESTIONE AUDIO EVENTI ---
     if (isBluescreenActive) {
         const sound = document.getElementById('sound-click');
+
         if (sound) {
-            // Cambia la velocità di riproduzione a caso tra 0.2x (lento/cupo) e 1.8x (veloce/acuto)
+            // CASO 1: RICARDO / RICK ROLL (Audio Pulito ma Basso)
+            if (document.body.classList.contains('rick-rolling')) {
+                sound.playbackRate = 1; // Velocità normale (pulito)
+
+                // Volume ridotto (es. 20% del volume master) per non coprire la musica/video
+                // Modifica 0.2 con un altro valore se lo vuoi più/meno alto
+                sound.volume = (gameState.user.masterVolume * gameState.user.sfxVolume) * 0.2;
+
+                sound.currentTime = 0;
+                sound.play().catch(e => { });
+            }
+            // CASO 2: BLUE SCREEN 404 (Audio Glitchato)
+            else {
+                // Cambia la velocità di riproduzione a caso (Effetto Glitch)
             sound.playbackRate = 0.2 + Math.random() * 1.6;
 
-            // Opzionale: volume instabile per accentuare il glitch
-            // (mantiene il volume master come base massima)
+                // Volume instabile e alto
             sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
 
             sound.currentTime = 0;
-            sound.play().catch(e => { }); // Ignora errori di autoplay
+                sound.play().catch(e => { });
+            }
         }
     } else {
+        // CASO 3: GIOCO NORMALE
         // Reset fondamentale: se l'evento finisce, il suono deve tornare normale!
         const sound = document.getElementById('sound-click');
         if (sound && sound.playbackRate !== 1) {
             sound.playbackRate = 1;
-            sound.volume = gameState.user.masterVolume;
+            sound.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
         }
         playSound('sound-click');
     }

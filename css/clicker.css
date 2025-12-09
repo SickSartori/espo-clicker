@@ -286,7 +286,9 @@ body.bluescreen-active #clicker-btn {
 /* --- RICK ROLL / RICARDO MODE --- */
 
 #rick-roll-video,
-#ricardo-video {
+#ricardo-video,
+#ricardo-metal-video,
+#ricardo-dota-video {
     position: fixed;
     top: 0;
     left: 0;
