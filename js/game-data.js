@@ -14,6 +14,21 @@ let crunchTimeCooldownEnd = 0;
 var clickHistory = [];
 let achievementsBPSBonus = 0;
 
+function isChristmasSeason() {
+    const now = new Date();
+    const month = now.getMonth(); // 0 = Gennaio, 11 = Dicembre
+    const day = now.getDate();
+
+    // È Dicembre (Mese 11) OPPURE è Gennaio (Mese 0) fino al giorno 8
+    if (month === 11) return true;
+    if (month === 0 && day <= 8) return true;
+
+    return false;
+}
+
+// Calcoliamo lo stato attuale una volta all'avvio
+const IS_XMAS_TIME = isChristmasSeason();
+
 function getInitialGameState() {
     return {
         version: {
@@ -266,6 +281,17 @@ const gameData = {
         default: { name: "Classico", desc: "L'originale inconfondibile.", img: "espo.png", imgClick: "espo-click.png", rarity: "common", bg: "background.jpg", clickEffect: "normal" },
 
         // UNLOCKABLE SKINS (Achievement Based)
+        christmas: {
+            name: "Espo Natale",
+            desc: "Oh Oh Oh! Risolviamo questi bug sotto l'albero.",
+            img: "esponatale.png",
+            imgClick: "esponatale-click.png",
+            rarity: "christmas",
+            unlockHint: "Riscatta l'obiettivo 'Buon Natale'!",
+            clickEffect: "snow",
+            cost: IS_XMAS_TIME ? undefined : 20,
+            unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token."
+        },
         gladiator: {
             name: "Esporator",
             desc: "Al mio segnale, scatenate i click.",
@@ -295,6 +321,7 @@ const gameData = {
         },
 
         // PREMIUM SKINS (Token Based - NO Unlock Hint, solo Costo)
+
         king: {
             name: "Espo of Empires",
             desc: "Il Re dei Bug.",
@@ -656,6 +683,17 @@ const gameData = {
             isSecret: false,
             reward: { type: 'skin', id: 'jesus' },
             condition: () => gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased
+        },
+        natale: {
+            name: 'Buon Natale',
+            desc: 'Un regalo speciale per te!',
+            flavor: 'A Natale siamo tutti più buoni (tranne i bug).',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'skin', id: 'christmas' },
+            // Condizione sempre vera per renderlo riscattabile subito
+            condition: () => IS_XMAS_TIME
         }
     },
 

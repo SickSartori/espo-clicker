@@ -360,7 +360,6 @@
     #skill-crunchTime {
         min-width: 0 !important;
         width: auto !important;
-        display: inline-block !important;
         padding: 8px 25px !important;
         font-size: 0.9rem !important;
         margin-top: 10px !important;
@@ -587,5 +586,78 @@
     .toast i {
         font-size: 0.9rem !important;
         margin-right: 6px !important;
+    }
+}
+
+@media (max-width: 768px) {
+
+    #game-navbar {
+        padding: 5px 10px !important;
+        gap: 5px;
+    }
+
+    #tokens-display {
+        font-size: 0.85rem !important;
+        white-space: nowrap;
+    }
+
+    /* Rimpicciolisce il bottone Prestigio */
+    #prestige-btn-header {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+        white-space: nowrap;
+    }
+
+    .christmas-title {
+        font-size: 8vw !important;
+        white-space: nowrap !important;
+        width: 100%;
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+    }
+
+    /* 2. SOTTOTITOLO (Skin Equipaggiata) */
+    .christmas-subtitle {
+        font-size: 1rem !important;
+        margin-top: 15px !important;
+        text-align: center !important;
+        padding: 0 20px !important;
+        opacity: 0.9;
+    }
+
+    /* 3. GRIGLIA SKIN (Layout a 2 colonne per leggibilità) */
+    #skins-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding: 10px !important;
+    }
+
+    /* Ottimizza l'aspetto delle card */
+    .skin-card {
+        min-height: 130px;
+        padding: 10px !important;
+        padding-top: 25px !important;
+    }
+
+    .skin-img-container {
+        width: 70px !important;
+        height: 70px !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* Rende il nome e la descrizione più leggibili */
+    .skin-name-display {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    .skin-desc {
+        font-size: 0.7rem !important;
+        line-height: 1.2 !important;
     }
 }

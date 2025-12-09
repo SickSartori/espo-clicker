@@ -346,9 +346,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
+        // --- NUOVO: CONTROLLO FINE CRUNCH TIME ---
+        // Se il tempo è scaduto MA l'effetto è ancora visibile (classe presente)
+        if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
+            if (document.body.classList.contains('crunch-active')) {
 
+                // 1. Spegni Effetti CSS e Audio
+                document.body.classList.remove('crunch-active');
+
+                const overlay = document.getElementById('crunch-overlay');
+                if (overlay) overlay.style.display = 'none';
+
+                const fireSound = document.getElementById('sound-fire');
+                if (fireSound) {
+                    fireSound.pause();
+                    fireSound.currentTime = 0;
+                }
+
+                // 2. STOP PARTICELLE (Importante!)
+                const fireContainer = document.getElementById('fire-particles-container');
+                if (fireContainer) {
+                    fireContainer.style.display = 'none';
+                    fireContainer.innerHTML = ''; // Pulisce tutte le particelle esistenti
+                }
+                // Ferma il generatore (variabile definita in game-logic.js, accessibile qui se globale)
+                if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
+                    clearInterval(fireParticleInterval);
+                    fireParticleInterval = null;
+                }
+
+                // 3. Reset Logica
+                crunchTimeMultiplier = 1;
+                recalculateCPS();
+
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof refreshAllStores === 'function') refreshAllStores();
+
+                window.EspooClicker.showToast('Crunch Time terminato.', 'info');
+            }
+        }
+        // ------------------------------------------
     }
-
     // --------- 11. INIZIALIZZAZIONE ---------
     function startGameRoutines() {
         // Volume audio iniziale
@@ -413,9 +451,18 @@ document.addEventListener('DOMContentLoaded', () => {
         buildStores(); // Costruisce l'HTML dei negozi
         loadGame();    // Carica il salvataggio (se esiste)
 
-        // --- 3. APPLICAZIONE VISIVA FORZATA ---
-        // Questo risolve il bug "CSS perso": applica sfondo e bordo della skin 
-        // anche se è una nuova partita (default) o dopo un reset.
+        const now = Date.now();
+        if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
+            console.log("Crunch Time ancora attivo! Ripristino effetti...");
+
+            crunchTimeEndTime = gameState.crunchTimeEndTime;
+            crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+
+            if (typeof resumeCrunchTimeEffects === 'function') {
+                resumeCrunchTimeEffects();
+            }
+        }
+
         if (typeof applySkinVisuals === 'function') {
             applySkinVisuals(gameState.skins.current);
         }
@@ -479,28 +526,40 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
-            // Se il volume caricato è 0, metti subito l'icona Muto
+            // Setup Icona Iniziale
             if (gameState.user.masterVolume <= 0) {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
             } else {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
             }
 
-            // Listener Click (questo c'era già, lascialo così)
+            // Listener Click Modificato
             muteBtn.addEventListener('click', () => {
+                // 1. Logica Toggle Volume
                 if (gameState.user.masterVolume > 0) {
                     gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    // Cambio Icona
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    // Suono di feedback quando RIATTIVI l'audio
+                    playSound('sound-click');
                 }
+
+                // 2. Aggiorna Slider se presente
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
+
+                // 3. Aggiorna tutti i loop ambientali (inclusa la musica di Natale)
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+
+                // 4. Check Forzato per Snowball (per sicurezza immediata)
+                const snowAudio = document.getElementById('sound-snowball');
+                if (snowAudio) {
+                    // Applica la regola del 20% anche qui
+                    snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+                }
             });
         }
 
@@ -695,7 +754,13 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => { audio.volume = gameState.user.masterVolume; });
+            document.querySelectorAll('audio').forEach(audio => {
+                if (audio.id === 'sound-snowball') {
+                    audio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 1.5;
+                } else {
+                    audio.volume = gameState.user.masterVolume;
+                }
+            });
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,

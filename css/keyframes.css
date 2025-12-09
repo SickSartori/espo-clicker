@@ -333,3 +333,25 @@
         transform: scale(1.05);
     }
 }
+
+@keyframes risingHeat {
+    0% {
+        background-position: 0% 100%;
+    }
+
+    100% {
+        background-position: 0% 0%;
+    }
+}
+
+@keyframes crunchPulse {
+    0% {
+        box-shadow: 0 0 30px rgba(255, 69, 0, 0.6);
+        border-color: #ff4500;
+    }
+
+    100% {
+        box-shadow: 0 0 80px 20px rgba(255, 215, 0, 0.8);
+        border-color: #ffd700;
+    }
+}
