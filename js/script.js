@@ -381,7 +381,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (typeof updateUI === 'function') updateUI();
                 if (typeof refreshAllStores === 'function') refreshAllStores();
-
+                if (window.currentActiveEvent === 'Crunch Time') {
+                    window.currentActiveEvent = null; // Rilascia il lock
+                    console.log("Crunch Time terminato naturalmente. Lock rilasciato.");
+                }
                 window.EspooClicker.showToast('Crunch Time terminato.', 'info');
             }
         }
@@ -414,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100); // 100ms = 10 volte al secondo, fluido e leggero
 
-        // Auto-save (ogni 5s)
-        setInterval(saveGame, 5000);
+        // Auto-save (ogni 30s)
+        setInterval(saveGame, 30000);
 
         // Classifica (ogni 30s) - Nota: rimosso score/prestige dai parametri come discusso per sicurezza
         setInterval(() => {

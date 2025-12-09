@@ -398,24 +398,28 @@
     document.getElementById('btn-event-404').addEventListener('click', () => {
         const mult = getVal('cheat-404-input');
         if (typeof triggerBluescreen === 'function') {
-            triggerBluescreen(mult);
-            toast(`Evento 404 avviato (x${mult})`);
+            // Se checkEventConflict blocca, la funzione ritorna false
+            if (triggerBluescreen(mult)) {
+                toast(`Evento 404 avviato (x${mult})`);
+            }
         }
     });
 
     // Evento Rick Roll
     document.getElementById('btn-event-rick').addEventListener('click', () => {
         if (typeof triggerRickRoll === 'function') {
-            triggerRickRoll(3);
-            toast("Rick Roll avviato!");
+            if (triggerRickRoll(3)) {
+                toast("Rick Roll avviato!");
+            }
         }
     });
 
     // Evento Ricardo
     document.getElementById('btn-event-ricardo').addEventListener('click', () => {
         if (typeof triggerRicardoEvent === 'function') {
-            triggerRicardoEvent();
-            toast("Ricardo Flex avviato!");
+            if (triggerRicardoEvent()) {
+                toast("Ricardo Flex avviato!");
+            }
         } else {
             toast("Funzione triggerRicardoEvent non trovata!");
         }
@@ -426,6 +430,8 @@
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
             toast("Golden Bug generato");
+        } else {
+            toast("Funzione spawnGoldenBug non trovata!");
         }
     });
 

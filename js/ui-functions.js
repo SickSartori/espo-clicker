@@ -72,8 +72,8 @@ function updateSkinsUI() {
 
         // Immagine: Sempre nascosta se non sbloccata
         const imgSrc = isUnlocked
-            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.png')
-            : './assets/image/hidden.png';
+            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp')
+            : './assets/image/hidden.webp';
 
         // --- MODIFICA STATO VISIVO (Senza Hover) ---
         let statusHtml = '';
@@ -1054,7 +1054,7 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         document.body.classList.remove('theme-christmas');
 
         if (goldenBugImg) {
-            goldenBugImg.src = './assets/image/bug.png';
+            goldenBugImg.src = './assets/image/bug.webp';
         }
 
         // Spegni Neve

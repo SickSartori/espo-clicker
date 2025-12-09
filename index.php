@@ -24,22 +24,14 @@
 
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="./assets/image/favicon.png">
+    <link rel="icon" type="image/png" href="./assets/image/favicon.webp">
 </head>
 <body>
-    <video id="rick-roll-video" style="display: none;" playsinline>
-        <source src="./assets/video/rick-espley-video.mp4" type="video/mp4">
-        Il tuo browser non supporta il video tag.
-    </video>
-    <video id="ricardo-video" style="display: none;" playsinline>
-        <source src="./assets/video/ricardo-milespo-video.mp4" type="video/mp4">
-    </video>
-    <video id="ricardo-metal-video" style="display: none;" playsinline>
-        <source src="./assets/video/ricardo-milespo-metal-video.mp4" type="video/mp4">
-    </video>
-    <video id="ricardo-dota-video" style="display: none;" playsinline>
-        <source src="./assets/video/ricardo-milespo-dota-video.mp4" type="video/mp4">
-    </video>
+    <video id="rick-roll-video" style="display: none;" playsinline preload="none" data-src="./assets/video/rick-espley-video.mp4"></video>
+    <video id="ricardo-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
+    <video id="ricardo-metal-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
+    <video id="ricardo-dota-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
+
     <div id="toast-container"></div>
     <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">
@@ -159,7 +151,7 @@
     </div>
 
     <div id="golden-bug" title="Un Ticket Critico! Clicca!">
-        <img src="./assets/image/bug.png" alt="Ticket Critico!">
+        <img src="./assets/image/bug.webp" alt="Ticket Critico!">
     </div>  
 
     <div id="github-link-container">
@@ -168,23 +160,23 @@
         </a>
     </div>
 
-    <audio id="sound-click" src="./assets/sounds/click.mp3" preload="auto"></audio>
-    <audio id="sound-buy" src="./assets/sounds/buy.mp3" preload="auto"></audio>
-    <audio id="sound-achievement" src="./assets/sounds/achievement.mp3" preload="auto"></audio>
-    <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="auto"></audio>
+    <audio id="sound-click" src="./assets/sounds/click.mp3" preload="metadata"></audio>
+    <audio id="sound-buy" src="./assets/sounds/buy.mp3" preload="none"></audio> 
+    <audio id="sound-achievement" src="./assets/sounds/achievement.mp3" preload="none"></audio>
+    <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="none"></audio>
 
-    <audio id="sound-error" src="./assets/sounds/error.mp3" preload="auto"></audio>
-    <audio id="sound-golden" src="./assets/sounds/golden.mp3" preload="auto"></audio>
-    <audio id="sound-prestige" src="./assets/sounds/prestige.mp3" preload="auto"></audio>
-    <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="auto"></audio>
+    <audio id="sound-error" src="./assets/sounds/error.mp3" preload="none"></audio>
+    <audio id="sound-golden" src="./assets/sounds/golden.mp3" preload="none"></audio>
+    <audio id="sound-prestige" src="./assets/sounds/prestige.mp3" preload="none"></audio>
+    <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="none"></audio>
 
-    <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="auto"></audio>
-    <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="auto"></audio>
+    <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="none"></audio>
+    <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="none"></audio>
     
     <div id="crunch-overlay"></div>
     <div id="fire-particles-container"></div>
     
-    <audio id="sound-fire" src="./assets/sounds/fire-loop.mp3" loop preload="auto"></audio>
+    <audio id="sound-fire" src="./assets/sounds/fire-loop.mp3" loop preload="none"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

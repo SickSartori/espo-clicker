@@ -336,6 +336,18 @@ body.theme-christmas #cps-display {
     /* Oro */
 }
 
+body.theme-christmas.rick-rolling #game-container {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Rimuove anche eventuali bordi rossi dalle colonne se dovessero rimanere visibili */
+body.theme-christmas.rick-rolling .game-column {
+    border: none !important;
+    background: transparent !important;
+}
+
 .skin-card.rarity-christmas {
     --r-color: #e74c3c;
     /* Rosso Natale Brillante */
