@@ -346,9 +346,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
+        // --- NUOVO: CONTROLLO FINE CRUNCH TIME ---
+        // Se il tempo è scaduto MA l'effetto è ancora visibile (classe presente)
+        if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
+            if (document.body.classList.contains('crunch-active')) {
 
+                // 1. Spegni Effetti CSS e Audio
+                document.body.classList.remove('crunch-active');
+
+                const overlay = document.getElementById('crunch-overlay');
+                if (overlay) overlay.style.display = 'none';
+
+                const fireSound = document.getElementById('sound-fire');
+                if (fireSound) {
+                    fireSound.pause();
+                    fireSound.currentTime = 0;
+                }
+
+                // 2. STOP PARTICELLE (Importante!)
+                const fireContainer = document.getElementById('fire-particles-container');
+                if (fireContainer) {
+                    fireContainer.style.display = 'none';
+                    fireContainer.innerHTML = ''; // Pulisce tutte le particelle esistenti
+                }
+                // Ferma il generatore (variabile definita in game-logic.js, accessibile qui se globale)
+                if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
+                    clearInterval(fireParticleInterval);
+                    fireParticleInterval = null;
+                }
+
+                // 3. Reset Logica
+                crunchTimeMultiplier = 1;
+                recalculateCPS();
+
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof refreshAllStores === 'function') refreshAllStores();
+
+                window.EspooClicker.showToast('Crunch Time terminato.', 'info');
+            }
+        }
+        // ------------------------------------------
     }
-
     // --------- 11. INIZIALIZZAZIONE ---------
     function startGameRoutines() {
         // Volume audio iniziale
@@ -413,9 +451,18 @@ document.addEventListener('DOMContentLoaded', () => {
         buildStores(); // Costruisce l'HTML dei negozi
         loadGame();    // Carica il salvataggio (se esiste)
 
-        // --- 3. APPLICAZIONE VISIVA FORZATA ---
-        // Questo risolve il bug "CSS perso": applica sfondo e bordo della skin 
-        // anche se è una nuova partita (default) o dopo un reset.
+        const now = Date.now();
+        if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
+            console.log("Crunch Time ancora attivo! Ripristino effetti...");
+
+            crunchTimeEndTime = gameState.crunchTimeEndTime;
+            crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+
+            if (typeof resumeCrunchTimeEffects === 'function') {
+                resumeCrunchTimeEffects();
+            }
+        }
+
         if (typeof applySkinVisuals === 'function') {
             applySkinVisuals(gameState.skins.current);
         }

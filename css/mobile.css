@@ -591,19 +591,14 @@
 
 @media (max-width: 768px) {
 
-    /* Ottimizza lo spazio nella barra di navigazione */
     #game-navbar {
         padding: 5px 10px !important;
-        /* Riduce il padding laterale */
         gap: 5px;
-        /* Aggiunge un piccolo spazio tra gli elementi */
     }
 
-    /* Rimpicciolisce il testo dei Token */
     #tokens-display {
         font-size: 0.85rem !important;
         white-space: nowrap;
-        /* Impedisce al testo di andare a capo */
     }
 
     /* Rimpicciolisce il bottone Prestigio */
@@ -611,46 +606,44 @@
         font-size: 0.75rem !important;
         padding: 4px 8px !important;
         white-space: nowrap;
-        /* Impedisce al testo del bottone di andare a capo */
     }
 
-    #christmas-overlay h1 {
-        font-size: 2.5rem !important;
-        /* Da 4rem a 2.5rem */
-        line-height: 1.2 !important;
-        text-align: center;
+    .christmas-title {
+        font-size: 8vw !important;
+        white-space: nowrap !important;
         width: 100%;
-        padding: 0 15px;
-        box-sizing: border-box;
-        word-wrap: break-word;
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
     }
 
-    #christmas-overlay p {
-        font-size: 1.2rem !important;
-        /* Da 1.5rem a 1.2rem */
-        padding: 0 20px;
-        text-align: center;
+    /* 2. SOTTOTITOLO (Skin Equipaggiata) */
+    .christmas-subtitle {
+        font-size: 1rem !important;
+        margin-top: 15px !important;
+        text-align: center !important;
+        padding: 0 20px !important;
         opacity: 0.9;
     }
 
-    /* 2. SISTEMAZIONE GRIGLIA SKIN */
-    /* Passa da 3 colonne strette a 2 colonne più larghe e comode */
+    /* 3. GRIGLIA SKIN (Layout a 2 colonne per leggibilità) */
     #skins-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        gap: 10px !important;
         padding: 10px !important;
     }
 
     /* Ottimizza l'aspetto delle card */
     .skin-card {
         min-height: 130px;
-        /* Altezza minima uniforme */
         padding: 10px !important;
         padding-top: 25px !important;
-        /* Spazio per il badge */
     }
 
-    /* Ingrandisce leggermente l'immagine della skin per riempire lo spazio */
     .skin-img-container {
         width: 70px !important;
         height: 70px !important;

@@ -34,6 +34,12 @@
     <video id="ricardo-video" style="display: none;" playsinline>
         <source src="./assets/video/ricardo-milespo-video.mp4" type="video/mp4">
     </video>
+    <video id="ricardo-metal-video" style="display: none;" playsinline>
+        <source src="./assets/video/ricardo-milespo-metal-video.mp4" type="video/mp4">
+    </video>
+    <video id="ricardo-dota-video" style="display: none;" playsinline>
+        <source src="./assets/video/ricardo-milespo-dota-video.mp4" type="video/mp4">
+    </video>
     <div id="toast-container"></div>
     <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">
@@ -44,8 +50,8 @@
     </div>
     
     <div id="christmas-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #c0392b; z-index: 10000; justify-content: center; align-items: center; flex-direction: column; color: white;">
-        <h1 id="christmas-title" style="font-size: 4rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5); animation: pulseButton 1s infinite;">🎄 BUON NATALE! 🎄</h1>
-        <p id="christmas-subtitle" style="font-size: 1.5rem;">Skin Espo Natale Equipaggiata!</p>
+        <h1 id="christmas-title">🎄 BUON NATALE! 🎄</h1>
+        <p id="christmas-subtitle">Skin Espo Natale Equipaggiata!</p>
     </div>
 
     <div id="snow-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: none;"></div>
@@ -173,8 +179,15 @@
     <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="auto"></audio>
 
     <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="auto"></audio>
-<audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="auto"></audio>
+    <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="auto"></audio>
     
+    <div id="crunch-overlay"></div>
+    <div id="fire-particles-container"></div>
+    
+    <audio id="sound-fire" src="./assets/sounds/fire-loop.mp3" loop preload="auto"></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="./js/version-config.js"></script>
     <script src="./js/game-data.js" defer></script>
     <script src="./js/ui-functions.js" defer></script>

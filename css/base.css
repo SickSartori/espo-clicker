@@ -130,3 +130,216 @@ body.bluescreen-active {
 #mobile-nav-bar {
     display: none;
 }
+
+/* --- EFFETTO CRUNCH TIME (FIAMME) --- */
+
+#crunch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 300%;
+    z-index: 9000;
+    pointer-events: none;
+    display: none;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    background: linear-gradient(to top,
+            rgba(255, 69, 0, 0.8) 0%,
+            rgba(255, 140, 0, 0.5) 30%,
+            rgba(255, 215, 0, 0.2) 60%,
+            transparent 100%);
+    background-size: 100% 100%;
+    animation: risingHeat 2s linear infinite;
+}
+
+body.crunch-active {
+    background: linear-gradient(-45deg, #4a0000, #2b0000, #590000, #1a0000) !important;
+    background-size: 400% 400%;
+    animation: gradientBG 5s ease infinite !important;
+    /* Animazione più veloce */
+}
+
+/* Assicura che il contenitore di gioco sia rossastro e semi-trasparente */
+body.crunch-active #game-container {
+    border-color: #ff4500 !important;
+    background-color: rgba(30, 0, 0, 0.9) !important;
+    /* Rosso scuro quasi opaco */
+    box-shadow: 0 0 60px rgba(255, 69, 0, 0.6) !important;
+}
+
+/* Rende la navbar incandescente */
+body.crunch-active #game-navbar {
+    background: linear-gradient(to bottom, #500000, #300000) !important;
+    border-bottom: 2px solid #ff4500 !important;
+    box-shadow: 0 0 20px #ff4500;
+}
+
+/* 3. Colonne laterali (Upgrade e Team) */
+body.crunch-active .game-column {
+    /* Tinta rossastra sulle colonne */
+    background: rgba(255, 0, 0, 0.05) !important;
+    border-right: 1px solid rgba(255, 69, 0, 0.4) !important;
+}
+
+/* 4. Titoli delle sezioni */
+body.crunch-active h2,
+body.crunch-active .section-header h2 {
+    color: #ffcc00 !important;
+    /* Giallo fuoco */
+    text-shadow: 0 0 10px #ff4500;
+}
+
+/* 5. Bottoni "Compra" e Navigazione */
+body.crunch-active .buy-btn:not(:disabled),
+body.crunch-active .nav-item {
+    border-color: #e67e22 !important;
+    box-shadow: 0 0 10px rgba(230, 126, 34, 0.2);
+}
+
+body.crunch-active .buy-btn:not(:disabled):hover {
+    background-color: #d35400 !important;
+    box-shadow: 0 0 15px #ff4500;
+}
+
+/* 6. Barra progresso (Lock) */
+body.crunch-active .progress-bar-fill {
+    background: linear-gradient(to right, #ff4500, #ffcc00) !important;
+}
+
+/* 7. Icone e Testi vari */
+body.crunch-active i,
+body.crunch-active .upgrade-name {
+    text-shadow: 0 0 5px rgba(255, 100, 0, 0.5);
+}
+
+/* --- SISTEMA PARTICELLE FUOCO (ULTRA REALISTICO) --- */
+
+#fire-particles-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Altezza ridotta per concentrare il fuoco in basso */
+    pointer-events: none;
+    z-index: 9001;
+    overflow: hidden;
+    display: none;
+
+    /* IL SEGRETO DEL FUOCO LIQUIDO: */
+    /* Il contrasto alto "taglia" la sfocatura delle particelle rendendole nette ma fuse insieme */
+    filter: contrast(200%) brightness(120%);
+    background: transparent;
+}
+
+/* Particella Fiamma (Base) */
+.fire-particle {
+    position: absolute;
+    bottom: -30px;
+    border-radius: 50%;
+    /* Gradiente dal giallo (interno) al rosso (esterno) */
+    background: radial-gradient(circle, rgba(255, 255, 0, 1) 20%, rgba(255, 100, 0, 1) 50%, rgba(200, 0, 0, 0.8) 80%);
+    opacity: 0;
+
+    /* Sfocatura alta per permettere la fusione */
+    filter: blur(15px);
+
+    /* Mix blend screen per renderle luminose */
+    mix-blend-mode: screen;
+
+    animation: fireRise linear forwards;
+}
+
+/* Particella Scintilla (Dettagli veloci) */
+.fire-spark {
+    position: absolute;
+    bottom: 0;
+    width: 4px;
+    height: 12px;
+    background: #fff;
+    /* Bianco incandescente */
+    border-radius: 2px;
+    filter: blur(1px);
+    opacity: 0;
+    z-index: 9002;
+    animation: sparkFly linear forwards;
+}
+
+/* Animazione Fiamma che sale e ondeggia */
+@keyframes fireRise {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(1) translateX(0);
+    }
+
+    10% {
+        opacity: 1;
+        /* Appare subito */
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: translateY(-40vh) scale(1.2) translateX(var(--drift));
+    }
+
+    100% {
+        opacity: 0;
+        /* Si rimpicciolisce e diventa scura (fumo) verso l'alto */
+        transform: translateY(-90vh) scale(0) translateX(calc(var(--drift) * 2));
+        background: rgba(50, 50, 50, 0);
+    }
+}
+
+/* Animazione Scintille (veloci) */
+@keyframes sparkFly {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(0.5);
+    }
+}
+
+/* Overlay Rosso/Arancio migliorato */
+#crunch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9000;
+    opacity: 0;
+    transition: opacity 0.5s;
+    mix-blend-mode: overlay;
+    /* Fonde meglio con lo sfondo scuro */
+
+    /* Vignettatura di calore: Scuro ai bordi, incandescente sotto */
+    background: radial-gradient(circle at 50% 120%,
+            rgba(255, 200, 0, 0.6) 0%,
+            /* Giallo nucleo */
+            rgba(255, 69, 0, 0.5) 30%,
+            /* Rosso fuoco */
+            rgba(100, 0, 0, 0.8) 70%,
+            /* Rosso sangue */
+            rgba(0, 0, 0, 0.9) 100%
+            /* Nero fumo */
+        );
+}
+
+/* Pulsazione schermo più aggressiva */
+@keyframes crunchPulse {
+    0% {
+        box-shadow: inset 0 -20px 50px rgba(255, 69, 0, 0.5);
+        border-color: #ff4500;
+    }
+
+    100% {
+        box-shadow: inset 0 -50px 100px rgba(255, 215, 0, 0.6);
+        border-color: #ffd700;
+    }
+}

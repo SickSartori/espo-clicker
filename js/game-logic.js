@@ -1,4 +1,6 @@
 // --------- 3. FUNZIONI AUDIO AVANZATE ---------
+let fireParticleInterval = null;
+let lastRicardoVideoId = null;
 
 // type può essere 'sfx' (default) o 'music'
 function playSound(id, type = 'sfx') {
@@ -70,13 +72,16 @@ function updateAmbientVolume() {
     const rickVideo = document.getElementById('rick-roll-video');
     if (rickVideo) rickVideo.volume = finalVol * 0.5;
 
-    // --- AGGIUNTA MANCANTE ---
-    const ricardoVideo = document.getElementById('ricardo-video');
-    if (ricardoVideo) ricardoVideo.volume = finalVol * 0.5;
+    // --- AGGIORNAMENTO LISTA RICARDO COMPLETA ---
+    const ricardoIds = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
+    ricardoIds.forEach(id => {
+        const vid = document.getElementById(id);
+        if (vid) vid.volume = finalVol * 0.6;
+    });
 
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) {
-        snowAudio.volume = finalVol;
+        snowAudio.volume = finalVol * 0.2;
     }
 }
 // Funzione per acquistare Skin con Token Lab
@@ -190,33 +195,151 @@ function recalculateCPS() {
 
 function activateCrunchTime() {
     const now = Date.now();
-    // Se è attivo o in cooldown, esci
-    if (now < crunchTimeCooldownEnd || now < crunchTimeEndTime) return;
 
-    // [MODIFICA] Potenza aumentata: da 3 a 7 (o 10 se vuoi esagerare)
+    // 1. Controllo Cooldown (Usa la variabile GLOBALE)
+    if (now < crunchTimeCooldownEnd) {
+        const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
+        window.EspooClicker.showToast(`Crunch Time in ricarica: ${remaining}s`, 'warning');
+        return;
+    }
+
+    // 2. AGGIORNAMENTO VARIABILI GLOBALI
     crunchTimeMultiplier = 7;
+    crunchTimeEndTime = now + 30000; // 30 secondi
+    crunchTimeCooldownEnd = crunchTimeEndTime + 300000; // 5 minuti cooldown
 
-    // Durata: 30 secondi
-    crunchTimeEndTime = now + 30000;
-
-    // Cooldown: 5 minuti (300.000 ms)
-    crunchTimeCooldownEnd = now + 300000;
-
-    // Aggiorna subito il gameState per evitare exploit con F5 immediato
+    // 3. Sincronizza gameState
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-    if (window.EspooClicker) window.EspooClicker.saveGame(); // Salva su disco
 
-    playSound('sound-achievement');
+    // 4. Aggiorna calcoli e grafica
     recalculateCPS();
-    refreshAllStores();
-    updateUI();
-    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x7! 🔥");
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof refreshAllStores === 'function') refreshAllStores();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+
+    // 5. --- EFFETTI VISIVI INFERNO ---
+    document.body.classList.add('crunch-active');
+
+    // Mostra overlay gradiente
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    // AVVIA GENERATORE PARTICELLE
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (fireParticleInterval) clearInterval(fireParticleInterval); // Sicurezza
+
+        // Genera una particella ogni 40ms (molto denso)
+        fireParticleInterval = setInterval(() => {
+            spawnFireParticle(fireContainer);
+        }, 40);
+    }
+
+    // Audio
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) {
+        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
+        fireSound.currentTime = 0;
+        fireSound.play().catch(e => { });
+    }
+
+    window.EspooClicker.showToast('🔥 CRUNCH TIME ATTIVO! BPS x7! 🔥', 'success');
+
+    if (typeof checkAchievements === 'function') checkAchievements();
 }
 
+// --- NUOVA FUNZIONE HELPER PER CREARE IL FUOCO ---
+function spawnFireParticle(container) {
+    // 1. Genera la FIAMMA (Blob)
+    const p = document.createElement('div');
+    p.classList.add('fire-particle');
 
-function triggerBluescreen(multiplier) {
-    // 1. GESTIONE SKIN SPECIALI (con probabilità)
+    const left = Math.random() * 100;
+    p.style.left = `${left}%`;
+
+    // Dimensioni variabili: alcune enormi (base), alcune piccole (punte)
+    // Più grande è, più "liquido" sembrerà l'effetto
+    const size = 60 + Math.random() * 100;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+
+    // Velocità variabile
+    const duration = 1.5 + Math.random() * 2.5;
+    p.style.animationDuration = `${duration}s`;
+
+    // Drift (Spostamento laterale simulando vento)
+    // Più forte al centro, meno ai lati
+    const drift = (Math.random() - 0.5) * 150;
+    p.style.setProperty('--drift', `${drift}px`);
+
+    // Variazione colore (più giallo o più rosso)
+    // Manipoliamo leggermente l'opacità per variare l'intensità
+    p.style.opacity = 0.5 + Math.random() * 0.5;
+
+    container.appendChild(p);
+    setTimeout(() => p.remove(), duration * 1000);
+
+    // 2. Genera SCINTILLE (Sparks) - 30% di probabilità per ogni fiamma
+    if (Math.random() < 0.3) {
+        const s = document.createElement('div');
+        s.classList.add('fire-spark');
+        s.style.left = `${left + (Math.random() * 10 - 5)}%`; // Vicino alla fiamma madre
+
+        const sDuration = 0.5 + Math.random() * 1; // Molto veloci
+        s.style.animationDuration = `${sDuration}s`;
+
+        container.appendChild(s);
+        setTimeout(() => s.remove(), sDuration * 1000);
+    }
+}
+
+function resumeCrunchTimeEffects() {
+    // 1. Ripristina Variabile Globale
+    crunchTimeMultiplier = 7;
+
+    // 2. Riattiva Effetti Visivi CSS
+    document.body.classList.add('crunch-active');
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    // 3. Riavvia Particelle
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) clearInterval(fireParticleInterval);
+
+        // Riavvia il loop particelle
+        fireParticleInterval = setInterval(() => {
+            spawnFireParticle(fireContainer);
+        }, 40);
+    }
+
+    // 4. Riavvia Audio (Gestione Blocco Autoplay)
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) {
+        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
+        // Tentativo di play
+        const playPromise = fireSound.play();
+
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                console.log("Autoplay bloccato. Attesa click utente per audio fuoco.");
+                // Se il browser blocca l'audio al refresh, lo avvia al primo click
+                const forcePlay = () => {
+                    fireSound.play();
+                    document.removeEventListener('click', forcePlay);
+                };
+                document.addEventListener('click', forcePlay);
+            });
+        }
+    }
+
+    // Forza ricalcolo BPS immediato
+    recalculateCPS();
+    if (typeof updateUI === 'function') updateUI();
+}
 
 function triggerBluescreen(multiplier) {
     // Se hai Rick Espley equipaggiato
@@ -435,12 +558,12 @@ function clickCookie(event) {
             // CASO 2: BLUE SCREEN 404 (Audio Glitchato)
             else {
                 // Cambia la velocità di riproduzione a caso (Effetto Glitch)
-            sound.playbackRate = 0.2 + Math.random() * 1.6;
+                sound.playbackRate = 0.2 + Math.random() * 1.6;
 
                 // Volume instabile e alto
-            sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
+                sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
 
-            sound.currentTime = 0;
+                sound.currentTime = 0;
                 sound.play().catch(e => { });
             }
         }

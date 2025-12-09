@@ -761,25 +761,34 @@ function updateUI() {
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
             btnCrunch.style.display = 'block';
             const timerDiv = btnCrunch.querySelector('.skill-timer');
+
             if (now < crunchTimeEndTime) {
                 const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
-                crunchTimeMultiplier = 3;
+
+                crunchTimeMultiplier = 7;
                 btnCrunch.className = 'skill-btn active';
-                btnCrunch.firstChild.textContent = "🔥 IN CORSO 🔥";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = `🔥 BPS x${crunchTimeMultiplier} 🔥`;
+                }
                 timerDiv.textContent = `${timeLeft}s`;
+
             } else if (now < crunchTimeCooldownEnd) {
                 const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn cooldown';
-                btnCrunch.firstChild.textContent = "Ricarica...";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = "Ricarica...";
+                }
                 const m = Math.floor(timeLeft / 60);
                 const s = timeLeft % 60;
-                timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
+                if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
             } else {
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn';
-                btnCrunch.firstChild.textContent = "🔥 CRUNCH TIME 🔥";
-                timerDiv.textContent = "CLICCA!";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = "🔥 CRUNCH TIME 🔥";
+                }
+                if (timerDiv) timerDiv.textContent = "CLICCA!";
             }
         } else {
             btnCrunch.style.display = 'none';
@@ -787,9 +796,7 @@ function updateUI() {
     }
     const tabPrestige = document.getElementById('tab-prestige');
     if (tabPrestige) {
-        // Mostra il tab se hai fatto almeno un reset O hai punti prestigio (attuali o storici)
         if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-            // Usa 'block' o 'flex' a seconda di come gestisci i bottoni, solitamente block per i button standard
             if (tabPrestige.style.display === 'none') {
                 tabPrestige.style.display = 'block';
             }
@@ -811,20 +818,16 @@ function updatePrestigeVisuals() {
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
 
-    // Se non deve essere visibile, nascondilo e basta
     if (!canPrestige && !hasPrestiged) {
         if (prestigeBtn.style.display !== 'none') prestigeBtn.style.display = 'none';
         return;
     }
 
-    // Assicuriamoci che sia visibile
     if (prestigeBtn.style.display !== 'flex') prestigeBtn.style.display = 'flex';
 
-    // Recupera (o crea se mancano) gli elementi interni SENZA distruggere tutto
     let icon = prestigeBtn.querySelector('.nav-icon');
     let label = prestigeBtn.querySelector('span');
 
-    // Se il bottone è vuoto (primo avvio), creiamo la struttura una volta sola
     if (!icon || !label) {
         prestigeBtn.innerHTML = '<i class="nav-icon"></i> <span></span>';
         icon = prestigeBtn.querySelector('.nav-icon');
@@ -832,29 +835,22 @@ function updatePrestigeVisuals() {
     }
 
     if (canPrestige) {
-        // --- STATO: PRONTA! (Verde) ---
-        // Aggiungiamo la classe solo se non c'è già, per evitare reflow inutili
         if (!prestigeBtn.classList.contains('promotion-ready')) {
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
-
-            // Aggiorna icona e testo
             icon.className = 'nav-icon fa-solid fa-circle-check';
             label.textContent = 'PRONTA!';
         }
     } else {
-        // --- STATO: IN PROGRESS (Viola/Standard) ---
         if (prestigeBtn.classList.contains('promotion-ready')) {
             prestigeBtn.classList.remove('promotion-ready');
             prestigeBtn.style.cursor = "default";
             icon.className = 'nav-icon fa-solid fa-rocket';
         }
 
-        // Calcolo percentuale
         const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 99).toFixed(0);
         const newText = `${progress}%`;
 
-        // Aggiorna il testo SOLO se è cambiato (risparmia risorse)
         if (label.textContent !== newText) {
             label.textContent = newText;
         }
@@ -964,10 +960,8 @@ function setEmptyMessage(el, mode) {
 function equipSkin(skinId) {
     if (!gameState.skins.unlocked.includes(skinId)) return;
 
-    // --- LOGICA EVENTO NATALE ---
-    // Scatta SOLO se la skin è 'christmas' E siamo nel periodo giusto (funzione in game-data.js)
     if (skinId === 'christmas' && typeof isChristmasSeason === 'function' && isChristmasSeason()) {
-        triggerChristmasOverlay(); // Mostra overlay + chiude modale
+        triggerChristmasOverlay();
     }
 
     gameState.skins.current = skinId;
@@ -984,26 +978,19 @@ function triggerChristmasOverlay() {
     const overlay = document.getElementById('christmas-overlay');
     const soundMerry = document.getElementById('sound-merry');
 
-    // --- NUOVO: Chiudi il modale Skin immediatamente ---
     const skinsModal = document.getElementById('skins-modal');
     if (skinsModal) {
         skinsModal.style.display = 'none';
     }
-
-    // 1. Mostra Overlay
     if (overlay) {
         overlay.style.display = 'flex';
         overlay.style.animation = 'fadeIn 0.5s';
     }
-
-    // 2. Suona "Merry Christmas" (Solo una volta all'equipaggiamento)
     if (soundMerry) {
         soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
         soundMerry.currentTime = 0;
         soundMerry.play().catch(e => { });
     }
-
-    // 3. Nascondi dopo 4 secondi
     setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
     }, 4000);
@@ -1018,40 +1005,28 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
-    // Riferimenti Audio e Grafica Natale
     const snowContainer = document.getElementById('snow-container');
     const snowAudio = document.getElementById('sound-snowball');
 
     const goldenBugImg = document.querySelector('#golden-bug img');
 
-    // Reset Classi
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
 
-    // 1. GESTIONE TEMA NATALIZIO
     if (skinId === 'christmas') {
         document.body.classList.add('theme-christmas');
-
-        // A. Attiva Neve (Se non c'è già)
         if (snowContainer) {
             snowContainer.style.display = 'block';
-            // Rigenera solo se vuoto per evitare accumulo al refresh rapido
             if (snowContainer.innerHTML === '') {
                 createSnowflakes();
             }
         }
         if (goldenBugImg) {
-            // Puoi caricare un'immagine 'gift.png' o usare temporaneamente questa URL esterna o un placeholder
-            // Se hai un'immagine locale usa: ./assets/image/gift.png
             goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
         }
-        // B. Attiva Audio Loop (Gestione Refresh e Autoplay)
         if (snowAudio) {
-            snowAudio.loop = true; // Assicura loop infinito
-            // Volume basso come richiesto (20% del volume musica impostato)
+            snowAudio.loop = true;
             const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             snowAudio.volume = targetVol;
-
-            // Tentativo di riproduzione immediata
             const playPromise = snowAudio.play();
 
             if (playPromise !== undefined) {
@@ -1130,23 +1105,14 @@ function createSnowflakes() {
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
 
-        // Randomizza dimensioni
         const size = Math.random() * 5 + 3 + 'px';
         snowflake.style.width = size;
         snowflake.style.height = size;
 
-        // Posizione orizzontale casuale
         snowflake.style.left = Math.random() * 100 + 'vw';
-
-        // Durata caduta casuale (tra 5s e 12s per effetto naturale)
         const duration = Math.random() * 7 + 5;
         snowflake.style.animationDuration = duration + 's';
-
-        // Ritardo casuale negativo: fa sì che alcuni fiocchi inizino già a metà schermo
-        // Questo evita l'effetto "tutti partono insieme dall'alto" al refresh
         snowflake.style.animationDelay = (Math.random() * -20) + 's';
-
-        // Opacità casuale
         snowflake.style.opacity = Math.random() * 0.7 + 0.3;
 
         container.appendChild(snowflake);

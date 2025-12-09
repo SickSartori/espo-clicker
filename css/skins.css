@@ -255,6 +255,16 @@
 /*
 Natale
 */
+.christmas-title {
+    font-size: 4rem;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    animation: pulseButton 1s infinite;
+}
+
+.christmas-subtitle {
+    font-size: 1.5rem;
+}
+
 body.theme-christmas {
     /* Sfondo generale pagina: Gradiente Notte di Natale */
     background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
