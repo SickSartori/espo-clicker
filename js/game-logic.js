@@ -1,52 +1,146 @@
+
+// --- GESTIONE CONFLITTI EVENTI (SEMAFORO) ---
+let fireParticleInterval = null;
+let lastRicardoVideoId = null;
+
+window.currentActiveEvent = null; // Il "Semaforo"
+let audioGlitchInterval = null;
+
+function checkEventConflict(newEventName) {
+    if (window.currentActiveEvent) {
+        window.EspooClicker.showToast(`⛔ Occupato: Evento "${window.currentActiveEvent}" in corso!`, 'error');
+        return true; // C'è conflitto (BLOCCA)
+    }
+    window.currentActiveEvent = newEventName; // Blocca il sistema
+    return false; // Nessun conflitto (PROCEDI)
+}
+
+function clearActiveEvent() {
+    console.log(`Evento "${window.currentActiveEvent}" terminato.`);
+    window.currentActiveEvent = null;
+}
+
 // --------- 3. FUNZIONI AUDIO AVANZATE ---------
-
-// type può essere 'sfx' (default) o 'music'
 function playSound(id, type = 'sfx') {
-    const sound = document.getElementById(id);
-    if (!sound) return;
+    const originalSound = document.getElementById(id);
+    if (!originalSound) return;
 
-    // Calcolo Volume Finale: Master * Canale Specifico
+    // 1. Recupera il moltiplicatore custom dal Mixer (o usa 1.0 se non esiste)
+    // Questo collega finalmente lo slider al suono reale!
+    const customVol = (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined)
+        ? gameState.user.audioCustom[id]
+        : 1.0;
+
+    // 2. Calcolo Volume Finale (Master * Canale * CustomMixer)
     const master = gameState.user.masterVolume;
     const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
 
-    // Se il volume finale è 0, non fare nulla
-    if (master <= 0 || channel <= 0) {
-        sound.pause(); // Ferma se stava andando
+    let finalVolume = master * channel * customVol;
+
+    // NOTA: Ho rimosso i vecchi "if (id === 'sound-click') volume * 0.4" 
+    // perché ora sono gestiti dai valori di default nel game-data.js 
+    // e modificabili dall'utente nel menu.
+
+    if (finalVolume <= 0) {
+        if (type === 'music') originalSound.pause();
         return;
     }
 
     try {
-        sound.volume = master * channel;
-
-        // Se è un effetto sonoro breve, resettalo per poterlo spamamre
         if (type === 'sfx') {
-            sound.currentTime = 0;
-        }
+            const soundClone = originalSound.cloneNode();
+            soundClone.volume = finalVolume;
 
-        const playPromise = sound.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => { }); // Ignora errori autoplay
+            const playPromise = soundClone.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    soundClone.addEventListener('ended', () => {
+                        soundClone.remove();
+                    });
+                })
+                    .catch(e => {
+                        // Ignora errori di autoplay o interruzione
+                        // console.warn("Audio clone error:", e); 
+                    });
+            }
+        } else {
+            // --- MUSICA (Singola istanza) ---
+            originalSound.volume = finalVolume;
+            const playPromise = originalSound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => { });
+            }
         }
     } catch (e) { console.warn("Audio error:", e); }
 }
 
-// Funzione per aggiornare i volumi dei loop in corso (es. BlueScreen, Rick Roll)
-function updateAmbientVolume() {
+function setBgMusicVolume() {
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (!bgMusic) return;
+
+    // --- NUOVA LOGICA: Check Skin Natale ---
+    // Se la skin è Natale, fermiamo la musica base (perché c'è già quella della neve)
+    if (gameState.skins.current === 'christmas') {
+        if (!bgMusic.paused) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0; // Opzionale: resetta all'inizio
+        }
+        return; // Esce dalla funzione, ignorando il calcolo del volume sotto
+    }
+    // ---------------------------------------
+
+    const BASE_VOLUME_MULTIPLIER = 0.05;
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
-    const finalVol = master * music;
 
-    // Aggiorna Blue Screen
+    // Applica il volume calcolato solo se NON siamo a Natale
+    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER;
+
+    // Se il volume è > 0 e non è in pausa (e non siamo in un evento che la blocca), assicuriamoci che suoni
+    if (bgMusic.paused && bgMusic.volume > 0 && !window.currentActiveEvent) {
+        bgMusic.play().catch(e => { });
+    }
+}
+
+function updateAmbientVolume() {
+    setBgMusicVolume(); // Gestisce la musica base
+
+    const master = gameState.user.masterVolume;
+    const music = gameState.user.musicVolume;
+    const sfx = gameState.user.sfxVolume;
+
+    // Helper: prende il valore custom o 1.0 se non esiste
+    const getVol = (id) => (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined) ? gameState.user.audioCustom[id] : 1.0;
+
+    // --- ERRORE 404 ---
     const bluescreen = document.getElementById('sound-bluescreen');
-    if (bluescreen) bluescreen.volume = finalVol;
+    if (bluescreen) {
+        bluescreen.volume = master * music * getVol('sound-bluescreen');
+    }
 
-    // Aggiorna Rick Roll Video
+    // --- VIDEO RICK ROLL ---
     const rickVideo = document.getElementById('rick-roll-video');
-    if (rickVideo) rickVideo.volume = finalVol;
+    if (rickVideo) {
+        // Applica il custom volume 'video-rick'
+        rickVideo.volume = master * music * getVol('video-rick');
+    }
 
-    // --- AGGIUNTA MANCANTE ---
-    const ricardoVideo = document.getElementById('ricardo-video');
-    if (ricardoVideo) ricardoVideo.volume = finalVol;
+    // --- VIDEO RICARDO (Tutti e 3) ---
+    const ricardoIds = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
+    ricardoIds.forEach(id => {
+        const vid = document.getElementById(id);
+        if (vid) {
+            // Applica il custom volume 'video-ricardo'
+            vid.volume = master * music * getVol('video-ricardo');
+        }
+    });
+
+    // --- LOOP EFFETTI ---
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) fireSound.volume = master * sfx * getVol('sound-fire');
+
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) snowAudio.volume = master * music * getVol('sound-snowball');
 }
 
 // Funzione per acquistare Skin con Token Lab
@@ -63,7 +157,7 @@ function buySkin(skinId) {
         gameState.skins.unlocked.push(skinId);
 
         if (typeof playSound === 'function') playSound('sound-buy');
-        window.EspooClicker.showToast(`👕 Skin Acquistata: ${data.name}!`, 'success');
+        window.EspooClicker.showToast("Skin Acquistata: " + data.name + "!", 'success');
 
         // Equipaggia subito
         equipSkin(skinId);
@@ -73,7 +167,8 @@ function buySkin(skinId) {
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Aggiorna contatore token
         if (typeof updateSkinsUI === 'function') updateSkinsUI(); // Aggiorna Guardaroba
     } else {
-        window.EspooClicker.showToast(`❌ Token insufficienti! Te ne servono ${data.cost}.`, 'error');
+        playSound('sound-error');
+        window.EspooClicker.showToast("Token insufficienti!", 'error');
     }
 }
 
@@ -157,75 +252,257 @@ function recalculateCPS() {
     cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
 }
 
+// 1. CRUNCH TIME
 function activateCrunchTime() {
     const now = Date.now();
-    // Se è attivo o in cooldown, esci
-    if (now < crunchTimeCooldownEnd || now < crunchTimeEndTime) return;
 
-    // [MODIFICA] Potenza aumentata: da 3 a 7 (o 10 se vuoi esagerare)
+    // Check Conflitto
+    if (checkEventConflict('Crunch Time')) return false;
+
+    // Check Cooldown
+    if (now < crunchTimeCooldownEnd) {
+        const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
+        window.EspooClicker.showToast(`Crunch Time in ricarica: ${remaining}s`, 'warning');
+        clearActiveEvent(); // Rilascia subito il lock se fallisce
+        return false;
+    }
+
+    // Attivazione
     crunchTimeMultiplier = 7;
-
-    // Durata: 30 secondi
     crunchTimeEndTime = now + 30000;
-
-    // Cooldown: 5 minuti (300.000 ms)
-    crunchTimeCooldownEnd = now + 300000;
-
-    // Aggiorna subito il gameState per evitare exploit con F5 immediato
+    crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-    if (window.EspooClicker) window.EspooClicker.saveGame(); // Salva su disco
 
-    playSound('sound-achievement');
     recalculateCPS();
-    refreshAllStores();
-    updateUI();
-    window.EspooClicker.showToast("🔥 CRUNCH TIME ATTIVATO! BPS x7! 🔥");
+    if (typeof updateUI === 'function') updateUI();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+
+    document.body.classList.add('crunch-active');
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (fireParticleInterval) clearInterval(fireParticleInterval);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
+    }
+
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) {
+        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
+        fireSound.currentTime = 0;
+        fireSound.play().catch(e => { });
+    }
+
+    window.EspooClicker.showToast('🔥 CRUNCH TIME ATTIVO! BPS x7! 🔥', 'success');
+    return true; // Successo
 }
 
+// --- NUOVA FUNZIONE HELPER PER CREARE IL FUOCO ---
+function spawnFireParticle(container) {
+    // 1. Genera la FIAMMA (Blob)
+    const p = document.createElement('div');
+    p.classList.add('fire-particle');
+
+    const left = Math.random() * 100;
+    p.style.left = `${left}%`;
+
+    // Dimensioni variabili: alcune enormi (base), alcune piccole (punte)
+    // Più grande è, più "liquido" sembrerà l'effetto
+    const size = 60 + Math.random() * 100;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+
+    // Velocità variabile
+    const duration = 1.5 + Math.random() * 2.5;
+    p.style.animationDuration = `${duration}s`;
+
+    // Drift (Spostamento laterale simulando vento)
+    // Più forte al centro, meno ai lati
+    const drift = (Math.random() - 0.5) * 150;
+    p.style.setProperty('--drift', `${drift}px`);
+
+    // Variazione colore (più giallo o più rosso)
+    // Manipoliamo leggermente l'opacità per variare l'intensità
+    p.style.opacity = 0.5 + Math.random() * 0.5;
+
+    container.appendChild(p);
+    setTimeout(() => p.remove(), duration * 1000);
+
+    // 2. Genera SCINTILLE (Sparks) - 30% di probabilità per ogni fiamma
+    if (Math.random() < 0.3) {
+        const s = document.createElement('div');
+        s.classList.add('fire-spark');
+        s.style.left = `${left + (Math.random() * 10 - 5)}%`; // Vicino alla fiamma madre
+
+        const sDuration = 0.5 + Math.random() * 1; // Molto veloci
+        s.style.animationDuration = `${sDuration}s`;
+
+        container.appendChild(s);
+        setTimeout(() => s.remove(), sDuration * 1000);
+    }
+}
+
+function resumeCrunchTimeEffects() {
+    // 1. Ripristina Variabile Globale
+    crunchTimeMultiplier = 7;
+
+    // 2. Riattiva Effetti Visivi CSS
+    document.body.classList.add('crunch-active');
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (fireParticleInterval) clearInterval(fireParticleInterval);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
+    }
+
+    // 4. Riavvia Audio (Gestione Blocco Autoplay)
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) {
+        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
+        // Tentativo di play
+        const playPromise = fireSound.play();
+
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                console.log("Autoplay bloccato. Attesa click utente per audio fuoco.");
+                // Se il browser blocca l'audio al refresh, lo avvia al primo click
+                const forcePlay = () => {
+                    fireSound.play();
+                    document.removeEventListener('click', forcePlay);
+                };
+                document.addEventListener('click', forcePlay);
+            });
+        }
+    }
+
+    // Forza ricalcolo BPS immediato
+    recalculateCPS();
+    if (typeof updateUI === 'function') updateUI();
+}
 
 function triggerBluescreen(multiplier) {
-    if (gameState.skins.current === 'rick') {
-        triggerRickRoll(multiplier);
-        return;
-    }
-    if (gameState.skins.current === 'ricardo') {
-        triggerRicardoEvent();
-        return;
-    }
+    // Redirect Skin (Rick/Ricardo hanno la priorità se equipaggiati)
+    if (gameState.skins.current === 'rick' && Math.random() < 0.8) return triggerRickRoll();
+    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) return triggerRicardoEvent();
+
+    if (checkEventConflict('System Error 404')) return false;
 
     isBluescreenActive = true;
     bluescreenMultiplier = multiplier;
     document.body.classList.add('bluescreen-active');
 
     recalculateCPS();
-    refreshAllStores();
 
-    if (eventMultiplierDisplay) {
-        eventMultiplierDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
-        eventMultiplierDisplay.style.display = 'block';
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) {
+        emDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
+        emDisplay.style.display = 'block';
     }
 
-    // [FIX] Ora usa il canale 'music' (quindi rispetta lo slider Musica)
-    playSound('sound-bluescreen', 'music');
+    // --- LOGICA AUDIO SPECIALE ---
+    if (gameState.skins.current === 'christmas') {
+        // Se è Natale: NON suonare l'errore standard, ma GLITCHA la musica di Natale
+        const snowAudio = document.getElementById('sound-snowball');
+        if (snowAudio && !snowAudio.paused) {
+            if (audioGlitchInterval) clearInterval(audioGlitchInterval);
+            audioGlitchInterval = setInterval(() => {
+                // Cambia velocità a caso (distorsione)
+                snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
+                // Volume a scatti (stutter)
+                snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+            }, 100);
+        }
+    } else {
+        // Standard
+        playSound('sound-bluescreen', 'music');
+    }
 
-    setTimeout(() => {
-        stopBluescreenEffect();
-    }, 30000);
+    setTimeout(() => { stopBluescreenEffect(); }, 30000);
+    return true;
 }
 
+function stopBluescreenEffect() {
+    isBluescreenActive = false;
+    bluescreenMultiplier = 1;
+    document.body.classList.remove('bluescreen-active');
+    document.body.classList.remove('rick-rolling'); // Sicurezza extra
 
-function triggerRickRoll(multiplier) {
-    const video = document.getElementById('rick-roll-video');
-    if (!video) return;
-
-    let rickMultiplier = Math.max(multiplier, 2);
-
-    isBluescreenActive = true;
-    bluescreenMultiplier = rickMultiplier;
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) emDisplay.style.display = 'none';
 
     recalculateCPS();
-    updateUI();
+
+    // Stop Audio Eventi
+    try {
+        const soundBluescreen = document.getElementById('sound-bluescreen');
+        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
+
+        // Stop Video se ancora attivi
+        const rickVideo = document.getElementById('rick-roll-video');
+        if (rickVideo) { rickVideo.pause(); rickVideo.style.display = 'none'; }
+    } catch (e) { }
+
+    // Stop Glitch Natale
+    if (audioGlitchInterval) {
+        clearInterval(audioGlitchInterval);
+        audioGlitchInterval = null;
+    }
+
+    // --- FIX RIAVVIO MUSICA BACKGROUND ---
+    // Questo blocco assicura che la musica riparta DOPO l'evento
+    const snowAudio = document.getElementById('sound-snowball');
+    const bgMusic = document.getElementById('sound-bg-music');
+    const masterVol = gameState.user.masterVolume;
+
+    // Calcoliamo se dobbiamo suonare (volume > 0)
+    if (masterVol > 0) {
+        if (gameState.skins.current === 'christmas') {
+            // Logica Natale
+            if (snowAudio) {
+                snowAudio.playbackRate = 1.0;
+                snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
+                // Riavvia solo se era in pausa
+                if (snowAudio.paused) snowAudio.play().catch(e => console.log("Attesa interazione per riavvio neve"));
+            }
+        } else {
+            // Logica Normale
+            if (bgMusic) {
+                setBgMusicVolume(); // Reimposta volume corretto
+                if (bgMusic.paused) bgMusic.play().catch(e => console.log("Attesa interazione per riavvio musica"));
+            }
+        }
+    }
+
+    // Rilascia il lock dell'evento
+    clearActiveEvent();
+}
+
+// 3. RICK ROLL
+function triggerRickRoll() {
+    if (checkEventConflict('Rick Roll')) return false;
+
+    const video = document.getElementById('rick-roll-video');
+    if (!video) { clearActiveEvent(); return false; }
+
+    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
+
+    // Stop suoni ambiente
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) snowAudio.pause();
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause();
+
+    // Setup Moltiplicatore
+    let rickMultiplier = Math.floor(Math.random() * 8) + 5;
+    isBluescreenActive = true;
+    bluescreenMultiplier = rickMultiplier;
+    recalculateCPS();
 
     document.body.classList.add('rick-rolling');
 
@@ -237,47 +514,92 @@ function triggerRickRoll(multiplier) {
 
     video.style.display = 'block';
     video.currentTime = 0;
+    // Volume basso (2%) per Rick
+    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-rick'] !== undefined)
+        ? gameState.user.audioCustom['video-rick'] : 0.02;
+    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * rickVol;
 
-    // [FIX] Calcolo volume: Master * Musica
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+    video.play().catch(e => { });
 
-    try {
-        const bgMusic = document.getElementById('sound-bg');
-        if (bgMusic) bgMusic.pause();
-    } catch (e) { }
+    window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
 
-    video.play().catch(e => console.warn("Autoplay bloccato", e));
+    // --- NUOVA LOGICA CLICK VIDEO ---
+    video.style.cursor = 'pointer';
 
-    window.EspooClicker.showToast(`🎵 NEVER GONNA GIVE YOU UP! 🎵`, 'achievement');
+    const videoClickHandler = (e) => {
+        // Evita lo scroll o zoom su mobile
+        // e.preventDefault(); // (Opzionale: scommenta se da problemi su mobile)
 
-    const videoClickHandler = (e) => { clickCookie(e); };
-    video.addEventListener('mousedown', videoClickHandler);
-    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+        // Creiamo un evento sintetico con le coordinate corrette per clickCookie
+        // 'pointerdown' gestisce sia mouse che touch
+        const syntheticEvent = {
+            detail: 1, // Simula un click reale
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            target: video
+        };
 
-    const duration = 60000;
+        // Chiama la funzione di click principale
+        clickCookie(syntheticEvent);
+
+        // Piccolo effetto visivo di "pressione" sul video
+        video.style.transform = 'scale(0.98)';
+        setTimeout(() => video.style.transform = 'scale(1)', 50);
+    };
+
+    // Usa 'pointerdown' per la massima compatibilità Mobile/Desktop senza doppi click
+    video.addEventListener('pointerdown', videoClickHandler);
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
         video.pause();
         video.style.display = 'none';
-        video.removeEventListener('mousedown', videoClickHandler);
-        video.removeEventListener('touchstart', videoClickHandler);
+
+        // Pulizia importante
+        video.style.transform = 'none';
+        video.style.cursor = 'default';
+        video.removeEventListener('pointerdown', videoClickHandler);
+
         stopBluescreenEffect();
-    }, duration);
+    }, 60000);
+
+    return true;
 }
 
-// EVENTO LEGGENDARIO: RICARDO MILESPO
+// 4. RICARDO FLEX
 function triggerRicardoEvent() {
-    const video = document.getElementById('ricardo-video');
-    if (!video) return;
+    if (checkEventConflict('Ricardo Flex')) return false;
 
-    let bonusMult = Math.floor(Math.random() * 8) + 3;
+    const allVideos = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
 
+    // Pulizia preventiva
+    allVideos.forEach(id => {
+        const v = document.getElementById(id);
+        if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+    });
+
+    // Selezione Casuale Video
+    let availableVideos = allVideos.filter(id => id !== lastRicardoVideoId);
+    if (availableVideos.length === 0) availableVideos = allVideos;
+    const selectedId = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+    lastRicardoVideoId = selectedId;
+
+    const video = document.getElementById(selectedId);
+    if (!video) { clearActiveEvent(); return false; }
+    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
+
+    // Stop suoni
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) snowAudio.pause();
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause(); // Aggiunto per sicurezza
+
+    let bonusMult = Math.floor(Math.random() * 8) + 5;
     isBluescreenActive = true;
     bluescreenMultiplier = bonusMult;
-
     recalculateCPS();
-    updateUI();
 
     document.body.classList.add('rick-rolling');
 
@@ -289,79 +611,133 @@ function triggerRicardoEvent() {
 
     video.style.display = 'block';
     video.currentTime = 0;
+    // Ricardo al 80% (ha bisogno di volume alto)
+    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-ricardo'] !== undefined)
+        ? gameState.user.audioCustom['video-ricardo'] : 0.8;
+    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * ricardoVol;
 
-    // [FIX] Calcolo volume: Master * Musica
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
-
-    try {
-        const bgMusic = document.getElementById('sound-bg');
-        if (bgMusic) bgMusic.pause();
-    } catch (e) { }
-
-    video.play().catch(e => console.warn("Autoplay bloccato", e));
+    video.play().catch(e => { });
 
     window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
 
-    const videoClickHandler = (e) => { clickCookie(e); };
-    video.addEventListener('mousedown', videoClickHandler);
-    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+    // --- NUOVA LOGICA CLICK VIDEO ---
+    video.style.cursor = 'pointer';
 
-    const duration = 45000;
+    const videoClickHandler = (e) => {
+        const syntheticEvent = {
+            detail: 1,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            target: video
+        };
+
+        clickCookie(syntheticEvent);
+
+        video.style.transform = 'scale(0.99)'; // Effetto leggermente diverso per Ricardo
+        setTimeout(() => video.style.transform = 'scale(1)', 50);
+    };
+
+    video.addEventListener('pointerdown', videoClickHandler);
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
-        video.pause();
-        video.style.display = 'none';
-        video.removeEventListener('mousedown', videoClickHandler);
-        video.removeEventListener('touchstart', videoClickHandler);
+
+        // Cleanup completo su TUTTI i video possibili
+        allVideos.forEach(id => {
+            const v = document.getElementById(id);
+            if (v) {
+                v.pause();
+                v.style.display = 'none';
+                v.currentTime = 0;
+                v.style.transform = 'none';
+                v.style.cursor = 'default';
+                v.removeEventListener('pointerdown', videoClickHandler);
+            }
+        });
+
         stopBluescreenEffect();
-    }, duration);
+    }, 45000);
+
+    return true;
 }
 
-// Funzione Helper per pulire (condivisa tra 404 normale e Rick)
-function stopBluescreenEffect() {
-    isBluescreenActive = false;
-    bluescreenMultiplier = 1;
+function triggerChristmasEvent(key) {
+    if (checkEventConflict('Merry Christmas')) return;
 
-    document.body.classList.remove('bluescreen-active');
+    const overlay = document.getElementById('christmas-overlay');
+    const soundMerry = document.getElementById('sound-merry');
 
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) emDisplay.style.display = 'none';
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'fadeIn 0.5s';
+    }
 
-    recalculateCPS();
-    refreshAllStores();
+    if (soundMerry) {
+        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
+        soundMerry.play().catch(e => console.log(e));
+    }
 
-    try {
-        const soundBluescreen = document.getElementById('sound-bluescreen');
-        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
-    } catch (e) { }
+    const skinId = 'christmas';
+    if (!gameState.skins.unlocked.includes(skinId)) {
+        gameState.skins.unlocked.push(skinId);
+    }
+
+    gameState.achievements[key].claimed = true;
+
+    equipSkin(skinId);
+
+    window.EspooClicker.saveGame();
+
+    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+
+    setTimeout(() => {
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }, 4000);
 }
-
 
 function clickCookie(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
 
-    // --- 🔊 NUOVO: LOGICA AUDIO GLITCH ---
+    // --- 🔊 GESTIONE AUDIO EVENTI ---
     if (isBluescreenActive) {
         const sound = document.getElementById('sound-click');
+
         if (sound) {
-            // Cambia la velocità di riproduzione a caso tra 0.2x (lento/cupo) e 1.8x (veloce/acuto)
-            sound.playbackRate = 0.2 + Math.random() * 1.6;
+            // CASO 1: RICARDO / RICK ROLL (Audio Pulito ma Basso)
+            if (document.body.classList.contains('rick-rolling')) {
+                sound.playbackRate = 1; // Velocità normale (pulito)
 
-            // Opzionale: volume instabile per accentuare il glitch
-            // (mantiene il volume master come base massima)
-            sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
+                // Volume ridotto (es. 20% del volume master) per non coprire la musica/video
+                // Modifica 0.2 con un altro valore se lo vuoi più/meno alto
+                sound.volume = (gameState.user.masterVolume * gameState.user.sfxVolume) * 0.2;
 
-            sound.currentTime = 0;
-            sound.play().catch(e => { }); // Ignora errori di autoplay
+                sound.currentTime = 0;
+                sound.play().catch(e => { });
+            }
+            // CASO 2: BLUE SCREEN 404 (Audio Glitchato)
+            else {
+                // Cambia la velocità di riproduzione a caso (Effetto Glitch)
+                sound.playbackRate = 0.2 + Math.random() * 1.6;
+
+                // Volume instabile e alto
+                sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
+
+                sound.currentTime = 0;
+                sound.play().catch(e => { });
+            }
         }
     } else {
+        // CASO 3: GIOCO NORMALE
         // Reset fondamentale: se l'evento finisce, il suono deve tornare normale!
         const sound = document.getElementById('sound-click');
         if (sound && sound.playbackRate !== 1) {
             sound.playbackRate = 1;
-            sound.volume = gameState.user.masterVolume;
+            sound.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
         }
         playSound('sound-click');
     }
@@ -432,17 +808,47 @@ function clickCookie(event) {
 function calculateMaxAffordable(teamKey) {
     const state = gameState.teams[teamKey];
     const data = gameData.teams[teamKey];
-    const r = 1.20;
+
+    // --- FIX 1: CALCOLO DINAMICO DI R (Sincronizzato con Contrattazione) ---
+    // Prima era hardcodato a 1.20, ora legge il potenziamento reale
+    let scalingBase = 1.20;
+    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
+        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
+        scalingBase = Math.max(1.05, scalingBase - reduction);
+    }
+    const r = scalingBase;
+    // -------------------------------------------------------------------
 
     let discountedBaseCost = data.baseCost;
 
+    // Calcolo del costo del prossimo singolo edificio
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
 
+    // Se non puoi permetterti nemmeno uno, ritorna 0
     if (gameState.score < currentSingleCost) return 0;
 
-    // Formula inversa della somma geometrica: n = log(1 + (Score * (r-1) / CostoBase)) / log(r)
-    // Serve a trovare quanti ne puoi comprare in blocco con i tuoi soldi attuali
-    const maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
+    // --- FORMULA GEOMETRICA INVERSA ---
+    // CostoTotale = CostoBase * (r^n - 1) / (r - 1)
+    // Risolviamo per n
+
+    let maxAmount = 0;
+
+    // Caso limite matematico (se r fosse 1, ma qui è min 1.05)
+    if (Math.abs(r - 1) < 0.0000001) {
+        maxAmount = Math.floor(gameState.score / currentSingleCost);
+    } else {
+        maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
+    }
+
+    // Ricalcoliamo il costo esatto per la quantità trovata
+    let realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
+
+    // Se il costo supera i soldi (anche di poco), riduciamo la quantità di 1 finché non rientra
+    // Usiamo un while per sicurezza assoluta, ma di solito basta 1 iterazione.
+    while (maxAmount > 0 && Math.floor(realCost) > gameState.score) {
+        maxAmount--;
+        realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
+    }
 
     return Math.max(0, maxAmount);
 }
@@ -466,6 +872,9 @@ function buyTeam(teamKey) {
         refreshAllStores();
         window.EspooClicker.saveGame();
         updateUI();
+    } else {
+        playSound('sound-error'); // <--- FEEDBACK NEGATIVO
+        window.EspooClicker.showToast("Bugs insufficienti!", 'error');
     }
 }
 
@@ -543,28 +952,34 @@ function calculatePrestigeGained() {
 
 // 1. Apre il modale e mostra i dati (NON Resetta ancora)
 function openPrestigeContract() {
+    // 1. Controlla se è possibile fare prestigio
     const gained = calculatePrestigeGained();
+
+    // Se guadagno è 0, NON aprire, o mostra toast di avviso
     if (gained < 1) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!");
-        } else {
-            alert("Devi accumulare più bug per ottenere una promozione!");
+            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!", "error");
         }
         return;
     }
+
+    // 2. Popola i dati nel NUOVO modale unico
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
+
     if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
 
+    // Calcolo anteprima bonus futuro
     let currentLifetime = gameState.lifetimePrestigePoints || 0;
     let estimatedLifetime = currentLifetime + gained;
     let baseBonus = estimatedLifetime * 0.01;
-    let synergyCount = gameState.prestigeUpgrades.sinergia.count;
-    let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * estimatedLifetime;
+    let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
+    let synergyBonus = synergyCount * (gameData.prestigeUpgrades.sinergia.bonusPerLevel || 0.001) * estimatedLifetime;
     let totalPercent = ((baseBonus + synergyBonus) * 100).toFixed(1);
 
     if (bonusDisplay) bonusDisplay.textContent = `Nuovo Totale: +${totalPercent}%`;
 
+    // 3. Mostra il modale unico
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'flex';
 }
@@ -580,6 +995,7 @@ async function executePrestige() {
     // 2. Avvia Animazione Overlay
     if (overlay) {
         overlay.style.display = 'flex';
+        playSound('sound-prestige');
         // Timeout breve per permettere al browser di renderizzare il display:flex prima dell'opacity
         setTimeout(() => overlay.classList.add('active'), 10);
     }
@@ -602,8 +1018,9 @@ async function executePrestige() {
     // Salva i dati che devono persistere
     let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
     let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
+    let oldSkins = JSON.parse(JSON.stringify(gameState.skins)); // <--- AGGIUNTO: Salva le skin attuali
     let oldTotalResets = gameState.totalResets + 1;
-    let oldTotalClicks = gameState.totalClicks; // <--- NUOVO: Salva i click
+    let oldTotalClicks = gameState.totalClicks;
     let oldGoldenBugs = gameState.totalGoldenBugsClicked;
     let oldPlayTime = gameState.totalPlayTime;
     let oldLifetimeScore = gameState.lifetimeScore;
@@ -632,8 +1049,9 @@ async function executePrestige() {
 
     newState.achievements = oldAchievements;
     newState.prestigeUpgrades = oldPrestigeUpgrades;
+    newState.skins = oldSkins; // <--- AGGIUNTO: Ripristina le skin
     newState.totalResets = oldTotalResets;
-    newState.totalClicks = oldTotalClicks; // <--- NUOVO: Ripristina i click
+    newState.totalClicks = oldTotalClicks;
     newState.totalGoldenBugsClicked = oldGoldenBugs;
     newState.totalPlayTime = oldPlayTime;
     newState.lifetimeScore = oldLifetimeScore;
@@ -818,7 +1236,6 @@ function claimAchievementReward(key) {
 
     if (!state || !state.unlocked || state.claimed) return;
 
-    // Applica il premio
     if (data.reward) {
         let toastType = 'reward';
         if (data.reward.type === 'bugs') {
@@ -834,7 +1251,8 @@ function claimAchievementReward(key) {
             const skinId = data.reward.id;
             if (!gameState.skins.unlocked.includes(skinId)) {
                 gameState.skins.unlocked.push(skinId);
-                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success'); // Skin è un successo!
+                // QUI SOLO MESSAGGIO TOAST, NESSUN EVENTO GRAFICO
+                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success');
             }
         }
         else if (data.reward.type === 'multiplier') {
@@ -842,18 +1260,16 @@ function claimAchievementReward(key) {
         }
     }
 
-    // Segna come riscattato
     state.claimed = true;
     playSound('sound-buy');
-
     recalculateCPS();
     window.EspooClicker.saveGame();
-
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
 
-// --------- 8. TICKET CRITICO (GOLDEN BUG) ---------
+
+// --------- 8. BUG CRITICO (GOLDEN BUG) ---------
 
 let goldenBugTimer;
 function scheduleGoldenBug() {
@@ -877,10 +1293,11 @@ function spawnGoldenBug() {
     goldenBug.style.display = 'block';
     setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
     scheduleGoldenBug();
+    return true;
 }
 
 function clickGoldenBug() {
-    playSound('sound-achievement');
+    playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
 
     let clickBonusPercent = 0.01;
@@ -899,7 +1316,7 @@ function clickGoldenBug() {
     gameState.totalScore += bonus;
     gameState.lifetimeScore += bonus;
 
-    showToast(`Ticket Critico Risolto! +${formatNumber(bonus)} bug!`);
+    window.EspooClicker.showToast(`Bug Critico Risolto! +${formatNumber(bonus)} bug!`, 'reward');
     goldenBug.style.display = 'none';
     updateUI();
 }
@@ -908,6 +1325,7 @@ function clickGoldenBug() {
 
 let originalTitle = document.title;
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.title = 'I bug si accumulano... 🐞';
+    // Aggiungiamo l'emoji 🐞 qui perché il browser non supporta FontAwesome nel titolo tab
+    if (document.hidden) document.title = '🐞 I bug si accumulano...';
     else document.title = originalTitle;
 });

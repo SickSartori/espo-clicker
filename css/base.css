@@ -1,44 +1,63 @@
-/* css/base.css - Stili base e comuni */
+/* css/base.css - Stili base, reset e sfondo */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-image: linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)), url('../assets/image/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Rendering Font Ottimizzato */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+
+    background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #240b36);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
     color: #e0e0e0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 65px 20px 20px 20px;
+    padding: 65px 10px 0 10px;
     user-select: none;
-    overflow-y: hidden;
+    overflow: hidden;
+    position: relative;
 }
 
-/* Stile per la schermata blu */
+/* Overlay a griglia Cyber */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 100s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
+
+/* Stile per la schermata blu (override sfondo) */
 body.bluescreen-active {
-    background-image: url('../assets/image/bluescreen.jpg');
+    background-image: url('../assets/image/bluescreen.webp');
     transition: background-image 0.5s ease-in-out;
     color: #c0c0c0;
 }
 
+/* Scrollbar Globali */
 * {
     scrollbar-width: thin;
-    /* Per Firefox */
     scrollbar-color: #5d7c9a #34495e;
-    /* Per Firefox */
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
-
-
-
 
 ::-webkit-scrollbar-track {
     background: #34495e;
@@ -54,245 +73,7 @@ body.bluescreen-active {
     background: #7f9ebc;
 }
 
-#bonus-counter-display {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #5dade2;
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #bdc3c7;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-}
-
-/* Classi Comuni Bottoni */
-.buy-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.buy-btn:hover:not(:disabled) {
-    background-color: #2980b9;
-}
-
-.buy-btn:disabled {
-    background-color: #5d7c9a;
-    color: #9cb3c9;
-    cursor: not-allowed;
-    text-shadow: none;
-}
-
-.buy-btn.danger-btn {
-    background-color: #e74c3c;
-    width: 100%;
-}
-
-.buy-btn.danger-btn:hover:not(:disabled) {
-    background-color: #c0392b;
-}
-
-.buy-btn.owned {
-    background-color: rgba(44, 62, 80, 0.5) !important;
-    color: #2ecc71 !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    cursor: default !important;
-    pointer-events: none;
-}
-
-/* Toast Notifications */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    /* Z-Index molto alto per stare sopra i modali */
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    /* Più spazio tra le notifiche */
-    pointer-events: none;
-}
-
-.toast {
-    /* Base */
-    padding: 15px 25px;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: default;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease-out;
-    pointer-events: auto;
-
-    /* Animazione di entrata (più "elastica") e uscita */
-    animation: slideIn 0.4s cubic-bezier(0.1, 0.9, 0.2, 1.2) forwards,
-        fadeOut 0.5s ease-in 3.5s forwards;
-    /* Durata totale 4s */
-}
-
-/* Base Animazioni */
-@keyframes slideIn {
-    from {
-        transform: translateX(120%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
-/* Animazione per gli ERRORI: shake */
-@keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    20%,
-    60% {
-        transform: translateX(-5px);
-    }
-
-    40%,
-    80% {
-        transform: translateX(5px);
-    }
-}
-
-/* Animazione per ACHIEVEMENTS: leggero pop dorato */
-@keyframes pulseAchievement {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-
-/* --- CLASSI SPECIFICHE --- */
-
-/* Successo Generico (Login, Acquisto Skin, Salvataggio) */
-.toast-success {
-    background-color: #2ecc71;
-    color: white;
-    border: 2px solid #6ee39a;
-}
-
-/* Errore (Token insufficienti, Login fallito) */
-.toast-error {
-    background-color: #e74c3c;
-    color: white;
-    border: 2px solid #c0392b;
-    /* Aggiunge la vibrazione */
-    animation: shake 0.4s, slideIn 0.4s, fadeOut 0.5s ease-in 3.5s forwards;
-}
-
-/* Obiettivo Sbloccato */
-.toast-achievement {
-    background: linear-gradient(135deg, #f1c40f, #e67e22);
-    /* Gradiente Oro/Arancione */
-    color: #2c3e50;
-    border: 2px solid #f39c12;
-    font-weight: 800;
-    text-shadow: none;
-    /* Effetto glow e pulsazione */
-    box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
-    animation: slideIn 0.4s ease-out, fadeOut 0.5s ease-in 3.5s forwards, pulseAchievement 0.8s 2;
-}
-
-/* Riscatto Premio (Bug, Token) */
-.toast-reward {
-    background-color: #3498db;
-    color: white;
-    border: 2px solid #5dade2;
-}
-
-/* Info (Caricamento, ecc.) */
-.toast-info {
-    background-color: #7f8c8d;
-    color: white;
-    border: 2px solid #95a5a6;
-}
-
-[data-tooltip] {
-    position: relative;
-    cursor: help;
-    /* Cambia il cursore per indicare info */
-}
-
-/* Il box che appare */
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    /* Prende il testo dall'attributo HTML */
-    position: absolute;
-    bottom: 100%;
-    /* Appare sopra l'elemento */
-    left: 50%;
-    transform: translateX(-50%);
-    /* Centra orizzontalmente */
-
-    background-color: rgba(44, 62, 80, 0.95);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid #f1c40f;
-    /* Bordo dorato */
-
-    font-size: 0.9rem;
-    font-weight: bold;
-    white-space: nowrap;
-    z-index: 9999;
-    /* Assicura che stia sopra a tutto */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    /* Non interferisce col mouse */
-    margin-bottom: 8px;
-    /* Spazio dall'elemento */
-}
-
-/* Freccetta del tooltip (opzionale, per estetica) */
-[data-tooltip]:hover::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #f1c40f;
-    margin-bottom: -4px;
-    z-index: 9999;
-}
-
+/* Link Github */
 #github-link-container {
     position: fixed;
     bottom: 15px;
@@ -319,8 +100,248 @@ body.bluescreen-active {
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
-.github-icon {
-    width: 42px;
-    height: 42px;
-    vertical-align: middle;
+/* Bottone Mute Fisso */
+#quick-mute-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 11000;
+    background-color: rgba(44, 62, 80, 0.8);
+    color: #fff;
+    border: 2px solid #5d7c9a;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+}
+
+#quick-mute-btn:hover {
+    background-color: #34495e;
+    transform: scale(1.1);
+}
+
+/* --- FIX IMPORTANTE: NASCONDI BARRA MOBILE SU DESKTOP --- */
+#mobile-nav-bar {
+    display: none;
+}
+
+
+
+/* --- EFFETTO CRUNCH TIME (FIAMME) --- */
+
+#crunch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 300%;
+    z-index: 9000;
+    pointer-events: none;
+    display: none;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    background: linear-gradient(to top,
+            rgba(255, 69, 0, 0.8) 0%,
+            rgba(255, 140, 0, 0.5) 30%,
+            rgba(255, 215, 0, 0.2) 60%,
+            transparent 100%);
+    background-size: 100% 100%;
+    animation: risingHeat 2s linear infinite;
+}
+
+body.crunch-active {
+    background: linear-gradient(-45deg, #4a0000, #2b0000, #590000, #1a0000) !important;
+    background-size: 400% 400%;
+    animation: gradientBG 5s ease infinite !important;
+    /* Animazione più veloce */
+}
+
+/* Assicura che il contenitore di gioco sia rossastro e semi-trasparente */
+body.crunch-active #game-container {
+    border-color: #ff4500 !important;
+    background-color: rgba(30, 0, 0, 0.9) !important;
+    /* Rosso scuro quasi opaco */
+    box-shadow: 0 0 60px rgba(255, 69, 0, 0.6) !important;
+}
+
+/* Rende la navbar incandescente */
+body.crunch-active #game-navbar {
+    background: linear-gradient(to bottom, #500000, #300000) !important;
+    border-bottom: 2px solid #ff4500 !important;
+    box-shadow: 0 0 20px #ff4500;
+}
+
+/* 3. Colonne laterali (Upgrade e Team) */
+body.crunch-active .game-column {
+    /* Tinta rossastra sulle colonne */
+    background: rgba(255, 0, 0, 0.05) !important;
+    border-right: 1px solid rgba(255, 69, 0, 0.4) !important;
+}
+
+/* 4. Titoli delle sezioni */
+body.crunch-active h2,
+body.crunch-active .section-header h2 {
+    color: #ffcc00 !important;
+    /* Giallo fuoco */
+    text-shadow: 0 0 10px #ff4500;
+}
+
+/* 5. Bottoni "Compra" e Navigazione */
+body.crunch-active .buy-btn:not(:disabled),
+body.crunch-active .nav-item {
+    border-color: #e67e22 !important;
+    box-shadow: 0 0 10px rgba(230, 126, 34, 0.2);
+}
+
+body.crunch-active .buy-btn:not(:disabled):hover {
+    background-color: #d35400 !important;
+    box-shadow: 0 0 15px #ff4500;
+}
+
+/* 6. Barra progresso (Lock) */
+body.crunch-active .progress-bar-fill {
+    background: linear-gradient(to right, #ff4500, #ffcc00) !important;
+}
+
+/* 7. Icone e Testi vari */
+body.crunch-active i,
+body.crunch-active .upgrade-name {
+    text-shadow: 0 0 5px rgba(255, 100, 0, 0.5);
+}
+
+/* --- SISTEMA PARTICELLE FUOCO (ULTRA REALISTICO) --- */
+
+#fire-particles-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Altezza ridotta per concentrare il fuoco in basso */
+    pointer-events: none;
+    z-index: 9001;
+    overflow: hidden;
+    display: none;
+
+    /* IL SEGRETO DEL FUOCO LIQUIDO: */
+    /* Il contrasto alto "taglia" la sfocatura delle particelle rendendole nette ma fuse insieme */
+    filter: contrast(200%) brightness(120%);
+    background: transparent;
+}
+
+/* Particella Fiamma (Base) */
+.fire-particle {
+    position: absolute;
+    bottom: -30px;
+    border-radius: 50%;
+    /* Gradiente dal giallo (interno) al rosso (esterno) */
+    background: radial-gradient(circle, rgba(255, 255, 0, 1) 20%, rgba(255, 100, 0, 1) 50%, rgba(200, 0, 0, 0.8) 80%);
+    opacity: 0;
+
+    /* Sfocatura alta per permettere la fusione */
+    filter: blur(15px);
+
+    /* Mix blend screen per renderle luminose */
+    mix-blend-mode: screen;
+
+    animation: fireRise linear forwards;
+}
+
+/* Particella Scintilla (Dettagli veloci) */
+.fire-spark {
+    position: absolute;
+    bottom: 0;
+    width: 4px;
+    height: 12px;
+    background: #fff;
+    /* Bianco incandescente */
+    border-radius: 2px;
+    filter: blur(1px);
+    opacity: 0;
+    z-index: 9002;
+    animation: sparkFly linear forwards;
+}
+
+/* Animazione Fiamma che sale e ondeggia */
+@keyframes fireRise {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(1) translateX(0);
+    }
+
+    10% {
+        opacity: 1;
+        /* Appare subito */
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: translateY(-40vh) scale(1.2) translateX(var(--drift));
+    }
+
+    100% {
+        opacity: 0;
+        /* Si rimpicciolisce e diventa scura (fumo) verso l'alto */
+        transform: translateY(-90vh) scale(0) translateX(calc(var(--drift) * 2));
+        background: rgba(50, 50, 50, 0);
+    }
+}
+
+/* Animazione Scintille (veloci) */
+@keyframes sparkFly {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(0.5);
+    }
+}
+
+/* Overlay Rosso/Arancio migliorato */
+#crunch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9000;
+    opacity: 0;
+    transition: opacity 0.5s;
+    mix-blend-mode: overlay;
+    /* Fonde meglio con lo sfondo scuro */
+
+    /* Vignettatura di calore: Scuro ai bordi, incandescente sotto */
+    background: radial-gradient(circle at 50% 120%,
+            rgba(255, 200, 0, 0.6) 0%,
+            /* Giallo nucleo */
+            rgba(255, 69, 0, 0.5) 30%,
+            /* Rosso fuoco */
+            rgba(100, 0, 0, 0.8) 70%,
+            /* Rosso sangue */
+            rgba(0, 0, 0, 0.9) 100%
+            /* Nero fumo */
+        );
+}
+
+/* Pulsazione schermo più aggressiva */
+@keyframes crunchPulse {
+    0% {
+        box-shadow: inset 0 -20px 50px rgba(255, 69, 0, 0.5);
+        border-color: #ff4500;
+    }
+
+    100% {
+        box-shadow: inset 0 -50px 100px rgba(255, 215, 0, 0.6);
+        border-color: #ffd700;
+    }
 }

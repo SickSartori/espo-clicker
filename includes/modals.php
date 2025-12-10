@@ -1,27 +1,45 @@
 <div id="login-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
-        <h2>Accesso Account</h2>
-        <p class="modal-desc">
-            Inserisci le credenziali per giocare.<br>Se non hai un account, verrà creato ora.
-        </p>
-        <div class="settings-content">
-            <div class="setting-item">
-                <label>Nome Utente</label>
-                <input type="text" id="login-username-input" placeholder="Es. MasterBug">
+    <div class="modal-content" style="max-width: 380px; border-top: 4px solid #3498db;">
+        
+        <div style="text-align: center; padding: 30px 20px 10px 20px;">
+            <div style="font-size: 3.5rem; color: #3498db; margin-bottom: 15px; text-shadow: 0 0 20px rgba(52, 152, 219, 0.4);">
+                <i class="fa-solid fa-gamepad"></i>
             </div>
-            <div class="setting-item">
-                <label>Password</label>
-                <input type="password" id="login-password-input" placeholder="••••••••">
-            </div>
-            <button id="login-btn" class="buy-btn">Entra / Registrati</button>
+            <h2 style="background: none; border: none; padding: 0; font-size: 1.8rem; margin-bottom: 5px;">Espòòò Clicker</h2>
+            <p style="color: #95a5a6; font-size: 0.9rem; margin: 0;">
+                Accedi o crea un account per salvare i progressi nel cloud.
+            </p>
         </div>
+
+        <div class="settings-content" style="padding: 20px 30px 40px 30px;">
+            
+            <div class="input-stack">
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-user"></i></div>
+                    <input type="text" id="login-username-input" placeholder="Nome Utente">
+                </div>
+
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-lock"></i></div>
+                    <input type="password" id="login-password-input" placeholder="Password">
+                    <button class="toggle-pass-btn icon-only" data-target="login-password-input" tabindex="-1">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="login-btn" class="buy-btn save-btn" style="margin-top: 25px; height: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); gap: 10px;">
+                <i class="fa-solid fa-rocket"></i> Entra / Registrati
+            </button>
+            
+            </div>
     </div>
 </div>
 
 <div id="achievements-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>🏆 Obiettivi</h2>
+        <h2><i class="fa-solid fa-trophy"></i> Obiettivi</h2>
         <div id="achievement-list"></div>
     </div>
 </div>
@@ -29,78 +47,155 @@
 <div id="stats-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>📈 Statistiche</h2>
+        <h2><i class="fa-solid fa-chart-pie"></i> Statistiche</h2>
         <div id="stats-list"></div>
     </div>
 </div>
 
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 400px;">
         <button class="modal-close-btn">&times;</button>
-        <h2>⚙️ Impostazioni</h2>
+        <h2><i class="fa-solid fa-sliders"></i> Configurazione</h2>
         
         <div class="settings-content">
-            <div class="setting-item">
-                <label>🔊 Volume Master (<span id="master-vol-display">100</span>%)</label>
-                <input type="range" id="master-slider" min="0" max="1" step="0.1" value="1">
-            </div>
+            <div class="settings-group">
+                <h3 class="group-title">Audio & Suoni</h3>
+                
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-volume-high"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Master</label>
+                        <input type="range" id="master-slider" class="custom-slider" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <span id="master-vol-display" class="slider-value">100%</span>
+                </div>
 
-            <div class="setting-item">
-                <label>🔔 Effetti Sonori (<span id="sfx-vol-display">100</span>%)</label>
-                <input type="range" id="sfx-slider" min="0" max="1" step="0.1" value="1">
-            </div>
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-bell"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Effetti</label>
+                        <input type="range" id="sfx-slider" class="custom-slider" min="0" max="1" step="0.1" value="1">
+                    </div>
+                    <span id="sfx-vol-display" class="slider-value">100%</span>
+                </div>
 
-            <div class="setting-item">
-                <label>🎵 Musica & Eventi (<span id="music-vol-display">50</span>%)</label>
-                <input type="range" id="music-slider" min="0" max="1" step="0.1" value="0.5">
-            </div>
-            
-            <button id="save-settings-btn" class="buy-btn" style="background-color: #27ae60;">Salva e Chiudi</button>
-
-            <div class="account-section">
-                <h3>Account</h3>
-                <p style="margin: 5px 0 10px 0; color: #bdc3c7;">
-                    Utente: <span id="current-username-display" style="color: #3498db; font-weight: bold;">...</span>
-                </p>
-                <button id="open-account-btn" class="buy-btn" style="background-color: #34495e; border: 1px solid #5d7c9a;">
-                    Gestione Credenziali & Logout
+                <div class="slider-row">
+                    <span class="slider-icon"><i class="fa-solid fa-music"></i></span>
+                    <div class="slider-wrapper">
+                        <label>Musica</label>
+                        <input type="range" id="music-slider" class="custom-slider" min="0" max="1" step="0.1" value="0.5">
+                    </div>
+                    <span id="music-vol-display" class="slider-value">50%</span>
+                </div>
+                <button id="open-advanced-audio-btn" class="buy-btn ghost-btn" style="width: 100%; margin-top: 15px; justify-content: center;">
+                    <i class="fa-solid fa-sliders"></i> Mixer Audio & Video
                 </button>
             </div>
+
+            <div class="account-preview-card">
+                <div class="acc-details">
+                    <small>Utente connesso</small>
+                    <div id="current-username-display" class="acc-name">...</div>
+                </div>
+                <button id="open-account-btn" class="buy-btn ghost-btn">
+                    <i class="fa-solid fa-user-gear"></i> Gestisci
+                </button>
+            </div>
+
+            <button id="save-settings-btn" class="buy-btn save-btn">
+                <i class="fa-solid fa-check"></i> Salva Configurazione
+            </button>
         </div>
     </div>
 </div>
 
 <div id="account-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 450px;">
         <button class="modal-close-btn">&times;</button>
-        <h2>🔐 Gestione Account</h2>
+        <h2><i class="fa-solid fa-id-card-clip"></i> Profilo Utente</h2>
         
         <div class="settings-content">
             
-            <div class="setting-item">
-                <label>Cambia Nome Utente</label>
-                <div class="input-group-row">
-                    <input type="text" id="new-username-input" placeholder="Nuovo Nome">
-                    <button id="change-username-btn" class="buy-btn" style="width: auto; margin: 0;">Salva</button>
+            <div class="settings-group">
+                <h3 class="group-title">Identità</h3>
+                <div class="input-group-modern">
+                    <div class="input-icon"><i class="fa-solid fa-user"></i></div>
+                    <input type="text" id="new-username-input" placeholder="Nuovo Nome Utente">
+                    <button id="change-username-btn" class="action-btn-small" title="Salva Nome"><i class="fa-solid fa-floppy-disk"></i></button>
                 </div>
             </div>
 
-            <div class="setting-item" style="margin-top: 10px;">
-                <label>Cambia Password</label>
-                <input type="password" id="old-password-input" placeholder="Vecchia Password" style="margin-bottom: 5px;">
-                <input type="password" id="new-password-input" placeholder="Nuova Password">
-                <button id="change-password-btn" class="buy-btn" style="margin-top: 5px;">Aggiorna Password</button>
+            <div class="settings-group">
+                <h3 class="group-title">Sicurezza</h3>
+                <div class="input-stack">
+                    <div class="input-group-modern">
+                        <div class="input-icon"><i class="fa-solid fa-lock"></i></div>
+                        <input type="password" id="old-password-input" placeholder="Vecchia Password">
+                        <button class="toggle-pass-btn icon-only" data-target="old-password-input"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <div class="input-group-modern">
+                        <div class="input-icon"><i class="fa-solid fa-key"></i></div>
+                        <input type="password" id="new-password-input" placeholder="Nuova Password">
+                        <button class="toggle-pass-btn icon-only" data-target="new-password-input"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <button id="change-password-btn" class="buy-btn outline-btn" style="margin-top: 5px;">Aggiorna Password</button>
+                </div>
             </div>
 
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;"></div>
+            <div style="text-align: center; margin: 15px 0;">
+                <button id="logout-btn" class="text-link-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> Disconnetti (Logout)
+                </button>
+            </div>
 
-            <button id="logout-btn" class="buy-btn logout-btn">Cambia Utente (Logout)</button>
+            <div class="danger-zone-pro">
+                <div class="danger-header">
+                    <i class="fa-solid fa-biohazard"></i> AREA CRITICA
+                </div>
+                
+                <div class="input-group-modern danger-input">
+                    <div class="input-icon danger"><i class="fa-solid fa-shield-halved"></i></div>
+                    <input type="password" id="danger-zone-password" placeholder="Password per confermare">
+                    <button class="toggle-pass-btn icon-only" data-target="danger-zone-password"><i class="fa-solid fa-eye"></i></button>
+                </div>
 
-            <div class="danger-zone">
-                <h3>⚠️ Zona Pericolosa</h3>
-                <p>Eliminazione definitiva account.</p>
-                <input type="password" id="delete-confirm-password" placeholder="Password di conferma">
-                <button id="delete-save-btn" class="buy-btn danger-btn" style="margin-top: 10px;">ELIMINA ACCOUNT</button>
+                <div class="danger-buttons-row">
+                    <button id="reset-progress-btn" class="danger-btn-small orange" title="Resetta Progressi">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button id="delete-save-btn" class="danger-btn-small red" title="Elimina Account">
+                        <i class="fa-solid fa-trash-can"></i> Elimina
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="advanced-audio-modal" class="modal-backdrop" style="display: none; z-index: 2200;">
+    <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
+        <button class="modal-close-btn" id="close-advanced-audio-btn">&times;</button>
+        
+        <h2><i class="fa-solid fa-music"></i> Mixer Sorgenti</h2>
+        
+        <div class="settings-content" style="padding-top: 10px; overflow-y: auto; flex-grow: 1;">
+            <p style="font-size: 0.85rem; color: #95a5a6; margin-bottom: 20px; text-align: center;">
+                Regola il volume di ogni singola sorgente.<br>
+                <i style="font-size: 0.75rem;">(Percentuale rispetto al Master)</i>
+            </p>
+            
+            <div id="advanced-audio-list" style="display: flex; flex-direction: column; gap: 12px;">
+                </div>
+
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
+                <button type="button" id="back-to-settings-btn" class="buy-btn" style="flex: 2; background-color: #34495e;">
+                    <i class="fa-solid fa-arrow-left"></i> Indietro
+                </button>
+                
+                <button type="button" id="reset-audio-defaults" class="buy-btn outline-btn" style="flex: 1; border-color: #e74c3c; color: #e74c3c; font-size: 0.8rem;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
             </div>
         </div>
     </div>
@@ -109,7 +204,7 @@
 <div id="leaderboard-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>🏆 Classifica</h2>
+        <h2><i class="fa-solid fa-medal"></i> Classifica</h2>
         <div id="leaderboard-list"></div>
     </div>
 </div>
@@ -118,7 +213,7 @@
     <div class="modal-content" style="max-width: 450px; border-color: #9b59b6;"> 
         <button class="modal-close-btn">&times;</button>
         <h2 style="background-color: #4a235a; border-bottom: 1px solid #9b59b6; color: #f1c40f; text-align: center;">
-            👑 Ufficio Promozioni
+            <i class="fa-solid fa-rocket"></i> Ufficio Promozioni
         </h2>
         
         <div class="settings-content" style="text-align: center; padding: 30px 20px;">
@@ -139,54 +234,65 @@
             </div>
 
             <button id="btn-go-to-contract" class="buy-btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); border: none; font-size: 1.1rem; padding: 15px; width: 100%; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);">
-                📄 Visualizza Contratto
+                <i class="fa-solid fa-file-signature"></i> Visualizza Contratto
             </button>
         </div>
     </div>
 </div>
 
 <div id="prestige-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content contract-modal">
-        <div class="contract-header">
-            <h2>📜 Contratto di Promozione</h2>
-            <p>L'azienda ha notato il tuo eccellente lavoro.</p>
-        </div>
+    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #f1c40f; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+        
+        <button class="modal-close-btn">&times;</button>
+        
+        <h2 style="background: #233040; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.2); padding: 20px;">
+            <i class="fa-solid fa-certificate"></i> Promozione
+        </h2>
 
-        <div class="contract-body">
-            <div class="contract-columns">
-                <div class="contract-column loss">
-                    <h3>📉 Cedi al Dipartimento</h3>
-                    <ul>
-                        <li> Tutti i Bug attuali</li>
-                        <li> Tutti i teams</li>
-                        <li> Potenziamenti Click/Auto</li>
-                    </ul>
+        <div class="settings-content" style="padding: 30px 25px;">
+            
+            <p style="
+                color: #ff6b6b; 
+                font-weight: 800; 
+                font-size: 0.95rem; 
+                margin-bottom: 25px; 
+                line-height: 1.5; 
+                background: rgba(255, 0, 0, 0.1); 
+                padding: 10px; 
+                border-radius: 8px; 
+                border: 1px solid rgba(255, 107, 107, 0.3);">
+                <i class="fa-solid fa-triangle-exclamation"></i> Accettando la promozione, l'azienda resetterà i tuoi Bug ed Edifici per riassegnarti ad un nuovo progetto.
+            </p>
+
+            <div style="background: #1e272e; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #34495e;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">OTTERRAI SUBITO</div>
+                
+                <div style="font-size: 3rem; font-weight: 900; color: #2ecc71; text-shadow: 0 0 20px rgba(46, 204, 113, 0.2); line-height: 1;">
+                    <span id="contract-gain-token">+0</span>
                 </div>
+                <div style="color: #2ecc71; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px;">Token Lab</div>
 
-                <div class="contract-separator">
-                    <span>vs</span>
-                </div>
-
-                <div class="contract-column gain">
-                    <h3>📈 Il tuo Nuovo Pacchetto</h3>
-                    <div class="gain-item">
-                        <span class="gain-label">Nuovi Token Lab</span>
-                        <span id="contract-gain-token" class="gain-value">+0</span>
-                    </div>
-                    <div class="gain-item">
-                        <span class="gain-label">Nuovo Bonus Carriera</span>
-                        <span id="contract-gain-bonus" class="gain-value">+0%</span>
-                    </div>
-                    <p class="gain-note">Il Bonus Carriera è permanente!</p>
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                    <div style="font-size: 0.8rem; color: #bdc3c7;">Bonus Carriera Totale</div>
+                    <div id="contract-gain-bonus" style="font-size: 1.2rem; color: #f1c40f; font-weight: 800;">Nuovo Totale: +0%</div>
                 </div>
             </div>
-        </div>
 
-        <div class="contract-footer">
-            <button id="btn-cancel-contract" class="buy-btn" style="background-color: #7f8c8d; width: auto;">Rifiuta e Torna Indietro</button>
-            <button id="btn-confirm-prestige" class="buy-btn prestige-btn signature-btn">
-                ✍️ Firma e Accetta Promozione
+            <button id="btn-confirm-prestige" class="buy-btn" style="
+                background: linear-gradient(135deg, #f1c40f, #e67e22); 
+                color: #2c3e50; 
+                font-weight: 800; 
+                width: 100%; 
+                height: 55px; 
+                font-size: 1.2rem; 
+                box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+                border-radius: 8px;">
+                <i class="fa-solid fa-signature"></i> Firma e Accetta
             </button>
+            
+            <p style="font-size: 0.8rem; color: #5d7c9a; margin-top: 20px;">
+                I potenziamenti del Lab e le Skin rimarranno salvati.
+            </p>
         </div>
     </div>
 </div>
@@ -194,7 +300,7 @@
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn">&times;</button>
-        <h2>👕 Guardaroba</h2>
+        <h2><i class="fa-solid fa-shirt"></i> Guardaroba</h2>
         <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
             Personalizza il tuo look.<br>Sblocca nuove skin completando obiettivi speciali!
         </p>
@@ -213,12 +319,12 @@
 <div id="help-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
         <button class="modal-close-btn">&times;</button>
-        <h2>📘 Manuale del Dipendente</h2>
+        <h2><i class="fa-solid fa-book-open"></i> Manuale del Dipendente</h2>
         
         <div class="settings-content" style="text-align: left; line-height: 1.6;">
             
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #3498db; margin-bottom: 5px;">1. L'Obiettivo</h3>
+                <h3 style="color: #3498db; margin-bottom: 5px;"><i class="fa-solid fa-bullseye"></i> 1. L'Obiettivo</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: 
                     risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. 
@@ -227,7 +333,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #2ecc71; margin-bottom: 5px;">2. Automazione (BPS)</h3>
+                <h3 style="color: #2ecc71; margin-bottom: 5px;"><i class="fa-solid fa-robot"></i> 2. Automazione (BPS)</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.
                     <br>
@@ -236,19 +342,21 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #f1c40f; margin-bottom: 5px;">3. Eventi & Anomalie</h3>
+                <h3 style="color: #f1c40f; margin-bottom: 5px;"><i class="fa-solid fa-bolt"></i> 3. Eventi & Anomalie</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Il sistema è instabile. Tieni gli occhi aperti per:
                 </p>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
-                    <li>🐞 <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito per un bonus enorme!</li>
-                    <li>💻 <strong>Errore 404 (Blue Screen):</strong> Il sistema crasha! Durante l'errore, la produzione è moltiplicata (x2 o più).</li>
-                    <li>🕺 <strong>Eventi Skin:</strong> Alcuni costumi leggendari (come Rick o Ricardo) scatenano eventi musicali unici con moltiplicatori folli.</li>
+                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px; list-style: none;">
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-bug" style="color:#f1c40f; width: 20px;"></i> <strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito!</li>
+                    
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-display" style="color:#3498db; width: 20px;"></i> <strong>Errore 404:</strong> Il sistema crasha! Produzione moltiplicata.</li>
+                    
+                    <li style="margin-bottom: 5px;"><i class="fa-solid fa-music" style="color:#e74c3c; width: 20px;"></i> <strong>Eventi Skin:</strong> Alcuni costumi leggendari scatenano eventi musicali.</li>
                 </ul>
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #9b59b6; margin-bottom: 5px;">4. Laboratorio (Prestigio)</h3>
+                <h3 style="color: #9b59b6; margin-bottom: 5px;"><i class="fa-solid fa-flask"></i> 4. Laboratorio (Prestigio)</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.
                     <br>
@@ -258,7 +366,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #e67e22; margin-bottom: 5px;">5. Matematica dei Bonus</h3>
+                <h3 style="color: #e67e22; margin-bottom: 5px;"><i class="fa-solid fa-calculator"></i> 5. Matematica dei Bonus</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Come faccio a fare numeri enormi? Semplice: <strong>I Moltiplicatori si sommano!</strong>
                 </p>
@@ -271,7 +379,7 @@
             </div>
 
             <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #1abc9c; margin-bottom: 5px;">6. Account & Salvataggi</h3>
+                <h3 style="color: #1abc9c; margin-bottom: 5px;"><i class="fa-solid fa-user"></i> 6. Account & Salvataggi</h3>
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     I tuoi dati sono al sicuro nel Cloud della Espò Solutions.
                 </p>
@@ -283,7 +391,7 @@
             </div>
 
             <div>
-                <h3 style="color: #e74c3c; margin-bottom: 5px;">7. Consigli Utili</h3>
+                <h3 style="color: #e74c3c; margin-bottom: 5px;"><i class="fa-solid fa-lightbulb"></i> 7. Consigli Utili</h3>
                 <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
                     <li>Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.</li>
                     <li>Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.</li>

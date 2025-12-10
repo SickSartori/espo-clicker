@@ -20,8 +20,8 @@
         <div id="click-feedback-container"></div>
         
         <button id="clicker-btn" title="Risolvi un Bug!">
-            <img id="manager-photo-clicked" src="./assets/image/espo-click.png" alt="Click!" draggable="false">
-            <img id="manager-photo-normal" src="./assets/image/espo.png" alt="Espòòò" draggable="false">
+            <img id="manager-photo-clicked" src="./assets/image/espo-click.webp" alt="Click!" draggable="false">
+            <img id="manager-photo-normal" src="./assets/image/espo.webp" alt="Espòòò" draggable="false">
         </button>
         
         <div id="score-label">Bug Risolti</div>
@@ -37,6 +37,6 @@
         
         <div id="prestige-bonus-display" class="prestige-info" style="display: none;">Bonus: +0%</div>
 
-        <div id="version-display">Versione 3.0 beta</div>
+        <div id="version-display"></div>
     </div>
 </div>

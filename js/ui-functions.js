@@ -35,87 +35,115 @@ function updateSkinsUI() {
 
     grid.innerHTML = '';
 
-    // Controlli di sicurezza dati
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
-    if (!gameState.skins.current) gameState.skins.current = 'default';
 
-    const safeUnlockedList = gameState.skins.unlocked;
+    const unlockedList = gameState.skins.unlocked;
     const currentSkin = gameState.skins.current;
+
+    const rarityMap = {
+        'common': 'COMUNE',
+        'rare': 'RARA',
+        'epic': 'EPICA',
+        'legendary': 'LEGGENDARIA',
+        'christmas': 'NATALE'
+    };
 
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
-        const isUnlocked = safeUnlockedList.includes(key);
+        const isUnlocked = unlockedList.includes(key);
         const isEquipped = currentSkin === key;
+        const isBuyable = !isUnlocked && data.cost !== undefined;
+        const canAfford = isBuyable && gameState.prestigePoints >= data.cost;
 
-        // Calcola se l'utente PUÒ acquistare la skin (has enough tokens)
-        const canBuy = !isUnlocked && data.cost && gameState.prestigePoints >= data.cost;
-        const isBuyable = data.cost !== undefined;
+        const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
         const card = document.createElement('div');
 
-        // FIX: Aggiunto la classe 'can-afford-border' solo se canBuy è TRUE
-        // Rimuoviamo la logica 'buyable' dall'inline-style.
-        card.className = `skin-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''} rarity-${data.rarity || 'common'} ${isBuyable ? 'buyable' : ''} ${canBuy ? 'can-afford-border' : ''}`;
+        let classes = `skin-card rarity-${data.rarity || 'common'}`;
+        if (isUnlocked) classes += ' unlocked';
+        else classes += ' locked'; // Bloccata (anche se acquistabile)
+        if (isEquipped) classes += ' equipped';
+        // NOTA: Rimuoviamo la classe 'buyable' per non farla brillare/pulsare se non in hover
+        // if (isBuyable) classes += ' buyable'; 
+        if (canAfford) classes += ' can-afford-border'; // Manteniamo questo se vuoi il bordo colorato, o rimuovilo per total stealth
 
-        // Determina il testo di sblocco (Hint o Costo)
-        let unlockText = data.unlockHint || "Sblocca completando l'obiettivo";
-        let priceHtml = "";
+        card.className = classes;
 
-        if (!isUnlocked && data.cost) {
-            unlockText = canBuy ? "Clicca per acquistare!" : "Acquista con Token Lab";
-            priceHtml = `<div class="skin-price ${canBuy ? 'can-afford' : ''}">💰 ${data.cost} Token</div>`;
+        // Immagine: Sempre nascosta se non sbloccata
+        const imgSrc = isUnlocked
+            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp')
+            : './assets/image/hidden.webp';
+
+        // --- MODIFICA STATO VISIVO (Senza Hover) ---
+        let statusHtml = '';
+        if (isEquipped) {
+            // Prima: ✔ -> Ora: FontAwesome
+            statusHtml = `<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>`;
+        } else if (isUnlocked) {
+            // ...
+        } else {
+            // Prima: 🔒 Bloccata -> Ora: FontAwesome
+            statusHtml = `<div class="skin-status-info"><i class="fa-solid fa-lock"></i> Bloccata</div>`;
         }
 
-        // Stile CSS dinamico
-        const statusColor = isEquipped ? '#2ecc71' : (canBuy ? '#f1c40f' : (isUnlocked ? '#bdc3c7' : '#e74c3c'));
+        // --- MODIFICA OVERLAY (Con Hover) ---
+        let overlayContent = '';
+        if (!isEquipped) {
+            if (isBuyable) {
+                const priceText = `<i class="fa-solid fa-flask"></i> ${data.cost} Token`;
+                // Classi colore dinamiche
+                const actionColor = canAfford ? '#2ecc71' : '#e74c3c';
+                const actionMsg = canAfford ? 'CLICCA ORA' : 'INSUFFICIENTI';
 
-        card.style.cssText = `
-            border-radius: 8px; padding: 10px; text-align: center;
-            opacity: ${isUnlocked ? '1' : '0.8'}; 
-            cursor: pointer;
-            background-color: ${isEquipped ? 'rgba(46, 204, 113, 0.1)' : 'transparent'};
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        `;
-
-        const imgSrc = isUnlocked
-            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.png')
-            : './assets/image/hidden.png';
-
-        const imgStyle = `width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px;`;
-        const displayName = data.name;
-        const displayStatus = isEquipped ? 'In uso' : (isBuyable ? 'Acquistabile' : (isUnlocked ? 'Sbloccata' : 'Bloccata'));
+                overlayContent = `
+                    <h4>${data.name}</h4>
+                    <div class="skin-desc">${data.desc || "???"}</div>
+                    <div class="skin-price-tag">${priceText}</div>
+                    <div class="skin-action-text" style="color: ${actionColor}">${actionMsg}</div>
+                `;
+            } else if (!isUnlocked) {
+                overlayContent = `
+                    <h4>${data.name}</h4>
+                    <div class="skin-desc">${data.unlockHint || "Segreto"}</div>
+                `;
+            } else {
+                overlayContent = `
+                    <h4>${data.name}</h4>
+                    <div class="skin-desc">${data.desc}</div>
+                    <div class="skin-action-text" style="color:#2ecc71;">USA SKIN</div>
+                `;
+            }
+        }
 
         card.innerHTML = `
-            <img src="${imgSrc}" style="${imgStyle}">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #fff;">${displayName}</div>
-            <div style="font-size: 0.7rem; color: ${statusColor};">${displayStatus}</div>
+            ${isEquipped ? '<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>' : ''}
             
-            ${!isUnlocked ? `
-                <div class="skin-overlay">
-                    <div class="skin-overlay-text" style="font-weight: bold; color: ${statusColor}; margin-bottom: 5px;">${data.rarity.toUpperCase()}</div>
-                    <div class="skin-overlay-text">${unlockText}</div>
-                    ${priceHtml}
-                </div>
-            ` : ''}
+            <div class="skin-badge">${rarityLabel}</div>
+            
+            <div class="skin-img-container">
+                <img src="${imgSrc}" class="skin-img" alt="${isUnlocked ? data.name : 'Segreto'}">
+            </div>
+            
+            <div class="skin-name-display">${data.name}</div>
+            
+            ${statusHtml}
+
+            ${!isEquipped ? `<div class="skin-overlay">${overlayContent}</div>` : ''}
         `;
 
-        // ... (Listener Click) ...
         card.addEventListener('click', () => {
             if (isUnlocked) {
                 if (typeof equipSkin === 'function') equipSkin(key);
             } else if (isBuyable) {
                 if (typeof buySkin === 'function') buySkin(key);
             } else {
-                window.EspooClicker.showToast(data.unlockHint || "Completa l'obiettivo associato per sbloccare.", 'warning');
-                if (card.classList.contains('locked')) {
-                    card.style.transform = "translateX(5px)";
-                    setTimeout(() => card.style.transform = "translateX(0)", 100);
-                }
+                card.style.transform = "translateX(5px)";
+                setTimeout(() => card.style.transform = "translateX(0)", 100);
+                if (window.EspooClicker) window.EspooClicker.showToast(data.unlockHint || "Obiettivo richiesto!", "warning");
             }
         });
+
         grid.appendChild(card);
     }
 }
@@ -179,7 +207,7 @@ function updateAchievementsUI() {
         if (data.isSecret && !isUnlocked) {
             const secretEl = document.createElement('div');
             secretEl.className = 'achievement achievement-secret';
-            secretEl.innerHTML = `<div class="achievement-icon">🔒</div><div class="achievement-info">??? (Segreto)</div>`;
+            secretEl.innerHTML = `<div class="achievement-icon"><i class="fa-solid fa-lock"></i></div>...`;
             list.appendChild(secretEl);
             return;
         }
@@ -192,29 +220,29 @@ function updateAchievementsUI() {
 
 
         // --- PREPARAZIONE INFORMAZIONI PREMIO (Dettaglio) ---
-        let rewardIcon = '🏆';
+        let rewardIcon = '<i class="fa-solid fa-trophy"></i>';
         let rewardDisplay = 'Gloria'; // Testo visibile nel bottone/tooltip
         let rewardTooltip = 'Nessun premio materiale.'; // Dettaglio per l'attributo title
 
         if (data.reward) {
             if (data.reward.type === 'bugs') {
-                rewardIcon = '🐞';
+                rewardIcon = '<i class="fa-solid fa-bug"></i>';
                 rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
                 rewardTooltip = `Ricompensa: ${rewardDisplay}`;
             }
             else if (data.reward.type === 'skin') {
-                rewardIcon = '👕';
+                rewardIcon = '<i class="fa-solid fa-tshirt"></i>';
                 const skinName = (gameData.skins && gameData.skins[data.reward.id]) ? gameData.skins[data.reward.id].name : 'Skin Rara';
                 rewardDisplay = `Skin: ${skinName}`;
                 rewardTooltip = `Sblocca la Skin: ${skinName}`;
             }
             else if (data.reward.type === 'prestige') {
-                rewardIcon = '👑';
+                rewardIcon = '<i class="fa-solid fa-flask"></i>';
                 rewardDisplay = `${data.reward.value} Token Lab`;
                 rewardTooltip = `Ottieni: ${rewardDisplay}`;
             }
             else if (data.reward.type === 'multiplier') {
-                rewardIcon = '💻'; // CAMBIATO: da ⚡ a 💻 (Laptop)
+                rewardIcon = '<i class="fa-solid fa-laptop"></i>';
                 rewardDisplay = `BPS x${data.reward.value}`;
                 rewardTooltip = `Bonus BPS Permanente`;
             }
@@ -232,7 +260,7 @@ function updateAchievementsUI() {
             `;
         } else if (isClaimed || (isUnlocked && !data.reward)) {
             // CASO 2: COMPLETATO / Già Riscattato
-            actionHtml = `<div class="achievement-done">✅ Completato</div>`;
+            actionHtml = `<div class="achievement-done"><i class="fa-solid fa-check-circle"></i> Completato</div>`;
         } else {
             // CASO 3: IN CORSO (Barra Progresso)
             const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
@@ -276,48 +304,75 @@ function updateAchievementsUI() {
 }
 
 function showClickFeedback(event) {
+    // 1. Recupera il contenitore in modo sicuro
+    const feedbackContainer = document.getElementById('click-feedback-container');
+    if (!feedbackContainer) return;
+
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // Evento 404
+    // Logica Evento 404
     const now = Date.now();
     const COOLDOWN_404 = 300000;
     const lastCrash = gameState.lastBluescreenTimestamp || 0;
     const timeSinceLast = now - lastCrash;
-    const scoreString = Math.floor(gameState.score).toString();
-    const clicksString = gameState.totalClicks.toString();
-    const has404 = scoreString.includes('404') || clicksString.includes('404');
-    let currentChance = has404 ? 0.005 : 0.0005;
 
-    if (timeSinceLast > COOLDOWN_404 && Math.random() < currentChance && !isBluescreenActive && gameState.score >= 404) {
-        feedback.textContent = 'Error 404: Logic Not Found';
+    // Controllo esistenza variabili globali (sicurezza)
+    const isBlueScreen = (typeof isBluescreenActive !== 'undefined') ? isBluescreenActive : false;
+    const currentScore = gameState.score || 0;
+
+    if (timeSinceLast > COOLDOWN_404 && Math.random() < 0.0005 && !isBlueScreen && currentScore >= 404) {
+        feedback.textContent = 'Error 404';
         feedback.style.color = '#facc15';
         feedback.style.fontSize = '1.2rem';
         feedback.style.fontWeight = '900';
         feedback.style.zIndex = '100';
-        let baseMult = 2;
-        let variableMult = Math.random() * 3;
-        let dynamicMultiplier = Math.floor(baseMult + variableMult);
+
+        let dynamicMultiplier = Math.floor(2 + Math.random() * 3);
         gameState.lastBluescreenTimestamp = now;
+
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
     } else {
+        // Calcolo valore click
         let clickBonusPercent = 0.01;
-        if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
-        const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) +
-            (gameState.clickUpgrades.manoBionica.purchased ? (cookiesPerSecond * clickBonusPercent) : 0);
-        feedback.textContent = `+${formatNumber(currentClickValue)}`;
+        if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
+
+        // Recupera variabili globali o fallback a 1
+        const pBonus = (typeof prestigeBonus !== 'undefined') ? prestigeBonus : 1;
+        const bsMult = (typeof bluescreenMultiplier !== 'undefined') ? bluescreenMultiplier : 1;
+        const cps = (typeof cookiesPerSecond !== 'undefined') ? cookiesPerSecond : 0;
+
+        let val = (gameState.baseClickValue * pBonus * bsMult);
+        if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
+            val += (cps * clickBonusPercent);
+        }
+
+        feedback.textContent = `+${formatNumber(val)}`;
+
+        if (document.body.classList.contains('theme-christmas')) {
+            // Alterna casualmente tra Rosso Natale e Verde Pino
+            feedback.style.color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
+            feedback.style.textShadow = '0 0 5px #fff'; // Alone bianco neve
+        } else {
+            // Colore Standard (modifica se il tuo default è diverso)
+            feedback.style.color = 'rgba(239, 68, 68, 0.7)';
+        }
     }
 
+    // Calcolo Posizione
     const rect = feedbackContainer.getBoundingClientRect();
     let x, y;
-    if (event.clientX && event.clientY) {
+
+    if (event && event.clientX && event.clientY) {
         x = event.clientX - rect.left;
         y = event.clientY - rect.top;
     } else {
         x = rect.width / 2;
         y = rect.height / 2;
     }
+
+    // Variazione casuale
     const randomX = (Math.random() - 0.5) * 60;
     const randomY = (Math.random() - 0.5) * 40;
     const randomRot = (Math.random() - 0.5) * 30;
@@ -326,6 +381,7 @@ function showClickFeedback(event) {
     feedback.style.top = `${y + randomY}px`;
     feedback.style.setProperty('--tx', `${randomX}px`);
     feedback.style.setProperty('--rot', `${randomRot}deg`);
+
     feedbackContainer.appendChild(feedback);
     setTimeout(() => feedback.remove(), 1500);
 }
@@ -338,13 +394,13 @@ function showToast(message, type = 'info') { // Aggiunto parametro type
 
     // Aggiungi Icona/Emoji basata sul tipo
     let icon = '';
-    if (type === 'success') icon = '✅ ';
-    else if (type === 'error') icon = '❌ ';
-    else if (type === 'achievement') icon = '🏆 ';
-    else if (type === 'warning') icon = '⚠️ ';
-    else if (type === 'reward') icon = '🎁 '; // Per riscatti bug/token
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i> ';
+    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i> ';
+    else if (type === 'achievement') icon = '<i class="fa-solid fa-trophy"></i> ';
+    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation"></i> ';
+    else if (type === 'reward') icon = '<i class="fa-solid fa-gift"></i> ';
+    else if (type === 'info') icon = '<i class="fa-solid fa-circle-info"></i> ';
 
-    // Usiamo innerHTML per iniettare l'icona
     toast.innerHTML = icon + message;
     toastContainer.appendChild(toast);
 
@@ -631,7 +687,10 @@ function updateUI() {
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
 
-
+    const mobileWallets = document.querySelectorAll('.bug-wallet-amount');
+    mobileWallets.forEach(el => {
+        el.textContent = formatNumber(gameState.score);
+    });
 
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer) hudContainer.style.display = 'flex';
@@ -651,6 +710,16 @@ function updateUI() {
         }
     } else {
         if (hudContainer) hudContainer.style.display = 'none';
+    }
+    const labWallet = document.getElementById('lab-wallet-amount');
+    if (labWallet) {
+        // Usa formatNumber se vuoi "1k", oppure toLocaleString per "1.000"
+        labWallet.textContent = formatNumber(gameState.prestigePoints);
+    }
+
+    const bugWallet = document.getElementById('bug-wallet-amount');
+    if (bugWallet) {
+        bugWallet.textContent = formatNumber(gameState.bugWallet);
     }
 
     for (const key in gameState.teams) {
@@ -692,30 +761,50 @@ function updateUI() {
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
             btnCrunch.style.display = 'block';
             const timerDiv = btnCrunch.querySelector('.skill-timer');
+
             if (now < crunchTimeEndTime) {
                 const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
-                crunchTimeMultiplier = 3;
+
+                crunchTimeMultiplier = 7;
                 btnCrunch.className = 'skill-btn active';
-                btnCrunch.firstChild.textContent = "🔥 IN CORSO 🔥";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = `🔥 BPS x${crunchTimeMultiplier} 🔥`;
+                }
                 timerDiv.textContent = `${timeLeft}s`;
+
             } else if (now < crunchTimeCooldownEnd) {
                 const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn cooldown';
-                btnCrunch.firstChild.textContent = "Ricarica...";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = "Ricarica...";
+                }
                 const m = Math.floor(timeLeft / 60);
                 const s = timeLeft % 60;
-                timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
+                if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
             } else {
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn';
-                btnCrunch.firstChild.textContent = "🔥 CRUNCH TIME 🔥";
-                timerDiv.textContent = "CLICCA!";
+                if (btnCrunch.childNodes[0]) {
+                    btnCrunch.childNodes[0].textContent = "🔥 CRUNCH TIME 🔥";
+                }
+                if (timerDiv) timerDiv.textContent = "CLICCA!";
             }
         } else {
             btnCrunch.style.display = 'none';
         }
     }
+    const tabPrestige = document.getElementById('tab-prestige');
+    if (tabPrestige) {
+        if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
+            if (tabPrestige.style.display === 'none') {
+                tabPrestige.style.display = 'block';
+            }
+        } else {
+            tabPrestige.style.display = 'none';
+        }
+    }
+
     checkTabNotifications();
     checkOverlayNotifications();
     updateBonusCounter();
@@ -723,52 +812,51 @@ function updateUI() {
 }
 
 function updatePrestigeVisuals() {
-    const prestigeHubBtn = document.getElementById('open-prestige-hub-btn');
+    const prestigeBtn = document.getElementById('open-prestige-hub-btn');
+    if (!prestigeBtn) return;
+
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
     const hasPrestiged = gameState.totalResets > 0;
 
-    if (prestigeHubBtn) {
-        if (canPrestige || hasPrestiged) {
-            prestigeHubBtn.style.display = 'block';
-            if (canPrestige) {
-                prestigeHubBtn.style.animation = 'pulseButton 1.5s infinite';
-                prestigeHubBtn.style.borderColor = '#2ecc71';
-                prestigeHubBtn.textContent = "👑 PROMOZIONE PRONTA!";
-            } else {
-                prestigeHubBtn.style.animation = 'none';
-                prestigeHubBtn.style.borderColor = '#9b59b6';
-                prestigeHubBtn.textContent = "👑 Promozione";
-            }
-        } else {
-            prestigeHubBtn.style.display = 'none';
-        }
+    if (!canPrestige && !hasPrestiged) {
+        if (prestigeBtn.style.display !== 'none') prestigeBtn.style.display = 'none';
+        return;
     }
 
-    const hubGainDisplay = document.getElementById('prestige-gain-display');
-    const btnGoToContract = document.getElementById('btn-go-to-contract');
-    if (hubGainDisplay && btnGoToContract) {
-        const gained = calculatePrestigeGained();
-        hubGainDisplay.textContent = formatNumber(gained);
-        hubGainDisplay.setAttribute('data-tooltip', gained.toLocaleString('it-IT'));
-        if (gained < 1) {
-            btnGoToContract.textContent = "⚠️ Accumula più bug!";
-            btnGoToContract.disabled = true;
-            btnGoToContract.style.background = "#7f8c8d";
-            btnGoToContract.style.cursor = "not-allowed";
-            hubGainDisplay.style.color = "#e74c3c";
-        } else {
-            btnGoToContract.innerHTML = "📄 Visualizza Contratto";
-            btnGoToContract.disabled = false;
-            btnGoToContract.style.background = "linear-gradient(135deg, #8e44ad, #9b59b6)";
-            btnGoToContract.style.cursor = "pointer";
-            hubGainDisplay.style.color = "#2ecc71";
+    if (prestigeBtn.style.display !== 'flex') prestigeBtn.style.display = 'flex';
+
+    let icon = prestigeBtn.querySelector('.nav-icon');
+    let label = prestigeBtn.querySelector('span');
+
+    if (!icon || !label) {
+        prestigeBtn.innerHTML = '<i class="nav-icon"></i> <span></span>';
+        icon = prestigeBtn.querySelector('.nav-icon');
+        label = prestigeBtn.querySelector('span');
+    }
+
+    if (canPrestige) {
+        if (!prestigeBtn.classList.contains('promotion-ready')) {
+            prestigeBtn.classList.add('promotion-ready');
+            prestigeBtn.style.cursor = "pointer";
+            icon.className = 'nav-icon fa-solid fa-circle-check';
+            label.textContent = 'PRONTA!';
+        }
+    } else {
+        if (prestigeBtn.classList.contains('promotion-ready')) {
+            prestigeBtn.classList.remove('promotion-ready');
+            prestigeBtn.style.cursor = "default";
+            icon.className = 'nav-icon fa-solid fa-rocket';
+        }
+
+        const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 99).toFixed(0);
+        const newText = `${progress}%`;
+
+        if (label.textContent !== newText) {
+            label.textContent = newText;
         }
     }
-    const tabLabButton = document.getElementById('tab-prestige');
-    if (tabLabButton) {
-        tabLabButton.style.display = (gameState.totalResets > 0 || gameState.prestigePoints > 0) ? 'inline-block' : 'none';
-    }
 }
+
 
 function updatePrestigeUI() {
     updatePrestigeVisuals();
@@ -871,25 +959,165 @@ function setEmptyMessage(el, mode) {
 // --- HELPERS PER SKIN ---
 function equipSkin(skinId) {
     if (!gameState.skins.unlocked.includes(skinId)) return;
+
+    if (skinId === 'christmas' && typeof isChristmasSeason === 'function' && isChristmasSeason()) {
+        triggerChristmasOverlay();
+    }
+
     gameState.skins.current = skinId;
-    applySkinVisuals(skinId);
+
+    // Applica grafica e suoni loop (questo funziona sempre, anche fuori stagione)
+    applySkinVisuals(skinId, true);
+
     if (typeof playSound === 'function') playSound('sound-click');
     if (window.EspooClicker) window.EspooClicker.saveGame();
     updateSkinsUI();
 }
 
-function applySkinVisuals(skinId) {
+function triggerChristmasOverlay() {
+    const overlay = document.getElementById('christmas-overlay');
+    const soundMerry = document.getElementById('sound-merry');
+
+    const skinsModal = document.getElementById('skins-modal');
+    if (skinsModal) {
+        skinsModal.style.display = 'none';
+    }
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'fadeIn 0.5s';
+    }
+    if (soundMerry) {
+        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
+        soundMerry.currentTime = 0;
+        soundMerry.play().catch(e => { });
+    }
+    setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+    }, 4000);
+}
+
+let christmasAudioInitialized = false;
+function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
-    if (!data) { applySkinVisuals('default'); return; }
+    const skinData = data || gameData.skins['default'];
+
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
-    if (photoNormal) {
-        photoNormal.src = `./assets/image/${data.img}`;
-        photoNormal.style.filter = 'none';
+    const snowContainer = document.getElementById('snow-container');
+    const snowAudio = document.getElementById('sound-snowball');
+
+    // Riferimento alla musica di background standard
+    const bgMusic = document.getElementById('sound-bg-music');
+
+    const goldenBugImg = document.querySelector('#golden-bug img');
+    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
+
+    if (skinId === 'christmas') {
+        // --- LOGICA NATALE ---
+        document.body.classList.add('theme-christmas');
+        if (snowContainer) {
+            snowContainer.style.display = 'block';
+            if (snowContainer.innerHTML === '') {
+                createSnowflakes();
+            }
+        }
+        if (goldenBugImg) {
+            goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
+        }
+
+        // 1. Ferma la musica Standard
+        if (bgMusic) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+        }
+
+        // 2. Avvia audio Neve (Musica di Natale)
+        if (snowAudio) {
+            snowAudio.loop = true;
+            const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+            snowAudio.volume = targetVol;
+
+            if (forcePlayMusic || (gameState.user.masterVolume > 0 && !snowAudio.paused)) {
+                snowAudio.play().catch(e => { console.log("Autoplay neve bloccato"); });
+            }
+        }
+
+    } else {
+        // --- LOGICA SKIN NORMALI ---
+        document.body.classList.remove('theme-christmas');
+
+        if (goldenBugImg) {
+            goldenBugImg.src = './assets/image/bug.webp';
+        }
+
+        // 1. Spegni Neve e Audio Natale
+        if (snowContainer) {
+            snowContainer.style.display = 'none';
+            snowContainer.innerHTML = '';
+        }
+        if (snowAudio) {
+            snowAudio.pause();
+            snowAudio.currentTime = 0;
+        }
+
+        // 2. Riattiva Musica Background Standard (se non c'è evento attivo)
+        if (bgMusic && !window.currentActiveEvent) {
+            setBgMusicVolume(); // Imposta volume corretto
+
+            // Riavvia solo se il volume è udibile
+            if (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0) {
+                bgMusic.play().catch(error => { });
+            }
+        }
     }
+
+    // ... (Il resto della funzione per gestire le immagini rimane invariato) ...
+    if (photoNormal) {
+        photoNormal.src = `./assets/image/${skinData.img}`;
+        photoNormal.style.filter = 'none';
+        photoNormal.classList.remove(...bgClasses);
+        // ... switch classi bg ...
+        if (skinId === 'jesus') photoNormal.classList.add('bg-divine');
+        else if (skinData.rarity) photoNormal.classList.add(`bg-${skinData.rarity}`);
+        else if (skinId === 'christmas') photoNormal.classList.add('bg-christmas');
+        else photoNormal.classList.add('bg-common');
+    }
+
     if (photoClicked) {
-        photoClicked.src = `./assets/image/${data.imgClick}`;
+        photoClicked.src = `./assets/image/${skinData.imgClick}`;
         photoClicked.style.filter = 'none';
+        photoClicked.classList.remove(...bgClasses);
+        // ... switch classi bg ...
+        if (skinId === 'jesus') photoClicked.classList.add('bg-divine');
+        else if (skinData.rarity) photoClicked.classList.add(`bg-${skinData.rarity}`);
+        else if (skinId === 'christmas') photoClicked.classList.add('bg-christmas');
+        else photoClicked.classList.add('bg-common');
+    }
+}
+
+
+// Nuova funzione helper per creare i fiocchi (Aggiungila alla fine del file ui-functions.js)
+function createSnowflakes() {
+    const container = document.getElementById('snow-container');
+    if (!container) return;
+
+    const numberOfSnowflakes = 60; // Numero fiocchi
+
+    for (let i = 0; i < numberOfSnowflakes; i++) {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+
+        const size = Math.random() * 5 + 3 + 'px';
+        snowflake.style.width = size;
+        snowflake.style.height = size;
+
+        snowflake.style.left = Math.random() * 100 + 'vw';
+        const duration = Math.random() * 7 + 5;
+        snowflake.style.animationDuration = duration + 's';
+        snowflake.style.animationDelay = (Math.random() * -20) + 's';
+        snowflake.style.opacity = Math.random() * 0.7 + 0.3;
+
+        container.appendChild(snowflake);
     }
 }
 
@@ -1013,7 +1241,7 @@ function updateStatsUI() {
         <div class="stats-container">
             
             <div class="stats-section">
-                <div class="stats-header">💰 Economia Aziendale</div>
+                <div class="stats-header"><i class="fa-solid fa-wallet"></i> Economia Aziendale</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Bug Attuali (Wallet)</span>
@@ -1048,7 +1276,7 @@ function updateStatsUI() {
             </div>
 
             <div class="stats-section">
-                <div class="stats-header">⚡ Performance & Tech</div>
+                <div class="stats-header"><i class="fa-solid fa-microchip"></i> Performance & Tech</div>     
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Produzione (BPS)</span>
@@ -1070,7 +1298,7 @@ function updateStatsUI() {
             </div>
 
             <div class="stats-section">
-                <div class="stats-header">🎨 Profilo & Visuals</div>
+                <div class="stats-header"><i class="fa-solid fa-id-card"></i> Profilo & Visuals</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Skin Equipaggiata</span>

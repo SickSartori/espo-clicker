@@ -107,18 +107,84 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     }
 
+    // Funzione Helper per il controllo versione
+    function checkSaveCompatibility(savedData) {
+        if (!window.GAME_VERSION) return true; // Dev safety
+
+        // 1. Salvataggi antichi (senza versione) -> Incompatibili
+        if (!savedData || !savedData.version) {
+            console.warn("Salvataggio Legacy: Reset richiesto.");
+            return false;
+        }
+
+        const current = window.GAME_VERSION;
+        const saved = savedData.version;
+
+        // 2. Controllo STAGE (Non mischiare Beta con Stable)
+        if (saved.stage !== current.stage) {
+            console.warn(`Mismatch Stage: Salvataggio ${saved.stage} vs Gioco ${current.stage}`);
+            return false;
+        }
+
+        // 3. Regola STABLE: Sempre compatibile in avanti
+        if (current.stage === 'stable') {
+            // Se siamo in stable, accettiamo anche major diverse (es. Save 1.0 su Gioco 2.0)
+            return true;
+        }
+
+        // 4. Regola BETA/ALPHA: Rottura su cambio Major
+        // Se siamo in beta, la versione Major deve coincidere.
+        if (saved.major !== current.major) {
+            console.warn(`Mismatch Major (Beta): v${saved.major} non compatibile con v${current.major}`);
+            return false;
+        }
+
+        return true; // Tutto ok (es. 3.0 -> 3.1)
+    }
+
     function loadGame() {
         const savedState = localStorage.getItem(SAVE_KEY);
+
         if (savedState) {
             try {
                 const parsedState = JSON.parse(savedState);
 
+                // --- 1. CONTROLLO COMPATIBILITÀ VERSIONE ---
+                if (!checkSaveCompatibility(parsedState)) {
+                    console.log("Versione incompatibile. Reset automatico.");
+                    // Avviso visivo
+                    setTimeout(() => {
+                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Reset Versione: ${parsedState.version?.stage || 'Legacy'} incompatibile!`, 'warning');
+                    }, 500);
+
+                    // Forza il salvataggio della nuova versione pulita
+                    saveGame();
+                    return; // Interrompi caricamento
+                }
+                // ------------------------------------------
+
+                // Gestione Migrazione Legacy (buildings -> teams)
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
                 }
 
+                // Fusione dei dati salvati con lo stato attuale
                 deepMerge(gameState, parsedState);
+
+                // --- 2. AGGIORNAMENTO VERSIONE ---
+                // Aggiorniamo la versione nel gioco caricato all'ultima versione del codice
+                // (Utile per aggiornamenti minori, es. caricare un save 3.0 su 3.1)
+                if (window.GAME_VERSION) {
+                    gameState.version = {
+                        major: window.GAME_VERSION.major,
+                        minor: window.GAME_VERSION.minor,
+                        stage: window.GAME_VERSION.stage
+                    };
+                }
+
+
+                // Inizializzazione oggetti mancanti (se aggiunti in nuove versioni)
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                 for (const key in gameData.buildingEnhancements) {
                     if (!gameState.buildingEnhancements[key]) {
@@ -133,14 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                // Ripristino variabili temporali e impostazioni
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
+
                 if (!gameState.filterSettings) {
                     gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
                 }
+
+                // Ripristino Achievements
                 if (gameData.achievements) {
                     if (!gameState.achievements) gameState.achievements = {};
                     for (const key in gameData.achievements) {
@@ -149,37 +220,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }
+
+                // Applicazione Skin Visiva
                 if (gameState.skins && gameState.skins.current) {
                     if (typeof applySkinVisuals === 'function') {
                         applySkinVisuals(gameState.skins.current);
                     }
                 }
+
             } catch (e) { console.error("Errore loadGame:", e); }
         }
 
+        // Recupero username legacy se presente
         const savedUsername = localStorage.getItem('espooClickerUsername');
         if (savedUsername) gameState.user.username = savedUsername;
 
+        // Ricalcolo Bonus
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // --- FIX AUTO-REPAIR SKIN (LOCALE) ---
+        // --- FIX AUTO-REPAIR SKIN (Controllo coerenza) ---
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
 
-            // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
+            // Se l'obiettivo è riscattato e dà una skin, assicuriamoci di averla
             if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
                 const skinId = achData.reward.id;
-                // Se la skin NON è nell'inventario, aggiungila ora
                 if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
                     console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
                     gameState.skins.unlocked.push(skinId);
                 }
             }
         }
-        // -------------------------------------
 
+        // Applicazione Effetti passivi al caricamento
         if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
         if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
     }
@@ -271,9 +346,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
+        // --- NUOVO: CONTROLLO FINE CRUNCH TIME ---
+        // Se il tempo è scaduto MA l'effetto è ancora visibile (classe presente)
+        if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
+            if (document.body.classList.contains('crunch-active')) {
 
+                // 1. Spegni Effetti CSS e Audio
+                document.body.classList.remove('crunch-active');
+
+                const overlay = document.getElementById('crunch-overlay');
+                if (overlay) overlay.style.display = 'none';
+
+                const fireSound = document.getElementById('sound-fire');
+                if (fireSound) {
+                    fireSound.pause();
+                    fireSound.currentTime = 0;
+                }
+
+                // 2. STOP PARTICELLE (Importante!)
+                const fireContainer = document.getElementById('fire-particles-container');
+                if (fireContainer) {
+                    fireContainer.style.display = 'none';
+                    fireContainer.innerHTML = ''; // Pulisce tutte le particelle esistenti
+                }
+                // Ferma il generatore (variabile definita in game-logic.js, accessibile qui se globale)
+                if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
+                    clearInterval(fireParticleInterval);
+                    fireParticleInterval = null;
+                }
+
+                // 3. Reset Logica
+                crunchTimeMultiplier = 1;
+                recalculateCPS();
+
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof refreshAllStores === 'function') refreshAllStores();
+                if (window.currentActiveEvent === 'Crunch Time') {
+                    window.currentActiveEvent = null; // Rilascia il lock
+                    console.log("Crunch Time terminato naturalmente. Lock rilasciato.");
+                }
+                window.EspooClicker.showToast('Crunch Time terminato.', 'info');
+            }
+        }
+        // ------------------------------------------
     }
-
     // --------- 11. INIZIALIZZAZIONE ---------
     function startGameRoutines() {
         // Volume audio iniziale
@@ -301,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100); // 100ms = 10 volte al secondo, fluido e leggero
 
-        // Auto-save (ogni 5s)
-        setInterval(saveGame, 5000);
+        // Auto-save (ogni 30s)
+        setInterval(saveGame, 30000);
 
         // Classifica (ogni 30s) - Nota: rimosso score/prestige dai parametri come discusso per sicurezza
         setInterval(() => {
@@ -315,15 +431,104 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
 
+
+
     function initializeGame() {
+        // --- Music Starter Persistente ---
+        const musicStarter = () => {
+            // Non avviare se c'è un evento attivo (Rick/Ricardo/404)
+            if (document.body.classList.contains('rick-rolling') || document.body.classList.contains('bluescreen-active')) return;
+
+            const bgMusic = document.getElementById('sound-bg-music');
+            const snowAudio = document.getElementById('sound-snowball');
+            const masterVol = gameState.user.masterVolume;
+
+            if (masterVol <= 0) return;
+
+            if (gameState.skins.current === 'christmas') {
+                if (snowAudio && snowAudio.paused) {
+                    snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
+                    snowAudio.play().then(() => {
+                        document.removeEventListener('click', musicStarter);
+                        document.removeEventListener('touchstart', musicStarter);
+                    }).catch(() => { });
+                }
+            } else {
+                if (bgMusic && bgMusic.paused) {
+                    if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+                    bgMusic.play().then(() => {
+                        document.removeEventListener('click', musicStarter);
+                        document.removeEventListener('touchstart', musicStarter);
+                    }).catch(() => { });
+                }
+            }
+        };
+
+        document.addEventListener('click', musicStarter);
+        document.addEventListener('touchstart', musicStarter, { passive: true });
+
+        // Setup Volume Iniziale
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.volume = gameState.user.masterVolume;
+        });
+
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
+        // Cleanup classi UI
+        document.body.classList.remove('rick-rolling', 'bluescreen-active');
+        const gContainer = document.getElementById('game-container');
+        if (gContainer) {
+            gContainer.style.opacity = '1';
+            gContainer.style.transform = 'none';
+            gContainer.style.pointerEvents = 'auto';
+        }
+
+        // Caricamento Dati
         buildStores();
         loadGame();
+
+        // --- FIX REFRESH (F5) ---
+        // Resetta lo stato degli eventi se l'utente ha ricaricato durante un evento
+        isBluescreenActive = false;
+        bluescreenMultiplier = 1;
+        if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
+
+        // Ferma e nascondi tutti i video eventi
+        const vids = ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
+        vids.forEach(id => {
+            const v = document.getElementById(id);
+            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+        });
+
+        // Reset Audio Click
+        const soundClick = document.getElementById('sound-click');
+        if (soundClick) soundClick.playbackRate = 1;
+
+        // Ripristino Crunch Time
+        const now = Date.now();
+        if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
+            crunchTimeEndTime = gameState.crunchTimeEndTime;
+            crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
+            if (typeof resumeCrunchTimeEffects === 'function') resumeCrunchTimeEffects();
+        }
+
+        // Applicazione Skin
+        if (typeof applySkinVisuals === 'function') {
+            applySkinVisuals(gameState.skins.current);
+        }
+
+        // Fix Filtri Negozi
+        const globalFilterSelect = document.getElementById('global-filter-select');
+        if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
+            globalFilterSelect.value = 'available';
+            gameState.filterSettings.globalFilter = 'available';
+        }
+
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
+        // Setup Bottoni Moltiplicatore
         const btns = {
             '1x': document.getElementById('btn-1x'),
             '5x': document.getElementById('btn-5x'),
@@ -333,85 +538,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function setBuyMultiplier(value) {
             buyMultiplier = value;
-
-            // Reset colori
-            for (let k in btns) {
-                if (btns[k]) btns[k].style.backgroundColor = '#34495e';
-            }
-
-            // Attiva quello giusto
+            for (let k in btns) { if (btns[k]) btns[k].style.backgroundColor = '#34495e'; }
             const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
             if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
-
             playSound('sound-click');
             refreshAllStores();
             updateUI();
         }
+
         if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
         if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
         if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
 
-        const crunchBtn = document.getElementById('skill-crunchTime');
-
-        const tabs = document.querySelectorAll('.tab-btn');
-        const contents = document.querySelectorAll('.tab-content');
-
-        const globalFilterSelect = document.getElementById('global-filter-select');
-
+        // Setup Tasti Rapidi
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-                // Se il focus è su un input di testo (es. chat, login), lascia fare
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-                // Altrimenti blocca
                 e.preventDefault();
             }
         });
 
+        // Setup Mute Button
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
+            muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+
             muteBtn.addEventListener('click', () => {
                 if (gameState.user.masterVolume > 0) {
-                    // Muta
-                    gameState.lastVolume = gameState.user.masterVolume; // Salva il volume precedente
+                    gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
-                    muteBtn.textContent = '🔇';
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 } else {
-                    // Smuta
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                    muteBtn.textContent = '🔊';
+                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    playSound('sound-click');
                 }
-                // Aggiorna slider nel modale se aperto
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
 
-                // Applica
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+
+                const snowAudio = document.getElementById('sound-snowball');
+                if (snowAudio) snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             });
         }
 
-        // Rimuovi focus dal clicker dopo ogni click per sicurezza
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+            clickerButton.addEventListener('click', clickCookie);
         }
 
+        // Setup Filtri Store
         if (globalFilterSelect) {
-            const savedFilter = gameState.filterSettings.globalFilter || 'available';
-            globalFilterSelect.value = savedFilter;
-            gameState.filterSettings.globalFilter = savedFilter;
-
+            globalFilterSelect.value = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.addEventListener('change', (e) => {
-                const newValue = e.target.value;
-                gameState.filterSettings.globalFilter = newValue;
+                gameState.filterSettings.globalFilter = e.target.value;
                 refreshAllStores();
                 saveGame();
-                if (window.EspooClicker && window.EspooClicker.playSound) {
-                    window.EspooClicker.playSound('sound-click');
-                }
+                if (window.EspooClicker) window.EspooClicker.playSound('sound-click');
             });
         }
+
+        // Setup Mobile Tabs
+        const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
+        if (window.innerWidth <= 1024) {
+            document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+            const center = document.getElementById('center-column');
+            if (center) center.classList.add('mobile-active');
+        }
+
+        mobileBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                mobileBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const targetId = btn.getAttribute('data-target');
+                document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+                const targetCol = document.getElementById(targetId);
+                if (targetCol) {
+                    targetCol.classList.add('mobile-active');
+                    if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
+                }
+                playSound('sound-click');
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) {
+                document.querySelectorAll('.game-column').forEach(col => {
+                    col.classList.remove('mobile-active');
+                    col.style.display = '';
+                });
+            } else if (!document.querySelector('.game-column.mobile-active')) {
+                document.getElementById('center-column').classList.add('mobile-active');
+            }
+        });
+
+        // Setup Desktop Tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
 
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -421,16 +647,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 tab.classList.add('active');
                 const targetId = tab.getAttribute('data-target');
                 document.getElementById(targetId).style.display = 'block';
-
                 tab.classList.remove('notify');
 
                 const filterSelect = document.getElementById('global-filter-select');
-
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
-                        if (!filterSelect.disabled) {
-                            filterSelect.setAttribute('data-prev', filterSelect.value);
-                        }
+                        if (!filterSelect.disabled) filterSelect.setAttribute('data-prev', filterSelect.value);
                         filterSelect.value = 'all';
                         filterSelect.disabled = true;
                         gameState.filterSettings.globalFilter = 'all';
@@ -445,15 +667,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     refreshAllStores();
                 }
-                if (e.isTrusted) {
-                    playSound('sound-click');
-                }
+                if (e.isTrusted) playSound('sound-click');
             });
         });
 
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
+        // Skill & Event Listeners
+        const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
                 if (e.detail === 0) return;
@@ -462,22 +684,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-
-        if (clickerButton) clickerButton.addEventListener('click', clickCookie);
-
         if (goldenBug) goldenBug.addEventListener('click', (e) => {
-            if (e.detail === 0) return; clickGoldenBug();
+            if (e.detail === 0) return;
+            clickGoldenBug();
         });
-
 
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
-            cancelPrestigeBtn.addEventListener('click', () => {
-                prestigeModal.style.display = 'none';
-            });
+            cancelPrestigeBtn.addEventListener('click', () => prestigeModal.style.display = 'none');
         }
 
+        // Global Buy Listener
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
@@ -495,6 +713,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof buyTeam === 'function') buyTeam(name);
             }
         });
+
+        // Version
+        const vDisplay = document.getElementById('version-display');
+        if (vDisplay && window.GAME_VERSION) {
+            vDisplay.textContent = window.GAME_VERSION.toString();
+            if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12';
+            if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
+        }
     }
 
     // --------- API GLOBALE ---------
@@ -502,7 +728,6 @@ document.addEventListener('DOMContentLoaded', () => {
         getGameState: () => gameState,
         saveGame: saveGame,
         showToast: showToast,
-
         playSound: playSound,
         updateStatsUI: updateStatsUI,
         formatNumber: formatNumber,
@@ -510,10 +735,32 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => { audio.volume = gameState.user.masterVolume; });
+            document.querySelectorAll('audio').forEach(audio => {
+                if (audio.id === 'sound-snowball') {
+                    audio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 1.5;
+                } else {
+                    audio.volume = gameState.user.masterVolume;
+                }
+            });
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
+
+        // --- NUOVO: Funzione per caricare la cheatboard su richiesta ---
+        loadCheatboard: () => {
+            // Evita di caricarlo due volte
+            if (document.querySelector('script[src="js/cheatboard.js"]')) return;
+
+            fetch('js/cheatboard.js', { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        const script = document.createElement('script');
+                        script.src = 'js/cheatboard.js';
+                        document.body.appendChild(script);
+                    }
+                })
+                .catch(e => { });
+        },
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
@@ -528,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 3. Merge dei dati
                     const cloudState = JSON.parse(cloudJSON);
 
-                    // Gestione compatibilità cloud: "buildings" -> "teams"
+                    // Gestione compatibilità cloud
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
@@ -536,11 +783,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     deepMerge(gameState, cloudState);
 
-                    // --- FIX SICUREZZA: RIPARA I DATI SKIN CORROTTI ---
+                    // --- FIX SICUREZZA SKIN ---
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
-                        console.warn("Dati skin corrotti. Ripristino default.");
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
+
+                    // --- FIX CRUCIALE: APPLICA LA SKIN VISIVAMENTE ---
+                    if (typeof applySkinVisuals === 'function') {
+                        applySkinVisuals(gameState.skins.current);
+                    }
+                    // -----------------------------------------------
 
                     // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
@@ -595,3 +847,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeGame();
 });
+
