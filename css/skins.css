@@ -265,22 +265,6 @@ Natale
     font-size: 1.5rem;
 }
 
-body.theme-christmas {
-    /* Sfondo generale pagina: Gradiente Notte di Natale */
-    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), auto;
-}
-
-body.theme-christmas button,
-body.theme-christmas .buy-btn,
-body.theme-christmas .nav-item,
-body.theme-christmas .tab-btn {
-    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), pointer;
-}
-
-body.theme-christmas #clicker-btn {
-    cursor: url('https://www.rw-designer.com/cursor-view/95789.png'), pointer !important;
-}
 
 /* Modifica il contenitore principale del gioco */
 body.theme-christmas #game-container {
@@ -308,8 +292,8 @@ body.theme-christmas #game-navbar {
 body.theme-christmas .store-section h2,
 body.theme-christmas .section-header h2 {
     color: #e74c3c !important;
-    /* Rosso Natale */
-    text-shadow: 0 0 5px #fff;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8) !important;
+    font-weight: 900;
 }
 
 /* Bottoni Compra (Verdi con bordo rosso) */
@@ -317,6 +301,8 @@ body.theme-christmas .buy-btn:not(:disabled) {
     background: linear-gradient(to bottom, #27ae60, #145a32) !important;
     border: 1px solid #c0392b !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    /* Rimuoviamo eventuali shadow interne che sfocano il testo */
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5) !important;
 }
 
 body.theme-christmas .buy-btn:hover:not(:disabled) {
@@ -327,8 +313,8 @@ body.theme-christmas .buy-btn:hover:not(:disabled) {
 /* Punteggio */
 body.theme-christmas #score-display {
     color: #ecf0f1 !important;
-    /* Bianco Ghiaccio */
-    text-shadow: 0 0 10px #e74c3c, 2px 2px 0 #000;
+    /* Riduciamo il glow rosso che potrebbe impastare */
+    text-shadow: 2px 2px 0 #000, 0 0 10px rgba(231, 76, 60, 0.5) !important;
 }
 
 body.theme-christmas #cps-display {
@@ -370,13 +356,11 @@ body.theme-christmas.rick-rolling .game-column {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
-    /* Lascia passare i click */
+    pointer-events: none !important;
+    /* FORZIAMO il passaggio del click */
     z-index: 9999;
-    /* Sopra a tutto ma sotto i modali */
     overflow: hidden;
     display: none;
-    /* Nascosto di default */
 }
 
 .snowflake {
@@ -385,7 +369,8 @@ body.theme-christmas.rick-rolling .game-column {
     background-color: white;
     border-radius: 50%;
     opacity: 0.8;
-    pointer-events: none;
+    pointer-events: none !important;
+    /* FORZIAMO anche qui */
     animation-name: fall;
     animation-timing-function: linear;
     animation-iteration-count: infinite;

@@ -25,20 +25,21 @@ function playSound(id, type = 'sfx') {
     const originalSound = document.getElementById(id);
     if (!originalSound) return;
 
-    // Calcolo Volume Finale
+    // 1. Recupera il moltiplicatore custom dal Mixer (o usa 1.0 se non esiste)
+    // Questo collega finalmente lo slider al suono reale!
+    const customVol = (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined)
+        ? gameState.user.audioCustom[id]
+        : 1.0;
+
+    // 2. Calcolo Volume Finale (Master * Canale * CustomMixer)
     const master = gameState.user.masterVolume;
     const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
-    let finalVolume = master * channel;
 
-    if (id === 'sound-achievement') {
-        finalVolume = finalVolume * 0.4;
-    }
-    if (id === 'sound-click') {
-        finalVolume = finalVolume * 0.4;
-    }
-    if (id === 'sound-buy') {
-        finalVolume = finalVolume * 0.4;
-    }
+    let finalVolume = master * channel * customVol;
+
+    // NOTA: Ho rimosso i vecchi "if (id === 'sound-click') volume * 0.4" 
+    // perché ora sono gestiti dai valori di default nel game-data.js 
+    // e modificabili dall'utente nel menu.
 
     if (finalVolume <= 0) {
         if (type === 'music') originalSound.pause();
@@ -47,22 +48,19 @@ function playSound(id, type = 'sfx') {
 
     try {
         if (type === 'sfx') {
-
             const soundClone = originalSound.cloneNode();
             soundClone.volume = finalVolume;
 
             const playPromise = soundClone.play();
             if (playPromise !== undefined) {
-                playPromise
-                    .then(() => {
-                        // Una volta finito, rimuovi il clone dalla memoria
-                        soundClone.addEventListener('ended', () => {
-                            soundClone.remove();
-                        });
-                    })
+                playPromise.then(() => {
+                    soundClone.addEventListener('ended', () => {
+                        soundClone.remove();
+                    });
+                })
                     .catch(e => {
                         // Ignora errori di autoplay o interruzione
-                        console.warn("Audio clone error:", e);
+                        // console.warn("Audio clone error:", e); 
                     });
             }
         } else {
@@ -80,44 +78,71 @@ function setBgMusicVolume() {
     const bgMusic = document.getElementById('sound-bg-music');
     if (!bgMusic) return;
 
-    // CONFIGURAZIONE CENTRALE: Cambia questo 0.1 per alzare/abbassare ovunque
-    const BASE_VOLUME_MULTIPLIER = 0.05;
+    // --- NUOVA LOGICA: Check Skin Natale ---
+    // Se la skin è Natale, fermiamo la musica base (perché c'è già quella della neve)
+    if (gameState.skins.current === 'christmas') {
+        if (!bgMusic.paused) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0; // Opzionale: resetta all'inizio
+        }
+        return; // Esce dalla funzione, ignorando il calcolo del volume sotto
+    }
+    // ---------------------------------------
 
+    const BASE_VOLUME_MULTIPLIER = 0.05;
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
 
-    // Applica il volume calcolato
+    // Applica il volume calcolato solo se NON siamo a Natale
     bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER;
+
+    // Se il volume è > 0 e non è in pausa (e non siamo in un evento che la blocca), assicuriamoci che suoni
+    if (bgMusic.paused && bgMusic.volume > 0 && !window.currentActiveEvent) {
+        bgMusic.play().catch(e => { });
+    }
 }
 
-// Funzione per aggiornare i volumi dei loop in corso (es. BlueScreen, Rick Roll)
 function updateAmbientVolume() {
+    setBgMusicVolume(); // Gestisce la musica base
 
-    setBgMusicVolume();
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
-    const finalVol = master * music;
+    const sfx = gameState.user.sfxVolume;
 
-    // Aggiorna Blue Screen
+    // Helper: prende il valore custom o 1.0 se non esiste
+    const getVol = (id) => (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined) ? gameState.user.audioCustom[id] : 1.0;
+
+    // --- ERRORE 404 ---
     const bluescreen = document.getElementById('sound-bluescreen');
-    if (bluescreen) bluescreen.volume = finalVol * 0.5;
+    if (bluescreen) {
+        bluescreen.volume = master * music * getVol('sound-bluescreen');
+    }
 
-    // Aggiorna Rick Roll Video
+    // --- VIDEO RICK ROLL ---
     const rickVideo = document.getElementById('rick-roll-video');
-    if (rickVideo) rickVideo.volume = finalVol * 0.5;
+    if (rickVideo) {
+        // Applica il custom volume 'video-rick'
+        rickVideo.volume = master * music * getVol('video-rick');
+    }
 
-    // --- AGGIORNAMENTO LISTA RICARDO COMPLETA ---
+    // --- VIDEO RICARDO (Tutti e 3) ---
     const ricardoIds = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
     ricardoIds.forEach(id => {
         const vid = document.getElementById(id);
-        if (vid) vid.volume = finalVol * 0.8;
+        if (vid) {
+            // Applica il custom volume 'video-ricardo'
+            vid.volume = master * music * getVol('video-ricardo');
+        }
     });
 
+    // --- LOOP EFFETTI ---
+    const fireSound = document.getElementById('sound-fire');
+    if (fireSound) fireSound.volume = master * sfx * getVol('sound-fire');
+
     const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) {
-        snowAudio.volume = finalVol * 0.2;
-    }
+    if (snowAudio) snowAudio.volume = master * music * getVol('sound-snowball');
 }
+
 // Funzione per acquistare Skin con Token Lab
 function buySkin(skinId) {
     const data = gameData.skins[skinId];
@@ -406,16 +431,21 @@ function stopBluescreenEffect() {
     isBluescreenActive = false;
     bluescreenMultiplier = 1;
     document.body.classList.remove('bluescreen-active');
+    document.body.classList.remove('rick-rolling'); // Sicurezza extra
 
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) emDisplay.style.display = 'none';
 
     recalculateCPS();
 
-    // Stop Audio Standard
+    // Stop Audio Eventi
     try {
         const soundBluescreen = document.getElementById('sound-bluescreen');
         if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
+
+        // Stop Video se ancora attivi
+        const rickVideo = document.getElementById('rick-roll-video');
+        if (rickVideo) { rickVideo.pause(); rickVideo.style.display = 'none'; }
     } catch (e) { }
 
     // Stop Glitch Natale
@@ -424,28 +454,32 @@ function stopBluescreenEffect() {
         audioGlitchInterval = null;
     }
 
-    // Ripristina Audio Natale
+    // --- FIX RIAVVIO MUSICA BACKGROUND ---
+    // Questo blocco assicura che la musica riparta DOPO l'evento
     const snowAudio = document.getElementById('sound-snowball');
     const bgMusic = document.getElementById('sound-bg-music');
+    const masterVol = gameState.user.masterVolume;
 
-    // Calcola il volume corrente
-    const currentVol = gameState.user.masterVolume * gameState.user.musicVolume;
-
-    if (gameState.skins.current === 'christmas') {
-        // Se è Natale, riparte la neve
-        if (snowAudio) {
-            snowAudio.playbackRate = 1.0;
-            snowAudio.volume = currentVol * 0.2;
-            if (snowAudio.paused && currentVol > 0) snowAudio.play().catch(e => { });
-        }
-    } else {
-        // ALTRIMENTI riparte la musica normale
-        if (bgMusic) {
-            setBgMusicVolume();
-            if (bgMusic.paused && currentVol > 0) bgMusic.play().catch(e => { });
+    // Calcoliamo se dobbiamo suonare (volume > 0)
+    if (masterVol > 0) {
+        if (gameState.skins.current === 'christmas') {
+            // Logica Natale
+            if (snowAudio) {
+                snowAudio.playbackRate = 1.0;
+                snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
+                // Riavvia solo se era in pausa
+                if (snowAudio.paused) snowAudio.play().catch(e => console.log("Attesa interazione per riavvio neve"));
+            }
+        } else {
+            // Logica Normale
+            if (bgMusic) {
+                setBgMusicVolume(); // Reimposta volume corretto
+                if (bgMusic.paused) bgMusic.play().catch(e => console.log("Attesa interazione per riavvio musica"));
+            }
         }
     }
 
+    // Rilascia il lock dell'evento
     clearActiveEvent();
 }
 
@@ -456,17 +490,15 @@ function triggerRickRoll() {
     const video = document.getElementById('rick-roll-video');
     if (!video) { clearActiveEvent(); return false; }
 
-    // Lazy Load
     if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
 
-    // SPEGNI LA NEVE E AUDIO NATALE
+    // Stop suoni ambiente
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) snowAudio.pause();
-
     const bgMusic = document.getElementById('sound-bg-music');
     if (bgMusic) bgMusic.pause();
 
-    // Setup Video
+    // Setup Moltiplicatore
     let rickMultiplier = Math.floor(Math.random() * 8) + 5;
     isBluescreenActive = true;
     bluescreenMultiplier = rickMultiplier;
@@ -482,31 +514,53 @@ function triggerRickRoll() {
 
     video.style.display = 'block';
     video.currentTime = 0;
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+    // Volume basso (2%) per Rick
+    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-rick'] !== undefined)
+        ? gameState.user.audioCustom['video-rick'] : 0.02;
+    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * rickVol;
+
     video.play().catch(e => { });
 
     window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
 
-    // --- MODIFICA: CLICK SUL VIDEO ---
-    // Rende il video cliccabile e cambia il cursore
+    // --- NUOVA LOGICA CLICK VIDEO ---
     video.style.cursor = 'pointer';
+
     const videoClickHandler = (e) => {
-        // Impedisce comportamenti touch di default se necessario e registra il click
-        clickCookie(e);
+        // Evita lo scroll o zoom su mobile
+        // e.preventDefault(); // (Opzionale: scommenta se da problemi su mobile)
+
+        // Creiamo un evento sintetico con le coordinate corrette per clickCookie
+        // 'pointerdown' gestisce sia mouse che touch
+        const syntheticEvent = {
+            detail: 1, // Simula un click reale
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            target: video
+        };
+
+        // Chiama la funzione di click principale
+        clickCookie(syntheticEvent);
+
+        // Piccolo effetto visivo di "pressione" sul video
+        video.style.transform = 'scale(0.98)';
+        setTimeout(() => video.style.transform = 'scale(1)', 50);
     };
 
-    video.addEventListener('mousedown', videoClickHandler);
-    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+    // Usa 'pointerdown' per la massima compatibilità Mobile/Desktop senza doppi click
+    video.addEventListener('pointerdown', videoClickHandler);
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
         video.pause();
         video.style.display = 'none';
 
-        // Pulizia Listener e Stile
+        // Pulizia importante
+        video.style.transform = 'none';
         video.style.cursor = 'default';
-        video.removeEventListener('mousedown', videoClickHandler);
-        video.removeEventListener('touchstart', videoClickHandler);
+        video.removeEventListener('pointerdown', videoClickHandler);
 
         stopBluescreenEffect();
     }, 60000);
@@ -520,25 +574,27 @@ function triggerRicardoEvent() {
 
     const allVideos = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
 
-    // ... logica selezione video ...
+    // Pulizia preventiva
     allVideos.forEach(id => {
         const v = document.getElementById(id);
         if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
     });
+
+    // Selezione Casuale Video
     let availableVideos = allVideos.filter(id => id !== lastRicardoVideoId);
     if (availableVideos.length === 0) availableVideos = allVideos;
     const selectedId = availableVideos[Math.floor(Math.random() * availableVideos.length)];
     lastRicardoVideoId = selectedId;
-    // .............................
 
     const video = document.getElementById(selectedId);
-
     if (!video) { clearActiveEvent(); return false; }
     if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
 
-    // SPEGNI AUDIO NATALE
+    // Stop suoni
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) snowAudio.pause();
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause(); // Aggiunto per sicurezza
 
     let bonusMult = Math.floor(Math.random() * 8) + 5;
     isBluescreenActive = true;
@@ -555,32 +611,49 @@ function triggerRicardoEvent() {
 
     video.style.display = 'block';
     video.currentTime = 0;
-    video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+    // Ricardo al 80% (ha bisogno di volume alto)
+    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-ricardo'] !== undefined)
+        ? gameState.user.audioCustom['video-ricardo'] : 0.8;
+    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * ricardoVol;
+
     video.play().catch(e => { });
 
     window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
 
-    // --- MODIFICA: CLICK SUL VIDEO ---
+    // --- NUOVA LOGICA CLICK VIDEO ---
     video.style.cursor = 'pointer';
-    const videoClickHandler = (e) => { clickCookie(e); };
 
-    video.addEventListener('mousedown', videoClickHandler);
-    video.addEventListener('touchstart', videoClickHandler, { passive: true });
+    const videoClickHandler = (e) => {
+        const syntheticEvent = {
+            detail: 1,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            target: video
+        };
+
+        clickCookie(syntheticEvent);
+
+        video.style.transform = 'scale(0.99)'; // Effetto leggermente diverso per Ricardo
+        setTimeout(() => video.style.transform = 'scale(1)', 50);
+    };
+
+    video.addEventListener('pointerdown', videoClickHandler);
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
 
-        // Cleanup completo
+        // Cleanup completo su TUTTI i video possibili
         allVideos.forEach(id => {
             const v = document.getElementById(id);
             if (v) {
                 v.pause();
                 v.style.display = 'none';
                 v.currentTime = 0;
-                // Rimuovi listener da TUTTI i video potenziali per sicurezza
+                v.style.transform = 'none';
                 v.style.cursor = 'default';
-                v.removeEventListener('mousedown', videoClickHandler);
-                v.removeEventListener('touchstart', videoClickHandler);
+                v.removeEventListener('pointerdown', videoClickHandler);
             }
         });
 

@@ -61,7 +61,30 @@ function getInitialGameState() {
             username: 'Giocatore',
             masterVolume: 0.8,
             sfxVolume: 1.0,
-            musicVolume: 0.5
+            musicVolume: 0.5,
+
+            // --- MODIFICA QUI I VALORI DI DEFAULT (0.0 a 1.0) ---
+            audioCustom: {
+                // Suoni SFX
+                'sound-click': 0.4,
+                'sound-buy': 0.4,
+                'sound-achievement': 0.4,
+                'sound-error': 0.5,
+                'sound-golden': 0.6,
+                'sound-prestige': 0.6,
+                'sound-hover': 0.2,
+
+                // Loop e Ambienti
+                'sound-bluescreen': 0.3,
+                'sound-fire': 0.5,
+                'sound-snowball': 0.2,
+                'sound-merry': 0.5,
+                'sound-bg-music': 0.05,
+
+                // Video (Default 50%)
+                'video-rick': 0.5,
+                'video-ricardo': 0.5
+            }
         },
         filterSettings: {
             globalFilter: 'available'

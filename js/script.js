@@ -434,61 +434,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function initializeGame() {
-        // --- FIX MUSICA ROBUSTO (Persistente) ---
-        // Questa funzione prova ad avviare la musica ad ogni click finché non ci riesce
+        // --- Music Starter Persistente ---
         const musicStarter = () => {
-            // 1. Se c'è un evento speciale attivo (Rick/Ricardo/404), NON far partire la musica base
-            if (document.body.classList.contains('rick-rolling') || document.body.classList.contains('bluescreen-active')) {
-                return;
-            }
+            // Non avviare se c'è un evento attivo (Rick/Ricardo/404)
+            if (document.body.classList.contains('rick-rolling') || document.body.classList.contains('bluescreen-active')) return;
 
             const bgMusic = document.getElementById('sound-bg-music');
             const snowAudio = document.getElementById('sound-snowball');
             const masterVol = gameState.user.masterVolume;
 
-            // Se il volume è 0, non proviamo nemmeno (evita errori console)
             if (masterVol <= 0) return;
 
-            // CASO A: SIAMO A NATALE
             if (gameState.skins.current === 'christmas') {
                 if (snowAudio && snowAudio.paused) {
                     snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
                     snowAudio.play().then(() => {
-                        // Successo! Rimuoviamo i listener
                         document.removeEventListener('click', musicStarter);
                         document.removeEventListener('touchstart', musicStarter);
-                    }).catch(e => console.log("Attesa input per neve..."));
+                    }).catch(() => { });
                 }
-            }
-            // CASO B: GIOCO NORMALE
-            else {
+            } else {
                 if (bgMusic && bgMusic.paused) {
-                    setBgMusicVolume();
+                    if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
                     bgMusic.play().then(() => {
                         document.removeEventListener('click', musicStarter);
                         document.removeEventListener('touchstart', musicStarter);
-                    }).catch(e => console.log("Attesa input per musica..."));
+                    }).catch(() => { });
                 }
             }
         };
 
-        // Aggiungiamo i listener PERSISTENTI (non { once: true })
-        // Proveranno ad avviare l'audio ad ogni interazione finché non funziona
         document.addEventListener('click', musicStarter);
         document.addEventListener('touchstart', musicStarter, { passive: true });
 
-        // Volume audio iniziale
+        // Setup Volume Iniziale
         document.querySelectorAll('audio').forEach(audio => {
             audio.volume = gameState.user.masterVolume;
         });
 
-        // Prevenzione menu contestuale e trascinamento immagini
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
-        // --- 1. CLEANUP INIZIALE (Fix post-reset) ---
+        // Cleanup classi UI
         document.body.classList.remove('rick-rolling', 'bluescreen-active');
-
         const gContainer = document.getElementById('game-container');
         if (gContainer) {
             gContainer.style.opacity = '1';
@@ -496,37 +484,51 @@ document.addEventListener('DOMContentLoaded', () => {
             gContainer.style.pointerEvents = 'auto';
         }
 
-        // --- 2. CARICAMENTO DATI ---
+        // Caricamento Dati
         buildStores();
         loadGame();
 
-        // --- 3. RIPRISTINO STATI ---
+        // --- FIX REFRESH (F5) ---
+        // Resetta lo stato degli eventi se l'utente ha ricaricato durante un evento
+        isBluescreenActive = false;
+        bluescreenMultiplier = 1;
+        if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
+
+        // Ferma e nascondi tutti i video eventi
+        const vids = ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
+        vids.forEach(id => {
+            const v = document.getElementById(id);
+            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+        });
+
+        // Reset Audio Click
+        const soundClick = document.getElementById('sound-click');
+        if (soundClick) soundClick.playbackRate = 1;
+
+        // Ripristino Crunch Time
         const now = Date.now();
         if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
-            console.log("Crunch Time ancora attivo! Ripristino effetti...");
             crunchTimeEndTime = gameState.crunchTimeEndTime;
             crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
-            if (typeof resumeCrunchTimeEffects === 'function') {
-                resumeCrunchTimeEffects();
-            }
+            if (typeof resumeCrunchTimeEffects === 'function') resumeCrunchTimeEffects();
         }
 
+        // Applicazione Skin
         if (typeof applySkinVisuals === 'function') {
             applySkinVisuals(gameState.skins.current);
         }
 
-        // Gestione filtro "Mostra Tutto" vs "Disponibili" dopo un reset
+        // Fix Filtri Negozi
         const globalFilterSelect = document.getElementById('global-filter-select');
         if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
             globalFilterSelect.value = 'available';
             gameState.filterSettings.globalFilter = 'available';
         }
 
-        // Aggiorna tutta l'interfaccia
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
-        // --- 4. GESTIONE BOTTONI MOLTIPLICATORE (1x, 5x, MAX) ---
+        // Setup Bottoni Moltiplicatore
         const btns = {
             '1x': document.getElementById('btn-1x'),
             '5x': document.getElementById('btn-5x'),
@@ -536,9 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function setBuyMultiplier(value) {
             buyMultiplier = value;
-            for (let k in btns) {
-                if (btns[k]) btns[k].style.backgroundColor = '#34495e';
-            }
+            for (let k in btns) { if (btns[k]) btns[k].style.backgroundColor = '#34495e'; }
             const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
             if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
             playSound('sound-click');
@@ -551,11 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
         if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
 
-        // --- 5. ALTRI EVENT LISTENER ---
-        const crunchBtn = document.getElementById('skill-crunchTime');
-        const tabs = document.querySelectorAll('.tab-btn');
-        const contents = document.querySelectorAll('.tab-content');
-
+        // Setup Tasti Rapidi
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -563,13 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Setup Mute Button
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
-            if (gameState.user.masterVolume <= 0) {
-                muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-            } else {
-                muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-            }
+            muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
 
             muteBtn.addEventListener('click', () => {
                 if (gameState.user.masterVolume > 0) {
@@ -581,68 +574,55 @@ document.addEventListener('DOMContentLoaded', () => {
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                     playSound('sound-click');
                 }
-
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
 
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
 
                 const snowAudio = document.getElementById('sound-snowball');
-                if (snowAudio) {
-                    snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-                }
+                if (snowAudio) snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             });
         }
 
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+            clickerButton.addEventListener('click', clickCookie);
         }
 
+        // Setup Filtri Store
         if (globalFilterSelect) {
-            const savedFilter = gameState.filterSettings.globalFilter || 'available';
-            globalFilterSelect.value = savedFilter;
-            gameState.filterSettings.globalFilter = savedFilter;
-
+            globalFilterSelect.value = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.addEventListener('change', (e) => {
-                const newValue = e.target.value;
-                gameState.filterSettings.globalFilter = newValue;
+                gameState.filterSettings.globalFilter = e.target.value;
                 refreshAllStores();
                 saveGame();
-                if (window.EspooClicker && window.EspooClicker.playSound) {
-                    window.EspooClicker.playSound('sound-click');
-                }
+                if (window.EspooClicker) window.EspooClicker.playSound('sound-click');
             });
         }
 
+        // Setup Mobile Tabs
         const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
-
-        function setupMobileTabs() {
-            if (window.innerWidth <= 1024) {
-                document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
-                const center = document.getElementById('center-column');
-                if (center) center.classList.add('mobile-active');
-            }
-
-            mobileBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    mobileBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const targetId = btn.getAttribute('data-target');
-                    document.querySelectorAll('.game-column').forEach(col => {
-                        col.classList.remove('mobile-active');
-                    });
-                    const targetCol = document.getElementById(targetId);
-                    if (targetCol) {
-                        targetCol.classList.add('mobile-active');
-                        if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
-                    }
-                    playSound('sound-click');
-                });
-            });
+        if (window.innerWidth <= 1024) {
+            document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+            const center = document.getElementById('center-column');
+            if (center) center.classList.add('mobile-active');
         }
 
-        setupMobileTabs();
+        mobileBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                mobileBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const targetId = btn.getAttribute('data-target');
+                document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+                const targetCol = document.getElementById(targetId);
+                if (targetCol) {
+                    targetCol.classList.add('mobile-active');
+                    if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
+                }
+                playSound('sound-click');
+            });
+        });
 
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024) {
@@ -650,12 +630,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     col.classList.remove('mobile-active');
                     col.style.display = '';
                 });
-            } else {
-                if (!document.querySelector('.game-column.mobile-active')) {
-                    document.getElementById('center-column').classList.add('mobile-active');
-                }
+            } else if (!document.querySelector('.game-column.mobile-active')) {
+                document.getElementById('center-column').classList.add('mobile-active');
             }
         });
+
+        // Setup Desktop Tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
 
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -665,15 +647,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 tab.classList.add('active');
                 const targetId = tab.getAttribute('data-target');
                 document.getElementById(targetId).style.display = 'block';
-
                 tab.classList.remove('notify');
 
                 const filterSelect = document.getElementById('global-filter-select');
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
-                        if (!filterSelect.disabled) {
-                            filterSelect.setAttribute('data-prev', filterSelect.value);
-                        }
+                        if (!filterSelect.disabled) filterSelect.setAttribute('data-prev', filterSelect.value);
                         filterSelect.value = 'all';
                         filterSelect.disabled = true;
                         gameState.filterSettings.globalFilter = 'all';
@@ -688,15 +667,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     refreshAllStores();
                 }
-                if (e.isTrusted) {
-                    playSound('sound-click');
-                }
+                if (e.isTrusted) playSound('sound-click');
             });
         });
 
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
+        // Skill & Event Listeners
+        const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
                 if (e.detail === 0) return;
@@ -705,20 +684,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (clickerButton) clickerButton.addEventListener('click', clickCookie);
-
         if (goldenBug) goldenBug.addEventListener('click', (e) => {
-            if (e.detail === 0) return; clickGoldenBug();
+            if (e.detail === 0) return;
+            clickGoldenBug();
         });
 
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
-            cancelPrestigeBtn.addEventListener('click', () => {
-                prestigeModal.style.display = 'none';
-            });
+            cancelPrestigeBtn.addEventListener('click', () => prestigeModal.style.display = 'none');
         }
 
+        // Global Buy Listener
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
@@ -737,6 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Version
         const vDisplay = document.getElementById('version-display');
         if (vDisplay && window.GAME_VERSION) {
             vDisplay.textContent = window.GAME_VERSION.toString();

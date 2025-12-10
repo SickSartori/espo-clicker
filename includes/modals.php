@@ -87,6 +87,9 @@
                     </div>
                     <span id="music-vol-display" class="slider-value">50%</span>
                 </div>
+                <button id="open-advanced-audio-btn" class="buy-btn ghost-btn" style="width: 100%; margin-top: 15px; justify-content: center;">
+                    <i class="fa-solid fa-sliders"></i> Mixer Audio & Video
+                </button>
             </div>
 
             <div class="account-preview-card">
@@ -166,6 +169,34 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<div id="advanced-audio-modal" class="modal-backdrop" style="display: none; z-index: 2200;">
+    <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
+        <button class="modal-close-btn" id="close-advanced-audio-btn">&times;</button>
+        
+        <h2><i class="fa-solid fa-music"></i> Mixer Sorgenti</h2>
+        
+        <div class="settings-content" style="padding-top: 10px; overflow-y: auto; flex-grow: 1;">
+            <p style="font-size: 0.85rem; color: #95a5a6; margin-bottom: 20px; text-align: center;">
+                Regola il volume di ogni singola sorgente.<br>
+                <i style="font-size: 0.75rem;">(Percentuale rispetto al Master)</i>
+            </p>
+            
+            <div id="advanced-audio-list" style="display: flex; flex-direction: column; gap: 12px;">
+                </div>
+
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
+                <button type="button" id="back-to-settings-btn" class="buy-btn" style="flex: 2; background-color: #34495e;">
+                    <i class="fa-solid fa-arrow-left"></i> Indietro
+                </button>
+                
+                <button type="button" id="reset-audio-defaults" class="buy-btn outline-btn" style="flex: 1; border-color: #e74c3c; color: #e74c3c; font-size: 0.8rem;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
         </div>
     </div>
 </div>

@@ -997,22 +997,23 @@ function triggerChristmasOverlay() {
 }
 
 let christmasAudioInitialized = false;
-
 function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
-
     const snowContainer = document.getElementById('snow-container');
     const snowAudio = document.getElementById('sound-snowball');
 
-    const goldenBugImg = document.querySelector('#golden-bug img');
+    // Riferimento alla musica di background standard
+    const bgMusic = document.getElementById('sound-bg-music');
 
+    const goldenBugImg = document.querySelector('#golden-bug img');
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
 
     if (skinId === 'christmas') {
+        // --- LOGICA NATALE ---
         document.body.classList.add('theme-christmas');
         if (snowContainer) {
             snowContainer.style.display = 'block';
@@ -1021,73 +1022,64 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
             }
         }
         if (goldenBugImg) {
-            goldenBugImg.src = './assets/image/gift-box.png'; // Assicurati che l'immagine esista o usa un URL valido
+            goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
         }
 
-        // --- FIX AUTOPLAY ---
+        // 1. Ferma la musica Standard
+        if (bgMusic) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+        }
+
+        // 2. Avvia audio Neve (Musica di Natale)
         if (snowAudio) {
             snowAudio.loop = true;
             const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             snowAudio.volume = targetVol;
 
-            // Suona SOLO se forzato (click su equipaggia) o se l'audio di sfondo è già attivo
-            // Evita l'errore in console al caricamento pagina
-            if (forcePlayMusic) {
-                const playPromise = snowAudio.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Autoplay bloccato. L'audio partirà al primo click.");
-                    });
-                }
+            if (forcePlayMusic || (gameState.user.masterVolume > 0 && !snowAudio.paused)) {
+                snowAudio.play().catch(e => { console.log("Autoplay neve bloccato"); });
             }
         }
 
     } else {
-        // DISATTIVAZIONE TEMA NATALE
+        // --- LOGICA SKIN NORMALI ---
         document.body.classList.remove('theme-christmas');
 
         if (goldenBugImg) {
             goldenBugImg.src = './assets/image/bug.webp';
         }
 
-        // Spegni Neve
+        // 1. Spegni Neve e Audio Natale
         if (snowContainer) {
             snowContainer.style.display = 'none';
             snowContainer.innerHTML = '';
         }
-
-        // Spegni Audio Natale
         if (snowAudio) {
             snowAudio.pause();
             snowAudio.currentTime = 0;
         }
 
-        // --- FIX: AVVIA MUSICA BACKGROUND (Se non c'è un evento attivo) ---
-        const bgMusic = document.getElementById('sound-bg-music');
+        // 2. Riattiva Musica Background Standard (se non c'è evento attivo)
         if (bgMusic && !window.currentActiveEvent) {
-            setBgMusicVolume();
-            // Se è in pausa e il volume è > 0, prova a farlo partire
-            if (bgMusic.paused && gameState.user.masterVolume > 0) {
-                const playPromise = bgMusic.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        // Ignora errore autoplay (partirà al primo click grazie a script.js)
-                        console.log("Musica in attesa di interazione...");
-                    });
-                }
+            setBgMusicVolume(); // Imposta volume corretto
+
+            // Riavvia solo se il volume è udibile
+            if (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0) {
+                bgMusic.play().catch(error => { });
             }
         }
     }
 
-    // 2. GESTIONE IMMAGINI STANDARD
+    // ... (Il resto della funzione per gestire le immagini rimane invariato) ...
     if (photoNormal) {
         photoNormal.src = `./assets/image/${skinData.img}`;
         photoNormal.style.filter = 'none';
         photoNormal.classList.remove(...bgClasses);
-
+        // ... switch classi bg ...
         if (skinId === 'jesus') photoNormal.classList.add('bg-divine');
         else if (skinData.rarity) photoNormal.classList.add(`bg-${skinData.rarity}`);
-        else if (skinId === 'christmas') photoNormal.classList.add('bg-christmas'); // Ridondante ma sicuro
+        else if (skinId === 'christmas') photoNormal.classList.add('bg-christmas');
         else photoNormal.classList.add('bg-common');
     }
 
@@ -1095,12 +1087,14 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         photoClicked.src = `./assets/image/${skinData.imgClick}`;
         photoClicked.style.filter = 'none';
         photoClicked.classList.remove(...bgClasses);
+        // ... switch classi bg ...
         if (skinId === 'jesus') photoClicked.classList.add('bg-divine');
         else if (skinData.rarity) photoClicked.classList.add(`bg-${skinData.rarity}`);
         else if (skinId === 'christmas') photoClicked.classList.add('bg-christmas');
         else photoClicked.classList.add('bg-common');
     }
 }
+
 
 // Nuova funzione helper per creare i fiocchi (Aggiungila alla fine del file ui-functions.js)
 function createSnowflakes() {
