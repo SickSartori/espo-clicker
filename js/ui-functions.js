@@ -1021,36 +1021,29 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
             }
         }
         if (goldenBugImg) {
-            goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
+            goldenBugImg.src = './assets/image/gift-box.png'; // Assicurati che l'immagine esista o usa un URL valido
         }
+
+        // --- FIX AUTOPLAY ---
         if (snowAudio) {
             snowAudio.loop = true;
             const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             snowAudio.volume = targetVol;
-            const playPromise = snowAudio.play();
 
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log("Autoplay bloccato dal browser. In attesa di interazione...");
-                    // Se bloccato, aggiungi listener one-shot al body per sbloccarlo al primo click
-                    if (!christmasAudioInitialized) {
-                        const unlockAudio = () => {
-                            snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-                            snowAudio.play();
-                            christmasAudioInitialized = true; // Evita doppi trigger
-                            document.body.removeEventListener('click', unlockAudio);
-                            document.body.removeEventListener('touchstart', unlockAudio);
-                        };
-                        document.body.addEventListener('click', unlockAudio);
-                        document.body.addEventListener('touchstart', unlockAudio);
-                    }
-                });
+            // Suona SOLO se forzato (click su equipaggia) o se l'audio di sfondo è già attivo
+            // Evita l'errore in console al caricamento pagina
+            if (forcePlayMusic) {
+                const playPromise = snowAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay bloccato. L'audio partirà al primo click.");
+                    });
+                }
             }
         }
 
-
     } else {
-        // DISATTIVAZIONE TEMA (Se cambio skin)
+        // DISATTIVAZIONE TEMA NATALE
         document.body.classList.remove('theme-christmas');
 
         if (goldenBugImg) {
@@ -1060,14 +1053,29 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         // Spegni Neve
         if (snowContainer) {
             snowContainer.style.display = 'none';
-            snowContainer.innerHTML = ''; // Pulisce per risparmiare memoria
+            snowContainer.innerHTML = '';
         }
 
-        // Spegni Audio
+        // Spegni Audio Natale
         if (snowAudio) {
             snowAudio.pause();
             snowAudio.currentTime = 0;
-            christmasAudioInitialized = false;
+        }
+
+        // --- FIX: AVVIA MUSICA BACKGROUND (Se non c'è un evento attivo) ---
+        const bgMusic = document.getElementById('sound-bg-music');
+        if (bgMusic && !window.currentActiveEvent) {
+            setBgMusicVolume();
+            // Se è in pausa e il volume è > 0, prova a farlo partire
+            if (bgMusic.paused && gameState.user.masterVolume > 0) {
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        // Ignora errore autoplay (partirà al primo click grazie a script.js)
+                        console.log("Musica in attesa di interazione...");
+                    });
+                }
+            }
         }
     }
 

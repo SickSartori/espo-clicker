@@ -76,8 +76,24 @@ function playSound(id, type = 'sfx') {
     } catch (e) { console.warn("Audio error:", e); }
 }
 
+function setBgMusicVolume() {
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (!bgMusic) return;
+
+    // CONFIGURAZIONE CENTRALE: Cambia questo 0.1 per alzare/abbassare ovunque
+    const BASE_VOLUME_MULTIPLIER = 0.05;
+
+    const master = gameState.user.masterVolume;
+    const music = gameState.user.musicVolume;
+
+    // Applica il volume calcolato
+    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER;
+}
+
 // Funzione per aggiornare i volumi dei loop in corso (es. BlueScreen, Rick Roll)
 function updateAmbientVolume() {
+
+    setBgMusicVolume();
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
     const finalVol = master * music;
@@ -410,10 +426,24 @@ function stopBluescreenEffect() {
 
     // Ripristina Audio Natale
     const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) {
-        snowAudio.playbackRate = 1.0;
-        snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-        if (gameState.skins.current === 'christmas' && snowAudio.paused) snowAudio.play().catch(e => { });
+    const bgMusic = document.getElementById('sound-bg-music');
+
+    // Calcola il volume corrente
+    const currentVol = gameState.user.masterVolume * gameState.user.musicVolume;
+
+    if (gameState.skins.current === 'christmas') {
+        // Se è Natale, riparte la neve
+        if (snowAudio) {
+            snowAudio.playbackRate = 1.0;
+            snowAudio.volume = currentVol * 0.2;
+            if (snowAudio.paused && currentVol > 0) snowAudio.play().catch(e => { });
+        }
+    } else {
+        // ALTRIMENTI riparte la musica normale
+        if (bgMusic) {
+            setBgMusicVolume();
+            if (bgMusic.paused && currentVol > 0) bgMusic.play().catch(e => { });
+        }
     }
 
     clearActiveEvent();
@@ -432,6 +462,9 @@ function triggerRickRoll() {
     // SPEGNI LA NEVE E AUDIO NATALE
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) snowAudio.pause();
+
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause();
 
     // Setup Video
     let rickMultiplier = Math.floor(Math.random() * 8) + 5;
@@ -454,7 +487,14 @@ function triggerRickRoll() {
 
     window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
 
-    const videoClickHandler = (e) => { clickCookie(e); };
+    // --- MODIFICA: CLICK SUL VIDEO ---
+    // Rende il video cliccabile e cambia il cursore
+    video.style.cursor = 'pointer';
+    const videoClickHandler = (e) => {
+        // Impedisce comportamenti touch di default se necessario e registra il click
+        clickCookie(e);
+    };
+
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
@@ -462,9 +502,13 @@ function triggerRickRoll() {
         document.body.classList.remove('rick-rolling');
         video.pause();
         video.style.display = 'none';
+
+        // Pulizia Listener e Stile
+        video.style.cursor = 'default';
         video.removeEventListener('mousedown', videoClickHandler);
         video.removeEventListener('touchstart', videoClickHandler);
-        stopBluescreenEffect(); // Questo ripristinerà l'audio di Natale automaticamente
+
+        stopBluescreenEffect();
     }, 60000);
 
     return true;
@@ -501,7 +545,7 @@ function triggerRicardoEvent() {
     bluescreenMultiplier = bonusMult;
     recalculateCPS();
 
-    document.body.classList.add('rick-rolling'); // Usa la stessa classe CSS per nascondere UI
+    document.body.classList.add('rick-rolling');
 
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
@@ -516,7 +560,10 @@ function triggerRicardoEvent() {
 
     window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
 
+    // --- MODIFICA: CLICK SUL VIDEO ---
+    video.style.cursor = 'pointer';
     const videoClickHandler = (e) => { clickCookie(e); };
+
     video.addEventListener('mousedown', videoClickHandler);
     video.addEventListener('touchstart', videoClickHandler, { passive: true });
 
@@ -530,12 +577,14 @@ function triggerRicardoEvent() {
                 v.pause();
                 v.style.display = 'none';
                 v.currentTime = 0;
+                // Rimuovi listener da TUTTI i video potenziali per sicurezza
+                v.style.cursor = 'default';
                 v.removeEventListener('mousedown', videoClickHandler);
                 v.removeEventListener('touchstart', videoClickHandler);
             }
         });
 
-        stopBluescreenEffect(); // Ripristina audio
+        stopBluescreenEffect();
     }, 45000);
 
     return true;

@@ -172,6 +172,8 @@
 
     <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="none"></audio>
     <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="none"></audio>
+
+    <audio id="sound-bg-music" src="./assets/sounds/bg-music.mp3" loop preload="auto"></audio>
     
     <div id="crunch-overlay"></div>
     <div id="fire-particles-container"></div>

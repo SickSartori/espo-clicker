@@ -434,15 +434,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function initializeGame() {
+        // --- FIX MUSICA ROBUSTO (Persistente) ---
+        // Questa funzione prova ad avviare la musica ad ogni click finché non ci riesce
+        const musicStarter = () => {
+            // 1. Se c'è un evento speciale attivo (Rick/Ricardo/404), NON far partire la musica base
+            if (document.body.classList.contains('rick-rolling') || document.body.classList.contains('bluescreen-active')) {
+                return;
+            }
+
+            const bgMusic = document.getElementById('sound-bg-music');
+            const snowAudio = document.getElementById('sound-snowball');
+            const masterVol = gameState.user.masterVolume;
+
+            // Se il volume è 0, non proviamo nemmeno (evita errori console)
+            if (masterVol <= 0) return;
+
+            // CASO A: SIAMO A NATALE
+            if (gameState.skins.current === 'christmas') {
+                if (snowAudio && snowAudio.paused) {
+                    snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
+                    snowAudio.play().then(() => {
+                        // Successo! Rimuoviamo i listener
+                        document.removeEventListener('click', musicStarter);
+                        document.removeEventListener('touchstart', musicStarter);
+                    }).catch(e => console.log("Attesa input per neve..."));
+                }
+            }
+            // CASO B: GIOCO NORMALE
+            else {
+                if (bgMusic && bgMusic.paused) {
+                    setBgMusicVolume();
+                    bgMusic.play().then(() => {
+                        document.removeEventListener('click', musicStarter);
+                        document.removeEventListener('touchstart', musicStarter);
+                    }).catch(e => console.log("Attesa input per musica..."));
+                }
+            }
+        };
+
+        // Aggiungiamo i listener PERSISTENTI (non { once: true })
+        // Proveranno ad avviare l'audio ad ogni interazione finché non funziona
+        document.addEventListener('click', musicStarter);
+        document.addEventListener('touchstart', musicStarter, { passive: true });
+
+        // Volume audio iniziale
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.volume = gameState.user.masterVolume;
+        });
+
         // Prevenzione menu contestuale e trascinamento immagini
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
         // --- 1. CLEANUP INIZIALE (Fix post-reset) ---
-        // Rimuove classi residue di eventi che potrebbero bloccare la vista
         document.body.classList.remove('rick-rolling', 'bluescreen-active');
 
-        // Assicura che il container di gioco sia visibile e cliccabile
         const gContainer = document.getElementById('game-container');
         if (gContainer) {
             gContainer.style.opacity = '1';
@@ -451,16 +497,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- 2. CARICAMENTO DATI ---
-        buildStores(); // Costruisce l'HTML dei negozi
-        loadGame();    // Carica il salvataggio (se esiste)
+        buildStores();
+        loadGame();
 
+        // --- 3. RIPRISTINO STATI ---
         const now = Date.now();
         if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
             console.log("Crunch Time ancora attivo! Ripristino effetti...");
-
             crunchTimeEndTime = gameState.crunchTimeEndTime;
             crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
-
             if (typeof resumeCrunchTimeEffects === 'function') {
                 resumeCrunchTimeEffects();
             }
@@ -473,7 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gestione filtro "Mostra Tutto" vs "Disponibili" dopo un reset
         const globalFilterSelect = document.getElementById('global-filter-select');
         if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
-            // Se non c'è salvataggio (reset), resetta il filtro a "Available"
             globalFilterSelect.value = 'available';
             gameState.filterSettings.globalFilter = 'available';
         }
@@ -492,22 +536,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function setBuyMultiplier(value) {
             buyMultiplier = value;
-
-            // Reset stile bottoni
             for (let k in btns) {
                 if (btns[k]) btns[k].style.backgroundColor = '#34495e';
             }
-
-            // Attiva quello selezionato
             const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
             if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
-
             playSound('sound-click');
             refreshAllStores();
             updateUI();
         }
 
-        // Listener Moltiplicatori
         if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
         if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
@@ -518,7 +556,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabs = document.querySelectorAll('.tab-btn');
         const contents = document.querySelectorAll('.tab-content');
 
-        // Blocca tasto Invio/Spazio (per evitare click automatici tenendo premuto)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -526,19 +563,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Bottone Mute
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
-            // Setup Icona Iniziale
             if (gameState.user.masterVolume <= 0) {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
             } else {
                 muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
             }
 
-            // Listener Click Modificato
             muteBtn.addEventListener('click', () => {
-                // 1. Logica Toggle Volume
                 if (gameState.user.masterVolume > 0) {
                     gameState.lastVolume = gameState.user.masterVolume;
                     gameState.user.masterVolume = 0;
@@ -546,37 +579,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     gameState.user.masterVolume = gameState.lastVolume || 1.0;
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                    // Suono di feedback quando RIATTIVI l'audio
                     playSound('sound-click');
                 }
 
-                // 2. Aggiorna Slider se presente
                 const mSlider = document.getElementById('master-slider');
                 if (mSlider) mSlider.value = gameState.user.masterVolume;
 
-                // 3. Aggiorna tutti i loop ambientali (inclusa la musica di Natale)
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
 
-                // 4. Check Forzato per Snowball (per sicurezza immediata)
                 const snowAudio = document.getElementById('sound-snowball');
                 if (snowAudio) {
-                    // Applica la regola del 20% anche qui
                     snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
                 }
             });
         }
 
-        // Rimuovi focus dal clicker
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
         }
 
-        // Filtro Globale Negozi
         if (globalFilterSelect) {
             const savedFilter = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.value = savedFilter;
-            // Assicurati che lo stato rifletta il valore (specialmente post-reset)
             gameState.filterSettings.globalFilter = savedFilter;
 
             globalFilterSelect.addEventListener('change', (e) => {
@@ -593,7 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
 
         function setupMobileTabs() {
-            // Setta default (Console/Center)
             if (window.innerWidth <= 1024) {
                 document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
                 const center = document.getElementById('center-column');
@@ -602,28 +626,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             mobileBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    // 1. Aggiorna stile bottoni
                     mobileBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-
-                    // 2. Cambia Vista
                     const targetId = btn.getAttribute('data-target');
-
-                    // Nascondi tutte
                     document.querySelectorAll('.game-column').forEach(col => {
                         col.classList.remove('mobile-active');
-                        // Importante: forza display none via classe CSS, ma assicuriamoci che il JS non interferisca
-                        // La classe CSS .mobile-active gestisce il display: flex
                     });
-
-                    // Mostra target
                     const targetCol = document.getElementById(targetId);
                     if (targetCol) {
                         targetCol.classList.add('mobile-active');
-                        // Se è la colonna upgrade, forza un refresh visivo
                         if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
                     }
-
                     playSound('sound-click');
                 });
             });
@@ -631,23 +644,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setupMobileTabs();
 
-        // Gestione resize (se ruoti il telefono)
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024) {
-                // Reset per desktop: mostra tutto
                 document.querySelectorAll('.game-column').forEach(col => {
                     col.classList.remove('mobile-active');
-                    col.style.display = ''; // Rimuovi stili inline
+                    col.style.display = '';
                 });
             } else {
-                // Forza una vista attiva se nessuna lo è
                 if (!document.querySelector('.game-column.mobile-active')) {
                     document.getElementById('center-column').classList.add('mobile-active');
                 }
             }
         });
 
-        // Gestione Tabs (Click, Auto, Lab)
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 tabs.forEach(t => t.classList.remove('active'));
@@ -659,7 +668,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tab.classList.remove('notify');
 
-                // Gestione specifica per il tab Prestigio (nasconde il filtro)
                 const filterSelect = document.getElementById('global-filter-select');
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
@@ -686,11 +694,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Tab di default
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
-        // Skill Crunch Time
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
                 if (e.detail === 0) return;
@@ -699,15 +705,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Click Principale
         if (clickerButton) clickerButton.addEventListener('click', clickCookie);
 
-        // Golden Bug
         if (goldenBug) goldenBug.addEventListener('click', (e) => {
             if (e.detail === 0) return; clickGoldenBug();
         });
 
-        // Bottone Annulla Prestigio (Modale)
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
         if (cancelPrestigeBtn && prestigeModal) {
@@ -716,7 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Delegazione Click per bottoni acquisto (gestisce anche elementi creati dinamicamente)
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
@@ -735,13 +737,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Mostra versione
         const vDisplay = document.getElementById('version-display');
         if (vDisplay && window.GAME_VERSION) {
             vDisplay.textContent = window.GAME_VERSION.toString();
-            // Opzionale: Colore diverso per la beta
-            if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12'; // Arancione
-            if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71'; // Verde
+            if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12';
+            if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
         }
     }
 
