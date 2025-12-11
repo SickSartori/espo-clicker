@@ -355,3 +355,25 @@
         border-color: #ffd700;
     }
 }
+
+@keyframes gridFloat {
+    0% {
+        background-position: 0 0, 0 0;
+    }
+
+    100% {
+        background-position: 0 1000px, 1000px 0;
+    }
+}
+
+@keyframes ambientPulse {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}

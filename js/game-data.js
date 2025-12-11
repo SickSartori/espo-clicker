@@ -79,7 +79,7 @@ function getInitialGameState() {
                 'sound-fire': 0.5,
                 'sound-snowball': 0.2,
                 'sound-merry': 0.5,
-                'sound-bg-music': 0.05,
+                'sound-bg-music': 0.5,
 
                 // Video (Default 50%)
                 'video-rick': 0.5,

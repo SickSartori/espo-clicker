@@ -434,40 +434,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function initializeGame() {
-        // --- Music Starter Persistente ---
-        const musicStarter = () => {
-            // Non avviare se c'è un evento attivo (Rick/Ricardo/404)
-            if (document.body.classList.contains('rick-rolling') || document.body.classList.contains('bluescreen-active')) return;
+        // 1. CARICAMENTO DATI (Spostato PRIMA dell'audio per avere il volume corretto)
+        buildStores();
+        loadGame();
 
-            const bgMusic = document.getElementById('sound-bg-music');
-            const snowAudio = document.getElementById('sound-snowball');
-            const masterVol = gameState.user.masterVolume;
+        // --- 2. TENTATIVO DIRETTO (Senza attese) ---
+        const bgMusic = document.getElementById('sound-bg-music');
+        const snowAudio = document.getElementById('sound-snowball');
+        const masterVol = gameState.user.masterVolume;
+        const musicVol = gameState.user.musicVolume;
 
-            if (masterVol <= 0) return;
+        // Funzione rapida per provare a suonare
+        const tryStart = () => {
+            if (masterVol <= 0 || musicVol <= 0) return;
 
-            if (gameState.skins.current === 'christmas') {
-                if (snowAudio && snowAudio.paused) {
-                    snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
-                    snowAudio.play().then(() => {
-                        document.removeEventListener('click', musicStarter);
-                        document.removeEventListener('touchstart', musicStarter);
-                    }).catch(() => { });
-                }
-            } else {
-                if (bgMusic && bgMusic.paused) {
-                    if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
-                    bgMusic.play().then(() => {
-                        document.removeEventListener('click', musicStarter);
-                        document.removeEventListener('touchstart', musicStarter);
-                    }).catch(() => { });
+            // Definisci quale audio suonare
+            const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+
+            if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent) {
+                if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+
+                // Tenta il play
+                const playPromise = audioToPlay.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        console.log("Autoplay bloccato: In attesa di interazione utente...");
+
+                        // === AGGIUNTA: ASCOLTATORE GLOBALE ===
+                        // Appena l'utente tocca QUALSIASI cosa, riprova a far partire la musica
+                        const unlockAudio = () => {
+                            // Riprova a suonare
+                            audioToPlay.play().then(() => {
+                                // Se riesce, rimuovi gli ascoltatori per non sprecarli
+                                document.removeEventListener('click', unlockAudio);
+                                document.removeEventListener('keydown', unlockAudio);
+                                document.removeEventListener('touchstart', unlockAudio);
+                            }).catch(e => { });
+                        };
+
+                        // Aggiungi gli ascoltatori "one-shot"
+                        document.addEventListener('click', unlockAudio, { once: true });
+                        document.addEventListener('keydown', unlockAudio, { once: true });
+                        document.addEventListener('touchstart', unlockAudio, { once: true });
+
+                        // Opzionale: Mostra un piccolo avviso visivo
+                        if (window.EspooClicker) window.EspooClicker.showToast("🎵 Clicca ovunque per attivare la musica", "info");
+                    });
                 }
             }
         };
 
-        document.addEventListener('click', musicStarter);
-        document.addEventListener('touchstart', musicStarter, { passive: true });
+        // Prova subito (funziona se soft refresh)
+        tryStart();
 
-        // Setup Volume Iniziale
+        // --- 3. SETUP STANDARD ---
         document.querySelectorAll('audio').forEach(audio => {
             audio.volume = gameState.user.masterVolume;
         });
@@ -475,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
-        // Cleanup classi UI
         document.body.classList.remove('rick-rolling', 'bluescreen-active');
         const gContainer = document.getElementById('game-container');
         if (gContainer) {
@@ -484,28 +504,19 @@ document.addEventListener('DOMContentLoaded', () => {
             gContainer.style.pointerEvents = 'auto';
         }
 
-        // Caricamento Dati
-        buildStores();
-        loadGame();
-
-        // --- FIX REFRESH (F5) ---
-        // Resetta lo stato degli eventi se l'utente ha ricaricato durante un evento
+        // Reset stati temporanei
         isBluescreenActive = false;
         bluescreenMultiplier = 1;
         if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
 
-        // Ferma e nascondi tutti i video eventi
-        const vids = ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
-        vids.forEach(id => {
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
             const v = document.getElementById(id);
             if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
         });
 
-        // Reset Audio Click
         const soundClick = document.getElementById('sound-click');
         if (soundClick) soundClick.playbackRate = 1;
 
-        // Ripristino Crunch Time
         const now = Date.now();
         if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
             crunchTimeEndTime = gameState.crunchTimeEndTime;
@@ -513,12 +524,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof resumeCrunchTimeEffects === 'function') resumeCrunchTimeEffects();
         }
 
-        // Applicazione Skin
         if (typeof applySkinVisuals === 'function') {
             applySkinVisuals(gameState.skins.current);
         }
 
-        // Fix Filtri Negozi
         const globalFilterSelect = document.getElementById('global-filter-select');
         if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
             globalFilterSelect.value = 'available';
@@ -528,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
-        // Setup Bottoni Moltiplicatore
+        // Setup Moltiplicatori
         const btns = {
             '1x': document.getElementById('btn-1x'),
             '5x': document.getElementById('btn-5x'),
@@ -546,12 +555,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
         }
 
-        if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['1x'].blur(); setBuyMultiplier(1); });
-        if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['5x'].blur(); setBuyMultiplier(5); });
-        if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['10x'].blur(); setBuyMultiplier(10); });
-        if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail === 0) return; btns['MAX'].blur(); setBuyMultiplier('MAX'); });
+        if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['1x'].blur(); setBuyMultiplier(1); } });
+        if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['5x'].blur(); setBuyMultiplier(5); } });
+        if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['10x'].blur(); setBuyMultiplier(10); } });
+        if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['MAX'].blur(); setBuyMultiplier('MAX'); } });
 
-        // Setup Tasti Rapidi
+        // Setup UI Globale
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -559,38 +568,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Setup Mute Button
+        // --- FIX MUTE BUTTON (Sblocco Intelligente) ---
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
             muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
 
             muteBtn.addEventListener('click', () => {
-                if (gameState.user.masterVolume > 0) {
-                    gameState.lastVolume = gameState.user.masterVolume;
-                    gameState.user.masterVolume = 0;
-                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                } else {
-                    gameState.user.masterVolume = gameState.lastVolume || 1.0;
+                const targetAudio = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+                const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
+
+                if (isBlocked) {
+                    // CASO 1: BLOCCATO -> SBLOCCA (1 Click)
+                    tryStart();
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                    playSound('sound-click');
+                } else {
+                    // CASO 2: NORMALE (Toggle)
+                    if (gameState.user.masterVolume > 0) {
+                        gameState.lastVolume = gameState.user.masterVolume;
+                        gameState.user.masterVolume = 0;
+                        muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                    } else {
+                        gameState.user.masterVolume = gameState.lastVolume || 1.0;
+                        muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                        playSound('sound-click');
+                        tryStart(); // Riprova a far partire se era spento
+                    }
+                    const mSlider = document.getElementById('master-slider');
+                    if (mSlider) mSlider.value = gameState.user.masterVolume;
+                    if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
                 }
-                const mSlider = document.getElementById('master-slider');
-                if (mSlider) mSlider.value = gameState.user.masterVolume;
-
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
-
-                const snowAudio = document.getElementById('sound-snowball');
-                if (snowAudio) snowAudio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             });
         }
 
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
-            clickerButton.addEventListener('click', clickCookie);
+
+            // --- FIX AUTOSTART AL CLICK ---
+            // Fa partire la musica anche cliccando sul biscotto, senza codice globale "in attesa"
+            clickerButton.addEventListener('click', (e) => {
+                tryStart(); // Se è bloccata, prova a farla partire
+                clickCookie(e);
+            });
         }
 
-        // Setup Filtri Store
         if (globalFilterSelect) {
             globalFilterSelect.value = gameState.filterSettings.globalFilter || 'available';
             globalFilterSelect.addEventListener('change', (e) => {
@@ -601,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Setup Mobile Tabs
+        // Setup Navigazione Mobile
         const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
         if (window.innerWidth <= 1024) {
             document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
@@ -635,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Setup Desktop Tabs
+        // Setup Tabs
         const tabs = document.querySelectorAll('.tab-btn');
         const contents = document.querySelectorAll('.tab-content');
 
@@ -674,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
-        // Skill & Event Listeners
+        // Listeners Eventi
         const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
@@ -695,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelPrestigeBtn.addEventListener('click', () => prestigeModal.style.display = 'none');
         }
 
-        // Global Buy Listener
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-btn');
             if (!btn || btn.disabled || btn.classList.contains('owned')) return;
@@ -714,7 +734,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Version
         const vDisplay = document.getElementById('version-display');
         if (vDisplay && window.GAME_VERSION) {
             vDisplay.textContent = window.GAME_VERSION.toString();
@@ -722,6 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
         }
     }
+
 
     // --------- API GLOBALE ---------
     window.EspooClicker = {
@@ -733,6 +753,47 @@ document.addEventListener('DOMContentLoaded', () => {
         formatNumber: formatNumber,
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
+        // --- NUOVA FUNZIONE AUDIO INTELLIGENTE ---
+        tryStartAudio: () => {
+            const bgMusic = document.getElementById('sound-bg-music');
+            const snowAudio = document.getElementById('sound-snowball');
+            const masterVol = gameState.user.masterVolume;
+            const musicVol = gameState.user.musicVolume;
+
+            // Se il volume è 0, non fare nulla
+            if (masterVol <= 0 || musicVol <= 0) return;
+
+            // Scegli traccia in base alla skin
+            const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+
+            // Se l'audio è già partito o c'è un evento, esci
+            if (!audioToPlay || !audioToPlay.paused || window.currentActiveEvent) return;
+
+            if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+
+            // Tenta di avviare l'audio
+            const playPromise = audioToPlay.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    console.log("Autoplay bloccato (Normale su F5): Attendo interazione...");
+
+                    // FALLBACK: Al primo click ovunque, fai partire la musica
+                    const unlockAudio = () => {
+                        audioToPlay.play().then(() => {
+                            // Pulizia listener dopo il successo
+                            document.removeEventListener('click', unlockAudio);
+                            document.removeEventListener('keydown', unlockAudio);
+                            document.removeEventListener('touchstart', unlockAudio);
+                        }).catch(e => { });
+                    };
+
+                    document.addEventListener('click', unlockAudio, { once: true });
+                    document.addEventListener('keydown', unlockAudio, { once: true });
+                    document.addEventListener('touchstart', unlockAudio, { once: true });
+                });
+            }
+        },
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
             document.querySelectorAll('audio').forEach(audio => {
@@ -847,4 +908,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeGame();
 });
-

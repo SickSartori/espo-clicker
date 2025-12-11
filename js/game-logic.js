@@ -82,10 +82,10 @@ function setBgMusicVolume() {
     const bgMusic = document.getElementById('sound-bg-music');
     if (!bgMusic) return;
 
-    // --- FIX: Se siamo nel Mixer, NON toccare la musica (lascia fare al test) ---
+    // Se siamo nel Mixer, NON toccare la musica (lascia fare al test slider)
     if (window.currentActiveEvent === 'Audio Mixer') return;
 
-    // Se è Natale... (resto della funzione invariato)
+    // Se è Natale, la musica base deve tacere (suona la neve)
     if (gameState.skins.current === 'christmas') {
         if (!bgMusic.paused) {
             bgMusic.pause();
@@ -94,19 +94,36 @@ function setBgMusicVolume() {
         return;
     }
 
-    const BASE_VOLUME_MULTIPLIER = 0.05;
+    // --- CONFIGURAZIONE VOLUME ---
+    // Impostiamo il base a 1.0 per coerenza col mixer
+    const BASE_VOLUME_MULTIPLIER = 1.0;
+
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
 
+    // Recupera valore custom dal mixer (default 1.0 se non settato)
     const custom = (gameState.user.audioCustom && gameState.user.audioCustom['sound-bg-music'] !== undefined)
         ? gameState.user.audioCustom['sound-bg-music']
         : 1.0;
 
-    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER * custom;
+    // Calcolo Volume Finale
+    const finalVolume = Math.max(0, Math.min(1, master * music * custom * BASE_VOLUME_MULTIPLIER));
 
-    if (bgMusic.volume > 0 && !window.currentActiveEvent) {
-        if (bgMusic.paused) bgMusic.play().catch(e => { });
+    // Applica subito
+    bgMusic.volume = finalVolume;
+
+    // --- LOGICA PLAY/PAUSE ---
+    // Suona SOLO se:
+    // 1. Il volume è udibile (> 0)
+    // 2. Non ci sono eventi attivi che bloccano la musica
+    if (finalVolume > 0 && !window.currentActiveEvent) {
+        if (bgMusic.paused) {
+            bgMusic.play().catch(e => {
+                // Autoplay bloccato, ci penserà il listener globale
+            });
+        }
     } else {
+        // Altrimenti pausa per risparmiare risorse
         if (!bgMusic.paused) bgMusic.pause();
     }
 }
