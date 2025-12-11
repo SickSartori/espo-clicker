@@ -78,37 +78,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnAdvAudio = document.getElementById('open-advanced-audio-btn');
     const modalAdvAudio = document.getElementById('advanced-audio-modal');
-    const closeAdvAudio = document.getElementById('close-advanced-audio-btn');
-    const btnBackToSettings = document.getElementById('back-to-settings-btn');
     const listAdvAudio = document.getElementById('advanced-audio-list');
-    const btnResetAudio = document.getElementById('reset-audio-defaults');
 
-    // Variabile per ricordare i suoni messi in pausa entrando nel mixer
+    // NUOVI RIFERIMENTI HEADER
+    const btnHeaderBack = document.getElementById('header-back-btn');
+    const btnHeaderReset = document.getElementById('header-reset-btn');
+
+    // Variabile per ricordare i suoni messi in pausa
     let soundsPausedByMixer = [];
 
-    // Mappa ID Logico -> ID HTML Reale (per i video)
+    // Mappa ID Logico -> ID HTML Reale
     const mediaMap = {
         'video-rick': 'rick-roll-video',
         'video-ricardo': 'ricardo-video'
     };
 
-    // Configurazione Gruppi UI
+    // Gruppi UI
     const mixerGroups = {
-        'ambiente': {
-            title: '🎵 Musica & Ambiente',
-            icon: 'fa-music',
-            ids: ['sound-bg-music', 'sound-snowball', 'sound-fire', 'sound-bluescreen']
-        },
-        'eventi': {
-            title: '🎬 Video & Eventi',
-            icon: 'fa-film',
-            ids: ['video-rick', 'video-ricardo', 'sound-merry', 'sound-golden']
-        },
-        'effetti': {
-            title: '🔊 Effetti Sonori',
-            icon: 'fa-volume-high',
-            ids: ['sound-click', 'sound-buy', 'sound-achievement', 'sound-prestige', 'sound-error', 'sound-hover']
-        }
+        'ambiente': { title: 'Musica & Ambiente', icon: 'fa-music', ids: ['sound-bg-music', 'sound-snowball', 'sound-fire', 'sound-bluescreen'] },
+        'eventi': { title: 'Video & Eventi', icon: 'fa-film', ids: ['video-rick', 'video-ricardo', 'sound-merry', 'sound-golden'] },
+        'effetti': { title: 'Effetti Sonori', icon: 'fa-volume-high', ids: ['sound-click', 'sound-buy', 'sound-achievement', 'sound-prestige', 'sound-error', 'sound-hover'] }
     };
 
     const audioLabels = {
@@ -119,42 +108,40 @@ document.addEventListener('DOMContentLoaded', () => {
         'video-rick': 'Video: Rick', 'video-ricardo': 'Video: Ricardo'
     };
 
-    // --- RENDERIZZAZIONE LISTA MIXER ---
+    // --- RENDERIZZA MIXER ---
     function renderAudioMixer() {
         if (!listAdvAudio) return;
         listAdvAudio.innerHTML = '';
 
         const Game = getGameAPI();
-        // Fallback se l'oggetto non esiste ancora
         if (!Game.getGameState().user.audioCustom) {
-            if (btnResetAudio) btnResetAudio.click();
-            return;
+            // Auto-repair se mancano i dati
+            Game.getGameState().user.audioCustom = {
+                'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
+                'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.05,
+                'sound-fire': 0.5, 'sound-error': 1.0, 'sound-golden': 1.0,
+                'sound-prestige': 1.0, 'sound-hover': 1.0, 'sound-merry': 1.0,
+                'video-rick': 0.5, 'video-ricardo': 0.5
+            };
         }
 
         const customAudio = Game.getGameState().user.audioCustom;
 
-        // Helper per creare una singola riga
+        // Crea Riga
         const createMixerRow = (id) => {
             const val = customAudio[id];
             if (val === undefined) return null;
 
             const row = document.createElement('div');
             row.className = 'mixer-row';
-
-            // Colore percentuale dinamico
             let percColor = val > 1 ? '#e74c3c' : (val === 0 ? '#7f8c8d' : '#3498db');
 
             row.innerHTML = `
-                <div class="mixer-label" title="${audioLabels[id]}">
-                    ${audioLabels[id]}
-                </div>
-                
+                <div class="mixer-label" title="${audioLabels[id]}">${audioLabels[id]}</div>
                 <div class="mixer-controls">
-                    <input type="range" class="mixer-slider" 
-                           data-target="${id}" min="0" max="1" step="0.01" value="${val}">
+                    <input type="range" class="mixer-slider" data-target="${id}" min="0" max="1" step="0.01" value="${val}">
                     <span class="mixer-value" style="color: ${percColor};">${Math.round(val * 100)}%</span>
                 </div>
-
                 <button class="mixer-test-btn" data-target="${id}" title="Prova Audio">
                     <i class="fa-solid fa-play" style="font-size: 0.8rem; margin-left: 2px;"></i>
                 </button>
@@ -162,16 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return row;
         };
 
-        // Generazione Gruppi e Righe
+        // Crea Gruppi
         for (const [groupKey, groupData] of Object.entries(mixerGroups)) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'mixer-category';
-
-            // Titolo Categoria
-            const groupTitle = document.createElement('div');
-            groupTitle.className = 'mixer-category-title';
-            groupTitle.innerHTML = `<i class="fa-solid ${groupData.icon}"></i> ${groupData.title}`;
-            groupDiv.appendChild(groupTitle);
+            groupDiv.innerHTML = `<div class="mixer-category-title"><i class="fa-solid ${groupData.icon}"></i> ${groupData.title}</div>`;
 
             let hasItems = false;
             groupData.ids.forEach(audioId => {
@@ -181,36 +163,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasItems = true;
                 }
             });
-
             if (hasItems) listAdvAudio.appendChild(groupDiv);
         }
 
-        // Listener: Slider Input (Salvataggio Live)
+        // Listener Sliders (Salvataggio Live)
         listAdvAudio.querySelectorAll('.mixer-slider').forEach(input => {
             input.addEventListener('input', (e) => {
                 const targetId = e.target.getAttribute('data-target');
                 const newVal = parseFloat(e.target.value);
 
-                // Aggiorna stato
+                // 1. Aggiorna lo stato del gioco
                 Game.getGameState().user.audioCustom[targetId] = newVal;
 
-                // Aggiorna UI Percentuale
+                // 2. Aggiorna UI Percentuale
                 const valSpan = e.target.parentElement.querySelector('.mixer-value');
                 valSpan.textContent = Math.round(newVal * 100) + '%';
                 valSpan.style.color = newVal === 0 ? '#7f8c8d' : '#3498db';
 
-                // Aggiorna volume live (Nota: updateAmbientVolume aggiorna i volumi, ma se sono in pausa restano in pausa)
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+                // 3. FIX CRITICO: Aggiorna il volume SOLO dell'elemento che sta suonando ORA (Test)
+                // NON chiamiamo più updateAmbientVolume() qui per evitare conflitti!
+                const elementId = mediaMap[targetId] || targetId;
+                const activeEl = document.getElementById(elementId);
+
+                if (activeEl && !activeEl.paused) {
+                    const userVol = Game.getGameState().user;
+                    // Determina il canale
+                    const channelVol = targetId.startsWith('video-') || targetId === 'sound-bg-music'
+                        ? userVol.musicVolume
+                        : userVol.sfxVolume;
+
+                    // Calcola e applica subito
+                    const liveVol = userVol.masterVolume * channelVol * newVal;
+                    activeEl.volume = Math.max(0, Math.min(1, liveVol));
+                }
             });
         });
 
-        // Listener: Bottone Test (Play/Stop)
+        // Listener Test
         listAdvAudio.querySelectorAll('.mixer-test-btn').forEach(btn => {
             btn.addEventListener('click', () => handleTestAudioClick(btn));
         });
     }
 
-    // Gestione Play/Stop Anteprima
+    // --- FUNZIONE DI TEST ---
     function handleTestAudioClick(btn) {
         const targetId = btn.getAttribute('data-target');
         const icon = btn.querySelector('i');
@@ -221,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!el) return;
 
-        // Se sta suonando questo stesso suono, fermalo
         if (!el.paused && !el.ended) {
             el.pause();
             el.currentTime = 0;
@@ -229,71 +223,62 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Ferma eventuali altri test in corso
         stopAllTestAudio();
         resetTestButtons();
 
-        // Caricamento Lazy per i Video (se non hanno src)
+        // Lazy Load Video
         if (el.tagName === 'VIDEO' && !el.getAttribute('src')) {
             const src = el.getAttribute('data-src');
             if (src) { el.setAttribute('src', src); el.load(); }
         }
 
-        // Calcolo Volume Test
+        // Calcolo Volume per il TEST
         const channelVol = targetId.startsWith('video-') || targetId === 'sound-bg-music'
             ? userVol.musicVolume : userVol.sfxVolume;
-        const testVol = userVol.masterVolume * channelVol * userVol.audioCustom[targetId];
+
+        // Recupera valore slider live
+        const customVal = Game.getGameState().user.audioCustom[targetId];
+        const testVol = userVol.masterVolume * channelVol * customVal;
 
         el.volume = testVol;
         el.currentTime = 0;
-
-        // Se è un video, nascondiamolo (vogliamo solo l'audio nel mixer)
         if (targetId.startsWith('video-')) el.style.display = 'none';
 
-        // Riproduci
         el.play().then(() => {
-            // UI Attiva
             btn.classList.add('playing');
             icon.className = 'fa-solid fa-stop';
             icon.style.marginLeft = '0';
-
-            // Reset a fine riproduzione
             el.onended = () => {
                 btn.classList.remove('playing');
                 icon.className = 'fa-solid fa-play';
                 icon.style.marginLeft = '2px';
             };
-
-            // Timeout sicurezza per loop infiniti (es. fuoco)
             if (el.loop) {
                 setTimeout(() => { if (!el.paused) { el.pause(); el.onended(); } }, 3000);
             }
-        }).catch(err => console.log("Test play error", err));
+        }).catch(err => { });
     }
 
     function resetTestButtons() {
         document.querySelectorAll('.mixer-test-btn').forEach(b => {
             b.classList.remove('playing');
             const i = b.querySelector('i');
-            i.className = 'fa-solid fa-play';
-            i.style.marginLeft = '2px';
+            if (i) { i.className = 'fa-solid fa-play'; i.style.marginLeft = '2px'; }
         });
     }
 
     function stopAllTestAudio() {
-        // Ferma solo i suoni di test attivi.
-        // I suoni di gioco originali sono gestiti separatamente dall'array soundsPausedByMixer
         document.querySelectorAll('audio, video').forEach(media => {
-            if (!media.paused) media.pause();
+            // Non fermiamo i suoni originali (che sono nell'array paused), ma solo quelli di test
+            if (!media.paused && !soundsPausedByMixer.includes(media)) media.pause();
         });
     }
 
-    // --- NAVIGAZIONE: PAUSA & RIPRESA INTELLIGENTE ---
+    // --- NAVIGAZIONE E STATI ---
 
-    // 1. APERTURA MIXER
+    // APRI
     if (btnAdvAudio) {
         btnAdvAudio.addEventListener('click', () => {
-            // A. Salva i suoni che stanno suonando e mettili in pausa
             soundsPausedByMixer = [];
             document.querySelectorAll('audio, video').forEach(media => {
                 if (!media.paused && !media.ended) {
@@ -302,23 +287,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // B. Attiva "Semaforo" per impedire che il gioco riavvii la musica mentre siamo nel menu
-            if (!window.currentActiveEvent) {
-                window.currentActiveEvent = 'Audio Mixer';
-            }
+            if (!window.currentActiveEvent) window.currentActiveEvent = 'Audio Mixer';
 
-            // C. Genera UI e Mostra
             renderAudioMixer();
-            if (settingsModal) settingsModal.style.display = 'none'; // Nascondi Opzioni
-            if (modalAdvAudio) modalAdvAudio.style.display = 'flex'; // Mostra Mixer
+            if (settingsModal) settingsModal.style.display = 'none';
+            if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
         });
     }
 
-    // Helper per chiudere il mixer e ripristinare il gioco
     function closeMixerAndResume() {
-        // A. Ferma eventuali suoni di TEST avviati nel mixer
+        // A. Ferma eventuali suoni di TEST
         document.querySelectorAll('audio, video').forEach(media => {
-            // Se sta suonando MA non era nella lista dei suoni di gioco originali, spegnilo.
             if (!media.paused && !soundsPausedByMixer.includes(media)) {
                 media.pause();
                 media.currentTime = 0;
@@ -326,49 +305,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         resetTestButtons();
 
-        // B. Rilascia il Semaforo (solo se era bloccato dal Mixer)
+        // B. Rilascia il Semaforo
         if (window.currentActiveEvent === 'Audio Mixer') {
             window.currentActiveEvent = null;
         }
 
-        // C. Riprendi i suoni originali
-        // Nota: updateAmbientVolume viene chiamato dagli slider, quindi i volumi sono già aggiornati nel DOM
+        // C. Riprendi i suoni originali AGGIORNANDO IL VOLUME
+
+        // 1. Forza l'aggiornamento dei volumi ORA, prima di riprodurre
+        if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+
+        // 2. Riproduci
         soundsPausedByMixer.forEach(media => {
-            if (media.paused) {
-                // Aggiorna il volume prima di riprendere (per applicare le modifiche fatte)
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
-                media.play().catch(e => console.log("Resume error", e));
+            // Controlla se il volume aggiornato è > 0 prima di riprodurre
+            // Questo evita di riprodurre tracce messe a 0% nel mixer
+            if (media.volume > 0 && media.paused) {
+                media.play().catch(e => { });
             }
         });
-        soundsPausedByMixer = []; // Pulisci la memoria
 
-        // D. Nascondi Modale
+        soundsPausedByMixer = []; // Pulisci array
+
+        // D. UI
         if (modalAdvAudio) modalAdvAudio.style.display = 'none';
     }
 
-    // 2. CHIUSURA (X) -> Torna al Gioco
-    if (closeAdvAudio) {
-        // Clone trick per pulire listener precedenti
-        const newClose = closeAdvAudio.cloneNode(true);
-        closeAdvAudio.parentNode.replaceChild(newClose, closeAdvAudio);
-
-        newClose.addEventListener('click', closeMixerAndResume);
-    }
-
-    // 3. INDIETRO -> Torna al Menu Opzioni
-    if (btnBackToSettings) {
-        btnBackToSettings.addEventListener('click', () => {
-            closeMixerAndResume(); // Ripristina suoni gioco
-            if (settingsModal) settingsModal.style.display = 'flex'; // Riapri Opzioni
+    // INDIETRO (Nel nuovo header)
+    if (btnHeaderBack) {
+        btnHeaderBack.addEventListener('click', () => {
+            closeMixerAndResume();
+            if (settingsModal) settingsModal.style.display = 'flex';
         });
     }
 
-    // --- RESET PREDEFINITI ---
-    if (btnResetAudio) {
-        btnResetAudio.addEventListener('click', () => {
+    // RESET (Nel nuovo header)
+    if (btnHeaderReset) {
+        btnHeaderReset.addEventListener('click', () => {
             if (confirm("Ripristinare i volumi predefiniti?")) {
                 const Game = getGameAPI();
-                // Valori di default
                 Game.getGameState().user.audioCustom = {
                     'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
                     'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.05,
@@ -376,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'sound-prestige': 1.0, 'sound-hover': 1.0, 'sound-merry': 1.0,
                     'video-rick': 0.5, 'video-ricardo': 0.5
                 };
-                renderAudioMixer(); // Ridisegna slider
+                renderAudioMixer();
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
                 Game.showToast("Volumi ripristinati.", "info");
             }

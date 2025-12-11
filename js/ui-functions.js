@@ -388,11 +388,50 @@ function showClickFeedback(event) {
 
 
 
-function showToast(message, type = 'info') { // Aggiunto parametro type
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`; // Classe dinamica
+const toastQueue = [];          // Coda dei messaggi in attesa
+let visibleToasts = 0;          // Contatore messaggi attualmente a schermo
+const MAX_VISIBLE_TOASTS = 3;   // Limite massimo richiesto
+let lastToastMsg = "";          // Memoria ultimo messaggio (per anti-spam)
+let lastToastTime = 0;          // Timestamp ultimo messaggio
 
-    // Aggiungi Icona/Emoji basata sul tipo
+function showToast(message, type = 'info') {
+    // 1. ANTI-SPAM: Evita messaggi identici consecutivi
+    // Se il messaggio è uguale all'ultimo ed è passato meno di 2 secondi, ignoralo.
+    const now = Date.now();
+    if (message === lastToastMsg && (now - lastToastTime < 2000)) {
+        return;
+    }
+
+    // Aggiorna memoria
+    lastToastMsg = message;
+    lastToastTime = now;
+
+    // 2. Aggiungi alla Coda
+    toastQueue.push({ message, type });
+
+    // 3. Prova a processare la coda
+    processToastQueue();
+}
+
+function processToastQueue() {
+    // Se abbiamo già raggiunto il limite o non c'è nulla in coda, fermati
+    if (visibleToasts >= MAX_VISIBLE_TOASTS || toastQueue.length === 0) return;
+
+    // Estrai il prossimo messaggio (FIFO)
+    const data = toastQueue.shift();
+    visibleToasts++; // Occupa uno slot
+
+    createToastDOM(data.message, data.type);
+}
+
+function createToastDOM(message, type) {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    // Icone
     let icon = '';
     if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i> ';
     else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i> ';
@@ -404,8 +443,19 @@ function showToast(message, type = 'info') { // Aggiunto parametro type
     toast.innerHTML = icon + message;
     toastContainer.appendChild(toast);
 
-    // Durata totale dell'animazione (4 secondi)
-    setTimeout(() => toast.remove(), 4000);
+    // Rimozione Automatica
+    // Il CSS gestisce l'animazione di uscita a 3.5s, noi rimuoviamo il nodo a 4s
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+
+        visibleToasts--; // Libera uno slot
+
+        // Appena si libera un posto, controlla se c'è qualcun altro in fila
+        // Usiamo un piccolo timeout per dare fluidità visiva
+        setTimeout(processToastQueue, 100);
+    }, 4000);
 }
 
 function buildStores() {

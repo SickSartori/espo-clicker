@@ -21,55 +21,59 @@ function clearActiveEvent() {
 }
 
 // --------- 3. FUNZIONI AUDIO AVANZATE ---------
+function getCustomVolume(id) {
+    if (gameState && gameState.user && gameState.user.audioCustom) {
+        const val = gameState.user.audioCustom[id];
+        // Se è definito ritorna il valore, altrimenti 1.0 (100%)
+        return (val !== undefined) ? val : 1.0;
+    }
+    return 1.0;
+}
+
 function playSound(id, type = 'sfx') {
     const originalSound = document.getElementById(id);
     if (!originalSound) return;
 
-    // 1. Recupera il moltiplicatore custom dal Mixer (o usa 1.0 se non esiste)
-    // Questo collega finalmente lo slider al suono reale!
-    const customVol = (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined)
-        ? gameState.user.audioCustom[id]
-        : 1.0;
-
-    // 2. Calcolo Volume Finale (Master * Canale * CustomMixer)
+    // 1. Recupera impostazioni globali
     const master = gameState.user.masterVolume;
-    const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
+    // Se master è 0, fermiamo tutto subito per performance
+    if (master <= 0) return;
 
-    let finalVolume = master * channel * customVol;
+    // 2. Recupera impostazione canale (SFX o Musica)
+    const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
 
-    // NOTA: Ho rimosso i vecchi "if (id === 'sound-click') volume * 0.4" 
-    // perché ora sono gestiti dai valori di default nel game-data.js 
-    // e modificabili dall'utente nel menu.
+    // 3. Recupera impostazione specifica del Mixer (0.0 - 1.0)
+    const custom = getCustomVolume(id);
 
-    if (finalVolume <= 0) {
-        if (type === 'music') originalSound.pause();
-        return;
-    }
+    // 4. Calcolo Volume Finale
+    let finalVolume = master * channel * custom;
+
+    // Clamp volume tra 0 e 1 (per sicurezza HTML5)
+    finalVolume = Math.max(0, Math.min(1, finalVolume));
+
+    // Se il volume finale è quasi zero, non suonare
+    if (finalVolume < 0.01) return;
 
     try {
         if (type === 'sfx') {
+            // Clona per sovrapposizione suoni rapidi (es. click)
             const soundClone = originalSound.cloneNode();
             soundClone.volume = finalVolume;
 
             const playPromise = soundClone.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
+                    // Pulizia memoria a fine suono
                     soundClone.addEventListener('ended', () => {
                         soundClone.remove();
                     });
-                })
-                    .catch(e => {
-                        // Ignora errori di autoplay o interruzione
-                        // console.warn("Audio clone error:", e); 
-                    });
+                }).catch(e => { /* Ignora errori di autoplay */ });
             }
         } else {
-            // --- MUSICA (Singola istanza) ---
+            // Suoni unici (es. Errori interfaccia, non clonati)
             originalSound.volume = finalVolume;
-            const playPromise = originalSound.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => { });
-            }
+            originalSound.currentTime = 0;
+            originalSound.play().catch(e => { });
         }
     } catch (e) { console.warn("Audio error:", e); }
 }
@@ -78,69 +82,67 @@ function setBgMusicVolume() {
     const bgMusic = document.getElementById('sound-bg-music');
     if (!bgMusic) return;
 
-    // --- NUOVA LOGICA: Check Skin Natale ---
-    // Se la skin è Natale, fermiamo la musica base (perché c'è già quella della neve)
+    // --- FIX: Se siamo nel Mixer, NON toccare la musica (lascia fare al test) ---
+    if (window.currentActiveEvent === 'Audio Mixer') return;
+
+    // Se è Natale... (resto della funzione invariato)
     if (gameState.skins.current === 'christmas') {
         if (!bgMusic.paused) {
             bgMusic.pause();
-            bgMusic.currentTime = 0; // Opzionale: resetta all'inizio
+            bgMusic.currentTime = 0;
         }
-        return; // Esce dalla funzione, ignorando il calcolo del volume sotto
+        return;
     }
-    // ---------------------------------------
 
     const BASE_VOLUME_MULTIPLIER = 0.05;
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
 
-    // Applica il volume calcolato solo se NON siamo a Natale
-    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER;
+    const custom = (gameState.user.audioCustom && gameState.user.audioCustom['sound-bg-music'] !== undefined)
+        ? gameState.user.audioCustom['sound-bg-music']
+        : 1.0;
 
-    // Se il volume è > 0 e non è in pausa (e non siamo in un evento che la blocca), assicuriamoci che suoni
-    if (bgMusic.paused && bgMusic.volume > 0 && !window.currentActiveEvent) {
-        bgMusic.play().catch(e => { });
+    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER * custom;
+
+    if (bgMusic.volume > 0 && !window.currentActiveEvent) {
+        if (bgMusic.paused) bgMusic.play().catch(e => { });
+    } else {
+        if (!bgMusic.paused) bgMusic.pause();
     }
 }
 
 function updateAmbientVolume() {
-    setBgMusicVolume(); // Gestisce la musica base
+    // 1. Musica di Fondo
+    setBgMusicVolume();
 
     const master = gameState.user.masterVolume;
     const music = gameState.user.musicVolume;
     const sfx = gameState.user.sfxVolume;
 
-    // Helper: prende il valore custom o 1.0 se non esiste
-    const getVol = (id) => (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined) ? gameState.user.audioCustom[id] : 1.0;
-
-    // --- ERRORE 404 ---
-    const bluescreen = document.getElementById('sound-bluescreen');
-    if (bluescreen) {
-        bluescreen.volume = master * music * getVol('sound-bluescreen');
-    }
-
-    // --- VIDEO RICK ROLL ---
-    const rickVideo = document.getElementById('rick-roll-video');
-    if (rickVideo) {
-        // Applica il custom volume 'video-rick'
-        rickVideo.volume = master * music * getVol('video-rick');
-    }
-
-    // --- VIDEO RICARDO (Tutti e 3) ---
-    const ricardoIds = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
-    ricardoIds.forEach(id => {
-        const vid = document.getElementById(id);
-        if (vid) {
-            // Applica il custom volume 'video-ricardo'
-            vid.volume = master * music * getVol('video-ricardo');
+    // Helper interno per applicare volume a un elemento ID
+    const applyVol = (elmId, channelVol, customId) => {
+        const el = document.getElementById(elmId);
+        if (el) {
+            const custom = getCustomVolume(customId);
+            const final = Math.max(0, Math.min(1, master * channelVol * custom));
+            el.volume = final;
         }
+    };
+
+    // --- AGGIORNAMENTO LOOP E VIDEO ---
+
+    // Suoni Ambiente (Usano canale Music o SFX a seconda della natura logic)
+    applyVol('sound-bluescreen', music, 'sound-bluescreen');
+    applyVol('sound-fire', sfx, 'sound-fire'); // Il fuoco è un SFX ambientale
+    applyVol('sound-snowball', music, 'sound-snowball'); // Neve sostituisce la musica
+
+    // Video Eventi (Usano canale Music)
+    applyVol('rick-roll-video', music, 'video-rick');
+
+    // Ricardo ha 3 varianti, usano tutte lo stesso slider 'video-ricardo'
+    ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(vidId => {
+        applyVol(vidId, music, 'video-ricardo');
     });
-
-    // --- LOOP EFFETTI ---
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) fireSound.volume = master * sfx * getVol('sound-fire');
-
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.volume = master * music * getVol('sound-snowball');
 }
 
 // Funzione per acquistare Skin con Token Lab
@@ -412,15 +414,19 @@ function triggerBluescreen(multiplier) {
         if (snowAudio && !snowAudio.paused) {
             if (audioGlitchInterval) clearInterval(audioGlitchInterval);
             audioGlitchInterval = setInterval(() => {
-                // Cambia velocità a caso (distorsione)
                 snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
-                // Volume a scatti (stutter)
                 snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
             }, 100);
         }
     } else {
         // Standard
         playSound('sound-bluescreen', 'music');
+
+        // --- FIX: Ferma la musica di sottofondo ---
+        const bgMusic = document.getElementById('sound-bg-music');
+        if (bgMusic && !bgMusic.paused) {
+            bgMusic.pause();
+        }
     }
 
     setTimeout(() => { stopBluescreenEffect(); }, 30000);

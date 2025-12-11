@@ -313,7 +313,7 @@ const gameData = {
         // UNLOCKABLE SKINS (Achievement Based)
         christmas: {
             name: "Espo Natale",
-            desc: "Oh Oh Oh! Risolviamo questi bug sotto l'albero.",
+            desc: "Risolviamo questi bug sotto l'albero.",
             img: "esponatale.webp",
             imgClick: "esponatale-click.webp",
             rarity: "christmas",
