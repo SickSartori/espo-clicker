@@ -54,7 +54,6 @@
 
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 400px;">
-        <button class="modal-close-btn">&times;</button>
         <h2><i class="fa-solid fa-sliders"></i> Configurazione</h2>
         
         <div class="settings-content">
@@ -87,6 +86,7 @@
                     </div>
                     <span id="music-vol-display" class="slider-value">50%</span>
                 </div>
+
                 <button id="open-advanced-audio-btn" class="buy-btn ghost-btn" style="width: 100%; margin-top: 15px; justify-content: center;">
                     <i class="fa-solid fa-sliders"></i> Mixer Audio & Video
                 </button>
@@ -103,7 +103,7 @@
             </div>
 
             <button id="save-settings-btn" class="buy-btn save-btn">
-                <i class="fa-solid fa-check"></i> Salva Configurazione
+                <i class="fa-solid fa-floppy-disk"></i> <p style="margin-left: 5px;"> Chiudi & Salva</p>
             </button>
         </div>
     </div>
@@ -174,29 +174,38 @@
 </div>
 
 <div id="advanced-audio-modal" class="modal-backdrop" style="display: none; z-index: 2200;">
-    <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
-        <button class="modal-close-btn" id="close-advanced-audio-btn">&times;</button>
+    <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
         
-        <h2><i class="fa-solid fa-music"></i> Mixer Sorgenti</h2>
+        <div class="modal-header-custom" style="
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px 20px; 
+            background-color: #34495e; 
+            border-bottom: 1px solid #4a6582;
+            flex-shrink: 0;">
+            
+            <button id="header-back-btn" class="header-action-btn" title="Torna alle Opzioni">
+                <i class="fa-solid fa-chevron-left"></i> Indietro
+            </button>
+
+            <h2 style="margin: 0; padding: 0; font-size: 1.2rem; border: none; background: transparent;">
+                <i class="fa-solid fa-sliders"></i> Mixer
+            </h2>
+
+            <button id="header-reset-btn" class="header-action-btn reset" title="Ripristina Default">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+        </div>
         
-        <div class="settings-content" style="padding-top: 10px; overflow-y: auto; flex-grow: 1;">
-            <p style="font-size: 0.85rem; color: #95a5a6; margin-bottom: 20px; text-align: center;">
-                Regola il volume di ogni singola sorgente.<br>
-                <i style="font-size: 0.75rem;">(Percentuale rispetto al Master)</i>
+        <div class="settings-content" style="padding: 10px 20px 20px 20px; overflow-y: auto; flex-grow: 1;">
+            <p style="font-size: 0.85rem; color: #95a5a6; margin-bottom: 20px; text-align: center; margin-top: 10px;">
+                Regola il volume specifico di ogni sorgente.<br>
+                <i style="font-size: 0.75rem;">(Si moltiplica con il volume Master ed Effetti)</i>
             </p>
             
             <div id="advanced-audio-list" style="display: flex; flex-direction: column; gap: 12px;">
                 </div>
-
-            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
-                <button type="button" id="back-to-settings-btn" class="buy-btn" style="flex: 2; background-color: #34495e;">
-                    <i class="fa-solid fa-arrow-left"></i> Indietro
-                </button>
-                
-                <button type="button" id="reset-audio-defaults" class="buy-btn outline-btn" style="flex: 1; border-color: #e74c3c; color: #e74c3c; font-size: 0.8rem;">
-                    <i class="fa-solid fa-rotate-left"></i> Reset
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -206,37 +215,6 @@
         <button class="modal-close-btn">&times;</button>
         <h2><i class="fa-solid fa-medal"></i> Classifica</h2>
         <div id="leaderboard-list"></div>
-    </div>
-</div>
-
-<div id="prestige-hub-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 450px; border-color: #9b59b6;"> 
-        <button class="modal-close-btn">&times;</button>
-        <h2 style="background-color: #4a235a; border-bottom: 1px solid #9b59b6; color: #f1c40f; text-align: center;">
-            <i class="fa-solid fa-rocket"></i> Ufficio Promozioni
-        </h2>
-        
-        <div class="settings-content" style="text-align: center; padding: 30px 20px;">
-            <p style="color: #e0e0e0; font-size: 1.1rem; font-weight: bold; margin-bottom: 10px;">
-                Valutazione Carriera
-            </p>
-            <p style="color: #bdc3c7; font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">
-                L'azienda è pronta a offrirti una promozione.<br>
-                Vuoi visualizzare il contratto?
-            </p>
-            
-            <div style="background: rgba(155, 89, 182, 0.1); border: 1px solid #8e44ad; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-                <p style="margin: 0 0 5px 0; color: #d7bde2; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Stima Guadagno</p>
-                <p style="margin: 0; line-height: 1;">
-                    <span id="prestige-gain-display" style="font-size: 3rem; font-weight: 800; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);">0</span>
-                    <span style="font-size: 1.2rem; color: #2ecc71; font-weight: bold;"> Token</span>
-                </p>
-            </div>
-
-            <button id="btn-go-to-contract" class="buy-btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); border: none; font-size: 1.1rem; padding: 15px; width: 100%; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);">
-                <i class="fa-solid fa-file-signature"></i> Visualizza Contratto
-            </button>
-        </div>
     </div>
 </div>
 

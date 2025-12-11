@@ -44,6 +44,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUsernameDisplay = document.getElementById('current-username-display');
 
     // ==========================================
+    // --- GESTIONE PRESTIGIO / PROMOZIONE ---
+    // ==========================================
+    const openPrestigeBtn = document.getElementById('open-prestige-hub-btn');
+    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
+
+    // 1. Il bottone apre DIRETTAMENTE il contratto finale (saltando l'hub)
+    if (openPrestigeBtn) {
+        openPrestigeBtn.addEventListener('click', () => {
+            // Aggiorna visuali se necessario
+            if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+
+            // Chiama la funzione logica che calcola i guadagni e apre il modale del contratto
+            // (Questa funzione è definita in game-logic.js)
+            if (typeof openPrestigeContract === 'function') {
+                openPrestigeContract();
+            }
+        });
+    }
+
+    // 2. Conferma/Firma il Contratto (Esegue il Reset)
+    if (btnConfirmPrestige) {
+        btnConfirmPrestige.addEventListener('click', () => {
+            if (typeof executePrestige === 'function') {
+                executePrestige();
+            }
+        });
+    }
+
+    // ==========================================
     // 2. LOGICA MIXER AUDIO AVANZATO
     // ==========================================
 
