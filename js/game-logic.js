@@ -389,37 +389,136 @@ function resumeCrunchTimeEffects() {
     if (typeof updateUI === 'function') updateUI();
 }
 
-function triggerBluescreen(multiplier) {
-    if (gameState.skins.current === 'rick' && Math.random() < 0.8) return triggerRickRoll();
-    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) return triggerRicardoEvent();
-    if (checkEventConflict('System Error 404')) return false;
+let lastVideoPlayedId = null;
+
+// --- FUNZIONE EVENTI UNIVERSALE  ---
+function triggerGameEvent(eventKey, overrideMult = null) {
+    const config = gameData.events[eventKey];
+    if (!config) return false;
+
+    // 1. Controllo Conflitti
+    if (checkEventConflict(config.name)) return false;
+
+    // 2. Stop Audio Background (Comune a tutti)
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) snowAudio.pause();
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause();
+
+    // 3. Calcolo Moltiplicatore
+    let bonusMult = overrideMult;
+    if (!bonusMult) {
+        bonusMult = Math.floor(Math.random() * (config.maxMult - config.minMult + 1)) + config.minMult;
+    }
+
+    // 4. Setup Stato Globale
     isBluescreenActive = true;
-    bluescreenMultiplier = multiplier;
-    document.body.classList.add('bluescreen-active');
+    bluescreenMultiplier = bonusMult;
     recalculateCPS();
+
+    // Aggiorna UI Moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
-        emDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
+        const msg = config.toast.replace('{mult}', bonusMult);
+        emDisplay.textContent = msg; // Usa il testo del toast anche qui per coerenza
         emDisplay.style.display = 'block';
     }
-    if (gameState.skins.current === 'christmas') {
-        const snowAudio = document.getElementById('sound-snowball');
-        if (snowAudio && !snowAudio.paused) {
-            if (audioGlitchInterval) clearInterval(audioGlitchInterval);
-            audioGlitchInterval = setInterval(() => {
-                snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
-                snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-            }, 100);
+
+    // Toast Notifica
+    const toastMsg = config.toast.replace('{mult}', bonusMult);
+    window.EspooClicker.showToast(toastMsg, config.toastType);
+
+    // --- GESTIONE SPECIFICA PER TIPO ---
+
+    if (config.type === 'video') {
+        // === LOGICA VIDEO (Rick/Ricardo) ===
+        document.body.classList.add('rick-rolling');
+
+        // Reset Video
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
+            const v = document.getElementById(id);
+            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+        });
+
+        // Scelta Video
+        let videoId = config.videos[0];
+        if (config.videos.length > 1) {
+            const available = config.videos.filter(id => id !== lastVideoPlayedId);
+            const pool = available.length > 0 ? available : config.videos;
+            videoId = pool[Math.floor(Math.random() * pool.length)];
         }
-    } else {
-        playSound('sound-bluescreen', 'music');
-        const bgMusic = document.getElementById('sound-bg-music');
-        if (bgMusic && !bgMusic.paused) {
-            bgMusic.pause();
+        lastVideoPlayedId = videoId;
+
+        const video = document.getElementById(videoId);
+        if (video) {
+            if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
+            video.style.display = 'block';
+            video.currentTime = 0;
+
+            const customVol = getCustomVolume(config.audioId || videoId);
+            video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
+            video.play().catch(e => { });
+
+            // Click Handler Video
+            video.style.cursor = 'pointer';
+            const videoClickHandler = (e) => {
+                const syntheticEvent = { detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: video };
+                clickCookie(syntheticEvent);
+                video.style.transform = 'scale(0.98)';
+                setTimeout(() => video.style.transform = 'scale(1)', 50);
+            };
+            video.addEventListener('pointerdown', videoClickHandler);
+
+            // Cleanup specifico video alla fine
+            setTimeout(() => {
+                video.pause();
+                video.style.display = 'none';
+                video.removeEventListener('pointerdown', videoClickHandler);
+            }, config.duration);
+        }
+
+    } else if (config.type === 'css_mode') {
+        // === LOGICA CSS (404 / Bluescreen) ===
+        document.body.classList.add(config.cssClass);
+
+        // Gestione Audio Speciale (Natale vs Normale)
+        if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
+            // Glitch Natalizio
+            if (snowAudio) {
+                snowAudio.play();
+                if (audioGlitchInterval) clearInterval(audioGlitchInterval);
+                audioGlitchInterval = setInterval(() => {
+                    snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
+                    snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+                }, 100);
+            }
+        } else {
+            // Audio Normale Evento
+            playSound(config.audioId, 'music');
         }
     }
-    setTimeout(() => { stopBluescreenEffect(); }, 30000);
+
+    // 5. Timer Finale Comune (Cleanup)
+    setTimeout(() => {
+        document.body.classList.remove('rick-rolling');
+        if (config.cssClass) document.body.classList.remove(config.cssClass);
+        stopBluescreenEffect();
+    }, config.duration);
+
     return true;
+}
+
+
+function triggerBluescreen(multiplier) {
+    // 1. Logica Skins Speciali (Dispatcher)
+    if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
+        return triggerGameEvent('rickRoll');
+    }
+    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
+        return triggerGameEvent('ricardo');
+    }
+
+    return triggerGameEvent('bluescreen', multiplier);
 }
 
 function stopBluescreenEffect() {
@@ -460,126 +559,8 @@ function stopBluescreenEffect() {
     clearActiveEvent();
 }
 
-function triggerRickRoll() {
-    if (checkEventConflict('Rick Roll')) return false;
-    const video = document.getElementById('rick-roll-video');
-    if (!video) { clearActiveEvent(); return false; }
-    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.pause();
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) bgMusic.pause();
-    let rickMultiplier = Math.floor(Math.random() * 8) + 5;
-    isBluescreenActive = true;
-    bluescreenMultiplier = rickMultiplier;
-    recalculateCPS();
-    document.body.classList.add('rick-rolling');
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) {
-        emDisplay.textContent = `🔥 RICK BONUS: BPS x${rickMultiplier} 🔥`;
-        emDisplay.style.display = 'block';
-    }
-    video.style.display = 'block';
-    video.currentTime = 0;
-    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['rick-roll-video'] !== undefined)
-        ? gameState.user.audioCustom['rick-roll-video'] : 0.5;
-    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * rickVol;
-    video.play().catch(e => { });
-    window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
-    video.style.cursor = 'pointer';
-    const videoClickHandler = (e) => {
-        const syntheticEvent = {
-            detail: 1,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            pageX: e.pageX,
-            pageY: e.pageY,
-            target: video
-        };
-        clickCookie(syntheticEvent);
-        video.style.transform = 'scale(0.98)';
-        setTimeout(() => video.style.transform = 'scale(1)', 50);
-    };
-    video.addEventListener('pointerdown', videoClickHandler);
-    setTimeout(() => {
-        document.body.classList.remove('rick-rolling');
-        video.pause();
-        video.style.display = 'none';
-        video.style.transform = 'none';
-        video.style.cursor = 'default';
-        video.removeEventListener('pointerdown', videoClickHandler);
-        stopBluescreenEffect();
-    }, 60000);
-    return true;
-}
 
-function triggerRicardoEvent() {
-    if (checkEventConflict('Ricardo Flex')) return false;
-    const allVideos = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
-    allVideos.forEach(id => {
-        const v = document.getElementById(id);
-        if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
-    });
-    let availableVideos = allVideos.filter(id => id !== lastRicardoVideoId);
-    if (availableVideos.length === 0) availableVideos = allVideos;
-    const selectedId = availableVideos[Math.floor(Math.random() * availableVideos.length)];
-    lastRicardoVideoId = selectedId;
-    const video = document.getElementById(selectedId);
-    if (!video) { clearActiveEvent(); return false; }
-    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.pause();
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) bgMusic.pause();
-    let bonusMult = Math.floor(Math.random() * 8) + 5;
-    isBluescreenActive = true;
-    bluescreenMultiplier = bonusMult;
-    recalculateCPS();
-    document.body.classList.add('rick-rolling');
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) {
-        emDisplay.textContent = `🔥 FLEX BONUS: BPS x${bonusMult} 🔥`;
-        emDisplay.style.display = 'block';
-    }
-    video.style.display = 'block';
-    video.currentTime = 0;
-    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['ricardo-video'] !== undefined)
-        ? gameState.user.audioCustom['ricardo-video'] : 0.5;
-    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * ricardoVol;
-    video.play().catch(e => { });
-    window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
-    video.style.cursor = 'pointer';
-    const videoClickHandler = (e) => {
-        const syntheticEvent = {
-            detail: 1,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            pageX: e.pageX,
-            pageY: e.pageY,
-            target: video
-        };
-        clickCookie(syntheticEvent);
-        video.style.transform = 'scale(0.99)';
-        setTimeout(() => video.style.transform = 'scale(1)', 50);
-    };
-    video.addEventListener('pointerdown', videoClickHandler);
-    setTimeout(() => {
-        document.body.classList.remove('rick-rolling');
-        allVideos.forEach(id => {
-            const v = document.getElementById(id);
-            if (v) {
-                v.pause();
-                v.style.display = 'none';
-                v.currentTime = 0;
-                v.style.transform = 'none';
-                v.style.cursor = 'default';
-                v.removeEventListener('pointerdown', videoClickHandler);
-            }
-        });
-        stopBluescreenEffect();
-    }, 45000);
-    return true;
-}
+
 
 function clickCookie(event) {
     if (event.detail === 0) return;

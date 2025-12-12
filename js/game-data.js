@@ -967,7 +967,42 @@ const gameData = {
             reward: { type: 'skin', id: 'christmas' },
             condition: () => IS_XMAS_TIME
         }
-    }
+    },
+    events: {
+        rickRoll: {
+            name: 'Rick Roll',
+            type: 'video',
+            videos: ['rick-roll-video'], // ID dei tag <video> HTML
+            duration: 60000,             // Durata in ms
+            minMult: 5,                  // Moltiplicatore minimo
+            maxMult: 13,                 // Moltiplicatore massimo
+            audioId: 'rick-roll-video',  // ID per il volume nel mixer
+            toast: "🎵 RICK ROLL! (x{mult}) 🎵",
+            toastType: "achievement"
+        },
+        ricardo: {
+            name: 'Ricardo Flex',
+            type: 'video',
+            videos: ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'],
+            duration: 45000,
+            minMult: 5,
+            maxMult: 13,
+            audioId: 'ricardo-video',
+            toast: "💪 PURE POWER! (x{mult}) 💪",
+            toastType: "achievement"
+        },
+        bluescreen: {
+            name: 'System Error 404',
+            type: 'css_mode',       // Tipo diverso: non è un video
+            cssClass: 'bluescreen-active', // La classe da mettere al body
+            audioId: 'sound-bluescreen',
+            duration: 30000,
+            minMult: 2,
+            maxMult: 5,
+            toast: "ERRORE DI SISTEMA! x{mult}!",
+            toastType: "error"
+        }
+    },
 };
 
 // --- 3. GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---

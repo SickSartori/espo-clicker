@@ -397,31 +397,25 @@
     // Evento 404
     document.getElementById('btn-event-404').addEventListener('click', () => {
         const mult = getVal('cheat-404-input');
+        // Usa la funzione dispatcher per mantenere la sorpresa delle skin, 
+        // oppure usa triggerGameEvent('bluescreen', mult) per forzare il 404 puro.
         if (typeof triggerBluescreen === 'function') {
-            // Se checkEventConflict blocca, la funzione ritorna false
-            if (triggerBluescreen(mult)) {
-                toast(`Evento 404 avviato (x${mult})`);
-            }
+            triggerBluescreen(mult);
+            toast(`Evento avviato (x${mult})`);
         }
     });
 
     // Evento Rick Roll
     document.getElementById('btn-event-rick').addEventListener('click', () => {
-        if (typeof triggerRickRoll === 'function') {
-            if (triggerRickRoll(3)) {
-                toast("Rick Roll avviato!");
-            }
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('rickRoll');
         }
     });
 
     // Evento Ricardo
     document.getElementById('btn-event-ricardo').addEventListener('click', () => {
-        if (typeof triggerRicardoEvent === 'function') {
-            if (triggerRicardoEvent()) {
-                toast("Ricardo Flex avviato!");
-            }
-        } else {
-            toast("Funzione triggerRicardoEvent non trovata!");
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('ricardo');
         }
     });
 
