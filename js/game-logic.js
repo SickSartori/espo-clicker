@@ -136,7 +136,7 @@ function updateAmbientVolume() {
     const music = gameState.user.musicVolume;
     const sfx = gameState.user.sfxVolume;
 
-    // Helper interno per applicare volume a un elemento ID
+    // Helper interno
     const applyVol = (elmId, channelVol, customId) => {
         const el = document.getElementById(elmId);
         if (el) {
@@ -147,16 +147,14 @@ function updateAmbientVolume() {
     };
 
     // --- AGGIORNAMENTO LOOP E VIDEO ---
-
-    // Suoni Ambiente (Usano canale Music o SFX a seconda della natura logic)
     applyVol('sound-bluescreen', music, 'sound-bluescreen');
-    applyVol('sound-fire', sfx, 'sound-fire'); // Il fuoco è un SFX ambientale
-    applyVol('sound-snowball', music, 'sound-snowball'); // Neve sostituisce la musica
+    applyVol('sound-snowball', music, 'sound-snowball');
 
-    // Video Eventi (Usano canale Music)
+    // [FIX] AGGIUNTO IL CONTROLLO PER LA FURY MUSIC
+    applyVol('sound-fury-music', music, 'sound-fury-music');
+
+    // Video Eventi
     applyVol('rick-roll-video', music, 'video-rick');
-
-    // Ricardo ha 3 varianti, usano tutte lo stesso slider 'video-ricardo'
     ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(vidId => {
         applyVol(vidId, music, 'video-ricardo');
     });
@@ -275,18 +273,15 @@ function recalculateCPS() {
 function activateCrunchTime() {
     const now = Date.now();
 
-    // Check Conflitto
-    if (checkEventConflict('Crunch Time')) return false;
+    if (checkEventConflict('Espo Fury')) return false;
 
-    // Check Cooldown
     if (now < crunchTimeCooldownEnd) {
         const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-        window.EspooClicker.showToast(`Crunch Time in ricarica: ${remaining}s`, 'warning');
-        clearActiveEvent(); // Rilascia subito il lock se fallisce
+        window.EspooClicker.showToast(`Espo si sta calmando: ${remaining}s`, 'warning');
+        clearActiveEvent();
         return false;
     }
 
-    // Attivazione
     crunchTimeMultiplier = 7;
     crunchTimeEndTime = now + 30000;
     crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
@@ -298,6 +293,12 @@ function activateCrunchTime() {
     if (window.EspooClicker) window.EspooClicker.saveGame();
 
     document.body.classList.add('crunch-active');
+
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+    if (photoNormal) photoNormal.src = './assets/image/espo-fury.webp';
+    if (photoClicked) photoClicked.src = './assets/image/espo-fury-click.webp';
+
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
@@ -305,18 +306,29 @@ function activateCrunchTime() {
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 120);
     }
 
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) {
-        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
-        fireSound.currentTime = 0;
-        fireSound.play().catch(e => { });
+    // RIMOSSO AUDIO FIRE QUI
+
+    // FIX: Pausa sicura musica BG
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) {
+        bgMusic.pause();
+        bgMusic.currentTime = 0; // Reset posizione
     }
 
-    window.EspooClicker.showToast('🔥 CRUNCH TIME ATTIVO! BPS x7! 🔥', 'success');
-    return true; // Successo
+    // 2. Avvia la Fury Music
+    const furyMusic = document.getElementById('sound-fury-music');
+    if (furyMusic) {
+        const furyVol = getCustomVolume('sound-fury-music');
+        furyMusic.volume = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
+        furyMusic.currentTime = 0;
+        furyMusic.play().catch(e => { });
+    }
+
+    window.EspooClicker.showToast('🔥 ESPO FURY ATTIVA! BPS x7! 🔥', 'success');
+    return true;
 }
 
 // --- NUOVA FUNZIONE HELPER PER CREARE IL FUOCO ---
@@ -365,10 +377,11 @@ function spawnFireParticle(container) {
 }
 
 function resumeCrunchTimeEffects() {
-    // 1. Ripristina Variabile Globale
+    // 1. Blocca il sistema e imposta moltiplicatori
+    window.currentActiveEvent = 'Espo Fury';
     crunchTimeMultiplier = 7;
 
-    // 2. Riattiva Effetti Visivi CSS
+    // 2. Effetti Visivi (Skin di Fuoco)
     document.body.classList.add('crunch-active');
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
@@ -377,30 +390,60 @@ function resumeCrunchTimeEffects() {
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 120);
     }
 
-    // 4. Riavvia Audio (Gestione Blocco Autoplay)
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) {
-        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
-        // Tentativo di play
-        const playPromise = fireSound.play();
+    // 3. STOP Audio Ambiente (Background / Neve) - Assicuriamoci che stiano zitti
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
+
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
+
+    // 4. FORZA SKIN VISIVA (Sovrascrive qualsiasi altra cosa)
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+    if (photoNormal) photoNormal.src = './assets/image/espo-fury.webp';
+    if (photoClicked) photoClicked.src = './assets/image/espo-fury-click.webp';
+
+    // 5. GESTIONE AUDIO ROBUSTA (Autoplay Policy)
+    const furyMusic = document.getElementById('sound-fury-music');
+    if (furyMusic) {
+        // Calcola volume
+        const furyVol = getCustomVolume('sound-fury-music');
+        const targetVol = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
+        furyMusic.volume = targetVol;
+        furyMusic.currentTime = 0;
+
+        // Tenta riproduzione immediata
+        const playPromise = furyMusic.play();
 
         if (playPromise !== undefined) {
             playPromise.catch(() => {
-                console.log("Autoplay bloccato. Attesa click utente per audio fuoco.");
-                // Se il browser blocca l'audio al refresh, lo avvia al primo click
-                const forcePlay = () => {
-                    fireSound.play();
-                    document.removeEventListener('click', forcePlay);
+                console.log("Autoplay bloccato per Fury Music. In attesa di interazione...");
+
+                // Funzione One-Shot per sbloccare l'audio al primo tocco
+                const unlockFuryAudio = () => {
+                    // Controlla se siamo ancora in Fury (potrebbe essere scaduto mentre l'utente aspettava)
+                    if (gameState.crunchTimeEndTime > Date.now()) {
+                        furyMusic.volume = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
+                        furyMusic.play().catch(e => console.error("Errore play Fury manuale", e));
+                    }
+                    // Rimuovi i listener per non ripeterlo
+                    document.removeEventListener('click', unlockFuryAudio);
+                    document.removeEventListener('keydown', unlockFuryAudio);
+                    document.removeEventListener('touchstart', unlockFuryAudio);
                 };
-                document.addEventListener('click', forcePlay);
+
+                // Ascolta qualsiasi interazione
+                document.addEventListener('click', unlockFuryAudio, { once: true });
+                document.addEventListener('keydown', unlockFuryAudio, { once: true });
+                document.addEventListener('touchstart', unlockFuryAudio, { once: true });
             });
         }
     }
 
-    // Forza ricalcolo BPS immediato
+    // Ricalcolo immediato CPS e UI
     recalculateCPS();
     if (typeof updateUI === 'function') updateUI();
 }

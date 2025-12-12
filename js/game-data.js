@@ -76,10 +76,10 @@ function getInitialGameState() {
 
                 // Loop e Ambienti
                 'sound-bluescreen': 0.3,
-                'sound-fire': 0.5,
                 'sound-snowball': 0.2,
                 'sound-merry': 0.5,
-                'sound-bg-music': 0.5,
+                'sound-bg-music': 0.3,
+                'sound-fury-music': 0.2,
 
                 // Video (Default 50%)
                 'video-rick': 0.5,
@@ -270,6 +270,42 @@ function getInitialGameState() {
                 purchased: false
             },
             skynet: {
+                purchased: false
+            },
+            entanglementLink: {
+                purchased: false
+            },
+            superpositionCores: {
+                purchased: false
+            },
+            errorCorrection: {
+                purchased: false
+            },
+            quantumSupremacy: {
+                purchased: false
+            },
+            subspaceTransceiver: {
+                purchased: false
+            },
+            dysonNodes: {
+                purchased: false
+            },
+            wormholeRouting: {
+                purchased: false
+            },
+            federazioneGalattica: {
+                purchased: false
+            },
+            paradoxPrevention: {
+                purchased: false
+            },
+            timelineBranching: {
+                purchased: false
+            },
+            chronosTrigger: {
+                purchased: false
+            },
+            immutablePast: {
                 purchased: false
             }
         },
@@ -773,10 +809,14 @@ const gameData = {
             isCounted: false
         },
         crunchTime: {
-            name: 'Crunch Time',
-            desc: 'Abilità Attiva: BPS x3 per 30s (Cooldown 5m).',
+            id: 'crunchTime', // NON cambiare l'ID per non rompere i salvataggi
+            name: 'ESPO FURY!', // Nuovo Nome
+            description: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.', // Nuova Descrizione
             baseCost: 200,
-            isCounted: false
+            isCounted: false,
+            // Aggiungiamo i percorsi delle immagini qui per comodità
+            furyImage: 'espo-fury.webp',
+            furyClickImage: 'espo-fury-click.webp'
         }
     },
 
@@ -1020,6 +1060,107 @@ const gameData = {
             cost: 14000000000,
             multiplier: 4,
             requiredCount: 100
+        },
+        // --- QUANTUM SERVER UPGRADES (Base Cost: 55M) ---
+        entanglementLink: {
+            name: 'Entanglement Link',
+            desc: 'Quantum Server x2 BPS. Connette i qubit istantaneamente.',
+            targetTeam: 'quantumServer',
+            cost: 550000000, // 550M
+            multiplier: 2,
+            requiredCount: 1
+        },
+        superpositionCores: {
+            name: 'Superposition Cores',
+            desc: 'Quantum Server x2 BPS. Calcola bug e fix contemporaneamente.',
+            targetTeam: 'quantumServer',
+            cost: 2750000000, // 2.75B
+            multiplier: 2,
+            requiredCount: 10
+        },
+        errorCorrection: {
+            name: 'Quantum Error Correction',
+            desc: 'Quantum Server x3 BPS. Stabilizza lo stato quantico del codice.',
+            targetTeam: 'quantumServer',
+            cost: 22000000000, // 22B
+            multiplier: 3,
+            requiredCount: 25
+        },
+        quantumSupremacy: {
+            name: 'Supremazia Quantistica',
+            desc: 'Quantum Server x4 BPS. Risolve bug impossibili per l\'uomo.',
+            targetTeam: 'quantumServer',
+            cost: 110000000000, // 110B
+            multiplier: 4,
+            requiredCount: 50
+        },
+
+        // --- RETE GALATTICA UPGRADES (Base Cost: 850M) ---
+        subspaceTransceiver: {
+            name: 'Subspace Transceiver',
+            desc: 'Rete Galattica x2 BPS. Aggiornamenti a velocità superluminale.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: 8500000000, // 8.5B
+            multiplier: 2,
+            requiredCount: 1
+        },
+        dysonNodes: {
+            name: 'Nodi Dyson',
+            desc: 'Rete Galattica x2 BPS. Usa l\'energia delle stelle per il debug.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: 42500000000, // 42.5B
+            multiplier: 2,
+            requiredCount: 10
+        },
+        wormholeRouting: {
+            name: 'Wormhole Routing',
+            desc: 'Rete Galattica x3 BPS. Invia patch attraverso pieghe spaziali.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: 340000000000, // 340B
+            multiplier: 3,
+            requiredCount: 25
+        },
+        federazioneGalattica: {
+            name: 'Federazione Galattica',
+            desc: 'Rete Galattica x4 BPS. Tutti i pianeti uniti contro i bug.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: 1700000000000, // 1.7T
+            multiplier: 4,
+            requiredCount: 50
+        },
+
+        // --- DEBUG TEMPORALE UPGRADES (Base Cost: 15B) ---
+        paradoxPrevention: {
+            name: 'Paradox Prevention',
+            desc: 'Debug Temporale x2 BPS. Risolve i bug prima che vengano scritti.',
+            targetTeam: 'debugTemporale',
+            cost: 150000000000, // 150B
+            multiplier: 2,
+            requiredCount: 1
+        },
+        timelineBranching: {
+            name: 'Timeline Branching',
+            desc: 'Debug Temporale x2 BPS. Debugga infiniti universi paralleli.',
+            targetTeam: 'debugTemporale',
+            cost: 750000000000, // 750B
+            multiplier: 2,
+            requiredCount: 10
+        },
+        chronosTrigger: {
+            name: 'Chronos Trigger',
+            desc: 'Debug Temporale x3 BPS. Un reset leggendario per il codice errato.',
+            targetTeam: 'debugTemporale',
+            cost: 6000000000000, // 6T
+            multiplier: 3,
+            requiredCount: 25
+        },
+        immutablePast: {
+            name: 'Passato Immutabile',
+            desc: 'Debug Temporale x4 BPS. Rende il codice legacy perfetto per sempre.',
+            targetTeam: 'debugTemporale',
+            cost: 30000000000000, // 30T
+            multiplier: 4,
+            requiredCount: 50
         }
     }
 };

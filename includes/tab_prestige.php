@@ -94,7 +94,7 @@
 
             <div id="upgrade-crunchTime" class="prestige-upgrade">
                 <div class="upgrade-details">
-                    <span class="upgrade-name">Crunch Time</span>
+                    <span class="upgrade-name">ESPO FURY!</span>
                     <div class="upgrade-desc">Abilità Attiva: BPS x7.</div>
                      <div class="upgrade-cost">Costo: <span id="cost-crunchTime">200</span> Pt</div>
                 </div>

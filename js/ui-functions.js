@@ -836,7 +836,7 @@ function updateUI() {
                 crunchTimeMultiplier = 1;
                 btnCrunch.className = 'skill-btn';
                 if (btnCrunch.childNodes[0]) {
-                    btnCrunch.childNodes[0].textContent = "🔥 CRUNCH TIME 🔥";
+                    btnCrunch.childNodes[0].textContent = "🔥 ESPO FURY 🔥";
                 }
                 if (timerDiv) timerDiv.textContent = "CLICCA!";
             }

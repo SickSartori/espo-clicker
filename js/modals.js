@@ -173,16 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const mixerGroups = {
-        'ambiente': { title: 'Musica & Ambiente', icon: 'fa-music', ids: ['sound-bg-music', 'sound-snowball', 'sound-fire', 'sound-bluescreen'] },
-        'eventi': { title: 'Video & Eventi', icon: 'fa-film', ids: ['video-rick', 'video-ricardo', 'sound-merry', 'sound-golden'] },
+        'ambiente': { title: 'Musica & Ambiente', icon: 'fa-music', ids: ['sound-bg-music', 'sound-snowball', 'sound-bluescreen'] },
+        'eventi': { title: 'Video & Eventi', icon: 'fa-film', ids: ['video-rick', 'video-ricardo', 'sound-merry', 'sound-fury-music', 'sound-golden'] },
         'effetti': { title: 'Effetti Sonori', icon: 'fa-volume-high', ids: ['sound-click', 'sound-buy', 'sound-achievement', 'sound-prestige', 'sound-error', 'sound-hover'] }
     };
 
     const audioLabels = {
         'sound-click': 'Click', 'sound-buy': 'Shop', 'sound-achievement': 'Obiettivo',
         'sound-error': 'Errore', 'sound-golden': 'Golden Bug', 'sound-prestige': 'Prestigio',
-        'sound-hover': 'Hover', 'sound-bluescreen': 'Loop 404', 'sound-fire': 'Loop Fuoco',
+        'sound-hover': 'Hover', 'sound-bluescreen': 'Loop 404',
         'sound-snowball': 'Loop Neve', 'sound-bg-music': 'Musica Base', 'sound-merry': 'Jingle Natale',
+        'sound-fury-music': 'Musica Fury',
         'video-rick': 'Video: Rick', 'video-ricardo': 'Video: Ricardo'
     };
 
@@ -195,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Game.getGameState().user.audioCustom = {
                 'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
                 'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.5, // ALZATO A 0.5
-                'sound-fire': 0.5, 'sound-error': 1.0, 'sound-golden': 1.0,
+                'sound-error': 1.0, 'sound-golden': 1.0,
                 'sound-prestige': 1.0, 'sound-hover': 1.0, 'sound-merry': 1.0,
                 'video-rick': 0.5, 'video-ricardo': 0.5
             };
@@ -371,9 +372,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.currentActiveEvent = 'System Error 404';
         }
         else if (body.classList.contains('crunch-active')) {
-            const fireAudio = document.getElementById('sound-fire');
-            if (fireAudio) fireAudio.play().catch(e => { });
-            if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+            const furyMusic = document.getElementById('sound-fury-music');
+            if (furyMusic) furyMusic.play().catch(e => { });
         }
         else if (state.skins.current === 'christmas') {
             const snowAudio = document.getElementById('sound-snowball');
@@ -382,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 snowAudio.play().catch(e => { });
             }
         }
+
         else {
             const bgMusic = document.getElementById('sound-bg-music');
             if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
@@ -404,15 +405,29 @@ document.addEventListener('DOMContentLoaded', () => {
         btnHeaderReset.addEventListener('click', () => {
             if (confirm("Ripristinare i volumi predefiniti?")) {
                 const Game = getGameAPI();
-                Game.getGameState().user.audioCustom = {
-                    'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
-                    'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.5,
-                    'sound-fire': 0.5, 'sound-error': 1.0, 'sound-golden': 1.0,
-                    'sound-prestige': 1.0, 'sound-hover': 1.0, 'sound-merry': 1.0,
-                    'video-rick': 0.5, 'video-ricardo': 0.5
-                };
-                renderAudioMixer();
+
+                // [FIX] Ora legge i default veri da game-data.js invece di usare valori fissi
+                if (typeof getInitialGameState === 'function') {
+                    const defaults = getInitialGameState().user.audioCustom;
+                    // Clona l'oggetto per sicurezza
+                    Game.getGameState().user.audioCustom = JSON.parse(JSON.stringify(defaults));
+                } else {
+                    // Fallback di sicurezza se la funzione non esiste
+                    Game.getGameState().user.audioCustom = {
+                        'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
+                        'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.3,
+                        'sound-error': 0.5, 'sound-golden': 0.6,
+                        'sound-prestige': 0.6, 'sound-hover': 0.2, 'sound-merry': 0.5,
+                        'sound-fury-music': 0.2,
+                        'video-rick': 0.5, 'video-ricardo': 0.5
+                    };
+                }
+
+                renderAudioMixer(); // Aggiorna gli slider visivi
+
+                // Applica subito il volume
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+
                 Game.showToast("Volumi ripristinati.", "info");
             }
         });

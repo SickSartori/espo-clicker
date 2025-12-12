@@ -29,7 +29,7 @@
         <div id="cps-display">BPS: 0.0</div>
 
         <button id="skill-crunchTime" class="skill-btn" style="display: none;">
-            🔥 CRUNCH TIME 🔥
+            🔥 ESPO FURY 🔥
             <div class="skill-timer">Pronto!</div>
         </button>
 

@@ -351,41 +351,63 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
             if (document.body.classList.contains('crunch-active')) {
 
-                // 1. Spegni Effetti CSS e Audio
                 document.body.classList.remove('crunch-active');
-
                 const overlay = document.getElementById('crunch-overlay');
                 if (overlay) overlay.style.display = 'none';
 
-                const fireSound = document.getElementById('sound-fire');
-                if (fireSound) {
-                    fireSound.pause();
-                    fireSound.currentTime = 0;
+                // SPEGNI SOLO FURY MUSIC (Fire rimosso)
+                const furyMusic = document.getElementById('sound-fury-music');
+                if (furyMusic) {
+                    furyMusic.pause();
+                    furyMusic.currentTime = 0;
                 }
 
-                // 2. STOP PARTICELLE (Importante!)
+                // 3. Ripristina Musica Background
+                const bgMusic = document.getElementById('sound-bg-music');
+                if (bgMusic && gameState.user.masterVolume > 0 && gameState.skins.current !== 'christmas') {
+                    if (typeof setBgMusicVolume === 'function') {
+                        setBgMusicVolume();
+                    } else if (window.EspooClicker && typeof window.EspooClicker.setBgMusicVolume === 'function') {
+                        window.EspooClicker.setBgMusicVolume();
+                    }
+
+                    // Riavvia solo se non c'è altro evento
+                    if (!window.currentActiveEvent || window.currentActiveEvent === 'Espo Fury') {
+                        bgMusic.play().catch(e => { });
+                    }
+                }
+
+                // 4. STOP PARTICELLE
                 const fireContainer = document.getElementById('fire-particles-container');
                 if (fireContainer) {
                     fireContainer.style.display = 'none';
-                    fireContainer.innerHTML = ''; // Pulisce tutte le particelle esistenti
+                    fireContainer.innerHTML = '';
                 }
-                // Ferma il generatore (variabile definita in game-logic.js, accessibile qui se globale)
                 if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
                     clearInterval(fireParticleInterval);
                     fireParticleInterval = null;
                 }
 
-                // 3. Reset Logica
+                // 5. RESET IMMAGINI SKIN
+                if (typeof applySkinVisuals === 'function') {
+                    applySkinVisuals(gameState.skins.current);
+                }
+
+                // 6. RESET LOGICA GIOCO
                 crunchTimeMultiplier = 1;
                 recalculateCPS();
 
                 if (typeof updateUI === 'function') updateUI();
                 if (typeof refreshAllStores === 'function') refreshAllStores();
-                if (window.currentActiveEvent === 'Crunch Time') {
-                    window.currentActiveEvent = null; // Rilascia il lock
-                    console.log("Crunch Time terminato naturalmente. Lock rilasciato.");
+
+                // === FIX CRUCIALE QUI SOTTO ===
+                // Rilascia il blocco indipendentemente dal nome usato ('Crunch Time' o 'Espo Fury')
+                if (window.currentActiveEvent === 'Crunch Time' || window.currentActiveEvent === 'Espo Fury') {
+                    window.currentActiveEvent = null;
+                    console.log("Espo Fury terminato. Semaforo verde.");
                 }
-                window.EspooClicker.showToast('Crunch Time terminato.', 'info');
+
+                window.EspooClicker.showToast('Espo si è calmato.', 'info');
             }
         }
         // ------------------------------------------
@@ -434,11 +456,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function initializeGame() {
-        // 1. CARICAMENTO DATI (Spostato PRIMA dell'audio per avere il volume corretto)
+        // 1. CARICAMENTO DATI
         buildStores();
         loadGame();
 
-        // --- 2. TENTATIVO DIRETTO (Senza attese) ---
+        const now = Date.now();
         const bgMusic = document.getElementById('sound-bg-music');
         const snowAudio = document.getElementById('sound-snowball');
         const masterVol = gameState.user.masterVolume;
@@ -447,45 +469,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // Funzione rapida per provare a suonare
         const tryStart = () => {
             if (masterVol <= 0 || musicVol <= 0) return;
-
-            // Definisci quale audio suonare
             const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
 
-            if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent) {
+            // FIX: Non far partire la musica base se c'è un evento FURY in corso o in memoria
+            const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
+            if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent && !isFuryActive) {
+
                 if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
 
-                // Tenta il play
                 const playPromise = audioToPlay.play();
-
                 if (playPromise !== undefined) {
                     playPromise.catch(() => {
                         console.log("Autoplay bloccato: In attesa di interazione utente...");
-
-                        // === AGGIUNTA: ASCOLTATORE GLOBALE ===
-                        // Appena l'utente tocca QUALSIASI cosa, riprova a far partire la musica
                         const unlockAudio = () => {
-                            // Riprova a suonare
-                            audioToPlay.play().then(() => {
-                                // Se riesce, rimuovi gli ascoltatori per non sprecarli
-                                document.removeEventListener('click', unlockAudio);
-                                document.removeEventListener('keydown', unlockAudio);
-                                document.removeEventListener('touchstart', unlockAudio);
-                            }).catch(e => { });
+                            if (!window.currentActiveEvent && !(gameState.crunchTimeEndTime > Date.now())) {
+                                audioToPlay.play().catch(e => { });
+                            }
+                            document.removeEventListener('click', unlockAudio);
+                            document.removeEventListener('keydown', unlockAudio);
+                            document.removeEventListener('touchstart', unlockAudio);
                         };
-
-                        // Aggiungi gli ascoltatori "one-shot"
                         document.addEventListener('click', unlockAudio, { once: true });
                         document.addEventListener('keydown', unlockAudio, { once: true });
                         document.addEventListener('touchstart', unlockAudio, { once: true });
-
-                        // Opzionale: Mostra un piccolo avviso visivo
-                        if (window.EspooClicker) window.EspooClicker.showToast("🎵 Clicca ovunque per attivare la musica", "info");
                     });
                 }
             }
         };
 
-        // Prova subito (funziona se soft refresh)
         tryStart();
 
         // --- 3. SETUP STANDARD ---
@@ -504,7 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gContainer.style.pointerEvents = 'auto';
         }
 
-        // Reset stati temporanei
         isBluescreenActive = false;
         bluescreenMultiplier = 1;
         if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
@@ -517,16 +527,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const soundClick = document.getElementById('sound-click');
         if (soundClick) soundClick.playbackRate = 1;
 
-        const now = Date.now();
+        // --- FIX LOGICA F5 DURANTE FURY ---
+        let isFuryResumed = false;
+
         if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
             crunchTimeEndTime = gameState.crunchTimeEndTime;
             crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
-            if (typeof resumeCrunchTimeEffects === 'function') resumeCrunchTimeEffects();
+            if (typeof resumeCrunchTimeEffects === 'function') {
+                resumeCrunchTimeEffects();
+                isFuryResumed = true;
+            }
         }
 
-        if (typeof applySkinVisuals === 'function') {
+        // Applica la skin normale SOLO se NON abbiamo appena riattivato la Fury
+        if (!isFuryResumed && typeof applySkinVisuals === 'function') {
             applySkinVisuals(gameState.skins.current);
+        } else if (isFuryResumed) {
+            console.log("Fury Mode attiva: skip caricamento skin standard.");
         }
+
+        // (QUI HO RIMOSSO IL BLOCCO DUPLICATO CHE CAUSAVA L'ERRORE)
 
         const globalFilterSelect = document.getElementById('global-filter-select');
         if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
@@ -560,7 +580,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['10x'].blur(); setBuyMultiplier(10); } });
         if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['MAX'].blur(); setBuyMultiplier('MAX'); } });
 
-        // Setup UI Globale
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -568,7 +587,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- FIX MUTE BUTTON (Sblocco Intelligente) ---
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
             muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
@@ -578,11 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
 
                 if (isBlocked) {
-                    // CASO 1: BLOCCATO -> SBLOCCA (1 Click)
                     tryStart();
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 } else {
-                    // CASO 2: NORMALE (Toggle)
                     if (gameState.user.masterVolume > 0) {
                         gameState.lastVolume = gameState.user.masterVolume;
                         gameState.user.masterVolume = 0;
@@ -591,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.user.masterVolume = gameState.lastVolume || 1.0;
                         muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                         playSound('sound-click');
-                        tryStart(); // Riprova a far partire se era spento
+                        tryStart();
                     }
                     const mSlider = document.getElementById('master-slider');
                     if (mSlider) mSlider.value = gameState.user.masterVolume;
@@ -603,11 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clickerButton) {
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
-
-            // --- FIX AUTOSTART AL CLICK ---
-            // Fa partire la musica anche cliccando sul biscotto, senza codice globale "in attesa"
             clickerButton.addEventListener('click', (e) => {
-                tryStart(); // Se è bloccata, prova a farla partire
+                tryStart();
                 clickCookie(e);
             });
         }
@@ -622,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Setup Navigazione Mobile
         const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
         if (window.innerWidth <= 1024) {
             document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
@@ -656,7 +668,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Setup Tabs
         const tabs = document.querySelectorAll('.tab-btn');
         const contents = document.querySelectorAll('.tab-content');
 
@@ -695,7 +706,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultTab = document.getElementById('tab-click');
         if (defaultTab) defaultTab.click();
 
-        // Listeners Eventi
         const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
@@ -844,14 +854,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     deepMerge(gameState, cloudState);
 
+                    if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
+                    for (const key in gameData.buildingEnhancements) {
+                        // Se nel salvataggio attuale manca questa chiave, creala!
+                        if (!gameState.buildingEnhancements[key]) {
+                            gameState.buildingEnhancements[key] = { purchased: false };
+                            console.log(`[Auto-Fix] Aggiunto potenziamento mancante: ${key}`);
+                        }
+                    }
+
+
                     // --- FIX SICUREZZA SKIN ---
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
 
                     // --- FIX CRUCIALE: APPLICA LA SKIN VISIVAMENTE ---
-                    if (typeof applySkinVisuals === 'function') {
-                        applySkinVisuals(gameState.skins.current);
+                    const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
+
+                    if (isFuryActive && typeof resumeCrunchTimeEffects === 'function') {
+                        // SE FURY È ATTIVO: Forza il ripristino degli effetti Fury (ignora la skin equipaggiata)
+                        console.log("Cloud Sync: Fury Mode rilevata. Ripristino effetti visivi.");
+                        resumeCrunchTimeEffects();
+                    } else {
+                        // SE È TUTTO NORMALE: Applica la skin equipaggiata
+                        if (typeof applySkinVisuals === 'function') {
+                            applySkinVisuals(gameState.skins.current);
+                        }
                     }
                     // -----------------------------------------------
 

@@ -169,11 +169,10 @@
     <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="none"></audio>
 
     <audio id="sound-bg-music" src="./assets/sounds/bg-music.mp3" loop preload="auto"></audio>
+    <audio id="sound-fury-music" src="./assets/sounds/fury-theme.mp3" loop preload="none"></audio>
     
     <div id="crunch-overlay"></div>
     <div id="fire-particles-container"></div>
-    
-    <audio id="sound-fire" src="./assets/sounds/fire-loop.mp3" loop preload="none"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
