@@ -458,11 +458,39 @@ function createToastDOM(message, type) {
     }, 4000);
 }
 
+// --- GENERAZIONE DINAMICA NEGOZI ---
 function buildStores() {
-    // Click Upgrades
+
+    // 1. GENERAZIONE TEAMS (EDIFICI)
+    const buildingContainer = document.getElementById('building-list-container');
+    // Nota: Dovrai aggiungere questo ID nel file PHP (vedi step 2)
+
+    if (buildingContainer) {
+        buildingContainer.innerHTML = ''; // Pulisce
+        for (const key in gameData.teams) {
+            const data = gameData.teams[key];
+            const el = document.createElement('div');
+            el.className = 'upgrade';
+            el.id = `item-${key}`;
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span id="name-${key}" class="upgrade-name">${data.name}</span>
+                    <div id="bps-${key}" class="upgrade-bps"></div>
+                    <div id="cost-${key}" class="upgrade-cost"></div>
+                </div>
+                <div class="upgrade-actions">
+                    <span id="count-${key}" class="upgrade-count">0</span>
+                    <button id="buy-${key}" class="buy-btn buy-building-btn" data-upgrade-name="${key}">Compra</button>
+                </div>
+            `;
+            buildingContainer.appendChild(el);
+        }
+    }
+
+    // 2. GENERAZIONE CLICK UPGRADES
     const clickList = document.getElementById('click-upgrade-list');
     if (clickList) {
-        clickList.innerHTML = ''; // Pulizia preventiva
+        clickList.innerHTML = '';
         for (const key in gameData.clickUpgrades) {
             const data = gameData.clickUpgrades[key];
             const el = document.createElement('div');
@@ -484,7 +512,7 @@ function buildStores() {
         }
     }
 
-    // Enhancements
+    // 3. GENERAZIONE ENHANCEMENTS (AUTO)
     const enhList = document.getElementById('enhancement-list');
     if (enhList) {
         enhList.innerHTML = '';
@@ -508,34 +536,61 @@ function buildStores() {
             enhList.appendChild(el);
         }
     }
+
+    // 4. GENERAZIONE PRESTIGIO (LABORATORIO)
+    const prestigeList = document.getElementById('prestige-list-container');
+    if (prestigeList) {
+        prestigeList.innerHTML = '';
+        for (const key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+
+            // Determina se mostrare il counter dei livelli
+            const countHtml = data.isCounted
+                ? `<span id="count-${key}" class="upgrade-count">0</span>`
+                : '';
+
+            const el = document.createElement('div');
+            el.className = 'prestige-upgrade';
+            el.id = `upgrade-${key}`;
+            // Default nascosto, verrà mostrato da updatePrestigeStore se disponibile
+            el.style.display = 'none';
+
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span class="upgrade-name">${data.name}</span>
+                    <div class="upgrade-desc">${data.description || data.desc}</div> <div class="upgrade-cost">Costo: <span id="cost-${key}">${formatNumber(data.baseCost)}</span> Pt</div>
+                </div>
+                <div class="upgrade-actions">
+                    ${countHtml}
+                    <button id="buy-${key}" class="buy-btn prestige-btn" data-upgrade-name="${key}">Compra</button>
+                </div>
+            `;
+            prestigeList.appendChild(el);
+        }
+    }
 }
 
+// --- LOGICA AGGIORNAMENTO PRESTIGIO DINAMICA ---
 function updatePrestigeStore() {
     const listContainer = document.getElementById('prestige-list-container');
     if (!listContainer) return;
 
+    // Helper interno per aggiornare singolo bottone
     const updateBtn = (id, data, state) => {
-        // Se il dato non esiste (es. vecchio salvataggio o refuso), saltiamo per evitare crash
         if (!data || !state) return null;
 
         const el = document.getElementById(`upgrade-${id}`);
         const btn = document.getElementById(`buy-${id}`);
-
-        // Se non c'è l'HTML corrispondente, saltiamo
         if (!btn || !el) return null;
 
         let isCompleted = false;
-        // Se è a livelli e ha un max level raggiunto
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
-        // Se è singolo ed è già comprato
         if (!data.isCounted && state.purchased) isCompleted = true;
 
         let priority = 0;
         let cost = data.baseCost;
-
-        // Calcolo costo dinamico per i livelli (se serve, altrimenti baseCost)
-        // Nota: nel tuo game-logic attuale usi baseCost fisso o logica custom, 
-        // qui manteniamo la visualizzazione coerente.
+        // Se volessi scalare il costo prestigio in futuro: 
+        // if(data.isCounted) cost = Math.floor(data.baseCost * Math.pow(1.5, state.count));
 
         if (isCompleted) {
             btn.textContent = "Posseduto";
@@ -546,70 +601,56 @@ function updatePrestigeStore() {
         } else {
             btn.innerHTML = "Compra";
             btn.className = "buy-btn prestige-btn";
-            const canAfford = gameState.prestigePoints >= data.baseCost;
+            const canAfford = gameState.prestigePoints >= cost;
             btn.disabled = !canAfford;
             el.classList.remove('purchased');
             priority = canAfford ? 200 : 210;
         }
 
-        // Aggiorna contatore livelli se esiste
         const countEl = document.getElementById(`count-${id}`);
         if (countEl && state) countEl.textContent = state.count || 0;
 
-        // Aggiorna costo visivo
         const costEl = document.getElementById(`cost-${id}`);
-        if (costEl) costEl.textContent = formatNumber(data.baseCost);
+        if (costEl) costEl.textContent = formatNumber(cost);
 
         return { el: el, priority: priority, cost: cost };
     };
 
+    // --- NON USIAMO PIÙ LISTE HARDCODED ---
     const items = [];
+    const mode = gameState.filterSettings.globalFilter || 'available';
 
-    // --- QUESTA È LA LISTA AGGIORNATA DEI NUOVI POTENZIAMENTI ---
-    const ids = [
-        'sinergia',
-        'paracadute',
-        'serverAlwaysOn',
-        'contrattazione',
-        'bugBounty',
-        'eredita',
-        'ticketPremium',
-        'crunchTime'
-    ];
-    // Nota: Ho rimosso 'outsourcing' e 'accelerazione' che non esistono più nei nuovi dati
-    // -------------------------------------------------------------
-
-    ids.forEach(id => {
-        // Controllo di sicurezza: passiamo i dati solo se esistono
-        if (gameData.prestigeUpgrades[id] && gameState.prestigeUpgrades[id]) {
-            const item = updateBtn(id, gameData.prestigeUpgrades[id], gameState.prestigeUpgrades[id]);
+    // Itera su TUTTO quello che c'è in gameData
+    for (const key in gameData.prestigeUpgrades) {
+        // Verifica esistenza nello stato (per sicurezza con vecchi save)
+        if (gameState.prestigeUpgrades[key]) {
+            const item = updateBtn(key, gameData.prestigeUpgrades[key], gameState.prestigeUpgrades[key]);
             if (item) items.push(item);
         }
-    });
+    }
 
-    // Ordinamento e Visualizzazione
+    // Ordinamento
     items.sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
         return a.cost - b.cost;
     });
 
-    const mode = gameState.filterSettings.globalFilter || 'available';
-
-    // Nascondi tutti prima
-    const allUpgrades = listContainer.querySelectorAll('.prestige-upgrade');
-    allUpgrades.forEach(el => el.style.display = 'none');
-
+    // Applicazione DOM
     items.forEach(item => {
         let show = true;
         if (mode === 'available' && item.priority === 300) show = false;
         if (mode === 'purchased' && item.priority < 300) show = false;
 
-        // Se il filtro lo permette, mostriamo l'elemento e lo riordiniamo
-        if (show) {
-            item.el.style.display = 'flex';
-            listContainer.appendChild(item.el); // Sposta l'elemento in fondo (ordina visivamente)
-        }
+        item.el.style.display = show ? 'flex' : 'none';
+        if (show) listContainer.appendChild(item.el); // Riordina visivamente
     });
+
+    // Gestione Empty State
+    const emptyMsg = document.getElementById('prestige-empty');
+    if (emptyMsg) {
+        const visibleItems = items.filter(i => i.el.style.display !== 'none').length;
+        emptyMsg.style.display = (visibleItems === 0) ? 'block' : 'none';
+    }
 }
 
 function checkTabNotifications() {
