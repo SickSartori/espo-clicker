@@ -1,4 +1,4 @@
-// --------- 1. DATI E STATO DEL GIOCO ---------
+// --------- 1. DATI E STATO DEL GIOCO (Data-Driven) ---------
 
 // Variabili Globali
 let cookiesPerSecond = 0;
@@ -6,355 +6,153 @@ let prestigeBonus = 1;
 let clickCPSBonus = 1;
 let isBluescreenActive = false;
 let bluescreenMultiplier = 1;
-let goldenBugChance = 0.001;
-let goldenBugSpawnTime = 60000 + Math.random() * 120000;
 let crunchTimeMultiplier = 1;
 let crunchTimeEndTime = 0;
 let crunchTimeCooldownEnd = 0;
 var clickHistory = [];
 let achievementsBPSBonus = 0;
 
+// --- NUOVI GLOBALS PER SISTEMA EFFETTI ---
+let goldenBugChance = 0.001;
+let goldenBugSpawnTime = 60000 + Math.random() * 120000;
+let goldenBugMult = 1; // Moltiplicatore valore Golden Bug
+window.gameFlags = {}; // Contenitore per i flag (es. 'bionicHand')
+
+// Definizione helper stagionale
 function isChristmasSeason() {
     const now = new Date();
-    const month = now.getMonth(); // 0 = Gennaio, 11 = Dicembre
+    const month = now.getMonth();
     const day = now.getDate();
-
-    // È Dicembre (Mese 11) OPPURE è Gennaio (Mese 0) fino al giorno 8
     if (month === 11) return true;
     if (month === 0 && day <= 8) return true;
-
     return false;
 }
-
-// Calcoliamo lo stato attuale una volta all'avvio
 const IS_XMAS_TIME = isChristmasSeason();
 
-function getInitialGameState() {
-    return {
-        version: {
-            major: window.GAME_VERSION.major,
-            minor: window.GAME_VERSION.minor,
-            stage: window.GAME_VERSION.stage
-        },
-        score: 0,
-        baseClickValue: 1,
-        totalClicks: 0,
-        totalScore: 0,
-        totalOfflineScore: 0,
-        prestigePoints: 0,
-        lifetimePrestigePoints: 0,
-        totalResets: 0,
-        totalGoldenBugsClicked: 0,
-        totalPlayTime: 0,
-        lifetimeScore: 0,
-        lastSaveTimestamp: Date.now(),
-        lastBluescreenTimestamp: 0,
-        crunchTimeEndTime: 0,
-        crunchTimeCooldownEnd: 0,
+let gameState;
 
-        skins: {
-            current: 'default',
-            unlocked: ['default']
-        },
-
-        user: {
-            username: 'Giocatore',
-            masterVolume: 0.8,
-            sfxVolume: 1.0,
-            musicVolume: 0.5,
-
-            // --- MODIFICA QUI I VALORI DI DEFAULT (0.0 a 1.0) ---
-            audioCustom: {
-                'sound-click': 0.4,
-                'sound-buy': 0.4,
-                'sound-achievement': 0.4,
-                'sound-error': 0.5,
-                'sound-golden': 0.6,
-                'sound-prestige': 0.6,
-                'sound-hover': 0.2,
-                'sound-bluescreen': 0.3,
-                'sound-snowball': 0.2,
-                'sound-merry': 0.5,
-                'sound-bg-music': 0.3,
-                'sound-fury-music': 0.2,
-                // Video IDs corretti
-                'rick-roll-video': 0.5,
-                'ricardo-video': 0.5
-            }
-        },
-        filterSettings: {
-            globalFilter: 'available'
-        },
-
-        teams: {
-            assistenteQa: {
-                count: 0
-            },
-            jiraTicket: {
-                count: 0
-            },
-            teamQa: {
-                count: 0
-            },
-            automazioneTest: {
-                count: 0
-            },
-            metodologiaAgile: {
-                count: 0
-            },
-            aiDebugger: {
-                count: 0
-            },
-            quantumServer: {
-                count: 0
-            },
-            reteNeuraleGalattica: {
-                count: 0
-            },
-            debugTemporale: { count: 0 }
-        },
-        clickUpgrades: {
-            caffeForte: {
-                purchased: false
-            },
-            tastieraErgonomica: {
-                purchased: false
-            },
-            mouseGaming: {
-                purchased: false
-            },
-            manoBionica: {
-                purchased: false
-            },
-            ergonomiaEstrema: {
-                purchased: false
-            },
-            hacking: {
-                purchased: false
-            },
-            doppioClick: {
-                purchased: false
-            },
-            aiClick: {
-                purchased: false
-            },
-            clickAutomatico: {
-                purchased: false
-            },
-            clickDivino: {
-                purchased: false
-            }
-        },
-        prestigeUpgrades: {
-            sinergia: {
-                count: 0
-            },
-            paracadute: {
-                count: 0
-            },
-            serverAlwaysOn: {
-                count: 0
-            },
-            contrattazione: {
-                count: 0
-            },
-            bugBounty: {
-                count: 0
-            },
-            eredita: {
-                count: 0
-            },
-            ticketPremium: {
-                purchased: false
-            },
-            crunchTime: {
-                purchased: false
-            },
-            outsourcing: {
-                count: 0
-            },
-            accelerazione: {
-                purchased: false
-            }
-        },
-        buildingEnhancements: {
-            caffeDoppio: {
-                purchased: false
-            },
-            caffeTriplo: {
-                purchased: false
-            },
-            scrivanieErgonomiche: {
-                purchased: false
-            },
-            formazioneAvanzata: {
-                purchased: false
-            },
-            managerJunior: {
-                purchased: false
-            },
-            jiraAI: {
-                purchased: false
-            },
-            jiraCloud: {
-                purchased: false
-            },
-            jiraDataCenter: {
-                purchased: false
-            },
-            jiraPremium: {
-                purchased: false
-            },
-            jiraSelfHealing: {
-                purchased: false
-            },
-            scrum: {
-                purchased: false
-            },
-            teamLeader: {
-                purchased: false
-            },
-            certificazioneISTQB: {
-                purchased: false
-            },
-            bonusProduttivita: {
-                purchased: false
-            },
-            teamGlobale: {
-                purchased: false
-            },
-            selenium: {
-                purchased: false
-            },
-            cucumber: {
-                purchased: false
-            },
-            ciCd: {
-                purchased: false
-            },
-            docker: {
-                purchased: false
-            },
-            kubernetes: {
-                purchased: false
-            },
-            kanban: {
-                purchased: false
-            },
-            safe: {
-                purchased: false
-            },
-            productOwner: {
-                purchased: false
-            },
-            releaseTrain: {
-                purchased: false
-            },
-            devOps: {
-                purchased: false
-            },
-            deepLearning: {
-                purchased: false
-            },
-            machineLearning: {
-                purchased: false
-            },
-            retiNeurali: {
-                purchased: false
-            },
-            quantumComputing: {
-                purchased: false
-            },
-            skynet: {
-                purchased: false
-            },
-            entanglementLink: {
-                purchased: false
-            },
-            superpositionCores: {
-                purchased: false
-            },
-            errorCorrection: {
-                purchased: false
-            },
-            quantumSupremacy: {
-                purchased: false
-            },
-            subspaceTransceiver: {
-                purchased: false
-            },
-            dysonNodes: {
-                purchased: false
-            },
-            wormholeRouting: {
-                purchased: false
-            },
-            federazioneGalattica: {
-                purchased: false
-            },
-            paradoxPrevention: {
-                purchased: false
-            },
-            timelineBranching: {
-                purchased: false
-            },
-            chronosTrigger: {
-                purchased: false
-            },
-            immutablePast: {
-                purchased: false
-            }
-        },
-        achievements: {}
-    };
-}
-
-let gameState = getInitialGameState();
-
-function resetGameToDefault() {
-    const freshState = getInitialGameState();
-    Object.assign(gameState, freshState);
-
-    gameState.teams = JSON.parse(JSON.stringify(freshState.teams));
-    gameState.clickUpgrades = JSON.parse(JSON.stringify(freshState.clickUpgrades));
-    gameState.prestigeUpgrades = JSON.parse(JSON.stringify(freshState.prestigeUpgrades));
-    gameState.buildingEnhancements = JSON.parse(JSON.stringify(freshState.buildingEnhancements));
-    gameState.achievements = {};
-    gameState.skins = JSON.parse(JSON.stringify(freshState.skins));
-    gameState.user = JSON.parse(JSON.stringify(freshState.user));
-
-    cookiesPerSecond = 0;
-    prestigeBonus = 1;
-    clickCPSBonus = 1;
-    clickHistory = [];
-}
-
+// --- 2. DEFINIZIONE DEI DATI ---
 const gameData = {
     PRESTIGE_THRESHOLD: 50000000,
 
     assets: {
         sounds: {
-            // Ambiente
-            'bg-music': { id: 'sound-bg-music', file: 'bg-music.mp3', name: 'Musica Base', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.3 },
-            'snowball': { id: 'sound-snowball', file: 'nonsnowball.mp3', name: 'Loop Neve', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.2 },
-            'bluescreen': { id: 'sound-bluescreen', file: 'bluescreen.mp3', name: 'Loop 404', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.3 },
-            'fury-theme': { id: 'sound-fury-music', file: 'fury-theme.mp3', name: 'Musica Fury', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.2 },
-
-            // Eventi
-            'merry': { id: 'sound-merry', file: 'merry-christmas.mp3', name: 'Jingle Natale', type: 'sfx', category: 'eventi', defaultVol: 0.5 },
-            'golden': { id: 'sound-golden', file: 'golden.mp3', name: 'Golden Bug', type: 'sfx', category: 'eventi', defaultVol: 0.6 },
-
-            // Effetti
-            'click': { id: 'sound-click', file: 'click.mp3', name: 'Click', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
-            'buy': { id: 'sound-buy', file: 'buy.mp3', name: 'Shop', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
-            'achievement': { id: 'sound-achievement', file: 'achievement.mp3', name: 'Obiettivo', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
-            'error': { id: 'sound-error', file: 'error.mp3', name: 'Errore', type: 'sfx', category: 'effetti', defaultVol: 0.5 },
-            'prestige': { id: 'sound-prestige', file: 'prestige.mp3', name: 'Prestigio', type: 'sfx', category: 'effetti', defaultVol: 0.6 },
-            'hover': { id: 'sound-hover', file: 'hover.mp3', name: 'Hover', type: 'sfx', category: 'effetti', defaultVol: 0.2 }
+            'bg-music': {
+                id: 'sound-bg-music',
+                file: 'bg-music.mp3',
+                name: 'Musica Base',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'snowball': {
+                id: 'sound-snowball',
+                file: 'nonsnowball.mp3',
+                name: 'Loop Neve',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.2
+            },
+            'bluescreen': {
+                id: 'sound-bluescreen',
+                file: 'bluescreen.mp3',
+                name: 'Loop 404',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'fury-theme': {
+                id: 'sound-fury-music',
+                file: 'fury-theme.mp3',
+                name: 'Musica Fury',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.2
+            },
+            'merry': {
+                id: 'sound-merry',
+                file: 'merry-christmas.mp3',
+                name: 'Jingle Natale',
+                type: 'sfx',
+                category: 'eventi',
+                defaultVol: 0.5
+            },
+            'golden': {
+                id: 'sound-golden',
+                file: 'golden.mp3',
+                name: 'Golden Bug',
+                type: 'sfx',
+                category: 'eventi',
+                defaultVol: 0.6
+            },
+            'click': {
+                id: 'sound-click',
+                file: 'click.mp3',
+                name: 'Click',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.4
+            },
+            'buy': {
+                id: 'sound-buy',
+                file: 'buy.mp3',
+                name: 'Shop',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.4
+            },
+            'achievement': {
+                id: 'sound-achievement',
+                file: 'achievement.mp3',
+                name: 'Obiettivo',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.4
+            },
+            'error': {
+                id: 'sound-error',
+                file: 'error.mp3',
+                name: 'Errore',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.5
+            },
+            'prestige': {
+                id: 'sound-prestige',
+                file: 'prestige.mp3',
+                name: 'Prestigio',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.6
+            },
+            'hover': {
+                id: 'sound-hover',
+                file: 'hover.mp3',
+                name: 'Hover',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.2
+            }
         },
         videos: {
-            'rick': { id: 'rick-roll-video', file: 'rick-espley-video.mp4', name: 'Video: Rick', category: 'eventi', defaultVol: 0.5 },
-            'ricardo': { id: 'ricardo-video', file: 'ricardo-milespo-video.mp4', name: 'Video: Ricardo', category: 'eventi', defaultVol: 0.5 }
+            'rick-roll-video': {
+                id: 'rick-roll-video',
+                file: 'rick-espley-video.mp4',
+                name: 'Video: Rick',
+                category: 'eventi',
+                defaultVol: 0.5
+            },
+            'ricardo-video': {
+                id: 'ricardo-video',
+                file: 'ricardo-milespo-video.mp4',
+                name: 'Video: Ricardo',
+                category: 'eventi',
+                defaultVol: 0.5
+            }
         }
     },
 
@@ -364,21 +162,16 @@ const gameData = {
             desc: "L'originale inconfondibile.",
             img: "espo.webp",
             imgClick: "espo-click.webp",
-            rarity: "common",
-            clickEffect: "normal"
+            rarity: "common"
         },
-
-        // UNLOCKABLE SKINS (Achievement Based)
         christmas: {
             name: "Espo Natale",
             desc: "Risolviamo questi bug sotto l'albero.",
             img: "esponatale.webp",
             imgClick: "esponatale-click.webp",
             rarity: "christmas",
-            unlockHint: "Riscatta l'obiettivo 'Buon Natale'!",
-            clickEffect: "snow",
-            cost: IS_XMAS_TIME ? undefined : 20,
-            unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token."
+            unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
+            cost: IS_XMAS_TIME ? undefined : 20
         },
         gladiator: {
             name: "Esporator",
@@ -386,8 +179,7 @@ const gameData = {
             img: "esporator.webp",
             imgClick: "esporator-click.webp",
             rarity: "rare",
-            unlockHint: "Raggiungi 2.000 click manuali.",
-            clickEffect: "fire"
+            unlockHint: "Raggiungi 2.000 click manuali."
         },
         geisha: {
             name: "Esponese",
@@ -395,7 +187,7 @@ const gameData = {
             img: "esponese.webp",
             imgClick: "esponese-click.webp",
             rarity: "rare",
-            unlockHint: "Gioca per 4 ore totali.",
+            unlockHint: "Gioca per 4 ore totali."
         },
         unicorn: {
             name: "Espocorno",
@@ -403,20 +195,15 @@ const gameData = {
             img: "espocorno.webp",
             imgClick: "espocorno-click.webp",
             rarity: "rare",
-            unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'",
-            clickEffect: "rainbow"
+            unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'"
         },
-
-        // PREMIUM SKINS (Token Based - NO Unlock Hint, solo Costo)
-
         king: {
             name: "Espo of Empires",
             desc: "Il Re dei Bug.",
             img: "espofempires.webp",
             imgClick: "espofempires-click.webp",
             rarity: "epic",
-            cost: 10,
-            clickEffect: "gold"
+            cost: 10
         },
         waifu: {
             name: "Espowaifu",
@@ -424,29 +211,23 @@ const gameData = {
             img: "espowaifu.webp",
             imgClick: "espowaifu-click.webp",
             rarity: "epic",
-            cost: 15,
-            clickEffect: "flowers"
-        }, // Rimosso unlockHint
-
+            cost: 15
+        },
         jesus: {
             name: "Gespo",
             desc: "Il salvatore del database.",
             img: "gespo.webp",
             imgClick: "gespo-click.webp",
             rarity: "epic",
-            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
-            clickEffect: "divine"
+            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'"
         },
-
-        // LEGENDARY SKINS (Hardcore Grind)
         rick: {
             name: "Rick Espley",
             desc: "Never gonna give you up.",
             img: "rick-espley.webp",
             imgClick: "rick-espley-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 10.000 click manuali.",
-            clickEffect: "hearts"
+            unlockHint: "Raggiungi 10.000 click manuali."
         },
         ricardo: {
             name: "Ricardo Milespo",
@@ -454,8 +235,7 @@ const gameData = {
             img: "ricardo-milespo.webp",
             imgClick: "ricardo-milespo-click.webp",
             rarity: "legendary",
-            unlockHint: "Sblocca l'obiettivo 'White Hat'",
-            clickEffect: "fire"
+            unlockHint: "Sblocca l'obiettivo 'White Hat'"
         },
         dictator: {
             name: "Adolf Espler",
@@ -463,8 +243,7 @@ const gameData = {
             img: "adolf-espler.webp",
             imgClick: "adolf-espler-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 20.000 click manuali.",
-            clickEffect: "error"
+            unlockHint: "Raggiungi 20.000 click manuali."
         }
     },
 
@@ -545,27 +324,6 @@ const gameData = {
             clickIncrease: 50,
             requiredClicks: 1000
         },
-        doppioClick: {
-            name: 'Doppio Click',
-            desc: 'Raddoppia il valore base dei tuoi click.',
-            cost: 25000,
-            clickIncrease: 0,
-            requiredClicks: 1500
-        },
-        manoBionica: {
-            name: 'Mano Bionica',
-            desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.',
-            cost: 50000,
-            clickIncrease: 0,
-            requiredClicks: 2500
-        },
-        hacking: {
-            name: 'Hacking Etico',
-            desc: 'Raddoppia la probabilità di trovare Ticket Critici.',
-            cost: 100000,
-            clickIncrease: 0,
-            requiredClicks: 5000
-        },
         aiClick: {
             name: 'Intelligenza Artificiale',
             desc: 'Aggiunge +500 al valore di ogni click.',
@@ -573,213 +331,47 @@ const gameData = {
             clickIncrease: 500,
             requiredClicks: 7500
         },
+
+        // --- UPGRADE CON EFFETTI SPECIALI (Data-Driven) ---
+        doppioClick: {
+            name: 'Doppio Click',
+            desc: 'Raddoppia il valore base dei tuoi click.',
+            cost: 25000,
+            requiredClicks: 1500,
+            clickIncrease: 0,
+            effects: [{ trigger: 'immediate', type: 'mult_state', stat: 'baseClickValue', val: 2 }]
+        },
+        manoBionica: {
+            name: 'Mano Bionica',
+            desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.',
+            cost: 50000,
+            requiredClicks: 2500,
+            clickIncrease: 0,
+            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'bionicHand', val: true }]
+        },
+        hacking: {
+            name: 'Hacking Etico',
+            desc: 'Raddoppia la probabilità di trovare Ticket Critici.',
+            cost: 100000,
+            requiredClicks: 5000,
+            clickIncrease: 0,
+            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugChance', val: 2 }]
+        },
         clickAutomatico: {
             name: 'Click Automatico',
             desc: 'Aggiunge BPS pari al numero di Assistenti QA.',
             cost: 250000,
+            requiredClicks: 10000,
             clickIncrease: 0,
-            requiredClicks: 10000
+            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'autoClickQA', val: true }]
         },
         clickDivino: {
             name: 'Click Divino',
             desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
             cost: 1000000,
+            requiredClicks: 50000,
             clickIncrease: 0,
-            requiredClicks: 50000
-        }
-    },
-
-    achievements: {
-        primoClick: {
-            name: 'Hello World!',
-            desc: 'Effettua il tuo primo click manuale.',
-            flavor: 'Il primo bug è sempre il più facile.',
-            type: 'click',
-            target: 1,
-            isSecret: false,
-            reward: null,
-            condition: () => gameState.totalClicks >= 1
-        },
-
-        primoTeam: {
-            name: 'Inception',
-            desc: 'Possiedi 10 Assistenti QA.',
-            type: 'building',
-            buildingId: 'assistenteQa',
-            target: 10,
-            isSecret: false,
-            reward: { type: 'bugs', value: 5000 },
-            condition: () => gameState.teams.assistenteQa.count >= 10
-        },
-
-        jiraWarrior: {
-            name: 'Ticketing System',
-            desc: 'Gestisci 25 Jira Ticket.',
-            type: 'building',
-            buildingId: 'jiraTicket',
-            target: 25,
-            isSecret: false,
-            reward: { type: 'bugs', value: 2000 },
-            condition: () => gameState.teams.jiraTicket.count >= 25
-        },
-
-        // MODIFICATO: 10k Click per Rick Roll
-        clickMaster: {
-            name: 'Rick Roll Patch',
-            desc: 'Raggiungi 10.000 click manuali.',
-            type: 'click',
-            target: 10000,
-            isSecret: false,
-            reward: { type: 'skin', id: 'rick' },
-            condition: () => gameState.totalClicks >= 10000
-        },
-
-        codeMonkey: {
-            name: 'Code Monkey',
-            desc: 'Accumula 50.000 bug totali.',
-            type: 'score',
-            target: 50000,
-            isSecret: false,
-            reward: { type: 'bugs', value: 10000 },
-            condition: () => gameState.totalScore >= 50000
-        },
-
-        automationFirst: {
-            name: 'Automation First',
-            desc: 'Raggiungi 10 Team QA.',
-            type: 'building',
-            buildingId: 'teamQa',
-            target: 10,
-            isSecret: false,
-            reward: { type: 'bugs', value: 15000 },
-            condition: () => gameState.teams.teamQa.count >= 10
-        },
-
-        // MODIFICATO: 2k Click per Gladiator
-        clickGod: {
-            name: 'Hardcoded Solution',
-            desc: 'Raggiungi 2.000 click manuali.',
-            type: 'click',
-            target: 2000,
-            isSecret: false,
-            reward: { type: 'skin', id: 'gladiator' },
-            condition: () => gameState.totalClicks >= 2000
-        },
-
-        // NUOVO: 50k Click per Adolf (Dictator)
-        clickDictator: {
-            name: 'Dittatore del Mouse',
-            desc: 'Raggiungi 20.000 click manuali.',
-            type: 'click',
-            target: 20000,
-            isSecret: false,
-            reward: { type: 'skin', id: 'dictator' },
-            condition: () => gameState.totalClicks >= 20000
-        },
-
-        middleManagement: {
-            name: 'Middle Management',
-            desc: 'Assumi 100 Assistenti QA.',
-            type: 'building',
-            buildingId: 'assistenteQa',
-            target: 100,
-            isSecret: false,
-            reward: { type: 'bugs', value: 50000 },
-            condition: () => gameState.teams.assistenteQa.count >= 100
-        },
-
-        fullStack: {
-            name: 'Full Stack Agency',
-            desc: 'Possiedi almeno 1 unità di ogni Team.',
-            type: 'custom',
-            target: 1,
-            isSecret: false,
-            reward: { type: 'skin', id: 'unicorn' },
-            condition: () => { for (const key in gameState.teams) { if (gameState.teams[key].count === 0) return false; } return true; }
-        },
-
-        // MODIFICATO: Tech Lead ora da 5 Token invece della skin King (che è a pagamento)
-        milionario: {
-            name: 'Tech Lead',
-            desc: 'Accumula 10 Milioni di bug.',
-            type: 'score',
-            target: 10000000,
-            isSecret: false,
-            reward: { type: 'prestige', value: 5 },
-            condition: () => gameState.totalScore >= 10000000
-        },
-
-        geishaUnlock: {
-            name: 'Zen Master',
-            desc: 'Gioca per 4 ore totali.',
-            type: 'time',
-            target: 14400,
-            isSecret: false,
-            reward: { type: 'skin', id: 'geisha' },
-            condition: () => gameState.totalPlayTime >= 14400
-        },
-
-        miliardario: {
-            name: 'System Architect',
-            desc: 'Accumula 1 Miliardo di bug.',
-            type: 'score',
-            target: 1000000000,
-            isSecret: false,
-            reward: { type: 'prestige', value: 10 },
-            condition: () => gameState.totalScore >= 1000000000
-        },
-
-        // 404 ora da solo Bug, non più la skin leggendaria
-        errore404: {
-            name: 'Page Not Found',
-            desc: 'Incontra il Blue Screen of Death.',
-            type: 'custom',
-            target: 1,
-            isSecret: false,
-            reward: { type: 'bugs', value: 500000 },
-            condition: () => gameState.lastBluescreenTimestamp > 0
-        },
-
-        hacker: {
-            name: 'White Hat',
-            desc: 'Acquista il potenziamento Hacking Etico.',
-            type: 'custom',
-            target: 1,
-            isSecret: false,
-            reward: { type: 'skin', id: 'ricardo' },
-            condition: () => gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased
-        },
-
-        // MODIFICATO: AI Supremacy ora da 5 Token invece della skin Waifu (che è a pagamento)
-        waifuUnlock: {
-            name: 'AI Supremacy',
-            desc: 'Possiedi 100 AI Debugger.',
-            type: 'building',
-            buildingId: 'aiDebugger',
-            target: 100,
-            isSecret: false,
-            reward: { type: 'prestige', value: 5 },
-            condition: () => gameState.teams.aiDebugger.count >= 100
-        },
-        divinitaMouse: {
-            name: 'Divinità del Mouse',
-            desc: 'Acquista il potenziamento "Click Divino".',
-            type: 'custom',
-            target: 1,
-            isSecret: false,
-            reward: { type: 'skin', id: 'jesus' },
-            condition: () => gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased
-        },
-        natale: {
-            name: 'Buon Natale',
-            desc: 'Un regalo speciale per te!',
-            flavor: 'A Natale siamo tutti più buoni (tranne i bug).',
-            type: 'custom',
-            target: 1,
-            isSecret: false,
-            reward: { type: 'skin', id: 'christmas' },
-            // Condizione sempre vera per renderlo riscattabile subito
-            condition: () => IS_XMAS_TIME
+            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'divineClick', val: true }]
         }
     },
 
@@ -812,33 +404,49 @@ const gameData = {
             isCounted: true,
             maxLevel: 10
         },
-        bugBounty: {
-            name: 'Bug Bounty',
-            desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.',
-            baseCost: 75,
-            isCounted: true
-        },
         eredita: {
             name: 'Eredità Strutturale',
             desc: 'Mantieni 1 "Assistente QA" per livello dopo il reset.',
             baseCost: 100,
             isCounted: true
         },
+        outsourcing: {
+            name: 'Outsourcing',
+            desc: 'Riduce i costi base del 5% per livello.',
+            baseCost: 300,
+            isCounted: true,
+            maxLevel: 5
+        },
+        accelerazione: {
+            name: 'Accelerazione',
+            desc: 'Inizi con +1 Assistente QA.',
+            baseCost: 15,
+            isCounted: false
+        },
+        crunchTime: {
+            id: 'crunchTime',
+            name: 'ESPO FURY!',
+            description: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.',
+            baseCost: 200,
+            isCounted: false,
+            furyImage: 'espo-fury.webp',
+            furyClickImage: 'espo-fury-click.webp'
+        },
+
+        // --- PRESTIGE CON EFFETTI ---
+        bugBounty: {
+            name: 'Bug Bounty',
+            desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.',
+            baseCost: 75,
+            isCounted: true,
+            effects: [{ trigger: 'passive', type: 'add_mult_per_level', stat: 'goldenBugMult', val: 0.2 }]
+        },
         ticketPremium: {
             name: 'Ticket Premium',
             desc: 'I Ticket Critici appaiono 2 volte più spesso.',
             baseCost: 25,
-            isCounted: false
-        },
-        crunchTime: {
-            id: 'crunchTime', // NON cambiare l'ID per non rompere i salvataggi
-            name: 'ESPO FURY!', // Nuovo Nome
-            description: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.', // Nuova Descrizione
-            baseCost: 200,
             isCounted: false,
-            // Aggiungiamo i percorsi delle immagini qui per comodità
-            furyImage: 'espo-fury.webp',
-            furyClickImage: 'espo-fury-click.webp'
+            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugSpawnTime', val: 0.5 }]
         }
     },
 
@@ -1017,7 +625,7 @@ const gameData = {
             targetTeam: 'metodologiaAgile',
             cost: 6500000,
             multiplier: 2,
-            requiredCount: 10
+            requiredCount: 1
         },
         productOwner: {
             name: 'Product Owner Dedicato',
@@ -1083,106 +691,350 @@ const gameData = {
             multiplier: 4,
             requiredCount: 100
         },
-        // --- QUANTUM SERVER UPGRADES (Base Cost: 55M) ---
         entanglementLink: {
             name: 'Entanglement Link',
-            desc: 'Quantum Server x2 BPS. Connette i qubit istantaneamente.',
+            desc: 'Quantum Server x2 BPS.',
             targetTeam: 'quantumServer',
-            cost: 550000000, // 550M
+            cost: 550000000,
             multiplier: 2,
             requiredCount: 1
         },
         superpositionCores: {
             name: 'Superposition Cores',
-            desc: 'Quantum Server x2 BPS. Calcola bug e fix contemporaneamente.',
+            desc: 'Quantum Server x2 BPS.',
             targetTeam: 'quantumServer',
-            cost: 2750000000, // 2.75B
+            cost: 2750000000,
             multiplier: 2,
             requiredCount: 10
         },
         errorCorrection: {
             name: 'Quantum Error Correction',
-            desc: 'Quantum Server x3 BPS. Stabilizza lo stato quantico del codice.',
+            desc: 'Quantum Server x3 BPS.',
             targetTeam: 'quantumServer',
-            cost: 22000000000, // 22B
+            cost: 22000000000,
             multiplier: 3,
             requiredCount: 25
         },
         quantumSupremacy: {
             name: 'Supremazia Quantistica',
-            desc: 'Quantum Server x4 BPS. Risolve bug impossibili per l\'uomo.',
+            desc: 'Quantum Server x4 BPS.',
             targetTeam: 'quantumServer',
-            cost: 110000000000, // 110B
+            cost: 110000000000,
             multiplier: 4,
             requiredCount: 50
         },
-
-        // --- RETE GALATTICA UPGRADES (Base Cost: 850M) ---
         subspaceTransceiver: {
             name: 'Subspace Transceiver',
-            desc: 'Rete Galattica x2 BPS. Aggiornamenti a velocità superluminale.',
+            desc: 'Rete Galattica x2 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 8500000000, // 8.5B
+            cost: 8500000000,
             multiplier: 2,
             requiredCount: 1
         },
         dysonNodes: {
             name: 'Nodi Dyson',
-            desc: 'Rete Galattica x2 BPS. Usa l\'energia delle stelle per il debug.',
+            desc: 'Rete Galattica x2 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 42500000000, // 42.5B
+            cost: 42500000000,
             multiplier: 2,
             requiredCount: 10
         },
         wormholeRouting: {
             name: 'Wormhole Routing',
-            desc: 'Rete Galattica x3 BPS. Invia patch attraverso pieghe spaziali.',
+            desc: 'Rete Galattica x3 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 340000000000, // 340B
+            cost: 340000000000,
             multiplier: 3,
             requiredCount: 25
         },
         federazioneGalattica: {
             name: 'Federazione Galattica',
-            desc: 'Rete Galattica x4 BPS. Tutti i pianeti uniti contro i bug.',
+            desc: 'Rete Galattica x4 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 1700000000000, // 1.7T
+            cost: 1700000000000,
             multiplier: 4,
             requiredCount: 50
         },
-
-        // --- DEBUG TEMPORALE UPGRADES (Base Cost: 15B) ---
         paradoxPrevention: {
             name: 'Paradox Prevention',
-            desc: 'Debug Temporale x2 BPS. Risolve i bug prima che vengano scritti.',
+            desc: 'Debug Temporale x2 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 150000000000, // 150B
+            cost: 150000000000,
             multiplier: 2,
             requiredCount: 1
         },
         timelineBranching: {
             name: 'Timeline Branching',
-            desc: 'Debug Temporale x2 BPS. Debugga infiniti universi paralleli.',
+            desc: 'Debug Temporale x2 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 750000000000, // 750B
+            cost: 750000000000,
             multiplier: 2,
             requiredCount: 10
         },
         chronosTrigger: {
             name: 'Chronos Trigger',
-            desc: 'Debug Temporale x3 BPS. Un reset leggendario per il codice errato.',
+            desc: 'Debug Temporale x3 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 6000000000000, // 6T
+            cost: 6000000000000,
             multiplier: 3,
             requiredCount: 25
         },
         immutablePast: {
             name: 'Passato Immutabile',
-            desc: 'Debug Temporale x4 BPS. Rende il codice legacy perfetto per sempre.',
+            desc: 'Debug Temporale x4 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 30000000000000, // 30T
+            cost: 30000000000000,
             multiplier: 4,
             requiredCount: 50
         }
+    },
+
+    achievements: {
+        primoClick: {
+            name: 'Hello World!',
+            desc: 'Effettua il tuo primo click manuale.',
+            flavor: 'Il primo bug è sempre il più facile.',
+            type: 'click',
+            target: 1,
+            isSecret: false,
+            reward: null,
+            condition: () => gameState.totalClicks >= 1
+        },
+        primoTeam: {
+            name: 'Inception',
+            desc: 'Possiedi 10 Assistenti QA.',
+            type: 'building',
+            buildingId: 'assistenteQa',
+            target: 10,
+            isSecret: false,
+            reward: { type: 'bugs', value: 5000 },
+            condition: () => gameState.teams.assistenteQa.count >= 10
+        },
+        jiraWarrior: {
+            name: 'Ticketing System',
+            desc: 'Gestisci 25 Jira Ticket.',
+            type: 'building',
+            buildingId: 'jiraTicket',
+            target: 25,
+            isSecret: false,
+            reward: { type: 'bugs', value: 2000 },
+            condition: () => gameState.teams.jiraTicket.count >= 25
+        },
+        clickMaster: {
+            name: 'Rick Roll Patch',
+            desc: 'Raggiungi 10.000 click manuali.',
+            type: 'click',
+            target: 10000,
+            isSecret: false,
+            reward: { type: 'skin', id: 'rick' },
+            condition: () => gameState.totalClicks >= 10000
+        },
+        codeMonkey: {
+            name: 'Code Monkey',
+            desc: 'Accumula 50.000 bug totali.',
+            type: 'score',
+            target: 50000,
+            isSecret: false,
+            reward: { type: 'bugs', value: 10000 },
+            condition: () => gameState.totalScore >= 50000
+        },
+        automationFirst: {
+            name: 'Automation First',
+            desc: 'Raggiungi 10 Team QA.',
+            type: 'building',
+            buildingId: 'teamQa',
+            target: 10,
+            isSecret: false,
+            reward: { type: 'bugs', value: 15000 },
+            condition: () => gameState.teams.teamQa.count >= 10
+        },
+        clickGod: {
+            name: 'Hardcoded Solution',
+            desc: 'Raggiungi 2.000 click manuali.',
+            type: 'click',
+            target: 2000,
+            isSecret: false,
+            reward: { type: 'skin', id: 'gladiator' },
+            condition: () => gameState.totalClicks >= 2000
+        },
+        clickDictator: {
+            name: 'Dittatore del Mouse',
+            desc: 'Raggiungi 20.000 click manuali.',
+            type: 'click',
+            target: 20000,
+            isSecret: false,
+            reward: { type: 'skin', id: 'dictator' },
+            condition: () => gameState.totalClicks >= 20000
+        },
+        middleManagement: {
+            name: 'Middle Management',
+            desc: 'Assumi 100 Assistenti QA.',
+            type: 'building',
+            buildingId: 'assistenteQa',
+            target: 100,
+            isSecret: false,
+            reward: { type: 'bugs', value: 50000 },
+            condition: () => gameState.teams.assistenteQa.count >= 100
+        },
+        fullStack: {
+            name: 'Full Stack Agency',
+            desc: 'Possiedi almeno 1 unità di ogni Team.',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'skin', id: 'unicorn' },
+            condition: () => { for (const key in gameState.teams) { if (gameState.teams[key].count === 0) return false; } return true; }
+        },
+        milionario: {
+            name: 'Tech Lead',
+            desc: 'Accumula 10 Milioni di bug.',
+            type: 'score',
+            target: 10000000,
+            isSecret: false,
+            reward: { type: 'prestige', value: 5 },
+            condition: () => gameState.totalScore >= 10000000
+        },
+        geishaUnlock: {
+            name: 'Zen Master',
+            desc: 'Gioca per 4 ore totali.',
+            type: 'time',
+            target: 14400,
+            isSecret: false,
+            reward: { type: 'skin', id: 'geisha' },
+            condition: () => gameState.totalPlayTime >= 14400
+        },
+        miliardario: {
+            name: 'System Architect',
+            desc: 'Accumula 1 Miliardo di bug.',
+            type: 'score',
+            target: 1000000000,
+            isSecret: false,
+            reward: { type: 'prestige', value: 10 },
+            condition: () => gameState.totalScore >= 1000000000
+        },
+        errore404: {
+            name: 'Page Not Found',
+            desc: 'Incontra il Blue Screen of Death.',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'bugs', value: 500000 },
+            condition: () => gameState.lastBluescreenTimestamp > 0
+        },
+        hacker: {
+            name: 'White Hat',
+            desc: 'Acquista il potenziamento Hacking Etico.',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'skin', id: 'ricardo' },
+            condition: () => gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased
+        },
+        waifuUnlock: {
+            name: 'AI Supremacy',
+            desc: 'Possiedi 100 AI Debugger.',
+            type: 'building',
+            buildingId: 'aiDebugger',
+            target: 100,
+            isSecret: false,
+            reward: { type: 'prestige', value: 5 },
+            condition: () => gameState.teams.aiDebugger.count >= 100
+        },
+        divinitaMouse: {
+            name: 'Divinità del Mouse',
+            desc: 'Acquista il potenziamento "Click Divino".',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'skin', id: 'jesus' },
+            condition: () => gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased
+        },
+        natale: {
+            name: 'Buon Natale',
+            desc: 'Un regalo speciale per te!',
+            flavor: 'A Natale siamo tutti più buoni (tranne i bug).',
+            type: 'custom',
+            target: 1,
+            isSecret: false,
+            reward: { type: 'skin', id: 'christmas' },
+            condition: () => IS_XMAS_TIME
+        }
     }
 };
+
+// --- 3. GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
+function getInitialGameState() {
+    const state = {
+        version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
+        score: 0,
+        baseClickValue: 1,
+        totalClicks: 0,
+        totalScore: 0,
+        totalOfflineScore: 0,
+        prestigePoints: 0,
+        lifetimePrestigePoints: 0,
+        totalResets: 0,
+        totalGoldenBugsClicked: 0,
+        totalPlayTime: 0,
+        lifetimeScore: 0,
+        lastSaveTimestamp: Date.now(),
+        lastBluescreenTimestamp: 0,
+        crunchTimeEndTime: 0,
+        crunchTimeCooldownEnd: 0,
+        skins: { current: 'default', unlocked: ['default'] },
+        filterSettings: { globalFilter: 'available' },
+        teams: {},
+        clickUpgrades: {},
+        prestigeUpgrades: {},
+        buildingEnhancements: {},
+        achievements: {},
+        user: {
+            username: 'Giocatore',
+            masterVolume: 0.8,
+            sfxVolume: 1.0,
+            musicVolume: 0.5,
+            audioCustom: {}
+        }
+    };
+
+    for (const key in gameData.teams) state.teams[key] = { count: 0 };
+    for (const key in gameData.clickUpgrades) state.clickUpgrades[key] = { purchased: false };
+    for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
+    for (const key in gameData.prestigeUpgrades) {
+        if (gameData.prestigeUpgrades[key].isCounted) state.prestigeUpgrades[key] = { count: 0 };
+        else state.prestigeUpgrades[key] = { purchased: false };
+    }
+
+    const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
+    for (const key in allAssets) {
+        if (allAssets[key].defaultVol !== undefined) state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
+    }
+
+    return state;
+}
+
+gameState = getInitialGameState();
+
+function resetGameToDefault() {
+    const freshState = getInitialGameState();
+    Object.assign(gameState, freshState);
+
+    gameState.teams = JSON.parse(JSON.stringify(freshState.teams));
+    gameState.clickUpgrades = JSON.parse(JSON.stringify(freshState.clickUpgrades));
+    gameState.prestigeUpgrades = JSON.parse(JSON.stringify(freshState.prestigeUpgrades));
+    gameState.buildingEnhancements = JSON.parse(JSON.stringify(freshState.buildingEnhancements));
+    gameState.achievements = {};
+    gameState.skins = JSON.parse(JSON.stringify(freshState.skins));
+    gameState.user = JSON.parse(JSON.stringify(freshState.user));
+
+    cookiesPerSecond = 0;
+    prestigeBonus = 1;
+    clickCPSBonus = 1;
+    clickHistory = [];
+
+    // Reset Globals
+    goldenBugChance = 0.001;
+    goldenBugSpawnTime = 60000 + Math.random() * 120000;
+    goldenBugMult = 1;
+    window.gameFlags = {};
+}

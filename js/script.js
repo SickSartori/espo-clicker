@@ -235,6 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedUsername = localStorage.getItem('espooClickerUsername');
         if (savedUsername) gameState.user.username = savedUsername;
 
+        // [GENERICO] Ricalcola tutti gli effetti passivi
+        if (typeof reapplyAllEffects === 'function') {
+            reapplyAllEffects();
+        }
+
         // Ricalcolo Bonus
         calculatePrestigeBonus();
         recalculateCPS();
@@ -490,11 +495,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (masterVol <= 0 || musicVol <= 0) return;
             const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
 
-            // FIX: Non far partire la musica base se c'è un evento FURY in corso o in memoria
             const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
             if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent && !isFuryActive) {
 
-                if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+                // --- MODIFICA QUI: Usa updateAmbientVolume invece di setBgMusicVolume ---
+                // Questo assicura che ANCHE la neve riceva il volume giusto prima del play
+                if (typeof updateAmbientVolume === 'function') {
+                    updateAmbientVolume();
+                } else if (typeof setBgMusicVolume === 'function') {
+                    setBgMusicVolume();
+                }
+                // -----------------------------------------------------------------------
 
                 const playPromise = audioToPlay.play();
                 if (playPromise !== undefined) {

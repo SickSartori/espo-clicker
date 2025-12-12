@@ -1125,8 +1125,15 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         // 2. Avvia audio Neve (Musica di Natale)
         if (snowAudio) {
             snowAudio.loop = true;
-            const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+
+            // --- FIX: Leggi il volume dal salvataggio (Mixer), non fisso a 0.2 ---
+            const customVol = (gameState.user.audioCustom && gameState.user.audioCustom['sound-snowball'] !== undefined)
+                ? gameState.user.audioCustom['sound-snowball']
+                : 0.2; // Fallback default se non esiste
+
+            const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
             snowAudio.volume = targetVol;
+            // ---------------------------------------------------------------------
 
             if (forcePlayMusic || (gameState.user.masterVolume > 0 && !snowAudio.paused)) {
                 snowAudio.play().catch(e => { console.log("Autoplay neve bloccato"); });
