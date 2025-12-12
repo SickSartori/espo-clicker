@@ -5,6 +5,56 @@ let lastRicardoVideoId = null;
 window.currentActiveEvent = null; // Il "Semaforo"
 let audioGlitchInterval = null;
 
+
+const RewardHandlers = {
+    // Aggiunge Bug al wallet
+    bugs: (value) => {
+        gameState.score += value;
+        gameState.totalScore += value;
+        gameState.lifetimeScore += value;
+        return `+${formatNumber(value)} Bug!`;
+    },
+    // Aggiunge Token Prestigio
+    prestige: (value) => {
+        gameState.prestigePoints += value;
+        return `+${value} Token Lab!`;
+    },
+    // Sblocca una Skin
+    skin: (skinId) => {
+        if (!gameState.skins.unlocked.includes(skinId)) {
+            gameState.skins.unlocked.push(skinId);
+            const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : skinId;
+            return `Nuova Skin: ${skinName}!`;
+        }
+        return null; // Già posseduta, niente toast
+    },
+    // Moltiplicatore (Logica gestita passivamente, qui solo feedback)
+    multiplier: (value) => {
+        return `Bonus BPS x${value} Attivo!`;
+    },
+    // NUOVO ESEMPIO: Genera subito un Golden Bug
+    spawnGolden: () => {
+        spawnGoldenBug();
+        return "Golden Bug Avvistato!";
+    }
+};
+
+/**
+ * Funzione generica per assegnare un premio
+ * @param {Object} reward - Oggetto ricompensa {type, value/id}
+ */
+function grantReward(reward) {
+    if (!reward || !RewardHandlers[reward.type]) return;
+
+    // Chiama l'handler specifico passandogli il valore o l'ID
+    const message = RewardHandlers[reward.type](reward.value || reward.id);
+
+    // Mostra il toast solo se l'handler ha restituito un messaggio
+    if (message) {
+        window.EspooClicker.showToast(`Riscattato: ${message}`, 'reward');
+    }
+}
+
 // Funzione per inviare il punteggio al leaderboard
 async function submitScoreToLeaderboard(username) {
     // Recupera la password in modo sicuro dall'oggetto globale
@@ -97,110 +147,267 @@ function reapplyAllEffects() {
     }
 }
 
-// --------- 3. FUNZIONI AUDIO AVANZATE ---------
-function getCustomVolume(id) {
-    if (gameState && gameState.user && gameState.user.audioCustom) {
-        const val = gameState.user.audioCustom[id];
-        return (val !== undefined) ? val : 1.0;
-    }
-    return 1.0;
-}
+// --------- 3. AUDIO MANAGER CENTRALIZZATO ---------
+const AudioManager = {
+    // Genera i tag audio all'avvio (Sostituisce generateAudioTags di script.js)
+    init() {
+        const container = document.body;
+        // Suoni
+        for (const key in gameData.assets.sounds) {
+            const sound = gameData.assets.sounds[key];
+            if (!document.getElementById(sound.id)) {
+                const audio = document.createElement('audio');
+                audio.id = sound.id;
+                audio.src = `./assets/sounds/${sound.file}`;
+                audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
+                if (sound.loop) audio.loop = true;
+                container.appendChild(audio);
+            }
+        }
+        // Applica volumi iniziali
+        this.updateAmbience();
+    },
 
-function playSound(id, type = 'sfx') {
-    const originalSound = document.getElementById(id);
-    if (!originalSound) return;
-    const master = gameState.user.masterVolume;
-    if (master <= 0) return;
-    const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
-    const custom = getCustomVolume(id);
-    let finalVolume = Math.max(0, Math.min(1, master * channel * custom));
-    if (finalVolume < 0.01) return;
+    getCustomVolume(id) {
+        if (gameState && gameState.user && gameState.user.audioCustom) {
+            const val = gameState.user.audioCustom[id];
+            return (val !== undefined) ? val : 1.0;
+        }
+        return 1.0;
+    },
 
-    try {
-        if (type === 'sfx') {
-            const soundClone = originalSound.cloneNode();
-            soundClone.volume = finalVolume;
-            const playPromise = soundClone.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    soundClone.addEventListener('ended', () => soundClone.remove());
+    play(id, type = 'sfx') {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const master = gameState.user.masterVolume;
+        if (master <= 0) return;
+
+        const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
+        const custom = this.getCustomVolume(id);
+        const finalVol = Math.max(0, Math.min(1, master * channel * custom));
+
+        if (finalVol < 0.01) return;
+
+        try {
+            if (type === 'sfx') {
+                // Clona per sovrapporre suoni rapidi (es. click)
+                const clone = el.cloneNode();
+                clone.volume = finalVol;
+                clone.play().then(() => {
+                    clone.addEventListener('ended', () => clone.remove());
                 }).catch(e => { });
+            } else {
+                // Musica/Loop: usa elemento originale
+                el.volume = finalVol;
+                if (el.paused) el.play().catch(e => { });
+            }
+        } catch (e) { console.warn("Audio error:", e); }
+    },
+
+    // Logica complessa del click (Glitch, Rick, Natale) centralizzata
+    playClickEffect() {
+        const sound = document.getElementById('sound-click');
+        if (!sound) return;
+
+        let rate = 1.0;
+        let volumeMult = 1.0;
+
+        if (isBluescreenActive) {
+            // Effetti Glitch
+            if (document.body.classList.contains('rick-rolling')) {
+                volumeMult = 0.2;
+            } else {
+                rate = 0.2 + Math.random() * 1.6; // Tono a caso
+                volumeMult = 0.5 + Math.random(); // Volume instabile
+            }
+        }
+
+        // Applica master volume
+        const master = gameState.user.masterVolume * gameState.user.sfxVolume;
+        sound.volume = Math.max(0, Math.min(1, master * volumeMult));
+        sound.playbackRate = rate;
+
+        // Play
+        sound.currentTime = 0;
+        sound.play().catch(e => { });
+    },
+
+    // Gestisce Musica Background vs Neve vs Fury vs Eventi
+    updateAmbience() {
+        const bgMusic = document.getElementById('sound-bg-music');
+        const snowAudio = document.getElementById('sound-snowball');
+        const furyMusic = document.getElementById('sound-fury-music');
+        const blueAudio = document.getElementById('sound-bluescreen');
+
+        // Helper per applicare volume
+        const setVol = (el, customId) => {
+            if (!el) return;
+            const vol = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(customId);
+            el.volume = Math.max(0, Math.min(1, vol));
+        };
+
+        // 1. Aggiorna volumi base
+        setVol(bgMusic, 'sound-bg-music');
+        setVol(snowAudio, 'sound-snowball');
+        setVol(furyMusic, 'sound-fury-music');
+        setVol(blueAudio, 'sound-bluescreen');
+
+        // 2. Logica Priorità Musica (Chi suona?)
+        // Se c'è un evento attivo (Mixer o altro), non interferire troppo
+        if (window.currentActiveEvent === 'Audio Mixer') return;
+
+        // Fury Mode vince su tutto
+        if (gameState.crunchTimeEndTime > Date.now()) {
+            if (bgMusic) bgMusic.pause();
+            if (snowAudio) snowAudio.pause();
+            // Fury music gestita da activateCrunchTime
+            return;
+        }
+
+        // Eventi CSS (404)
+        if (isBluescreenActive) {
+            if (bgMusic) bgMusic.pause();
+            // 404 sound gestito da triggerGameEvent
+            return;
+        }
+
+        // Stato Normale: Natale vs Standard
+        if (gameState.skins.current === 'christmas') {
+            if (bgMusic) bgMusic.pause();
+            if (snowAudio && snowAudio.paused && gameState.user.masterVolume > 0) {
+                snowAudio.play().catch(e => { });
             }
         } else {
-            originalSound.volume = finalVolume;
-            originalSound.currentTime = 0;
-            originalSound.play().catch(e => { });
+            if (snowAudio) snowAudio.pause();
+            if (bgMusic && bgMusic.paused && gameState.user.masterVolume > 0) {
+                bgMusic.play().catch(e => { });
+            }
         }
-    } catch (e) { console.warn("Audio error:", e); }
-}
-
-function setBgMusicVolume() {
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (!bgMusic) return;
-    if (window.currentActiveEvent === 'Audio Mixer') return;
-    if (gameState.skins.current === 'christmas') {
-        if (!bgMusic.paused) {
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-        }
-        return;
     }
-    const BASE_VOLUME_MULTIPLIER = 1.0;
-    const master = gameState.user.masterVolume;
-    const music = gameState.user.musicVolume;
-    const custom = (gameState.user.audioCustom && gameState.user.audioCustom['sound-bg-music'] !== undefined)
-        ? gameState.user.audioCustom['sound-bg-music'] : 1.0;
-    const finalVolume = Math.max(0, Math.min(1, master * music * custom * BASE_VOLUME_MULTIPLIER));
-    bgMusic.volume = finalVolume;
+};
 
-    if (finalVolume > 0 && !window.currentActiveEvent) {
-        if (bgMusic.paused) bgMusic.play().catch(e => { });
-    } else {
-        if (!bgMusic.paused) bgMusic.pause();
-    }
-}
+// --- WRAPPERS PER COMPATIBILITÀ (Non rompere il codice esistente) ---
+function playSound(id, type) { AudioManager.play(id, type); }
+function setBgMusicVolume() { AudioManager.updateAmbience(); }
+function updateAmbientVolume() { AudioManager.updateAmbience(); }
+function getCustomVolume(id) { return AudioManager.getCustomVolume(id); }
 
-function updateAmbientVolume() {
-    setBgMusicVolume();
-    const master = gameState.user.masterVolume;
-    const music = gameState.user.musicVolume;
-    const sfx = gameState.user.sfxVolume;
-    const applyVol = (elmId, channelVol, customId) => {
-        const el = document.getElementById(elmId);
-        if (el) {
-            const custom = getCustomVolume(customId);
-            const final = Math.max(0, Math.min(1, master * channelVol * custom));
-            el.volume = final;
-        }
-    };
-    applyVol('sound-bluescreen', music, 'sound-bluescreen');
-    applyVol('sound-snowball', music, 'sound-snowball');
-    applyVol('sound-fury-music', music, 'sound-fury-music');
-    applyVol('rick-roll-video', music, 'rick-roll-video');
-    ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(vidId => {
-        applyVol(vidId, music, 'ricardo-video');
-    });
+// --------- 4. FUNZIONI DI ACQUISTO ---------
+
+function finalizePurchase() {
+    playSound('sound-buy');
+    refreshAllStores(); // Ridisegna i negozi per aggiornare i tasti (grigi/verdi)
+    window.EspooClicker.saveGame();
+    updateUI();
 }
 
 function buySkin(skinId) {
     const data = gameData.skins[skinId];
-    if (!data || !data.cost || data.cost === 0) return;
+
+    // Guard Clauses: Esce subito se c'è un problema
+    if (!data || !data.cost) return;
     if (gameState.skins.unlocked.includes(skinId)) return;
 
     if (gameState.prestigePoints >= data.cost) {
+        // Acquisto
         gameState.prestigePoints -= data.cost;
         gameState.skins.unlocked.push(skinId);
-        if (typeof playSound === 'function') playSound('sound-buy');
-        window.EspooClicker.showToast("Skin Acquistata: " + data.name + "!", 'success');
-        equipSkin(skinId);
+
+        // Effetti Immediati
+        playSound('sound-buy');
+        window.EspooClicker.showToast(`Skin Acquistata: ${data.name}!`, 'success');
+        equipSkin(skinId); // Equipaggia subito
+
+        // Salvataggio e UI
         window.EspooClicker.saveGame();
-        if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
-        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+
+        // Aggiorniamo solo ciò che serve
+        if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Per i token spesi
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();       // Per la lista skin
+
     } else {
         playSound('sound-error');
         window.EspooClicker.showToast("Token insufficienti!", 'error');
     }
 }
+
+function buyClickUpgrade(upgradeKey) {
+    const state = gameState.clickUpgrades[upgradeKey];
+    const data = gameData.clickUpgrades[upgradeKey];
+
+    // Controlla se puoi permettertelo E se non l'hai già comprato
+    if (gameState.score >= data.cost && !state.purchased) {
+
+        // 1. Logica specifica di questo acquisto
+        gameState.score -= data.cost;
+        gameState.baseClickValue += data.clickIncrease;
+        state.purchased = true;
+
+        if (data.effects) {
+            data.effects.forEach(eff => applyEffect(eff));
+        }
+
+        if (upgradeKey === 'clickAutomatico') recalculateCPS();
+
+        // 2. Chiamata standard finale (sostituisce tutto il resto)
+        finalizePurchase();
+    }
+}
+
+function buyTeamEnhancement(enhanceKey) {
+    const state = gameState.buildingEnhancements[enhanceKey];
+    const data = gameData.buildingEnhancements[enhanceKey];
+
+    if (gameState.score >= data.cost && !state.purchased) {
+        // 1. Logica di Gioco (Pagamento e Stato)
+        gameState.score -= data.cost;
+        state.purchased = true;
+
+        // 2. Ricalcoli necessari
+        recalculateCPS();
+
+        // 3. Chiusura standard (Suono, Save, UI)
+        finalizePurchase();
+    }
+}
+
+function buyPrestigeUpgrade(upgradeKey) {
+    const state = gameState.prestigeUpgrades[upgradeKey];
+    const data = gameData.prestigeUpgrades[upgradeKey];
+    const cost = data.baseCost;
+
+    // Controlli preliminari
+    if (data.isCounted) {
+        if (gameState.prestigePoints < cost) return; // Non hai abbastanza token
+    } else {
+        if (gameState.prestigePoints < cost || state.purchased) return; // O povero o già comprato
+    }
+
+    // --- AZIONE DI ACQUISTO ---
+
+    // 1. Pagamento (Comune a entrambi)
+    gameState.prestigePoints -= cost;
+
+    // 2. Aggiornamento Stato specifico
+    if (data.isCounted) {
+        state.count++;
+        // [GENERICO] Effetti Counted (incremento livello)
+        if (data.effects) data.effects.forEach(eff => applyEffect(eff, 1));
+    } else {
+        state.purchased = true;
+        // [GENERICO] Effetti One-Shot
+        if (data.effects) data.effects.forEach(eff => applyEffect(eff));
+    }
+
+    // 3. Ricalcoli Logici
+    calculatePrestigeBonus();
+    recalculateCPS();
+
+    // 4. Chiusura standard (Suono, Save, UI)
+    finalizePurchase();
+}
+
 
 // --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
 function calculateBulkCost(teamKey, amount) {
@@ -559,56 +766,34 @@ function stopBluescreenEffect() {
     clearActiveEvent();
 }
 
-
-
-
 function clickCookie(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
-    if (isBluescreenActive) {
-        const sound = document.getElementById('sound-click');
-        if (sound) {
-            if (document.body.classList.contains('rick-rolling')) {
-                sound.playbackRate = 1;
-                sound.volume = (gameState.user.masterVolume * gameState.user.sfxVolume) * 0.2;
-                sound.currentTime = 0;
-                sound.play().catch(e => { });
-            } else {
-                sound.playbackRate = 0.2 + Math.random() * 1.6;
-                sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
-                sound.currentTime = 0;
-                sound.play().catch(e => { });
-            }
-        }
-    } else {
-        const sound = document.getElementById('sound-click');
-        if (sound && sound.playbackRate !== 1) {
-            sound.playbackRate = 1;
-            sound.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
-        }
-        playSound('sound-click');
-    }
 
-    // [GENERICO] Bonus Click Divino (Flag)
+    // 1. AUDIO (Delegato al Manager)
+    AudioManager.playClickEffect();
+
+    // 2. CALCOLO VALORE
     let clickBonusPercent = 0.01;
     if (window.gameFlags.divineClick) clickBonusPercent = 0.02;
 
-    // [GENERICO] Bonus Mano Bionica (Flag)
     let clickValuePercentBonus = 0;
     if (window.gameFlags.bionicHand) {
         clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
     }
 
     const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
+
+    // 3. AGGIORNAMENTO DATI
     clickHistory.push({ time: Date.now(), value: currentClickValue });
     gameState.score += currentClickValue;
     gameState.totalScore += currentClickValue;
     gameState.lifetimeScore += currentClickValue;
     gameState.totalClicks++;
 
+    // 4. PARTICELLE & FEEDBACK VISIVO
     let x, y;
     if (event.clientX && event.clientY) {
-        const rect = document.getElementById('clicker-section').getBoundingClientRect();
         x = event.pageX;
         y = event.pageY;
     } else {
@@ -616,22 +801,24 @@ function clickCookie(event) {
         x = rect.left + rect.width / 2;
         y = rect.top + rect.height / 2;
     }
+
     if (typeof createClickParticles === 'function') {
         const containerRect = document.getElementById('click-feedback-container').getBoundingClientRect();
-        const relX = (event.clientX || (x - window.scrollX)) - containerRect.left;
-        const relY = (event.clientY || (y - window.scrollY)) - containerRect.top;
-        createClickParticles(relX, relY);
+        createClickParticles((x - window.scrollX) - containerRect.left, (y - window.scrollY) - containerRect.top);
     }
+
     showClickFeedback(event);
-    clickerButton.classList.remove('click-shrink');
-    clickerButton.classList.remove('clicked');
-    void clickerButton.offsetWidth;
-    clickerButton.classList.add('click-shrink');
-    clickerButton.classList.add('clicked');
+
+    // Animazione Bottone
+    clickerButton.classList.remove('click-shrink', 'clicked');
+    void clickerButton.offsetWidth; // Trigger Reflow
+    clickerButton.classList.add('click-shrink', 'clicked');
+
     setTimeout(() => {
-        clickerButton.classList.remove('click-shrink');
         clickerButton.classList.remove('clicked');
     }, 100);
+
+    // UI
     if (typeof updateClickStore === 'function') updateClickStore();
     updateUI();
 }
@@ -684,84 +871,7 @@ function buyTeam(teamKey) {
     }
 }
 
-function buyClickUpgrade(upgradeKey) {
-    const state = gameState.clickUpgrades[upgradeKey];
-    const data = gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score >= data.cost && !state.purchased) {
-        playSound('sound-buy');
-        gameState.score -= data.cost;
-        gameState.baseClickValue += data.clickIncrease;
-
-        // [GENERICO] Applicazione effetti
-        if (data.effects) {
-            data.effects.forEach(eff => applyEffect(eff));
-        }
-
-        if (upgradeKey === 'clickAutomatico') recalculateCPS();
-
-        state.purchased = true;
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
-    }
-}
-
-function buyTeamEnhancement(enhanceKey) {
-    const state = gameState.buildingEnhancements[enhanceKey];
-    const data = gameData.buildingEnhancements[enhanceKey];
-    if (gameState.score >= data.cost && !state.purchased) {
-        playSound('sound-buy');
-        gameState.score -= data.cost;
-        state.purchased = true;
-        recalculateCPS();
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
-    }
-}
-
-function buyPrestigeUpgrade(upgradeKey) {
-    const state = gameState.prestigeUpgrades[upgradeKey];
-    const data = gameData.prestigeUpgrades[upgradeKey];
-    const cost = data.baseCost;
-
-    if (data.isCounted) {
-        if (gameState.prestigePoints >= cost) {
-            playSound('sound-buy');
-            gameState.prestigePoints -= cost;
-            state.count++;
-
-            // [GENERICO] Effetti Counted
-            if (data.effects) {
-                data.effects.forEach(eff => applyEffect(eff, 1)); // Incremento di 1 livello
-            }
-
-            calculatePrestigeBonus();
-            recalculateCPS();
-            refreshAllStores();
-            window.EspooClicker.saveGame();
-            updateUI();
-        }
-    } else {
-        if (gameState.prestigePoints >= cost && !state.purchased) {
-            playSound('sound-buy');
-            gameState.prestigePoints -= cost;
-            state.purchased = true;
-
-            // [GENERICO] Effetti One-Shot
-            if (data.effects) {
-                data.effects.forEach(eff => applyEffect(eff));
-            }
-
-            calculatePrestigeBonus();
-            recalculateCPS();
-            refreshAllStores();
-            window.EspooClicker.saveGame();
-            updateUI();
-        }
-    }
-}
 
 function calculatePrestigeGained() {
     return Math.floor(Math.sqrt(gameState.totalScore / 2000000) * 1.0);
@@ -797,6 +907,7 @@ function openPrestigeContract() {
 }
 
 async function executePrestige() {
+    // 1. Gestione Animazione Transizione
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'none';
@@ -805,66 +916,113 @@ async function executePrestige() {
         playSound('sound-prestige');
         setTimeout(() => overlay.classList.add('active'), 10);
     }
+
+    // 2. Calcoli dei Guadagni
     const gained = calculatePrestigeGained();
     let newPrestigePoints = gameState.prestigePoints + gained;
     let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
     let newLifetimePrestigePoints = currentLifetime + gained;
+
+    // Calcolo Bonus Iniziale (Paracadute d'Oro)
     let startBonusBugs = 0;
     if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
         startBonusBugs = gameState.prestigeUpgrades.paracadute.count * 2000;
     }
-    let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
-    let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
-    let oldSkins = JSON.parse(JSON.stringify(gameState.skins));
-    let oldTotalResets = gameState.totalResets + 1;
-    let oldTotalClicks = gameState.totalClicks;
-    let oldGoldenBugs = gameState.totalGoldenBugsClicked;
-    let oldPlayTime = gameState.totalPlayTime;
-    let oldLifetimeScore = gameState.lifetimeScore;
-    let oldUser = gameState.user;
+
+    // --- HARDENING: Salvataggio Sicuro dei Dati ---
+    // Definiamo qui cosa deve sopravvivere al reset. 
+    // Se aggiungi nuove feature (es. "Artefatti"), basta aggiungerle a questa lista.
+    const persistentKeys = [
+        'achievements',
+        'prestigeUpgrades',
+        'skins',
+        'user',
+        'totalClicks',
+        'totalGoldenBugsClicked',
+        'totalPlayTime',
+        'lifetimeScore',
+        'buildingEnhancements', // Mantiene le migliorie acquistate (Opzionale: rimuovi se vuoi che si resettino)
+        'totalOfflineScore'     // Statistica guadagni offline
+    ];
+
+    // Creiamo una "cassaforte" temporanea con i dati da salvare
+    const preservedData = {};
+    persistentKeys.forEach(key => {
+        if (gameState[key] !== undefined) {
+            // Clona profondo per rompere i riferimenti
+            preservedData[key] = JSON.parse(JSON.stringify(gameState[key]));
+        }
+    });
+
+    // Incrementa contatore reset (statistica)
+    const newResets = gameState.totalResets + 1;
+
+    // Attesa scenografica (1.5 secondi)
     await new Promise(r => setTimeout(r, 1500));
+
+    // 3. RESET: Crea un nuovo stato pulito
     let newState = getInitialGameState();
+
+    // 4. RIPRISTINO: Inserisce i dati salvati nel nuovo stato
+    persistentKeys.forEach(key => {
+        if (preservedData[key] !== undefined) {
+            newState[key] = preservedData[key];
+        }
+    });
+
+    // Applica i nuovi valori calcolati
+    newState.prestigePoints = newPrestigePoints;
+    newState.lifetimePrestigePoints = newLifetimePrestigePoints;
+    newState.totalResets = newResets;
+    newState.lastSaveTimestamp = Date.now();
+
+    // 5. APPLICAZIONE BONUS SPECIALI (Post-Reset)
+
+    // Bonus Eredità: Mantiene N "Assistente QA"
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
-    newState.prestigePoints = newPrestigePoints;
-    newState.lifetimePrestigePoints = newLifetimePrestigePoints;
+
+    // Bonus Paracadute: Imposta i bug iniziali
     if (startBonusBugs > 0) {
         newState.score = startBonusBugs;
         newState.totalScore = startBonusBugs;
     }
-    newState.achievements = oldAchievements;
-    newState.prestigeUpgrades = oldPrestigeUpgrades;
-    newState.skins = oldSkins;
-    newState.totalResets = oldTotalResets;
-    newState.totalClicks = oldTotalClicks;
-    newState.totalGoldenBugsClicked = oldGoldenBugs;
-    newState.totalPlayTime = oldPlayTime;
-    newState.lifetimeScore = oldLifetimeScore;
-    newState.user = oldUser;
-    newState.lastSaveTimestamp = Date.now();
+
+    // Bonus Accelerazione: Regala +1 Assistente QA extra
     if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
-        newState.teams.assistenteQa.count = 1;
+        newState.teams.assistenteQa.count++;
     }
+
+    // 6. SOSTITUZIONE DELLO STATO E PULIZIA
     gameState = newState;
+
+    // Reset Variabili Runtime
     cookiesPerSecond = 0;
     clickHistory = [];
     isBluescreenActive = false;
     bluescreenMultiplier = 1;
     document.body.classList.remove('bluescreen-active');
+
+    // Stop suoni eventi precedenti
     try {
         const soundBluescreen = document.getElementById('sound-bluescreen');
         if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
     } catch (e) { }
 
-    // [GENERICO] Ri-applica effetti passivi dopo reset
+    // Ricalcola tutti gli effetti passivi (Sinergia, Sconti, ecc.)
     reapplyAllEffects();
 
+    // Aggiorna l'interfaccia
     calculatePrestigeBonus();
     recalculateCPS();
     refreshAllStores();
     updateUI();
+
+    // 7. SALVATAGGIO FINALE
     if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
+
+    // Rimuovi Overlay
     if (overlay) {
         overlay.classList.remove('active');
         setTimeout(() => {
@@ -922,33 +1080,24 @@ function unlockAchievement(key) {
 function claimAchievementReward(key) {
     const state = gameState.achievements[key];
     const data = gameData.achievements[key];
+
+    // Controlli di sicurezza
     if (!state || !state.unlocked || state.claimed) return;
+
+    // 1. Assegna il premio usando il nuovo sistema unificato
     if (data.reward) {
-        let toastType = 'reward';
-        if (data.reward.type === 'bugs') {
-            gameState.score += data.reward.value;
-            gameState.totalScore += data.reward.value;
-            window.EspooClicker.showToast(`Riscattato: +${formatNumber(data.reward.value)} Bug!`, toastType);
-        }
-        else if (data.reward.type === 'prestige') {
-            gameState.prestigePoints += data.reward.value;
-            window.EspooClicker.showToast(`Riscattato: +${data.reward.value} Token Lab!`, toastType);
-        }
-        else if (data.reward.type === 'skin') {
-            const skinId = data.reward.id;
-            if (!gameState.skins.unlocked.includes(skinId)) {
-                gameState.skins.unlocked.push(skinId);
-                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success');
-            }
-        }
-        else if (data.reward.type === 'multiplier') {
-            window.EspooClicker.showToast(`Riscattato: Bonus BPS Attivo!`, toastType);
-        }
+        grantReward(data.reward);
     }
+
+    // 2. Aggiorna stato
     state.claimed = true;
     playSound('sound-buy');
+
+    // 3. Ricalcola e Salva
     recalculateCPS();
     window.EspooClicker.saveGame();
+
+    // 4. Aggiorna UI
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }

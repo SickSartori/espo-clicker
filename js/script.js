@@ -458,30 +458,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
 
-    function generateAudioTags() {
-        const container = document.body; // O un div nascosto specifico
-        const assets = gameData.assets.sounds;
-
-        for (const key in assets) {
-            const sound = assets[key];
-            // Evita duplicati se esistono già nell'HTML statico
-            if (!document.getElementById(sound.id)) {
-                const audio = document.createElement('audio');
-                audio.id = sound.id;
-                audio.src = `./assets/sounds/${sound.file}`;
-                audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
-                if (sound.loop) audio.loop = true;
-                container.appendChild(audio);
-            }
-        }
-    }
-
-    // Chiamalo dentro document.addEventListener('DOMContentLoaded', ...)
-    generateAudioTags();
 
     function initializeGame() {
         // 1. CARICAMENTO DATI
         loadGame();
+
+        if (typeof AudioManager !== 'undefined') {
+            AudioManager.init();
+        }
 
         const now = Date.now();
         const bgMusic = document.getElementById('sound-bg-music');
@@ -757,24 +741,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cancelPrestigeBtn && prestigeModal) {
             cancelPrestigeBtn.addEventListener('click', () => prestigeModal.style.display = 'none');
         }
-
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.buy-btn');
-            if (!btn || btn.disabled || btn.classList.contains('owned')) return;
-            btn.blur();
-            const name = btn.getAttribute('data-upgrade-name');
-            if (!name) return;
-
-            if (btn.classList.contains('prestige-btn')) {
-                if (typeof buyPrestigeUpgrade === 'function') buyPrestigeUpgrade(name);
-            } else if (btn.classList.contains('buy-click-btn')) {
-                if (typeof buyClickUpgrade === 'function') buyClickUpgrade(name);
-            } else if (btn.classList.contains('enhancement-btn')) {
-                if (typeof buyTeamEnhancement === 'function') buyTeamEnhancement(name);
-            } else if (btn.classList.contains('buy-building-btn')) {
-                if (typeof buyTeam === 'function') buyTeam(name);
-            }
-        });
 
         const vDisplay = document.getElementById('version-display');
         if (vDisplay && window.GAME_VERSION) {

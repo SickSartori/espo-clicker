@@ -29,11 +29,17 @@ function formatTime(totalSeconds) {
     return timeString;
 }
 
+function setTextIfChanged(elementId, newText) {
+    const el = document.getElementById(elementId);
+    if (el && el.textContent !== String(newText)) {
+        el.textContent = newText;
+        return true; // Ha aggiornato
+    }
+    return false; // Nessun cambiamento
+}
+
 // --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
 
-/**
- * Renderizza una lista di oggetti (Upgrade, Skill, etc.) in modo dinamico.
- */
 function renderStoreSection(config) {
     const list = document.getElementById(config.containerId);
     if (!list) return;
@@ -41,31 +47,30 @@ function renderStoreSection(config) {
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
-    // 1. Prepara la lista ordinata
+    // 1. Prepara la lista
     const items = Object.keys(config.dataSource).map(key => {
         return { key: key, data: config.dataSource[key], state: config.stateSource[key] };
     });
 
-    // Ordinamento (Default: per costo)
-    items.sort((a, b) => (a.data.cost || a.data.baseCost) - (b.data.cost || b.data.baseCost));
+    // Ordinamento (Se non specificato, usa costo base)
+    items.sort((a, b) => (a.data.baseCost || a.data.cost) - (b.data.baseCost || b.data.cost));
 
     items.forEach(item => {
         const { key, data, state } = item;
         const domId = `${config.type}-item-${key}`;
         let el = document.getElementById(domId);
 
-        // 2. Calcola Stato tramite la funzione passata nella config
+        // 2. Calcola Stato
         const status = config.getStatus(key, data, state);
-        // status atteso: { unlocked: bool, purchased: bool, canAfford: bool, label: string, progress: number }
 
         // 3. Filtro Visibilità
         let isVisible = false;
-        if (mode === 'all') isVisible = true;
-        else if (mode === 'purchased' && status.purchased) isVisible = true;
+        if (config.type === 'building') isVisible = true; // Gli edifici si vedono sempre
+        else if (data.alwaysVisible) isVisible = true;
+        else if (mode === 'all') isVisible = true;
+        else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
         else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
-        else if (mode === 'available' && status.unlocked && !status.purchased) isVisible = true;
-
-        if (data.alwaysVisible) isVisible = true; // Override
+        else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
 
         if (!isVisible) {
             if (el) el.style.display = 'none';
@@ -80,14 +85,25 @@ function renderStoreSection(config) {
             el.id = domId;
             el.className = config.cardClass || 'upgrade';
 
+            // Layout Flessibile: Usa 'extraHtml' per BPS o Descrizione standard
+            const middleContent = config.useCustomBody
+                ? `<div class="upgrade-bps" id="bps-${key}"></div>` // Per Edifici
+                : `<div class="upgrade-desc">${data.desc}</div>`;   // Per Upgrade
+
+            // Badge conteggio (per edifici)
+            const countBadge = config.showCount
+                ? `<span id="count-${key}" class="upgrade-count">0</span>`
+                : '';
+
             el.innerHTML = `
                 <div class="upgrade-details">
                     <span class="upgrade-name">${data.name}</span>
-                    <div class="upgrade-desc">${data.desc}</div>
-                    <div class="upgrade-cost">Costo: <span class="cost-val"></span></div>
+                    ${middleContent}
+                    <div class="upgrade-cost" id="cost-${key}-wrapper">Costo: <span class="cost-val" id="cost-${key}"></span></div>
                 </div>
                 <div class="upgrade-actions">
-                    <button class="buy-btn" data-key="${key}">${status.label}</button>
+                    ${countBadge}
+                    <button class="buy-btn" id="buy-${key}" data-upgrade-name="${key}">${status.label}</button>
                 </div>
                 <div class="progress-bar-container" style="display:none;">
                     <div class="progress-bar-fill"></div>
@@ -102,61 +118,58 @@ function renderStoreSection(config) {
 
         el.style.display = 'flex';
 
-        // 5. Aggiornamento Grafico (Ogni frame)
+        // 5. Aggiornamento Grafico
         const btn = el.querySelector('.buy-btn');
-        const costDisplay = el.querySelector('.cost-val');
-        const costRow = el.querySelector('.upgrade-cost');
+        const costDisplay = el.querySelector('.cost-val'); // O usa id specifico
+        const costWrapper = el.querySelector('.upgrade-cost');
         const progressContainer = el.querySelector('.progress-bar-container');
 
-        // Gestione Classi
+        // Aggiornamenti specifici per Edifici (BPS e Count)
+        if (config.type === 'building') {
+            const bpsEl = document.getElementById(`bps-${key}`);
+            const countEl = document.getElementById(`count-${key}`);
+            if (bpsEl) bpsEl.textContent = status.bpsText;
+            if (countEl) countEl.textContent = state.count;
+            // Il testo del costo per gli edifici è complesso (es. "Costo (10x)")
+            if (costDisplay) costDisplay.textContent = status.costText;
+        } else {
+            // Standard Upgrade
+            if (costDisplay) costDisplay.textContent = formatNumber(status.currentCost || data.cost);
+        }
+
+        // Gestione Classi e Stati Comuni
         el.classList.toggle('purchased', status.purchased);
         el.classList.toggle('locked-item', !status.unlocked && !status.purchased);
 
-        // Gestione Bottone e Costo
-        if (status.isMaxed || (status.purchased && !data.isCounted)) {
+        if (status.isMaxed || (status.purchased && !data.isCounted && config.type !== 'building')) {
             btn.textContent = "Posseduto";
             btn.className = "buy-btn owned";
             btn.disabled = true;
             btn.style.display = 'block';
-            costRow.style.display = 'none';
-            progressContainer.style.display = 'none';
+            if (costWrapper) costWrapper.style.display = 'none';
+            if (progressContainer) progressContainer.style.display = 'none';
         } else if (status.unlocked) {
             btn.textContent = status.label || "Compra";
             btn.className = `buy-btn ${config.btnClass || ''}`;
             btn.disabled = !status.canAfford;
-            costRow.style.display = 'block';
-            costDisplay.textContent = formatNumber(status.currentCost || data.cost);
+            btn.style.display = 'block';
+            if (costWrapper) costWrapper.style.display = 'block';
+            if (progressContainer) progressContainer.style.display = 'none';
         } else {
             // Bloccato
             btn.style.display = 'none';
-            costRow.style.display = 'block';
-            progressContainer.style.display = 'block';
-
-            const fill = el.querySelector('.progress-bar-fill');
-            const txt = el.querySelector('.progress-text');
-
-            fill.style.width = `${status.progress}%`;
-            txt.textContent = status.progressText || `${Math.floor(status.progress)}%`;
-        }
-
-        if (status.unlocked && !status.purchased) {
-            btn.style.display = 'block';
-            progressContainer.style.display = 'none';
-        }
-
-        // Gestione specifica per livelli (Prestigio)
-        if (data.isCounted) {
-            let countBadge = el.querySelector('.upgrade-count');
-            if (!countBadge) {
-                countBadge = document.createElement('span');
-                countBadge.className = 'upgrade-count';
-                el.querySelector('.upgrade-actions').prepend(countBadge);
+            if (costWrapper) costWrapper.style.display = 'block';
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                const fill = el.querySelector('.progress-bar-fill');
+                const txt = el.querySelector('.progress-text');
+                if (fill) fill.style.width = `${status.progress}%`;
+                if (txt) txt.textContent = status.progressText || `${Math.floor(status.progress)}%`;
             }
-            countBadge.textContent = state.count || 0;
         }
     });
 
-    // Empty State Message
+    // Empty State
     const emptyMsg = document.getElementById(config.emptyId);
     if (emptyMsg) {
         emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
@@ -178,18 +191,14 @@ function refreshAllStores() {
         btnClass: 'buy-click-btn',
         onBuy: (key) => buyClickUpgrade(key),
         getStatus: (key, data, state) => {
-            const isPurchased = state.purchased;
-            const currentClicks = gameState.totalClicks;
-            const target = data.requiredClicks;
-            const isUnlocked = currentClicks >= target;
-
+            const isUnlocked = gameState.totalClicks >= data.requiredClicks;
             return {
-                purchased: isPurchased,
+                purchased: state.purchased,
                 unlocked: isUnlocked,
                 canAfford: gameState.score >= data.cost,
                 label: "Compra",
-                progress: Math.min((currentClicks / target) * 100, 100),
-                progressText: `Click: ${formatNumber(currentClicks)} / ${formatNumber(target)}`
+                progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),
+                progressText: `Click: ${formatNumber(gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
             };
         },
         setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
@@ -208,15 +217,13 @@ function refreshAllStores() {
         getStatus: (key, data, state) => {
             const targetTeam = gameState.teams[data.targetTeam];
             const current = targetTeam ? targetTeam.count : 0;
-            const target = data.requiredCount;
-
             return {
                 purchased: state.purchased,
-                unlocked: current >= target,
+                unlocked: current >= data.requiredCount,
                 canAfford: gameState.score >= data.cost,
                 label: "Compra",
-                progress: Math.min((current / target) * 100, 100),
-                progressText: `${data.targetTeam}: ${current}/${target}`
+                progress: Math.min((current / data.requiredCount) * 100, 100),
+                progressText: `${gameData.teams[data.targetTeam].name}: ${current}/${data.requiredCount}`
             };
         },
         setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
@@ -233,94 +240,78 @@ function refreshAllStores() {
         btnClass: 'prestige-btn',
         onBuy: (key) => buyPrestigeUpgrade(key),
         getStatus: (key, data, state) => {
-            const cost = data.baseCost;
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
-
             return {
                 purchased: !data.isCounted && state.purchased,
                 unlocked: !isMaxed,
                 isMaxed: isMaxed,
-                canAfford: gameState.prestigePoints >= cost,
+                canAfford: gameState.prestigePoints >= data.baseCost,
                 label: isMaxed ? "MAX" : "Compra",
-                currentCost: cost,
+                currentCost: data.baseCost,
                 progress: 100
             };
         },
         setEmptyMsg: (el, mode) => { el.textContent = "Laboratorio al completo!"; }
     });
 
-    // 4. AGGIORNAMENTO EDIFICI (Legacy - manteniamo la logica veloce esistente)
-    updateBuildingsLegacy();
+    // 4. NEGOZIO TEAMS (Nuovo!)
+    renderStoreSection({
+        type: 'building', // Usa prefisso 'building-item-'
+        containerId: 'building-list-container',
+        emptyId: 'building-empty', // Aggiungi questo div nel HTML se vuoi, opzionale
+        dataSource: gameData.teams,
+        stateSource: gameState.teams,
+        cardClass: 'upgrade',
+        btnClass: 'buy-building-btn',
+        useCustomBody: true, // Attiva BPS display
+        showCount: true,     // Attiva badge numero
+        onBuy: (key) => buyTeam(key),
+        getStatus: (key, data, state) => {
+            // Calcoli specifici per edifici
+            let amountToBuy = buyMultiplier;
+            let isMax = false;
+
+            if (buyMultiplier === 'MAX') {
+                const max = calculateMaxAffordable(key);
+                amountToBuy = max > 0 ? max : 1;
+                isMax = true;
+            }
+
+            const currentCost = calculateBulkCost(key, amountToBuy);
+
+            // Calcolo BPS Dinamico per visualizzazione
+            let teamBPS = data.cpsPerUnit;
+            // Applica moltiplicatori delle migliorie
+            for (const enhanceKey in gameState.buildingEnhancements) {
+                const eData = gameData.buildingEnhancements[enhanceKey];
+                const eState = gameState.buildingEnhancements[enhanceKey];
+                if (eData.targetTeam === key && eState.purchased) {
+                    teamBPS *= eData.multiplier;
+                }
+            }
+            const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+
+            // Formattazione etichetta costo
+            let prefix = "Costo";
+            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
+
+            return {
+                unlocked: true, // Gli edifici sono sempre sbloccati nella logica attuale
+                purchased: false,
+                canAfford: gameState.score >= currentCost,
+                label: "Compra",
+                costText: `${prefix}: ${formatNumber(currentCost)}`,
+                bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
+                currentCost: currentCost // Fallback
+            };
+        }
+    });
 
     // Aggiorna Visuals Extra
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
 
-// Funzione helper per gli edifici (spostata qui per pulizia)
-function updateBuildingsLegacy() {
-    const container = document.getElementById('building-list-container');
-
-    // Genera edifici se vuoto (Init automatico)
-    if (container && container.children.length === 0) {
-        for (const key in gameData.teams) {
-            const data = gameData.teams[key];
-            const el = document.createElement('div');
-            el.className = 'upgrade';
-            el.id = `building-item-${key}`; // ID univoco per evitare conflitti
-            el.innerHTML = `
-                <div class="upgrade-details">
-                    <span class="upgrade-name">${data.name}</span>
-                    <div id="bps-${key}" class="upgrade-bps"></div>
-                    <div id="cost-${key}" class="upgrade-cost"></div>
-                </div>
-                <div class="upgrade-actions">
-                    <span id="count-${key}" class="upgrade-count">0</span>
-                    <button id="buy-${key}" class="buy-btn buy-building-btn" data-upgrade-name="${key}">Compra</button>
-                </div>
-            `;
-            // Aggiungi listener diretto per performance
-            el.querySelector('button').addEventListener('click', () => buyTeam(key));
-            container.appendChild(el);
-        }
-    }
-
-    // Aggiorna edifici
-    for (const key in gameState.teams) {
-        let amountToBuy = buyMultiplier;
-        let isMax = false;
-        if (buyMultiplier === 'MAX') {
-            const max = calculateMaxAffordable(key);
-            amountToBuy = max > 0 ? max : 1;
-            isMax = true;
-        }
-        const currentCost = calculateBulkCost(key, amountToBuy);
-
-        // Calcolo BPS dinamico
-        let teamBPS = gameData.teams[key].cpsPerUnit;
-        for (const enhanceKey in gameState.buildingEnhancements) {
-            const eData = gameData.buildingEnhancements[enhanceKey];
-            if (eData.targetTeam === key && gameState.buildingEnhancements[enhanceKey].purchased) {
-                teamBPS *= eData.multiplier;
-            }
-        }
-        const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
-
-        // Aggiornamento DOM (usando gli ID che hai già nel HTML)
-        const costEl = document.getElementById(`cost-${key}`);
-        const bpsEl = document.getElementById(`bps-${key}`);
-        const countEl = document.getElementById(`count-${key}`);
-        const btn = document.getElementById(`buy-${key}`);
-
-        if (costEl) {
-            let prefix = isMax ? `Costo (+${formatNumber(amountToBuy)})` : `Costo (${buyMultiplier}x)`;
-            if (buyMultiplier === 1) prefix = "Costo";
-            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
-        }
-        if (bpsEl) bpsEl.textContent = `+${formatNumber(totalUnitBPS)} BPS cad.`;
-        if (countEl) countEl.textContent = gameState.teams[key].count;
-        if (btn) btn.disabled = (gameState.score < currentCost);
-    }
-}
 
 function updateSkinsUI() {
     const grid = document.getElementById('skins-grid');
@@ -828,9 +819,9 @@ function updateUI() {
     }
     let totalDisplayBPS = cookiesPerSecond + activeBPS;
 
-    scoreDisplay.textContent = formatNumber(gameState.score);
+    setTextIfChanged('score-display', formatNumber(gameState.score));
     scoreDisplay.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
-    cpsDisplay.textContent = `BPS: ${formatNumber(totalDisplayBPS)}`;
+    setTextIfChanged('cps-display', `BPS: ${formatNumber(totalDisplayBPS)}`);
     cpsDisplay.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
 
     const hudContainer = document.getElementById('hud-stats-container');
