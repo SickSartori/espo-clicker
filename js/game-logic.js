@@ -49,64 +49,50 @@ function applyEffect(effect, level = 1) {
     if (!effect) return;
 
     if (effect.type === 'mult_state') {
-        // Moltiplica valore nel gameState (Permanente)
-        if (gameState.hasOwnProperty(effect.stat)) {
-            gameState[effect.stat] *= effect.val;
-        }
+        if (gameState.hasOwnProperty(effect.stat)) gameState[effect.stat] *= effect.val;
     }
     else if (effect.type === 'mult_global') {
-        // Moltiplica variabile globale (Volatile, es. goldenBugChance)
-        if (window.hasOwnProperty(effect.stat)) {
-            window[effect.stat] *= effect.val;
-        }
+        if (window.hasOwnProperty(effect.stat)) window[effect.stat] *= effect.val;
     }
     else if (effect.type === 'add_mult_per_level') {
-        // Aggiunge moltiplicatore basato sul livello (es. Bug Bounty)
-        // Usa una variabile globale accumulatore
-        if (window.hasOwnProperty(effect.stat)) {
-            window[effect.stat] += (effect.val * level);
-        }
+        if (window.hasOwnProperty(effect.stat)) window[effect.stat] += (effect.val * level);
+    }
+    else if (effect.type === 'add_global_stat_per_level') {
+        // NUOVO: Aggiunge valore a una variabile globale per ogni livello
+        if (window.hasOwnProperty(effect.stat)) window[effect.stat] += (effect.val * level);
     }
     else if (effect.type === 'set_flag') {
-        // Imposta un flag di gioco
         window.gameFlags[effect.flag] = effect.val;
     }
 }
 
-// Ricalcola tutti gli effetti passivi (da chiamare al caricamento)
+// Ricalcola tutti gli effetti passivi
 function reapplyAllEffects() {
-    // 1. Reset Variabili Globali ai valori base (Definiti in game-data.js)
+    // 1. Reset Totale
     goldenBugChance = 0.001;
-    // Spawn time base è dinamico, lo resettiamo a una media ragionevole o lasciamo invariato se non vogliamo reset
-    // goldenBugSpawnTime viene gestito dallo scheduler, resettiamo il moltiplicatore logico se ci fosse
-
     goldenBugMult = 1;
+    goldenBugSpawnTime = 60000;
+
+    // Reset Nuove Statistiche
+    costScalingReduction = 0;
+    prestigeSynergyFactor = 0;
+
     window.gameFlags = {};
 
-    // 2. Riaplica Effetti Passivi dai Click Upgrades
+    // 2. Click Upgrades
     for (const key in gameState.clickUpgrades) {
         if (gameState.clickUpgrades[key].purchased) {
             const data = gameData.clickUpgrades[key];
-            if (data.effects) {
-                data.effects.forEach(eff => {
-                    if (eff.trigger === 'passive') applyEffect(eff);
-                });
-            }
+            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
         }
     }
 
-    // 3. Riaplica Effetti Passivi dal Prestigio
+    // 3. Prestige Upgrades
     for (const key in gameState.prestigeUpgrades) {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
-
-        // Se acquistato (bool) o livello > 0 (counted)
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
-            if (data.effects) {
-                data.effects.forEach(eff => {
-                    if (eff.trigger === 'passive') applyEffect(eff, state.count || 1);
-                });
-            }
+            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
         }
     }
 }
@@ -220,13 +206,11 @@ function buySkin(skinId) {
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
-    let scalingBase = 1.20;
-    if (gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
-        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
-        scalingBase = Math.max(1.05, scalingBase - reduction);
-    }
-    const r = scalingBase;
-    let discountedBaseCost = data.baseCost;
+
+    // Logica Generica: usa la variabile globale 'costScalingReduction' calcolata dagli effetti
+    let r = Math.max(1.05, costScalingBase - costScalingReduction);
+
+    let discountedBaseCost = data.baseCost; // Qui potresti applicare altri sconti globali
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
 
     if (amount === 1) {
@@ -242,11 +226,10 @@ function calculateTeamCost(teamKey) {
 }
 
 function calculatePrestigeBonus() {
-    const pData = gameData.prestigeUpgrades;
-    const pState = gameState.prestigeUpgrades;
     let baseBonus = gameState.lifetimePrestigePoints * 0.01;
-    let synergyCount = pState.sinergia.count;
-    let synergyBonus = synergyCount * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
+
+    let synergyBonus = prestigeSynergyFactor * gameState.lifetimePrestigePoints;
+
     const MAX_BONUS = 10000;
     let calculatedBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus;
     prestigeBonus = Math.min(calculatedBonus, MAX_BONUS);
@@ -254,11 +237,15 @@ function calculatePrestigeBonus() {
 
 function recalculateCPS() {
     let baseCPS = 0;
+
     for (const key in gameState.teams) {
         if (!gameState.teams[key] || !gameData.teams[key]) continue;
         const state = gameState.teams[key];
         const data = gameData.teams[key];
+
         let teamBPS = state.count * data.cpsPerUnit;
+
+        // Applicazione Enhancements (già generica, ok)
         for (const enhanceKey in gameData.buildingEnhancements) {
             if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
                 const enhancementState = gameState.buildingEnhancements[enhanceKey];
@@ -268,12 +255,14 @@ function recalculateCPS() {
                 }
             }
         }
-        baseCPS += teamBPS;
-    }
 
-    // [GENERICO] Bonus Click Automatico (Flag)
-    if (window.gameFlags.autoClickQA) {
-        baseCPS += gameState.teams.assistenteQa.count;
+        // NUOVA LOGICA GENERICA: Click Automatico
+        // Se il flag è attivo E il team ha il tag 'helper', aggiungi il suo numero al BPS
+        if (window.gameFlags.autoClickQA && data.tags && data.tags.includes('helper')) {
+            baseCPS += state.count;
+        }
+
+        baseCPS += teamBPS;
     }
 
     cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;

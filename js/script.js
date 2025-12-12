@@ -481,7 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializeGame() {
         // 1. CARICAMENTO DATI
-        buildStores();
         loadGame();
 
         const now = Date.now();
@@ -528,6 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         tryStart();
+
+        // Genera l'interfaccia iniziale
+        if (typeof refreshAllStores === 'function') refreshAllStores();
 
         // --- 3. SETUP STANDARD ---
         document.querySelectorAll('audio').forEach(audio => {

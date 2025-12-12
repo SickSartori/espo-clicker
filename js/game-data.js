@@ -18,6 +18,11 @@ let goldenBugSpawnTime = 60000 + Math.random() * 120000;
 let goldenBugMult = 1; // Moltiplicatore valore Golden Bug
 window.gameFlags = {}; // Contenitore per i flag (es. 'bionicHand')
 
+let costScalingBase = 1.20;      // Il valore base dell'aumento prezzi
+let costScalingReduction = 0;    // Quanto riduciamo questo valore
+let prestigeSynergyFactor = 0;   // Il fattore di sinergia prestigio
+// ------------------------------------------
+
 // Definizione helper stagionale
 function isChristmasSeason() {
     const now = new Date();
@@ -251,7 +256,8 @@ const gameData = {
         assistenteQa: {
             name: 'Assistente QA',
             baseCost: 15,
-            cpsPerUnit: 0.1
+            cpsPerUnit: 0.1,
+            tags: ['helper']
         },
         jiraTicket: {
             name: 'Jira Ticket',
@@ -381,7 +387,8 @@ const gameData = {
             desc: 'Ogni punto promozione vale +0.1% in più (Cumulativo).',
             baseCost: 5,
             bonusPerLevel: 0.001,
-            isCounted: true
+            isCounted: true,
+            effects: [{ trigger: 'passive', type: 'add_global_stat_per_level', stat: 'prestigeSynergyFactor', val: 0.001 }]
         },
         paracadute: {
             name: 'Paracadute d\'Oro',
@@ -402,7 +409,8 @@ const gameData = {
             desc: 'Riduce l\'aumento dei costi dei Teams (Scaling).',
             baseCost: 500,
             isCounted: true,
-            maxLevel: 10
+            maxLevel: 10,
+            effects: [{ trigger: 'passive', type: 'add_global_stat_per_level', stat: 'costScalingReduction', val: 0.01 }]
         },
         eredita: {
             name: 'Eredità Strutturale',

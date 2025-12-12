@@ -29,6 +29,299 @@ function formatTime(totalSeconds) {
     return timeString;
 }
 
+// --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
+
+/**
+ * Renderizza una lista di oggetti (Upgrade, Skill, etc.) in modo dinamico.
+ */
+function renderStoreSection(config) {
+    const list = document.getElementById(config.containerId);
+    if (!list) return;
+
+    const mode = gameState.filterSettings.globalFilter || 'available';
+    let visibleCount = 0;
+
+    // 1. Prepara la lista ordinata
+    const items = Object.keys(config.dataSource).map(key => {
+        return { key: key, data: config.dataSource[key], state: config.stateSource[key] };
+    });
+
+    // Ordinamento (Default: per costo)
+    items.sort((a, b) => (a.data.cost || a.data.baseCost) - (b.data.cost || b.data.baseCost));
+
+    items.forEach(item => {
+        const { key, data, state } = item;
+        const domId = `${config.type}-item-${key}`;
+        let el = document.getElementById(domId);
+
+        // 2. Calcola Stato tramite la funzione passata nella config
+        const status = config.getStatus(key, data, state);
+        // status atteso: { unlocked: bool, purchased: bool, canAfford: bool, label: string, progress: number }
+
+        // 3. Filtro Visibilità
+        let isVisible = false;
+        if (mode === 'all') isVisible = true;
+        else if (mode === 'purchased' && status.purchased) isVisible = true;
+        else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
+        else if (mode === 'available' && status.unlocked && !status.purchased) isVisible = true;
+
+        if (data.alwaysVisible) isVisible = true; // Override
+
+        if (!isVisible) {
+            if (el) el.style.display = 'none';
+            return;
+        }
+
+        visibleCount++;
+
+        // 4. Generazione HTML (Solo se non esiste)
+        if (!el) {
+            el = document.createElement('div');
+            el.id = domId;
+            el.className = config.cardClass || 'upgrade';
+
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span class="upgrade-name">${data.name}</span>
+                    <div class="upgrade-desc">${data.desc}</div>
+                    <div class="upgrade-cost">Costo: <span class="cost-val"></span></div>
+                </div>
+                <div class="upgrade-actions">
+                    <button class="buy-btn" data-key="${key}">${status.label}</button>
+                </div>
+                <div class="progress-bar-container" style="display:none;">
+                    <div class="progress-bar-fill"></div>
+                    <span class="progress-text">Locked</span>
+                </div>
+            `;
+
+            // Listener Unico
+            el.querySelector('.buy-btn').addEventListener('click', () => config.onBuy(key));
+            list.appendChild(el);
+        }
+
+        el.style.display = 'flex';
+
+        // 5. Aggiornamento Grafico (Ogni frame)
+        const btn = el.querySelector('.buy-btn');
+        const costDisplay = el.querySelector('.cost-val');
+        const costRow = el.querySelector('.upgrade-cost');
+        const progressContainer = el.querySelector('.progress-bar-container');
+
+        // Gestione Classi
+        el.classList.toggle('purchased', status.purchased);
+        el.classList.toggle('locked-item', !status.unlocked && !status.purchased);
+
+        // Gestione Bottone e Costo
+        if (status.isMaxed || (status.purchased && !data.isCounted)) {
+            btn.textContent = "Posseduto";
+            btn.className = "buy-btn owned";
+            btn.disabled = true;
+            btn.style.display = 'block';
+            costRow.style.display = 'none';
+            progressContainer.style.display = 'none';
+        } else if (status.unlocked) {
+            btn.textContent = status.label || "Compra";
+            btn.className = `buy-btn ${config.btnClass || ''}`;
+            btn.disabled = !status.canAfford;
+            costRow.style.display = 'block';
+            costDisplay.textContent = formatNumber(status.currentCost || data.cost);
+        } else {
+            // Bloccato
+            btn.style.display = 'none';
+            costRow.style.display = 'block';
+            progressContainer.style.display = 'block';
+
+            const fill = el.querySelector('.progress-bar-fill');
+            const txt = el.querySelector('.progress-text');
+
+            fill.style.width = `${status.progress}%`;
+            txt.textContent = status.progressText || `${Math.floor(status.progress)}%`;
+        }
+
+        if (status.unlocked && !status.purchased) {
+            btn.style.display = 'block';
+            progressContainer.style.display = 'none';
+        }
+
+        // Gestione specifica per livelli (Prestigio)
+        if (data.isCounted) {
+            let countBadge = el.querySelector('.upgrade-count');
+            if (!countBadge) {
+                countBadge = document.createElement('span');
+                countBadge.className = 'upgrade-count';
+                el.querySelector('.upgrade-actions').prepend(countBadge);
+            }
+            countBadge.textContent = state.count || 0;
+        }
+    });
+
+    // Empty State Message
+    const emptyMsg = document.getElementById(config.emptyId);
+    if (emptyMsg) {
+        emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
+        if (visibleCount === 0 && config.setEmptyMsg) config.setEmptyMsg(emptyMsg, mode);
+    }
+}
+
+// --- NUOVA FUNZIONE PRINCIPALE DI AGGIORNAMENTO ---
+function refreshAllStores() {
+
+    // 1. NEGOZIO CLICK
+    renderStoreSection({
+        type: 'click',
+        containerId: 'click-upgrade-list',
+        emptyId: 'click-upgrade-empty',
+        dataSource: gameData.clickUpgrades,
+        stateSource: gameState.clickUpgrades,
+        cardClass: 'click-upgrade',
+        btnClass: 'buy-click-btn',
+        onBuy: (key) => buyClickUpgrade(key),
+        getStatus: (key, data, state) => {
+            const isPurchased = state.purchased;
+            const currentClicks = gameState.totalClicks;
+            const target = data.requiredClicks;
+            const isUnlocked = currentClicks >= target;
+
+            return {
+                purchased: isPurchased,
+                unlocked: isUnlocked,
+                canAfford: gameState.score >= data.cost,
+                label: "Compra",
+                progress: Math.min((currentClicks / target) * 100, 100),
+                progressText: `Click: ${formatNumber(currentClicks)} / ${formatNumber(target)}`
+            };
+        },
+        setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
+    });
+
+    // 2. NEGOZIO AUTO (MIGLIORIE)
+    renderStoreSection({
+        type: 'enhancement',
+        containerId: 'enhancement-list',
+        emptyId: 'enhancement-empty',
+        dataSource: gameData.buildingEnhancements,
+        stateSource: gameState.buildingEnhancements,
+        cardClass: 'enhancement-upgrade',
+        btnClass: 'enhancement-btn',
+        onBuy: (key) => buyTeamEnhancement(key),
+        getStatus: (key, data, state) => {
+            const targetTeam = gameState.teams[data.targetTeam];
+            const current = targetTeam ? targetTeam.count : 0;
+            const target = data.requiredCount;
+
+            return {
+                purchased: state.purchased,
+                unlocked: current >= target,
+                canAfford: gameState.score >= data.cost,
+                label: "Compra",
+                progress: Math.min((current / target) * 100, 100),
+                progressText: `${data.targetTeam}: ${current}/${target}`
+            };
+        },
+        setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
+    });
+
+    // 3. NEGOZIO PRESTIGIO
+    renderStoreSection({
+        type: 'prestige',
+        containerId: 'prestige-list-container',
+        emptyId: 'prestige-empty',
+        dataSource: gameData.prestigeUpgrades,
+        stateSource: gameState.prestigeUpgrades,
+        cardClass: 'prestige-upgrade',
+        btnClass: 'prestige-btn',
+        onBuy: (key) => buyPrestigeUpgrade(key),
+        getStatus: (key, data, state) => {
+            const cost = data.baseCost;
+            const isMaxed = data.maxLevel && state.count >= data.maxLevel;
+
+            return {
+                purchased: !data.isCounted && state.purchased,
+                unlocked: !isMaxed,
+                isMaxed: isMaxed,
+                canAfford: gameState.prestigePoints >= cost,
+                label: isMaxed ? "MAX" : "Compra",
+                currentCost: cost,
+                progress: 100
+            };
+        },
+        setEmptyMsg: (el, mode) => { el.textContent = "Laboratorio al completo!"; }
+    });
+
+    // 4. AGGIORNAMENTO EDIFICI (Legacy - manteniamo la logica veloce esistente)
+    updateBuildingsLegacy();
+
+    // Aggiorna Visuals Extra
+    if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+}
+
+// Funzione helper per gli edifici (spostata qui per pulizia)
+function updateBuildingsLegacy() {
+    const container = document.getElementById('building-list-container');
+
+    // Genera edifici se vuoto (Init automatico)
+    if (container && container.children.length === 0) {
+        for (const key in gameData.teams) {
+            const data = gameData.teams[key];
+            const el = document.createElement('div');
+            el.className = 'upgrade';
+            el.id = `building-item-${key}`; // ID univoco per evitare conflitti
+            el.innerHTML = `
+                <div class="upgrade-details">
+                    <span class="upgrade-name">${data.name}</span>
+                    <div id="bps-${key}" class="upgrade-bps"></div>
+                    <div id="cost-${key}" class="upgrade-cost"></div>
+                </div>
+                <div class="upgrade-actions">
+                    <span id="count-${key}" class="upgrade-count">0</span>
+                    <button id="buy-${key}" class="buy-btn buy-building-btn" data-upgrade-name="${key}">Compra</button>
+                </div>
+            `;
+            // Aggiungi listener diretto per performance
+            el.querySelector('button').addEventListener('click', () => buyTeam(key));
+            container.appendChild(el);
+        }
+    }
+
+    // Aggiorna edifici
+    for (const key in gameState.teams) {
+        let amountToBuy = buyMultiplier;
+        let isMax = false;
+        if (buyMultiplier === 'MAX') {
+            const max = calculateMaxAffordable(key);
+            amountToBuy = max > 0 ? max : 1;
+            isMax = true;
+        }
+        const currentCost = calculateBulkCost(key, amountToBuy);
+
+        // Calcolo BPS dinamico
+        let teamBPS = gameData.teams[key].cpsPerUnit;
+        for (const enhanceKey in gameState.buildingEnhancements) {
+            const eData = gameData.buildingEnhancements[enhanceKey];
+            if (eData.targetTeam === key && gameState.buildingEnhancements[enhanceKey].purchased) {
+                teamBPS *= eData.multiplier;
+            }
+        }
+        const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+
+        // Aggiornamento DOM (usando gli ID che hai già nel HTML)
+        const costEl = document.getElementById(`cost-${key}`);
+        const bpsEl = document.getElementById(`bps-${key}`);
+        const countEl = document.getElementById(`count-${key}`);
+        const btn = document.getElementById(`buy-${key}`);
+
+        if (costEl) {
+            let prefix = isMax ? `Costo (+${formatNumber(amountToBuy)})` : `Costo (${buyMultiplier}x)`;
+            if (buyMultiplier === 1) prefix = "Costo";
+            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
+        }
+        if (bpsEl) bpsEl.textContent = `+${formatNumber(totalUnitBPS)} BPS cad.`;
+        if (countEl) countEl.textContent = gameState.teams[key].count;
+        if (btn) btn.disabled = (gameState.score < currentCost);
+    }
+}
+
 function updateSkinsUI() {
     const grid = document.getElementById('skins-grid');
     if (!grid) return;
@@ -458,200 +751,8 @@ function createToastDOM(message, type) {
     }, 4000);
 }
 
-// --- GENERAZIONE DINAMICA NEGOZI ---
-function buildStores() {
 
-    // 1. GENERAZIONE TEAMS (EDIFICI)
-    const buildingContainer = document.getElementById('building-list-container');
-    // Nota: Dovrai aggiungere questo ID nel file PHP (vedi step 2)
 
-    if (buildingContainer) {
-        buildingContainer.innerHTML = ''; // Pulisce
-        for (const key in gameData.teams) {
-            const data = gameData.teams[key];
-            const el = document.createElement('div');
-            el.className = 'upgrade';
-            el.id = `item-${key}`;
-            el.innerHTML = `
-                <div class="upgrade-details">
-                    <span id="name-${key}" class="upgrade-name">${data.name}</span>
-                    <div id="bps-${key}" class="upgrade-bps"></div>
-                    <div id="cost-${key}" class="upgrade-cost"></div>
-                </div>
-                <div class="upgrade-actions">
-                    <span id="count-${key}" class="upgrade-count">0</span>
-                    <button id="buy-${key}" class="buy-btn buy-building-btn" data-upgrade-name="${key}">Compra</button>
-                </div>
-            `;
-            buildingContainer.appendChild(el);
-        }
-    }
-
-    // 2. GENERAZIONE CLICK UPGRADES
-    const clickList = document.getElementById('click-upgrade-list');
-    if (clickList) {
-        clickList.innerHTML = '';
-        for (const key in gameData.clickUpgrades) {
-            const data = gameData.clickUpgrades[key];
-            const el = document.createElement('div');
-            el.className = 'click-upgrade';
-            el.id = `click-upgrade-${key}`;
-            el.innerHTML = `
-                <div class="upgrade-details">
-                    <span class="upgrade-name">${data.name}</span>
-                    <div class="upgrade-desc">${data.desc}</div>
-                    <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
-                </div>
-                <button class="buy-btn buy-click-btn" data-upgrade-name="${key}">Compra</button>
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill"></div>
-                    <span class="progress-text">Locked</span>
-                </div>
-            `;
-            clickList.appendChild(el);
-        }
-    }
-
-    // 3. GENERAZIONE ENHANCEMENTS (AUTO)
-    const enhList = document.getElementById('enhancement-list');
-    if (enhList) {
-        enhList.innerHTML = '';
-        for (const key in gameData.buildingEnhancements) {
-            const data = gameData.buildingEnhancements[key];
-            const el = document.createElement('div');
-            el.className = 'enhancement-upgrade';
-            el.id = `enh-upgrade-${key}`;
-            el.innerHTML = `
-                <div class="upgrade-details">
-                    <span class="upgrade-name">${data.name}</span>
-                    <div class="upgrade-desc">${data.desc}</div>
-                    <div class="upgrade-cost">Costo: ${formatNumber(data.cost)} bug</div>
-                </div>
-                <button class="buy-btn enhancement-btn" data-upgrade-name="${key}">Compra</button>
-                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill"></div>
-                    <span class="progress-text">Locked</span>
-                </div>
-            `;
-            enhList.appendChild(el);
-        }
-    }
-
-    // 4. GENERAZIONE PRESTIGIO (LABORATORIO)
-    const prestigeList = document.getElementById('prestige-list-container');
-    if (prestigeList) {
-        prestigeList.innerHTML = '';
-        for (const key in gameData.prestigeUpgrades) {
-            const data = gameData.prestigeUpgrades[key];
-
-            // Determina se mostrare il counter dei livelli
-            const countHtml = data.isCounted
-                ? `<span id="count-${key}" class="upgrade-count">0</span>`
-                : '';
-
-            const el = document.createElement('div');
-            el.className = 'prestige-upgrade';
-            el.id = `upgrade-${key}`;
-            // Default nascosto, verrà mostrato da updatePrestigeStore se disponibile
-            el.style.display = 'none';
-
-            el.innerHTML = `
-                <div class="upgrade-details">
-                    <span class="upgrade-name">${data.name}</span>
-                    <div class="upgrade-desc">${data.description || data.desc}</div> <div class="upgrade-cost">Costo: <span id="cost-${key}">${formatNumber(data.baseCost)}</span> Pt</div>
-                </div>
-                <div class="upgrade-actions">
-                    ${countHtml}
-                    <button id="buy-${key}" class="buy-btn prestige-btn" data-upgrade-name="${key}">Compra</button>
-                </div>
-            `;
-            prestigeList.appendChild(el);
-        }
-    }
-}
-
-// --- LOGICA AGGIORNAMENTO PRESTIGIO DINAMICA ---
-function updatePrestigeStore() {
-    const listContainer = document.getElementById('prestige-list-container');
-    if (!listContainer) return;
-
-    // Helper interno per aggiornare singolo bottone
-    const updateBtn = (id, data, state) => {
-        if (!data || !state) return null;
-
-        const el = document.getElementById(`upgrade-${id}`);
-        const btn = document.getElementById(`buy-${id}`);
-        if (!btn || !el) return null;
-
-        let isCompleted = false;
-        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) isCompleted = true;
-        if (!data.isCounted && state.purchased) isCompleted = true;
-
-        let priority = 0;
-        let cost = data.baseCost;
-        // Se volessi scalare il costo prestigio in futuro: 
-        // if(data.isCounted) cost = Math.floor(data.baseCost * Math.pow(1.5, state.count));
-
-        if (isCompleted) {
-            btn.textContent = "Posseduto";
-            btn.className = "buy-btn prestige-btn owned";
-            btn.disabled = true;
-            el.classList.add('purchased');
-            priority = 300;
-        } else {
-            btn.innerHTML = "Compra";
-            btn.className = "buy-btn prestige-btn";
-            const canAfford = gameState.prestigePoints >= cost;
-            btn.disabled = !canAfford;
-            el.classList.remove('purchased');
-            priority = canAfford ? 200 : 210;
-        }
-
-        const countEl = document.getElementById(`count-${id}`);
-        if (countEl && state) countEl.textContent = state.count || 0;
-
-        const costEl = document.getElementById(`cost-${id}`);
-        if (costEl) costEl.textContent = formatNumber(cost);
-
-        return { el: el, priority: priority, cost: cost };
-    };
-
-    // --- NON USIAMO PIÙ LISTE HARDCODED ---
-    const items = [];
-    const mode = gameState.filterSettings.globalFilter || 'available';
-
-    // Itera su TUTTO quello che c'è in gameData
-    for (const key in gameData.prestigeUpgrades) {
-        // Verifica esistenza nello stato (per sicurezza con vecchi save)
-        if (gameState.prestigeUpgrades[key]) {
-            const item = updateBtn(key, gameData.prestigeUpgrades[key], gameState.prestigeUpgrades[key]);
-            if (item) items.push(item);
-        }
-    }
-
-    // Ordinamento
-    items.sort((a, b) => {
-        if (a.priority !== b.priority) return a.priority - b.priority;
-        return a.cost - b.cost;
-    });
-
-    // Applicazione DOM
-    items.forEach(item => {
-        let show = true;
-        if (mode === 'available' && item.priority === 300) show = false;
-        if (mode === 'purchased' && item.priority < 300) show = false;
-
-        item.el.style.display = show ? 'flex' : 'none';
-        if (show) listContainer.appendChild(item.el); // Riordina visivamente
-    });
-
-    // Gestione Empty State
-    const emptyMsg = document.getElementById('prestige-empty');
-    if (emptyMsg) {
-        const visibleItems = items.filter(i => i.el.style.display !== 'none').length;
-        emptyMsg.style.display = (visibleItems === 0) ? 'block' : 'none';
-    }
-}
 
 function checkTabNotifications() {
     // Click Tab
@@ -699,49 +800,7 @@ function checkTabNotifications() {
     if (tabPrestige) prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
 }
 
-function refreshAllStores() {
-    for (const key in gameState.teams) {
-        let amountToBuy = buyMultiplier;
-        let isMax = false;
-        if (buyMultiplier === 'MAX') {
-            const max = calculateMaxAffordable(key);
-            amountToBuy = max > 0 ? max : 1;
-            isMax = true;
-        }
-        const currentCost = calculateBulkCost(key, amountToBuy);
-        let teamBPS = gameData.teams[key].cpsPerUnit;
-        for (const enhanceKey in gameState.buildingEnhancements) {
-            const eData = gameData.buildingEnhancements[enhanceKey];
-            if (eData.targetTeam === key && gameState.buildingEnhancements[enhanceKey].purchased) {
-                teamBPS *= eData.multiplier;
-            }
-        }
-        const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
-        const costEl = document.getElementById(`cost-${key}`);
-        const bpsEl = document.getElementById(`bps-${key}`);
-        const countEl = document.getElementById(`count-${key}`);
-
-        if (costEl) {
-            let prefix = "Costo";
-            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
-            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
-            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
-            costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
-        }
-        if (bpsEl) {
-            bpsEl.textContent = `+${formatNumber(totalUnitBPS)} BPS cad.`;
-            bpsEl.setAttribute('data-tooltip', totalUnitBPS.toLocaleString('it-IT'));
-        }
-        if (countEl) countEl.textContent = gameState.teams[key].count;
-        const btn = document.getElementById(`buy-${key}`);
-        if (btn) btn.disabled = (gameState.score < currentCost);
-    }
-    updateClickStore();
-    updateEnhancementStore();
-    updatePrestigeStore();
-    updatePrestigeVisuals();
-}
 function updateBonusCounter() {
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
@@ -951,84 +1010,8 @@ function updatePrestigeVisuals() {
 
 function updatePrestigeUI() {
     updatePrestigeVisuals();
-    updatePrestigeStore();
 }
 
-function updateEnhancementStore() {
-    const list = document.getElementById('enhancement-list');
-    if (!list) return;
-    const mode = gameState.filterSettings.globalFilter || 'available';
-    let visibleCount = 0;
-    let hasAnyBuilding = false;
-    for (const key in gameState.teams) {
-        if (gameState.teams[key].count > 0) { hasAnyBuilding = true; break; }
-    }
-    const items = [];
-    for (const key in gameData.buildingEnhancements) {
-        const data = gameData.buildingEnhancements[key];
-        const state = gameState.buildingEnhancements[key];
-        const targetTeam = gameState.teams[data.targetTeam];
-        const el = document.getElementById(`enh-upgrade-${key}`);
-        if (!el) continue;
-        const btn = el.querySelector('.buy-btn');
-        const progressBar = el.querySelector('.progress-bar-container');
-        const isPurchased = state.purchased;
-        const isUnlocked = targetTeam.count >= data.requiredCount;
-        const canAfford = gameState.score >= data.cost;
-        el.classList.remove('purchased', 'locked-item');
-        btn.style.display = 'none';
-        progressBar.style.display = 'none';
-        let priority = 0;
-        if (isPurchased) {
-            el.classList.add('purchased');
-            btn.textContent = "Posseduto";
-            btn.disabled = true;
-            btn.className = "buy-btn owned";
-            btn.style.display = 'block';
-            priority = 300;
-        } else if (isUnlocked) {
-            btn.textContent = "Compra";
-            btn.disabled = !canAfford;
-            btn.className = "buy-btn enhancement-btn";
-            btn.style.display = 'block';
-            priority = canAfford ? 200 : 210;
-        } else {
-            el.classList.add('locked-item');
-            progressBar.style.display = 'block';
-            const current = targetTeam.count;
-            const target = data.requiredCount;
-            const targetName = gameData.teams[data.targetTeam].name;
-            let percent = Math.min((current / target) * 100, 100);
-            if (isNaN(percent)) percent = 0;
-            el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-            const text = `${current} / ${target} ${targetName}`;
-            el.querySelector('.progress-text').textContent = text;
-            el.querySelector('.progress-text').title = text;
-            priority = 100 - percent;
-        }
-        if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
-            el.style.display = 'flex';
-            visibleCount++;
-            items.push({ el: el, priority: priority, cost: data.cost });
-        } else {
-            el.style.display = 'none';
-        }
-    }
-    items.sort((a, b) => {
-        if (Math.floor(a.priority) !== Math.floor(b.priority)) return a.priority - b.priority;
-        return a.cost - b.cost;
-    });
-    items.forEach(item => list.appendChild(item.el));
-    const emptyMsg = document.getElementById('enhancement-empty');
-    if (emptyMsg) {
-        if (visibleCount === 0 && hasAnyBuilding) {
-            emptyMsg.style.display = 'block';
-            setEmptyMessage(emptyMsg, mode);
-        } else {
-            emptyMsg.style.display = 'none';
-        }
-    }
-}
 
 function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
     switch (mode) {
@@ -1219,71 +1202,7 @@ function createSnowflakes() {
     }
 }
 
-function updateClickStore() {
-    const list = document.getElementById('click-upgrade-list');
-    if (!list) return;
-    const mode = gameState.filterSettings.globalFilter || 'available';
-    let visibleCount = 0;
-    const items = [];
-    for (const key in gameData.clickUpgrades) {
-        const data = gameData.clickUpgrades[key];
-        const state = gameState.clickUpgrades[key];
-        const el = document.getElementById(`click-upgrade-${key}`);
-        if (!el) continue;
-        const btn = el.querySelector('.buy-btn');
-        const progressBar = el.querySelector('.progress-bar-container');
-        const isPurchased = state.purchased;
-        const isUnlocked = gameState.totalClicks >= data.requiredClicks;
-        const canAfford = gameState.score >= data.cost;
-        el.classList.remove('purchased', 'locked-item');
-        btn.style.display = 'none';
-        progressBar.style.display = 'none';
-        let priority = 0;
-        if (isPurchased) {
-            el.classList.add('purchased');
-            btn.textContent = "Posseduto";
-            btn.disabled = true;
-            btn.className = "buy-btn owned";
-            btn.style.display = 'block';
-            priority = 300;
-        } else if (isUnlocked) {
-            btn.textContent = "Compra";
-            btn.disabled = !canAfford;
-            btn.className = "buy-btn buy-click-btn";
-            btn.style.display = 'block';
-            priority = canAfford ? 200 : 210;
-        } else {
-            el.classList.add('locked-item');
-            progressBar.style.display = 'block';
-            const current = gameState.totalClicks;
-            const target = data.requiredClicks;
-            let percent = Math.min((current / target) * 100, 100);
-            if (isNaN(percent)) percent = 0;
-            el.querySelector('.progress-bar-fill').style.width = `${percent}%`;
-            const text = `Sblocco: ${formatNumber(current)} / ${formatNumber(target)}`;
-            el.querySelector('.progress-text').textContent = text;
-            el.querySelector('.progress-text').title = text;
-            priority = 100 - percent;
-        }
-        if (shouldItemBeVisible(mode, isPurchased, isUnlocked)) {
-            el.style.display = 'flex';
-            visibleCount++;
-            items.push({ el: el, priority: priority, cost: data.cost });
-        } else {
-            el.style.display = 'none';
-        }
-    }
-    items.sort((a, b) => {
-        if (Math.floor(a.priority) !== Math.floor(b.priority)) return a.priority - b.priority;
-        return a.cost - b.cost;
-    });
-    items.forEach(item => list.appendChild(item.el));
-    const emptyMsg = document.getElementById('click-upgrade-empty');
-    if (emptyMsg) {
-        emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
-        if (visibleCount === 0) setEmptyMessage(emptyMsg, mode);
-    }
-}
+
 
 function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
