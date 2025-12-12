@@ -5,6 +5,29 @@ let lastRicardoVideoId = null;
 window.currentActiveEvent = null; // Il "Semaforo"
 let audioGlitchInterval = null;
 
+// Funzione per inviare il punteggio al leaderboard
+async function submitScoreToLeaderboard(username) {
+    // Recupera la password in modo sicuro dall'oggetto globale
+    const password = window.EspooClicker ? window.EspooClicker.getPassword() : null;
+
+    // Se non siamo loggati, non fare nulla
+    if (!username || !password) return;
+
+    try {
+        const response = await fetch('./php/submit_score.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+        // Non serve fare nulla con la risposta, è un aggiornamento silenzioso
+    } catch (e) {
+        console.warn("Impossibile aggiornare la classifica:", e);
+    }
+}
+
 function checkEventConflict(newEventName) {
     if (window.currentActiveEvent) {
         window.EspooClicker.showToast(`⛔ Occupato: Evento "${window.currentActiveEvent}" in corso!`, 'error');
@@ -830,7 +853,7 @@ async function executePrestige() {
     let oldLifetimeScore = gameState.lifetimeScore;
     let oldUser = gameState.user;
     await new Promise(r => setTimeout(r, 1500));
-    let newState = createNewGameState();
+    let newState = getInitialGameState();
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
