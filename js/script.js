@@ -453,7 +453,26 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
 
+    function generateAudioTags() {
+        const container = document.body; // O un div nascosto specifico
+        const assets = gameData.assets.sounds;
 
+        for (const key in assets) {
+            const sound = assets[key];
+            // Evita duplicati se esistono già nell'HTML statico
+            if (!document.getElementById(sound.id)) {
+                const audio = document.createElement('audio');
+                audio.id = sound.id;
+                audio.src = `./assets/sounds/${sound.file}`;
+                audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
+                if (sound.loop) audio.loop = true;
+                container.appendChild(audio);
+            }
+        }
+    }
+
+    // Chiamalo dentro document.addEventListener('DOMContentLoaded', ...)
+    generateAudioTags();
 
     function initializeGame() {
         // 1. CARICAMENTO DATI

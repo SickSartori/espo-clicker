@@ -581,8 +581,8 @@ function triggerRickRoll() {
     video.style.display = 'block';
     video.currentTime = 0;
     // Volume basso (2%) per Rick
-    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-rick'] !== undefined)
-        ? gameState.user.audioCustom['video-rick'] : 0.02;
+    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['rick-roll-video'] !== undefined)
+        ? gameState.user.audioCustom['rick-roll-video'] : 0.5;
     video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * rickVol;
 
     video.play().catch(e => { });
@@ -678,8 +678,8 @@ function triggerRicardoEvent() {
     video.style.display = 'block';
     video.currentTime = 0;
     // Ricardo al 80% (ha bisogno di volume alto)
-    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-ricardo'] !== undefined)
-        ? gameState.user.audioCustom['video-ricardo'] : 0.8;
+    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['ricardo-video'] !== undefined)
+        ? gameState.user.audioCustom['ricardo-video'] : 0.5;
     video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * ricardoVol;
 
     video.play().catch(e => { });

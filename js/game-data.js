@@ -65,7 +65,6 @@ function getInitialGameState() {
 
             // --- MODIFICA QUI I VALORI DI DEFAULT (0.0 a 1.0) ---
             audioCustom: {
-                // Suoni SFX
                 'sound-click': 0.4,
                 'sound-buy': 0.4,
                 'sound-achievement': 0.4,
@@ -73,17 +72,14 @@ function getInitialGameState() {
                 'sound-golden': 0.6,
                 'sound-prestige': 0.6,
                 'sound-hover': 0.2,
-
-                // Loop e Ambienti
                 'sound-bluescreen': 0.3,
                 'sound-snowball': 0.2,
                 'sound-merry': 0.5,
                 'sound-bg-music': 0.3,
                 'sound-fury-music': 0.2,
-
-                // Video (Default 50%)
-                'video-rick': 0.5,
-                'video-ricardo': 0.5
+                // Video IDs corretti
+                'rick-roll-video': 0.5,
+                'ricardo-video': 0.5
             }
         },
         filterSettings: {
@@ -335,6 +331,32 @@ function resetGameToDefault() {
 
 const gameData = {
     PRESTIGE_THRESHOLD: 50000000,
+
+    assets: {
+        sounds: {
+            // Ambiente
+            'bg-music': { id: 'sound-bg-music', file: 'bg-music.mp3', name: 'Musica Base', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.3 },
+            'snowball': { id: 'sound-snowball', file: 'nonsnowball.mp3', name: 'Loop Neve', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.2 },
+            'bluescreen': { id: 'sound-bluescreen', file: 'bluescreen.mp3', name: 'Loop 404', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.3 },
+            'fury-theme': { id: 'sound-fury-music', file: 'fury-theme.mp3', name: 'Musica Fury', type: 'music', category: 'ambiente', loop: true, defaultVol: 0.2 },
+
+            // Eventi
+            'merry': { id: 'sound-merry', file: 'merry-christmas.mp3', name: 'Jingle Natale', type: 'sfx', category: 'eventi', defaultVol: 0.5 },
+            'golden': { id: 'sound-golden', file: 'golden.mp3', name: 'Golden Bug', type: 'sfx', category: 'eventi', defaultVol: 0.6 },
+
+            // Effetti
+            'click': { id: 'sound-click', file: 'click.mp3', name: 'Click', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
+            'buy': { id: 'sound-buy', file: 'buy.mp3', name: 'Shop', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
+            'achievement': { id: 'sound-achievement', file: 'achievement.mp3', name: 'Obiettivo', type: 'sfx', category: 'effetti', defaultVol: 0.4 },
+            'error': { id: 'sound-error', file: 'error.mp3', name: 'Errore', type: 'sfx', category: 'effetti', defaultVol: 0.5 },
+            'prestige': { id: 'sound-prestige', file: 'prestige.mp3', name: 'Prestigio', type: 'sfx', category: 'effetti', defaultVol: 0.6 },
+            'hover': { id: 'sound-hover', file: 'hover.mp3', name: 'Hover', type: 'sfx', category: 'effetti', defaultVol: 0.2 }
+        },
+        videos: {
+            'rick': { id: 'rick-roll-video', file: 'rick-espley-video.mp4', name: 'Video: Rick', category: 'eventi', defaultVol: 0.5 },
+            'ricardo': { id: 'ricardo-video', file: 'ricardo-milespo-video.mp4', name: 'Video: Ricardo', category: 'eventi', defaultVol: 0.5 }
+        }
+    },
 
     skins: {
         default: {
