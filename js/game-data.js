@@ -440,7 +440,7 @@ const gameData = {
         crunchTime: {
             id: 'crunchTime',
             name: 'ESPO FURY!',
-            description: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.',
+            desc: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.',
             baseCost: 200,
             isCounted: false,
             furyImage: 'espo-fury.webp',

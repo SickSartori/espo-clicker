@@ -599,28 +599,45 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof refreshAllStores === 'function') refreshAllStores();
         updateUI();
 
-        // Setup Moltiplicatori
-        const btns = {
-            '1x': document.getElementById('btn-1x'),
-            '5x': document.getElementById('btn-5x'),
-            '10x': document.getElementById('btn-10x'),
-            'MAX': document.getElementById('btn-max')
-        };
+        // Setup Moltiplicatori (Automatizzato)
+        const multiplierValues = [1, 5, 10, 'MAX'];
+        const multiplierBtns = {};
 
+        // 1. Recupera Riferimenti
+        multiplierValues.forEach(val => {
+            const id = val === 'MAX' ? 'btn-max' : `btn-${val}x`;
+            multiplierBtns[val] = document.getElementById(id);
+        });
+
+        // 2. Funzione Logica Cambio
         function setBuyMultiplier(value) {
             buyMultiplier = value;
-            for (let k in btns) { if (btns[k]) btns[k].style.backgroundColor = '#34495e'; }
-            const activeKey = value === 'MAX' ? 'MAX' : value + 'x';
-            if (btns[activeKey]) btns[activeKey].style.backgroundColor = '#27ae60';
+
+            // Aggiorna Grafica Bottoni
+            multiplierValues.forEach(val => {
+                if (multiplierBtns[val]) {
+                    // Colore attivo verde, inattivo grigio
+                    const color = (val === value) ? '#27ae60' : '#34495e';
+                    multiplierBtns[val].style.backgroundColor = color;
+                }
+            });
+
             playSound('sound-click');
             refreshAllStores();
             updateUI();
         }
 
-        if (btns['1x']) btns['1x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['1x'].blur(); setBuyMultiplier(1); } });
-        if (btns['5x']) btns['5x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['5x'].blur(); setBuyMultiplier(5); } });
-        if (btns['10x']) btns['10x'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['10x'].blur(); setBuyMultiplier(10); } });
-        if (btns['MAX']) btns['MAX'].addEventListener('click', (e) => { if (e.detail !== 0) { btns['MAX'].blur(); setBuyMultiplier('MAX'); } });
+        // 3. Assegna Listener
+        multiplierValues.forEach(val => {
+            if (multiplierBtns[val]) {
+                multiplierBtns[val].addEventListener('click', (e) => {
+                    if (e.detail !== 0) { // Ignora click simulati strani
+                        multiplierBtns[val].blur();
+                        setBuyMultiplier(val);
+                    }
+                });
+            }
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {

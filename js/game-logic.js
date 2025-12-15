@@ -851,26 +851,38 @@ function clickCookie(event) {
 function calculateMaxAffordable(teamKey) {
     const state = gameState.teams[teamKey];
     const data = gameData.teams[teamKey];
-    let scalingBase = 1.20;
-    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
-        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
-        scalingBase = Math.max(1.05, scalingBase - reduction);
-    }
-    const r = scalingBase;
+
+    // --- Usa le variabili globali coerenti con calculateBulkCost ---
+    const r = Math.max(1.05, costScalingBase - costScalingReduction);
+    // --------------------------------------------------------------------
+
     let discountedBaseCost = data.baseCost;
+
+    // Calcolo costo del prossimo singolo acquisto
     const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
+
+    // Se non puoi permetterti nemmeno uno, esci subito
     if (gameState.score < currentSingleCost) return 0;
+
     let maxAmount = 0;
+
+    // Formula inversa della somma geometrica per trovare N
     if (Math.abs(r - 1) < 0.0000001) {
+        // Caso lineare (r quasi 1)
         maxAmount = Math.floor(gameState.score / currentSingleCost);
     } else {
+        // Caso geometrico (logaritmo)
         maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
     }
+
+    // Correzione di sicurezza per errori di precisione virgola mobile
+    // Ricalcola il costo reale per maxAmount e riduci se sfora il budget
     let realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
     while (maxAmount > 0 && Math.floor(realCost) > gameState.score) {
         maxAmount--;
         realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
     }
+
     return Math.max(0, maxAmount);
 }
 
