@@ -121,7 +121,7 @@ function renderStoreSection(config) {
                 <div class="upgrade-details">
                     <span class="upgrade-name">${data.name}</span>
                     ${middleContent}
-                    <div class="upgrade-cost" id="cost-${key}-wrapper">Costo: <span class="cost-val" id="cost-${key}"></span></div>
+                    <div class="upgrade-cost" id="cost-${key}-wrapper"><span class="cost-val" id="cost-${key}"></span></div>
                 </div>
                 <div class="upgrade-actions">
                     ${countBadge}
@@ -835,102 +835,97 @@ function updateBonusCounter() {
 
 
 function updateUI() {
-    // 1. Calcolo BPS Visuale (include i click recenti)
-    let activeBPS = 0;
+    // 1. Calcoli Preliminari (BPS Visivo)
+    const activeBPS = calculateVisualBPS();
+
+    // 2. Aggiornamenti Sezioni
+    updateScoreBoard(activeBPS);
+    updateHUD();
+    updateWallets();
+    updateStoreButtons(); // Gestisce i costi e i tasti "enabled/disabled"
+    updateSkillButton();  // Gestisce Espo Fury / Crunch Time
+    updateTabsVisibility();
+
+    // 3. Notifiche e Extra
+    checkOverlayNotifications();
+    updateBonusCounter();
+}
+
+// --- SOTTO-FUNZIONI (Copia queste sotto updateUI) ---
+
+function calculateVisualBPS() {
+    let active = 0;
     const now = Date.now();
     for (let i = 0; i < clickHistory.length; i++) {
-        if (now - clickHistory[i].time < 1000) activeBPS += clickHistory[i].value;
+        if (now - clickHistory[i].time < 1000) active += clickHistory[i].value;
     }
-    let totalDisplayBPS = cookiesPerSecond + activeBPS;
+    return cookiesPerSecond + active;
+}
 
-    // 2. Aggiornamento Score e BPS (Solo se cambiati)
-    // Nota: Usiamo setTextIfChanged per risparmiare risorse
+function updateScoreBoard(totalBPS) {
     setTextIfChanged('score-display', formatNumber(gameState.score));
 
-    // Aggiorna attributo tooltip solo se serve (opzionale, ma buona pratica)
     const scoreEl = getEl('score-display');
     if (scoreEl) scoreEl.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
 
-    setTextIfChanged('cps-display', `BPS: ${formatNumber(totalDisplayBPS)}`);
+    setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
     const cpsEl = getEl('cps-display');
-    if (cpsEl) cpsEl.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+    if (cpsEl) cpsEl.setAttribute('data-tooltip', totalBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+}
 
-    // 3. HUD Stats Container (Carriera e Token)
+function updateHUD() {
     const hudContainer = getEl('hud-stats-container');
     const displayCareer = getEl('display-career-bonus');
     const displayTokens = getEl('prestige-points-display');
 
-    // Aggiornamento Wallets Mobile
-    // Nota: querySelectorAll è lento, ma se sono pochi elementi va bene. 
-    // Se vuoi ottimizzare al massimo, assegna ID univoci anche a questi.
-    const mobileWallets = document.querySelectorAll('.bug-wallet-amount');
-    mobileWallets.forEach(el => {
-        if (el.textContent !== formatNumber(gameState.score)) {
-            el.textContent = formatNumber(gameState.score);
-        }
-    });
-
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
         if (hudContainer && hudContainer.style.display === 'none') hudContainer.style.display = 'flex';
-
-        if (displayCareer) {
-            setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
-            displayCareer.setAttribute('data-tooltip', `Potenza Totale: x${formatNumber(prestigeBonus)}`);
-        }
-
-        if (displayTokens) {
-            setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
-            displayTokens.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));
-        }
+        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
     } else {
         if (hudContainer && hudContainer.style.display !== 'none') hudContainer.style.display = 'none';
     }
+}
 
-    // 4. Aggiornamento Wallet Lab e Bug
+function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
     setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score));
 
-    // 5. Aggiornamento Costi e Stati Bottoni (Teams)
+    // Mobile Wallets (Aggiornamento di gruppo)
+    document.querySelectorAll('.bug-wallet-amount').forEach(el => {
+        if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
+    });
+}
+
+function updateStoreButtons() {
+    // A. Teams
     for (const key in gameState.teams) {
+        // Logica Costi
         let amountToBuy = buyMultiplier;
         let isMax = false;
-
         if (buyMultiplier === 'MAX') {
             const max = calculateMaxAffordable(key);
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
         }
-
         const currentCost = calculateBulkCost(key, amountToBuy);
 
-        // Bottone Compra
+        // UI Aggiornamento
         const btn = getEl(`buy-${key}`);
         if (btn) btn.disabled = (gameState.score < currentCost);
 
-        // Testo Costo
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
-            let prefix = "Costo";
-            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
-            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
-
+            let prefix = isMax && amountToBuy > 1 ? `Costo (+${formatNumber(amountToBuy)})` :
+                (!isMax && amountToBuy > 1) ? `Costo (${amountToBuy}x)` : "Costo";
             const costText = `${prefix}: ${formatNumber(currentCost)}`;
-
-            // Qui usiamo la logica diretta perché setTextIfChanged usa l'ID, ma qui siamo nel loop
-            if (costEl.textContent !== costText) {
-                costEl.textContent = costText;
-            }
-            costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
+            if (costEl.textContent !== costText) costEl.textContent = costText;
         }
     }
 
-    // 6. Aggiornamento Click Upgrades (Disabilitazione se poveri)
-    // Nota: Qui usiamo querySelector specifico perché l'ID è sul container
+    // B. Click Upgrades
     for (const key in gameState.clickUpgrades) {
         if (!gameState.clickUpgrades[key].purchased) {
-            // Ottimizzazione: Usiamo getEl sul container se possibile, altrimenti querySelector
-            // Se hai dato ID ai bottoni (es. btn-click-nome), usa getEl. 
-            // Altrimenti manteniamo la logica originale ma con controllo esistenza.
             const container = getEl(`click-upgrade-${key}`);
             if (container) {
                 const btn = container.querySelector('.buy-btn');
@@ -939,102 +934,59 @@ function updateUI() {
         }
     }
 
-    // 7. Aggiornamento Enhancement Upgrades
+    // C. Enhancements
     for (const key in gameState.buildingEnhancements) {
         if (!gameState.buildingEnhancements[key].purchased) {
-            const container = getEl(`enh-upgrade-${key}`); // Assicurati che l'ID del div sia questo nel rendering
-            // Fallback se l'ID nel rendering è diverso (nel codice precedente era enhancement-item-${key})
-            // Controlla renderStoreSection. Se usa id="enhancement-item-...", usa quello.
-            // Assumo standard 'enhancement-item-' basato sul codice precedente.
-            const item = getEl(`enhancement-item-${key}`);
-            if (item) {
-                const btn = item.querySelector('.buy-btn');
+            const container = getEl(`enh-upgrade-${key}`) || getEl(`enhancement-item-${key}`);
+            if (container) {
+                const btn = container.querySelector('.buy-btn');
                 if (btn) btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
             }
         }
     }
+}
 
-    // 8. Skill Button (Crunch Time / Espo Fury)
+function updateSkillButton() {
     const btnCrunch = getEl('skill-crunchTime');
-    if (btnCrunch) {
-        if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
-            if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
+    if (!btnCrunch) return;
 
-            const timerDiv = btnCrunch.querySelector('.skill-timer');
+    if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
+        if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
 
-            if (now < crunchTimeEndTime) {
-                // FASE ATTIVA
-                const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
-                crunchTimeMultiplier = 7;
+        const timerDiv = btnCrunch.querySelector('.skill-timer');
+        const now = Date.now();
 
-                if (btnCrunch.className !== 'skill-btn active') btnCrunch.className = 'skill-btn active';
-
-                // Aggiorna testo solo se serve (uso children[0] per il testo principale se misto)
-                // O semplicemente riscrivo innerHTML se la struttura è semplice
-                const mainTextNode = btnCrunch.childNodes[0];
-                if (mainTextNode.textContent.trim() !== '🔥 BPS x7 🔥') {
-                    mainTextNode.textContent = '🔥 BPS x7 🔥';
-                }
-
-                if (timerDiv && timerDiv.textContent !== `${timeLeft}s`) {
-                    timerDiv.textContent = `${timeLeft}s`;
-                }
-
-            } else if (now < crunchTimeCooldownEnd) {
-                // FASE COOLDOWN
-                const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-                crunchTimeMultiplier = 1;
-
-                if (btnCrunch.className !== 'skill-btn cooldown') btnCrunch.className = 'skill-btn cooldown';
-
-                const mainTextNode = btnCrunch.childNodes[0];
-                if (mainTextNode.textContent.trim() !== 'Ricarica...') {
-                    mainTextNode.textContent = 'Ricarica...';
-                }
-
-                const m = Math.floor(timeLeft / 60);
-                const s = timeLeft % 60;
-                const timeStr = `${m}:${s < 10 ? '0' + s : s}`;
-
-                if (timerDiv && timerDiv.textContent !== timeStr) {
-                    timerDiv.textContent = timeStr;
-                }
-
-            } else {
-                // PRONTO
-                crunchTimeMultiplier = 1;
-                if (btnCrunch.className !== 'skill-btn') btnCrunch.className = 'skill-btn';
-
-                const mainTextNode = btnCrunch.childNodes[0];
-                if (mainTextNode.textContent.trim() !== '🔥 ESPO FURY 🔥') {
-                    mainTextNode.textContent = '🔥 ESPO FURY 🔥';
-                }
-
-                if (timerDiv && timerDiv.textContent !== 'CLICCA!') {
-                    timerDiv.textContent = 'CLICCA!';
-                }
-            }
+        if (now < crunchTimeEndTime) {
+            // ATTIVO
+            const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
+            if (btnCrunch.className !== 'skill-btn active') btnCrunch.className = 'skill-btn active';
+            btnCrunch.childNodes[0].textContent = '🔥 BPS x7 🔥';
+            if (timerDiv) timerDiv.textContent = `${timeLeft}s`;
+        } else if (now < crunchTimeCooldownEnd) {
+            // COOLDOWN
+            const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
+            if (btnCrunch.className !== 'skill-btn cooldown') btnCrunch.className = 'skill-btn cooldown';
+            btnCrunch.childNodes[0].textContent = 'Ricarica...';
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
-            if (btnCrunch.style.display !== 'none') btnCrunch.style.display = 'none';
+            // PRONTO
+            if (btnCrunch.className !== 'skill-btn') btnCrunch.className = 'skill-btn';
+            btnCrunch.childNodes[0].textContent = '🔥 ESPO FURY 🔥';
+            if (timerDiv) timerDiv.textContent = 'CLICCA!';
         }
+    } else {
+        if (btnCrunch.style.display !== 'none') btnCrunch.style.display = 'none';
     }
+}
 
-    // 9. Tab Prestigio (Visibilità)
+function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
     if (tabPrestige) {
-        if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-            if (tabPrestige.style.display === 'none') tabPrestige.style.display = 'block';
-        } else {
-            if (tabPrestige.style.display !== 'none') tabPrestige.style.display = 'none';
-        }
+        const show = gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0;
+        tabPrestige.style.display = show ? 'block' : 'none';
     }
-
-    // 10. Chiamate Extra (Nota: checkTabNotifications è stato spostato nel Slow Loop in script.js)
-    // Se non hai ancora spostato checkTabNotifications, lascialo qui.
-    // checkTabNotifications(); 
-
-    checkOverlayNotifications();
-    updateBonusCounter();
 }
 
 function updatePrestigeVisuals() {
