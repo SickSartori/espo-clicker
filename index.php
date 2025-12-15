@@ -175,6 +175,7 @@
     <div id="fire-particles-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 
     <script src="./js/version-config.js"></script>
     <script src="./js/game-data.js" defer></script>

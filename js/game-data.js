@@ -176,7 +176,13 @@ const gameData = {
             imgClick: "esponatale-click.webp",
             rarity: "christmas",
             unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
-            cost: IS_XMAS_TIME ? undefined : 20
+            cost: IS_XMAS_TIME ? undefined : 20,
+            themeConfig: {
+                hasSnow: true,
+                specialMusic: 'sound-snowball',
+                bodyClass: 'theme-christmas',
+                goldenBugImg: 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png'
+            }
         },
         gladiator: {
             name: "Esporator",

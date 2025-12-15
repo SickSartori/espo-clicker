@@ -41,16 +41,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8';
 
     async function saveGame() {
-
         if (gameState.isDeleting) return;
 
+        // Aggiorna timestamp
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-
         gameState.lastSaveTimestamp = Date.now();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 
+        // 1. Converti in JSON
+        const stateJSON = JSON.stringify(gameState);
 
+        // 2. Comprimi (LZString) - Riduce la dimensione del 60-80%
+        // Usiamo compressToUTF16 perché funziona perfettamente con localStorage e JSON
+        const compressed = LZString.compressToUTF16(stateJSON);
+
+        // 3. Salva in Locale
+        localStorage.setItem(SAVE_KEY, compressed);
+
+        // 4. Salva in Cloud (se loggato)
         if (gameState.user.username && currentUserPassword) {
             try {
                 await fetch('./php/save_progress.php', {
@@ -59,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({
                         username: gameState.user.username,
                         password: currentUserPassword,
-                        saveData: gameState
+                        saveData: compressed // Inviamo la stringa compressa al server
                     })
                 });
             } catch (e) { console.error("Errore salvataggio cloud:", e); }
@@ -147,29 +155,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (savedState) {
             try {
-                const parsedState = JSON.parse(savedState);
+                let parsedState;
+
+                // --- TENTATIVO DI DECOMPRESSIONE ---
+                // Proviamo a decomprimere. Se è un vecchio salvataggio, 
+                // questa funzione restituirà null o una stringa corrotta.
+                const decompressed = LZString.decompressFromUTF16(savedState);
+
+                // Controllo intelligente: Se decompresso è valido e inizia con '{' (JSON), usalo.
+                if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
+                    parsedState = JSON.parse(decompressed);
+                    console.log("💾 Salvataggio compresso caricato (LZString).");
+                } else {
+                    // Fallback Legacy: Prova a leggere come JSON normale (vecchi salvataggi)
+                    parsedState = JSON.parse(savedState);
+                    console.log("💾 Salvataggio legacy caricato.");
+                }
+                // -----------------------------------
 
                 // --- 1. CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
+                    // ... (Il resto della funzione rimane IDENTICO a prima) ...
                     console.log("Versione incompatibile. Reset automatico.");
-                    // Avviso visivo
                     setTimeout(() => {
                         if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Reset Versione: ${parsedState.version?.stage || 'Legacy'} incompatibile!`, 'warning');
                     }, 500);
-
-                    // Forza il salvataggio della nuova versione pulita
                     saveGame();
-                    return; // Interrompi caricamento
+                    return;
                 }
-                // ------------------------------------------
 
-                // Gestione Migrazione Legacy (buildings -> teams)
+                // ... continua con deepMerge e il resto del codice originale ...
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
                 }
-
-                // Fusione dei dati salvati con lo stato attuale
                 deepMerge(gameState, parsedState);
 
                 // --- 2. AGGIORNAMENTO VERSIONE ---
@@ -329,25 +348,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let lastFrameTime = Date.now();
+    let lastSlowTick = 0;
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
         const now = Date.now();
         const deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        if (deltaTime > 86400) return;
+        if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
 
+        // 1. Calcolo Score (Veloce - Ogni frame)
         const scoreToAdd = cookiesPerSecond * deltaTime;
-
         gameState.score += scoreToAdd;
         gameState.totalScore += scoreToAdd;
         gameState.lifetimeScore += scoreToAdd;
-
-        // AGGIORNAMENTO TEMPO DI GIOCO
         gameState.totalPlayTime += deltaTime;
 
-        checkAchievements();
+        // 2. Slow Loop (1 volta al secondo) - OTTIMIZZAZIONE
+        if (now - lastSlowTick > 1000) {
+            checkAchievements();         // Controlla obiettivi
+            checkTabNotifications();     // Controlla i pallini rossi sui tab
 
+            // Qui puoi aggiungere altri controlli pesanti futuri (es. Auto-Save logico)
+            lastSlowTick = now;
+        }
+
+        // 3. Gestione Click History (Veloce)
         const clickNow = Date.now();
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
@@ -841,10 +867,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // 3. Merge dei dati
-                    const cloudState = JSON.parse(cloudJSON);
+                    // 3. Parsing e Decompressione Intelligente
+                    // Il cloudJSON arriva dal PHP (json_encoded), quindi è una stringa che contiene i dati.
+                    let cloudDataRaw = JSON.parse(cloudJSON);
+                    let cloudState;
 
-                    // Gestione compatibilità cloud
+                    if (typeof cloudDataRaw === 'string') {
+                        // Se è una stringa, significa che è il nostro dato compresso
+                        const decompressed = LZString.decompressFromUTF16(cloudDataRaw);
+                        if (decompressed) {
+                            cloudState = JSON.parse(decompressed);
+                            console.log("☁️ Cloud: Salvataggio compresso rilevato.");
+                        } else {
+                            // Caso raro: stringa non compressa ma salvata come stringa
+                            cloudState = JSON.parse(cloudDataRaw);
+                        }
+                    } else {
+                        // Se è un oggetto, è un salvataggio vecchio (non compresso)
+                        cloudState = cloudDataRaw;
+                        console.log("☁️ Cloud: Salvataggio legacy rilevato.");
+                    }
+
+                    // Gestione compatibilità cloud (Legacy Teams fix)
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
@@ -861,28 +905,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-
-                    // --- FIX SICUREZZA SKIN ---
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked)) {
                         gameState.skins = { current: 'default', unlocked: ['default'] };
                     }
-
-                    // --- FIX CRUCIALE: APPLICA LA SKIN VISIVAMENTE ---
                     const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
 
                     if (isFuryActive && typeof resumeCrunchTimeEffects === 'function') {
-                        // SE FURY È ATTIVO: Forza il ripristino degli effetti Fury (ignora la skin equipaggiata)
                         console.log("Cloud Sync: Fury Mode rilevata. Ripristino effetti visivi.");
                         resumeCrunchTimeEffects();
                     } else {
-                        // SE È TUTTO NORMALE: Applica la skin equipaggiata
                         if (typeof applySkinVisuals === 'function') {
                             applySkinVisuals(gameState.skins.current);
                         }
                     }
-                    // -----------------------------------------------
 
-                    // 4. Fix Nome Utente
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser) {
                         gameState.user.username = currentSessionUser;

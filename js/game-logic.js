@@ -4,7 +4,7 @@ let lastRicardoVideoId = null;
 
 window.currentActiveEvent = null; // Il "Semaforo"
 let audioGlitchInterval = null;
-
+let lastVideoPlayedId = null;
 
 const RewardHandlers = {
     // Aggiunge Bug al wallet
@@ -596,9 +596,82 @@ function resumeCrunchTimeEffects() {
     if (typeof updateUI === 'function') updateUI();
 }
 
-let lastVideoPlayedId = null;
 
-// --- FUNZIONE EVENTI UNIVERSALE  ---
+const EventHandlers = {
+    video: (config, eventKey) => {
+        // === LOGICA VIDEO (Rick/Ricardo) ===
+        document.body.classList.add('rick-rolling');
+
+        // Reset Video Precedenti
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
+            const v = document.getElementById(id);
+            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+        });
+
+        // Scelta Video (evita ripetizioni se possibile)
+        let videoId = config.videos[0];
+        if (config.videos.length > 1) {
+            const available = config.videos.filter(id => id !== lastVideoPlayedId);
+            const pool = available.length > 0 ? available : config.videos;
+            videoId = pool[Math.floor(Math.random() * pool.length)];
+        }
+        lastVideoPlayedId = videoId;
+
+        const video = document.getElementById(videoId);
+        if (video) {
+            if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
+            video.style.display = 'block';
+            video.currentTime = 0;
+
+            const customVol = getCustomVolume(config.audioId || videoId);
+            video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
+            video.play().catch(e => { });
+
+            // Click Handler Video (per interagire cliccando sul video)
+            video.style.cursor = 'pointer';
+            const videoClickHandler = (e) => {
+                const syntheticEvent = { detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: video };
+                clickCookie(syntheticEvent);
+                video.style.transform = 'scale(0.98)';
+                setTimeout(() => video.style.transform = 'scale(1)', 50);
+            };
+            video.addEventListener('pointerdown', videoClickHandler);
+
+            // Cleanup specifico video alla fine
+            setTimeout(() => {
+                video.pause();
+                video.style.display = 'none';
+                video.removeEventListener('pointerdown', videoClickHandler);
+            }, config.duration);
+        }
+    },
+
+    css_mode: (config, eventKey) => {
+        // === LOGICA CSS (404 / Bluescreen) ===
+        document.body.classList.add(config.cssClass);
+
+        const snowAudio = document.getElementById('sound-snowball');
+
+        // Gestione Audio Speciale (Natale vs Normale)
+        if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
+            // Glitch Natalizio
+            if (snowAudio) {
+                snowAudio.play();
+                if (audioGlitchInterval) clearInterval(audioGlitchInterval);
+                audioGlitchInterval = setInterval(() => {
+                    snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
+                    snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
+                }, 100);
+            }
+        } else {
+            // Audio Normale Evento
+            playSound(config.audioId, 'music');
+        }
+    }
+};
+
+// --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
+// --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
 function triggerGameEvent(eventKey, overrideMult = null) {
     const config = gameData.events[eventKey];
     if (!config) return false;
@@ -627,7 +700,7 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
         const msg = config.toast.replace('{mult}', bonusMult);
-        emDisplay.textContent = msg; // Usa il testo del toast anche qui per coerenza
+        emDisplay.textContent = msg;
         emDisplay.style.display = 'block';
     }
 
@@ -635,77 +708,14 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     const toastMsg = config.toast.replace('{mult}', bonusMult);
     window.EspooClicker.showToast(toastMsg, config.toastType);
 
-    // --- GESTIONE SPECIFICA PER TIPO ---
-
-    if (config.type === 'video') {
-        // === LOGICA VIDEO (Rick/Ricardo) ===
-        document.body.classList.add('rick-rolling');
-
-        // Reset Video
-        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
-            const v = document.getElementById(id);
-            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
-        });
-
-        // Scelta Video
-        let videoId = config.videos[0];
-        if (config.videos.length > 1) {
-            const available = config.videos.filter(id => id !== lastVideoPlayedId);
-            const pool = available.length > 0 ? available : config.videos;
-            videoId = pool[Math.floor(Math.random() * pool.length)];
-        }
-        lastVideoPlayedId = videoId;
-
-        const video = document.getElementById(videoId);
-        if (video) {
-            if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-            video.style.display = 'block';
-            video.currentTime = 0;
-
-            const customVol = getCustomVolume(config.audioId || videoId);
-            video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
-            video.play().catch(e => { });
-
-            // Click Handler Video
-            video.style.cursor = 'pointer';
-            const videoClickHandler = (e) => {
-                const syntheticEvent = { detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: video };
-                clickCookie(syntheticEvent);
-                video.style.transform = 'scale(0.98)';
-                setTimeout(() => video.style.transform = 'scale(1)', 50);
-            };
-            video.addEventListener('pointerdown', videoClickHandler);
-
-            // Cleanup specifico video alla fine
-            setTimeout(() => {
-                video.pause();
-                video.style.display = 'none';
-                video.removeEventListener('pointerdown', videoClickHandler);
-            }, config.duration);
-        }
-
-    } else if (config.type === 'css_mode') {
-        // === LOGICA CSS (404 / Bluescreen) ===
-        document.body.classList.add(config.cssClass);
-
-        // Gestione Audio Speciale (Natale vs Normale)
-        if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
-            // Glitch Natalizio
-            if (snowAudio) {
-                snowAudio.play();
-                if (audioGlitchInterval) clearInterval(audioGlitchInterval);
-                audioGlitchInterval = setInterval(() => {
-                    snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
-                    snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-                }, 100);
-            }
-        } else {
-            // Audio Normale Evento
-            playSound(config.audioId, 'music');
-        }
+    // 5. DELEGA ALL'HANDLER SPECIFICO (Nuovo Sistema)
+    if (EventHandlers[config.type]) {
+        EventHandlers[config.type](config, eventKey);
+    } else {
+        console.warn(`Nessun handler trovato per il tipo evento: ${config.type}`);
     }
 
-    // 5. Timer Finale Comune (Cleanup)
+    // 6. Timer Finale Comune (Cleanup e Reset)
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
         if (config.cssClass) document.body.classList.remove(config.cssClass);
@@ -766,6 +776,30 @@ function stopBluescreenEffect() {
     clearActiveEvent();
 }
 
+// --- CALCOLO CENTRALIZZATO DEL VALORE CLICK ---
+function calculateClickValue() {
+    // 1. Valore Base (Base * Moltiplicatori Globali)
+    // FIX: Aggiunto crunchTimeMultiplier qui sotto!
+    let val = gameState.baseClickValue * prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier;
+
+    // 2. Bonus Mano Bionica (Dipende dai BPS)
+    if (window.gameFlags.bionicHand) {
+        let percent = 0.01;
+        if (window.gameFlags.divineClick) percent = 0.02;
+
+        // Nota: cookiesPerSecond include già TUTTI i moltiplicatori (incluso crunchTimeMultiplier),
+        // quindi la mano bionica beneficerà automaticamente del x7 anche senza modifiche qui.
+        const effectiveBPS = cookiesPerSecond / (prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier);
+
+        // Se vuoi che la mano bionica "esploda" durante la Fury, usa direttamente cookiesPerSecond
+        // Altrimenti usa effectiveBPS per un calcolo più bilanciato.
+        // Dato che è una "Furia", consiglio di usare il BPS pieno:
+        val += (cookiesPerSecond * percent);
+    }
+
+    return val;
+}
+
 function clickCookie(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
@@ -773,16 +807,7 @@ function clickCookie(event) {
     // 1. AUDIO (Delegato al Manager)
     AudioManager.playClickEffect();
 
-    // 2. CALCOLO VALORE
-    let clickBonusPercent = 0.01;
-    if (window.gameFlags.divineClick) clickBonusPercent = 0.02;
-
-    let clickValuePercentBonus = 0;
-    if (window.gameFlags.bionicHand) {
-        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
-    }
-
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
+    const currentClickValue = calculateClickValue();
 
     // 3. AGGIORNAMENTO DATI
     clickHistory.push({ time: Date.now(), value: currentClickValue });
@@ -1130,13 +1155,11 @@ function spawnGoldenBug() {
 function clickGoldenBug() {
     playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
-    let clickBonusPercent = 0.01;
-    if (window.gameFlags.divineClick) clickBonusPercent = 0.02;
-    let clickValuePercentBonus = 0;
-    if (window.gameFlags.bionicHand) {
-        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
-    }
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier);
+
+    // CALCOLO SEMPLIFICATO
+    const currentClickValue = calculateClickValue();
+
+    // Bonus: 30 secondi di BPS + 10 volte il click + 10 fisso
     let bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
 
     // [GENERICO] Moltiplicatore Golden Bug

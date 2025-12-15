@@ -1,4 +1,35 @@
-// --------- 6. FUNZIONI DI AGGIORNAMENTO UI ---------
+
+// --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
+const domCache = new Map();
+
+/**
+ * Recupera un elemento dal DOM usando una cache interna.
+ * Riduce le chiamate lente a document.getElementById.
+ */
+function getEl(id) {
+    if (!domCache.has(id)) {
+        const el = document.getElementById(id);
+        if (el) domCache.set(id, el);
+        else return null;
+    }
+    return domCache.get(id);
+}
+
+/**
+ * Aggiorna il testo di un elemento solo se è cambiato.
+ * Evita il "Layout Thrashing" del browser.
+ */
+function setTextIfChanged(elementId, newText) {
+    const el = getEl(elementId);
+    // Nota: String(newText) assicura che confrontiamo stringhe (es. "100" vs 100)
+    if (el && el.textContent !== String(newText)) {
+        el.textContent = newText;
+        return true;
+    }
+    return false;
+}
+
+// ---------  FUNZIONI DI FORMATTORE ---------
 
 function formatNumber(num) {
     if (num === undefined || num === null || isNaN(num)) return "0";
@@ -29,15 +60,6 @@ function formatTime(totalSeconds) {
     return timeString;
 }
 
-function setTextIfChanged(elementId, newText) {
-    const el = document.getElementById(elementId);
-    if (el && el.textContent !== String(newText)) {
-        el.textContent = newText;
-        return true; // Ha aggiornato
-    }
-    return false; // Nessun cambiamento
-}
-
 // --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
 
 function renderStoreSection(config) {
@@ -52,7 +74,6 @@ function renderStoreSection(config) {
         return { key: key, data: config.dataSource[key], state: config.stateSource[key] };
     });
 
-    // Ordinamento (Se non specificato, usa costo base)
     items.sort((a, b) => (a.data.baseCost || a.data.cost) - (b.data.baseCost || b.data.cost));
 
     items.forEach(item => {
@@ -65,7 +86,7 @@ function renderStoreSection(config) {
 
         // 3. Filtro Visibilità
         let isVisible = false;
-        if (config.type === 'building') isVisible = true; // Gli edifici si vedono sempre
+        if (config.type === 'building') isVisible = true;
         else if (data.alwaysVisible) isVisible = true;
         else if (mode === 'all') isVisible = true;
         else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
@@ -79,20 +100,21 @@ function renderStoreSection(config) {
 
         visibleCount++;
 
-        // 4. Generazione HTML (Solo se non esiste)
+        // 4. Generazione HTML
         if (!el) {
             el = document.createElement('div');
             el.id = domId;
             el.className = config.cardClass || 'upgrade';
 
-            // Layout Flessibile: Usa 'extraHtml' per BPS o Descrizione standard
             const middleContent = config.useCustomBody
-                ? `<div class="upgrade-bps" id="bps-${key}"></div>` // Per Edifici
-                : `<div class="upgrade-desc">${data.desc}</div>`;   // Per Upgrade
+                ? `<div class="upgrade-bps" id="bps-${key}"></div>`
+                : `<div class="upgrade-desc">${data.desc}</div>`;
 
-            // Badge conteggio (per edifici)
-            const countBadge = config.showCount
-                ? `<span id="count-${key}" class="upgrade-count">0</span>`
+            // --- FIX 1: Mostra badge se richiesto O se è un prestigio a livelli ---
+            const shouldShowCount = config.showCount || (config.type === 'prestige' && data.isCounted);
+
+            const countBadge = shouldShowCount
+                ? `<span id="count-${key}" class="upgrade-count"></span>`
                 : '';
 
             el.innerHTML = `
@@ -111,7 +133,6 @@ function renderStoreSection(config) {
                 </div>
             `;
 
-            // Listener Unico
             el.querySelector('.buy-btn').addEventListener('click', () => config.onBuy(key));
             list.appendChild(el);
         }
@@ -120,24 +141,32 @@ function renderStoreSection(config) {
 
         // 5. Aggiornamento Grafico
         const btn = el.querySelector('.buy-btn');
-        const costDisplay = el.querySelector('.cost-val'); // O usa id specifico
+        const costDisplay = el.querySelector('.cost-val');
         const costWrapper = el.querySelector('.upgrade-cost');
         const progressContainer = el.querySelector('.progress-bar-container');
 
-        // Aggiornamenti specifici per Edifici (BPS e Count)
+        // --- FIX 2: Aggiornamento Contatore Livello (Generico) ---
+        const countEl = document.getElementById(`count-${key}`);
+        if (countEl) {
+            // Se esiste un conteggio nello stato (es. livelli o quantità edifici)
+            if (state.count !== undefined) {
+                countEl.textContent = state.count;
+                countEl.style.display = ''; // Mostra
+            } else {
+                countEl.style.display = 'none'; // Nascondi (per upgrade singoli tipo "Posseduto")
+            }
+        }
+        // ---------------------------------------------------------
+
         if (config.type === 'building') {
             const bpsEl = document.getElementById(`bps-${key}`);
-            const countEl = document.getElementById(`count-${key}`);
             if (bpsEl) bpsEl.textContent = status.bpsText;
-            if (countEl) countEl.textContent = state.count;
-            // Il testo del costo per gli edifici è complesso (es. "Costo (10x)")
             if (costDisplay) costDisplay.textContent = status.costText;
         } else {
-            // Standard Upgrade
             if (costDisplay) costDisplay.textContent = formatNumber(status.currentCost || data.cost);
         }
 
-        // Gestione Classi e Stati Comuni
+        // Gestione Classi e Stati
         el.classList.toggle('purchased', status.purchased);
         el.classList.toggle('locked-item', !status.unlocked && !status.purchased);
 
@@ -156,7 +185,6 @@ function renderStoreSection(config) {
             if (costWrapper) costWrapper.style.display = 'block';
             if (progressContainer) progressContainer.style.display = 'none';
         } else {
-            // Bloccato
             btn.style.display = 'none';
             if (costWrapper) costWrapper.style.display = 'block';
             if (progressContainer) {
@@ -169,7 +197,6 @@ function renderStoreSection(config) {
         }
     });
 
-    // Empty State
     const emptyMsg = document.getElementById(config.emptyId);
     if (emptyMsg) {
         emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
@@ -595,7 +622,7 @@ function showClickFeedback(event) {
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // Logica Evento 404
+    // Logica Evento 404 (Rimane invariata per gestire l'easter egg)
     const now = Date.now();
     const COOLDOWN_404 = 300000;
     const lastCrash = gameState.lastBluescreenTimestamp || 0;
@@ -606,6 +633,7 @@ function showClickFeedback(event) {
     const currentScore = gameState.score || 0;
 
     if (timeSinceLast > COOLDOWN_404 && Math.random() < 0.0005 && !isBlueScreen && currentScore >= 404) {
+        // --- LOGICA EVENTO 404 ---
         feedback.textContent = 'Error 404';
         feedback.style.color = '#facc15';
         feedback.style.fontSize = '1.2rem';
@@ -618,28 +646,22 @@ function showClickFeedback(event) {
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
     } else {
-        // Calcolo valore click
-        let clickBonusPercent = 0.01;
-        if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
+        // --- LOGICA CLICK STANDARD (Aggiornata con Calcolo Centralizzato) ---
 
-        // Recupera variabili globali o fallback a 1
-        const pBonus = (typeof prestigeBonus !== 'undefined') ? prestigeBonus : 1;
-        const bsMult = (typeof bluescreenMultiplier !== 'undefined') ? bluescreenMultiplier : 1;
-        const cps = (typeof cookiesPerSecond !== 'undefined') ? cookiesPerSecond : 0;
-
-        let val = (gameState.baseClickValue * pBonus * bsMult);
-        if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
-            val += (cps * clickBonusPercent);
-        }
+        // Usa la funzione centralizzata se disponibile, altrimenti fallback sicuro
+        let val = (typeof calculateClickValue === 'function')
+            ? calculateClickValue()
+            : gameState.baseClickValue;
 
         feedback.textContent = `+${formatNumber(val)}`;
 
+        // Gestione Colori Tema Natale vs Standard
         if (document.body.classList.contains('theme-christmas')) {
             // Alterna casualmente tra Rosso Natale e Verde Pino
             feedback.style.color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
             feedback.style.textShadow = '0 0 5px #fff'; // Alone bianco neve
         } else {
-            // Colore Standard (modifica se il tuo default è diverso)
+            // Colore Standard
             feedback.style.color = 'rgba(239, 68, 68, 0.7)';
         }
     }
@@ -656,7 +678,7 @@ function showClickFeedback(event) {
         y = rect.height / 2;
     }
 
-    // Variazione casuale
+    // Variazione casuale per rendere l'effetto più naturale
     const randomX = (Math.random() - 0.5) * 60;
     const randomY = (Math.random() - 0.5) * 40;
     const randomRot = (Math.random() - 0.5) * 30;
@@ -811,7 +833,9 @@ function updateBonusCounter() {
     }
 }
 
+
 function updateUI() {
+    // 1. Calcolo BPS Visuale (include i click recenti)
     let activeBPS = 0;
     const now = Date.now();
     for (let i = 0; i < clickHistory.length; i++) {
@@ -819,137 +843,198 @@ function updateUI() {
     }
     let totalDisplayBPS = cookiesPerSecond + activeBPS;
 
+    // 2. Aggiornamento Score e BPS (Solo se cambiati)
+    // Nota: Usiamo setTextIfChanged per risparmiare risorse
     setTextIfChanged('score-display', formatNumber(gameState.score));
-    scoreDisplay.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
+
+    // Aggiorna attributo tooltip solo se serve (opzionale, ma buona pratica)
+    const scoreEl = getEl('score-display');
+    if (scoreEl) scoreEl.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
+
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalDisplayBPS)}`);
-    cpsDisplay.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+    const cpsEl = getEl('cps-display');
+    if (cpsEl) cpsEl.setAttribute('data-tooltip', totalDisplayBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
 
-    const hudContainer = document.getElementById('hud-stats-container');
-    const displayCareer = document.getElementById('display-career-bonus');
-    const displayTokens = document.getElementById('prestige-points-display');
+    // 3. HUD Stats Container (Carriera e Token)
+    const hudContainer = getEl('hud-stats-container');
+    const displayCareer = getEl('display-career-bonus');
+    const displayTokens = getEl('prestige-points-display');
 
+    // Aggiornamento Wallets Mobile
+    // Nota: querySelectorAll è lento, ma se sono pochi elementi va bene. 
+    // Se vuoi ottimizzare al massimo, assegna ID univoci anche a questi.
     const mobileWallets = document.querySelectorAll('.bug-wallet-amount');
     mobileWallets.forEach(el => {
-        el.textContent = formatNumber(gameState.score);
+        if (el.textContent !== formatNumber(gameState.score)) {
+            el.textContent = formatNumber(gameState.score);
+        }
     });
 
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-        if (hudContainer) hudContainer.style.display = 'flex';
-        let baseBonus = (gameState.lifetimePrestigePoints || 0) * 0.01;
-        let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
-        let synergyBonus = synergyCount * gameData.prestigeUpgrades.sinergia.bonusPerLevel * (gameState.lifetimePrestigePoints || 0);
-        let totalPercent = ((baseBonus + synergyBonus) * 100);
+        if (hudContainer && hudContainer.style.display === 'none') hudContainer.style.display = 'flex';
 
         if (displayCareer) {
-            displayCareer.textContent = `x${formatNumber(prestigeBonus)}`;
-            let percent = ((prestigeBonus - 1) * 100).toFixed(0);
+            setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
             displayCareer.setAttribute('data-tooltip', `Potenza Totale: x${formatNumber(prestigeBonus)}`);
         }
+
         if (displayTokens) {
-            displayTokens.textContent = formatNumber(gameState.prestigePoints);
+            setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
             displayTokens.setAttribute('data-tooltip', gameState.prestigePoints.toLocaleString('it-IT'));
         }
     } else {
-        if (hudContainer) hudContainer.style.display = 'none';
-    }
-    const labWallet = document.getElementById('lab-wallet-amount');
-    if (labWallet) {
-        // Usa formatNumber se vuoi "1k", oppure toLocaleString per "1.000"
-        labWallet.textContent = formatNumber(gameState.prestigePoints);
+        if (hudContainer && hudContainer.style.display !== 'none') hudContainer.style.display = 'none';
     }
 
-    const bugWallet = document.getElementById('bug-wallet-amount');
-    if (bugWallet) {
-        bugWallet.textContent = formatNumber(gameState.bugWallet);
-    }
+    // 4. Aggiornamento Wallet Lab e Bug
+    setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
+    setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score));
 
+    // 5. Aggiornamento Costi e Stati Bottoni (Teams)
     for (const key in gameState.teams) {
         let amountToBuy = buyMultiplier;
         let isMax = false;
+
         if (buyMultiplier === 'MAX') {
             const max = calculateMaxAffordable(key);
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
         }
+
         const currentCost = calculateBulkCost(key, amountToBuy);
-        const btn = document.getElementById(`buy-${key}`);
+
+        // Bottone Compra
+        const btn = getEl(`buy-${key}`);
         if (btn) btn.disabled = (gameState.score < currentCost);
-        const costEl = document.getElementById(`cost-${key}`);
+
+        // Testo Costo
+        const costEl = getEl(`cost-${key}`);
         if (costEl) {
             let prefix = "Costo";
             if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
             else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
-            costEl.textContent = `${prefix}: ${formatNumber(currentCost)}`;
+
+            const costText = `${prefix}: ${formatNumber(currentCost)}`;
+
+            // Qui usiamo la logica diretta perché setTextIfChanged usa l'ID, ma qui siamo nel loop
+            if (costEl.textContent !== costText) {
+                costEl.textContent = costText;
+            }
             costEl.setAttribute('data-tooltip', currentCost.toLocaleString('it-IT'));
         }
     }
 
+    // 6. Aggiornamento Click Upgrades (Disabilitazione se poveri)
+    // Nota: Qui usiamo querySelector specifico perché l'ID è sul container
     for (const key in gameState.clickUpgrades) {
-        const btn = document.querySelector(`#click-upgrade-${key} .buy-btn`);
-        if (btn && !gameState.clickUpgrades[key].purchased) {
-            btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
-        }
-    }
-    for (const key in gameState.buildingEnhancements) {
-        const btn = document.querySelector(`#enh-upgrade-${key} .buy-btn`);
-        if (btn && !gameState.buildingEnhancements[key].purchased) {
-            btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
+        if (!gameState.clickUpgrades[key].purchased) {
+            // Ottimizzazione: Usiamo getEl sul container se possibile, altrimenti querySelector
+            // Se hai dato ID ai bottoni (es. btn-click-nome), usa getEl. 
+            // Altrimenti manteniamo la logica originale ma con controllo esistenza.
+            const container = getEl(`click-upgrade-${key}`);
+            if (container) {
+                const btn = container.querySelector('.buy-btn');
+                if (btn) btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
+            }
         }
     }
 
-    const btnCrunch = document.getElementById('skill-crunchTime');
+    // 7. Aggiornamento Enhancement Upgrades
+    for (const key in gameState.buildingEnhancements) {
+        if (!gameState.buildingEnhancements[key].purchased) {
+            const container = getEl(`enh-upgrade-${key}`); // Assicurati che l'ID del div sia questo nel rendering
+            // Fallback se l'ID nel rendering è diverso (nel codice precedente era enhancement-item-${key})
+            // Controlla renderStoreSection. Se usa id="enhancement-item-...", usa quello.
+            // Assumo standard 'enhancement-item-' basato sul codice precedente.
+            const item = getEl(`enhancement-item-${key}`);
+            if (item) {
+                const btn = item.querySelector('.buy-btn');
+                if (btn) btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
+            }
+        }
+    }
+
+    // 8. Skill Button (Crunch Time / Espo Fury)
+    const btnCrunch = getEl('skill-crunchTime');
     if (btnCrunch) {
         if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
-            btnCrunch.style.display = 'block';
+            if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
+
             const timerDiv = btnCrunch.querySelector('.skill-timer');
 
             if (now < crunchTimeEndTime) {
+                // FASE ATTIVA
                 const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
-
                 crunchTimeMultiplier = 7;
-                btnCrunch.className = 'skill-btn active';
-                if (btnCrunch.childNodes[0]) {
-                    btnCrunch.childNodes[0].textContent = `🔥 BPS x${crunchTimeMultiplier} 🔥`;
+
+                if (btnCrunch.className !== 'skill-btn active') btnCrunch.className = 'skill-btn active';
+
+                // Aggiorna testo solo se serve (uso children[0] per il testo principale se misto)
+                // O semplicemente riscrivo innerHTML se la struttura è semplice
+                const mainTextNode = btnCrunch.childNodes[0];
+                if (mainTextNode.textContent.trim() !== '🔥 BPS x7 🔥') {
+                    mainTextNode.textContent = '🔥 BPS x7 🔥';
                 }
-                timerDiv.textContent = `${timeLeft}s`;
+
+                if (timerDiv && timerDiv.textContent !== `${timeLeft}s`) {
+                    timerDiv.textContent = `${timeLeft}s`;
+                }
 
             } else if (now < crunchTimeCooldownEnd) {
+                // FASE COOLDOWN
                 const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
                 crunchTimeMultiplier = 1;
-                btnCrunch.className = 'skill-btn cooldown';
-                if (btnCrunch.childNodes[0]) {
-                    btnCrunch.childNodes[0].textContent = "Ricarica...";
+
+                if (btnCrunch.className !== 'skill-btn cooldown') btnCrunch.className = 'skill-btn cooldown';
+
+                const mainTextNode = btnCrunch.childNodes[0];
+                if (mainTextNode.textContent.trim() !== 'Ricarica...') {
+                    mainTextNode.textContent = 'Ricarica...';
                 }
+
                 const m = Math.floor(timeLeft / 60);
                 const s = timeLeft % 60;
-                if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
-            } else {
-                crunchTimeMultiplier = 1;
-                btnCrunch.className = 'skill-btn';
-                if (btnCrunch.childNodes[0]) {
-                    btnCrunch.childNodes[0].textContent = "🔥 ESPO FURY 🔥";
+                const timeStr = `${m}:${s < 10 ? '0' + s : s}`;
+
+                if (timerDiv && timerDiv.textContent !== timeStr) {
+                    timerDiv.textContent = timeStr;
                 }
-                if (timerDiv) timerDiv.textContent = "CLICCA!";
+
+            } else {
+                // PRONTO
+                crunchTimeMultiplier = 1;
+                if (btnCrunch.className !== 'skill-btn') btnCrunch.className = 'skill-btn';
+
+                const mainTextNode = btnCrunch.childNodes[0];
+                if (mainTextNode.textContent.trim() !== '🔥 ESPO FURY 🔥') {
+                    mainTextNode.textContent = '🔥 ESPO FURY 🔥';
+                }
+
+                if (timerDiv && timerDiv.textContent !== 'CLICCA!') {
+                    timerDiv.textContent = 'CLICCA!';
+                }
             }
         } else {
-            btnCrunch.style.display = 'none';
+            if (btnCrunch.style.display !== 'none') btnCrunch.style.display = 'none';
         }
     }
-    const tabPrestige = document.getElementById('tab-prestige');
+
+    // 9. Tab Prestigio (Visibilità)
+    const tabPrestige = getEl('tab-prestige');
     if (tabPrestige) {
         if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-            if (tabPrestige.style.display === 'none') {
-                tabPrestige.style.display = 'block';
-            }
+            if (tabPrestige.style.display === 'none') tabPrestige.style.display = 'block';
         } else {
-            tabPrestige.style.display = 'none';
+            if (tabPrestige.style.display !== 'none') tabPrestige.style.display = 'none';
         }
     }
 
-    checkTabNotifications();
+    // 10. Chiamate Extra (Nota: checkTabNotifications è stato spostato nel Slow Loop in script.js)
+    // Se non hai ancora spostato checkTabNotifications, lascialo qui.
+    // checkTabNotifications(); 
+
     checkOverlayNotifications();
     updateBonusCounter();
-
 }
 
 function updatePrestigeVisuals() {
@@ -1062,6 +1147,8 @@ function triggerChristmasOverlay() {
 }
 
 let christmasAudioInitialized = false;
+
+
 function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
@@ -1077,69 +1164,63 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     const goldenBugImg = document.querySelector('#golden-bug img');
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
 
-    if (skinId === 'christmas') {
-        // --- LOGICA NATALE ---
-        document.body.classList.add('theme-christmas');
-        if (snowContainer) {
+    const theme = skinData.themeConfig || {}; // Carica config o usa vuoto
+
+    // 1. Gestione Classi Body (Pulizia e Applicazione)
+    document.body.classList.remove('theme-christmas'); // Rimuovi vecchie classi note
+    if (theme.bodyClass) {
+        document.body.classList.add(theme.bodyClass);
+    }
+
+    // 2. Gestione Neve
+    if (snowContainer) {
+        if (theme.hasSnow) {
             snowContainer.style.display = 'block';
-            if (snowContainer.innerHTML === '') {
-                createSnowflakes();
-            }
-        }
-        if (goldenBugImg) {
-            goldenBugImg.src = 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png';
-        }
-
-        // 1. Ferma la musica Standard
-        if (bgMusic) {
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-        }
-
-        // 2. Avvia audio Neve (Musica di Natale)
-        if (snowAudio) {
-            snowAudio.loop = true;
-
-            // --- FIX: Leggi il volume dal salvataggio (Mixer), non fisso a 0.2 ---
-            const customVol = (gameState.user.audioCustom && gameState.user.audioCustom['sound-snowball'] !== undefined)
-                ? gameState.user.audioCustom['sound-snowball']
-                : 0.2; // Fallback default se non esiste
-
-            const targetVol = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
-            snowAudio.volume = targetVol;
-            // ---------------------------------------------------------------------
-
-            if (forcePlayMusic || (gameState.user.masterVolume > 0 && !snowAudio.paused)) {
-                snowAudio.play().catch(e => { console.log("Autoplay neve bloccato"); });
-            }
-        }
-
-    } else {
-        // --- LOGICA SKIN NORMALI ---
-        document.body.classList.remove('theme-christmas');
-
-        if (goldenBugImg) {
-            goldenBugImg.src = './assets/image/bug.webp';
-        }
-
-        // 1. Spegni Neve e Audio Natale
-        if (snowContainer) {
+            if (snowContainer.innerHTML === '') createSnowflakes();
+        } else {
             snowContainer.style.display = 'none';
-            snowContainer.innerHTML = '';
         }
-        if (snowAudio) {
-            snowAudio.pause();
-            snowAudio.currentTime = 0;
+    }
+
+    // 3. Gestione Immagine Golden Bug
+    if (goldenBugImg) {
+        goldenBugImg.src = theme.goldenBugImg || './assets/image/bug.webp';
+    }
+
+    // 4. Gestione Audio Intelligente
+    // Identifica la traccia da suonare (Default: Musica Base)
+    let targetAudio = bgMusic;
+    let targetAudioId = 'sound-bg-music';
+
+    // Se la skin ha una musica speciale, usala
+    if (theme.specialMusic) {
+        const specialEl = document.getElementById(theme.specialMusic);
+        if (specialEl) {
+            targetAudio = specialEl;
+            targetAudioId = theme.specialMusic;
+        }
+    }
+
+    // FERMA tutto ciò che stava suonando (per evitare sovrapposizioni)
+    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
+    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
+
+    // AVVIA la nuova traccia (se non ci sono eventi bloccanti come Fury o Video)
+    if (targetAudio && !window.currentActiveEvent) {
+        targetAudio.loop = true;
+
+        // Recupera il volume corretto dal Mixer (Salvataggio Utente)
+        let customVol = 0.3; // Fallback di sicurezza
+        if (gameState.user.audioCustom && gameState.user.audioCustom[targetAudioId] !== undefined) {
+            customVol = gameState.user.audioCustom[targetAudioId];
         }
 
-        // 2. Riattiva Musica Background Standard (se non c'è evento attivo)
-        if (bgMusic && !window.currentActiveEvent) {
-            setBgMusicVolume(); // Imposta volume corretto
+        // Applica volume calcolato
+        targetAudio.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
 
-            // Riavvia solo se il volume è udibile
-            if (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0) {
-                bgMusic.play().catch(error => { });
-            }
+        // Play (se il volume è > 0 o se forzato dal cambio skin)
+        if (forcePlayMusic || (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0)) {
+            targetAudio.play().catch(e => { /* Autoplay bloccato, normale su refresh */ });
         }
     }
 
@@ -1223,26 +1304,21 @@ function updateStatsUI() {
     // --- CALCOLI PRELIMINARI ---
     const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
 
-    // Calcolo Valore Click
-    let clickBonusPercent = 0.01;
-    if (gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
-    let clickValuePercentBonus = 0;
-    if (gameState.clickUpgrades.manoBionica && gameState.clickUpgrades.manoBionica.purchased) {
-        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
-    }
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
+    // Calcolo Valore Click (Aggiornato con Calcolo Centralizzato)
+    const currentClickValue = (typeof calculateClickValue === 'function')
+        ? calculateClickValue()
+        : (gameState.baseClickValue * (typeof prestigeBonus !== 'undefined' ? prestigeBonus : 1));
 
     // Dati Offline
     const totalOffline = gameState.totalOfflineScore || 0;
 
-    // --- NUOVO: Calcolo Efficienza Offline ---
+    // Calcolo Efficienza Offline
     let offlineEff = 0.30; // Base 30%
-    if (gameState.prestigeUpgrades.serverAlwaysOn) {
+    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn) {
         offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
     }
     if (offlineEff > 1.0) offlineEff = 1.0;
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
-    // -----------------------------------------
 
     // --- GENERAZIONE HTML ---
     statsList.innerHTML = `
