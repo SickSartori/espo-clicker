@@ -451,8 +451,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     function getGameAPI() { return window.EspooClicker || null; }
-    function openModal(modal) { if (modal) modal.style.display = 'flex'; }
-    function closeModal(modal) { if (modal) modal.style.display = 'none'; }
+    function openModal(modal) {
+        if (modal) {
+            modal.style.display = 'flex';
+
+            if (modal.id === 'login-modal') {
+                const muteBtn = document.getElementById('quick-mute-btn');
+                if (muteBtn) muteBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function closeModal(modal) {
+        if (modal) {
+            modal.style.display = 'none';
+
+            if (modal.id === 'login-modal') {
+                const muteBtn = document.getElementById('quick-mute-btn');
+                if (muteBtn) muteBtn.style.display = ''; // Rimuove l'inline style e lascia fare al CSS
+            }
+        }
+    }
 
     if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
@@ -599,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', async () => {
         const password = document.getElementById('danger-zone-password').value;
         if (!password) { alert("Inserisci la password nell'area critica."); return; }
-        if (!confirm("SEI SICURO? Questa azione è irreversibile.")) return;
+        if (!confirm("SEI SICURO? Questa azione è irreversibile e cancellerà tutto.")) return;
 
         const Game = getGameAPI();
         try {
@@ -609,15 +628,47 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.status === 'success') {
-                alert("Account eliminato.");
+                // --- FIX CRITICO: Impedisci il salvataggio automatico alla chiusura ---
+                Game.getGameState().isDeleting = true;
+                // ---------------------------------------------------------------------
+
+                alert("Account eliminato. Addio!");
                 sessionStorage.clear();
-                localStorage.clear();
+                localStorage.clear(); // Pulisce tutto il browser
+                localStorage.removeItem('espotoolClickerSaveV8'); // Doppia sicurezza
                 location.reload();
             } else {
                 alert(data.message);
             }
         } catch (e) { console.error(e); }
     });
+    const resetProgressBtn = document.getElementById('reset-progress-btn');
+    if (resetProgressBtn) {
+        resetProgressBtn.addEventListener('click', async () => {
+            const password = document.getElementById('danger-zone-password').value;
+            if (!password) { alert("Inserisci la password per confermare il reset."); return; }
+            if (!confirm("ATTENZIONE: Questo resetterà tutti i progressi al punto di partenza (Hard Reset). I token Lab e le Skin verranno persi. Continuare?")) return;
+
+            const Game = getGameAPI();
+            try {
+                const res = await fetch('./php/reset_progress.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    // Evita che il salvataggio automatico sovrascriva il reset
+                    Game.getGameState().isDeleting = true;
+
+                    alert("Progressi resettati con successo.");
+                    localStorage.removeItem('espotoolClickerSaveV8');
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { console.error(e); }
+        });
+    }
 
     if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
         const Game = getGameAPI();
@@ -645,8 +696,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
+
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV8');
                     Game.getGameState().user.username = u;
                     Game.saveGame();
@@ -655,6 +708,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeModal(loginModal);
                 Game.startGameRoutines();
 
+
+                // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
+                if (typeof window.updateAmbientVolume === 'function') {
+                    window.updateAmbientVolume();
+                }
+
+                // 2. POI aggiorna gli slider visivi (perché non sembrino rotti se apri le opzioni)
+                const userVol = Game.getGameState().user;
+                if (masterSlider) {
+                    masterSlider.value = userVol.masterVolume;
+                    if (masterDisplay) masterDisplay.textContent = Math.round(userVol.masterVolume * 100);
+                }
+                if (sfxSlider) {
+                    sfxSlider.value = userVol.sfxVolume;
+                    if (sfxDisplay) sfxDisplay.textContent = Math.round(userVol.sfxVolume * 100);
+                }
+                if (musicSlider) {
+                    musicSlider.value = userVol.musicVolume;
+                    if (musicDisplay) musicDisplay.textContent = Math.round(userVol.musicVolume * 100);
+                }
+
+                // 3. INFINE fai partire l'audio (ora che i volumi sono corretti)
                 Game.tryStartAudio();
 
                 Game.showToast("Benvenuto " + u);

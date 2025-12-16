@@ -263,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // --- FIX AUTO-REPAIR SKIN (Controllo coerenza) ---
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
@@ -431,8 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof updateUI === 'function') updateUI();
                 if (typeof refreshAllStores === 'function') refreshAllStores();
 
-                // === FIX CRUCIALE QUI SOTTO ===
-                // Rilascia il blocco indipendentemente dal nome usato ('Crunch Time' o 'Espo Fury')
                 if (window.currentActiveEvent === 'Crunch Time' || window.currentActiveEvent === 'Espo Fury') {
                     window.currentActiveEvent = null;
                     console.log("Espo Fury terminato. Semaforo verde.");
@@ -501,25 +498,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Funzione rapida per provare a suonare
         const tryStart = () => {
+            const loginModal = document.getElementById('login-modal');
+            // Controllo 1: Se il modale è visibile graficamente -> STOP
+            if (loginModal && getComputedStyle(loginModal).display !== 'none') {
+                return;
+            }
+            const hasSession = sessionStorage.getItem('espooUser');
+            if (!hasSession) {
+                console.log("Audio in attesa: Nessuna sessione attiva.");
+                return;
+            }
+            // ---------------------------------------------
+
             if (masterVol <= 0 || musicVol <= 0) return;
+
+            // ... (il resto della funzione rimane uguale: const audioToPlay = ...)
             const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
-
             const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
-            if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent && !isFuryActive) {
 
-                // --- MODIFICA QUI: Usa updateAmbientVolume invece di setBgMusicVolume ---
-                // Questo assicura che ANCHE la neve riceva il volume giusto prima del play
+            if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent && !isFuryActive) {
+                // Assicurati che updateAmbientVolume esista prima di chiamarlo
                 if (typeof updateAmbientVolume === 'function') {
                     updateAmbientVolume();
                 } else if (typeof setBgMusicVolume === 'function') {
                     setBgMusicVolume();
                 }
-                // -----------------------------------------------------------------------
 
                 const playPromise = audioToPlay.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(() => {
-                        console.log("Autoplay bloccato: In attesa di interazione utente...");
+                        // Logica Autoplay bloccato (lasciare invariata)
+                        console.log("Autoplay bloccato. Attendo interazione...");
                         const unlockAudio = () => {
                             if (!window.currentActiveEvent && !(gameState.crunchTimeEndTime > Date.now())) {
                                 audioToPlay.play().catch(e => { });
@@ -569,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const soundClick = document.getElementById('sound-click');
         if (soundClick) soundClick.playbackRate = 1;
 
-        // --- FIX LOGICA F5 DURANTE FURY ---
         let isFuryResumed = false;
 
         if (gameState.crunchTimeEndTime > 0 && gameState.crunchTimeEndTime > now) {
@@ -974,6 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     // --- AGGIUNTA: Check offline subito dopo il login ---
                     checkOfflineProgress();
+                    if (typeof updateAmbientVolume === 'function') {
+                        updateAmbientVolume();
+                    }
                     // --------------------------------------------------
 
                     showToast("Progressi scaricati dal Cloud!");

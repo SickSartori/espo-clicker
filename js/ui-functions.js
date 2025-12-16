@@ -194,8 +194,15 @@ function renderStoreSection(config) {
         const countEl = document.getElementById(`count-${key}`);
 
         if (countEl && state.count !== undefined) {
-            if (countEl.textContent != state.count) countEl.textContent = state.count;
-            countEl.style.display = '';
+            const countText = String(state.count);
+            if (countEl.textContent !== countText) countEl.textContent = countText;
+
+            if (config.type === 'building') {
+                countEl.style.display = 'inline-block';
+                countEl.style.opacity = state.count > 0 ? '1' : '0.5';
+            } else {
+                countEl.style.display = '';
+            }
         }
 
         if (costDisplay) {
@@ -839,7 +846,9 @@ function updateScoreBoard(totalBPS) {
     setTextIfChanged('score-display', formatNumber(gameState.score));
 
     const scoreEl = getEl('score-display');
-    if (scoreEl) scoreEl.setAttribute('data-tooltip', Math.round(gameState.score).toLocaleString('it-IT'));
+    if (scoreEl) {
+        scoreEl.setAttribute('data-tooltip', Math.floor(gameState.score).toLocaleString('it-IT'));
+    }
 
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
     const cpsEl = getEl('cps-display');
@@ -847,16 +856,29 @@ function updateScoreBoard(totalBPS) {
 }
 
 function updateHUD() {
-    const hudContainer = getEl('hud-stats-container');
-    const displayCareer = getEl('display-career-bonus');
-    const displayTokens = getEl('prestige-points-display');
+    // Riferimenti ai nuovi pannelli nell'header
+    const leftPanel = document.getElementById('header-left-panel');
+    const rightPanel = document.getElementById('header-right-panel');
 
+    // Riferimenti ai valori di testo
+    const displayCareer = document.getElementById('display-career-bonus');
+    const displayTokens = document.getElementById('prestige-points-display');
+
+    // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-        if (hudContainer && hudContainer.style.display === 'none') hudContainer.style.display = 'flex';
+
+        // Mostra i pannelli laterali
+        if (leftPanel) leftPanel.style.display = 'flex';
+        if (rightPanel) rightPanel.style.display = 'flex';
+
+        // Aggiorna i testi
         if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
         if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
+
     } else {
-        if (hudContainer && hudContainer.style.display !== 'none') hudContainer.style.display = 'none';
+        // Nascondi se è la prima run
+        if (leftPanel) leftPanel.style.display = 'none';
+        if (rightPanel) rightPanel.style.display = 'none';
     }
 }
 

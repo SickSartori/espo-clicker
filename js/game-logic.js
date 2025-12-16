@@ -978,8 +978,7 @@ async function executePrestige() {
         'totalGoldenBugsClicked',
         'totalPlayTime',
         'lifetimeScore',
-        'buildingEnhancements', // Mantiene le migliorie acquistate (Opzionale: rimuovi se vuoi che si resettino)
-        'totalOfflineScore'     // Statistica guadagni offline
+        'totalOfflineScore'
     ];
 
     // Creiamo una "cassaforte" temporanea con i dati da salvare
@@ -1014,19 +1013,17 @@ async function executePrestige() {
     newState.lastSaveTimestamp = Date.now();
 
     // 5. APPLICAZIONE BONUS SPECIALI (Post-Reset)
+    // A. Resetta il conteggio degli Assistenti QA
+    if (newState.teams && newState.teams.assistenteQa) {
+        newState.teams.assistenteQa.count = 0;
+    }
 
-    // Bonus Eredità: Mantiene N "Assistente QA"
+    // B. Bonus Eredità (Se posseduto)
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
 
-    // Bonus Paracadute: Imposta i bug iniziali
-    if (startBonusBugs > 0) {
-        newState.score = startBonusBugs;
-        newState.totalScore = startBonusBugs;
-    }
-
-    // Bonus Accelerazione: Regala +1 Assistente QA extra
+    // C. Bonus Accelerazione (Se posseduto)
     if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
         newState.teams.assistenteQa.count++;
     }
