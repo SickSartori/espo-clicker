@@ -616,9 +616,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Aggiorna Grafica Bottoni
             multiplierValues.forEach(val => {
                 if (multiplierBtns[val]) {
-                    // Colore attivo verde, inattivo grigio
-                    const color = (val === value) ? '#27ae60' : '#34495e';
-                    multiplierBtns[val].style.backgroundColor = color;
+                    // Rimuovi colore inline per far lavorare il CSS
+                    multiplierBtns[val].style.backgroundColor = '';
+
+                    if (val === value) {
+                        multiplierBtns[val].classList.add('active'); // Usa classe CSS
+                    } else {
+                        multiplierBtns[val].classList.remove('active');
+                    }
                 }
             });
 
@@ -638,6 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+
+        setBuyMultiplier(1);
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {

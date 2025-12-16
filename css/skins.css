@@ -7,9 +7,9 @@
 }
 
 .skin-card {
-    background-color: #1e272e;
+    background-color: var(--bg-panel);
     border-radius: 12px;
-    border: 1px solid #34495e;
+    border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
     cursor: pointer;

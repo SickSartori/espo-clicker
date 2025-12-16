@@ -1,22 +1,75 @@
 /* css/base.css - Stili base, reset e sfondo */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap');
+
+:root {
+    /* --- PALETTE COLORI (Invariata) --- */
+    --primary: #3498db;
+    --primary-dark: #2980b9;
+    --accent: #f1c40f;
+    --accent-glow: rgba(241, 196, 15, 0.4);
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --bg-dark: #050505;
+    --bg-panel: #1a252f;
+    --bg-nav: #151b22;
+    --text-main: #e0e0e0;
+    --text-muted: #95a5a6;
+    --border-color: #4a6582;
+
+    --font-heading: 'Rajdhani', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+.stat-value,
+.upgrade-count,
+#score-display,
+#cps-display,
+.money-display,
+.cost-val,
+.shop-header,
+.buy-btn,
+.nav-label,
+.tab-btn {
+    font-family: var(--font-heading);
+    letter-spacing: 0.5px;
+}
+
+button,
+input,
+select,
+textarea,
+optgroup,
+option {
+    font-family: var(--font-heading);
+    /* Rajdhani per UI Elements */
+    letter-spacing: 0.5px;
+}
+
+/* Eccezione per input di testo lunghi se necessari */
+textarea {
+    font-family: var(--font-body);
+}
+
+/* Assicura che i placeholder usino il font giusto */
+::placeholder {
+    font-family: var(--font-heading);
+    opacity: 0.5;
+}
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-
-    /* Sfondo Base: Deep Space Dark */
-    background-color: #050505;
-    color: #e0e0e0;
-
+    font-family: var(--font-body);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
     padding: 85px 10px 0 10px;
-    /* Spazio per la navbar */
     user-select: none;
     overflow: hidden;
     position: relative;
@@ -49,8 +102,8 @@ body::after {
     width: 100%;
     height: 100%;
     background:
-        radial-gradient(circle at 15% 50%, rgba(155, 89, 182, 0.4), transparent 40%),
-        radial-gradient(circle at 85% 30%, rgba(52, 152, 219, 0.4), transparent 40%);
+        radial-gradient(circle at 15% 50%, rgba(155, 89, 182, 0.3), transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(52, 152, 219, 0.3), transparent 40%);
     filter: blur(60px);
     animation: ambientPulse 8s ease-in-out infinite alternate;
     pointer-events: none;
@@ -67,7 +120,7 @@ body.bluescreen-active {
 /* Scrollbar Globali */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #3498db #0f1519;
+    scrollbar-color: var(--primary) var(--bg-nav);
 }
 
 ::-webkit-scrollbar {
@@ -75,11 +128,11 @@ body.bluescreen-active {
 }
 
 ::-webkit-scrollbar-track {
-    background: #0f1519;
+    background: var(--bg-nav);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3498db;
+    background: var(--primary);
     border-radius: 3px;
 }
 

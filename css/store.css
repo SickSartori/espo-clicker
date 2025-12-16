@@ -1,15 +1,9 @@
 /* css/store.css - Stili Negozi e Card */
 
 .store-section {
-    flex: 0 0 auto;
-    width: 100%;
-    padding: 20px 30px;
-    box-sizing: border-box;
+    padding: 0;
 }
 
-.store-section:not(:last-child) {
-    border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-}
 
 .store-section h2,
 .section-header h2 {
@@ -22,98 +16,157 @@
     border-color: #4a6582;
 }
 
-#global-filter-section {
-    padding: 10px 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(74, 101, 130, 0.3);
-    text-align: center;
-}
-
-#global-filter-select {
-    width: 100%;
-    padding: 10px;
-    background-color: #34495e;
-    color: #ecf0f1;
-    border: 1px solid #5d7c9a;
-    border-radius: 6px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    outline: none;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ecf0f1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 15px top 50%;
-    background-size: 12px auto;
-}
-
-#global-filter-select:hover {
-    background-color: #4a6582;
-    border-color: #7f9ebc;
-}
-
-#global-filter-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
-}
-
-.section-header h2 {
-    margin: 0;
-    padding: 0;
-    line-height: 1;
-    font-size: 1.5rem;
-}
-
+#global-filter-section,
 #teams-sticky-header {
-    position: -webkit-sticky;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* FIX: Altezza aumentata per evitare scrollbar al caricamento */
+    min-height: 72px;
+    /* Aumentato da 65px */
+    padding: 15px;
+    /* Padding più arioso */
+
+    width: 100%;
+    box-sizing: border-box;
     position: sticky;
     top: 0;
-    z-index: 100;
-
-    /* Spostiamo qui lo stile grafico della barra (sfondo, ombra, bordi) */
-    background-color: #25323e;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-
-    /* Gestione larghezza per compensare il padding della colonna */
-    margin-left: -30px;
-    margin-right: -30px;
-    padding: 15px 30px;
-    margin-bottom: 20px;
-}
-
-#buy-controls {
-    position: static;
-    /* Rimuove sticky */
-    top: auto;
-
-    /* Rimuove lo stile grafico che ora ha il padre */
-    background: transparent;
-    border: none;
-    box-shadow: none;
-
-    /* Reset margini e padding */
-    margin: 0;
-    padding: 0;
-    width: auto;
-
-    /* Mantiene il layout dei bottoni */
+    z-index: 50;
     display: flex;
-    gap: 10px;
+    align-items: center;
     justify-content: center;
 }
 
-.section-header {
+#teams-sticky-header {
+    margin: 0;
+}
+
+#global-filter-select {
+    display: block;
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+    /* Impedisce overflow flex */
+    height: 42px;
+
+    /* Spaziatura */
+    padding: 0 40px 0 15px;
+    box-sizing: border-box;
+
+    /* Stile */
+    background-color: var(--bg-panel);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+
+    /* Font */
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+
+    /* --- FIX ANTI-SCROLLBAR --- */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* Reset Stile Nativo */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    /* Freccia */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ecf0f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 14px;
+}
+
+#global-filter-select:hover {
+    border-color: var(--primary);
+}
+
+#global-filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+}
+
+#global-filter-select option {
+    background-color: #1a252f;
+    color: #fff;
+    padding: 10px;
+}
+
+.section-header h2 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: 12px 0 8px 0;
+    padding-left: 15px;
+    padding-bottom: 0;
+    border: none;
+    letter-spacing: 1px;
+}
+
+
+#teams-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(5px);
+    padding: 15px 20px;
+    width: 100%;
+    margin: 0;
+}
+
+#buy-controls {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid rgba(74, 101, 130, 0.5);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
-    margin-top: 10px;
+    gap: 8px;
+    width: 100%;
+}
+
+#buy-controls .buy-btn {
+    flex: 1;
+    height: 42px;
+    font-size: 1rem;
+    padding: 0;
+    margin: 0;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 6px;
+    box-shadow: none;
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+#buy-controls .buy-btn.active {
+    background-color: var(--success) !important;
+    color: #1a1a1a !important;
+    border-color: #27ae60 !important;
+    font-weight: 800;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+#buy-controls .buy-btn:hover {
+    border-color: var(--primary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+
+
+
+.section-header {
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
 .upgrade {
@@ -145,61 +198,66 @@
 .click-upgrade,
 .prestige-upgrade,
 .enhancement-upgrade {
-    background-color: #2b3845;
-    border: 1px solid #34495e;
+    background-color: var(--bg-panel) !important;
+    /* Sfondo scuro uniforme per tutti */
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 6px;
-    min-height: 60px;
+    padding: 10px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 0.2s ease, transform 0.1s;
-    box-shadow: none;
+    transition: all 0.1s ease;
+}
+
+#building-list-container .upgrade {
+    margin-bottom: 8px;
 }
 
 .upgrade:hover,
-.click-upgrade:hover,
+.click-upgrade:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
 .enhancement-upgrade:hover {
-    background-color: #34495e;
-    border-color: #5dade2;
+    background-color: var(--bg-panel-hover);
+    border-color: var(--primary);
     transform: translateY(-1px);
 }
 
-.upgrade .buy-btn,
-.click-upgrade .buy-btn,
-.enhancement-upgrade .buy-btn {
-    box-shadow: none;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    min-width: 80px;
-}
+
 
 .upgrade-details {
     flex-grow: 1;
 }
 
 .upgrade-name {
-    font-size: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    display: block;
     margin-bottom: 2px;
-    font-weight: bold;
-    color: #eee;
 }
 
-.upgrade-cost,
+.upgrade-cost {
+    font-size: 0.9rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+
 .upgrade-desc {
-    font-size: 0.65rem;
-    color: #bdc3c7;
-    margin-top: 2px;
-    line-height: 1.2;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.1;
+    opacity: 0.9;
 }
 
 .upgrade-bps {
     font-size: 0.65rem;
-    color: #5dade2;
+    color: var(--primary);
     margin-top: 1px;
     line-height: 1.2;
 }
@@ -215,10 +273,79 @@
 .upgrade-count {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #bdc3c7;
+    color: var(--text-main);
     min-width: 25px;
     text-align: center;
     line-height: 1;
+}
+
+.upgrade.purchased,
+.click-upgrade.purchased,
+.prestige-upgrade.purchased,
+.enhancement-upgrade.purchased {
+    opacity: 0.5;
+    /* Rende tutto semitrasparente */
+    filter: grayscale(0.9);
+    /* Rimuove quasi tutto il colore */
+    border-color: #34495e !important;
+    /* Bordo grigio scuro neutro */
+    box-shadow: none !important;
+    /* Rimuove glow ed effetti */
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    /* Sfondo più scuro per fondersi col retro */
+    pointer-events: none;
+    /* Opzionale: impedisce click inutili (tranne se vuoi tooltip) */
+}
+
+/* Eccezione: Il bottone "Posseduto" deve rimanere leggibile */
+.upgrade.purchased .buy-btn,
+.click-upgrade.purchased .buy-btn,
+.prestige-upgrade.purchased .buy-btn,
+.enhancement-upgrade.purchased .buy-btn {
+    filter: grayscale(0);
+    /* Ripristina un minimo di contrasto sul testo del bottone */
+    opacity: 0.8;
+}
+
+/* --- 2. OGGETTI BLOCCATI (In Arrivo) --- */
+.upgrade.locked-item,
+.click-upgrade.locked-item,
+.prestige-upgrade.locked-item,
+.enhancement-upgrade.locked-item {
+    opacity: 0.65;
+    border-color: #4a6582 !important;
+    /* Blu spento */
+    border-style: dashed !important;
+    /* Bordo tratteggiato = "Non ancora pronto" */
+    background-color: rgba(20, 30, 40, 0.4) !important;
+}
+
+/* La progress bar deve risaltare anche se la card è scura */
+.locked-item .progress-bar-container {
+    opacity: 1;
+    filter: none;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* --- 3. OGGETTI DISPONIBILI (Focus) --- */
+/* Quando passi il mouse su un oggetto acquistabile, fallo brillare un po' di più */
+.upgrade:not(.purchased):not(.locked-item):hover,
+.click-upgrade:not(.purchased):not(.locked-item):hover,
+.prestige-upgrade:not(.purchased):not(.locked-item):hover,
+.enhancement-upgrade:not(.purchased):not(.locked-item):hover {
+    transform: translateY(-2px);
+    z-index: 2;
+    opacity: 1;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+    /* Opzionale: bordo leggermente più luminoso */
+    filter: brightness(1.1);
+}
+
+#click-upgrade-list,
+#enhancement-list,
+#building-list-container,
+#prestige-list-container {
+    padding: 10px 15px 40px 15px;
 }
 
 /* Grid Layout per le liste (Click e Migliorie) */
@@ -226,7 +353,7 @@
 #enhancement-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
 }
 
 .click-upgrade,
@@ -238,12 +365,14 @@
     margin-bottom: 0;
 }
 
+.upgrade .buy-btn,
 .click-upgrade .buy-btn,
 .enhancement-upgrade .buy-btn {
+    height: 32px;
+    font-size: 0.8rem;
+    min-width: 80px;
     width: 100%;
     margin-top: 8px;
-    padding: 6px 10px;
-    font-size: 0.85rem;
 }
 
 /* Varianti Colore */
@@ -271,82 +400,88 @@
 
 /* Prestigio */
 .prestige-upgrade {
+    background: var(--bg-panel) !important;
+    border: 1px solid #b7950b !important;
+    /* Bordo Oro Scuro */
+    box-shadow: none !important;
+
+    display: flex;
     flex-direction: row !important;
-    align-items: center !important;
-    gap: 10px;
-    background: linear-gradient(145deg, #1a1020, #2c1a35) !important;
-    border: 1px solid #8e44ad !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+    align-items: center;
     gap: 15px;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
 }
 
-.prestige-upgrade:hover {
-    background: linear-gradient(145deg, #2c1a35, #3d244a) !important;
+/* Hover Effect (Solo se NON acquistato) */
+.prestige-upgrade:not(.purchased):hover {
     border-color: #f1c40f !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(142, 68, 173, 0.3) !important;
+    background-color: rgba(241, 196, 15, 0.05) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.1) !important;
 }
 
+/* 2. Tipografia Lab */
 .prestige-upgrade .upgrade-name {
-    color: #e8daef !important;
+    color: #f1c40f !important;
+    /* Titolo Oro */
+    font-size: 1rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
 .prestige-upgrade .upgrade-desc {
-    color: #af7ac5 !important;
+    color: #bdc3c7 !important;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    line-height: 1.2;
+    white-space: normal;
 }
 
 .prestige-upgrade .upgrade-cost {
     color: #f1c40f !important;
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-top: 5px;
 }
 
+/* 3. Bottoni Lab (Stato Normale: Oro) */
 .prestige-upgrade .buy-btn {
     background: linear-gradient(to bottom, #f1c40f, #d4ac0d) !important;
     color: #1a1a1a !important;
+    /* Testo scuro */
     border: 1px solid #b7950b !important;
-    font-weight: 800;
-    text-shadow: none;
     min-width: 100px;
+    height: 32px;
+    font-size: 0.8rem;
+    margin: 0;
+    font-weight: 800;
 }
 
-.prestige-upgrade .buy-btn:disabled {
-    background: #34495e !important;
-    /* Grigio scuro */
-    border: 1px solid #4a6582 !important;
-    color: #7f8c8d !important;
-    /* Testo spento */
-    box-shadow: none !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    animation: none !important;
-    opacity: 0.6;
+.prestige-upgrade .buy-btn:hover:not(:disabled):not(.owned) {
+    filter: brightness(1.1);
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4) !important;
 }
 
-.prestige-upgrade .buy-btn:hover:not(:disabled) {
-    background: linear-gradient(to bottom, #f7dc6f, #f1c40f) !important;
-    box-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
-}
-
+/* 4. Fix Bottone MAX / POSSEDUTO (Uniformato agli altri tab) */
 .prestige-upgrade .buy-btn.owned {
-    /* Stile Colori (quello che abbiamo appena fatto) */
-    background: rgba(0, 0, 0, 0.5) !important;
-    border: 1px solid #2ecc71 !important;
+    /* Reset totale dello stile Oro per farlo diventare "spento" */
+    background: rgba(44, 62, 80, 0.5) !important;
+    /* Sfondo scuro standard */
+    background-image: none !important;
+    /* Rimuove gradiente */
+    border: 1px solid rgba(46, 204, 113, 0.3) !important;
+    /* Bordo verde spento */
     color: #2ecc71 !important;
-    box-shadow: none !important;
-    cursor: default !important;
-    opacity: 0.8;
-    width: auto !important;
-    min-width: 0 !important;
-    flex-grow: 0 !important;
-    padding: 4px 12px !important;
-    font-size: 0.75rem !important;
-}
+    /* Testo verde */
 
-.prestige-upgrade .buy-btn.owned::before {
-    content: "✓ ";
-    margin-right: 4px;
+    box-shadow: none !important;
+    cursor: default;
+    width: auto !important;
+    min-width: 80px;
 }
 
 /* Filtri ed Empty State */
@@ -397,23 +532,26 @@
 
 .progress-bar-container {
     width: 100%;
-    height: 38px;
-    background-color: #2c3e50;
-    border: 1px solid #5d7c9a;
+    height: 32px;
+    /* Stessa altezza dei bottoni "Compra" interni */
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     overflow: hidden;
     position: relative;
     margin-top: 8px;
+    /* Stesso margine dei bottoni */
     box-sizing: border-box;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    display: none;
+    /* Gestito da JS */
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(to bottom, #f39c12, #d35400);
+    background: linear-gradient(to right, #e67e22, #f1c40f);
+    /* Gradiente Arancio/Oro */
     width: 0%;
     transition: width 0.4s ease-out;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .progress-text {
@@ -422,23 +560,16 @@
     left: 0;
     width: 100%;
     height: 100%;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    font-family: 'Inter', sans-serif;
-    font-size: 0.68rem;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
     font-weight: 700;
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     z-index: 2;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-    box-sizing: border-box;
-    max-width: 100%;
 }
 
 #lab-wallet-container {
