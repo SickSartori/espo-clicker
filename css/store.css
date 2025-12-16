@@ -517,7 +517,6 @@
 
 /* --- REGOLA FINALE PER SPAZIATURA TAB --- */
 .tab-content {
-    padding: 25px 20px;
     animation: fadeIn 0.3s ease;
     box-sizing: border-box;
     flex-grow: 1;

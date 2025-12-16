@@ -61,10 +61,20 @@ function formatTime(totalSeconds) {
 }
 
 // --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
-
 function renderStoreSection(config) {
     const list = document.getElementById(config.containerId);
     if (!list) return;
+
+    // --- FIX SCROLL JUMP AVANZATO ---
+    // Cerca il genitore scrollabile corretto in base al contesto (Tab, Store o Colonna)
+    let scrollParent = list.closest('.tab-content'); // 1. Prova Tab (Left Column Desktop)
+    if (!scrollParent) scrollParent = list.closest('#building-store'); // 2. Prova Store Edifici (Right Column Desktop)
+    if (!scrollParent) scrollParent = list.closest('.game-column'); // 3. Prova Colonna (Mobile o fallback)
+
+    let previousScrollTop = 0;
+    if (scrollParent) {
+        previousScrollTop = scrollParent.scrollTop;
+    }
 
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
@@ -77,29 +87,38 @@ function renderStoreSection(config) {
 
         // Calcolo Priorità (Solo per ordinamento dinamico)
         let sortPriority = 0;
-        if (status.isMaxed || (status.purchased && !data.isCounted)) sortPriority = 3;
-        else if (status.unlocked) sortPriority = 1;
-        else sortPriority = 2;
+
+        // Ordine richiesto:
+        // 1. Acquistabili (Available)
+        // 2. Bloccati (Locked)
+        // 3. Posseduti (Owned/Maxed)
+
+        if (status.isMaxed || (status.purchased && !data.isCounted)) {
+            sortPriority = 3; // Posseduti in fondo
+        } else if (status.unlocked) {
+            sortPriority = 1; // Acquistabili in cima
+        } else {
+            sortPriority = 2; // Bloccati nel mezzo
+        }
 
         return { key, data, state, status, sortPriority };
     });
 
-    // 2. ORDINAMENTO (LOGICA RAFFORZATA)
-    // Se è attivo 'fixedOrder' OPPURE siamo nei 'building' (Teams), usiamo l'ordine statico.
+    // 2. ORDINAMENTO
     if (config.fixedOrder || config.type === 'building') {
-        // --- ORDINAMENTO FISSO (Per Costo Base Originale) ---
+        // --- ORDINAMENTO FISSO (Per Teams) ---
         items.sort((a, b) => {
-            // Usa baseCost se esiste, altrimenti cost
             const baseA = a.data.baseCost !== undefined ? a.data.baseCost : (a.data.cost || 0);
             const baseB = b.data.baseCost !== undefined ? b.data.baseCost : (b.data.cost || 0);
             return baseA - baseB;
         });
     } else {
         // --- ORDINAMENTO DINAMICO (Per Upgrade, Skin, Lab) ---
-        // Ordina per Disponibilità > Prezzo Attuale
         items.sort((a, b) => {
+            // Prima per Priorità (Acquistabili -> Bloccati -> Posseduti)
             if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
 
+            // Poi per Costo (dal più economico)
             const costA = a.status.currentCost || a.data.baseCost || a.data.cost || 0;
             const costB = b.status.currentCost || b.data.baseCost || b.data.cost || 0;
             return costA - costB;
@@ -114,7 +133,7 @@ function renderStoreSection(config) {
 
         // Filtri Visibilità
         let isVisible = false;
-        if (config.type === 'building') isVisible = true; // Teams sempre visibili
+        if (config.type === 'building') isVisible = true;
         else if (data.alwaysVisible) isVisible = true;
         else if (mode === 'all') isVisible = true;
         else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
@@ -152,13 +171,20 @@ function renderStoreSection(config) {
                     <span class="progress-text">Locked</span>
                 </div>
             `;
-            el.querySelector('.buy-btn').addEventListener('click', () => config.onBuy(key));
 
-            // Appende l'elemento alla lista
+            // Listener con PreventDefault per evitare focus jump
+            const btn = el.querySelector('.buy-btn');
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                config.onBuy(key);
+            });
+
             list.appendChild(el);
         } else {
-            // FONDAMENTALE: Ri-appende l'elemento esistente per forzare l'ordine visivo calcolato dal sort()
-            list.appendChild(el);
+            // RIORDINO: Se non è ordine fisso, sposta l'elemento nella nuova posizione corretta
+            if (!config.fixedOrder) {
+                list.appendChild(el);
+            }
         }
 
         el.style.display = 'flex';
@@ -166,53 +192,61 @@ function renderStoreSection(config) {
         // Aggiornamenti Testuali
         const costDisplay = el.querySelector('.cost-val');
         const countEl = document.getElementById(`count-${key}`);
+
         if (countEl && state.count !== undefined) {
-            countEl.textContent = state.count;
+            if (countEl.textContent != state.count) countEl.textContent = state.count;
             countEl.style.display = '';
         }
 
         if (costDisplay) {
-            if (status.costText) costDisplay.textContent = status.costText;
-            else {
+            let txt = '';
+            if (status.costText) {
+                txt = status.costText;
+            } else {
                 const val = status.currentCost || data.cost || 0;
-                costDisplay.textContent = `Costo: ${formatNumber(val)}`;
+                txt = `Costo: ${formatNumber(val)}`;
             }
+            if (costDisplay.textContent !== txt) costDisplay.textContent = txt;
         }
 
         if (config.type === 'building') {
             const bpsEl = document.getElementById(`bps-${key}`);
-            if (bpsEl) bpsEl.textContent = status.bpsText;
+            if (bpsEl && bpsEl.textContent !== status.bpsText) bpsEl.textContent = status.bpsText;
         }
 
         const btn = el.querySelector('.buy-btn');
         const costWrapper = el.querySelector('.upgrade-cost');
         const progressContainer = el.querySelector('.progress-bar-container');
 
-        // Stati CSS (Purchased/Locked)
-        el.classList.toggle('purchased', status.purchased);
-        el.classList.toggle('locked-item', !status.unlocked && !status.purchased);
+        // Stati CSS
+        if (el.classList.contains('purchased') !== status.purchased) el.classList.toggle('purchased', status.purchased);
+        const isLockedItem = !status.unlocked && !status.purchased;
+        if (el.classList.contains('locked-item') !== isLockedItem) el.classList.toggle('locked-item', isLockedItem);
 
-        // Logica Stati UI (Posseduto / Disponibile / Bloccato)
+        // Stati UI
         if (status.isMaxed || (status.purchased && !data.isCounted && config.type !== 'building')) {
-            btn.textContent = status.isMaxed ? "MAX" : "Posseduto";
+            const label = status.isMaxed ? "MAX" : "Posseduto";
+            if (btn.textContent !== label) btn.textContent = label;
             btn.className = "buy-btn owned";
             btn.disabled = true;
             btn.style.display = 'block';
-
             if (costWrapper) costWrapper.style.display = 'none';
             if (progressContainer) progressContainer.style.display = 'none';
 
         } else if (status.unlocked) {
+            const label = status.label || "Compra";
+            if (btn.textContent !== label) btn.textContent = label;
 
-            btn.textContent = status.label || "Compra";
-            btn.className = `buy-btn ${config.btnClass || ''}`;
+            const newClass = `buy-btn ${config.btnClass || ''}`;
+            if (btn.className !== newClass) btn.className = newClass;
+
             btn.disabled = !status.canAfford;
             btn.style.display = 'block';
             if (costWrapper) costWrapper.style.display = 'block';
             if (progressContainer) progressContainer.style.display = 'none';
 
         } else {
-            // BLOCCATO
+            // Bloccato
             btn.style.display = 'none';
             if (costWrapper) costWrapper.style.display = 'none';
 
@@ -231,8 +265,14 @@ function renderStoreSection(config) {
         emptyMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
         if (visibleCount === 0 && config.setEmptyMsg) config.setEmptyMsg(emptyMsg, mode);
     }
+
+    // --- RIPRISTINA POSIZIONE SCROLL ---
+    if (scrollParent) {
+        scrollParent.scrollTop = previousScrollTop;
+    }
 }
 
+// --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
 function refreshAllStores() {
 
     // 1. NEGOZIO CLICK
@@ -293,15 +333,18 @@ function refreshAllStores() {
         stateSource: gameState.prestigeUpgrades,
         cardClass: 'prestige-upgrade',
         btnClass: 'prestige-btn',
+        // NOTA: fixedOrder RIMOSSO per permettere l'ordinamento dinamico (Acquistabili -> Bloccati -> Posseduti)
         onBuy: (key) => buyPrestigeUpgrade(key),
         getStatus: (key, data, state) => {
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
+            const singlePurchased = !data.isCounted && state.purchased;
             return {
-                purchased: !data.isCounted && state.purchased,
-                unlocked: !isMaxed,
+                purchased: singlePurchased,
+                unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
                 canAfford: gameState.prestigePoints >= data.baseCost,
-                label: isMaxed ? "MAX" : "Compra",
+                label: isMaxed || singlePurchased ? "POSSEDUTO" : (isMaxed ? "MAX" : "COMPRA"),
+                costText: `Costo: ${formatNumber(data.baseCost)} Token`,
                 currentCost: data.baseCost,
                 progress: 100
             };
@@ -309,20 +352,20 @@ function refreshAllStores() {
         setEmptyMsg: (el, mode) => { el.textContent = "Laboratorio al completo!"; }
     });
 
-    // 4. NEGOZIO TEAMS (Nuovo!)
+    // 4. NEGOZIO TEAMS
     renderStoreSection({
-        type: 'building', // Usa prefisso 'building-item-'
+        type: 'building',
         containerId: 'building-list-container',
-        emptyId: 'building-empty', // Aggiungi questo div nel HTML se vuoi, opzionale
+        emptyId: 'building-empty',
         dataSource: gameData.teams,
         stateSource: gameState.teams,
         cardClass: 'upgrade',
         btnClass: 'buy-building-btn',
-        useCustomBody: true, // Attiva BPS display
-        showCount: true,     // Attiva badge numero
+        useCustomBody: true,
+        showCount: true,
+        fixedOrder: true,
         onBuy: (key) => buyTeam(key),
         getStatus: (key, data, state) => {
-            // Calcoli specifici per edifici
             let amountToBuy = buyMultiplier;
             let isMax = false;
 
@@ -334,9 +377,7 @@ function refreshAllStores() {
 
             const currentCost = calculateBulkCost(key, amountToBuy);
 
-            // Calcolo BPS Dinamico per visualizzazione
             let teamBPS = data.cpsPerUnit;
-            // Applica moltiplicatori delle migliorie
             for (const enhanceKey in gameState.buildingEnhancements) {
                 const eData = gameData.buildingEnhancements[enhanceKey];
                 const eState = gameState.buildingEnhancements[enhanceKey];
@@ -346,26 +387,25 @@ function refreshAllStores() {
             }
             const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
-            // Formattazione etichetta costo
             let prefix = "Costo";
             if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
             else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
 
             return {
-                unlocked: true, // Gli edifici sono sempre sbloccati nella logica attuale
+                unlocked: true,
                 purchased: false,
                 canAfford: gameState.score >= currentCost,
                 label: "Compra",
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
                 bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
-                currentCost: currentCost // Fallback
+                currentCost: currentCost
             };
         }
     });
 
-    // Aggiorna Visuals Extra
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
+
 
 
 function updateSkinsUI() {
@@ -401,37 +441,28 @@ function updateSkinsUI() {
 
         let classes = `skin-card rarity-${data.rarity || 'common'}`;
         if (isUnlocked) classes += ' unlocked';
-        else classes += ' locked'; // Bloccata (anche se acquistabile)
+        else classes += ' locked';
         if (isEquipped) classes += ' equipped';
-        // NOTA: Rimuoviamo la classe 'buyable' per non farla brillare/pulsare se non in hover
-        // if (isBuyable) classes += ' buyable'; 
-        if (canAfford) classes += ' can-afford-border'; // Manteniamo questo se vuoi il bordo colorato, o rimuovilo per total stealth
+        if (canAfford) classes += ' can-afford-border';
 
         card.className = classes;
 
-        // Immagine: Sempre nascosta se non sbloccata
         const imgSrc = isUnlocked
             ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp')
             : './assets/image/hidden.webp';
 
-        // --- MODIFICA STATO VISIVO (Senza Hover) ---
         let statusHtml = '';
         if (isEquipped) {
-            // Prima: ✔ -> Ora: FontAwesome
             statusHtml = `<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>`;
         } else if (isUnlocked) {
-            // ...
         } else {
-            // Prima: 🔒 Bloccata -> Ora: FontAwesome
             statusHtml = `<div class="skin-status-info"><i class="fa-solid fa-lock"></i> Bloccata</div>`;
         }
 
-        // --- MODIFICA OVERLAY (Con Hover) ---
         let overlayContent = '';
         if (!isEquipped) {
             if (isBuyable) {
                 const priceText = `<i class="fa-solid fa-flask"></i> ${data.cost} Token`;
-                // Classi colore dinamiche
                 const actionColor = canAfford ? '#2ecc71' : '#e74c3c';
                 const actionMsg = canAfford ? 'CLICCA ORA' : 'INSUFFICIENTI';
 
@@ -457,17 +488,12 @@ function updateSkinsUI() {
 
         card.innerHTML = `
             ${isEquipped ? '<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>' : ''}
-            
             <div class="skin-badge">${rarityLabel}</div>
-            
             <div class="skin-img-container">
                 <img src="${imgSrc}" class="skin-img" alt="${isUnlocked ? data.name : 'Segreto'}">
             </div>
-            
             <div class="skin-name-display">${data.name}</div>
-            
             ${statusHtml}
-
             ${!isEquipped ? `<div class="skin-overlay">${overlayContent}</div>` : ''}
         `;
 
@@ -489,60 +515,40 @@ function updateSkinsUI() {
 
 
 function updateAchievementsUI() {
+    // Stesso codice di prima
     const list = document.getElementById('achievement-list');
     if (!list) return;
-
     list.innerHTML = '';
-
     const items = [];
     Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
-
         const isUnlocked = state.unlocked;
         const isClaimed = state.claimed;
-
         let progress = 0;
         let currentVal = 0;
-
-        // Calcolo Valori e Progresso
         if (!isUnlocked) {
             if (data.type === 'click') currentVal = gameState.totalClicks;
             else if (data.type === 'score') currentVal = gameState.totalScore;
             else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
             else if (data.type === 'time') currentVal = gameState.totalPlayTime;
-
-            if (data.target && data.target > 0) {
-                progress = Math.min(100, (currentVal / data.target) * 100);
-            }
-        } else {
-            progress = 100;
-        }
-
-        // Sorting Priority: Claimable (4) > In Progress (3, sorted by progress) > Completed (2) > Secret (1)
+            if (data.target && data.target > 0) progress = Math.min(100, (currentVal / data.target) * 100);
+        } else { progress = 100; }
         let priority = 0;
-        if (isUnlocked && !isClaimed && data.reward) { priority = 4; }
-        else if (!isUnlocked && !data.isSecret) { priority = 3; }
-        else if (isUnlocked) { priority = 2; }
-        else if (data.isSecret) { priority = 1; }
-
+        if (isUnlocked && !isClaimed && data.reward) priority = 4;
+        else if (!isUnlocked && !data.isSecret) priority = 3;
+        else if (isUnlocked) priority = 2;
+        else if (data.isSecret) priority = 1;
         items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority });
     });
-
-    // --- LOGICA DI ORDINAMENTO (Da Riscattare > Progresso > Completati) ---
     items.sort((a, b) => {
         if (b.priority !== a.priority) return b.priority - a.priority;
-        if (a.priority === 3 && b.priority === 3) return b.progress - a.progress; // Progresso
+        if (a.priority === 3 && b.priority === 3) return b.progress - a.progress;
         return a.data.name.localeCompare(b.data.name);
     });
-    // --- FINE ORDINAMENTO ---
-
-
     items.forEach(item => {
         const { key, data, state, isUnlocked, isClaimed, progress, currentVal } = item;
-
-        // Placeholder for Secrets
         if (data.isSecret && !isUnlocked) {
             const secretEl = document.createElement('div');
             secretEl.className = 'achievement achievement-secret';
@@ -550,94 +556,33 @@ function updateAchievementsUI() {
             list.appendChild(secretEl);
             return;
         }
-
         const el = document.createElement('div');
         const claimableClass = (isUnlocked && !isClaimed && data.reward) ? 'claimable' : '';
         const statusClass = isUnlocked ? 'unlocked' : 'locked';
-
         el.className = `achievement ${statusClass} ${claimableClass}`;
-
-
-        // --- PREPARAZIONE INFORMAZIONI PREMIO (Dettaglio) ---
         let rewardIcon = '<i class="fa-solid fa-trophy"></i>';
-        let rewardDisplay = 'Gloria'; // Testo visibile nel bottone/tooltip
-        let rewardTooltip = 'Nessun premio materiale.'; // Dettaglio per l'attributo title
-
+        let rewardDisplay = 'Gloria';
+        let rewardTooltip = 'Nessun premio materiale.';
         if (data.reward) {
-            if (data.reward.type === 'bugs') {
-                rewardIcon = '<i class="fa-solid fa-bug"></i>';
-                rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
-                rewardTooltip = `Ricompensa: ${rewardDisplay}`;
-            }
-            else if (data.reward.type === 'skin') {
-                rewardIcon = '<i class="fa-solid fa-tshirt"></i>';
-                const skinName = (gameData.skins && gameData.skins[data.reward.id]) ? gameData.skins[data.reward.id].name : 'Skin Rara';
-                rewardDisplay = `Skin: ${skinName}`;
-                rewardTooltip = `Sblocca la Skin: ${skinName}`;
-            }
-            else if (data.reward.type === 'prestige') {
-                rewardIcon = '<i class="fa-solid fa-flask"></i>';
-                rewardDisplay = `${data.reward.value} Token Lab`;
-                rewardTooltip = `Ottieni: ${rewardDisplay}`;
-            }
-            else if (data.reward.type === 'multiplier') {
-                rewardIcon = '<i class="fa-solid fa-laptop"></i>';
-                rewardDisplay = `BPS x${data.reward.value}`;
-                rewardTooltip = `Bonus BPS Permanente`;
-            }
+            if (data.reward.type === 'bugs') { rewardIcon = '<i class="fa-solid fa-bug"></i>'; rewardDisplay = `${formatNumber(data.reward.value)} Bug`; }
+            else if (data.reward.type === 'skin') { rewardIcon = '<i class="fa-solid fa-tshirt"></i>'; rewardDisplay = `Skin`; }
+            else if (data.reward.type === 'prestige') { rewardIcon = '<i class="fa-solid fa-flask"></i>'; rewardDisplay = `${data.reward.value} Token`; }
+            else if (data.reward.type === 'multiplier') { rewardIcon = '<i class="fa-solid fa-laptop"></i>'; rewardDisplay = `BPS x${data.reward.value}`; }
         }
-
         let actionHtml = '';
-
         if (isUnlocked && !isClaimed && data.reward) {
-            // CASO 1: DA RISCATTARE (con premio)
-            actionHtml = `
-                <button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere il premio!">
-                    <span class="claim-visible">${rewardIcon} ${rewardDisplay}</span>
-                    <span class="claim-hover">RISCATTA ORA!</span>
-                </button>
-            `;
+            actionHtml = `<button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere!"><span class="claim-visible">${rewardIcon} ${rewardDisplay}</span><span class="claim-hover">RISCATTA ORA!</span></button>`;
         } else if (isClaimed || (isUnlocked && !data.reward)) {
-            // CASO 2: COMPLETATO / Già Riscattato
             actionHtml = `<div class="achievement-done"><i class="fa-solid fa-check-circle"></i> Completato</div>`;
         } else {
-            // CASO 3: IN CORSO (Barra Progresso)
             const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
-
-            // FIX: Mostra il tooltip del premio sulla barra di progresso
-            actionHtml = `
-                <div class="ach-progress-container" data-tooltip="${rewardTooltip}">
-                    <div class="ach-progress-bar" style="width: ${progress}%"></div>
-                    <span class="ach-progress-text">${progressStatusText}</span>
-                </div>
-            `;
+            actionHtml = `<div class="ach-progress-container" data-tooltip="${rewardTooltip}"><div class="ach-progress-bar" style="width: ${progress}%"></div><span class="ach-progress-text">${progressStatusText}</span></div>`;
         }
-
-        const description = (data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc);
-
-        el.innerHTML = `
-            <div class="achievement-header">
-                <span class="achievement-name">${data.name}</span>
-                ${data.reward ? `<span class="reward-badge-text" data-tooltip="${rewardTooltip}">${rewardIcon}</span>` : ''}
-            </div>
-            <div class="achievement-desc">${description}</div>
-            ${data.flavor ? `<div class="achievement-flavor">"${data.flavor}"</div>` : ''}
-            
-            <div class="achievement-footer" style="margin-top: 10px;">
-                ${actionHtml}
-            </div>
-        `;
-
+        el.innerHTML = `<div class="achievement-header"><span class="achievement-name">${data.name}</span></div><div class="achievement-desc">${(data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc)}</div><div class="achievement-footer" style="margin-top: 10px;">${actionHtml}</div>`;
         list.appendChild(el);
-
         if (isUnlocked && !isClaimed && data.reward) {
             const claimBtn = document.getElementById(`claim-${key}`);
-            if (claimBtn) {
-                claimBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (typeof claimAchievementReward === 'function') claimAchievementReward(key);
-                });
-            }
+            if (claimBtn) { claimBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof claimAchievementReward === 'function') claimAchievementReward(key); }); }
         }
     });
 }
