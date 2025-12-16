@@ -11,12 +11,15 @@ $realPrestige = isset($serverSaveData['totalResets']) ? floor($serverSaveData['t
 if ($realScore < 0) $realScore = 0;
 
 $stmt = $conn->prepare("
-    INSERT INTO $table_leaderboard (username, score, prestigeLevel) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE score = ?, prestigeLevel = ?
+    INSERT INTO $table_leaderboard (username, score, prestigeLevel, timestamp) 
+    VALUES (?, ?, ?, NOW())
+    ON DUPLICATE KEY UPDATE 
+        score = GREATEST(score, VALUES(score)), 
+        prestigeLevel = GREATEST(prestigeLevel, VALUES(prestigeLevel)),
+        timestamp = NOW()
 ");
 
-$stmt->bind_param("sidii", $user['username'], $realScore, $realPrestige, $realScore, $realPrestige);
+$stmt->bind_param("sii", $user['username'], $realScore, $realPrestige);
 $stmt->execute();
 
 echo json_encode(["status" => "success", "message" => "Classifica aggiornata."]);

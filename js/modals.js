@@ -355,7 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon.className = 'fa-solid fa-play';
                 icon.style.marginLeft = '2px';
             };
-        }).catch(e => console.error("Errore playback test:", e));
+        }).catch(e => {
+            // Ignora l'errore se è stato causato da una pausa improvvisa (AbortError)
+            if (e.name !== 'AbortError') {
+                console.error("Errore playback test:", e);
+            }
+        });
     }
 
     if (btnAdvAudio) {

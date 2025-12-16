@@ -154,22 +154,6 @@
             <i class="fa-brands fa-github" style="font-size: 2.5rem;"></i>
         </a>
     </div>
-
-    <audio id="sound-click" src="./assets/sounds/click.mp3" preload="metadata"></audio>
-    <audio id="sound-buy" src="./assets/sounds/buy.mp3" preload="none"></audio> 
-    <audio id="sound-achievement" src="./assets/sounds/achievement.mp3" preload="none"></audio>
-    <audio id="sound-bluescreen" src="./assets/sounds/bluescreen.mp3" loop preload="none"></audio>
-
-    <audio id="sound-error" src="./assets/sounds/error.mp3" preload="none"></audio>
-    <audio id="sound-golden" src="./assets/sounds/golden.mp3" preload="none"></audio>
-    <audio id="sound-prestige" src="./assets/sounds/prestige.mp3" preload="none"></audio>
-    <audio id="sound-hover" src="./assets/sounds/hover.mp3" preload="none"></audio>
-
-    <audio id="sound-merry" src="./assets/sounds/merry-christmas.mp3" preload="none"></audio>
-    <audio id="sound-snowball" src="./assets/sounds/nonsnowball.mp3" loop preload="none"></audio>
-
-    <audio id="sound-bg-music" src="./assets/sounds/bg-music.mp3" loop preload="auto"></audio>
-    <audio id="sound-fury-music" src="./assets/sounds/fury-theme.mp3" loop preload="none"></audio>
     
     <div id="crunch-overlay"></div>
     <div id="fire-particles-container"></div>
