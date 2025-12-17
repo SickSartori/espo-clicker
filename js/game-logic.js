@@ -915,6 +915,12 @@ function calculatePrestigeGained() {
 }
 
 function openPrestigeContract() {
+    if (gameState.totalScore < gameData.PRESTIGE_THRESHOLD) {
+        if (window.EspooClicker && window.EspooClicker.showToast) {
+            window.EspooClicker.showToast("Devi completare il progetto (100%) per la promozione!", "error");
+        }
+        return;
+    }
     const gained = calculatePrestigeGained();
     if (gained < 1) {
         if (window.EspooClicker && window.EspooClicker.showToast) {

@@ -26,7 +26,13 @@
     <video id="ricardo-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
     <video id="ricardo-metal-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
     <video id="ricardo-dota-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
-
+    <div id="game-loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <h2 class="loader-title">Espòòò Clicker</h2>
+            <div class="loader-status" id="loader-status-text">Inizializzazione risorse...</div>
+        </div>
+    </div>
     <div id="toast-container"></div>
     <div id="prestige-transition-overlay" style="display: none;">
         <div class="transition-content">

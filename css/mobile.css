@@ -81,38 +81,59 @@
     /* 5. BOTTONE PROMOZIONE (Icona Razzo Quadrata) */
     .nav-special-btn {
         font-size: 0;
-        /* Nasconde testo */
         padding: 0;
         width: 40px;
         height: 40px;
         border-radius: 10px;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
         margin-left: 10px;
         background: linear-gradient(135deg, #8e44ad, #9b59b6);
         border: 1px solid #a569bd;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+
+        position: relative;
     }
 
     .nav-special-btn span {
-        display: none;
-    }
+        display: block !important;
+        /* Lo forziamo visibile */
+        font-size: 0.7rem !important;
+        /* Piccolo per stare nel quadrato */
+        font-weight: 800;
+        color: #fff;
+        white-space: nowrap;
 
-    /* Nasconde testo interno */
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        opacity: 0;
+        /* Parte nascosto */
+        animation: mobileTextSwitch 7s infinite;
+    }
 
     .nav-special-btn .nav-icon {
         font-size: 1.3rem !important;
         margin: 0 !important;
-        display: block !important;
         color: #fff;
+
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        animation: mobileIconSwitch 7s infinite;
     }
 
     /* Stato "Pronta" (Verde Pulsante) */
     .nav-special-btn.promotion-ready {
         background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
         border-color: #fff !important;
-        animation: promoPulse 1s infinite alternate;
         box-shadow: 0 0 15px #2ecc71;
     }
 

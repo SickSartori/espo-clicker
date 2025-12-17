@@ -263,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatePrestigeBonus();
         recalculateCPS();
 
+        // [GENERICO] Aggiungi skin mancanti
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
@@ -480,17 +481,138 @@ document.addEventListener('DOMContentLoaded', () => {
         // Salvataggio alla chiusura
         window.addEventListener('beforeunload', () => { saveGame(); });
     }
+    // Funzione universale per precaricare TUTTO (Immagini, Audio, Video)
+    function preloadAllAssets(onProgress) {
+        const promises = [];
+        let totalAssets = 0;
+        let loadedAssets = 0;
 
+        // Helper per aggiornare la percentuale
+        const updateProgress = () => {
+            loadedAssets++;
+            if (onProgress) {
+                const percent = Math.floor((loadedAssets / totalAssets) * 100);
+                onProgress(percent);
+            }
+        };
+
+        // 1. LISTA IMMAGINI CRITICHE (Manuale)
+        const imagesToLoad = [
+            './assets/image/espo.webp',
+            './assets/image/espo-click.webp',
+            './assets/image/bug.webp',
+            './assets/image/favicon.webp',
+            './assets/image/espo-fury.webp',
+            './assets/image/espo-fury-click.webp',
+            './assets/image/bluescreen.webp',
+            './assets/image/hidden.webp',
+            // Aggiungi qui skin comuni se vuoi
+        ];
+
+        // Aggiungiamo le immagini alla lista
+        totalAssets += imagesToLoad.length;
+        imagesToLoad.forEach(src => {
+            promises.push(
+                new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = () => { updateProgress(); resolve(); };
+                    img.onerror = () => { console.warn("Img missing:", src); updateProgress(); resolve(); };
+                })
+            );
+        });
+
+        // 2. AUDIO (Automatico da gameData)
+        if (gameData.assets && gameData.assets.sounds) {
+            const soundKeys = Object.keys(gameData.assets.sounds);
+            totalAssets += soundKeys.length;
+
+            soundKeys.forEach(key => {
+                const item = gameData.assets.sounds[key];
+                const url = `./assets/sounds/${item.file}`;
+
+                // Usiamo fetch per forzare il download in cache
+                promises.push(
+                    fetch(url)
+                        .then(() => updateProgress())
+                        .catch(() => { console.warn("Audio missing:", url); updateProgress(); })
+                );
+            });
+        }
+
+        // 3. VIDEO (Automatico da gameData)
+        if (gameData.assets && gameData.assets.videos) {
+            const videoKeys = Object.keys(gameData.assets.videos);
+            totalAssets += videoKeys.length;
+
+            videoKeys.forEach(key => {
+                const item = gameData.assets.videos[key];
+                const url = `./assets/video/${item.file}`; // Nota: cartella 'video' singolare
+
+                promises.push(
+                    fetch(url)
+                        .then(() => updateProgress())
+                        .catch(() => { console.warn("Video missing:", url); updateProgress(); })
+                );
+            });
+        }
+
+        // Se non c'è nulla da caricare, risolvi subito
+        if (totalAssets === 0) return Promise.resolve();
+
+        return Promise.all(promises);
+    }
 
     function initializeGame() {
-        // 1. CARICAMENTO DATI
-        loadGame();
+        const loaderStatus = document.getElementById('loader-status-text');
+
+        // 1. Setup Iniziale
+        if (loaderStatus) loaderStatus.textContent = "Caricamento dati...";
+        loadGame(); // Carica salvataggi
+
+        // 2. Inizializza Audio Context (senza suonare ancora)
+        if (typeof AudioManager !== 'undefined') {
+            AudioManager.init();
+        }
+
+        // 3. AVVIO PRELOADER CON BARRA PROGRESSO
+        preloadAllAssets((percent) => {
+            // Questa funzione viene chiamata ogni volta che un file finisce
+            if (loaderStatus) {
+                loaderStatus.textContent = `Scaricamento risorse... ${percent}%`;
+
+                // Opzionale: Se vuoi una barra visiva, puoi aggiornarla qui
+                // document.getElementById('loader-bar').style.width = percent + '%';
+            }
+        }).then(() => {
+            // 4. TUTTO PRONTO
+            if (loaderStatus) loaderStatus.textContent = "Avvio sistema...";
+
+            // Ritardo minimo per estetica (evita flash troppo rapidi se in cache)
+            setTimeout(() => {
+                const loader = document.getElementById('game-loader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    setTimeout(() => loader.remove(), 600);
+                }
+
+                // Fai partire l'UI e i loop
+                updateUI();
+
+                // Tenta autoplay audio (se permesso)
+                if (window.EspooClicker && window.EspooClicker.tryStartAudio) {
+                    window.EspooClicker.tryStartAudio();
+                }
+            }, 500);
+        });
+
+        // Setup Listener Vari
+        const now = Date.now();
 
         if (typeof AudioManager !== 'undefined') {
             AudioManager.init();
         }
 
-        const now = Date.now();
         const bgMusic = document.getElementById('sound-bg-music');
         const snowAudio = document.getElementById('sound-snowball');
         const masterVol = gameState.user.masterVolume;
