@@ -397,3 +397,110 @@
         transform: rotate(360deg);
     }
 }
+
+@keyframes cyberGlitchAnim {
+
+    /* FASE 1: Calma relativa con leggero respiro digitale */
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1) skew(0deg);
+        filter: none;
+        opacity: 1;
+    }
+
+    5% {
+        transform: translate(2px, -3px) scale(1.02);
+    }
+
+    10% {
+        transform: translate(-2px, 2px) scale(0.98);
+    }
+
+    /* FASE 2: GLITCH VIOLENTO 1 (Spostamento e Colore) */
+    14% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    15% {
+        transform: translate(-15px, 5px) skewX(20deg);
+        filter: hue-rotate(90deg) contrast(1.5);
+        opacity: 0.8;
+    }
+
+    16% {
+        transform: translate(10px, -10px) skewY(-10deg);
+        filter: hue-rotate(-90deg) invert(0.2);
+        opacity: 0.9;
+    }
+
+    17% {
+        transform: translate(0, 0) scale(1);
+        filter: none;
+        opacity: 1;
+    }
+
+    /* FASE 3: Calma instabile */
+    25% {
+        transform: translate(1px, 1px) rotate(2deg);
+    }
+
+    35% {
+        transform: translate(-1px, -2px) rotate(-1deg);
+    }
+
+    /* FASE 4: GLITCH VIOLENTO 2 (Compressione e Flash) */
+    48% {
+        transform: translate(0, 0);
+    }
+
+    49% {
+        transform: scale(1.5, 0.1) translate(0, 50px);
+        /* Schiacciato orizzontalmente */
+        filter: brightness(3) saturate(0);
+        /* Flash bianco */
+    }
+
+    50% {
+        transform: scale(0.5, 1.5) translate(0, -30px);
+        /* Schiacciato verticalmente */
+        filter: brightness(0.5) saturate(2);
+        /* Scuro e saturo */
+    }
+
+    51% {
+        transform: scale(1) translate(0, 0);
+        filter: none;
+    }
+
+    /* FASE 5: Calma con leggero tremolio */
+    60% {
+        transform: translate(3px, 0);
+    }
+
+    62% {
+        transform: translate(-3px, 0);
+    }
+
+    75% {
+        transform: translate(0, 2px);
+    }
+
+    /* FASE 6: GLITCH FINALE (Vibrazione rapida) */
+    88% {
+        transform: translate(5px, -5px);
+    }
+
+    90% {
+        transform: translate(-5px, 5px) skewX(10deg);
+        filter: invert(1);
+    }
+
+    92% {
+        transform: translate(5px, 5px);
+        filter: none;
+    }
+
+    94% {
+        transform: translate(-5px, -5px);
+    }
+}

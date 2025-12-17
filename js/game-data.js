@@ -181,7 +181,8 @@ const gameData = {
                 hasSnow: true,
                 specialMusic: 'sound-snowball',
                 bodyClass: 'theme-christmas',
-                goldenBugImg: 'https://pics.clipartpng.com/midle/Gift_Box_in_Red_PNG_Clipart-276.png'
+                goldenBugIcon: 'fa-gift',
+                goldenBugColor: '#e74c3c' // Opzionale: Pacco rosso
             }
         },
         gladiator: {

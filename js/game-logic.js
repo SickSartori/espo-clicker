@@ -1149,20 +1149,52 @@ function scheduleGoldenBug() {
     goldenBugTimer = setTimeout(spawnGoldenBug, nextSpawnTime);
 }
 
+
+
 function spawnGoldenBug() {
+    // 1. Reset
     goldenBug.style.display = 'none';
-    let bugWidth = goldenBug.style.width;
-    let bugHeight = goldenBug.style.height;
-    const offsetAreaAnimation = 40;
-    const rect = document.getElementById('center-column').getBoundingClientRect();
-    const spawnWidth = rect.width;
-    const spawnHeight = rect.height;
-    const x = Math.random() * (spawnWidth - (bugWidth / 2));
-    const y = Math.random() * (spawnHeight - (bugHeight / 2));
-    goldenBug.style.left = `${rect.left + x - offsetAreaAnimation}px`;
-    goldenBug.style.top = `${rect.top + y - offsetAreaAnimation}px`;
-    goldenBug.style.display = 'block';
-    setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
+
+    // 2. Dimensioni Bug
+    const bugWidth = goldenBug.offsetWidth || 60;
+    const bugHeight = goldenBug.offsetHeight || 60;
+
+    // Margine per evitare che l'animazione 'wobble' tagli il bug ai bordi
+    const padding = 20;
+
+    // 3. TARGET: Usiamo 'clicker-section' invece di 'center-column'
+    const targetArea = document.getElementById('clicker-section');
+    if (!targetArea) return;
+
+    // Ottieniamo le coordinate e dimensioni dell'area target
+    const rect = targetArea.getBoundingClientRect();
+
+    // 4. Calcolo coordinate RELATIVE all'area (X, Y locali)
+    // Sottraiamo bugWidth e padding per restare dentro
+    const maxX = rect.width - bugWidth - (padding * 2);
+    const maxY = rect.height - bugHeight - (padding * 2);
+
+    // Genera posizione casuale sicura
+    const randomX = Math.random() * maxX;
+    const randomY = Math.random() * maxY;
+
+    // 5. Conversione in coordinate ASSOLUTE (per il body)
+    // Sommiamo la posizione dell'area + lo scroll della pagina + il padding + la posizione random
+    const finalLeft = rect.left + window.scrollX + padding + randomX;
+    const finalTop = rect.top + window.scrollY + padding + randomY;
+
+    // 6. Applica posizione
+    goldenBug.style.left = `${finalLeft}px`;
+    goldenBug.style.top = `${finalTop}px`;
+
+    // 7. Mostra (Flex per centrare l'icona)
+    goldenBug.style.display = 'flex';
+
+    // 8. Timer Sparizione
+    setTimeout(() => {
+        goldenBug.style.display = 'none';
+    }, 10000); // 10 secondi
+
     scheduleGoldenBug();
     return true;
 }

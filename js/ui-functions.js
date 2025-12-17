@@ -1126,8 +1126,6 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     // Riferimento alla musica di background standard
     const bgMusic = document.getElementById('sound-bg-music');
-
-    const goldenBugImg = document.querySelector('#golden-bug img');
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
 
     const theme = skinData.themeConfig || {}; // Carica config o usa vuoto
@@ -1147,10 +1145,21 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
             snowContainer.style.display = 'none';
         }
     }
+    const goldenBugIcon = document.querySelector('#golden-bug i');
 
-    // 3. Gestione Immagine Golden Bug
-    if (goldenBugImg) {
-        goldenBugImg.src = theme.goldenBugImg || './assets/image/bug.webp';
+    if (goldenBugIcon) {
+        // Reset base
+        goldenBugIcon.className = 'fa-solid';
+        goldenBugIcon.style.color = ''; // Reset colore inline
+
+        if (theme.goldenBugIcon) {
+            // Caso Skin Speciale (es. Natale -> Regalo)
+            goldenBugIcon.classList.add(theme.goldenBugIcon);
+            if (theme.goldenBugColor) goldenBugIcon.style.color = theme.goldenBugColor;
+        } else {
+            // Default
+            goldenBugIcon.classList.add('fa-bug');
+        }
     }
 
     // 4. Gestione Audio Intelligente

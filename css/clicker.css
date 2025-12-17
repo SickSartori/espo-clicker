@@ -269,22 +269,44 @@
     position: absolute;
     cursor: pointer;
     z-index: 999;
+
+    /* MODIFICA: Nascosto di default all'avvio! */
     display: none;
-    transition: all 0.3s;
+
+    /* Dimensioni del contenitore */
+    width: 60px;
+    height: 60px;
+
+    /* Centriamo l'icona */
+    align-items: center;
+    justify-content: center;
+
+    transition: transform 0.2s;
+
+    /* Animazioni */
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
-    filter: drop-shadow(0 0 10px #facc15);
 }
 
-#golden-bug:hover {
+#golden-bug i {
+    font-size: 3rem;
+    /* Icona Grande */
+    color: #facc15;
+    /* Oro di base */
+
+    /* Effetto Neon Glow */
+    filter: drop-shadow(0 0 10px #facc15) drop-shadow(0 0 20px #e67e22);
+
+    /* Animazione Glitch Digitale (quella creata nel passaggio precedente) */
+    animation: cyberGlitchAnim 2s infinite linear alternate-reverse;
+}
+
+#golden-bug:hover i {
+    color: #fff;
+    /* Diventa bianco al passaggio */
+    filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #facc15);
     transform: scale(1.2);
-    filter: drop-shadow(0 0 15px #fff);
 }
 
-#golden-bug img {
-    width: 50px;
-    height: 50px;
-    animation: inherit;
-}
 
 #version-display {
     position: fixed;

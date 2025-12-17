@@ -500,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const imagesToLoad = [
             './assets/image/espo.webp',
             './assets/image/espo-click.webp',
-            './assets/image/bug.webp',
             './assets/image/favicon.webp',
             './assets/image/espo-fury.webp',
             './assets/image/espo-fury-click.webp',

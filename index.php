@@ -152,8 +152,8 @@
     </div>
 
     <div id="golden-bug" title="Un Ticket Critico! Clicca!">
-        <img src="./assets/image/bug.webp" alt="Ticket Critico!">
-    </div>  
+        <i class="fa-solid fa-bug"></i>
+    </div> 
 
     <div id="github-link-container">
         <a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
