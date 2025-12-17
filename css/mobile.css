@@ -196,7 +196,6 @@
         box-shadow: 0 2px 10px #3498db;
     }
 
-    /* 7. FIX CONTRATTO PRESTIGIO */
     .contract-modal {
         width: 95% !important;
         max-height: 85vh;
@@ -237,7 +236,6 @@
         width: 100% !important;
     }
 
-    /* 8. FIX MODALI (Z-Index sopra la navbar) */
     .modal-backdrop {
         z-index: 2100 !important;
         /* Sopra la barra (2000) */
@@ -324,29 +322,6 @@
         font-size: 0.65rem;
         opacity: 0.4;
         pointer-events: none;
-    }
-
-    .hud-stats-bar {
-        width: auto !important;
-        max-width: 85%;
-        margin: 10px auto 15px auto !important;
-        padding: 6px 20px !important;
-        gap: 20px !important;
-        border-radius: 25px !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    .hud-label {
-        font-size: 0.6rem !important;
-        margin-bottom: 2px;
-    }
-
-    .hud-value {
-        font-size: 1rem !important;
-    }
-
-    .hud-separator {
-        display: none !important;
     }
 
     #skill-crunchTime {
@@ -470,7 +445,7 @@
         display: flex !important;
         position: -webkit-sticky;
         position: sticky;
-        top: -25px;
+        top: 0px;
         z-index: 100;
 
         background-color: #14202b;
@@ -507,7 +482,7 @@
         display: flex !important;
         position: -webkit-sticky;
         position: sticky;
-        top: -25px;
+        top: 0px;
         z-index: 110;
         background-color: #14202b;
         margin-top: 0;
@@ -520,6 +495,7 @@
         width: calc(100% + 20px);
         box-sizing: border-box;
     }
+
 
     #teams-sticky-header {
         /* Mantiene la barra attaccata in alto quando scorri, ma solo per i bottoni */

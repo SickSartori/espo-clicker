@@ -168,6 +168,11 @@ body.bluescreen-active {
     gap: 8px;
 }
 
+#login-modal[style*="flex"]~#quick-mute-btn,
+#login-modal[style*="block"]~#quick-mute-btn {
+    display: none !important;
+}
+
 /* --- BOTTONE MUTE FISSO --- */
 #quick-mute-btn {
     position: fixed;

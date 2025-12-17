@@ -22,11 +22,8 @@
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
-    /* FIX: Altezza aumentata per evitare scrollbar al caricamento */
     min-height: 72px;
-    /* Aumentato da 65px */
     padding: 15px;
-    /* Padding più arioso */
 
     width: 100%;
     box-sizing: border-box;
@@ -69,18 +66,13 @@
     cursor: pointer;
     outline: none;
     transition: border-color 0.2s;
-
-    /* --- FIX ANTI-SCROLLBAR --- */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    /* Reset Stile Nativo */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
 
-    /* Freccia */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ecf0f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 15px center;
@@ -420,6 +412,22 @@
     background-color: rgba(241, 196, 15, 0.05) !important;
     transform: translateY(-1px);
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.1) !important;
+}
+
+.prestige-upgrade .buy-btn:disabled {
+    background: #2c3e50 !important;
+    /* Sfondo scuro */
+    background-image: none !important;
+    /* Rimuove il gradiente oro */
+    color: #5d6d7e !important;
+    /* Testo grigio */
+    border: 1px solid #34495e !important;
+    /* Bordo scuro */
+    box-shadow: none !important;
+    /* Niente alone */
+    cursor: not-allowed !important;
+    transform: none !important;
+    filter: none !important;
 }
 
 /* 2. Tipografia Lab */

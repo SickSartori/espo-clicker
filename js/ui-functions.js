@@ -279,10 +279,7 @@ function renderStoreSection(config) {
     }
 }
 
-// --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
-function refreshAllStores() {
-
-    // 1. NEGOZIO CLICK
+function updateClickStore() {
     renderStoreSection({
         type: 'click',
         containerId: 'click-upgrade-list',
@@ -299,12 +296,20 @@ function refreshAllStores() {
                 unlocked: isUnlocked,
                 canAfford: gameState.score >= data.cost,
                 label: "Compra",
+                // Calcolo preciso della barra di progresso
                 progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),
                 progressText: `Click: ${formatNumber(gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
             };
         },
         setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
     });
+}
+
+// --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
+function refreshAllStores() {
+
+    // 1. NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
+    updateClickStore();
 
     // 2. NEGOZIO AUTO (MIGLIORIE)
     renderStoreSection({
@@ -340,7 +345,6 @@ function refreshAllStores() {
         stateSource: gameState.prestigeUpgrades,
         cardClass: 'prestige-upgrade',
         btnClass: 'prestige-btn',
-        // NOTA: fixedOrder RIMOSSO per permettere l'ordinamento dinamico (Acquistabili -> Bloccati -> Posseduti)
         onBuy: (key) => buyPrestigeUpgrade(key),
         getStatus: (key, data, state) => {
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
@@ -921,10 +925,11 @@ function updateStoreButtons() {
     // B. Click Upgrades
     for (const key in gameState.clickUpgrades) {
         if (!gameState.clickUpgrades[key].purchased) {
-            const container = getEl(`click-upgrade-${key}`);
-            if (container) {
-                const btn = container.querySelector('.buy-btn');
-                if (btn) btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
+            const container = getEl(`click-upgrade-${key}`); // Usa ID contenitore se btn ID è ambiguo
+            // Fallback diretto al bottone se l'ID è univoco
+            const btn = getEl(`buy-${key}`);
+            if (btn && !btn.classList.contains('owned')) {
+                btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
             }
         }
     }
@@ -932,11 +937,25 @@ function updateStoreButtons() {
     // C. Enhancements
     for (const key in gameState.buildingEnhancements) {
         if (!gameState.buildingEnhancements[key].purchased) {
-            const container = getEl(`enh-upgrade-${key}`) || getEl(`enhancement-item-${key}`);
-            if (container) {
-                const btn = container.querySelector('.buy-btn');
-                if (btn) btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
+            const btn = getEl(`buy-${key}`);
+            if (btn && !btn.classList.contains('owned')) {
+                btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
             }
+        }
+    }
+    // D. Prestige / Lab
+    for (const key in gameState.prestigeUpgrades) {
+        const data = gameData.prestigeUpgrades[key];
+        const state = gameState.prestigeUpgrades[key];
+
+        // Se è già maxato o posseduto (non contato), il bottone è gestito come 'owned' dal render, lo ignoriamo
+        if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) continue;
+        if (!data.isCounted && state.purchased) continue;
+
+        const btn = getEl(`buy-${key}`);
+        if (btn && !btn.classList.contains('owned')) {
+            // Controlla Token invece di Score
+            btn.disabled = (gameState.prestigePoints < data.baseCost);
         }
     }
 }
