@@ -507,6 +507,7 @@ function updateSkinsUI() {
         'rare': 'RARA',
         'epic': 'EPICA',
         'legendary': 'LEGGENDARIA',
+        'divine': 'DIVINA',
         'christmas': 'NATALE'
     };
 
@@ -914,7 +915,7 @@ function calculateVisualBPS() {
     for (let i = 0; i < clickHistory.length; i++) {
         if (now - clickHistory[i].time < 1000) active += clickHistory[i].value;
     }
-    return cookiesPerSecond + active;
+    return bps + active;
 }
 
 function updateScoreBoard(totalBPS) {
@@ -1197,12 +1198,14 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     // Riferimento alla musica di background standard
     const bgMusic = document.getElementById('sound-bg-music');
+
+    // Lista classi da rimuovere per pulizia
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
 
-    const theme = skinData.themeConfig || {}; // Carica config o usa vuoto
+    const theme = skinData.themeConfig || {};
 
-    // 1. Gestione Classi Body (Pulizia e Applicazione)
-    document.body.classList.remove('theme-christmas'); // Rimuovi vecchie classi note
+    // 1. Gestione Classi Body (Natale)
+    document.body.classList.remove('theme-christmas');
     if (theme.bodyClass) {
         document.body.classList.add(theme.bodyClass);
     }
@@ -1216,29 +1219,24 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
             snowContainer.style.display = 'none';
         }
     }
+
+    // 3. Golden Bug Icona
     const goldenBugIcon = document.querySelector('#golden-bug i');
-
     if (goldenBugIcon) {
-        // Reset base
         goldenBugIcon.className = 'fa-solid';
-        goldenBugIcon.style.color = ''; // Reset colore inline
-
+        goldenBugIcon.style.color = '';
         if (theme.goldenBugIcon) {
-            // Caso Skin Speciale (es. Natale -> Regalo)
             goldenBugIcon.classList.add(theme.goldenBugIcon);
             if (theme.goldenBugColor) goldenBugIcon.style.color = theme.goldenBugColor;
         } else {
-            // Default
             goldenBugIcon.classList.add('fa-bug');
         }
     }
 
-    // 4. Gestione Audio Intelligente
-    // Identifica la traccia da suonare (Default: Musica Base)
+    // 4. Audio Manager (Logica esistente mantenuta)
     let targetAudio = bgMusic;
     let targetAudioId = 'sound-bg-music';
 
-    // Se la skin ha una musica speciale, usala
     if (theme.specialMusic) {
         const specialEl = document.getElementById(theme.specialMusic);
         if (specialEl) {
@@ -1247,51 +1245,42 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         }
     }
 
-    // FERMA tutto ciò che stava suonando (per evitare sovrapposizioni)
     if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
     if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
 
-    // AVVIA la nuova traccia (se non ci sono eventi bloccanti come Fury o Video)
     if (targetAudio && !window.currentActiveEvent) {
         targetAudio.loop = true;
-
-        // Recupera il volume corretto dal Mixer (Salvataggio Utente)
-        let customVol = 0.3; // Fallback di sicurezza
+        let customVol = 0.3;
         if (gameState.user.audioCustom && gameState.user.audioCustom[targetAudioId] !== undefined) {
             customVol = gameState.user.audioCustom[targetAudioId];
         }
-
-        // Applica volume calcolato
         targetAudio.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
 
-        // Play (se il volume è > 0 o se forzato dal cambio skin)
         if (forcePlayMusic || (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0)) {
-            targetAudio.play().catch(e => { /* Autoplay bloccato, normale su refresh */ });
+            targetAudio.play().catch(e => { });
         }
     }
 
-    // ... (Il resto della funzione per gestire le immagini rimane invariato) ...
-    if (photoNormal) {
-        photoNormal.src = `./assets/image/${skinData.img}`;
-        photoNormal.style.filter = 'none';
-        photoNormal.classList.remove(...bgClasses);
-        // ... switch classi bg ...
-        if (skinId === 'jesus') photoNormal.classList.add('bg-divine');
-        else if (skinData.rarity) photoNormal.classList.add(`bg-${skinData.rarity}`);
-        else if (skinId === 'christmas') photoNormal.classList.add('bg-christmas');
-        else photoNormal.classList.add('bg-common');
-    }
+    // 5. APPLICAZIONE IMMAGINI E CLASSI RARITÀ
+    // Helper interno per applicare classi
+    const applyClasses = (element, imgSrc) => {
+        if (!element) return;
+        element.src = `./assets/image/${imgSrc}`;
+        element.style.filter = 'none';
 
-    if (photoClicked) {
-        photoClicked.src = `./assets/image/${skinData.imgClick}`;
-        photoClicked.style.filter = 'none';
-        photoClicked.classList.remove(...bgClasses);
-        // ... switch classi bg ...
-        if (skinId === 'jesus') photoClicked.classList.add('bg-divine');
-        else if (skinData.rarity) photoClicked.classList.add(`bg-${skinData.rarity}`);
-        else if (skinId === 'christmas') photoClicked.classList.add('bg-christmas');
-        else photoClicked.classList.add('bg-common');
-    }
+        // Rimuovi vecchie classi sfondo
+        element.classList.remove(...bgClasses);
+
+        // Applica nuova classe in base alla rarità nel data
+        if (skinData.rarity) {
+            element.classList.add(`bg-${skinData.rarity}`);
+        } else {
+            element.classList.add('bg-common');
+        }
+    };
+
+    applyClasses(photoNormal, skinData.img);
+    applyClasses(photoClicked, skinData.imgClick);
 }
 
 
@@ -1410,7 +1399,7 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Produzione (BPS)</span>
-                        <span class="stat-value">${formatNumber(cookiesPerSecond)}</span>
+                        <span class="stat-value">${formatNumber(bps)}</span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label">Valore Click</span>

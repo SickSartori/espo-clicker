@@ -1,29 +1,28 @@
 // --------- 1. DATI E STATO DEL GIOCO (Data-Driven) ---------
 
 // Variabili Globali
-let cookiesPerSecond = 0;
-let prestigeBonus = 1;
-let clickCPSBonus = 1;
-let isBluescreenActive = false;
-let bluescreenMultiplier = 1;
-let crunchTimeMultiplier = 1;
-let crunchTimeEndTime = 0;
-let crunchTimeCooldownEnd = 0;
+var bps = 0;
+var prestigeBonus = 1;
+var clickCPSBonus = 1;
+var isBluescreenActive = false;
+var bluescreenMultiplier = 1;
+var crunchTimeMultiplier = 1;
+var crunchTimeEndTime = 0;
+var crunchTimeCooldownEnd = 0;
 var clickHistory = [];
-let achievementsBPSBonus = 0;
+var achievementsBPSBonus = 0;
 
 // --- NUOVI GLOBALS PER SISTEMA EFFETTI ---
-let goldenBugChance = 0.001;
-let goldenBugSpawnTime = 60000 + Math.random() * 120000;
-let goldenBugMult = 1; // Moltiplicatore valore Golden Bug
-window.gameFlags = {}; // Contenitore per i flag (es. 'bionicHand')
+window.goldenBugChance = 0.001;
+window.goldenBugSpawnTime = 60000;
+window.goldenBugMult = 1;
+window.gameFlags = {};
 
-let costScalingBase = 1.20;      // Il valore base dell'aumento prezzi
-let costScalingReduction = 0;    // Quanto riduciamo questo valore
-let prestigeSynergyFactor = 0;   // Il fattore di sinergia prestigio
+window.costScalingBase = 1.20;
+window.costScalingReduction = 0;
+window.prestigeSynergyFactor = 0;
 // ------------------------------------------
 
-// Definizione helper stagionale
 function isChristmasSeason() {
     const now = new Date();
     const month = now.getMonth();
@@ -218,13 +217,14 @@ const gameData = {
             rarity: "rare",
             unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'"
         },
+        // --- EPICHE (Mid Game / Prestige) ---
         king: {
             name: "Espo of Empires",
             desc: "Il Re dei Bug.",
             img: "espofempires.webp",
             imgClick: "espofempires-click.webp",
             rarity: "epic",
-            cost: 10
+            cost: 10 // Richiede prestigio
         },
         waifu: {
             name: "Espowaifu",
@@ -232,23 +232,16 @@ const gameData = {
             img: "espowaifu.webp",
             imgClick: "espowaifu-click.webp",
             rarity: "epic",
-            cost: 15
+            cost: 15 // Richiede prestigio avanzato
         },
-        jesus: {
-            name: "Gespo",
-            desc: "Il salvatore del database.",
-            img: "gespo.webp",
-            imgClick: "gespo-click.webp",
-            rarity: "epic",
-            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'"
-        },
+        // --- LEGGENDARIE (Late Game - Difficili) ---
         rick: {
             name: "Rick Espley",
             desc: "Never gonna give you up.",
             img: "rick-espley.webp",
             imgClick: "rick-espley-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 10.000 click manuali."
+            unlockHint: "Raggiungi 25.000 click manuali." // Aumentato da 10k
         },
         ricardo: {
             name: "Ricardo Milespo",
@@ -256,7 +249,7 @@ const gameData = {
             img: "ricardo-milespo.webp",
             imgClick: "ricardo-milespo-click.webp",
             rarity: "legendary",
-            unlockHint: "Sblocca l'obiettivo 'White Hat'"
+            unlockHint: "Sblocca l'obiettivo 'White Hat' (Upgrade Costoso)"
         },
         dictator: {
             name: "Adolf Espler",
@@ -264,7 +257,16 @@ const gameData = {
             img: "adolf-espler.webp",
             imgClick: "adolf-espler-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 20.000 click manuali."
+            unlockHint: "Raggiungi 50.000 click manuali." // Aumentato da 20k
+        },
+        // --- DIVINE (End Game - Estreme) ---
+        jesus: {
+            name: "Gespo",
+            desc: "Il salvatore del database.",
+            img: "gespo.webp",
+            imgClick: "gespo-click.webp",
+            rarity: "divine", // NUOVA RARITÀ
+            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse' (1 Miliardo)"
         }
     },
 
@@ -361,7 +363,7 @@ const gameData = {
             cost: 25000,
             requiredClicks: 1500,
             clickIncrease: 0,
-            effects: [{ trigger: 'immediate', type: 'mult_state', stat: 'baseClickValue', val: 2 }]
+            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'clickGlobalMult', val: 2 }]
         },
         manoBionica: {
             name: 'Mano Bionica',
@@ -371,27 +373,33 @@ const gameData = {
             clickIncrease: 0,
             effects: [{ trigger: 'passive', type: 'set_flag', flag: 'bionicHand', val: true }]
         },
-        hacking: {
-            name: 'Hacking Etico',
-            desc: 'Raddoppia la probabilità di trovare Ticket Critici.',
-            cost: 100000,
-            requiredClicks: 5000,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugChance', val: 2 }]
-        },
+        aiClick: { name: 'Intelligenza Artificiale', desc: 'Aggiunge +500 al valore di ogni click.', cost: 500000, clickIncrease: 500, requiredClicks: 7500 },
+
         clickAutomatico: {
             name: 'Click Automatico',
             desc: 'Aggiunge BPS pari al numero di Assistenti QA.',
-            cost: 250000,
+            cost: 1000000, // Aumentato un po'
             requiredClicks: 10000,
             clickIncrease: 0,
             effects: [{ trigger: 'passive', type: 'set_flag', flag: 'autoClickQA', val: true }]
         },
+
+        // --- UPGRADE COSTOSI PER SBLOCCARE LE SKIN ---
+
+        hacking: {
+            name: 'Hacking Etico',
+            desc: 'Raddoppia la probabilità di trovare Ticket Critici.',
+            cost: 10000000, // AUMENTATO A 10 MILIONI (Per Leggendaria Ricardo)
+            requiredClicks: 15000,
+            clickIncrease: 0,
+            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugChance', val: 2 }]
+        },
+
         clickDivino: {
             name: 'Click Divino',
             desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
-            cost: 1000000,
-            requiredClicks: 50000,
+            cost: 1000000000, // AUMENTATO A 1 MILIARDO (Per Divina Gespo)
+            requiredClicks: 100000,
             clickIncrease: 0,
             effects: [{ trigger: 'passive', type: 'set_flag', flag: 'divineClick', val: true }]
         }
@@ -456,8 +464,6 @@ const gameData = {
             furyImage: 'espo-fury.webp',
             furyClickImage: 'espo-fury-click.webp'
         },
-
-        // --- PRESTIGE CON EFFETTI ---
         bugBounty: {
             name: 'Bug Bounty',
             desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.',
@@ -1010,8 +1016,8 @@ const gameData = {
         bluescreen: {
             name: 'System Error 404',
             type: 'css_mode',
-            cssClass: 'bluescreen-active', // Classe CSS classica (Sfondo Blu)
-            audioId: 'sound-bluescreen',   // Suono Classico
+            cssClass: 'bluescreen-active',
+            audioId: 'sound-bluescreen',
             duration: 30000,
             minMult: 2,
             maxMult: 5,
@@ -1021,8 +1027,8 @@ const gameData = {
         matrix: {
             name: 'Matrix Glitch',
             type: 'css_mode',
-            cssClass: 'matrix-active',     // Nuova classe CSS (Pioggia Verde)
-            audioId: 'sound-matrix',       // Suono Techno
+            cssClass: 'matrix-active',
+            audioId: 'sound-matrix',
             duration: 30000,
             minMult: 2,
             maxMult: 5,
@@ -1058,13 +1064,7 @@ function getInitialGameState() {
         prestigeUpgrades: {},
         buildingEnhancements: {},
         achievements: {},
-        user: {
-            username: 'Giocatore',
-            masterVolume: 0.8,
-            sfxVolume: 1.0,
-            musicVolume: 0.5,
-            audioCustom: {}
-        }
+        user: { username: 'Giocatore', masterVolume: 0.8, sfxVolume: 1.0, musicVolume: 0.5, audioCustom: {} }
     };
 
     for (const key in gameData.teams) state.teams[key] = { count: 0 };
@@ -1097,14 +1097,13 @@ function resetGameToDefault() {
     gameState.skins = JSON.parse(JSON.stringify(freshState.skins));
     gameState.user = JSON.parse(JSON.stringify(freshState.user));
 
-    cookiesPerSecond = 0;
+    bps = 0;
     prestigeBonus = 1;
     clickCPSBonus = 1;
     clickHistory = [];
 
-    // Reset Globals
-    goldenBugChance = 0.001;
-    goldenBugSpawnTime = 60000 + Math.random() * 120000;
-    goldenBugMult = 1;
+    window.goldenBugChance = 0.001;
+    window.goldenBugSpawnTime = 60000;
+    window.goldenBugMult = 1;
     window.gameFlags = {};
 }

@@ -5,7 +5,7 @@ $data = getJsonInput();
 $user = authenticate($conn, $data['username'], $data['password']);
 $newUsername = trim($data['newUsername']);
 
-if (strlen($newUsername) < 3 || strlen($newUsername) > 20) {
+if (mb_strlen($newUsername, 'UTF-8') < 3 || mb_strlen($newUsername, 'UTF-8') > 20) {
     echo json_encode(["status" => "error", "message" => "Nome non valido (3-20 caratteri)."]);
     exit;
 }

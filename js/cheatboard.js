@@ -7,9 +7,9 @@
 
     window.recalculateCPS = function () {
         originalRecalculateCPS();
-        if (typeof cookiesPerSecond !== 'undefined') {
-            cookiesPerSecond += window.cheatBPSBonus;
-            if (cookiesPerSecond < 0) cookiesPerSecond = 0;
+        if (typeof bps !== 'undefined') {
+            bps += window.cheatBPSBonus;
+            if (bps < 0) bps = 0;
         }
     };
 
@@ -330,9 +330,9 @@
 
     // Salto Temporale
     document.getElementById('btn-time-warp').addEventListener('click', () => {
-        if (cookiesPerSecond <= 0) { toast("BPS è 0! Impossibile viaggiare."); return; }
+        if (bps <= 0) { toast("BPS è 0! Impossibile viaggiare."); return; }
         const seconds = 3600;
-        const gain = cookiesPerSecond * seconds;
+        const gain = bps * seconds;
         gameState.score += gain;
         gameState.totalScore += gain;
         gameState.lifetimeScore += gain;

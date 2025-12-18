@@ -119,13 +119,13 @@ function applyEffect(effect, level = 1) {
 // Ricalcola tutti gli effetti passivi
 function reapplyAllEffects() {
     // 1. Reset Totale
-    goldenBugChance = 0.001;
-    goldenBugMult = 1;
-    goldenBugSpawnTime = 60000;
-
-    // Reset Nuove Statistiche
-    costScalingReduction = 0;
-    prestigeSynergyFactor = 0;
+    window.goldenBugChance = 0.001;
+    window.goldenBugMult = 1;
+    window.goldenBugSpawnTime = 60000;
+    window.clickGlobalMult = 1;
+    window.clickCPSBonus = 1;
+    window.costScalingReduction = 0;
+    window.prestigeSynergyFactor = 0;
 
     window.gameFlags = {};
 
@@ -473,7 +473,7 @@ function recalculateCPS() {
         baseCPS += teamBPS;
     }
 
-    cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
+    bps = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
 }
 
 // 1. CRUNCH TIME
@@ -632,7 +632,7 @@ const EventHandlers = {
             video.style.cursor = 'pointer';
             const videoClickHandler = (e) => {
                 const syntheticEvent = { detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: video };
-                clickCookie(syntheticEvent);
+                resolveBug(syntheticEvent);
                 video.style.transform = 'scale(0.98)';
                 setTimeout(() => video.style.transform = 'scale(1)', 50);
             };
@@ -826,28 +826,27 @@ function stopBluescreenEffect() {
 // --- CALCOLO CENTRALIZZATO DEL VALORE CLICK ---
 function calculateClickValue() {
     // 1. Valore Base (Base * Moltiplicatori Globali)
-    // FIX: Aggiunto crunchTimeMultiplier qui sotto!
-    let val = gameState.baseClickValue * prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier;
+    let val = gameState.baseClickValue * (window.clickGlobalMult || 1) * prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier;
 
     // 2. Bonus Mano Bionica (Dipende dai BPS)
     if (window.gameFlags.bionicHand) {
         let percent = 0.01;
         if (window.gameFlags.divineClick) percent = 0.02;
 
-        // Nota: cookiesPerSecond include già TUTTI i moltiplicatori (incluso crunchTimeMultiplier),
+        // Nota: bps include già TUTTI i moltiplicatori (incluso crunchTimeMultiplier),
         // quindi la mano bionica beneficerà automaticamente del x7 anche senza modifiche qui.
-        const effectiveBPS = cookiesPerSecond / (prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier);
+        const effectiveBPS = bps / (prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier);
 
-        // Se vuoi che la mano bionica "esploda" durante la Fury, usa direttamente cookiesPerSecond
+        // Se vuoi che la mano bionica "esploda" durante la Fury, usa direttamente bps
         // Altrimenti usa effectiveBPS per un calcolo più bilanciato.
         // Dato che è una "Furia", consiglio di usare il BPS pieno:
-        val += (cookiesPerSecond * percent);
+        val += (bps * percent);
     }
 
     return val;
 }
 
-function clickCookie(event) {
+function resolveBug(event) {
     if (event.detail === 0) return;
     if (clickerButton) clickerButton.blur();
 
@@ -1085,7 +1084,7 @@ async function executePrestige() {
     gameState = newState;
 
     // Reset Variabili Runtime
-    cookiesPerSecond = 0;
+    bps = 0;
     clickHistory = [];
     isBluescreenActive = false;
     bluescreenMultiplier = 1;
@@ -1202,28 +1201,23 @@ function spawnGoldenBug() {
     // 1. Reset
     goldenBug.style.display = 'none';
 
-    // 2. Dimensioni Bug
-    const bugWidth = goldenBug.offsetWidth || 60;
-    const bugHeight = goldenBug.offsetHeight || 60;
+    const bugWidth = 60;
+    const bugHeight = 60;
 
-    // Margine per evitare che l'animazione 'wobble' tagli il bug ai bordi
     const padding = 20;
 
-    // 3. TARGET: Usiamo 'clicker-section' invece di 'center-column'
     const targetArea = document.getElementById('clicker-section');
     if (!targetArea) return;
 
-    // Ottieniamo le coordinate e dimensioni dell'area target
     const rect = targetArea.getBoundingClientRect();
 
-    // 4. Calcolo coordinate RELATIVE all'area (X, Y locali)
-    // Sottraiamo bugWidth e padding per restare dentro
+    // Calcolo con dimensioni corrette
     const maxX = rect.width - bugWidth - (padding * 2);
     const maxY = rect.height - bugHeight - (padding * 2);
 
-    // Genera posizione casuale sicura
-    const randomX = Math.random() * maxX;
-    const randomY = Math.random() * maxY;
+    // Evita valori negativi se lo schermo è minuscolo
+    const randomX = Math.max(0, Math.random() * maxX);
+    const randomY = Math.max(0, Math.random() * maxY);
 
     // 5. Conversione in coordinate ASSOLUTE (per il body)
     // Sommiamo la posizione dell'area + lo scroll della pagina + il padding + la posizione random
@@ -1254,7 +1248,7 @@ function clickGoldenBug() {
     const currentClickValue = calculateClickValue();
 
     // Bonus: 30 secondi di BPS + 10 volte il click + 10 fisso
-    let bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
+    let bonus = (bps * 30) + (currentClickValue * 10) + 10;
 
     // [GENERICO] Moltiplicatore Golden Bug
     bonus *= goldenBugMult;

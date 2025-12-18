@@ -43,6 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function saveGame() {
         if (gameState.isDeleting) return;
 
+        // Check anti-corruzione
+        if (isNaN(gameState.score)) gameState.score = 0;
+        if (isNaN(gameState.totalScore)) gameState.totalScore = 0;
+
         // Aggiorna timestamp
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
@@ -100,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
 
             // Guadagno Potenziale
-            const rawEarned = effectiveSeconds * cookiesPerSecond;
+            const rawEarned = effectiveSeconds * bps;
             const realEarned = rawEarned * efficiency;
 
             if (realEarned > 0) {
@@ -358,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
 
         // 1. Calcolo Score (Veloce - Ogni frame)
-        const scoreToAdd = cookiesPerSecond * deltaTime;
+        const scoreToAdd = bps * deltaTime;
         gameState.score += scoreToAdd;
         gameState.totalScore += scoreToAdd;
         gameState.lifetimeScore += scoreToAdd;
@@ -442,37 +446,42 @@ document.addEventListener('DOMContentLoaded', () => {
         // ------------------------------------------
     }
     // --------- 11. INIZIALIZZAZIONE ---------
+    let gameLoopInterval = null;
+    let uiLoopInterval = null;
+    let saveInterval = null;
+    let leaderboardInterval = null;
+
     function startGameRoutines() {
+        // 1. STOP preventivo: Se esistono già intervalli attivi, cancellali
+        if (gameLoopInterval) clearInterval(gameLoopInterval);
+        if (uiLoopInterval) clearInterval(uiLoopInterval);
+        if (saveInterval) clearInterval(saveInterval);
+        if (leaderboardInterval) clearInterval(leaderboardInterval);
+
         // Volume audio iniziale
         document.querySelectorAll('audio').forEach(audio => {
             audio.volume = gameState.user.masterVolume;
         });
 
-        // 1. LOGICA (30 FPS) - Usa il tuo nuovo gameLoop pulito
-        setInterval(gameLoop, 33);
+        // 2. LOGICA (30 FPS)
+        gameLoopInterval = setInterval(gameLoop, 33);
 
-        // 2. GRAFICA (10 FPS) - Qui metti quello che hai tolto
-        setInterval(() => {
+        // 3. GRAFICA (10 FPS)
+        uiLoopInterval = setInterval(() => {
             updateUI();
+            if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 
-            if (typeof updatePrestigeVisuals === 'function') {
-                updatePrestigeVisuals();
-            }
-
-            // Aggiorna statistiche modale solo se aperto
             const statsModal = document.getElementById('stats-modal');
             if (statsModal && statsModal.style.display === 'flex') {
-                if (typeof updateStatsUI === 'function') {
-                    updateStatsUI();
-                }
+                if (typeof updateStatsUI === 'function') updateStatsUI();
             }
-        }, 100); // 100ms = 10 volte al secondo, fluido e leggero
+        }, 100);
 
         // Auto-save (ogni 30s)
-        setInterval(saveGame, 30000);
+        saveInterval = setInterval(saveGame, 30000);
 
-        // Classifica (ogni 30s) - Nota: rimosso score/prestige dai parametri come discusso per sicurezza
-        setInterval(() => {
+        // Classifica (ogni 30s)
+        leaderboardInterval = setInterval(() => {
             submitScoreToLeaderboard(gameState.user.username);
         }, 30000);
 
@@ -480,7 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Salvataggio alla chiusura
         window.addEventListener('beforeunload', () => { saveGame(); });
+
+        console.log("Cicli di gioco avviati correttamente.");
     }
+
     // Funzione universale per precaricare TUTTO (Immagini, Audio, Video)
     function preloadAllAssets(onProgress) {
         const promises = [];
@@ -817,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
             clickerButton.addEventListener('click', (e) => {
                 tryStart();
-                clickCookie(e);
+                resolveBug(e);
             });
         }
 
