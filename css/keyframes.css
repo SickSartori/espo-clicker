@@ -504,3 +504,26 @@
         transform: translate(-5px, -5px);
     }
 }
+
+@keyframes matrix-pulse-glow {
+    0% {
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.1);
+        border-color: rgba(0, 255, 0, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 0 40px rgba(0, 255, 0, 0.8), inset 0 0 30px rgba(0, 255, 0, 0.4);
+        border-color: #0f0;
+    }
+}
+
+/* 2. Linee di Scansione CRT (Effetto Monitor Vecchio) */
+@keyframes scanline-scroll {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 0 100%;
+    }
+}

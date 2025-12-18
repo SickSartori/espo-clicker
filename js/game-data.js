@@ -54,7 +54,7 @@ const gameData = {
             'snowball': {
                 id: 'sound-snowball',
                 file: 'nonsnowball.mp3',
-                name: 'Loop Neve',
+                name: 'Natale',
                 type: 'music',
                 category: 'ambiente',
                 loop: true,
@@ -68,6 +68,15 @@ const gameData = {
                 category: 'ambiente',
                 loop: true,
                 defaultVol: 0.3
+            },
+            'matrix': {
+                id: 'sound-matrix',
+                file: 'matrix.mp3',
+                name: 'Matrix Theme',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.4
             },
             'fury-theme': {
                 id: 'sound-fury-music',
@@ -1000,13 +1009,24 @@ const gameData = {
         },
         bluescreen: {
             name: 'System Error 404',
-            type: 'css_mode',       // Tipo diverso: non è un video
-            cssClass: 'bluescreen-active', // La classe da mettere al body
-            audioId: 'sound-bluescreen',
+            type: 'css_mode',
+            cssClass: 'bluescreen-active', // Classe CSS classica (Sfondo Blu)
+            audioId: 'sound-bluescreen',   // Suono Classico
             duration: 30000,
             minMult: 2,
             maxMult: 5,
             toast: "ERRORE DI SISTEMA! x{mult}!",
+            toastType: "error"
+        },
+        matrix: {
+            name: 'Matrix Glitch',
+            type: 'css_mode',
+            cssClass: 'matrix-active',     // Nuova classe CSS (Pioggia Verde)
+            audioId: 'sound-matrix',       // Suono Techno
+            duration: 30000,
+            minMult: 2,
+            maxMult: 5,
+            toast: "SYSTEM HACKED! x{mult}!",
             toastType: "error"
         }
     },

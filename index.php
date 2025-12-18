@@ -22,10 +22,8 @@
     <link rel="icon" type="image/png" href="./assets/image/favicon.webp">
 </head>
 <body>
-    <video id="rick-roll-video" style="display: none;" playsinline preload="none" data-src="./assets/video/rick-espley-video.mp4"></video>
-    <video id="ricardo-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
-    <video id="ricardo-metal-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
-    <video id="ricardo-dota-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
+    
+    <canvas id="matrix-canvas"></canvas>
     <div id="game-loader">
         <div class="loader-content">
             <div class="loader-spinner"></div>
@@ -163,6 +161,11 @@
     
     <div id="crunch-overlay"></div>
     <div id="fire-particles-container"></div>
+
+    <video id="rick-roll-video" style="display: none;" playsinline preload="none" data-src="./assets/video/rick-espley-video.mp4"></video>
+    <video id="ricardo-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
+    <video id="ricardo-metal-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
+    <video id="ricardo-dota-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>

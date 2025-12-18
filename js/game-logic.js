@@ -239,6 +239,7 @@ const AudioManager = {
         const snowAudio = document.getElementById('sound-snowball');
         const furyMusic = document.getElementById('sound-fury-music');
         const blueAudio = document.getElementById('sound-bluescreen');
+        const matrixAudio = document.getElementById('sound-matrix');
 
         // Helper per applicare volume
         const setVol = (el, customId) => {
@@ -252,7 +253,7 @@ const AudioManager = {
         setVol(snowAudio, 'sound-snowball');
         setVol(furyMusic, 'sound-fury-music');
         setVol(blueAudio, 'sound-bluescreen');
-
+        setVol(matrixAudio, 'sound-matrix');
         // 2. Logica Priorità Musica (Chi suona?)
         // Se c'è un evento attivo (Mixer o altro), non interferire troppo
         if (window.currentActiveEvent === 'Audio Mixer') return;
@@ -647,14 +648,25 @@ const EventHandlers = {
     },
 
     css_mode: (config, eventKey) => {
-        // === LOGICA CSS (404 / Bluescreen) ===
+        // === LOGICA CSS (404 / Bluescreen / Matrix) ===
         document.body.classList.add(config.cssClass);
+
+        // SE È L'EVENTO MATRIX: Avvia Canvas e Cambia Skin
+        if (config.cssClass === 'matrix-active') {
+            if (typeof startMatrixEffect === 'function') startMatrixEffect();
+
+            // --- CAMBIO SKIN TEMPORANEO ---
+            const photoNormal = document.getElementById('manager-photo-normal');
+            const photoClicked = document.getElementById('manager-photo-clicked');
+            if (photoNormal) photoNormal.src = './assets/image/espo-matrix.webp';
+            if (photoClicked) photoClicked.src = './assets/image/espo-matrix-click.webp';
+        }
 
         const snowAudio = document.getElementById('sound-snowball');
 
         // Gestione Audio Speciale (Natale vs Normale)
         if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
-            // Glitch Natalizio
+            // Glitch Natalizio (Solo per 404/Bluescreen, non Matrix)
             if (snowAudio) {
                 snowAudio.play();
                 if (audioGlitchInterval) clearInterval(audioGlitchInterval);
@@ -727,7 +739,7 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
 
 function triggerBluescreen(multiplier) {
-    // 1. Logica Skins Speciali (Dispatcher)
+    // 1. Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
     if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
         return triggerGameEvent('rickRoll');
     }
@@ -735,44 +747,79 @@ function triggerBluescreen(multiplier) {
         return triggerGameEvent('ricardo');
     }
 
-    return triggerGameEvent('bluescreen', multiplier);
+    // 2. Scelta Casuale: 50% Blue Screen / 50% Matrix
+    const eventType = Math.random() < 0.5 ? 'bluescreen' : 'matrix';
+
+    // 3. Avvia l'evento scelto
+    return triggerGameEvent(eventType, multiplier);
 }
 
 function stopBluescreenEffect() {
+    // 1. Reset Variabili di Stato
     isBluescreenActive = false;
     bluescreenMultiplier = 1;
+
+    // 2. Rimuovi TUTTE le classi CSS degli eventi
     document.body.classList.remove('bluescreen-active');
+    document.body.classList.remove('matrix-active');
     document.body.classList.remove('rick-rolling');
+
+    // 3. Ferma l'effetto Matrix Canvas
+    if (typeof stopMatrixEffect === 'function') {
+        stopMatrixEffect();
+    }
+
+    // 4. Nascondi display moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) emDisplay.style.display = 'none';
+
+    // 5. Ricalcola BPS
     recalculateCPS();
+
+    // 6. STOP AUDIO & VIDEO
     try {
-        const soundBluescreen = document.getElementById('sound-bluescreen');
-        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
+        const soundBlue = document.getElementById('sound-bluescreen');
+        const soundMatrix = document.getElementById('sound-matrix');
         const rickVideo = document.getElementById('rick-roll-video');
+
+        if (soundBlue) { soundBlue.pause(); soundBlue.currentTime = 0; }
+        if (soundMatrix) { soundMatrix.pause(); soundMatrix.currentTime = 0; }
         if (rickVideo) { rickVideo.pause(); rickVideo.style.display = 'none'; }
     } catch (e) { }
+
+    // 7. Pulizia Glitch Audio
     if (audioGlitchInterval) {
         clearInterval(audioGlitchInterval);
         audioGlitchInterval = null;
     }
+
+    // --- 8. RIPRISTINO SKIN ORIGINALE (NUOVO) ---
+    // Riporta l'immagine a quella equipaggiata nel guardaroba
+    if (typeof applySkinVisuals === 'function') {
+        applySkinVisuals(gameState.skins.current);
+    }
+
+    // 9. RIPRISTINO MUSICA AMBIENTE
     const snowAudio = document.getElementById('sound-snowball');
     const bgMusic = document.getElementById('sound-bg-music');
     const masterVol = gameState.user.masterVolume;
+
     if (masterVol > 0) {
         if (gameState.skins.current === 'christmas') {
             if (snowAudio) {
                 snowAudio.playbackRate = 1.0;
                 snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
-                if (snowAudio.paused) snowAudio.play().catch(e => console.log("Attesa interazione per riavvio neve"));
+                if (snowAudio.paused) snowAudio.play().catch(e => { });
             }
         } else {
             if (bgMusic) {
-                setBgMusicVolume();
-                if (bgMusic.paused) bgMusic.play().catch(e => console.log("Attesa interazione per riavvio musica"));
+                if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+                else if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                if (bgMusic.paused) bgMusic.play().catch(e => { });
             }
         }
     }
+
     clearActiveEvent();
 }
 

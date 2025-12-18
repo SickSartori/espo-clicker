@@ -60,6 +60,77 @@ function formatTime(totalSeconds) {
     return timeString;
 }
 
+
+let matrixInterval = null;
+
+function startMatrixEffect() {
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Adatta il canvas a tutto lo schermo
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Caratteri Matrix (Katakana + Numeri + Lettere)
+    const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+    const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const nums = '0123456789';
+    const alphabet = katakana + latin + nums;
+
+    const fontSize = 16;
+    const columns = canvas.width / fontSize; // Numero di colonne
+
+    const drops = [];
+    // Inizializza le gocce (tutte partono da y=1)
+    for (let x = 0; x < columns; x++) {
+        drops[x] = 1;
+    }
+
+    const draw = () => {
+        // Sfondo nero semitrasparente per creare l'effetto scia
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#0F0'; // Verde Matrix
+        ctx.font = fontSize + 'px monospace';
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            // Reset casuale della goccia o loop
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
+                drops[i] = 0;
+
+            // Incrementa Y
+            drops[i]++;
+        }
+    };
+
+    // Loop a 30 FPS
+    if (matrixInterval) clearInterval(matrixInterval);
+    matrixInterval = setInterval(draw, 33);
+
+    // Gestione Resize
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+}
+
+function stopMatrixEffect() {
+    if (matrixInterval) {
+        clearInterval(matrixInterval);
+        matrixInterval = null;
+    }
+    // Pulisci il canvas (opzionale, ma pulito)
+    const canvas = document.getElementById('matrix-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
 // --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
 function renderStoreSection(config) {
     const list = document.getElementById(config.containerId);

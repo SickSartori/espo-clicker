@@ -3,7 +3,6 @@
     window.cheatBPSBonus = 0;
 
     // --- 1. Hook nella Logica di Gioco ---
-    // Intercetta il calcolo del BPS per aggiungere il bonus cheat
     const originalRecalculateCPS = window.recalculateCPS || function () { };
 
     window.recalculateCPS = function () {
@@ -23,7 +22,7 @@
             left: 0;
             width: 350px;
             height: 100vh;
-            background-color: rgba(10, 10, 10, 0.95); /* Nero profondo semitrasparente */
+            background-color: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(10px);
             border-right: 1px solid #333;
             box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6);
@@ -133,7 +132,7 @@
             display: flex; 
             gap: 10px; 
             align-items: center;
-            width: 100%; /* Occupa tutto lo spazio */
+            width: 100%;
         }
         
         /* --- INPUT --- */
@@ -147,11 +146,9 @@
             font-size: 1.1rem;
             text-align: right;
             font-weight: bold;
-            height: 40px; /* Altezza fissa uniforme */
-            
-            /* FLEX: 1 qui è importante per bilanciare input e bottoni */
+            height: 40px;
             flex: 1; 
-            min-width: 0; /* Previene overflow */
+            min-width: 0;
         }
         
         .cheat-input:focus { 
@@ -173,10 +170,8 @@
             text-transform: uppercase;
             white-space: nowrap;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            height: 40px; /* Stessa altezza degli input */
+            height: 40px;
             transition: all 0.1s;
-            
-            /* LA MODIFICA CHIAVE PER DESKTOP: */
             flex: 1; 
         }
         
@@ -193,41 +188,18 @@
         .cheat-btn.gold { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
         .cheat-btn.gold:hover { background: rgba(241, 196, 15, 0.15); }
 
-        /* Scrollbar sottile */
+        .cheat-btn.matrix { border-color: #0f0; color: #0f0; background: rgba(0, 255, 0, 0.05); }
+        .cheat-btn.matrix:hover { background: rgba(0, 255, 0, 0.15); text-shadow: 0 0 5px #0f0; }
+
         #cheatboard-content::-webkit-scrollbar { width: 5px; }
         #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 
-        /* --- MOBILE MEDIA QUERY (Invariato, ma essenziale) --- */
         @media only screen and (max-width: 768px) {
-            #cheatboard-container {
-                width: 92%; 
-                max-width: none;
-            }
-
-            #cheatboard-handle {
-                top: 140px;
-                right: -35px;
-                width: 35px;
-                height: 40px;
-                font-size: 1rem;
-                background: rgba(20, 20, 20, 0.9);
-                border-left: 1px solid #00ff9d;
-            }
-
+            #cheatboard-container { width: 92%; max-width: none; }
+            #cheatboard-handle { top: 140px; right: -35px; width: 35px; height: 40px; }
             .control-row { flex-wrap: wrap; }
-            
-            .cheat-input { 
-                flex: 1 1 100%; 
-                margin-bottom: 5px;
-                height: 45px;
-            }
-            
-            .cheat-btn { 
-                flex: 1 1 100%; 
-                height: 50px;
-                font-size: 0.9rem;
-            }
-            
+            .cheat-input { flex: 1 1 100%; margin-bottom: 5px; height: 45px; }
+            .cheat-btn { flex: 1 1 100%; height: 50px; font-size: 0.9rem; }
             .control-row .cheat-btn:not(:first-child) { flex: 1; }
         }
     `;
@@ -250,17 +222,14 @@
             
             <div class="cheat-group">
                 <div class="cheat-group-title">Risorse</div>
-                
                 <div class="control-row">
                     <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Bugs" value="1000000">
                     <button id="btn-bugs-add" class="cheat-btn primary"><i class="fa-solid fa-plus"></i> Bug</button>
                 </div>
-                
                 <div class="control-row">
                     <input type="number" id="cheat-tokens-input" class="cheat-input" placeholder="Token" value="100">
                     <button id="btn-tokens-add" class="cheat-btn gold"><i class="fa-solid fa-coins"></i> Token</button>
                 </div>
-
                 <div class="control-row">
                     <button id="btn-time-warp" class="cheat-btn"><i class="fa-solid fa-forward"></i> Skip 1h</button>
                 </div>
@@ -268,12 +237,10 @@
 
             <div class="cheat-group">
                 <div class="cheat-group-title">Statistiche</div>
-                
                 <div class="control-row">
                     <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
                     <button id="btn-clicks-add" class="cheat-btn">Agg. Click</button>
                 </div>
-
                 <div class="control-row">
                     <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="BPS" value="1000">
                     <button id="btn-bps-add" class="cheat-btn">Bonus BPS</button>
@@ -281,16 +248,17 @@
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Eventi</div>
+                <div class="cheat-group-title">Eventi e Glitch</div>
                 
                 <div class="control-row">
-                    <input type="number" id="cheat-404-input" class="cheat-input" placeholder="x" value="5" style="width: 60px; flex: 0.5;">
+                    <input type="number" id="cheat-404-input" class="cheat-input" placeholder="x" value="5" style="width: 50px; flex: 0.4;">
                     <button id="btn-event-404" class="cheat-btn danger">404</button>
-                    <button id="btn-event-rick" class="cheat-btn danger">Rick</button>
+                    <button id="btn-event-matrix" class="cheat-btn matrix">Matrix</button>
                 </div>
                 
                 <div class="control-row">
-                    <button id="btn-event-ricardo" class="cheat-btn danger">Ricardo Flex</button>
+                    <button id="btn-event-rick" class="cheat-btn danger">Rick</button>
+                    <button id="btn-event-ricardo" class="cheat-btn danger">Ricardo</button>
                 </div>
 
                 <div class="control-row">
@@ -303,7 +271,6 @@
 
             <div class="cheat-group">
                 <div class="cheat-group-title">Sblocchi & Reset</div>
-                
                 <div class="control-row">
                     <button id="btn-unlock-skins" class="cheat-btn primary">Sblocca Skin</button>
                     <button id="btn-unlock-ach" class="cheat-btn primary">Sblocca Ach.</button>
@@ -335,7 +302,6 @@
     handle.addEventListener('click', togglePanel);
     closeBtn.addEventListener('click', togglePanel);
 
-    // Scorciatoia Tastiera (CTRL+SHIFT+C)
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === 'C') togglePanel();
     });
@@ -362,7 +328,7 @@
         toast(`Aggiunti ${val} Token Lab`);
     });
 
-    // Salto Temporale (1 Ora)
+    // Salto Temporale
     document.getElementById('btn-time-warp').addEventListener('click', () => {
         if (cookiesPerSecond <= 0) { toast("BPS è 0! Impossibile viaggiare."); return; }
         const seconds = 3600;
@@ -383,7 +349,7 @@
         toast(`Aggiunti ${val} click manuali`);
     });
 
-    // Aggiungi Bonus BPS (Temporaneo)
+    // Aggiungi Bonus BPS
     document.getElementById('btn-bps-add').addEventListener('click', () => {
         const val = getVal('cheat-bps-input');
         window.cheatBPSBonus += val;
@@ -392,31 +358,36 @@
         toast(`Bonus BPS +${val} attivato`);
     });
 
-    // --- Eventi ---
+    // --- Eventi (Separati 404 e Matrix) ---
 
-    // Evento 404
+    // Evento 404 (BSOD)
     document.getElementById('btn-event-404').addEventListener('click', () => {
         const mult = getVal('cheat-404-input');
-        // Usa la funzione dispatcher per mantenere la sorpresa delle skin, 
-        // oppure usa triggerGameEvent('bluescreen', mult) per forzare il 404 puro.
-        if (typeof triggerBluescreen === 'function') {
-            triggerBluescreen(mult);
-            toast(`Evento avviato (x${mult})`);
+        // Forza l'ID 'bluescreen'
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('bluescreen', mult);
+            toast(`BSOD Forzato (x${mult})`);
+        }
+    });
+
+    // Evento Matrix
+    document.getElementById('btn-event-matrix').addEventListener('click', () => {
+        const mult = getVal('cheat-404-input');
+        // Forza l'ID 'matrix'
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('matrix', mult);
+            toast(`Matrix Forzato (x${mult})`);
         }
     });
 
     // Evento Rick Roll
     document.getElementById('btn-event-rick').addEventListener('click', () => {
-        if (typeof triggerGameEvent === 'function') {
-            triggerGameEvent('rickRoll');
-        }
+        if (typeof triggerGameEvent === 'function') triggerGameEvent('rickRoll');
     });
 
     // Evento Ricardo
     document.getElementById('btn-event-ricardo').addEventListener('click', () => {
-        if (typeof triggerGameEvent === 'function') {
-            triggerGameEvent('ricardo');
-        }
+        if (typeof triggerGameEvent === 'function') triggerGameEvent('ricardo');
     });
 
     // Golden Bug
@@ -424,8 +395,6 @@
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
             toast("Golden Bug generato");
-        } else {
-            toast("Funzione spawnGoldenBug non trovata!");
         }
     });
 
@@ -450,7 +419,7 @@
         toast("Tutte le skin sbloccate!");
     });
 
-    // Blocca Skin (Reset alle default)
+    // Blocca Skin
     document.getElementById('btn-lock-skins').addEventListener('click', () => {
         gameState.skins.unlocked = ['default'];
         gameState.skins.current = 'default';
@@ -458,7 +427,7 @@
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof updateSkinsUI === 'function') updateSkinsUI();
         updateGame();
-        toast("Tutte le skin bloccate (tranne default).");
+        toast("Tutte le skin bloccate.");
     });
 
     // Sblocca Obiettivi
@@ -466,7 +435,6 @@
         for (let key in gameData.achievements) {
             if (!gameState.achievements[key]) gameState.achievements[key] = {};
             gameState.achievements[key].unlocked = true;
-            // Non le segniamo come claimed per permettere il riscatto
         }
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
@@ -487,25 +455,17 @@
         toast("Tutti gli obiettivi bloccati.");
     });
 
-    // Hard Reset (Senza Password - Dev Only)
+    // Hard Reset
     document.getElementById('btn-hard-reset').addEventListener('click', () => {
         if (!confirm("⚠️ RESET TOTALE DEV MODE? ⚠️\nCancella tutto senza password e ricarica.")) return;
-
-        // 1. Reset RAM
         if (typeof resetGameToDefault === 'function') {
-            const tempUser = gameState.user.username; // Mantiene username per comodità
+            const tempUser = gameState.user.username;
             resetGameToDefault();
             gameState.user.username = tempUser;
         }
-
-        // 2. Forza Salvataggio Immediato (Sovrascrive il cloud con dati vuoti)
-        // Usa la password già in memoria nella sessione
         if (window.EspooClicker) {
-            window.EspooClicker.saveGame().then(() => {
-                location.reload();
-            });
+            window.EspooClicker.saveGame().then(() => { location.reload(); });
         } else {
-            // Fallback se l'API non è pronta
             localStorage.removeItem('espotoolClickerSaveV8');
             location.reload();
         }

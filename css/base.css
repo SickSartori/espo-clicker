@@ -117,6 +117,135 @@ body.bluescreen-active {
     transition: all 0.2s ease-in-out;
 }
 
+/* --- MATRIX --- */
+#matrix-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    /* Dietro al gioco, sopra lo sfondo base */
+    display: none;
+    /* Nascosto di default */
+    background: black;
+}
+
+/* Quando l'evento è attivo */
+body.matrix-active #matrix-canvas {
+    display: block;
+}
+
+/* --- UI STILE MATRIX (Sovrascrive i colori durante l'evento) --- */
+body.matrix-active #game-container {
+    background-color: rgba(0, 10, 0, 0.92) !important;
+    animation: matrix-pulse-glow 2s infinite alternate ease-in-out !important;
+    transform: none !important;
+}
+
+body.matrix-active #clicker-btn {
+    border-radius: 50%;
+    /* Bordo Verde Neon Solido */
+    border: 4px solid #0f0;
+    /* Glow Esterno e Interno */
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.6), inset 0 0 20px rgba(0, 255, 0, 0.4);
+    /* Sfondo Sfumato Matrix */
+    background: radial-gradient(circle, #001a00 0%, #000 100%);
+    transition: all 0.3s ease;
+}
+
+/* Effetto Click durante Matrix */
+body.matrix-active #clicker-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.9), inset 0 0 40px rgba(0, 255, 0, 0.6);
+}
+
+/* Le immagini stesse */
+body.matrix-active #manager-photo-normal,
+body.matrix-active #manager-photo-clicked {
+    /* Rimuove lo sfondo colorato della rarità (Common, Rare, ecc.) */
+    background: transparent !important;
+
+    /* Rimuove il bordo colorato della rarità */
+    border: none !important;
+
+    /* Rimuove il bagliore/ombra della rarità */
+    box-shadow: none !important;
+
+    /* Ferma le animazioni (es. pulsazione Legendary) */
+    animation: none !important;
+
+    /* Aggiungiamo un drop-shadow verde per far risaltare Neo-Espo */
+    filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.8)) !important;
+}
+
+body.matrix-active h2,
+body.matrix-active .stat-value,
+body.matrix-active i {
+    color: #0f0 !important;
+    text-shadow: 0 0 8px #0f0;
+}
+
+body.matrix-active .buy-btn {
+    border-color: #0f0 !important;
+    color: #0f0 !important;
+    background: rgba(0, 20, 0, 0.8) !important;
+}
+
+body.matrix-active::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0),
+            rgba(255, 255, 255, 0) 50%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.2));
+    background-size: 100% 4px;
+    /* Dimensione riga */
+    z-index: 9998;
+    /* Sotto al loader e modali, sopra al gioco */
+    pointer-events: none;
+    /* Permette di cliccare attraverso */
+    animation: scanline-scroll 0.5s linear infinite;
+    /* Movimento rapido */
+    opacity: 0.3;
+}
+
+/* Testi e Icone Verde Terminale */
+body.matrix-active h2,
+body.matrix-active .stat-value,
+body.matrix-active i,
+body.matrix-active .upgrade-name,
+body.matrix-active span {
+    color: #0f0 !important;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.8) !important;
+    font-family: 'Courier New', monospace !important;
+    /* Font Monospace Hacker */
+}
+
+/* Bottoni stile Terminale */
+body.matrix-active .buy-btn {
+    border: 1px solid #0f0 !important;
+    color: #000 !important;
+    background: #0f0 !important;
+    box-shadow: 0 0 10px #0f0 !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: 900;
+}
+
+body.matrix-active .buy-btn:hover {
+    background: #fff !important;
+    box-shadow: 0 0 20px #fff !important;
+}
+
+/*--------------------------------------------------------------------------------*/
+
+
 /* Scrollbar Globali */
 * {
     scrollbar-width: thin;
@@ -140,6 +269,9 @@ body.bluescreen-active {
     background: #5dade2;
 }
 
+/*--------------------------------------------------------------------------------*/
+
+/* Game Loader */
 #game-loader {
     position: fixed;
     top: 0;
@@ -195,6 +327,8 @@ body.bluescreen-active {
     animation: pulseText 1.5s infinite;
 }
 
+/*--------------------------------------------------------------------------------*/
+
 /* Link Github */
 #github-link-container {
     position: fixed;
@@ -223,12 +357,14 @@ body.bluescreen-active {
     gap: 8px;
 }
 
+/*--------------------------------------------------------------------------------*/
+
+/* Quick Mute */
 #login-modal[style*="flex"]~#quick-mute-btn,
 #login-modal[style*="block"]~#quick-mute-btn {
     display: none !important;
 }
 
-/* --- BOTTONE MUTE FISSO --- */
 #quick-mute-btn {
     position: fixed;
     bottom: 20px;
@@ -257,12 +393,12 @@ body.bluescreen-active {
     transform: scale(1.05);
 }
 
+/*--------------------------------------------------------------------------------*/
+
 /* --- NASCONDI BARRA MOBILE SU DESKTOP --- */
 #mobile-nav-bar {
     display: none;
 }
-
-
 
 /* --- EFFETTO CRUNCH TIME (FIAMME) --- */
 

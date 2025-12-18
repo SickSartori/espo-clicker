@@ -505,7 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
             './assets/image/espo-fury-click.webp',
             './assets/image/bluescreen.webp',
             './assets/image/hidden.webp',
-            // Aggiungi qui skin comuni se vuoi
+            './assets/image/espo-matrix.webp',
+            './assets/image/espo-matrix-click.webp',
         ];
 
         // Aggiungiamo le immagini alla lista
