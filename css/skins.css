@@ -38,6 +38,19 @@
     --r-color: #f1c40f;
 }
 
+.skin-card.rarity-divine {
+    --r-color: #ffd700;
+    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 50%, rgba(255, 215, 0, 0.1) 100%);
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    animation: divineCardPulse 3s infinite alternate ease-in-out;
+}
+
+.skin-card.rarity-divine .skin-name-display {
+    color: #ffd700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
 .skin-badge {
     font-size: 0.6rem;
     text-transform: uppercase;
@@ -247,9 +260,15 @@
 }
 
 .bg-divine {
-    background: radial-gradient(circle, #fff 10%, #f1c40f 90%);
-    box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
+    background: radial-gradient(circle, #fff 10%, #ffd700 40%, #b8860b 90%);
     border: 4px solid #fff !important;
+    box-shadow:
+        0 0 20px #ffd700,
+        0 0 40px #b8860b,
+        inset 0 0 20px #fff;
+
+    /* Animazione Rotazione Alone (Simulata con filtri/ombre) */
+    animation: divineAura 4s infinite alternate;
 }
 
 /*

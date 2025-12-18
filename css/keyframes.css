@@ -527,3 +527,27 @@
         background-position: 0 100%;
     }
 }
+
+@keyframes divineCardPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        border-color: #ffd700;
+    }
+
+    100% {
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+        border-color: #fff;
+    }
+}
+
+@keyframes divineAura {
+    0% {
+        box-shadow: 0 0 20px #ffd700, 0 0 40px #b8860b;
+        filter: brightness(1);
+    }
+
+    100% {
+        box-shadow: 0 0 40px #ffd700, 0 0 60px #fff;
+        filter: brightness(1.2);
+    }
+}

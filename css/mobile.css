@@ -267,6 +267,8 @@
         width: 92%;
         max-height: 80vh;
         margin: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     /* 9. VARIE */
