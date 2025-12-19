@@ -190,6 +190,12 @@
 
         .cheat-btn.matrix { border-color: #0f0; color: #0f0; background: rgba(0, 255, 0, 0.05); }
         .cheat-btn.matrix:hover { background: rgba(0, 255, 0, 0.15); text-shadow: 0 0 5px #0f0; }
+        
+        .cheat-btn.info { border-color: #3498db; color: #3498db; background: rgba(52, 152, 219, 0.05); }
+        .cheat-btn.info:hover { background: rgba(52, 152, 219, 0.15); }
+
+        .cheat-btn.chaos { border-color: #9b59b6; color: #9b59b6; background: rgba(155, 89, 182, 0.05); }
+        .cheat-btn.chaos:hover { background: rgba(155, 89, 182, 0.15); }
 
         #cheatboard-content::-webkit-scrollbar { width: 5px; }
         #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
@@ -208,7 +214,7 @@
     styleSheet.innerText = styles;
     document.head.appendChild(styleSheet);
 
-    // --- 3. Struttura HTML ---
+    // --- 3. Struttura HTML (Tooltips Aggiornati) ---
     const container = document.createElement('div');
     container.id = 'cheatboard-container';
 
@@ -224,14 +230,14 @@
                 <div class="cheat-group-title">Risorse</div>
                 <div class="control-row">
                     <input type="number" id="cheat-bugs-input" class="cheat-input" placeholder="Bugs" value="1000000">
-                    <button id="btn-bugs-add" class="cheat-btn primary"><i class="fa-solid fa-plus"></i> Bug</button>
+                    <button id="btn-bugs-add" class="cheat-btn primary" title="Aggiunge Bug al tuo portafoglio"><i class="fa-solid fa-plus"></i> Bug</button>
                 </div>
                 <div class="control-row">
                     <input type="number" id="cheat-tokens-input" class="cheat-input" placeholder="Token" value="100">
-                    <button id="btn-tokens-add" class="cheat-btn gold"><i class="fa-solid fa-coins"></i> Token</button>
+                    <button id="btn-tokens-add" class="cheat-btn gold" title="Aggiunge Token Prestigio per il Laboratorio"><i class="fa-solid fa-coins"></i> Token</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-time-warp" class="cheat-btn"><i class="fa-solid fa-forward"></i> Skip 1h</button>
+                    <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco in avanti"><i class="fa-solid fa-forward"></i> Skip 1h</button>
                 </div>
             </div>
 
@@ -239,11 +245,28 @@
                 <div class="cheat-group-title">Statistiche</div>
                 <div class="control-row">
                     <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
-                    <button id="btn-clicks-add" class="cheat-btn">Agg. Click</button>
+                    <button id="btn-clicks-add" class="cheat-btn" title="Aumenta il contatore dei click manuali (utile per sblocchi)">Agg. Click</button>
                 </div>
                 <div class="control-row">
                     <input type="number" id="cheat-bps-input" class="cheat-input" placeholder="BPS" value="1000">
-                    <button id="btn-bps-add" class="cheat-btn">Bonus BPS</button>
+                    <button id="btn-bps-add" class="cheat-btn" title="Aggiunge un bonus piatto al BPS attuale">Bonus BPS</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Shop & Power</div>
+                <div class="control-row">
+                    <button id="btn-unlock-shop" class="cheat-btn primary" title="Compra istantaneamente tutti gli upgrade e team disponibili">Sblocca Shop</button>
+                    <button id="btn-lock-shop" class="cheat-btn danger" title="Resetta lo stato di acquisto di tutti gli oggetti"> Blocca Shop</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-army-100" class="cheat-btn gold" title="Aggiunge +100 unità a tutti i tipi di Team"><i class="fa-solid fa-users"></i> +100 Army</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-random-chaos" class="cheat-btn chaos" title="Aggiunge risorse casuali e sblocca cose a caso!"><i class="fa-solid fa-dice"></i> RANDOM</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-god-mode" class="cheat-btn matrix" style="font-weight:900; letter-spacing:2px;" title="Risorse infinite, tutto sbloccato, potenza massima"><i class="fa-solid fa-bolt"></i> GOD MODE</button>
                 </div>
             </div>
 
@@ -252,35 +275,45 @@
                 
                 <div class="control-row">
                     <input type="number" id="cheat-404-input" class="cheat-input" placeholder="x" value="5" style="width: 50px; flex: 0.4;">
-                    <button id="btn-event-404" class="cheat-btn danger">404</button>
-                    <button id="btn-event-matrix" class="cheat-btn matrix">Matrix</button>
+                    <button id="btn-event-404" class="cheat-btn danger" title="Scatena l'evento Error 404 (Moltiplicatore)">404</button>
+                    <button id="btn-event-matrix" class="cheat-btn matrix" title="Attiva l'evento Matrix Hack">Matrix</button>
                 </div>
                 
                 <div class="control-row">
-                    <button id="btn-event-rick" class="cheat-btn danger">Rick</button>
-                    <button id="btn-event-ricardo" class="cheat-btn danger">Ricardo</button>
+                    <button id="btn-event-rick" class="cheat-btn danger" title="Never gonna give you up...">Rick</button>
+                    <button id="btn-event-ricardo" class="cheat-btn danger" title="Attiva il video Ricardo Milos">Ricardo</button>
                 </div>
 
                 <div class="control-row">
-                    <button id="btn-event-golden" class="cheat-btn gold"><i class="fa-solid fa-bug"></i> Golden Bug</button>
+                    <button id="btn-event-golden" class="cheat-btn gold" title="Fa apparire un Golden Bug istantaneamente"><i class="fa-solid fa-bug"></i> Golden Bug</button>
                 </div>
                  <div class="control-row">
-                    <button id="btn-reset-cooldown" class="cheat-btn"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                    <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta il tempo di attesa di Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Dev Tools</div>
+                <div class="control-row">
+                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Prestige Ready</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
                 </div>
             </div>
 
             <div class="cheat-group">
                 <div class="cheat-group-title">Sblocchi & Reset</div>
                 <div class="control-row">
-                    <button id="btn-unlock-skins" class="cheat-btn primary">Sblocca Skin</button>
-                    <button id="btn-unlock-ach" class="cheat-btn primary">Sblocca Ach.</button>
+                    <button id="btn-unlock-skins" class="cheat-btn primary" title="Sblocca tutte le skin nel guardaroba">Sblocca Skin</button>
+                    <button id="btn-unlock-ach" class="cheat-btn primary" title="Sblocca tutti gli obiettivi">Sblocca Ach.</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-lock-skins" class="cheat-btn danger">Blocca Skin</button>
-                     <button id="btn-lock-ach" class="cheat-btn danger">Blocca Ach.</button>
+                    <button id="btn-lock-skins" class="cheat-btn danger" title="Blocca tutte le skin e resetta i relativi obiettivi">Blocca Skin</button>
+                     <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
-                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
                 </div>
             </div>
 
@@ -293,6 +326,14 @@
     const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
     const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
     const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast('<i class="fa-solid fa-terminal"></i> ' + msg, 'info'); };
+    // Helper per aggiornare tutte le liste
+    const refreshUI = () => {
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+        if (typeof refreshAllStores === 'function') refreshAllStores(); // Fondamentale per vedere i cambi istantanei
+        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+        updateGame();
+    };
 
     // --- 5. Event Listeners UI ---
     const handle = document.getElementById('cheatboard-handle');
@@ -314,7 +355,7 @@
         gameState.score += val;
         gameState.totalScore += val;
         gameState.lifetimeScore += val;
-        updateGame();
+        refreshUI();
         toast(`Aggiunti ${val} Bug`);
     });
 
@@ -324,7 +365,7 @@
         gameState.prestigePoints += val;
         if (gameState.lifetimePrestigePoints !== undefined) gameState.lifetimePrestigePoints += val;
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
-        updateGame();
+        refreshUI();
         toast(`Aggiunti ${val} Token Lab`);
     });
 
@@ -337,7 +378,7 @@
         gameState.totalScore += gain;
         gameState.lifetimeScore += gain;
         gameState.totalPlayTime += seconds;
-        updateGame();
+        refreshUI();
         toast(`Salto Temporale! (+${window.EspooClicker ? window.EspooClicker.formatNumber(gain) : gain} Bug)`);
     });
 
@@ -345,7 +386,7 @@
     document.getElementById('btn-clicks-add').addEventListener('click', () => {
         const val = getVal('cheat-clicks-input');
         gameState.totalClicks += val;
-        updateGame();
+        refreshUI();
         toast(`Aggiunti ${val} click manuali`);
     });
 
@@ -353,44 +394,129 @@
     document.getElementById('btn-bps-add').addEventListener('click', () => {
         const val = getVal('cheat-bps-input');
         window.cheatBPSBonus += val;
-        if (typeof recalculateCPS === 'function') recalculateCPS();
-        updateGame();
+        refreshUI();
         toast(`Bonus BPS +${val} attivato`);
     });
 
-    // --- Eventi (Separati 404 e Matrix) ---
+    // --- SHOP & POWER ---
 
-    // Evento 404 (BSOD)
+    // Sblocca Tutto lo Shop (Compra tutto)
+    document.getElementById('btn-unlock-shop').addEventListener('click', () => {
+        for (let key in gameData.clickUpgrades) {
+            if (gameState.clickUpgrades[key]) gameState.clickUpgrades[key].purchased = true;
+        }
+        for (let key in gameData.buildingEnhancements) {
+            if (gameState.buildingEnhancements[key]) gameState.buildingEnhancements[key].purchased = true;
+        }
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (!data.isCounted && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].purchased = true;
+            }
+        }
+        refreshUI();
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        toast("Tutto lo shop è stato sbloccato!");
+    });
+
+    // Blocca Tutto lo Shop (Resetta acquisti)
+    document.getElementById('btn-lock-shop').addEventListener('click', () => {
+        for (let key in gameData.clickUpgrades) {
+            if (gameState.clickUpgrades[key]) gameState.clickUpgrades[key].purchased = false;
+        }
+        for (let key in gameData.buildingEnhancements) {
+            if (gameState.buildingEnhancements[key]) gameState.buildingEnhancements[key].purchased = false;
+        }
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (!data.isCounted && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].purchased = false;
+            }
+        }
+        refreshUI();
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        toast("Tutto lo shop è stato bloccato.");
+    });
+
+    // Armata Istantanea (+100 a tutti i team)
+    document.getElementById('btn-army-100').addEventListener('click', () => {
+        for (let key in gameState.teams) {
+            if (gameState.teams[key]) gameState.teams[key].count += 100;
+        }
+        refreshUI();
+        toast("Rinforzi arrivati! (+100 unità a tutti)");
+    });
+
+    // RANDOM CHAOS
+    document.getElementById('btn-random-chaos').addEventListener('click', () => {
+        // 1. Risorse Random (Valori alti)
+        const randBugs = Math.floor(Math.random() * 1000000000);
+        const randTokens = Math.floor(Math.random() * 5000);
+        gameState.score += randBugs;
+        gameState.prestigePoints += randTokens;
+
+        // 2. Sblocca 3 Achievement a caso
+        const achKeys = Object.keys(gameData.achievements);
+        for (let i = 0; i < 3; i++) {
+            const randomKey = achKeys[Math.floor(Math.random() * achKeys.length)];
+            if (gameState.achievements[randomKey]) gameState.achievements[randomKey].unlocked = true;
+        }
+
+        // 3. Sblocca 1 Skin a caso
+        const skinKeys = Object.keys(gameData.skins);
+        const randomSkin = skinKeys[Math.floor(Math.random() * skinKeys.length)];
+        if (!gameState.skins.unlocked.includes(randomSkin)) gameState.skins.unlocked.push(randomSkin);
+
+        refreshUI();
+
+        toast(`🎲 CHAOS: +${window.EspooClicker.formatNumber(randBugs)} Bug, +${randTokens} Token, cose a caso sbloccate!`);
+    });
+
+    // GOD MODE
+    document.getElementById('btn-god-mode').addEventListener('click', () => {
+        // 1. Risorse Infinite
+        gameState.score = 1e21; // 1 Sestilione
+        gameState.totalScore = 1e21;
+        gameState.prestigePoints = 1e12; // 1 Trilione Token
+
+        // 2. Simula click sugli altri tasti sblocco
+        document.getElementById('btn-unlock-skins').click();
+        document.getElementById('btn-unlock-ach').click();
+        document.getElementById('btn-unlock-shop').click();
+        document.getElementById('btn-army-100').click();
+
+        refreshUI(); // Forza aggiornamento finale per sicurezza
+
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-achievement');
+        toast("⚡ GOD MODE ATTIVATA ⚡");
+    });
+
+    // --- Eventi ---
+
     document.getElementById('btn-event-404').addEventListener('click', () => {
         const mult = getVal('cheat-404-input');
-        // Forza l'ID 'bluescreen'
         if (typeof triggerGameEvent === 'function') {
             triggerGameEvent('bluescreen', mult);
             toast(`BSOD Forzato (x${mult})`);
         }
     });
 
-    // Evento Matrix
     document.getElementById('btn-event-matrix').addEventListener('click', () => {
         const mult = getVal('cheat-404-input');
-        // Forza l'ID 'matrix'
         if (typeof triggerGameEvent === 'function') {
             triggerGameEvent('matrix', mult);
             toast(`Matrix Forzato (x${mult})`);
         }
     });
 
-    // Evento Rick Roll
     document.getElementById('btn-event-rick').addEventListener('click', () => {
         if (typeof triggerGameEvent === 'function') triggerGameEvent('rickRoll');
     });
 
-    // Evento Ricardo
     document.getElementById('btn-event-ricardo').addEventListener('click', () => {
         if (typeof triggerGameEvent === 'function') triggerGameEvent('ricardo');
     });
 
-    // Golden Bug
     document.getElementById('btn-event-golden').addEventListener('click', () => {
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
@@ -398,16 +524,32 @@
         }
     });
 
-    // Reset Cooldown
     document.getElementById('btn-reset-cooldown').addEventListener('click', () => {
         crunchTimeCooldownEnd = 0;
-        if (typeof updateUI === 'function') updateUI();
+        refreshUI();
         toast("Cooldown resettati!");
+    });
+
+    // --- Dev Tools ---
+
+    document.getElementById('btn-prestige-ready').addEventListener('click', () => {
+        if (gameData.PRESTIGE_THRESHOLD) {
+            gameState.totalScore = gameData.PRESTIGE_THRESHOLD + 1;
+            gameState.score = gameData.PRESTIGE_THRESHOLD + 1;
+            if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+            refreshUI();
+            toast("Prestigio Pronto!");
+        }
+    });
+
+    document.getElementById('btn-log-state').addEventListener('click', () => {
+        console.log("--- GAME STATE ---", gameState);
+        console.log("--- GAME DATA ---", gameData);
+        toast("Stato stampato in console (F12)");
     });
 
     // --- Sblocchi & Reset ---
 
-    // Sblocca Tutte le Skin
     document.getElementById('btn-unlock-skins').addEventListener('click', () => {
         for (let key in gameData.skins) {
             if (!gameState.skins.unlocked.includes(key)) {
@@ -419,29 +561,32 @@
         toast("Tutte le skin sbloccate!");
     });
 
-    // Blocca Skin
     document.getElementById('btn-lock-skins').addEventListener('click', () => {
         gameState.skins.unlocked = ['default'];
         gameState.skins.current = 'default';
+        // Reset obiettivi che danno skin
+        for (const key in gameData.achievements) {
+            const reward = gameData.achievements[key].reward;
+            if (reward && reward.type === 'skin') {
+                if (gameState.achievements[key]) gameState.achievements[key].claimed = false;
+            }
+        }
         if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
         if (window.EspooClicker) window.EspooClicker.saveGame();
-        if (typeof updateSkinsUI === 'function') updateSkinsUI();
-        updateGame();
-        toast("Tutte le skin bloccate.");
+        refreshUI();
+        toast("Skin bloccate e obiettivi reset.");
     });
 
-    // Sblocca Obiettivi
     document.getElementById('btn-unlock-ach').addEventListener('click', () => {
         for (let key in gameData.achievements) {
             if (!gameState.achievements[key]) gameState.achievements[key] = {};
             gameState.achievements[key].unlocked = true;
         }
         if (window.EspooClicker) window.EspooClicker.saveGame();
-        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        refreshUI();
         toast("Tutti gli obiettivi sbloccati!");
     });
 
-    // Blocca Obiettivi
     document.getElementById('btn-lock-ach').addEventListener('click', () => {
         for (let key in gameData.achievements) {
             if (gameState.achievements[key]) {
@@ -451,11 +596,10 @@
             }
         }
         if (window.EspooClicker) window.EspooClicker.saveGame();
-        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        refreshUI();
         toast("Tutti gli obiettivi bloccati.");
     });
 
-    // Hard Reset
     document.getElementById('btn-hard-reset').addEventListener('click', () => {
         if (!confirm("⚠️ RESET TOTALE DEV MODE? ⚠️\nCancella tutto senza password e ricarica.")) return;
         if (typeof resetGameToDefault === 'function') {
