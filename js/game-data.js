@@ -217,6 +217,14 @@ const gameData = {
             rarity: "rare",
             unlockHint: "Sblocca l'obiettivo 'Full Stack Agency'"
         },
+        esportia: {
+            name: "Esportia",
+            desc: "My Espo at Portia",
+            img: "esportia.webp",
+            imgClick: "esportia-click.webp",
+            rarity: "rare",
+            cost: 5
+        },
         // --- EPICHE (Mid Game / Prestige) ---
         king: {
             name: "Espo of Empires",
@@ -258,6 +266,14 @@ const gameData = {
             imgClick: "adolf-espler-click.webp",
             rarity: "legendary",
             unlockHint: "Raggiungi 50.000 click manuali." // Aumentato da 20k
+        },
+        espory: {
+            name: "Freddy Espory",
+            desc: "eeeeeeeespo",
+            img: "freddy-espory.webp",
+            imgClick: "freddy-espory-click.webp",
+            rarity: "legendary",
+            cost: 50
         },
         // --- DIVINE (End Game - Estreme) ---
         jesus: {

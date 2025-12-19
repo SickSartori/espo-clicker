@@ -598,40 +598,49 @@ function updateSkinsUI() {
 
 
 function updateAchievementsUI() {
-    // Stesso codice di prima
     const list = document.getElementById('achievement-list');
     if (!list) return;
+
     list.innerHTML = '';
     const items = [];
+
     Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
+
         const isUnlocked = state.unlocked;
         const isClaimed = state.claimed;
         let progress = 0;
         let currentVal = 0;
+
         if (!isUnlocked) {
             if (data.type === 'click') currentVal = gameState.totalClicks;
             else if (data.type === 'score') currentVal = gameState.totalScore;
             else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
             else if (data.type === 'time') currentVal = gameState.totalPlayTime;
+
             if (data.target && data.target > 0) progress = Math.min(100, (currentVal / data.target) * 100);
         } else { progress = 100; }
+
         let priority = 0;
         if (isUnlocked && !isClaimed && data.reward) priority = 4;
         else if (!isUnlocked && !data.isSecret) priority = 3;
         else if (isUnlocked) priority = 2;
         else if (data.isSecret) priority = 1;
+
         items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority });
     });
+
     items.sort((a, b) => {
         if (b.priority !== a.priority) return b.priority - a.priority;
         if (a.priority === 3 && b.priority === 3) return b.progress - a.progress;
         return a.data.name.localeCompare(b.data.name);
     });
+
     items.forEach(item => {
         const { key, data, state, isUnlocked, isClaimed, progress, currentVal } = item;
+
         if (data.isSecret && !isUnlocked) {
             const secretEl = document.createElement('div');
             secretEl.className = 'achievement achievement-secret';
@@ -639,19 +648,38 @@ function updateAchievementsUI() {
             list.appendChild(secretEl);
             return;
         }
+
         const el = document.createElement('div');
         const claimableClass = (isUnlocked && !isClaimed && data.reward) ? 'claimable' : '';
         const statusClass = isUnlocked ? 'unlocked' : 'locked';
         el.className = `achievement ${statusClass} ${claimableClass}`;
+
         let rewardIcon = '<i class="fa-solid fa-trophy"></i>';
         let rewardDisplay = 'Gloria';
         let rewardTooltip = 'Nessun premio materiale.';
+
         if (data.reward) {
-            if (data.reward.type === 'bugs') { rewardIcon = '<i class="fa-solid fa-bug"></i>'; rewardDisplay = `${formatNumber(data.reward.value)} Bug`; }
-            else if (data.reward.type === 'skin') { rewardIcon = '<i class="fa-solid fa-tshirt"></i>'; rewardDisplay = `Skin`; }
-            else if (data.reward.type === 'prestige') { rewardIcon = '<i class="fa-solid fa-flask"></i>'; rewardDisplay = `${data.reward.value} Token`; }
-            else if (data.reward.type === 'multiplier') { rewardIcon = '<i class="fa-solid fa-laptop"></i>'; rewardDisplay = `BPS x${data.reward.value}`; }
+            if (data.reward.type === 'bugs') {
+                rewardIcon = '<i class="fa-solid fa-bug"></i>';
+                rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
+            }
+            else if (data.reward.type === 'skin') {
+                rewardIcon = '<i class="fa-solid fa-shirt"></i>';
+                // --- FIX: Recupera il nome della skin ---
+                const skinName = gameData.skins[data.reward.id] ? gameData.skins[data.reward.id].name : 'Skin Speciale';
+                rewardDisplay = skinName;
+                // ----------------------------------------
+            }
+            else if (data.reward.type === 'prestige') {
+                rewardIcon = '<i class="fa-solid fa-flask"></i>';
+                rewardDisplay = `${data.reward.value} Token`;
+            }
+            else if (data.reward.type === 'multiplier') {
+                rewardIcon = '<i class="fa-solid fa-laptop"></i>';
+                rewardDisplay = `BPS x${data.reward.value}`;
+            }
         }
+
         let actionHtml = '';
         if (isUnlocked && !isClaimed && data.reward) {
             actionHtml = `<button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere!"><span class="claim-visible">${rewardIcon} ${rewardDisplay}</span><span class="claim-hover">RISCATTA ORA!</span></button>`;
@@ -661,11 +689,23 @@ function updateAchievementsUI() {
             const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
             actionHtml = `<div class="ach-progress-container" data-tooltip="${rewardTooltip}"><div class="ach-progress-bar" style="width: ${progress}%"></div><span class="ach-progress-text">${progressStatusText}</span></div>`;
         }
-        el.innerHTML = `<div class="achievement-header"><span class="achievement-name">${data.name}</span></div><div class="achievement-desc">${(data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc)}</div><div class="achievement-footer" style="margin-top: 10px;">${actionHtml}</div>`;
+
+        el.innerHTML = `
+            <div class="achievement-header"><span class="achievement-name">${data.name}</span></div>
+            <div class="achievement-desc">${(data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc)}</div>
+            <div class="achievement-footer" style="margin-top: 10px;">${actionHtml}</div>
+        `;
+
         list.appendChild(el);
+
         if (isUnlocked && !isClaimed && data.reward) {
             const claimBtn = document.getElementById(`claim-${key}`);
-            if (claimBtn) { claimBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof claimAchievementReward === 'function') claimAchievementReward(key); }); }
+            if (claimBtn) {
+                claimBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof claimAchievementReward === 'function') claimAchievementReward(key);
+                });
+            }
         }
     });
 }
