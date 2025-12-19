@@ -149,7 +149,16 @@ const gameData = {
                 type: 'sfx',
                 category: 'effetti',
                 defaultVol: 0.2
-            }
+            },
+            'bg-bit': {
+                id: 'sound-bg-bit',
+                file: 'bg-music-bit.mp3',
+                name: '8-Bit World',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
         },
         videos: {
             'rick-roll-video': {
@@ -176,6 +185,20 @@ const gameData = {
             img: "espo.webp",
             imgClick: "espo-click.webp",
             rarity: "common"
+        },
+        espobit: {
+            name: "Espobit",
+            desc: "Inserisci il gettone. 1UP!",
+            img: "espobit.webp",
+            imgClick: "espobit-click.webp",
+            rarity: "common",
+            cost: 5,
+            themeConfig: {
+                bodyClass: 'theme-8bit',
+                specialMusic: 'sound-bg-bit',
+                goldenBugIcon: 'fa-gamepad',
+                goldenBugColor: '#f1c40f' // Giallo classico (Gold Coin)
+            }
         },
         christmas: {
             name: "Espo Natale",
@@ -223,7 +246,7 @@ const gameData = {
             img: "esportia.webp",
             imgClick: "esportia-click.webp",
             rarity: "rare",
-            cost: 5
+            cost: 10
         },
         // --- EPICHE (Mid Game / Prestige) ---
         king: {
@@ -232,7 +255,7 @@ const gameData = {
             img: "espofempires.webp",
             imgClick: "espofempires-click.webp",
             rarity: "epic",
-            cost: 10 // Richiede prestigio
+            cost: 20 // Richiede prestigio
         },
         waifu: {
             name: "Espowaifu",
@@ -240,7 +263,7 @@ const gameData = {
             img: "espowaifu.webp",
             imgClick: "espowaifu-click.webp",
             rarity: "epic",
-            cost: 15 // Richiede prestigio avanzato
+            cost: 20 // Richiede prestigio avanzato
         },
         // --- LEGGENDARIE (Late Game - Difficili) ---
         rick: {

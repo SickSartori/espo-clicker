@@ -514,11 +514,16 @@ function updateSkinsUI() {
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
+        const isLocked = !isUnlocked; // Variabile comoda
         const isEquipped = currentSkin === key;
         const isBuyable = !isUnlocked && data.cost !== undefined;
         const canAfford = isBuyable && gameState.prestigePoints >= data.cost;
 
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
+
+        // --- 1. LOGICA DESCRIZIONE NASCOSTA (ANTI-SPOILER) ---
+        // Se la skin è bloccata, mostra "???" invece della descrizione
+        const descriptionText = isLocked ? "???" : (data.desc || "Nessuna descrizione");
 
         const card = document.createElement('div');
 
@@ -534,49 +539,70 @@ function updateSkinsUI() {
             ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp')
             : './assets/image/hidden.webp';
 
-        let statusHtml = '';
-        if (isEquipped) {
-            statusHtml = `<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>`;
-        } else if (isUnlocked) {
+        // --- 2. LOGICA STATUS UNIFORME (FIX ALTEZZA) ---
+        // Determiniamo cosa mostrare in fondo alla card:
+        // - Bloccata: Mostra lucchetto
+        // - In Uso: Mostra "In Uso" verde
+        // - Sbloccata (non in uso): Mostra bottone "USA SKIN"
+        let bottomHtml = '';
+
+        if (isLocked) {
+            bottomHtml = `<div class="skin-status-info"><i class="fa-solid fa-lock"></i> Bloccata</div>`;
+        } else if (isEquipped) {
+            bottomHtml = `<div class="skin-status-info" style="color:#2ecc71; border-color:#2ecc71; background: rgba(46, 204, 113, 0.1);"><i class="fa-solid fa-user-check"></i> In Uso</div>`;
         } else {
-            statusHtml = `<div class="skin-status-info"><i class="fa-solid fa-lock"></i> Bloccata</div>`;
+            // Sbloccata ma non equipaggiata
+            bottomHtml = `<div class="skin-action-text">USA SKIN</div>`;
         }
 
+        // --- 3. OVERLAY (SOLO PER DETTAGLI EXTRA / COMPRA) ---
+        // L'overlay serve ora principalmente per l'acquisto o i hint,
+        // ma la struttura visiva principale è nella card stessa.
         let overlayContent = '';
         if (!isEquipped) {
             if (isBuyable) {
                 const priceText = `<i class="fa-solid fa-flask"></i> ${data.cost} Token`;
                 const actionColor = canAfford ? '#2ecc71' : '#e74c3c';
-                const actionMsg = canAfford ? 'CLICCA ORA' : 'INSUFFICIENTI';
+                const actionMsg = canAfford ? 'CLICCA PER COMPRARE' : 'TOKEN INSUFFICIENTI';
 
                 overlayContent = `
                     <h4>${data.name}</h4>
-                    <div class="skin-desc">${data.desc || "???"}</div>
                     <div class="skin-price-tag">${priceText}</div>
-                    <div class="skin-action-text" style="color: ${actionColor}">${actionMsg}</div>
+                    <div class="skin-action-text" style="color: ${actionColor}; border: 1px solid ${actionColor}">${actionMsg}</div>
                 `;
-            } else if (!isUnlocked) {
+            } else if (isLocked) {
+                // Hint di sblocco nell'overlay
                 overlayContent = `
                     <h4>${data.name}</h4>
-                    <div class="skin-desc">${data.unlockHint || "Segreto"}</div>
+                    <div class="skin-desc" style="height:auto; -webkit-line-clamp:unset;">${data.unlockHint || "Obiettivo segreto"}</div>
                 `;
             } else {
+                // Sbloccata: overlay semplice per conferma visuale
                 overlayContent = `
                     <h4>${data.name}</h4>
-                    <div class="skin-desc">${data.desc}</div>
-                    <div class="skin-action-text" style="color:#2ecc71;">USA SKIN</div>
+                    <div class="skin-action-text" style="color:#2ecc71;">CLICCA PER USARE</div>
                 `;
             }
         }
 
+        // --- 4. COSTRUZIONE HTML CARD ---
+        // Inseriamo la descrizione (.skin-desc) direttamente nel flusso principale
+        // per garantire l'altezza uniforme grazie al CSS 'height: 2.6em'.
         card.innerHTML = `
             ${isEquipped ? '<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>' : ''}
+            
             <div class="skin-badge">${rarityLabel}</div>
+            
             <div class="skin-img-container">
                 <img src="${imgSrc}" class="skin-img" alt="${isUnlocked ? data.name : 'Segreto'}">
             </div>
+            
             <div class="skin-name-display">${data.name}</div>
-            ${statusHtml}
+            
+            <div class="skin-desc">${descriptionText}</div>
+            
+            ${bottomHtml}
+            
             ${!isEquipped ? `<div class="skin-overlay">${overlayContent}</div>` : ''}
         `;
 
@@ -586,6 +612,7 @@ function updateSkinsUI() {
             } else if (isBuyable) {
                 if (typeof buySkin === 'function') buySkin(key);
             } else {
+                // Animazione "shake" se bloccata non acquistabile
                 card.style.transform = "translateX(5px)";
                 setTimeout(() => card.style.transform = "translateX(0)", 100);
                 if (window.EspooClicker) window.EspooClicker.showToast(data.unlockHint || "Obiettivo richiesto!", "warning");
@@ -1234,23 +1261,25 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
     const snowContainer = document.getElementById('snow-container');
-    const snowAudio = document.getElementById('sound-snowball');
 
-    // Riferimento alla musica di background standard
-    const bgMusic = document.getElementById('sound-bg-music');
-
-    // Lista classi da rimuovere per pulizia
+    // Lista classi di sfondo (rarità) da rimuovere per pulizia
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
+
+    // Lista classi dei temi globali da rimuovere dal body
+    const bodyThemes = ['theme-christmas', 'theme-8bit'];
 
     const theme = skinData.themeConfig || {};
 
-    // 1. Gestione Classi Body (Natale)
-    document.body.classList.remove('theme-christmas');
+    // 1. GESTIONE CLASSI BODY (Reset e Applicazione)
+    // Rimuove TUTTI i temi speciali attivi per evitare conflitti (es. 8bit + natale insieme)
+    document.body.classList.remove(...bodyThemes);
+
+    // Applica il nuovo tema se previsto dalla skin
     if (theme.bodyClass) {
         document.body.classList.add(theme.bodyClass);
     }
 
-    // 2. Gestione Neve
+    // 2. GESTIONE NEVE
     if (snowContainer) {
         if (theme.hasSnow) {
             snowContainer.style.display = 'block';
@@ -1260,58 +1289,42 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         }
     }
 
-    // 3. Golden Bug Icona
+    // 3. GOLDEN BUG ICONA (Personalizzazione Tematica)
     const goldenBugIcon = document.querySelector('#golden-bug i');
     if (goldenBugIcon) {
-        goldenBugIcon.className = 'fa-solid';
-        goldenBugIcon.style.color = '';
+        goldenBugIcon.className = 'fa-solid'; // Reset base FontAwesome
+        goldenBugIcon.style.color = '';       // Reset colore inline
+
         if (theme.goldenBugIcon) {
             goldenBugIcon.classList.add(theme.goldenBugIcon);
             if (theme.goldenBugColor) goldenBugIcon.style.color = theme.goldenBugColor;
         } else {
+            // Default icon
             goldenBugIcon.classList.add('fa-bug');
         }
     }
 
-    // 4. Audio Manager (Logica esistente mantenuta)
-    let targetAudio = bgMusic;
-    let targetAudioId = 'sound-bg-music';
-
-    if (theme.specialMusic) {
-        const specialEl = document.getElementById(theme.specialMusic);
-        if (specialEl) {
-            targetAudio = specialEl;
-            targetAudioId = theme.specialMusic;
-        }
+    // 4. AUDIO MANAGER (Logica Centralizzata)
+    // Invece di gestire play/pause qui, diciamo al Manager di aggiornare l'ambiente.
+    // Lui guarderà la skin corrente e deciderà quale traccia suonare e quali spegnere.
+    if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
+        AudioManager.updateAmbience();
     }
 
-    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
-    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
-
-    if (targetAudio && !window.currentActiveEvent) {
-        targetAudio.loop = true;
-        let customVol = 0.3;
-        if (gameState.user.audioCustom && gameState.user.audioCustom[targetAudioId] !== undefined) {
-            customVol = gameState.user.audioCustom[targetAudioId];
-        }
-        targetAudio.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
-
-        if (forcePlayMusic || (gameState.user.masterVolume > 0 && gameState.user.musicVolume > 0)) {
-            targetAudio.play().catch(e => { });
-        }
-    }
-
-    // 5. APPLICAZIONE IMMAGINI E CLASSI RARITÀ
-    // Helper interno per applicare classi
+    // 5. APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
     const applyClasses = (element, imgSrc) => {
         if (!element) return;
+
+        // Aggiorna immagine
         element.src = `./assets/image/${imgSrc}`;
+
+        // Reset filtri (utile se venivano alterati da eventi)
         element.style.filter = 'none';
 
-        // Rimuovi vecchie classi sfondo
+        // Rimuovi vecchie classi di sfondo rarità
         element.classList.remove(...bgClasses);
 
-        // Applica nuova classe in base alla rarità nel data
+        // Applica nuova classe sfondo in base alla rarità
         if (skinData.rarity) {
             element.classList.add(`bg-${skinData.rarity}`);
         } else {

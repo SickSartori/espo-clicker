@@ -112,6 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Music
     const audio = document.getElementById('bg-music');
 
+
+
     // Funzione per tentare il play
     function tryPlayMusic() {
         const playPromise = audio.play();

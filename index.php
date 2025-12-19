@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./css/skins.css">    
     <link rel="stylesheet" href="./css/podio.css">  
     <link rel="stylesheet" href="./css/mobile.css">
+    <link rel="stylesheet" href="./css/8bit-theme.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="./assets/image/favicon.webp">

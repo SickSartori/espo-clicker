@@ -398,18 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 3. Ripristina Musica Background
-                const bgMusic = document.getElementById('sound-bg-music');
-                if (bgMusic && gameState.user.masterVolume > 0 && gameState.skins.current !== 'christmas') {
-                    if (typeof setBgMusicVolume === 'function') {
-                        setBgMusicVolume();
-                    } else if (window.EspooClicker && typeof window.EspooClicker.setBgMusicVolume === 'function') {
-                        window.EspooClicker.setBgMusicVolume();
-                    }
-
-                    // Riavvia solo se non c'è altro evento
-                    if (!window.currentActiveEvent || window.currentActiveEvent === 'Espo Fury') {
-                        bgMusic.play().catch(e => { });
-                    }
+                if (typeof AudioManager !== 'undefined') {
+                    AudioManager.updateAmbience();
                 }
 
                 // 4. STOP PARTICELLE
@@ -633,39 +623,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // Funzione rapida per provare a suonare
         const tryStart = () => {
             const loginModal = document.getElementById('login-modal');
-            // Controllo 1: Se il modale è visibile graficamente -> STOP
-            if (loginModal && getComputedStyle(loginModal).display !== 'none') {
-                return;
-            }
+            if (loginModal && getComputedStyle(loginModal).display !== 'none') return;
+
             const hasSession = sessionStorage.getItem('espooUser');
-            if (!hasSession) {
-                console.log("Audio in attesa: Nessuna sessione attiva.");
-                return;
-            }
-            // ---------------------------------------------
+            if (!hasSession) return;
 
             if (masterVol <= 0 || musicVol <= 0) return;
 
-            // ... (il resto della funzione rimane uguale: const audioToPlay = ...)
-            const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+
+            const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+            const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
+                ? currentSkin.themeConfig.specialMusic
+                : 'sound-bg-music';
+
+            const audioToPlay = document.getElementById(targetId);
+            // ------------------------------------------------
+
             const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
 
             if (audioToPlay && audioToPlay.paused && !window.currentActiveEvent && !isFuryActive) {
-                // Assicurati che updateAmbientVolume esista prima di chiamarlo
-                if (typeof updateAmbientVolume === 'function') {
-                    updateAmbientVolume();
-                } else if (typeof setBgMusicVolume === 'function') {
-                    setBgMusicVolume();
-                }
+                // Aggiorna tutti i volumi prima di partire
+                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
                 const playPromise = audioToPlay.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(() => {
-                        // Logica Autoplay bloccato (lasciare invariata)
                         console.log("Autoplay bloccato. Attendo interazione...");
                         const unlockAudio = () => {
                             if (!window.currentActiveEvent && !(gameState.crunchTimeEndTime > Date.now())) {
-                                audioToPlay.play().catch(e => { });
+                                // Riprova a suonare quello corretto
+                                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
                             }
                             document.removeEventListener('click', unlockAudio);
                             document.removeEventListener('keydown', unlockAudio);
@@ -974,31 +961,37 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         // --- NUOVA FUNZIONE AUDIO INTELLIGENTE ---
         tryStartAudio: () => {
-            const bgMusic = document.getElementById('sound-bg-music');
-            const snowAudio = document.getElementById('sound-snowball');
+            // 1. Controlli preliminari
             const masterVol = gameState.user.masterVolume;
             const musicVol = gameState.user.musicVolume;
-
-            // Se il volume è 0, non fare nulla
             if (masterVol <= 0 || musicVol <= 0) return;
 
-            // Scegli traccia in base alla skin
-            const audioToPlay = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+            // 2. Identifica la traccia corretta (Logica Dinamica)
+            const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+            const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
+                ? currentSkin.themeConfig.specialMusic
+                : 'sound-bg-music';
 
-            // Se l'audio è già partito o c'è un evento, esci
+            const audioToPlay = document.getElementById(targetId);
+
+            // 3. Controlla se possiamo suonare
             if (!audioToPlay || !audioToPlay.paused || window.currentActiveEvent) return;
 
-            if (typeof setBgMusicVolume === 'function') setBgMusicVolume();
+            // 4. Aggiorna i volumi tramite il Manager centrale
+            if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
+                AudioManager.updateAmbience();
+            }
 
-            // Tenta di avviare l'audio
+            // 5. Tenta il Play (con gestione blocco browser)
             const playPromise = audioToPlay.play();
 
             if (playPromise !== undefined) {
                 playPromise.catch(() => {
-                    console.log("Autoplay bloccato (Normale su F5): Attendo interazione...");
+                    console.log("Autoplay bloccato: Attendo interazione...");
 
                     // FALLBACK: Al primo click ovunque, fai partire la musica
                     const unlockAudio = () => {
+                        // Riprova a suonare (ora siamo dentro un evento utente)
                         audioToPlay.play().then(() => {
                             // Pulizia listener dopo il successo
                             document.removeEventListener('click', unlockAudio);

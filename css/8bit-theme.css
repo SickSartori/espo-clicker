@@ -1,0 +1,355 @@
+/* IMPORTO FONT PIXEL ART */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* --- TEMA 8-BIT: CLEAN CYBER --- */
+body.theme-8bit {
+    background-color: #0b1016 !important;
+    background-image:
+        linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px) !important;
+    background-size: 40px 40px !important;
+}
+
+/* ============================================================
+   SCOPED STYLES: Applicati SOLO alla UI di Gioco e Navbar
+   ============================================================ */
+
+/* 1. RESET GRAFICO SOLO PER IL GIOCO */
+body.theme-8bit #game-navbar *,
+body.theme-8bit #game-container *,
+body.theme-8bit #mobile-nav-bar *,
+body.theme-8bit #golden-bug {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    font-family: 'Press Start 2P', cursive !important;
+    letter-spacing: -1px !important;
+}
+
+/* 2. ECCEZIONE PER LE ICONE */
+body.theme-8bit #game-navbar .fa,
+body.theme-8bit #game-navbar .fas,
+body.theme-8bit #game-navbar .fa-solid,
+body.theme-8bit #game-navbar .fa-brands,
+body.theme-8bit #game-container .fa,
+body.theme-8bit #game-container .fas,
+body.theme-8bit #game-container .fa-solid,
+body.theme-8bit #game-container .fa-brands,
+body.theme-8bit #golden-bug i {
+    font-family: "Font Awesome 6 Free" !important;
+    letter-spacing: normal !important;
+}
+
+/* 3. CONTENITORE PRINCIPALE */
+body.theme-8bit #game-container {
+    border: 2px solid #34495e !important;
+    background-color: rgba(13, 17, 23, 0.95) !important;
+    box-shadow: 0 0 0 4px #000 !important;
+}
+
+/* 4. NAVBAR */
+body.theme-8bit #game-navbar {
+    background-color: #161b22 !important;
+    border-bottom: 2px solid #30363d !important;
+    height: 70px !important;
+    padding: 0 15px !important;
+}
+
+body.theme-8bit #game-navbar .nav-item {
+    color: #8b949e !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    margin: 0 5px !important;
+    opacity: 1 !important;
+    transition: none !important;
+}
+
+body.theme-8bit #game-navbar .nav-item:hover {
+    color: #fff !important;
+    background-color: #21262d !important;
+    border: 1px solid #8b949e !important;
+    transform: translateY(-2px) !important;
+}
+
+body.theme-8bit #game-navbar .nav-icon {
+    font-size: 1.2rem !important;
+    margin-bottom: 5px !important;
+}
+
+body.theme-8bit #game-navbar .nav-label {
+    font-size: 0.5rem !important;
+    text-transform: uppercase;
+}
+
+/* 5. TABS */
+body.theme-8bit #game-container .tabs-header {
+    background-color: #0d1117 !important;
+    border-bottom: 2px solid #30363d !important;
+    padding-bottom: 0 !important;
+    gap: 2px !important;
+}
+
+body.theme-8bit #game-container .tab-btn {
+    background-color: #161b22 !important;
+    color: #8b949e !important;
+    border: 1px solid #30363d !important;
+    border-bottom: none !important;
+    font-size: 0.6rem !important;
+    padding: 12px 5px !important;
+    margin-bottom: 0 !important;
+}
+
+/* Tab Attivo */
+body.theme-8bit #game-container .tab-btn.active {
+    background-color: #3498db !important;
+    /* Blu Base */
+    color: #fff !important;
+    border: 1px solid #3498db !important;
+    border-bottom: none !important;
+    padding-bottom: 14px !important;
+    z-index: 10;
+}
+
+/* 6. MOLTIPLICATORI & FILTRI */
+body.theme-8bit #game-container #buy-controls .buy-btn {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    color: #fff !important;
+    font-size: 0.7rem !important;
+}
+
+body.theme-8bit #game-container #buy-controls .buy-btn.active {
+    background-color: #2ecc71 !important;
+    /* Verde Base */
+    color: #000 !important;
+    border-color: #fff !important;
+    box-shadow: inset 0 0 0 2px #000 !important;
+}
+
+body.theme-8bit #game-container #global-filter-select {
+    background-color: #000 !important;
+    border: 1px solid #30363d !important;
+    color: #fff !important;
+}
+
+/* 7. CARD UPGRADE */
+body.theme-8bit #game-container .upgrade,
+body.theme-8bit #game-container .click-upgrade,
+body.theme-8bit #game-container .enhancement-upgrade,
+body.theme-8bit #game-container .prestige-upgrade {
+    background-color: #12171e !important;
+    /* Quasi nero */
+    border: 1px solid #30363d !important;
+    margin-bottom: 10px !important;
+    padding: 12px !important;
+    box-shadow: 2px 2px 0 #000 !important;
+}
+
+body.theme-8bit #game-container .upgrade-name {
+    color: #fff !important;
+    font-size: 0.65rem !important;
+    margin-bottom: 6px !important;
+    line-height: 1.4 !important;
+}
+
+body.theme-8bit #game-container .upgrade-desc {
+    color: #8b949e !important;
+    font-size: 0.45rem !important;
+    line-height: 1.6 !important;
+    opacity: 1 !important;
+}
+
+body.theme-8bit #game-container .upgrade-cost {
+    color: #58a6ff !important;
+    /* Ciano */
+    font-size: 0.6rem !important;
+    margin-top: 5px !important;
+}
+
+/* Bottoni interni */
+body.theme-8bit #game-container .buy-btn {
+    background-color: #238636 !important;
+    /* Verde Terminal */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 0.55rem !important;
+    box-shadow: 2px 2px 0 #000 !important;
+    color: #fff !important;
+}
+
+body.theme-8bit #game-container .buy-btn:hover:not(:disabled) {
+    background-color: #2ea043 !important;
+}
+
+body.theme-8bit #game-container .buy-btn:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: none !important;
+}
+
+body.theme-8bit #game-container .buy-btn:disabled {
+    background-color: #30363d !important;
+    color: #6e7681 !important;
+}
+
+/* 8. SCORE & HUD CENTRALE */
+body.theme-8bit #game-container #score-display {
+    font-size: 1.5rem !important;
+    color: #c90000 !important;
+    text-shadow: 1px 1px 0 #000000 !important;
+    padding-top: 2px !important;
+}
+
+body.theme-8bit #game-container #cps-display {
+    background: #0d1117 !important;
+    color: #58a6ff !important;
+    border: 1px solid #30363d !important;
+    padding: 8px 15px !important;
+    font-size: 0.75rem !important;
+}
+
+
+
+
+/* Immagini Pixelate */
+body.theme-8bit #game-container #manager-photo-normal,
+body.theme-8bit #game-container #manager-photo-clicked {
+    /* Reset totale */
+    background: #050510 !important;
+    /* Blu scuro solido */
+
+    /* Griglia Cyber (Scacchiera Blu/Nera) */
+    background-image:
+        linear-gradient(rgba(88, 166, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 166, 255, 0.1) 1px, transparent 1px) !important;
+    background-size: 20px 20px !important;
+
+    /* Bordo e Ombre */
+    border: 2px solid #58a6ff !important;
+    /* Bordo Ciano */
+    box-shadow: 0 0 15px rgba(88, 166, 255, 0.2) !important;
+
+    /* Proprietà grafiche */
+    image-rendering: pixelated !important;
+    border-radius: 0 !important;
+    /* Quadrato */
+    filter: none !important;
+    /* Rimuove filtri rarità */
+    z-index: 10;
+}
+
+/* 2. Nasconde il cerchio sfumato dietro al bottone (Background base) */
+body.theme-8bit #game-container #clicker-btn::after {
+    display: none !important;
+}
+
+/* 10. EXTRA */
+body.theme-8bit #golden-bug {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    animation: bouncePixel 0.5s infinite alternate !important;
+}
+
+body.theme-8bit #golden-bug i {
+    color: #f1c40f !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-size: 2.5rem !important;
+}
+
+body.theme-8bit #game-container .skill-btn {
+    border: 1px solid #fff !important;
+    box-shadow: 4px 4px 0 #000 !important;
+    font-size: 0.8rem !important;
+}
+
+@keyframes bouncePixel {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-10px);
+    }
+}
+
+/* --- 11. FIX GESTIONE MATRIX (CRITICO) --- */
+
+/* Quando Matrix è attivo, NASCONDI COMPLETAMENTE lo sfondo griglia "8bit" del bottone */
+/* Questo permette al canvas Matrix sottostante di vedersi */
+body.theme-8bit.matrix-active #game-container #clicker-btn::after {
+    display: none !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Reset sfondo container per farlo trasparente verso il canvas */
+body.theme-8bit.matrix-active #game-container {
+    border-color: #0f0 !important;
+    box-shadow: 0 0 10px #0f0 !important;
+    background-color: transparent !important;
+    /* Trasparente per vedere il canvas */
+    background-image: none !important;
+}
+
+/* Colori Testo Matrix */
+body.theme-8bit.matrix-active #game-container * {
+    color: #0f0 !important;
+    text-shadow: 2px 2px 0 #003300 !important;
+    border-color: #0f0 !important;
+    /* Rende verdi anche i bordi delle card */
+}
+
+/* Reset immagine (rimuove filtri extra) */
+body.theme-8bit.matrix-active #game-container #manager-photo-normal,
+body.theme-8bit.matrix-active #game-container #manager-photo-clicked {
+    border: 4px solid #0f0 !important;
+    background: #000 !important;
+    /* Sfondo nero solido dietro l'immagine */
+    filter: none !important;
+}
+
+/* Bluescreen Fix */
+body.theme-8bit.bluescreen-active #game-container {
+    border-color: #fff !important;
+    background-color: #0000aa !important;
+    background-image: none !important;
+}
+
+body.theme-8bit.bluescreen-active #game-container * {
+    color: #fff !important;
+    text-shadow: 2px 2px 0 #000 !important;
+}
+
+body.theme-8bit.crunch-active #game-container #manager-photo-normal,
+body.theme-8bit.crunch-active #game-container #manager-photo-clicked {
+    /* Sfondo Rosso/Giallo */
+    background: #4a0000 !important;
+    background-image:
+        linear-gradient(45deg, #ff4500 25%, transparent 25%),
+        linear-gradient(-45deg, #ff4500 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ff4500 75%),
+        linear-gradient(-45deg, transparent 75%, #ff4500 75%) !important;
+    background-size: 20px 20px !important;
+
+    /* Bordo Arancio Fuoco */
+    border: 4px solid #ffcc00 !important;
+    box-shadow: 0 0 15px #ff4500 !important;
+
+    /* Filtro contrasto per accendere i colori dell'immagine */
+    filter: contrast(1.2) sepia(0.2) hue-rotate(-10deg) !important;
+}
+
+/* Cambia i bordi del contenitore in Rosso */
+body.theme-8bit.crunch-active #game-container {
+    border-color: #ff4500 !important;
+    box-shadow: 0 0 0 4px #000, 0 0 20px #ff0000 !important;
+}
+
+/* Testi e Icone in Giallo/Rosso */
+body.theme-8bit.crunch-active #game-container * {
+    text-shadow: 2px 2px 0 #8b0000 !important;
+}
+
+body.theme-8bit.crunch-active #game-container .upgrade-cost {
+    color: #ffcc00 !important;
+}
