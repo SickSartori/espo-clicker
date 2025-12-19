@@ -37,7 +37,12 @@
     pointer-events: none;
     text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
     z-index: 11;
+    white-space: nowrap;
+    width: auto;
+
 }
+
+
 
 /* Bottone Clicker */
 #clicker-btn {
@@ -355,6 +360,15 @@ body.bluescreen-active #clicker-btn {
     object-fit: cover;
     z-index: 9000;
     background: #000;
+    pointer-events: auto !important;
+    cursor: pointer;
+}
+
+.click-feedback {
+    white-space: nowrap !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: auto !important;
 }
 
 body.rick-rolling {
@@ -370,24 +384,59 @@ body.rick-rolling #game-container {
     filter: none !important;
     transform: none !important;
     z-index: 9500 !important;
-    pointer-events: none;
+    /* FIX: Importante per lasciar passare i click al video sotto */
+    pointer-events: none !important;
 }
 
-/* Nascondi colonne e elementi superflui */
+body.rick-rolling #click-feedback-container {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10005 !important;
+    pointer-events: none !important;
+    overflow: visible !important;
+}
+
+body.rick-rolling .click-feedback {
+    z-index: 10006 !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+}
+
+
 body.rick-rolling #left-column,
 body.rick-rolling #right-column,
 body.rick-rolling #version-display,
 body.rick-rolling #prestige-bonus-display,
 body.rick-rolling .skill-btn,
 body.rick-rolling #overlay-buttons-container,
-body.rick-rolling #github-link-container {
+body.rick-rolling #github-link-container,
+body.rick-rolling #header-left-panel,
+body.rick-rolling #header-right-panel,
+body.rick-rolling .header-label-main {
     display: none !important;
+}
+
+/* Disattiva contenitori */
+body.rick-rolling .header-main-score {
+    transform: none !important;
+    position: static !important;
+    display: block !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
 }
 
 body.rick-rolling #center-column {
     background: transparent !important;
     border: none !important;
     overflow: visible !important;
+    pointer-events: none !important;
 }
 
 /* Fix Numeri Click */
@@ -407,64 +456,89 @@ body.rick-rolling .click-feedback {
     opacity: 1 !important;
 }
 
-/* HUD Evento */
+
 body.rick-rolling #score-display {
     position: fixed !important;
-    top: 20px;
-    right: 20px;
-    left: auto;
-    transform: none;
-    z-index: 10001;
+    top: 25px !important;
+    right: 25px !important;
+    left: auto !important;
+    bottom: auto !important;
+
+    width: auto !important;
+
+    transform: none !important;
+    margin: 0 !important;
+    z-index: 10020 !important;
+
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    color: #f1c40f !important;
+    text-shadow: 2px 2px 0 #000, 0 0 15px rgba(241, 196, 15, 0.5) !important;
+
+    background: rgba(0, 0, 0, 0.85) !important;
+    padding: 10px 20px !important;
+    border-radius: 12px !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+
+    text-align: right !important;
+    pointer-events: auto !important;
     display: block !important;
-    font-size: 2.2rem;
-    color: #f1c40f;
-    text-shadow: 2px 2px 0 #000;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 5px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    margin: 0;
-    text-align: right;
-    pointer-events: auto;
 }
 
 body.rick-rolling #cps-display {
     position: fixed !important;
-    top: 85px;
-    right: 20px;
-    left: auto;
-    transform: none;
-    z-index: 10001;
+    top: 105px !important;
+    /* Subito sotto lo score */
+    right: 25px !important;
+    left: auto !important;
+
+    width: auto !important;
+
+    transform: none !important;
+    margin: 0 !important;
+    z-index: 10020 !important;
+
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #3498db !important;
+    text-shadow: 1px 1px 0 #000 !important;
+
+    background: rgba(0, 0, 0, 0.85) !important;
+    padding: 6px 15px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+
+    text-align: right !important;
     display: block !important;
     opacity: 1 !important;
-    font-size: 1.3rem;
-    color: #3498db;
-    text-shadow: 1px 1px 0 #000;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 4px 15px;
-    border-radius: 8px;
-    margin: 0;
-    text-align: right;
 }
 
+/* 4. Moltiplicatore Evento (Ancora più sotto) */
 body.rick-rolling #event-multiplier-display {
     position: fixed !important;
-    top: 135px;
-    right: 20px;
-    left: auto;
-    bottom: auto;
-    transform: none;
-    z-index: 10001;
+    top: 155px !important;
+    right: 25px !important;
+    left: auto !important;
+
+    width: auto !important;
+    transform: none !important;
+    z-index: 10020 !important;
+
+    background: rgba(0, 0, 0, 0.85) !important;
+    padding: 6px 15px !important;
+    border-radius: 6px !important;
+    border: 1px solid #e74c3c !important;
+
+    font-size: 1rem !important;
+    color: #e74c3c !important;
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;
+
     display: block !important;
-    font-size: 0.9rem;
-    color: #e74c3c;
-    font-weight: 600;
-    text-transform: uppercase;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 4px 10px;
-    border-radius: 6px;
-    box-shadow: none;
+    text-align: right !important;
 }
 
 body.rick-rolling #clicker-btn {
@@ -486,6 +560,7 @@ body.rick-rolling #clicker-btn img {
     height: 100%;
 }
 
+/* Toast (Spostati per non coprire) */
 body.rick-rolling #toast-container {
     display: flex !important;
     opacity: 1 !important;
@@ -493,6 +568,7 @@ body.rick-rolling #toast-container {
     right: auto !important;
     left: 20px !important;
     top: 20px !important;
+    align-items: flex-start !important;
     pointer-events: none;
 }
 

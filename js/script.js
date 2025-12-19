@@ -804,22 +804,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
 
                 if (isBlocked) {
-                    tryStart();
+                    // Se era solo bloccato dall'autoplay ma volume alto, prova a farlo partire
+                    if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 } else {
+                    // LOGICA MUTE / UNMUTE
                     if (gameState.user.masterVolume > 0) {
+                        // MUTA TUTTO
                         gameState.lastVolume = gameState.user.masterVolume;
                         gameState.user.masterVolume = 0;
                         muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                     } else {
+                        // UNMUTE
                         gameState.user.masterVolume = gameState.lastVolume || 1.0;
                         muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                         playSound('sound-click');
-                        tryStart();
+                        if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
                     }
+
+                    // Aggiorna Slider nelle impostazioni se aperto
                     const mSlider = document.getElementById('master-slider');
                     if (mSlider) mSlider.value = gameState.user.masterVolume;
+
+                    // 1. Audio Ambiente (Bg music, snow, etc)
                     if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+                    else if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
+                    // 2. Video Attivi (Rick Roll, Ricardo)
+                    ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
+                        const v = document.getElementById(id);
+                        if (v && !v.paused && v.style.display !== 'none') {
+                            // Ricalcola il volume corretto per il video
+                            const customVol = (typeof getCustomVolume === 'function') ? getCustomVolume(id) : 1.0;
+                            v.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
+                        }
+                    });
                 }
             });
         }

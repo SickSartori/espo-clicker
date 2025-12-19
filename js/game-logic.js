@@ -609,7 +609,7 @@ const EventHandlers = {
             if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
         });
 
-        // Scelta Video (evita ripetizioni se possibile)
+        // Scelta Video
         let videoId = config.videos[0];
         if (config.videos.length > 1) {
             const available = config.videos.filter(id => id !== lastVideoPlayedId);
@@ -628,21 +628,53 @@ const EventHandlers = {
             video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
             video.play().catch(e => { });
 
-            // Click Handler Video (per interagire cliccando sul video)
+            // --- GESTIONE INTERAZIONE CLICK SU TUTTO LO SCHERMO ---
             video.style.cursor = 'pointer';
-            const videoClickHandler = (e) => {
-                const syntheticEvent = { detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: video };
-                resolveBug(syntheticEvent);
-                video.style.transform = 'scale(0.98)';
-                setTimeout(() => video.style.transform = 'scale(1)', 50);
-            };
-            video.addEventListener('pointerdown', videoClickHandler);
 
-            // Cleanup specifico video alla fine
+            // Clonazione nodo per rimuovere vecchi listener
+            const newVideo = video.cloneNode(true);
+            video.parentNode.replaceChild(newVideo, video);
+
+            // Riavvia play sul clone
+            newVideo.play().catch(e => { });
+
+            const videoClickHandler = (e) => {
+                // Importante: Previene pausa/play nativo su click
+                if (e.cancelable) e.preventDefault();
+
+                // 1. Crea evento sintetico
+                const syntheticEvent = {
+                    detail: 1,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pageX: e.pageX,
+                    pageY: e.pageY,
+                    target: newVideo
+                };
+
+                // 2. Risolvi il bug
+                resolveBug(syntheticEvent);
+
+
+                // 4. Feedback sul bottone clicker
+                const mainBtn = document.getElementById('clicker-btn');
+                if (mainBtn) {
+                    mainBtn.classList.remove('clicked');
+                    void mainBtn.offsetWidth; // Reflow
+                    mainBtn.classList.add('clicked');
+                    setTimeout(() => mainBtn.classList.remove('clicked'), 100);
+                }
+            };
+
+            // Usa pointerdown per massima reattività (mobile + desktop)
+            newVideo.addEventListener('pointerdown', videoClickHandler);
+
+            // Timer fine evento
             setTimeout(() => {
-                video.pause();
-                video.style.display = 'none';
-                video.removeEventListener('pointerdown', videoClickHandler);
+                newVideo.pause();
+                newVideo.style.display = 'none';
+                newVideo.removeEventListener('pointerdown', videoClickHandler);
+                document.body.classList.remove('rick-rolling'); // Pulizia sicura
             }, config.duration);
         }
     },
