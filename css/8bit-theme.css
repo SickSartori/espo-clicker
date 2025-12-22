@@ -47,6 +47,38 @@ body.theme-8bit #game-container {
     box-shadow: 0 0 0 4px #000 !important;
 }
 
+body.theme-8bit #game-container .progress-text {
+    font-size: 0.45rem !important;
+    letter-spacing: -1px !important;
+    line-height: 32px !important;
+    width: 100% !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000 !important;
+    white-space: nowrap !important;
+}
+
+body.theme-8bit #game-container .tab-btn.notify {
+    animation: pixelFlash 1s infinite step-end !important;
+    opacity: 1 !important;
+    border: 2px solid #2ecc71 !important;
+    border-bottom: 2px solid #2ecc71 !important;
+    box-shadow: none !important;
+}
+
+/* Nascondi il pallino rotondo delle notifiche (stonava con la pixel art) */
+body.theme-8bit #game-container .tab-btn.notify::after {
+    display: none !important;
+}
+
+/* Applica lampeggio al bottone PROMOZIONE (se pronta) */
+body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
+    animation: pixelFlash 0.5s infinite step-end !important;
+    box-shadow: 4px 4px 0 #000 !important;
+    transform: none !important;
+    border-radius: 0 !important;
+}
+
 /* 4. NAVBAR */
 body.theme-8bit #game-navbar {
     background-color: #161b22 !important;
@@ -166,14 +198,15 @@ body.theme-8bit #game-container .upgrade-cost {
     margin-top: 5px !important;
 }
 
-/* Bottoni interni */
 body.theme-8bit #game-container .buy-btn {
-    background-color: #238636 !important;
-    /* Verde Terminal */
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    font-size: 0.55rem !important;
-    box-shadow: 2px 2px 0 #000 !important;
-    color: #fff !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 0.6rem !important;
+    padding: 0 10px !important;
+    line-height: 34px !important;
+    box-shadow: 3px 3px 0 #000 !important;
+    text-transform: uppercase !important;
+    border-radius: 0 !important;
 }
 
 body.theme-8bit #game-container .buy-btn:hover:not(:disabled) {
@@ -190,7 +223,6 @@ body.theme-8bit #game-container .buy-btn:disabled {
     color: #6e7681 !important;
 }
 
-/* 8. SCORE & HUD CENTRALE */
 body.theme-8bit #game-container #score-display {
     font-size: 1.5rem !important;
     color: #c90000 !important;
@@ -261,15 +293,7 @@ body.theme-8bit #game-container .skill-btn {
     font-size: 0.8rem !important;
 }
 
-@keyframes bouncePixel {
-    from {
-        transform: translateY(0);
-    }
 
-    to {
-        transform: translateY(-10px);
-    }
-}
 
 /* --- 11. FIX GESTIONE MATRIX (CRITICO) --- */
 
@@ -334,22 +358,96 @@ body.theme-8bit.crunch-active #game-container #manager-photo-clicked {
     /* Bordo Arancio Fuoco */
     border: 4px solid #ffcc00 !important;
     box-shadow: 0 0 15px #ff4500 !important;
-
-    /* Filtro contrasto per accendere i colori dell'immagine */
     filter: contrast(1.2) sepia(0.2) hue-rotate(-10deg) !important;
 }
 
-/* Cambia i bordi del contenitore in Rosso */
 body.theme-8bit.crunch-active #game-container {
     border-color: #ff4500 !important;
     box-shadow: 0 0 0 4px #000, 0 0 20px #ff0000 !important;
 }
 
-/* Testi e Icone in Giallo/Rosso */
 body.theme-8bit.crunch-active #game-container * {
     text-shadow: 2px 2px 0 #8b0000 !important;
 }
 
 body.theme-8bit.crunch-active #game-container .upgrade-cost {
     color: #ffcc00 !important;
+}
+
+body.theme-8bit #building-list-container .upgrade-details {
+    flex: 0 1 auto !important;
+    width: 40% !important;
+    max-width: 45% !important;
+    min-width: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.theme-8bit #building-list-container .upgrade-actions {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding-left: 10px !important;
+}
+
+body.theme-8bit #building-list-container .upgrade-count {
+    font-size: 0.9rem !important;
+    line-height: 1 !important;
+    text-align: right !important;
+    margin-right: 0 !important;
+}
+
+body.theme-8bit #building-list-container .buy-btn {
+    min-width: 80px !important;
+    width: auto !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+}
+
+body.theme-8bit #building-list-container .upgrade {
+    padding: 6px 10px !important;
+    min-height: 55px !important;
+    gap: 5px !important;
+}
+
+body.theme-8bit #click-upgrade-list .buy-btn,
+body.theme-8bit #enhancement-list .buy-btn {
+    width: 100% !important;
+    margin-top: 8px !important;
+}
+
+body.theme-8bit #click-upgrade-list .upgrade,
+body.theme-8bit #click-upgrade-list .click-upgrade,
+body.theme-8bit #enhancement-list .enhancement-upgrade {
+    padding: 10px 8px !important;
+    justify-content: center !important;
+}
+
+
+@keyframes pixelFlash {
+
+    0%,
+    49% {
+        background-color: #2ecc71;
+        color: #000;
+        border-color: #fff;
+    }
+
+    50%,
+    100% {
+        background-color: transparent;
+        color: #2ecc71;
+        border-color: #2ecc71;
+    }
+}
+
+@keyframes bouncePixel {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-10px);
+    }
 }
