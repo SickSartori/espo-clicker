@@ -329,14 +329,17 @@ function buySkin(skinId) {
         // Effetti Immediati
         playSound('sound-buy');
         window.EspooClicker.showToast(`Skin Acquistata: ${data.name}!`, 'success');
-        equipSkin(skinId); // Equipaggia subito
+
+        // --- MODIFICA QUI: Commenta o rimuovi questa riga ---
+        // equipSkin(skinId);  <-- QUESTO IMPEDISCE L'EQUIPAGGIAMENTO AUTOMATICO
+        // ----------------------------------------------------
 
         // Salvataggio e UI
         window.EspooClicker.saveGame();
 
         // Aggiorniamo solo ciò che serve
-        if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Per i token spesi
-        if (typeof updateSkinsUI === 'function') updateSkinsUI();       // Per la lista skin
+        if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
 
     } else {
         playSound('sound-error');
