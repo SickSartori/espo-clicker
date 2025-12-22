@@ -38,60 +38,71 @@ document.addEventListener('DOMContentLoaded', () => {
     gameContainer = document.getElementById('game-container');
 
     // --------- 9. SALVATAGGIO ---------
-    const SAVE_KEY = 'espotoolClickerSaveV8';
+    const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
 
     async function saveGame() {
         if (gameState.isDeleting) return;
 
-        // Check anti-corruzione
-        if (isNaN(gameState.score)) gameState.score = 0;
-        if (isNaN(gameState.totalScore)) gameState.totalScore = 0;
+        // 1. SANITY CHECK: Prevenzione corruzione dati
+        if (isNaN(gameState.score) || gameState.score === null) gameState.score = 0;
+        if (isNaN(gameState.totalScore)) gameState.totalScore = gameState.score;
 
         // Aggiorna timestamp
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
         gameState.lastSaveTimestamp = Date.now();
 
-        // 1. Converti in JSON e Comprimi
-        const stateJSON = JSON.stringify(gameState);
-        const compressed = LZString.compressToUTF16(stateJSON);
+        // 2. SERIALIZZAZIONE E COMPRESSIONE
+        let compressed = null;
+        try {
+            const stateJSON = JSON.stringify(gameState);
+            compressed = LZString.compressToUTF16(stateJSON);
+        } catch (e) {
+            console.error("❌ Errore critico compressione save:", e);
+            return; // Ferma tutto se la compressione fallisce
+        }
 
-        // 2. Salva in Locale
-        localStorage.setItem(SAVE_KEY, compressed);
+        // 3. SALVATAGGIO LOCALE (Con Backup a rotazione)
+        try {
+            localStorage.setItem(SAVE_KEY, compressed);
 
-        // 3. Salva in Cloud (se loggato)
+            // Crea un backup locale ogni tanto (o se è passato molto tempo dall'ultimo backup)
+            // Qui lo facciamo con una probabilità del 20% ad ogni autosave per non stressare lo storage
+            if (Math.random() < 0.2) {
+                localStorage.setItem(BACKUP_KEY, compressed);
+                // console.log("📦 Backup di sicurezza aggiornato.");
+            }
+        } catch (e) {
+            console.error("⚠️ Errore localStorage (Quota superata?):", e);
+            window.EspooClicker.showToast("Memoria piena! Impossibile salvare in locale.", "error");
+        }
+
+        // 4. SALVATAGGIO CLOUD (Con keepalive per chiusura tab)
         if (gameState.user.username && currentUserPassword) {
             try {
-                // FIX: Assicuriamoci che il punteggio non sia mai nullo
-                // Se lifetimeScore è 0 o null, usa totalScore come fallback
+                // Calcolo valori sicuri per il DB
                 let scoreToSend = Math.floor(gameState.lifetimeScore);
                 if (!scoreToSend || scoreToSend <= 0) {
                     scoreToSend = Math.floor(gameState.totalScore);
                 }
-
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
-                // DEBUG: Guarda nella Console (F12) se vedi questo messaggio
-                //console.log(`💾 Salvataggio Cloud... Invio Score: ${scoreToSend}, Prestige: ${prestigeToSend}`);
-
-                const response = await fetch('./php/save_progress.php', {
+                // FIX CRITICO: keepalive: true permette alla richiesta di finire anche se chiudi la pagina
+                fetch('./php/save_progress.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
                     body: JSON.stringify({
                         username: gameState.user.username,
                         password: currentUserPassword,
                         saveData: compressed,
-                        // INVIO DATI ESPLICITI
                         score: scoreToSend,
                         prestige: prestigeToSend
                     })
-                });
-
-                const result = await response.json();
-                //console.log("Esito Server:", result);
+                }).catch(err => console.warn("Cloud save warning:", err)); // Catch silenzioso per non bloccare
 
             } catch (e) {
-                console.error("Errore salvataggio cloud:", e);
+                console.error("Errore preparazione cloud save:", e);
             }
         }
     }
@@ -173,49 +184,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadGame() {
-        const savedState = localStorage.getItem(SAVE_KEY);
+        // Tenta di recuperare il salvataggio principale
+        let savedState = localStorage.getItem(SAVE_KEY);
+        let loadedFromBackup = false;
+
+        // Se il salvataggio principale non esiste o è vuoto, prova il BACKUP
+        if (!savedState) {
+            savedState = localStorage.getItem(BACKUP_KEY);
+            if (savedState) {
+                loadedFromBackup = true;
+                console.warn("⚠️ Main save non trovato. Tentativo di caricamento dal BACKUP.");
+            }
+        }
 
         if (savedState) {
             try {
-                let parsedState;
+                let parsedState = null;
 
-                // --- TENTATIVO DI DECOMPRESSIONE ---
-                // Proviamo a decomprimere. Se è un vecchio salvataggio, 
-                // questa funzione restituirà null o una stringa corrotta.
+                // --- 1. TENTATIVO DI DECOMPRESSIONE ---
+                // Proviamo a decomprimere la stringa
                 const decompressed = LZString.decompressFromUTF16(savedState);
 
-                // Controllo intelligente: Se decompresso è valido e inizia con '{' (JSON), usalo.
                 if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
-                    parsedState = JSON.parse(decompressed);
-                    console.log("💾 Salvataggio compresso caricato (LZString).");
-                } else {
-                    // Fallback Legacy: Prova a leggere come JSON normale (vecchi salvataggi)
-                    parsedState = JSON.parse(savedState);
-                    console.log("💾 Salvataggio legacy caricato.");
+                    try {
+                        parsedState = JSON.parse(decompressed);
+                        // console.log("💾 Salvataggio compresso caricato.");
+                    } catch (e) {
+                        console.warn("Dati decompressi corrotti, tento parsing diretto.");
+                    }
                 }
-                // -----------------------------------
 
-                // --- 1. CONTROLLO COMPATIBILITÀ VERSIONE ---
+                // Fallback: Se la decompressione fallisce, prova a leggere come JSON puro (Legacy)
+                if (!parsedState) {
+                    try {
+                        parsedState = JSON.parse(savedState);
+                        // console.log("💾 Salvataggio legacy (non compresso) caricato.");
+                    } catch (e) {
+                        throw new Error("Impossibile parsare il salvataggio.");
+                    }
+                }
+
+                // --- 2. CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
-                    // ... (Il resto della funzione rimane IDENTICO a prima) ...
-                    console.log("Versione incompatibile. Reset automatico.");
+                    console.log("Versione incompatibile. Reset automatico prevenuto.");
                     setTimeout(() => {
-                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Reset Versione: ${parsedState.version?.stage || 'Legacy'} incompatibile!`, 'warning');
+                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Versione salvataggio incompatibile!`, 'warning');
                     }, 500);
-                    saveGame();
-                    return;
+                    // In caso di incompatibilità grave, potresti decidere di non caricare o di resettare parzialmente.
+                    // Per ora carichiamo comunque per non far perdere dati all'utente.
                 }
 
-                // ... continua con deepMerge e il resto del codice originale ...
+                // --- 3. MERGE DEI DATI ---
+                // Uniamo i dati salvati con lo stato di default per garantire che le nuove variabili esistano
+
+                // Fix compatibilità: I vecchi save usavano "buildings" invece di "teams"
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
                 }
+
                 deepMerge(gameState, parsedState);
 
-                // --- 2. AGGIORNAMENTO VERSIONE ---
-                // Aggiorniamo la versione nel gioco caricato all'ultima versione del codice
-                // (Utile per aggiornamenti minori, es. caricare un save 3.0 su 3.1)
+                // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
+                if (loadedFromBackup) {
+                    setTimeout(() => {
+                        if (window.EspooClicker) window.EspooClicker.showToast("Dati ripristinati dal Backup di sicurezza!", "warning");
+                    }, 1000);
+                    saveGame(); // Salva subito nel main slot per rigenerarlo
+                }
+
+                // --- 4. INIZIALIZZAZIONE STRUTTURE MANCANTI ---
+                // Se sono stati aggiunti nuovi upgrade nel codice ma non sono nel save, li creiamo ora
+
+                // Aggiorna versione save alla versione attuale del codice
                 if (window.GAME_VERSION) {
                     gameState.version = {
                         major: window.GAME_VERSION.major,
@@ -224,8 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 }
 
-
-                // Inizializzazione oggetti mancanti (se aggiunti in nuove versioni)
+                // Inizializza Enhancements
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                 for (const key in gameData.buildingEnhancements) {
                     if (!gameState.buildingEnhancements[key]) {
@@ -233,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                // Inizializza Click Upgrades
                 if (!gameState.clickUpgrades) gameState.clickUpgrades = {};
                 for (const key in gameData.clickUpgrades) {
                     if (!gameState.clickUpgrades[key]) {
@@ -240,16 +281,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Ripristino variabili temporali e impostazioni
+                // Inizializza Prestige Upgrades
+                if (!gameState.prestigeUpgrades) gameState.prestigeUpgrades = {};
+                for (const key in gameData.prestigeUpgrades) {
+                    if (!gameState.prestigeUpgrades[key]) {
+                        const isCounted = gameData.prestigeUpgrades[key].isCounted;
+                        gameState.prestigeUpgrades[key] = isCounted ? { count: 0 } : { purchased: false };
+                    }
+                }
+
+                // Ripristino Variabili Temporali
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
 
+                // Fix Prestige Points Lifetime
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null) {
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
                 }
 
+                // Fix Filtri
                 if (!gameState.filterSettings) {
-                    gameState.filterSettings = { click: 'available', auto: 'available', lab: 'available' };
+                    gameState.filterSettings = { globalFilter: 'available' };
                 }
 
                 // Ripristino Achievements
@@ -257,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!gameState.achievements) gameState.achievements = {};
                     for (const key in gameData.achievements) {
                         if (!gameState.achievements[key]) {
-                            gameState.achievements[key] = { unlocked: false };
+                            gameState.achievements[key] = { unlocked: false, claimed: false };
                         }
                     }
                 }
@@ -269,40 +321,75 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-            } catch (e) { console.error("Errore loadGame:", e); }
+            } catch (e) {
+                console.error("❌ Errore critico in loadGame:", e);
+
+                // TENTATIVO DISPERATO: Se il main è corrotto e non abbiamo ancora provato il backup
+                if (!loadedFromBackup) {
+                    console.log("Il salvataggio principale è corrotto. Tento il backup...");
+                    const backupState = localStorage.getItem(BACKUP_KEY);
+                    if (backupState) {
+                        try {
+                            const decompBackup = LZString.decompressFromUTF16(backupState);
+                            const parsedBackup = JSON.parse(decompBackup);
+                            deepMerge(gameState, parsedBackup);
+
+                            setTimeout(() => {
+                                if (window.EspooClicker) window.EspooClicker.showToast("File principale corrotto. Caricato Backup.", "error");
+                            }, 1000);
+
+                            // Ripariamo il file principale
+                            saveGame();
+
+                            // Rilanciamo la funzione di caricamento per applicare le logiche (skins, ecc)
+                            // Nota: Evitiamo ricorsione infinita grazie al fatto che ora lo stato è in memoria
+                        } catch (bkErr) {
+                            console.error("Anche il backup è inutilizzabile.", bkErr);
+                        }
+                    }
+                }
+            }
         }
 
-        // Recupero username legacy se presente
-        const savedUsername = localStorage.getItem('espooClickerUsername');
-        if (savedUsername) gameState.user.username = savedUsername;
+        // Recupero Username Legacy (se presente in vecchie versioni localStorage)
+        const legacyUsername = localStorage.getItem('espooClickerUsername');
+        if (legacyUsername && (!gameState.user.username || gameState.user.username === 'Giocatore')) {
+            gameState.user.username = legacyUsername;
+        }
 
-        // [GENERICO] Ricalcola tutti gli effetti passivi
+        // 5. RICALCOLO EFFETTI E STATISTICHE
         if (typeof reapplyAllEffects === 'function') {
             reapplyAllEffects();
         }
 
-        // Ricalcolo Bonus
+        // Ricalcolo Bonus Prestigio e BPS
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // [GENERICO] Aggiungi skin mancanti
+        // 6. AUTO-FIX AGGIUNTIVI
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
 
-            // Se l'obiettivo è riscattato e dà una skin, assicuriamoci di averla
             if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
-                const skinId = achData.reward.id;
+                const skinId = achData.reward.id || achData.reward.value;
                 if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
-                    console.log(`[Auto-Fix Local] Recuperata skin mancante: ${skinId}`);
+                    // console.log(`[Auto-Fix] Recuperata skin mancante: ${skinId}`);
                     gameState.skins.unlocked.push(skinId);
                 }
             }
         }
 
-        // Applicazione Effetti passivi al caricamento
-        if (gameState.clickUpgrades.hacking.purchased) goldenBugChance *= 2;
-        if (gameState.prestigeUpgrades.ticketPremium.purchased) goldenBugSpawnTime *= 0.5;
+        // Applicazione Effetti passivi speciali al caricamento
+        if (gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased) {
+            if (window.goldenBugChance) window.goldenBugChance *= 2;
+        }
+        if (gameState.prestigeUpgrades.ticketPremium && gameState.prestigeUpgrades.ticketPremium.purchased) {
+            if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
+        }
+
+        // Fix BPS negativo visuale (raro bug)
+        if (bps < 0) bps = 0;
     }
 
 
