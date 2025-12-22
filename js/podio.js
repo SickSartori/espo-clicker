@@ -39,17 +39,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 leaderboardList.innerHTML = ''; // Pulisci
                 scores.forEach((entry, index) => {
                     const item = document.createElement('div');
-                    item.className = 'leaderboard-item';
+                    // Aggiungi una classe speciale se è la top 3 per lo styling CSS
+                    let rankClass = '';
+                    if (index === 0) rankClass = 'rank-1';
+                    else if (index === 1) rankClass = 'rank-2';
+                    else if (index === 2) rankClass = 'rank-3';
 
-                    // MODIFICA: Mostra sempre il livello, anche se è 0, per chiarezza
-                    // Usa entry.prestigeLevel || 0 per gestire eventuali null
+                    item.className = `leaderboard-item ${rankClass}`;
+
+                    // Gestione Icona Rango
+                    let rankDisplay = `#${index + 1}`;
+                    if (index === 0) rankDisplay = '<i class="fa-solid fa-trophy" style="color: #f1c40f;"></i>'; // Oro
+                    if (index === 1) rankDisplay = '<i class="fa-solid fa-medal" style="color: #bdc3c7;"></i>'; // Argento
+                    if (index === 2) rankDisplay = '<i class="fa-solid fa-medal" style="color: #cd7f32;"></i>'; // Bronzo
+
+                    // Gestione Livello (Prestigio)
                     let level = entry.prestigeLevel || 0;
-                    let prestigeHTML = ` <span style="color: #f1c40f; font-size: 0.8rem;"> (Liv. ${level})</span>`;
+                    // Badge colorato per il livello
+                    let prestigeBadge = `<span class="level-badge">LIV. ${level}</span>`;
+
+                    // Controlla se è l'utente corrente (opzionale, richiede di sapere l'username locale)
+                    const currentUsername = sessionStorage.getItem('espooUser');
+                    if (entry.username === currentUsername) {
+                        item.classList.add('is-me');
+                    }
 
                     item.innerHTML = `
-                        <span class="leaderboard-rank">#${index + 1}</span>
-                        <span class="leaderboard-name">${escapeHTML(entry.username)}${prestigeHTML}</span>
-                        <span class="leaderboard-score">${Game.formatNumber(entry.score)}</span>
+                        <div class="lb-left">
+                            <span class="leaderboard-rank">${rankDisplay}</span>
+                            <div class="lb-user-info">
+                                <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
+                                ${prestigeBadge}
+                            </div>
+                        </div>
+                        <span class="leaderboard-score">${Game.formatNumber(entry.score)} <i class="fa-solid fa-bug"></i></span>
                     `;
                     leaderboardList.appendChild(item);
                 });

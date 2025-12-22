@@ -1,34 +1,111 @@
-/* Stili per il Modale Podio */
+/* Stili per il Modale Podio - AGGIORNATO */
+
 .modal-content #leaderboard-list {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Spazio tra le righe */
 }
 
 .leaderboard-item {
     display: flex;
     justify-content: space-between;
-    padding: 12px;
-    background-color: #34495e;
-    border: 1px solid #5d7c9a;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
+    align-items: center;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    /* Più trasparente */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: transform 0.2s, background-color 0.2s;
 }
 
+/* Hover effect */
+.leaderboard-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+/* Sezione Sinistra (Rank + Info) */
+.lb-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Rank (Numero o Trofeo) */
 .leaderboard-rank {
-    font-weight: bold;
-    color: #f1c40f;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.2rem;
     min-width: 30px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+/* Info Utente (Nome e Badge impilati o affiancati) */
+.lb-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .leaderboard-name {
-    font-weight: 500;
-    color: #ecf0f1;
-    flex-grow: 1;
+    font-weight: 700;
+    color: #fff;
+    font-size: 1rem;
 }
 
+/* Badge Livello */
+.level-badge {
+    font-size: 0.65rem;
+    background-color: #34495e;
+    color: #3498db;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #4a6582;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* Punteggio */
 .leaderboard-score {
-    font-weight: bold;
-    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #2ecc71;
+    /* Verde soldi/bug */
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+}
+
+/* --- STILI SPECIALI PER LA TOP 3 --- */
+
+/* 1° Posto - Oro */
+.leaderboard-item.rank-1 {
+    background: linear-gradient(90deg, rgba(241, 196, 15, 0.1), transparent);
+    border-left: 4px solid #f1c40f;
+}
+
+.leaderboard-item.rank-1 .leaderboard-name {
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+}
+
+/* 2° Posto - Argento */
+.leaderboard-item.rank-2 {
+    border-left: 4px solid #bdc3c7;
+}
+
+/* 3° Posto - Bronzo */
+.leaderboard-item.rank-3 {
+    border-left: 4px solid #cd7f32;
+}
+
+/* --- STILE "SONO IO" --- */
+.leaderboard-item.is-me {
+    border: 1px solid #3498db;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
+    background-color: rgba(52, 152, 219, 0.1);
 }
