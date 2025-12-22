@@ -447,13 +447,27 @@
         toast("Rinforzi arrivati! (+100 unità a tutti)");
     });
 
+
     // RANDOM CHAOS
     document.getElementById('btn-random-chaos').addEventListener('click', () => {
         // 1. Risorse Random (Valori alti)
         const randBugs = Math.floor(Math.random() * 1000000000);
         const randTokens = Math.floor(Math.random() * 5000);
+
         gameState.score += randBugs;
+        gameState.totalScore += randBugs;
+        gameState.lifetimeScore += randBugs;
+
         gameState.prestigePoints += randTokens;
+        if (gameState.lifetimePrestigePoints !== undefined) gameState.lifetimePrestigePoints += randTokens;
+
+        // --- AGGIUNTA RICHIESTA: Click e Moltiplicatori ---
+        const randClicks = Math.floor(Math.random() * 5000) + 1000;
+        gameState.totalClicks += randClicks;
+
+        // Aggiunge un moltiplicatore casuale al bonus BPS del cheat
+        const randMult = Math.floor(Math.random() * 500) + 100;
+        window.cheatBPSBonus += randMult;
 
         // 2. Sblocca 3 Achievement a caso
         const achKeys = Object.keys(gameData.achievements);
@@ -467,9 +481,11 @@
         const randomSkin = skinKeys[Math.floor(Math.random() * skinKeys.length)];
         if (!gameState.skins.unlocked.includes(randomSkin)) gameState.skins.unlocked.push(randomSkin);
 
+        // Aggiorna l'interfaccia, incluso il bottone Promozione
+        if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
         refreshUI();
 
-        toast(`🎲 CHAOS: +${window.EspooClicker.formatNumber(randBugs)} Bug, +${randTokens} Token, cose a caso sbloccate!`);
+        toast(`🎲 CHAOS: +${window.EspooClicker.formatNumber(randBugs)} Bug, +${randTokens} Token, +${randClicks} Click!`);
     });
 
     // GOD MODE
