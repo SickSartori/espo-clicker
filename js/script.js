@@ -52,29 +52,47 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
         gameState.lastSaveTimestamp = Date.now();
 
-        // 1. Converti in JSON
+        // 1. Converti in JSON e Comprimi
         const stateJSON = JSON.stringify(gameState);
-
-        // 2. Comprimi (LZString) - Riduce la dimensione del 60-80%
-        // Usiamo compressToUTF16 perché funziona perfettamente con localStorage e JSON
         const compressed = LZString.compressToUTF16(stateJSON);
 
-        // 3. Salva in Locale
+        // 2. Salva in Locale
         localStorage.setItem(SAVE_KEY, compressed);
 
-        // 4. Salva in Cloud (se loggato)
+        // 3. Salva in Cloud (se loggato)
         if (gameState.user.username && currentUserPassword) {
             try {
-                await fetch('./php/save_progress.php', {
+                // FIX: Assicuriamoci che il punteggio non sia mai nullo
+                // Se lifetimeScore è 0 o null, usa totalScore come fallback
+                let scoreToSend = Math.floor(gameState.lifetimeScore);
+                if (!scoreToSend || scoreToSend <= 0) {
+                    scoreToSend = Math.floor(gameState.totalScore);
+                }
+
+                const prestigeToSend = Math.floor(gameState.totalResets || 0);
+
+                // DEBUG: Guarda nella Console (F12) se vedi questo messaggio
+                //console.log(`💾 Salvataggio Cloud... Invio Score: ${scoreToSend}, Prestige: ${prestigeToSend}`);
+
+                const response = await fetch('./php/save_progress.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: gameState.user.username,
                         password: currentUserPassword,
-                        saveData: compressed // Inviamo la stringa compressa al server
+                        saveData: compressed,
+                        // INVIO DATI ESPLICITI
+                        score: scoreToSend,
+                        prestige: prestigeToSend
                     })
                 });
-            } catch (e) { console.error("Errore salvataggio cloud:", e); }
+
+                const result = await response.json();
+                //console.log("Esito Server:", result);
+
+            } catch (e) {
+                console.error("Errore salvataggio cloud:", e);
+            }
         }
     }
 
@@ -470,10 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto-save (ogni 30s)
         saveInterval = setInterval(saveGame, 30000);
 
-        // Classifica (ogni 30s)
-        leaderboardInterval = setInterval(() => {
-            submitScoreToLeaderboard(gameState.user.username);
-        }, 30000);
 
         scheduleGoldenBug();
 

@@ -177,9 +177,9 @@
     <script src="./js/game-logic.js" defer></script>
     <script src="./js/script.js" defer></script> 
     <script src="./js/podio.js" defer></script>
-    <script src="./js/modals.js" defer></script>
+<script src="./js/modals.js" defer></script>
 
-<div id="mobile-nav-bar">
+    <div id="mobile-nav-bar">
         <button class="mobile-nav-btn" data-target="left-column">
             <i class="fa-solid fa-bolt"></i>
             <span>Upgrade</span>
@@ -195,5 +195,6 @@
             <span>Team</span>
         </button>
     </div>
-</body>
+
+</body> 
 </html>
