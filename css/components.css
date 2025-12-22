@@ -692,3 +692,22 @@ body.modal-open #toast-container {
     margin-bottom: -4px;
     z-index: 9999;
 }
+
+.tooltip-multiline[data-tooltip]:hover::after {
+    white-space: normal !important;
+    /* Permette al testo di andare a capo */
+    min-width: 150px;
+    /* Larghezza minima */
+    max-width: 220px;
+    /* Larghezza massima prima di andare a capo */
+    text-align: center;
+    /* Centra il testo */
+    line-height: 1.3;
+    /* Spazio tra le righe */
+    font-size: 0.8rem;
+    /* Testo leggermente più piccolo */
+    padding: 10px;
+    /* Un po' più di aria */
+    bottom: 105%;
+    /* Lo alza leggermente di più */
+}

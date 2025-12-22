@@ -508,6 +508,18 @@ function updateSkinsUI() {
         'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'NATALE'
     };
 
+    // 1. MAPPATURA INVERSA: Skin ID -> Obiettivo
+    // Ci serve per sapere quale obiettivo sblocca una specifica skin
+    const skinToAchievement = {};
+    for (const achKey in gameData.achievements) {
+        const ach = gameData.achievements[achKey];
+        if (ach.reward && ach.reward.type === 'skin') {
+            // Se l'obiettivo dà una skin, salviamo il collegamento
+            const skinId = ach.reward.id || ach.reward.value;
+            skinToAchievement[skinId] = ach;
+        }
+    }
+
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
@@ -516,18 +528,51 @@ function updateSkinsUI() {
         const canAfford = isBuyable && gameState.prestigePoints >= data.cost;
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
-        // 1. Descrizione Anti-Spoiler
-        let displayDesc = data.desc || "Nessuna descrizione";
-        if (!isUnlocked && !isBuyable) displayDesc = data.unlockHint || "???";
+        // --- LOGICA DESCRIZIONE & TOOLTIP ---
+        let displayDesc = "";
+        let tooltipAttr = ""; // Attributo per il tooltip HTML
 
-        // 2. Elemento Footer (Bottone)
+        if (isUnlocked) {
+            // Se SBLOCCATA: Mostra la descrizione "Lore" (es. "Best girl")
+            displayDesc = data.desc || "Nessuna descrizione";
+        } else {
+            // Se BLOCCATA: 
+
+            // 1. Mostra SOLO l'hint su come sbloccarla (nasconde la descrizione Lore)
+            if (data.unlockHint) {
+                displayDesc = `<i class="fa-solid fa-lock" style="font-size:0.8em"></i> ${data.unlockHint}`;
+            } else if (isBuyable) {
+                displayDesc = "Acquistabile nello Shop.";
+            } else {
+                displayDesc = "???";
+            }
+
+            // 2. Se legata a un obiettivo, prepara il Tooltip
+            const linkedAch = skinToAchievement[key];
+            if (linkedAch) {
+                // Costruiamo il testo del tooltip: "Obiettivo: Nome - Descrizione"
+                // Nota: Usiamo data.isSecret per nascondere i dettagli se necessario
+                let achName = linkedAch.name;
+                let achDesc = linkedAch.desc;
+
+                if (linkedAch.isSecret && !gameState.achievements[key]?.unlocked) { // Se l'obiettivo stesso è segreto
+                    achName = "Segreto";
+                    achDesc = "???";
+                }
+
+                // Aggiungiamo l'attributo data-tooltip alla card
+                tooltipAttr = `data-tooltip="🏆 Richiede: ${achName} - ${achDesc}"`;
+            }
+        }
+        // ------------------------------------
+
+        // Elemento Footer (Bottone)
         let footerHtml = '';
         if (isEquipped) {
             footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> IN USO</div>`;
         } else if (isUnlocked) {
             footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">USA SKIN</div>`;
         } else if (isBuyable) {
-            // Se comprabile mostra Prezzo + Bottone
             const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
             const btnText = canAfford ? 'COMPRA' : 'NO TOKEN';
             const btnStyle = canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;';
@@ -538,7 +583,6 @@ function updateSkinsUI() {
                 <div class="skin-btn" style="${btnStyle}" ${clickAction}>${btnText}</div>
             `;
         } else {
-            // Bloccata
             footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATA</div>`;
         }
 
@@ -548,12 +592,22 @@ function updateSkinsUI() {
         if (isEquipped) classes += ' equipped';
         card.className = classes;
 
-        // Struttura HTML Pulita
+        // Se è bloccata e ha un obiettivo, aggiungiamo il tooltip al div principale
+        if (tooltipAttr) {
+            card.innerHTML = `<div style="display:contents" ${tooltipAttr}>`; // Wrapper invisibile per tooltip se necessario, o direttamente sulla card:
+            // Ma data-tooltip funziona meglio sugli elementi diretti.
+            // Reimpostiamo l'innerHTML pulito sotto, aggiungendo tooltipAttr al div container
+        }
+
+        // Creiamo la card con l'attributo tooltip iniettato se presente
+        // Nota: `displayDesc` ora contiene l'icona lucchetto se bloccato.
+        const imgSource = isUnlocked ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp') : './assets/image/hidden.webp';
+
         card.innerHTML = `
             <div class="skin-badge">${rarityLabel}</div>
             
             <div class="skin-img-container">
-                <img src="${isUnlocked ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp') : './assets/image/hidden.webp'}" class="skin-img">
+                <img src="${imgSource}" class="skin-img">
             </div>
             
             <div class="skin-name-display" title="${data.name}">${data.name}</div>
@@ -566,6 +620,25 @@ function updateSkinsUI() {
                 ${footerHtml}
             </div>
         `;
+
+        // Applica l'attributo tooltip direttamente all'elemento DOM creato
+        if (!isUnlocked) {
+            const linkedAch = skinToAchievement[key];
+            if (linkedAch) {
+                let achName = linkedAch.name;
+                let achDesc = linkedAch.desc;
+
+                // Gestione segreti
+                if (linkedAch.isSecret && !gameState.achievements[key]?.unlocked) {
+                    achName = "Segreto";
+                    achDesc = "???";
+                }
+
+                card.setAttribute('data-tooltip', `🏆 Obiettivo: ${achDesc}`);
+
+                card.classList.add('tooltip-multiline');
+            }
+        }
 
         grid.appendChild(card);
     }

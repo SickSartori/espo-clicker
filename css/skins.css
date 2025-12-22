@@ -13,7 +13,6 @@
     border: 3px solid var(--border-color);
     border-radius: 12px;
 
-    /* MODIFICA 1: Riduci l'altezza da 280px a 240px */
     height: 240px;
     width: 100%;
 
@@ -22,15 +21,22 @@
     align-items: center;
     justify-content: flex-start;
 
-    /* MODIFICA 2: Riduci il padding verticale */
     padding: 10px 10px 15px 10px;
 
     box-sizing: border-box;
     position: relative;
-    overflow: hidden;
+
+    /* MODIFICA QUI: Cambia da hidden a visible */
+    overflow: visible !important;
+
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
+    /* Aggiunto z-index alla transizione */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.skin-card:hover {
+    z-index: 100;
 }
 
 /* Hover Effect */
