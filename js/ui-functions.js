@@ -1423,16 +1423,22 @@ function updateStatsUI() {
     // --- CALCOLI PRELIMINARI ---
     const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
 
-    // Calcolo Valore Click (Aggiornato con Calcolo Centralizzato)
-    const currentClickValue = (typeof calculateClickValue === 'function')
+    // 1. Recupera ENTRAMBI i valori
+    // Valore "Pulito" (Base + Upgrade + Mano Bionica)
+    const rawClick = (typeof calculateRawClickValue === 'function')
+        ? calculateRawClickValue()
+        : gameState.baseClickValue;
+
+    // Valore "Totale" (Con Moltiplicatore Prestigio, Eventi, ecc.)
+    const totalClick = (typeof calculateClickValue === 'function')
         ? calculateClickValue()
-        : (gameState.baseClickValue * (typeof prestigeBonus !== 'undefined' ? prestigeBonus : 1));
+        : rawClick;
 
     // Dati Offline
     const totalOffline = gameState.totalOfflineScore || 0;
 
     // Calcolo Efficienza Offline
-    let offlineEff = 0.30; // Base 30%
+    let offlineEff = 0.30;
     if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn) {
         offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
     }
@@ -1485,10 +1491,17 @@ function updateStatsUI() {
                         <span class="stat-label">Produzione (BPS)</span>
                         <span class="stat-value">${formatNumber(bps)}</span>
                     </div>
+                    
                     <div class="stat-box">
-                        <span class="stat-label">Valore Click</span>
-                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(currentClickValue)}</span>
+                        <span class="stat-label">Valore Click (Base / Totale)</span>
+                        <span class="stat-value" style="color: #e74c3c;">
+                            ${formatNumber(rawClick)}
+                            <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal;">
+                                (Tot: ${formatNumber(totalClick)})
+                            </span>
+                        </span>
                     </div>
+
                     <div class="stat-box">
                         <span class="stat-label">Moltiplicatore Globale</span>
                         <span class="stat-value">x${formatNumber(prestigeBonus)}</span>

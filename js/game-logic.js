@@ -888,6 +888,22 @@ function calculateClickValue() {
 
     return val;
 }
+function calculateRawClickValue() {
+    // 1. Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
+    let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
+
+    // 2. Aggiungi Mano Bionica (Se attiva)
+    // Nota: La mano bionica dipende dai BPS attuali. Se vuoi il valore "puro" senza inflazione,
+    // dovresti dividere i BPS per il prestigeBonus, ma solitamente si vuole vedere quanto aggiunge realmente.
+    // Qui lasciamo il calcolo standard della mano bionica.
+    if (window.gameFlags.bionicHand) {
+        let percent = 0.01;
+        if (window.gameFlags.divineClick) percent = 0.02;
+        val += (bps * percent);
+    }
+
+    return val;
+}
 
 function resolveBug(event) {
     if (event.detail === 0) return;
