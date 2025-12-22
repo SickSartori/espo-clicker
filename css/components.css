@@ -59,6 +59,19 @@
     pointer-events: none;
 }
 
+.buy-btn:not(:disabled) {
+    border: 1px solid #2ecc71;
+    /* Bordo verde sottile */
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+    transition: all 0.2s ease;
+}
+
+.buy-btn:not(:disabled):hover {
+    background-color: #27ae60;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    transform: translateY(-2px);
+}
+
 /*
  * Classi Danger Bottone
  */

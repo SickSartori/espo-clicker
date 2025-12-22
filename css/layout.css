@@ -227,36 +227,27 @@
 }
 
 .tab-btn.notify {
-    animation: none !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    color: #95a5a6;
-    border-bottom-color: transparent !important;
+    animation: tabPulse 1.5s infinite ease-in-out !important;
+    border-bottom-color: #2ecc71 !important;
+    position: relative;
 }
 
 .tab-btn.notify::after {
     content: '';
     position: absolute;
-
     top: 10px;
-    left: 50%;
-    right: auto;
-
-    /* Spostalo a destra del testo */
-    margin-left: 40px;
-
-    background-color: #e74c3c;
-
+    right: 15px;
+    /* Posizione fissa a destra */
+    left: auto;
+    margin-left: 0;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-
-    border: 1px solid #25323e;
-    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
-
-    /* Unica cosa che deve pulsare */
-    animation: dotPulse 2s infinite;
-    z-index: 5;
+    background-color: #2ecc71;
+    /* Verde invece di rosso */
+    box-shadow: 0 0 8px #2ecc71;
+    animation: none;
+    /* L'animazione è sul bottone ora */
 }
 
 .tab-content,
