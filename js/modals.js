@@ -457,6 +457,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) {
             modal.style.display = 'flex';
 
+            // [NUOVO] Aggiunge stato al body per spostare i toast
+            document.body.classList.add('modal-open');
+
             if (modal.id === 'login-modal') {
                 const muteBtn = document.getElementById('quick-mute-btn');
                 if (muteBtn) muteBtn.style.display = 'none';
@@ -468,9 +471,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) {
             modal.style.display = 'none';
 
+            // [NUOVO] Rimuove stato SOLO se non ci sono altri modali aperti
+            // (Previene lo "sfarfallio" se passi da un modale all'altro)
+            let anyOpen = false;
+            document.querySelectorAll('.modal-backdrop').forEach(m => {
+                if (m.style.display === 'flex' && m !== modal) anyOpen = true;
+            });
+
+            if (!anyOpen) {
+                document.body.classList.remove('modal-open');
+            }
+
             if (modal.id === 'login-modal') {
                 const muteBtn = document.getElementById('quick-mute-btn');
-                if (muteBtn) muteBtn.style.display = ''; // Rimuove l'inline style e lascia fare al CSS
+                if (muteBtn) muteBtn.style.display = '';
             }
         }
     }

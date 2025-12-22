@@ -276,283 +276,6 @@
     text-align: center;
 }
 
-.contract-columns {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.contract-column {
-    flex: 1;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.contract-column.loss {
-    border: 1px solid rgba(231, 76, 60, 0.3);
-}
-
-.contract-column.gain {
-    border: 1px solid rgba(46, 204, 113, 0.3);
-    background-color: rgba(46, 204, 113, 0.05);
-}
-
-.contract-column h3 {
-    margin-top: 0;
-    border-bottom: 1px solid #fff;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
-}
-
-.contract-column.loss h3 {
-    color: #e74c3c;
-    border-color: #e74c3c;
-}
-
-.contract-column.gain h3 {
-    color: #2ecc71;
-    border-color: #2ecc71;
-}
-
-.contract-column ul {
-    list-style: none;
-    padding: 0;
-    margin: 10px 0;
-    color: #c0392b;
-}
-
-/* Achievement */
-
-.achievement.claimable {
-    border: 3px solid #f1c40f;
-    background-color: rgba(241, 196, 15, 0.15);
-    box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
-    animation: achievementPulse 1.5s infinite alternate;
-}
-
-.achievement-done {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #2ecc71;
-    text-align: right;
-}
-
-.achievement.achievement-secret {
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px dashed #7f8c8d;
-    color: #7f8c8d;
-    font-style: italic;
-    opacity: 0.7;
-}
-
-.achievement {
-    border: 1px solid #4a6582;
-    /* Bordo sottile di base */
-    padding: 18px;
-    margin-bottom: 12px;
-    background-color: #2c3e50;
-    /* Sfondo card più scuro per contrasto */
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    transition: all 0.2s ease;
-}
-
-.achievement:hover:not(.locked):not(.claimable) {
-    background-color: #3d5570;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), 0 0 5px #5dade2;
-}
-
-/* SBLOCCATO */
-.achievement.unlocked {
-    background-color: rgba(46, 204, 113, 0.1);
-    /* Sfondo verde tenue */
-    border-color: #2ecc71;
-}
-
-/* BLOCCATO */
-.achievement.locked {
-    opacity: 0.8;
-    border-style: dashed;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* SEGRETO */
-.achievement.secret {
-    opacity: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-style: italic;
-    color: #7f8c8d;
-    padding: 10px;
-}
-
-.achievement-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.achievement-header [data-tooltip]:hover::after {
-    left: auto !important;
-    right: 0 !important;
-    transform: translateX(0) !important;
-
-    margin-right: -5px;
-}
-
-.achievement-header [data-tooltip]:hover::before {
-    left: auto !important;
-    right: 18px !important;
-    transform: translateX(0) !important;
-}
-
-.achievement-name {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.5px;
-    flex-grow: 1;
-}
-
-.achievement.locked .achievement-name {
-    color: #bdc3c7;
-}
-
-.achievement-desc {
-    font-size: 0.9rem;
-    color: #bdc3c7;
-    margin-bottom: 5px;
-}
-
-.achievement-flavor {
-    font-size: 0.8rem;
-    font-style: italic;
-    color: #95a5a6;
-    margin-bottom: 8px;
-}
-
-.achievement-reward {
-    font-size: 0.85rem;
-    color: #f1c40f;
-    font-weight: bold;
-    margin-top: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-
-/* BARRA PROGRESSO */
-.ach-progress-container {
-    height: 25px;
-    /* Più alta e visibile */
-    border: 1px solid #3498db;
-    background-color: #1a252f;
-    border-radius: 4px;
-    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
-    position: relative;
-    margin-top: 10px;
-}
-
-.ach-progress-bar {
-    background: linear-gradient(to right, #3498db, #5dade2);
-    box-shadow: 0 0 10px #5dade2;
-    transition: width 0.4s ease-out;
-    height: 100%;
-}
-
-.ach-progress-text {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: 10px;
-
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #fff;
-    text-shadow: 0 0 5px #000;
-    z-index: 2;
-    box-sizing: border-box;
-    white-space: nowrap;
-}
-
-/* Area Reward Ridisegnata */
-.reward-box-container {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 15px 0;
-    display: flex;
-    flex-direction: row;
-    /* Affiancati su Desktop */
-    justify-content: space-around;
-    align-items: center;
-    gap: 15px;
-}
-
-.reward-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    flex: 1;
-}
-
-.reward-icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
-}
-
-.reward-value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.1;
-}
-
-.reward-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #7f8c8d;
-    margin-top: 4px;
-    letter-spacing: 1px;
-}
-
-/* Colori specifici */
-.token-color {
-    color: #f1c40f;
-    text-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
-}
-
-.bonus-color {
-    color: #2ecc71;
-    text-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
-}
-
-/* Separatore verticale tra i reward */
-.reward-divider {
-    width: 1px;
-    height: 50px;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
 /* Footer Bottoni - Desktop */
 .contract-footer {
     display: flex;
@@ -561,7 +284,286 @@
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* --- STILE MIXER AUDIO AVANZATO --- */
+
+/* --- ACHIEVEMENT / TROPHY CASE --- */
+
+#achievement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    padding-bottom: 30px;
+}
+
+.achievement-title,
+.toast-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.achievement-desc,
+.trophy-desc {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #a0a0a0;
+
+    /* RIMOSSO max-width: 85% che causava problemi */
+    width: 100%;
+    white-space: normal;
+    /* Forza il testo ad andare a capo */
+
+    /* Clamp a 2 o 3 righe per evitare muri di testo */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Bottone per riscatto premi */
+
+
+.trophy-row {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 40, 50, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 80px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+/* STATI */
+.trophy-row.locked {
+    opacity: 0.6;
+    filter: grayscale(0.9);
+    border-left: 5px solid #7f8c8d;
+}
+
+.trophy-row.completed {
+    background: linear-gradient(90deg, rgba(46, 204, 113, 0.1), rgba(30, 40, 50, 0.8));
+    border: 1px solid #2ecc71;
+    border-left: 5px solid #2ecc71;
+}
+
+/* Elementi "da riscattare" */
+.trophy-row.unclaimed {
+    background: linear-gradient(90deg, rgba(241, 196, 15, 0.15), rgba(30, 40, 50, 0.9));
+    border: 1px solid #f1c40f;
+    border-left: 5px solid #f1c40f;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+}
+
+/* ICONA (Sinistra) */
+.trophy-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #bdc3c7;
+
+    margin-right: 15px;
+    /* Spazio tra icona e testo */
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.trophy-row.completed .trophy-icon-wrapper {
+    color: #f1c40f;
+    border-color: #f1c40f;
+    background: rgba(241, 196, 15, 0.1);
+}
+
+/* CONTENUTO TESTO (Centro) */
+.trophy-content {
+    flex: 1;
+    /* Occupa tutto lo spazio rimasto */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 10px;
+    min-width: 0;
+}
+
+.trophy-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 4px;
+
+    /* Gestione testo lungo */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* AZIONE (Destra) */
+.trophy-action {
+    width: 120px;
+    /* AUMENTATO da 80px: Fa spazio a "Skin Speciale" */
+    min-width: 120px;
+    /* Non si schiaccia mai */
+    display: flex;
+    flex-direction: column;
+    /* Impila elementi verticalmente (Barra sopra, testo sotto) */
+    justify-content: center;
+    align-items: flex-end;
+    /* Allinea tutto a destra */
+    flex-shrink: 0;
+}
+
+
+.trophy-flavor {
+    /* Impostazioni grafiche: piccolo e corsivo */
+    font-size: 0.65rem;
+    font-style: italic;
+    color: #7f8c8d;
+    /* Grigio spento */
+    margin-top: 5px;
+    line-height: 1.2;
+    white-space: normal;
+    /* Va a capo se lungo */
+
+    /* LOGICA VISIBILITÀ: Nascosto di base */
+    display: none;
+}
+
+.trophy-row.completed .trophy-flavor {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.trophy-done {
+    font-size: 1.8rem;
+    /* Check più grande */
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.trophy-row.completed .trophy-done {
+    color: #2ecc71;
+    /* Verde acceso se completato */
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+/* Barra progresso specifica per Obiettivi */
+.trophy-progress {
+    width: 100%;
+    height: 6px;
+    /* Barra sottile ed elegante */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+    /* FONDAMENTALE: Lascia uscire il testo */
+    margin-top: 5px;
+    /* Spazio sopra */
+    margin-bottom: 15px;
+    /* Spazio sotto per il testo che appenderemo */
+    box-shadow: none;
+    /* Rimuove ombre interne pesanti */
+}
+
+.t-prog-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Il testo sovrapposto alla barra */
+.t-prog-text {
+    position: absolute;
+    top: 10px;
+    /* Sposta il testo 10px sotto la barra */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Centra perfettamente */
+    width: 140%;
+    /* Più largo della barra per far entrare numeri lunghi */
+    text-align: center;
+
+    font-family: var(--font-body);
+    /* Font leggibile (Inter) */
+    font-size: 0.65rem;
+    /* Testo piccolo */
+    font-weight: 600;
+    color: #7f8c8d;
+    /* Grigio chiaro, non bianco sparato */
+    text-shadow: none;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.reward-button {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    min-width: fit-content;
+}
+
+/* Bottone Riscatta (Pulsante e Invitante) */
+.trophy-claim-btn {
+    background: linear-gradient(to bottom, #f1c40f, #f39c12);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 15px;
+    /* Spazio comodo */
+    color: #2c3e50;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d35400;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.1s;
+    white-space: nowrap;
+    /* Forza riga singola */
+    flex-shrink: 0;
+    /* Impedisce schiacciamento */
+    min-width: fit-content;
+}
+
+.reward-button,
+.trophy-claim-btn {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 6px 0;
+    justify-content: center;
+}
+
+.trophy-claim-btn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.trophy-claim-btn:hover {
+    filter: brightness(1.1);
+}
+
+.claim-text {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+
+/* --- STILE MIXER AUDIO --- */
 
 /* Gruppo di suoni (Categoria) */
 .mixer-category {

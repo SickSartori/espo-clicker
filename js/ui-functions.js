@@ -579,6 +579,14 @@ function updateAchievementsUI() {
     list.innerHTML = '';
     const items = [];
 
+    const typeIcons = {
+        'click': 'fa-computer-mouse',
+        'building': 'fa-building',
+        'score': 'fa-coins',
+        'time': 'fa-hourglass-half',
+        'custom': 'fa-star'
+    };
+
     Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
@@ -589,6 +597,7 @@ function updateAchievementsUI() {
         let progress = 0;
         let currentVal = 0;
 
+        // Calcolo Progresso
         if (!isUnlocked) {
             if (data.type === 'click') currentVal = gameState.totalClicks;
             else if (data.type === 'score') currentVal = gameState.totalScore;
@@ -598,13 +607,14 @@ function updateAchievementsUI() {
             if (data.target && data.target > 0) progress = Math.min(100, (currentVal / data.target) * 100);
         } else { progress = 100; }
 
+        // Priorità
         let priority = 0;
         if (isUnlocked && !isClaimed && data.reward) priority = 4;
         else if (!isUnlocked && !data.isSecret) priority = 3;
         else if (isUnlocked) priority = 2;
         else if (data.isSecret) priority = 1;
 
-        items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority });
+        items.push({ key, data, state, isUnlocked, isClaimed, progress, currentVal, priority, typeIcons });
     });
 
     items.sort((a, b) => {
@@ -614,62 +624,85 @@ function updateAchievementsUI() {
     });
 
     items.forEach(item => {
-        const { key, data, state, isUnlocked, isClaimed, progress, currentVal } = item;
+        const { key, data, state, isUnlocked, isClaimed, progress, currentVal, typeIcons } = item;
 
-        if (data.isSecret && !isUnlocked) {
-            const secretEl = document.createElement('div');
-            secretEl.className = 'achievement achievement-secret';
-            secretEl.innerHTML = `<div class="achievement-icon"><i class="fa-solid fa-lock"></i></div>...`;
-            list.appendChild(secretEl);
-            return;
-        }
+        let statusClass = 'locked';
+        if (isUnlocked) statusClass = isClaimed ? 'completed' : 'unclaimed';
+        if (data.isSecret && !isUnlocked) statusClass = 'secret';
 
         const el = document.createElement('div');
-        const claimableClass = (isUnlocked && !isClaimed && data.reward) ? 'claimable' : '';
-        const statusClass = isUnlocked ? 'unlocked' : 'locked';
-        el.className = `achievement ${statusClass} ${claimableClass}`;
+        el.className = `trophy-row ${statusClass}`;
 
-        let rewardIcon = '<i class="fa-solid fa-trophy"></i>';
-        let rewardDisplay = 'Gloria';
-        let rewardTooltip = 'Nessun premio materiale.';
-
-        if (data.reward) {
-            if (data.reward.type === 'bugs') {
-                rewardIcon = '<i class="fa-solid fa-bug"></i>';
-                rewardDisplay = `${formatNumber(data.reward.value)} Bug`;
-            }
-            else if (data.reward.type === 'skin') {
-                rewardIcon = '<i class="fa-solid fa-shirt"></i>';
-                // --- FIX: Recupera il nome della skin ---
-                const skinName = gameData.skins[data.reward.id] ? gameData.skins[data.reward.id].name : 'Skin Speciale';
-                rewardDisplay = skinName;
-                // ----------------------------------------
-            }
-            else if (data.reward.type === 'prestige') {
-                rewardIcon = '<i class="fa-solid fa-flask"></i>';
-                rewardDisplay = `${data.reward.value} Token`;
-            }
-            else if (data.reward.type === 'multiplier') {
-                rewardIcon = '<i class="fa-solid fa-laptop"></i>';
-                rewardDisplay = `BPS x${data.reward.value}`;
-            }
-        }
+        let iconClass = typeIcons[data.type] || 'fa-trophy';
+        let iconHTML = `<i class="fa-solid ${iconClass}"></i>`;
+        if (!isUnlocked) iconHTML = `<i class="fa-solid fa-lock"></i>`;
+        if (data.isSecret && !isUnlocked) iconHTML = `<i class="fa-solid fa-question"></i>`;
+        if (isUnlocked && !isClaimed) iconHTML = `<i class="fa-solid fa-gift fa-bounce"></i>`;
 
         let actionHtml = '';
+        let tooltipAttr = '';
+
         if (isUnlocked && !isClaimed && data.reward) {
-            actionHtml = `<button class="claim-btn" id="claim-${key}" title="Clicca per Riscuotere!"><span class="claim-visible">${rewardIcon} ${rewardDisplay}</span><span class="claim-hover">RISCATTA ORA!</span></button>`;
-        } else if (isClaimed || (isUnlocked && !data.reward)) {
-            actionHtml = `<div class="achievement-done"><i class="fa-solid fa-check-circle"></i> Completato</div>`;
+            let rewardText = "Riscatta";
+
+            if (data.reward.type === 'bugs') {
+                rewardText = `+${formatNumber(data.reward.value)} BUG`;
+            } else if (data.reward.type === 'skin') {
+                const skinId = data.reward.id || data.reward.value;
+                const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : "Skin Speciale";
+
+                rewardText = "SKIN SPECIALE";
+
+                // Imposta il tooltip con il nome della skin
+                tooltipAttr = `data-tooltip="Sblocca: ${skinName}"`;
+            } else if (data.reward.type === 'prestige') {
+                rewardText = `+${data.reward.value} TOKEN`;
+            }
+
+            // Aggiunto ${tooltipAttr} al tag button
+            actionHtml = `
+                <button class="trophy-claim-btn" id="claim-${key}" ${tooltipAttr}>
+                    <span class="claim-icon"><i class="fa-solid fa-gift"></i></span>
+                    <span class="claim-text">${rewardText}</span>
+                </button>`;
+
+        } else if (isClaimed) {
+            actionHtml = `<div class="trophy-done"><i class="fa-solid fa-check"></i></div>`;
         } else {
-            const progressStatusText = data.target ? (data.type === 'time' ? formatTime(currentVal) : `${formatNumber(currentVal)} / ${formatNumber(data.target)}`) : '';
-            actionHtml = `<div class="ach-progress-container" data-tooltip="${rewardTooltip}"><div class="ach-progress-bar" style="width: ${progress}%"></div><span class="ach-progress-text">${progressStatusText}</span></div>`;
+            // --- FIX 3: Progress Bar con testo dentro ---
+            if (!data.isSecret) {
+                // Formatta il testo (es: "50% (100/200)")
+                const valText = data.type === 'time' ? formatTime(currentVal) : formatNumber(currentVal);
+                const targetText = data.type === 'time' ? formatTime(data.target) : formatNumber(data.target);
+                const fullText = `${Math.floor(progress)}% (${valText} / ${targetText})`;
+
+                actionHtml = `
+                    <div class="trophy-progress">
+                        <div class="t-prog-bar" style="width: ${progress}%"></div>
+                        <span class="t-prog-text">${fullText}</span>
+                    </div>
+                `;
+            }
         }
 
+        let desc = (data.isSecret && !isUnlocked) ? "Obiettivo Segreto..." : (data.realDesc || data.desc);
+        let name = (data.isSecret && !isUnlocked) ? "???" : data.name;
+
         el.innerHTML = `
-            <div class="achievement-header"><span class="achievement-name">${data.name}</span></div>
-            <div class="achievement-desc">${(data.isSecret && !isUnlocked) ? data.desc : (data.realDesc || data.desc)}</div>
-            <div class="achievement-footer" style="margin-top: 10px;">${actionHtml}</div>
+            <div class="trophy-icon-wrapper">
+                ${iconHTML}
+            </div>
+            <div class="trophy-content">
+                <div class="trophy-title">${name}</div>
+                <div class="trophy-desc">${desc}</div>
+                ${data.flavor ? `<div class="trophy-flavor">"${data.flavor}"</div>` : ''}
+            </div>
+            <div class="trophy-action">
+                ${actionHtml}
+            </div>
         `;
+
+        if (isUnlocked) el.style.borderColor = '#f1c40f';
 
         list.appendChild(el);
 
@@ -987,6 +1020,13 @@ function updateScoreBoard(totalBPS) {
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
     const cpsEl = getEl('cps-display');
     if (cpsEl) cpsEl.setAttribute('data-tooltip', totalBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+
+    // --- NUOVO CODICE: Aggiorna il display del click nel Main ---
+    if (typeof calculateRawClickValue === 'function') {
+        const rawClick = calculateRawClickValue();
+        setTextIfChanged('raw-click-display', `Click Power: ${formatNumber(rawClick)}`);
+    }
+    // ------------------------------------------------------------
 }
 
 function updateHUD() {

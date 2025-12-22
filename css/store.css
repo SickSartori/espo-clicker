@@ -570,13 +570,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-heading);
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
     color: #fff;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     z-index: 2;
     white-space: nowrap;
+}
+
+.progress-text,
+.lock-status {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #lab-wallet-container {
