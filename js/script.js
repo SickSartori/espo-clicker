@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gameContainer = document.getElementById('game-container');
 
     // --------- 9. SALVATAGGIO ---------
+    const SAVE_KEY = 'espotoolClickerSaveV8';
     const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
 
     async function saveGame() {
@@ -885,18 +886,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
+            // Imposta icona iniziale
             muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
 
             muteBtn.addEventListener('click', () => {
-                const targetAudio = (gameState.skins.current === 'christmas') ? snowAudio : bgMusic;
+
+                const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+                const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
+                    ? currentSkin.themeConfig.specialMusic
+                    : 'sound-bg-music';
+
+                const targetAudio = document.getElementById(targetId);
+
                 const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
 
                 if (isBlocked) {
-                    // Se era solo bloccato dall'autoplay ma volume alto, prova a farlo partire
                     if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
                     muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 } else {
-                    // LOGICA MUTE / UNMUTE
+                    // LOGICA MUTE / UNMUTE CLASSICA
                     if (gameState.user.masterVolume > 0) {
                         // MUTA TUTTO
                         gameState.lastVolume = gameState.user.masterVolume;
@@ -907,6 +915,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.user.masterVolume = gameState.lastVolume || 1.0;
                         muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                         playSound('sound-click');
+
+                        // Riavvia l'audio se necessario
                         if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
                     }
 
@@ -914,15 +924,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mSlider = document.getElementById('master-slider');
                     if (mSlider) mSlider.value = gameState.user.masterVolume;
 
-                    // 1. Audio Ambiente (Bg music, snow, etc)
+                    // 1. Audio Ambiente (Bg music, snow, 8-bit, etc)
                     if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
                     else if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
-                    // 2. Video Attivi (Rick Roll, Ricardo)
+                    // 2. Video Attivi (Rick Roll, Ricardo) - Aggiorna volume
                     ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
                         const v = document.getElementById(id);
                         if (v && !v.paused && v.style.display !== 'none') {
-                            // Ricalcola il volume corretto per il video
                             const customVol = (typeof getCustomVolume === 'function') ? getCustomVolume(id) : 1.0;
                             v.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
                         }
@@ -1062,7 +1071,13 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         // --- NUOVA FUNZIONE AUDIO INTELLIGENTE ---
         tryStartAudio: () => {
-            // 1. Controlli preliminari
+            const loginModal = document.getElementById('login-modal');
+            if (loginModal && getComputedStyle(loginModal).display !== 'none') {
+                // console.log("Audio bloccato: Login in corso.");
+                return;
+            }
+
+            // 2. Controlli preliminari (Volume)
             const masterVol = gameState.user.masterVolume;
             const musicVol = gameState.user.musicVolume;
             if (masterVol <= 0 || musicVol <= 0) return;
