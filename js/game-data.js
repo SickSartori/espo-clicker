@@ -280,7 +280,7 @@ const gameData = {
             img: "ricardo-milespo.webp",
             imgClick: "ricardo-milespo-click.webp",
             rarity: "legendary",
-            unlockHint: "Sblocca l'obiettivo 'White Hat' (Upgrade Costoso)"
+            unlockHint: "Sblocca l'obiettivo 'White Hat'"
         },
         dictator: {
             name: "Adolf Espler",
@@ -305,7 +305,7 @@ const gameData = {
             img: "gespo.webp",
             imgClick: "gespo-click.webp",
             rarity: "divine", // NUOVA RARITÀ
-            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse' (1 Miliardo)"
+            unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'"
         }
     },
 

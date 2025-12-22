@@ -496,6 +496,7 @@ function updateSkinsUI() {
 
     grid.innerHTML = '';
 
+    // Fix dati se corrotti
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
 
@@ -503,121 +504,68 @@ function updateSkinsUI() {
     const currentSkin = gameState.skins.current;
 
     const rarityMap = {
-        'common': 'COMUNE',
-        'rare': 'RARA',
-        'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA',
-        'divine': 'DIVINA',
-        'christmas': 'NATALE'
+        'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
+        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'NATALE'
     };
 
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
-        const isLocked = !isUnlocked; // Variabile comoda
         const isEquipped = currentSkin === key;
         const isBuyable = !isUnlocked && data.cost !== undefined;
         const canAfford = isBuyable && gameState.prestigePoints >= data.cost;
-
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
-        // --- 1. LOGICA DESCRIZIONE NASCOSTA (ANTI-SPOILER) ---
-        // Se la skin è bloccata, mostra "???" invece della descrizione
-        const descriptionText = isLocked ? "???" : (data.desc || "Nessuna descrizione");
+        // 1. Descrizione Anti-Spoiler
+        let displayDesc = data.desc || "Nessuna descrizione";
+        if (!isUnlocked && !isBuyable) displayDesc = data.unlockHint || "???";
+
+        // 2. Elemento Footer (Bottone)
+        let footerHtml = '';
+        if (isEquipped) {
+            footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> IN USO</div>`;
+        } else if (isUnlocked) {
+            footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">USA SKIN</div>`;
+        } else if (isBuyable) {
+            // Se comprabile mostra Prezzo + Bottone
+            const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
+            const btnText = canAfford ? 'COMPRA' : 'NO TOKEN';
+            const btnStyle = canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;';
+            const clickAction = canAfford ? `onclick="buySkin('${key}')"` : '';
+
+            footerHtml = `
+                <div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
+                <div class="skin-btn" style="${btnStyle}" ${clickAction}>${btnText}</div>
+            `;
+        } else {
+            // Bloccata
+            footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATA</div>`;
+        }
 
         const card = document.createElement('div');
-
         let classes = `skin-card rarity-${data.rarity || 'common'}`;
-        if (isUnlocked) classes += ' unlocked';
-        else classes += ' locked';
+        if (isUnlocked) classes += ' unlocked'; else classes += ' locked';
         if (isEquipped) classes += ' equipped';
-        if (canAfford) classes += ' can-afford-border';
-
         card.className = classes;
 
-        const imgSrc = isUnlocked
-            ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp')
-            : './assets/image/hidden.webp';
-
-        // --- 2. LOGICA STATUS UNIFORME (FIX ALTEZZA) ---
-        // Determiniamo cosa mostrare in fondo alla card:
-        // - Bloccata: Mostra lucchetto
-        // - In Uso: Mostra "In Uso" verde
-        // - Sbloccata (non in uso): Mostra bottone "USA SKIN"
-        let bottomHtml = '';
-
-        if (isLocked) {
-            bottomHtml = `<div class="skin-status-info"><i class="fa-solid fa-lock"></i> Bloccata</div>`;
-        } else if (isEquipped) {
-            bottomHtml = `<div class="skin-status-info" style="color:#2ecc71; border-color:#2ecc71; background: rgba(46, 204, 113, 0.1);"><i class="fa-solid fa-user-check"></i> In Uso</div>`;
-        } else {
-            // Sbloccata ma non equipaggiata
-            bottomHtml = `<div class="skin-action-text">USA SKIN</div>`;
-        }
-
-        // --- 3. OVERLAY (SOLO PER DETTAGLI EXTRA / COMPRA) ---
-        // L'overlay serve ora principalmente per l'acquisto o i hint,
-        // ma la struttura visiva principale è nella card stessa.
-        let overlayContent = '';
-        if (!isEquipped) {
-            if (isBuyable) {
-                const priceText = `<i class="fa-solid fa-flask"></i> ${data.cost} Token`;
-                const actionColor = canAfford ? '#2ecc71' : '#e74c3c';
-                const actionMsg = canAfford ? 'CLICCA PER COMPRARE' : 'TOKEN INSUFFICIENTI';
-
-                overlayContent = `
-                    <h4>${data.name}</h4>
-                    <div class="skin-price-tag">${priceText}</div>
-                    <div class="skin-action-text" style="color: ${actionColor}; border: 1px solid ${actionColor}">${actionMsg}</div>
-                `;
-            } else if (isLocked) {
-                // Hint di sblocco nell'overlay
-                overlayContent = `
-                    <h4>${data.name}</h4>
-                    <div class="skin-desc" style="height:auto; -webkit-line-clamp:unset;">${data.unlockHint || "Obiettivo segreto"}</div>
-                `;
-            } else {
-                // Sbloccata: overlay semplice per conferma visuale
-                overlayContent = `
-                    <h4>${data.name}</h4>
-                    <div class="skin-action-text" style="color:#2ecc71;">CLICCA PER USARE</div>
-                `;
-            }
-        }
-
-        // --- 4. COSTRUZIONE HTML CARD ---
-        // Inseriamo la descrizione (.skin-desc) direttamente nel flusso principale
-        // per garantire l'altezza uniforme grazie al CSS 'height: 2.6em'.
+        // Struttura HTML Pulita
         card.innerHTML = `
-            ${isEquipped ? '<div class="equipped-icon"><i class="fa-solid fa-check"></i></div>' : ''}
-            
             <div class="skin-badge">${rarityLabel}</div>
             
             <div class="skin-img-container">
-                <img src="${imgSrc}" class="skin-img" alt="${isUnlocked ? data.name : 'Segreto'}">
+                <img src="${isUnlocked ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp') : './assets/image/hidden.webp'}" class="skin-img">
             </div>
             
-            <div class="skin-name-display">${data.name}</div>
+            <div class="skin-name-display" title="${data.name}">${data.name}</div>
             
-            <div class="skin-desc">${descriptionText}</div>
+            <div class="skin-desc">${displayDesc}</div>
             
-            ${bottomHtml}
+            <div class="skin-card-spacer"></div>
             
-            ${!isEquipped ? `<div class="skin-overlay">${overlayContent}</div>` : ''}
+            <div class="skin-footer">
+                ${footerHtml}
+            </div>
         `;
-
-        card.addEventListener('click', () => {
-            if (isUnlocked) {
-                if (typeof equipSkin === 'function') equipSkin(key);
-            } else if (isBuyable) {
-                if (typeof buySkin === 'function') buySkin(key);
-            } else {
-                // Animazione "shake" se bloccata non acquistabile
-                card.style.transform = "translateX(5px)";
-                setTimeout(() => card.style.transform = "translateX(0)", 100);
-                if (window.EspooClicker) window.EspooClicker.showToast(data.unlockHint || "Obiettivo richiesto!", "warning");
-            }
-        });
 
         grid.appendChild(card);
     }
@@ -769,7 +717,7 @@ function showClickFeedback(event) {
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
     } else {
-        // --- LOGICA CLICK STANDARD (Aggiornata con Calcolo Centralizzato) ---
+        // --- LOGICA CLICK STANDARD (Nuova UX Migliorata) ---
 
         // Usa la funzione centralizzata se disponibile, altrimenti fallback sicuro
         let val = (typeof calculateClickValue === 'function')
@@ -778,18 +726,41 @@ function showClickFeedback(event) {
 
         feedback.textContent = `+${formatNumber(val)}`;
 
-        // Gestione Colori Tema Natale vs Standard
+        // Determina se è un "Colpo Critico" Visivo
+        // Usa la chance globale se esiste, altrimenti 0.1% base
+        const critChance = (typeof window.goldenBugChance !== 'undefined') ? window.goldenBugChance : 0.001;
+        // Simuliamo un critico visivo (non influenza i punti, solo gratificazione)
+        // Nota: Moltiplichiamo per 10 la chance visiva per renderla più frequente e soddisfacente
+        const isCrit = Math.random() < (critChance * 10);
+
+        // --- STILI DEFAULT (Più leggibili: Bianco su scuro) ---
+        let color = '#ffffff';
+        let size = '1.1rem';
+        let weight = 'bold';
+        let shadow = '0 0 4px rgba(0,0,0,0.9)'; // Ombra scura per contrasto
+
+        // --- VARIANTI TEMA & CRITICO ---
         if (document.body.classList.contains('theme-christmas')) {
-            // Alterna casualmente tra Rosso Natale e Verde Pino
-            feedback.style.color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
-            feedback.style.textShadow = '0 0 5px #fff'; // Alone bianco neve
-        } else {
-            // Colore Standard
-            feedback.style.color = 'rgba(239, 68, 68, 0.7)';
+            // TEMA NATALE: Alterna Rosso/Verde con glow bianco
+            color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
+            shadow = '0 0 5px #fff';
+        } else if (isCrit) {
+            // COLPO CRITICO: Oro, Grande, Luminoso
+            color = '#f1c40f';
+            size = '1.5rem';
+            weight = '900';
+            shadow = '0 0 15px rgba(241, 196, 15, 0.8)'; // Glow dorato
+            feedback.style.zIndex = '50'; // Sovrapponi agli altri
         }
+
+        // Applicazione Stili
+        feedback.style.color = color;
+        feedback.style.fontSize = size;
+        feedback.style.fontWeight = weight;
+        feedback.style.textShadow = shadow;
     }
 
-    // Calcolo Posizione
+    // Calcolo Posizione (Rimane invariato)
     const rect = feedbackContainer.getBoundingClientRect();
     let x, y;
 
@@ -891,7 +862,7 @@ function createToastDOM(message, type) {
 
 
 function checkTabNotifications() {
-    // Click Tab
+    // 1. Click Tab
     let clickNotify = false;
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
@@ -904,7 +875,7 @@ function checkTabNotifications() {
     const tabClick = document.getElementById('tab-click');
     if (tabClick) clickNotify && !tabClick.classList.contains('active') ? tabClick.classList.add('notify') : tabClick.classList.remove('notify');
 
-    // Auto Tab
+    // 2. Auto Tab
     let autoNotify = false;
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
@@ -918,7 +889,7 @@ function checkTabNotifications() {
     const tabAuto = document.getElementById('tab-auto');
     if (tabAuto) autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
-    // Prestige Tab
+    // 3. Prestige Tab
     let prestigeNotify = false;
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
         for (const key in gameData.prestigeUpgrades) {
@@ -934,6 +905,26 @@ function checkTabNotifications() {
     }
     const tabPrestige = document.getElementById('tab-prestige');
     if (tabPrestige) prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
+
+    // --- 4. AGGIORNAMENTO TITOLO BROWSER (Nuova User Experience) ---
+    // Eseguiamo la logica direttamente qui, senza creare funzioni interne
+    let title = "Espòòò Clicker";
+
+    // Controlliamo se una delle variabili calcolate sopra è vera
+    const hasNotification = clickNotify || autoNotify || prestigeNotify;
+    const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
+
+    if (canPrestige) {
+        title = "PROMOZIONE PRONTA! - " + title;
+    }
+    else {
+        // Mostra i bug correnti
+        title = formatNumber(gameState.score) + " Bug - " + title;
+    }
+
+    if (document.title !== title) {
+        document.title = title;
+    }
 }
 
 

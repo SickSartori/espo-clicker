@@ -1,29 +1,42 @@
 #skins-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    /* Card leggermente più larghe (140px) per far respirare il testo */
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
-    padding: 20px;
+    padding: 15px;
     padding-bottom: 40px;
 }
 
+/* --- CARD STRUTTURA FISSA --- */
 .skin-card {
     background-color: var(--bg-panel);
-    border-radius: 12px;
     border: 3px solid var(--border-color);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+
+    /* MODIFICA 1: Riduci l'altezza da 280px a 240px */
+    height: 240px;
+    width: 100%;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* FIX SPAZIATURA: Padding bilanciato */
-    padding: 15px 10px;
-    padding-top: 35px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    height: 100%;
-    /* Altezza piena per allineare le card nella griglia */
+    justify-content: flex-start;
+
+    /* MODIFICA 2: Riduci il padding verticale */
+    padding: 10px 10px 15px 10px;
+
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Hover Effect */
+.skin-card.unlocked:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
 }
 
 /* --- COLORI RARITÀ --- */
@@ -45,64 +58,55 @@
 
 .skin-card.rarity-divine {
     --r-color: #ffee90;
-    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 50%, rgba(255, 215, 0, 0.1) 100%);
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
 }
 
 .skin-card.rarity-christmas {
     --r-color: #e74c3c;
 }
 
-/* --- STATI CARD --- */
+/* Bordi colorati */
+.skin-card.unlocked {
+    border-color: var(--r-color);
+}
+
 .skin-card.locked {
-    border-color: #34495e;
+    border-color: #444;
     border-style: dashed;
     opacity: 0.8;
 }
 
-.skin-card.locked .skin-img {
-    filter: grayscale(100%) brightness(0.5);
-    opacity: 0.6;
-}
-
-.skin-card.unlocked {
-    border-color: var(--r-color);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--r-color);
-}
-
-.skin-card.unlocked:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6), 0 0 15px var(--r-color);
-}
-
 .skin-card.equipped {
     border-color: #2ecc71 !important;
-    background: rgba(46, 204, 113, 0.05);
-    box-shadow: 0 0 20px rgba(46, 204, 113, 0.3), inset 0 0 10px rgba(46, 204, 113, 0.1) !important;
+    background: rgba(46, 204, 113, 0.08);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
 }
 
-/* --- BADGE RARITÀ (Angolo in alto a destra) --- */
+/* --- 1. BADGE RARITÀ (In alto a destra) --- */
 .skin-badge {
-    font-family: var(--font-heading);
-    /* Font Moderno */
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    font-weight: 800;
-    padding: 4px 8px;
-    border-radius: 0 0 0 6px;
-    background-color: var(--r-color);
-    color: #1e272e;
     position: absolute;
     top: 0;
     right: 0;
-    z-index: 10;
-    box-shadow: -1px 1px 3px rgba(0, 0, 0, 0.3);
+    background: var(--r-color);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-bottom-left-radius: 8px;
+    z-index: 5;
 }
 
-/* --- IMMAGINE --- */
+/* --- 2. IMMAGINE (Dimensione Fissa) --- */
 .skin-img-container {
-    width: 70px;
-    height: 70px;
-    margin-bottom: 12px;
+    width: 80px;
+    height: 80px;
+    /* MODIFICA 3: Riduci i margini per avvicinare tutto */
+    margin-top: 15px;
+    /* Era 20px */
+    margin-bottom: 5px;
+    /* Era 10px */
+
     border-radius: 50%;
     border: 3px solid var(--r-color);
     background: #151b22;
@@ -116,185 +120,120 @@
     object-fit: cover;
 }
 
-/* --- NOME SKIN --- */
+.skin-card.locked .skin-img {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+/* --- 3. NOME SKIN (Altezza Fissa) --- */
 .skin-name-display {
     font-family: var(--font-heading);
-    /* Font Moderno */
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 5px;
     text-align: center;
-    line-height: 1.2;
     width: 100%;
 
-    /* Marquee Setup */
+    /* Gestione Testo Lungo */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
+    margin-bottom: 5px;
+    min-height: 20px;
+    /* Riserva spazio */
 }
 
-/* Marquee Animation on Hover */
-.skin-card:hover .skin-name-display {
-    text-overflow: clip;
-    animation: marquee 3s ease-in-out infinite alternate;
-}
-
-@keyframes marquee {
-
-    0%,
-    20% {
-        text-indent: 0;
-        transform: translateX(0);
-    }
-
-    80%,
-    100% {
-        transform: translateX(-20%);
-    }
-}
-
-/* --- STATUS TEXT (BLOCCATA) --- */
-.skin-status-info {
-    font-family: var(--font-heading);
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #95a5a6;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-
-    /* FIX UNIFORMITÀ con il bottone azione */
-    margin-top: auto;
-    /* Spinge in fondo */
-    height: 30px;
-    /* Altezza fissa identica al bottone */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid transparent;
-    /* Per pareggiare il bordo del bottone */
-}
-
-/* --- OVERLAY INTERATTIVO (Hover) --- */
-.skin-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 20, 30, 0.97);
-    /* Sfondo quasi opaco per leggibilità */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    /* Centratura Verticale */
-    padding: 15px;
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 20;
-    box-sizing: border-box;
-}
-
-.skin-card:hover .skin-overlay {
-    opacity: 1;
-}
-
-/* Titolo nell'overlay */
-.skin-overlay h4 {
-    font-family: var(--font-heading);
-    margin: 0 0 8px 0;
-    font-size: 0.95rem;
-    color: var(--r-color);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Descrizione */
+/* --- 4. DESCRIZIONE (Area Fissa) --- */
 .skin-desc {
     font-family: var(--font-body);
-    font-size: 0.75rem;
-    margin-bottom: 12px;
-    color: #bdc3c7;
-    font-style: italic;
+    font-size: 0.7rem;
+    color: #aaa;
+    text-align: center;
     line-height: 1.3;
 
-    /* FIX ALTEZZA: Forza sempre 2 righe di spazio, anche se il testo è breve o nascosto */
-    height: 2.6em;
+    /* Mantieni l'altezza fissa per l'allineamento, ma riduci il margine sotto */
+    height: 3.9em;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+
+    /* MODIFICA 4: Riduci margine sotto */
+    margin-bottom: 5px;
+    /* Era 10px */
+}
+
+/* --- 5. SPACER (Spinge il bottone in fondo) --- */
+.skin-card-spacer {
+    flex-grow: 1;
+    /* Occupa tutto lo spazio disponibile */
+}
+
+/* --- 6. FOOTER (Status / Bottone) --- */
+.skin-footer {
+    width: 100%;
+    margin-top: auto;
+    /* Ancorato in basso */
+}
+
+/* Stile Bottone "USA SKIN" o "COMPRA" */
+.skin-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
+    text-align: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    transition: all 0.2s;
+}
+
+.skin-btn.action {
+    background: #2ecc71;
+    color: #000;
+    border: none;
+}
+
+.skin-btn.action:hover {
+    background: #27ae60;
+    transform: scale(1.02);
+}
+
+.skin-btn.locked {
+    background: transparent;
+    border: 1px solid #555;
+    color: #777;
+    cursor: default;
+}
+
+.skin-btn.equipped {
+    background: rgba(46, 204, 113, 0.2);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
 }
 
 /* Prezzo Token */
-.skin-price-tag {
-    font-family: var(--font-heading);
-    /* FIX FONT */
-    background: rgba(241, 196, 15, 0.1);
-    border: 1px solid #f1c40f;
+.skin-price {
+    font-size: 0.75rem;
     color: #f1c40f;
-    padding: 4px 12px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-    display: inline-block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: bold;
 }
 
-/* --- TESTO AZIONE (CLICCA ORA / USA SKIN) --- */
-.skin-action-text {
-    font-family: var(--font-heading) !important;
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-
-    /* FIX UNIFORMITÀ */
-    margin-top: auto;
-    /* Spinge in fondo */
-    height: 30px;
-    /* Altezza fissa identica allo status */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
-    box-sizing: border-box;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Icona Spunta (Equipaggiata) */
-.equipped-icon {
+/* Icona Spunta equipaggiato */
+.equipped-check {
     position: absolute;
     top: 5px;
     left: 5px;
-    background: #2ecc71;
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    z-index: 15;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    border: 2px solid #fff;
+    color: #2ecc71;
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
 }
 
 #skins-grid::-webkit-scrollbar {
