@@ -565,10 +565,17 @@ body.rick-rolling #toast-container {
     display: flex !important;
     opacity: 1 !important;
     z-index: 11000 !important;
+
+    /* Centramento orizzontale */
+    left: 50% !important;
     right: auto !important;
-    left: 20px !important;
+    transform: translateX(-50%) !important;
+
+    /* Posizionamento verticale (20px dal bordo superiore) */
     top: 20px !important;
-    align-items: flex-start !important;
+
+    /* Forza gli elementi interni al centro */
+    align-items: center !important;
     pointer-events: none;
 }
 
