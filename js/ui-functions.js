@@ -757,97 +757,146 @@ function showClickFeedback(event) {
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // Logica Evento 404 (Rimane invariata per gestire l'easter egg)
+    // Impostazioni base CSS per evitare che interferiscano
+    feedback.style.position = 'absolute';
+    feedback.style.pointerEvents = 'none';
+    feedback.style.userSelect = 'none';
+    // Rimuoviamo l'animazione CSS se presente nella classe, lasciando fare a GSAP
+    feedback.style.animation = 'none';
+
+    // --- VARIABILI LOGICA DI GIOCO ---
     const now = Date.now();
     const COOLDOWN_404 = 300000;
     const lastCrash = gameState.lastBluescreenTimestamp || 0;
     const timeSinceLast = now - lastCrash;
-
-    // Controllo esistenza variabili globali (sicurezza)
     const isBlueScreen = (typeof isBluescreenActive !== 'undefined') ? isBluescreenActive : false;
     const currentScore = gameState.score || 0;
 
+    // Variabili per l'animazione GSAP
+    let animDuration = 1.2;
+    let startScale = 0.5;
+    let endScale = 1.0;
+    let easeType = "power2.out";
+    let endY = -120;
+
+    // --- EVENTO 404 (Glitch) ---
     if (timeSinceLast > COOLDOWN_404 && Math.random() < 0.0005 && !isBlueScreen && currentScore >= 404) {
-        // --- LOGICA EVENTO 404 ---
         feedback.textContent = 'Error 404';
         feedback.style.color = '#facc15';
         feedback.style.fontSize = '1.2rem';
         feedback.style.fontWeight = '900';
         feedback.style.zIndex = '100';
+        feedback.style.textShadow = '2px 2px 0px red';
 
+        // Animazione "Glitchy" elastica
+        animDuration = 2;
+        endScale = 1.5;
+        easeType = "elastic.out(1, 0.3)";
+
+        // Trigger Logica 404
         let dynamicMultiplier = Math.floor(2 + Math.random() * 3);
         gameState.lastBluescreenTimestamp = now;
-
         if (window.EspooClicker) window.EspooClicker.saveGame();
         if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
-    } else {
-        // --- LOGICA CLICK STANDARD (Nuova UX Migliorata) ---
-
-        // Usa la funzione centralizzata se disponibile, altrimenti fallback sicuro
+    }
+    else {
+        // --- CLICK STANDARD ---
         let val = (typeof calculateClickValue === 'function')
             ? calculateClickValue()
             : gameState.baseClickValue;
 
         feedback.textContent = `+${formatNumber(val)}`;
 
-        // Determina se è un "Colpo Critico" Visivo
-        // Usa la chance globale se esiste, altrimenti 0.1% base
+        // Calcolo Critico Visivo
         const critChance = (typeof window.goldenBugChance !== 'undefined') ? window.goldenBugChance : 0.001;
-        // Simuliamo un critico visivo (non influenza i punti, solo gratificazione)
-        // Nota: Moltiplichiamo per 10 la chance visiva per renderla più frequente e soddisfacente
         const isCrit = Math.random() < (critChance * 10);
 
-        // --- STILI DEFAULT (Più leggibili: Bianco su scuro) ---
+        // Stili di Base
         let color = '#ffffff';
         let size = '1.1rem';
         let weight = 'bold';
-        let shadow = '0 0 4px rgba(0,0,0,0.9)'; // Ombra scura per contrasto
+        let shadow = '0 0 4px rgba(0,0,0,0.9)';
 
-        // --- VARIANTI TEMA & CRITICO ---
+        // Varianti Tema
         if (document.body.classList.contains('theme-christmas')) {
-            // TEMA NATALE: Alterna Rosso/Verde con glow bianco
             color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
             shadow = '0 0 5px #fff';
         } else if (isCrit) {
-            // COLPO CRITICO: Oro, Grande, Luminoso
+            // Colpo Critico
             color = '#f1c40f';
             size = '1.5rem';
             weight = '900';
-            shadow = '0 0 15px rgba(241, 196, 15, 0.8)'; // Glow dorato
-            feedback.style.zIndex = '50'; // Sovrapponi agli altri
+            shadow = '0 0 15px rgba(241, 196, 15, 0.8)';
+            feedback.style.zIndex = '50';
+
+            // Animazione "Pop" Esplosiva
+            startScale = 0.5;
+            endScale = 1.5;
+            easeType = "back.out(2)"; // Rimbalzo accentuato
         }
 
-        // Applicazione Stili
         feedback.style.color = color;
         feedback.style.fontSize = size;
         feedback.style.fontWeight = weight;
         feedback.style.textShadow = shadow;
     }
 
-    // Calcolo Posizione (Rimane invariato)
+    // --- POSIZIONAMENTO ---
     const rect = feedbackContainer.getBoundingClientRect();
-    let x, y;
+    let startX, startY;
 
     if (event && event.clientX && event.clientY) {
-        x = event.clientX - rect.left;
-        y = event.clientY - rect.top;
+        // Click del mouse: posizione esatta del cursore relativa al container
+        startX = event.clientX - rect.left;
+        startY = event.clientY - rect.top;
     } else {
-        x = rect.width / 2;
-        y = rect.height / 2;
+        // Click simulato o touch impreciso: centro del bottone
+        const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+        startX = (btnRect.left + btnRect.width / 2) - rect.left;
+        startY = (btnRect.top + btnRect.height / 2) - rect.top;
     }
 
-    // Variazione casuale per rendere l'effetto più naturale
-    const randomX = (Math.random() - 0.5) * 60;
-    const randomY = (Math.random() - 0.5) * 40;
-    const randomRot = (Math.random() - 0.5) * 30;
+    // Aggiungi variazione casuale per non sovrapporre i numeri
+    const randomOffsetX = (Math.random() - 0.5) * 50;
+    const randomOffsetY = (Math.random() - 0.5) * 50;
 
-    feedback.style.left = `${x + randomX}px`;
-    feedback.style.top = `${y + randomY}px`;
-    feedback.style.setProperty('--tx', `${randomX}px`);
-    feedback.style.setProperty('--rot', `${randomRot}deg`);
+    // Posiziona l'elemento inizialmente (invisibile o quasi)
+    feedback.style.left = `${startX + randomOffsetX}px`;
+    feedback.style.top = `${startY + randomOffsetY}px`;
 
     feedbackContainer.appendChild(feedback);
-    setTimeout(() => feedback.remove(), 1500);
+
+    // --- ANIMAZIONE GSAP ---
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(feedback,
+            {
+                opacity: 1,
+                scale: startScale,
+                rotation: Math.random() * 30 - 15 // Rotazione iniziale casuale
+            },
+            {
+                duration: animDuration,
+                y: endY, // Sale verso l'alto
+                x: (Math.random() * 40 - 20), // Leggera deriva laterale tipo fumo
+                opacity: 0,
+                scale: endScale,
+                rotation: Math.random() * 60 - 30, // Ruota mentre sale
+                ease: easeType,
+                onComplete: () => {
+                    if (feedback.parentNode) feedback.remove();
+                }
+            }
+        );
+    } else {
+        // Fallback di sicurezza se la libreria non è caricata
+        console.warn("GSAP non trovato. Uso fallback semplice.");
+        feedback.style.transition = "all 1s ease-out";
+        requestAnimationFrame(() => {
+            feedback.style.transform = `translateY(-100px)`;
+            feedback.style.opacity = 0;
+        });
+        setTimeout(() => feedback.remove(), 1000);
+    }
 }
 
 
@@ -1040,8 +1089,24 @@ function calculateVisualBPS() {
     return bps + active;
 }
 
+const scoreAnimState = { value: 0 };
+
 function updateScoreBoard(totalBPS) {
-    setTextIfChanged('score-display', formatNumber(gameState.score));
+    // Se è la prima volta (o reset), allinea subito senza animazione
+    if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5) {
+        scoreAnimState.value = gameState.score;
+    }
+
+    // GSAP anima il valore "visuale" verso il valore reale
+    gsap.to(scoreAnimState, {
+        duration: 0.5, // Mezzo secondo per raggiungere il target
+        value: gameState.score,
+        ease: "power1.out",
+        onUpdate: () => {
+            // Aggiorna il testo ad ogni frame dell'animazione
+            setTextIfChanged('score-display', formatNumber(scoreAnimState.value));
+        }
+    });
 
     const scoreEl = getEl('score-display');
     if (scoreEl) {
@@ -1052,12 +1117,11 @@ function updateScoreBoard(totalBPS) {
     const cpsEl = getEl('cps-display');
     if (cpsEl) cpsEl.setAttribute('data-tooltip', totalBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
 
-    // --- NUOVO CODICE: Aggiorna il display del click nel Main ---
+    // Aggiorna il display del click nel Main
     if (typeof calculateRawClickValue === 'function') {
         const rawClick = calculateRawClickValue();
         setTextIfChanged('raw-click-display', `Click Power: ${formatNumber(rawClick)}`);
     }
-    // ------------------------------------------------------------
 }
 
 function updateHUD() {

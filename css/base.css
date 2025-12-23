@@ -1,5 +1,10 @@
-/* css/base.css - Stili base, reset e sfondo */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
 
 :root {
     /* --- PALETTE COLORI (Invariata) --- */
@@ -18,6 +23,13 @@
 
     --font-heading: 'Rajdhani', sans-serif;
     --font-body: 'Inter', sans-serif;
+    font-size: 16px;
+}
+
+body {
+    /* Assicura che non ci sia scroll orizzontale */
+    width: 100vw;
+    overflow-x: hidden;
 }
 
 h1,
@@ -610,5 +622,25 @@ body.crunch-active .upgrade-name {
     100% {
         box-shadow: inset 0 -50px 100px rgba(255, 215, 0, 0.6);
         border-color: #ffd700;
+    }
+}
+
+/* Adattamento per Laptop e schermi con Zoom 125% */
+@media screen and (max-width: 1440px) {
+    :root {
+        font-size: 14px;
+    }
+}
+
+/* Adattamento per schermi molto bassi (es. 1366x768) */
+@media screen and (max-height: 800px) {
+    :root {
+        font-size: 13px;
+    }
+
+    /* Riduciamo il padding del body per guadagnare spazio verticale */
+    body {
+        padding-top: 70px !important;
+        /* Era 85px */
     }
 }

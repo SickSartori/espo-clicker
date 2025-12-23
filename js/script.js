@@ -683,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
         preloadAllAssets((percent) => {
             // Questa funzione viene chiamata ogni volta che un file finisce
             if (loaderStatus) {
-                loaderStatus.textContent = `Scaricamento risorse... ${percent}%`;
+                loaderStatus.textContent = `Caricamento risorse... ${percent}%`;
 
                 // Opzionale: Se vuoi una barra visiva, puoi aggiornarla qui
                 // document.getElementById('loader-bar').style.width = percent + '%';

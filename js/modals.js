@@ -457,9 +457,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function getGameAPI() { return window.EspooClicker || null; }
     function openModal(modal) {
         if (modal) {
+            // 1. Prepara lo stato iniziale (invisibile e piccolo)
             modal.style.display = 'flex';
+            modal.style.opacity = 0;
 
-            // [NUOVO] Aggiunge stato al body per spostare i toast
+            // Cerca il contenuto interno per animarlo (o l'intero modale se preferisci)
+            const content = modal.querySelector('.modal-content');
+
+            // 2. Animazione GSAP
+            if (content) {
+                gsap.fromTo(content,
+                    { scale: 0.8, opacity: 0, y: 20 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" } // Effetto rimbalzo
+                );
+                // Anima anche lo sfondo scuro
+                gsap.to(modal, { opacity: 1, duration: 0.3 });
+            } else {
+                modal.style.opacity = 1; // Fallback
+            }
+
             document.body.classList.add('modal-open');
 
             if (modal.id === 'login-modal') {
@@ -471,22 +487,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal(modal) {
         if (modal) {
-            modal.style.display = 'none';
+            const content = modal.querySelector('.modal-content');
 
-            // [NUOVO] Rimuove stato SOLO se non ci sono altri modali aperti
-            // (Previene lo "sfarfallio" se passi da un modale all'altro)
-            let anyOpen = false;
-            document.querySelectorAll('.modal-backdrop').forEach(m => {
-                if (m.style.display === 'flex' && m !== modal) anyOpen = true;
-            });
-
-            if (!anyOpen) {
-                document.body.classList.remove('modal-open');
+            // Animazione di uscita (veloce)
+            if (content) {
+                gsap.to(content, {
+                    scale: 0.8,
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.in",
+                    onComplete: () => {
+                        modal.style.display = 'none';
+                        finishClose();
+                    }
+                });
+                gsap.to(modal, { opacity: 0, duration: 0.2 });
+            } else {
+                modal.style.display = 'none';
+                finishClose();
             }
 
-            if (modal.id === 'login-modal') {
-                const muteBtn = document.getElementById('quick-mute-btn');
-                if (muteBtn) muteBtn.style.display = '';
+            function finishClose() {
+                let anyOpen = false;
+                document.querySelectorAll('.modal-backdrop').forEach(m => {
+                    if (m.style.display === 'flex' && m !== modal && m.style.opacity !== '0') anyOpen = true;
+                });
+
+                if (!anyOpen) {
+                    document.body.classList.remove('modal-open');
+                }
+
+                if (modal.id === 'login-modal') {
+                    const muteBtn = document.getElementById('quick-mute-btn');
+                    if (muteBtn) muteBtn.style.display = '';
+                }
             }
         }
     }

@@ -171,6 +171,9 @@
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
 
 		<script src="./js/version-config.js"></script>
 		<script src="./js/game-data.js" defer></script>
@@ -178,7 +181,7 @@
 		<script src="./js/game-logic.js" defer></script>
 		<script src="./js/script.js" defer></script> 
 		<script src="./js/podio.js" defer></script>
-		<script src="./js/modals.js" defer></script>
+		    <script src="./js/modals.js" defer></script>
 
 		<div id="mobile-nav-bar">
 			<button class="mobile-nav-btn" data-target="left-column">

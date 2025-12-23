@@ -542,7 +542,7 @@ function activateCrunchTime() {
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 120);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
     const bgMusic = document.getElementById('sound-bg-music');
     if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
@@ -560,28 +560,44 @@ function activateCrunchTime() {
 }
 
 function spawnFireParticle(container) {
+    // 1. Particella Fiamma (Grande e Lenta)
     const p = document.createElement('div');
     p.classList.add('fire-particle');
+
+    // Posizione
     const left = Math.random() * 100;
     p.style.left = `${left}%`;
-    const size = 60 + Math.random() * 100;
-    p.style.width = `${size}px`;
-    p.style.height = `${size}px`;
-    const duration = 1.5 + Math.random() * 2.5;
-    p.style.animationDuration = `${duration}s`;
+
+    // Dimensioni variabili (più grandi al centro per effetto "falò")
+    // Usiamo dimensioni maggiori per coprire più area con meno elementi
+    const sizeBase = 60 + Math.random() * 120;
+    p.style.width = `${sizeBase}px`;
+    p.style.height = `${sizeBase * 1.2}px`;
+
+    // Durata
+    const duration = 1.5 + Math.random() * 2;
+    p.style.animation = `fireRise ${duration}s ease-out forwards`;
+
+    // Drift (Vento laterale casuale)
     const drift = (Math.random() - 0.5) * 150;
     p.style.setProperty('--drift', `${drift}px`);
-    p.style.opacity = 0.5 + Math.random() * 0.5;
+
     container.appendChild(p);
-    setTimeout(() => p.remove(), duration * 1000);
+
+    // Pulizia
+    setTimeout(() => { if (p.parentNode) p.remove(); }, duration * 1000);
+
+    // 2. Scintille (Veloci e luminose) - Solo il 30% delle volte per non intasare
     if (Math.random() < 0.3) {
         const s = document.createElement('div');
         s.classList.add('fire-spark');
-        s.style.left = `${left + (Math.random() * 10 - 5)}%`;
-        const sDuration = 0.5 + Math.random() * 1;
-        s.style.animationDuration = `${sDuration}s`;
+        s.style.left = `${left + (Math.random() * 20 - 10)}%`;
+
+        const sDuration = 0.5 + Math.random() * 1.5;
+        s.style.animation = `sparkFly ${sDuration}s linear forwards`;
+
         container.appendChild(s);
-        setTimeout(() => s.remove(), sDuration * 1000);
+        setTimeout(() => { if (s.parentNode) s.remove(); }, sDuration * 1000);
     }
 }
 
@@ -597,7 +613,7 @@ function resumeCrunchTimeEffects() {
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 120);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
     const bgMusic = document.getElementById('sound-bg-music');
     if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
