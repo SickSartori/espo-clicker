@@ -89,7 +89,14 @@ function checkEventConflict(newEventName) {
 
 function clearActiveEvent() {
     console.log(`Evento "${window.currentActiveEvent}" terminato.`);
-    window.currentActiveEvent = null;
+
+    if (window.currentActiveEvent === 'Audio Mixer') {
+        window.preMixerEvent = null;
+        console.log("Evento scaduto durante il Mixer. Backup pulito.");
+    } else {
+        // Comportamento standard
+        window.currentActiveEvent = null;
+    }
 }
 
 // --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------

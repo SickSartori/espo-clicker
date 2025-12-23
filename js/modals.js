@@ -408,12 +408,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.resetTestButtons();
 
             // 6. RIPRISTINA LO STATO PRECEDENTE
-            // Toglie il blocco 'Audio Mixer' e rimette quello che c'era prima (o null)
             window.currentActiveEvent = window.preMixerEvent || null;
             window.preMixerEvent = null;
 
-            // 7. SMART RESUME
-            // Ora che il blocco è tolto, la musica può ripartire se deve
+            if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
+                AudioManager.updateAmbience();
+            }
+
+            // 7. SMART RESUME (Fallback per musica background standard)
             if (window.EspooClicker && typeof window.EspooClicker.tryStartAudio === 'function') {
                 window.EspooClicker.tryStartAudio();
             }
