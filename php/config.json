@@ -4,5 +4,5 @@
     "password": "root",
     "dbname": "my_espooclicker",
     "port": 3306,
-    "instancename": "production"
+    "instancename": "dev"
 }
