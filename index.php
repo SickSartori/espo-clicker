@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espòòò Clicker</title>
     
-    <link rel="stylesheet" href="./css/keyframes.css">
-    <link rel="stylesheet" href="./css/base.css">
-    <link rel="stylesheet" href="./css/layout.css">
-    <link rel="stylesheet" href="./css/components.css"> 
-    <link rel="stylesheet" href="./css/navbar.css"> 
-    <link rel="stylesheet" href="./css/clicker.css">
-    <link rel="stylesheet" href="./css/store.css">
-    <link rel="stylesheet" href="./css/modals-core.css"> 
-    <link rel="stylesheet" href="./css/modals-content.css"> 
-    <link rel="stylesheet" href="./css/skins.css">    
-    <link rel="stylesheet" href="./css/podio.css">  
-    <link rel="stylesheet" href="./css/mobile.css">
-    <link rel="stylesheet" href="./css/8bit-theme.css">
-    <link rel="stylesheet" href="./css/christmas-theme.css">
+    <link rel="stylesheet" href="./css/keyframes.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/base.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/layout.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/components.css?v=<?php echo time(); ?>"> 
+    <link rel="stylesheet" href="./css/navbar.css?v=<?php echo time(); ?>"> 
+    <link rel="stylesheet" href="./css/clicker.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/store.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/modals-core.css?v=<?php echo time(); ?>"> 
+    <link rel="stylesheet" href="./css/modals-content.css?v=<?php echo time(); ?>"> 
+    <link rel="stylesheet" href="./css/skins.css?v=<?php echo time(); ?>">    
+    <link rel="stylesheet" href="./css/podio.css?v=<?php echo time(); ?>">  
+    <link rel="stylesheet" href="./css/mobile.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo time(); ?>">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo time(); ?>">
     <link rel="icon" type="image/png" href="./assets/image/favicon.webp">
 </head>
 <body>
@@ -178,7 +178,7 @@
     <script src="./js/game-logic.js" defer></script>
     <script src="./js/script.js" defer></script> 
     <script src="./js/podio.js" defer></script>
-<script src="./js/modals.js" defer></script>
+	<script src="./js/modals.js" defer></script>
 
     <div id="mobile-nav-bar">
         <button class="mobile-nav-btn" data-target="left-column">
@@ -196,6 +196,5 @@
             <span>Team</span>
         </button>
     </div>
-
 </body> 
 </html>
