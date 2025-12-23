@@ -70,26 +70,29 @@
 						<span style="font-size: 1.2rem; color: #f1c40f;"> <?php echo $labels["offline_bug"]; ?></span>
 					</div>
 
-					<button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
-						💰 <?php echo $labels["offline_guadagni"]; ?>
-					</button>
-				</div>
-			</div>
-		</div>
-		
-		<?php include 'includes/modals.php'; ?>
-		
-		<nav id="game-navbar">
-			<div class="nav-group left">
-				<button id="open-help-btn" class="nav-item" title="Guida">
-					<i class="nav-icon fa-solid fa-circle-question"></i>
-					<span class="nav-label"><?php echo $labels["navbar_guida"]; ?></span>
-				</button>
-				<button id="open-stats-btn" class="nav-item" title="Statistiche">
-					<i class="nav-icon fa-solid fa-chart-pie"></i>
-					<span class="nav-label"><?php echo $labels["navbar_stats"]; ?></span>
-				</button>
-			</div>
+            <button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
+                💰 <?php echo $labels["offline_guadagni"]; ?>
+            </button>
+        </div>
+    </div>
+</div>
+    <?php include 'includes/modals.php'; ?>
+    
+    <nav id="game-navbar">
+        <div class="nav-group left">
+            <button id="open-help-btn" class="nav-item" title="Guida">
+                <i class="nav-icon fa-solid fa-circle-question"></i>
+                <span class="nav-label"><?php echo $labels["navbar_guida"]; ?></span>
+            </button>
+            <button id="open-stats-btn" class="nav-item" title="Statistiche">
+                <i class="nav-icon fa-solid fa-chart-pie"></i>
+                <span class="nav-label"><?php echo $labels["navbar_stats"]; ?></span>
+            </button>
+			<button id="open-arcade-btn" class="nav-item" title="Sala Giochi">
+                <i class="nav-icon fa-solid fa-gamepad"></i>
+                <span class="nav-label"><?php echo $labels["navbar_arcade"]; ?></span>
+            </button>
+        </div>
 
 			<div class="nav-group center">
 				<button id="open-achievements-btn" class="nav-item" title="Obiettivi">
@@ -172,9 +175,8 @@
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 		<script src="./js/version-config.js"></script>
 		<script src="./js/game-data.js" defer></script>
@@ -182,7 +184,7 @@
 		<script src="./js/game-logic.js" defer></script>
 		<script src="./js/script.js" defer></script> 
 		<script src="./js/podio.js" defer></script>
-		    <script src="./js/modals.js" defer></script>
+		<script src="./js/modals.js" defer></script>
 
 		<div id="mobile-nav-bar">
 			<button class="mobile-nav-btn" data-target="left-column">

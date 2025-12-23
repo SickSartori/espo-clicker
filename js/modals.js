@@ -111,7 +111,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUsernameDisplay = document.getElementById('current-username-display');
     // Music
     const audio = document.getElementById('bg-music');
+    // 1. Aggiungi il riferimento
+    const openArcadeBtn = document.getElementById('open-arcade-btn');
+    const arcadeModal = document.getElementById('arcade-modal');
 
+    // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
+    if (openArcadeBtn) {
+        openArcadeBtn.addEventListener('click', () => {
+            // Opzionale: Mostra un toast "Benvenuto in sala giochi"
+            if (window.EspooClicker) window.EspooClicker.showToast("Benvenuto nella Sala Server (Arcade)!", "info");
+            openModal(arcadeModal);
+        });
+    }
 
 
     // Funzione per tentare il play
