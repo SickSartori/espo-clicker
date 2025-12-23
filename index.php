@@ -1,9 +1,10 @@
+<?php require_once("php/check_language.php"); ?>
 <!DOCTYPE html>
 <html lang="it">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Espòòò Clicker</title>
+		<title><?php echo $labels["head_titolo"]; ?></title>
 		
 		<link rel="stylesheet" href="./css/keyframes.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/base.css?v=<?php echo time(); ?>">
@@ -29,8 +30,8 @@
 		<div id="game-loader">
 			<div class="loader-content">
 				<div class="loader-spinner"></div>
-				<h2 class="loader-title">Espòòò Clicker</h2>
-				<div class="loader-status" id="loader-status-text">Inizializzazione risorse...</div>
+				<h2 class="loader-title"><?php echo $labels["loader_titolo"]; ?></h2>
+				<div class="loader-status" id="loader-status-text"><?php echo $labels["loader_status"]; ?></div>
 			</div>
 		</div>
 
@@ -39,38 +40,38 @@
 		<div id="prestige-transition-overlay" style="display: none;">
 			<div class="transition-content">
 				<div class="transition-icon">🚀</div>
-				<h2>PROMOZIONE IN CORSO...</h2>
-				<p>Ricalcolo dei benefit aziendali</p>
+				<h2><?php echo $labels["prestigio_titolo"]; ?></h2>
+				<p><?php echo $labels["prestigio_sottotitolo"]; ?></p>
 			</div>
 		</div>
 		
 		<div id="christmas-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #c0392b; z-index: 10000; justify-content: center; align-items: center; flex-direction: column; color: white;">
-			<h1 id="christmas-title">🎄 BUON NATALE! 🎄</h1>
-			<p id="christmas-subtitle">Skin Espo Natale Equipaggiata!</p>
+			<h1 id="christmas-title">🎄 <?php echo $labels["natale_titolo"]; ?> 🎄</h1>
+			<p id="christmas-subtitle"><?php echo $labels["natale_sottotitolo"]; ?></p>
 		</div>
 
 		<div id="snow-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: none;"></div>
 
 		<div id="offline-modal" class="modal-backdrop" style="display: none; z-index: 3000;">
 			<div class="modal-content" style="text-align: center; border-color: #f39c12;">
-				<h2 style="color: #f39c12; border-bottom-color: #f39c12;">💤 Bentornato!</h2>
+				<h2 style="color: #f39c12; border-bottom-color: #f39c12;">💤 <?php echo $labels["offline_titolo"]; ?></h2>
 				<div class="settings-content" style="padding: 30px;">
 					<p style="color: #bdc3c7; font-size: 1.1rem;">
-						Mentre eri via il team ha lavorato (un po').
+						<?php echo $labels["offline_sottotitolo"]; ?>
 					</p>
 					
 					<div style="margin: 20px 0;">
-						<p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">Efficienza Server</p>
+						<p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;"><?php echo $labels["offline_server"]; ?></p>
 						<div id="offline-efficiency-display" style="font-weight: bold; color: #3498db; font-size: 1.2rem;">30%</div>
 					</div>
 
 					<div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #d35400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
 						<span id="offline-earnings-display" style="font-size: 2.5rem; font-weight: 800; color: #f1c40f; text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);">0</span>
-						<span style="font-size: 1.2rem; color: #f1c40f;"> Bug</span>
+						<span style="font-size: 1.2rem; color: #f1c40f;"> <?php echo $labels["offline_bug"]; ?></span>
 					</div>
 
 					<button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
-						💰 Riscatta Guadagni
+						💰 <?php echo $labels["offline_guadagni"]; ?>
 					</button>
 				</div>
 			</div>
@@ -82,35 +83,35 @@
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="Guida">
 					<i class="nav-icon fa-solid fa-circle-question"></i>
-					<span class="nav-label">Guida</span>
+					<span class="nav-label"><?php echo $labels["navbar_guida"]; ?></span>
 				</button>
 				<button id="open-stats-btn" class="nav-item" title="Statistiche">
 					<i class="nav-icon fa-solid fa-chart-pie"></i>
-					<span class="nav-label">Stats</span>
+					<span class="nav-label"><?php echo $labels["navbar_stats"]; ?></span>
 				</button>
 			</div>
 
 			<div class="nav-group center">
 				<button id="open-achievements-btn" class="nav-item" title="Obiettivi">
 					<i class="nav-icon fa-solid fa-trophy"></i>
-					<span class="nav-label">Obiettivi</span>
+					<span class="nav-label"><?php echo $labels["navbar_obiettivi"]; ?></span>
 				</button>
 				<button id="open-skins-btn" class="nav-item" title="Guardaroba">
-					<i class="nav-icon fa-solid fa-shirt"></i> <span class="nav-label">Skin</span>
+					<i class="nav-icon fa-solid fa-shirt"></i> <span class="nav-label"><?php echo $labels["navbar_skin"]; ?></span>
 				</button>
 				<button id="open-leaderboard-btn" class="nav-item" title="Classifica">
 					<i class="nav-icon fa-solid fa-medal"></i>
-					<span class="nav-label">Classifica</span>
+					<span class="nav-label"><?php echo $labels["navbar_classifica"]; ?></span>
 				</button>
 			</div>
 
 			<div class="nav-group right">
 				<button id="open-prestige-hub-btn" class="nav-special-btn">
-					<i class="nav-icon fa-solid fa-rocket"></i> <span>Promozione</span>
+					<i class="nav-icon fa-solid fa-rocket"></i> <span><?php echo $labels["navbar_promozione"]; ?></span>
 				</button>
 				<button id="open-settings-btn" class="nav-item" title="Opzioni">
 					<i class="nav-icon fa-solid fa-gear"></i>
-					<span class="nav-label">Opzioni</span>
+					<span class="nav-label"><?php echo $labels["navbar_opzioni"]; ?></span>
 				</button>
 			</div>
 		</nav>
@@ -123,22 +124,22 @@
 			<div id="left-column" class="game-column">
 				<div class="tabs-header">
 					<button class="tab-btn active" data-target="upgrade-store" id="tab-click">
-						<i class="fa-solid fa-computer-mouse"></i> Click
+						<i class="fa-solid fa-computer-mouse"></i> <?php echo $labels["game_container_click_titolo"]; ?>
 					</button>
 					<button class="tab-btn" data-target="enhancement-store" id="tab-auto">
-						<i class="fa-solid fa-robot"></i> Auto
+						<i class="fa-solid fa-robot"></i> <?php echo $labels["game_container_auto_titolo"]; ?>
 					</button>
 					<button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige" style="display: none;">
-						<i class="fa-solid fa-flask"></i> Lab
+						<i class="fa-solid fa-flask"></i> <?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
 				</div>
 				
 				<div id="global-filter-section">
 					<select id="global-filter-select">
-						<option value="available">Da Comprare (Disponibili)</option>
-						<option value="locked">In Arrivo (Bloccati)</option>
-						<option value="purchased">Già Presi (Posseduti)</option>
-						<option value="all">Mostra Tutto</option>
+						<option value="available"><?php echo $labels["game_container_da_comprare"]; ?></option>
+						<option value="locked"><?php echo $labels["game_container_in_arrivo"]; ?></option>
+						<option value="purchased"><?php echo $labels["game_container_gia_presi"]; ?></option>
+						<option value="all"><?php echo $labels["game_container_mostra_tutto"]; ?></option>
 					</select>
 				</div>
 
@@ -186,17 +187,17 @@
 		<div id="mobile-nav-bar">
 			<button class="mobile-nav-btn" data-target="left-column">
 				<i class="fa-solid fa-bolt"></i>
-				<span>Upgrade</span>
+				<span><?php echo $labels["mobile_tab_upgrade"]; ?></span>
 			</button>
 			
 			<button class="mobile-nav-btn active" data-target="center-column">
 				<i class="fa-solid fa-gamepad"></i>
-				<span>Console</span>
+				<span><?php echo $labels["mobile_tab_console"]; ?></span>
 			</button>
 			
 			<button class="mobile-nav-btn" data-target="right-column">
 				<i class="fa-solid fa-users"></i>
-				<span>Team</span>
+				<span><?php echo $labels["mobile_tab_team"]; ?></span>
 			</button>
 		</div>
 	</body>
