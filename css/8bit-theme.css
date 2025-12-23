@@ -1,20 +1,21 @@
 /* IMPORTO FONT PIXEL ART */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* --- TEMA 8-BIT: CLEAN CYBER --- */
-body.theme-8bit {
-    background-color: #0b1016 !important;
-    background-image:
-        linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px) !important;
-    background-size: 40px 40px !important;
-}
-
 /* ============================================================
-   SCOPED STYLES: Applicati SOLO alla UI di Gioco e Navbar
+   TEMA 8-BIT: CLEAN CYBER
+   Scoped: Si applica solo agli elementi di gioco, non ai modali
    ============================================================ */
 
-/* 1. RESET GRAFICO SOLO PER IL GIOCO */
+/* SFONDO GLOBALE */
+body.theme-8bit {
+    background-color: #0b1016;
+    background-image:
+        linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* --- RESET TIPOGRAFICO E GRAFICO PER IL GIOCO --- */
 body.theme-8bit #game-navbar *,
 body.theme-8bit #game-container *,
 body.theme-8bit #mobile-nav-bar *,
@@ -22,409 +23,291 @@ body.theme-8bit #golden-bug {
     border-radius: 0 !important;
     box-shadow: none !important;
     text-shadow: none !important;
-    font-family: 'Press Start 2P', cursive !important;
-    letter-spacing: -1px !important;
+    font-family: 'Press Start 2P', monospace !important;
+    letter-spacing: -1px;
 }
 
-/* 2. ECCEZIONE PER LE ICONE */
-body.theme-8bit #game-navbar .fa,
-body.theme-8bit #game-navbar .fas,
-body.theme-8bit #game-navbar .fa-solid,
-body.theme-8bit #game-navbar .fa-brands,
-body.theme-8bit #game-container .fa,
-body.theme-8bit #game-container .fas,
-body.theme-8bit #game-container .fa-solid,
-body.theme-8bit #game-container .fa-brands,
+/* Ripristino FontAwesome per le icone */
+body.theme-8bit #game-navbar i,
+body.theme-8bit #game-container i,
+body.theme-8bit #mobile-nav-bar i,
 body.theme-8bit #golden-bug i {
     font-family: "Font Awesome 6 Free" !important;
     letter-spacing: normal !important;
 }
 
-/* 3. CONTENITORE PRINCIPALE */
+/* --- GAME CONTAINER (Il bordo e lo sfondo principale) --- */
 body.theme-8bit #game-container {
-    border: 2px solid #34495e !important;
-    background-color: rgba(13, 17, 23, 0.95) !important;
-    box-shadow: 0 0 0 4px #000 !important;
+    border: 2px solid #34495e;
+    background-color: rgba(13, 17, 23, 0.95);
+    box-shadow: 0 0 0 4px #000;
 }
 
-body.theme-8bit #game-container .progress-text {
-    font-size: 0.45rem !important;
-    letter-spacing: -1px !important;
-    line-height: 32px !important;
-    width: 100% !important;
-    padding: 0 4px !important;
-    box-sizing: border-box !important;
-    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000 !important;
-    white-space: nowrap !important;
-}
-
-body.theme-8bit #game-container .tab-btn.notify {
-    animation: pixelFlash 1s infinite step-end !important;
-    opacity: 1 !important;
-    border: 2px solid #2ecc71 !important;
-    border-bottom: 2px solid #2ecc71 !important;
-    box-shadow: none !important;
-}
-
-/* Nascondi il pallino rotondo delle notifiche (stonava con la pixel art) */
-body.theme-8bit #game-container .tab-btn.notify::after {
-    display: none !important;
-}
-
-/* Applica lampeggio al bottone PROMOZIONE (se pronta) */
-body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
-    animation: pixelFlash 0.5s infinite step-end !important;
-    box-shadow: 4px 4px 0 #000 !important;
-    transform: none !important;
-    border-radius: 0 !important;
-}
-
-/* 4. NAVBAR */
+/* --- NAVBAR --- */
 body.theme-8bit #game-navbar {
-    background-color: #161b22 !important;
-    border-bottom: 2px solid #30363d !important;
-    height: 70px !important;
-    padding: 0 15px !important;
+    background-color: #161b22;
+    border-bottom: 2px solid #30363d;
+    height: 70px;
+    padding: 0 15px;
 }
 
 body.theme-8bit #game-navbar .nav-item {
-    color: #8b949e !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    margin: 0 5px !important;
-    opacity: 1 !important;
-    transition: none !important;
+    color: #8b949e;
+    border: 1px solid transparent;
 }
 
 body.theme-8bit #game-navbar .nav-item:hover {
-    color: #fff !important;
-    background-color: #21262d !important;
-    border: 1px solid #8b949e !important;
-    transform: translateY(-2px) !important;
+    color: #fff;
+    background-color: #21262d;
+    border-color: #8b949e;
+    transform: translateY(-2px);
 }
 
-body.theme-8bit #game-navbar .nav-icon {
-    font-size: 1.2rem !important;
-    margin-bottom: 5px !important;
+body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
+    animation: pixelFlash 0.5s infinite step-end;
+    box-shadow: 4px 4px 0 #000 !important;
+    transform: none;
+    border-radius: 0;
 }
 
-body.theme-8bit #game-navbar .nav-label {
-    font-size: 0.5rem !important;
-    text-transform: uppercase;
-}
-
-/* 5. TABS */
+/* --- TABS (Upgrade / Console / Teams) --- */
 body.theme-8bit #game-container .tabs-header {
-    background-color: #0d1117 !important;
-    border-bottom: 2px solid #30363d !important;
-    padding-bottom: 0 !important;
-    gap: 2px !important;
+    background-color: #0d1117;
+    border-bottom: 2px solid #30363d;
 }
 
 body.theme-8bit #game-container .tab-btn {
-    background-color: #161b22 !important;
-    color: #8b949e !important;
-    border: 1px solid #30363d !important;
-    border-bottom: none !important;
-    font-size: 0.6rem !important;
-    padding: 12px 5px !important;
-    margin-bottom: 0 !important;
+    background-color: #161b22;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    border-bottom: none;
+    font-size: 0.6rem;
+    padding: 12px 5px;
 }
 
-/* Tab Attivo */
 body.theme-8bit #game-container .tab-btn.active {
-    background-color: #3498db !important;
-    /* Blu Base */
-    color: #fff !important;
-    border: 1px solid #3498db !important;
-    border-bottom: none !important;
-    padding-bottom: 14px !important;
+    background-color: #3498db;
+    color: #fff;
+    border-color: #3498db;
     z-index: 10;
 }
 
-/* 6. MOLTIPLICATORI & FILTRI */
-body.theme-8bit #game-container #buy-controls .buy-btn {
-    background-color: #161b22 !important;
-    border: 1px solid #30363d !important;
-    color: #fff !important;
-    font-size: 0.7rem !important;
+body.theme-8bit #game-container .tab-btn.notify {
+    animation: pixelFlash 1s infinite step-end;
+    border: 2px solid #2ecc71;
+    border-bottom: 2px solid #2ecc71;
 }
 
-body.theme-8bit #game-container #buy-controls .buy-btn.active {
-    background-color: #2ecc71 !important;
-    /* Verde Base */
-    color: #000 !important;
-    border-color: #fff !important;
-    box-shadow: inset 0 0 0 2px #000 !important;
+body.theme-8bit #game-container .tab-btn.notify::after {
+    display: none;
 }
 
-body.theme-8bit #game-container #global-filter-select {
-    background-color: #000 !important;
-    border: 1px solid #30363d !important;
-    color: #fff !important;
-}
-
-/* 7. CARD UPGRADE */
+/* --- CARD UPGRADE & LISTE (Centratura e Dimensioni) --- */
 body.theme-8bit #game-container .upgrade,
 body.theme-8bit #game-container .click-upgrade,
 body.theme-8bit #game-container .enhancement-upgrade,
 body.theme-8bit #game-container .prestige-upgrade {
     background-color: #12171e !important;
-    /* Quasi nero */
     border: 1px solid #30363d !important;
-    margin-bottom: 10px !important;
-    padding: 12px !important;
-    box-shadow: 2px 2px 0 #000 !important;
+    box-shadow: 4px 4px 0 #000 !important;
+
+    display: flex;
+
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 12px 10px !important;
+    min-height: 100px;
 }
 
+/* FIX TESTI TROPPO GRANDI */
 body.theme-8bit #game-container .upgrade-name {
-    color: #fff !important;
-    font-size: 0.65rem !important;
-    margin-bottom: 6px !important;
-    line-height: 1.4 !important;
+    color: #fff;
+    font-size: 0.6rem !important;
+    line-height: 1.1 !important;
+    margin-bottom: 5px !important;
 }
 
 body.theme-8bit #game-container .upgrade-desc {
-    color: #8b949e !important;
+    color: #8b949e;
     font-size: 0.45rem !important;
-    line-height: 1.6 !important;
-    opacity: 1 !important;
+    line-height: 1.3 !important;
+    opacity: 1;
 }
 
 body.theme-8bit #game-container .upgrade-cost {
     color: #58a6ff !important;
-    /* Ciano */
-    font-size: 0.6rem !important;
+    font-size: 0.5rem !important;
     margin-top: 5px !important;
+    letter-spacing: -0.5px;
 }
 
+body.theme-8bit #game-container .progress-text {
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+    line-height: 32px;
+}
+
+body.theme-8bit #game-container .progress-bar-container {
+    height: 28px !important;
+    margin-top: 8px !important;
+}
+
+/* --- BOTTONI COMPRA --- */
 body.theme-8bit #game-container .buy-btn {
-    height: 34px !important;
-    min-height: 34px !important;
-    font-size: 0.6rem !important;
-    padding: 0 10px !important;
-    line-height: 34px !important;
+    height: 32px !important;
+    font-size: 0.55rem !important;
+
+    display: flex;
+
+    justify-content: center !important;
+    align-items: center !important;
+    line-height: normal !important;
+    padding: 0 !important;
+    padding-top: 2px !important;
+
+    margin: 8px auto 0 auto !important;
+    /* Centratura */
+    width: 90% !important;
+
     box-shadow: 3px 3px 0 #000 !important;
-    text-transform: uppercase !important;
-    border-radius: 0 !important;
+    border: 1px solid #fff !important;
+    transition: none;
 }
 
-body.theme-8bit #game-container .buy-btn:hover:not(:disabled) {
-    background-color: #2ea043 !important;
+body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned) {
+    background-color: #2ea043;
+    color: #fff;
+}
+
+body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned):hover {
+    background-color: #3fb950;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #000 !important;
 }
 
 body.theme-8bit #game-container .buy-btn:active {
-    transform: translate(2px, 2px) !important;
+    transform: translate(3px, 3px) !important;
     box-shadow: none !important;
 }
 
 body.theme-8bit #game-container .buy-btn:disabled {
-    background-color: #30363d !important;
-    color: #6e7681 !important;
-}
-
-body.theme-8bit #game-container #score-display {
-    font-size: 1.5rem !important;
-    color: #c90000 !important;
-    text-shadow: 1px 1px 0 #000000 !important;
-    padding-top: 2px !important;
-}
-
-body.theme-8bit #game-container #cps-display {
-    background: #0d1117 !important;
-    color: #58a6ff !important;
-    border: 1px solid #30363d !important;
-    padding: 8px 15px !important;
-    font-size: 0.75rem !important;
-}
-
-
-
-
-/* Immagini Pixelate */
-body.theme-8bit #game-container #manager-photo-normal,
-body.theme-8bit #game-container #manager-photo-clicked {
-    /* Reset totale */
-    background: #050510 !important;
-    /* Blu scuro solido */
-
-    /* Griglia Cyber (Scacchiera Blu/Nera) */
-    background-image:
-        linear-gradient(rgba(88, 166, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(88, 166, 255, 0.1) 1px, transparent 1px) !important;
-    background-size: 20px 20px !important;
-
-    /* Bordo e Ombre */
-    border: 2px solid #58a6ff !important;
-    /* Bordo Ciano */
-    box-shadow: 0 0 15px rgba(88, 166, 255, 0.2) !important;
-
-    /* Proprietà grafiche */
-    image-rendering: pixelated !important;
-    border-radius: 0 !important;
-    /* Quadrato */
-    filter: none !important;
-    /* Rimuove filtri rarità */
-    z-index: 10;
-}
-
-/* 2. Nasconde il cerchio sfumato dietro al bottone (Background base) */
-body.theme-8bit #game-container #clicker-btn::after {
-    display: none !important;
-}
-
-/* 10. EXTRA */
-body.theme-8bit #golden-bug {
-    border: none !important;
-    background: transparent !important;
+    background-color: #21262d !important;
+    color: #484f58 !important;
+    border-color: #30363d !important;
     box-shadow: none !important;
-    animation: bouncePixel 0.5s infinite alternate !important;
+    cursor: not-allowed;
 }
 
-body.theme-8bit #golden-bug i {
-    color: #f1c40f !important;
-    text-shadow: 2px 2px 0 #000 !important;
-    font-size: 2.5rem !important;
+body.theme-8bit #game-container .buy-btn.owned {
+    background-color: #1f2937 !important;
+    color: #60a5fa !important;
+    border-color: #374151 !important;
+    cursor: default;
+    width: auto !important;
 }
 
-body.theme-8bit #game-container .skill-btn {
-    border: 1px solid #fff !important;
-    box-shadow: 4px 4px 0 #000 !important;
+/* FIX SPECIFICO PER COLONNA TEAMS (Allineamento a destra) */
+body.theme-8bit #building-list-container .upgrade {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+}
+
+body.theme-8bit #building-list-container .upgrade-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+body.theme-8bit #building-list-container .upgrade-count {
     font-size: 0.8rem !important;
 }
 
-
-
-/* --- 11. FIX GESTIONE MATRIX (CRITICO) --- */
-
-/* Quando Matrix è attivo, NASCONDI COMPLETAMENTE lo sfondo griglia "8bit" del bottone */
-/* Questo permette al canvas Matrix sottostante di vedersi */
-body.theme-8bit.matrix-active #game-container #clicker-btn::after {
-    display: none !important;
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
+body.theme-8bit #building-list-container .buy-btn {
+    width: auto !important;
+    min-width: 75px !important;
+    margin: 0 !important;
+    flex-shrink: 0;
 }
 
-/* Reset sfondo container per farlo trasparente verso il canvas */
+/* --- DISPLAY PUNTEGGI --- */
+body.theme-8bit #game-container #score-display {
+    color: #c90000;
+    text-shadow: 1px 1px 0 #000;
+}
+
+body.theme-8bit #game-container #cps-display {
+    background: #0d1117;
+    color: #58a6ff;
+    border: 1px solid #30363d;
+}
+
+/* --- MANAGER PHOTO (Pixel Grid Effect) --- */
+body.theme-8bit #game-container #manager-photo-normal,
+body.theme-8bit #game-container #manager-photo-clicked {
+    background: #050510;
+    background-image:
+        linear-gradient(rgba(88, 166, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 166, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border: 2px solid #58a6ff;
+    box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
+    image-rendering: pixelated;
+    border-radius: 0;
+    z-index: 10;
+}
+
+/* Nasconde l'alone rotondo di default */
+body.theme-8bit #game-container #clicker-btn::after {
+    display: none;
+}
+
+/* --- GOLDEN BUG --- */
+body.theme-8bit #golden-bug {
+    animation: bouncePixel 0.5s infinite alternate;
+}
+
+body.theme-8bit #golden-bug i {
+    color: #f1c40f;
+    text-shadow: 2px 2px 0 #000;
+}
+
+/* --- COMPATIBILITÀ EVENTI (Matrix / Bluescreen) --- */
 body.theme-8bit.matrix-active #game-container {
-    border-color: #0f0 !important;
-    box-shadow: 0 0 10px #0f0 !important;
-    background-color: transparent !important;
-    /* Trasparente per vedere il canvas */
-    background-image: none !important;
+    background-color: transparent;
+    background-image: none;
+    border-color: #0f0;
+    box-shadow: 0 0 10px #0f0;
 }
 
-/* Colori Testo Matrix */
 body.theme-8bit.matrix-active #game-container * {
     color: #0f0 !important;
     text-shadow: 2px 2px 0 #003300 !important;
     border-color: #0f0 !important;
-    /* Rende verdi anche i bordi delle card */
+    font-family: 'Courier New', monospace !important;
 }
 
-/* Reset immagine (rimuove filtri extra) */
-body.theme-8bit.matrix-active #game-container #manager-photo-normal,
-body.theme-8bit.matrix-active #game-container #manager-photo-clicked {
-    border: 4px solid #0f0 !important;
-    background: #000 !important;
-    /* Sfondo nero solido dietro l'immagine */
-    filter: none !important;
+/* --- SKIN GUARDAROBA 8-BIT --- */
+body.theme-8bit .skin-desc {
+    height: 60px !important;
 }
 
-/* Bluescreen Fix */
-body.theme-8bit.bluescreen-active #game-container {
-    border-color: #fff !important;
-    background-color: #0000aa !important;
-    background-image: none !important;
-}
-
-body.theme-8bit.bluescreen-active #game-container * {
-    color: #fff !important;
-    text-shadow: 2px 2px 0 #000 !important;
-}
-
-body.theme-8bit.crunch-active #game-container #manager-photo-normal,
-body.theme-8bit.crunch-active #game-container #manager-photo-clicked {
-    /* Sfondo Rosso/Giallo */
-    background: #4a0000 !important;
-    background-image:
-        linear-gradient(45deg, #ff4500 25%, transparent 25%),
-        linear-gradient(-45deg, #ff4500 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #ff4500 75%),
-        linear-gradient(-45deg, transparent 75%, #ff4500 75%) !important;
-    background-size: 20px 20px !important;
-
-    /* Bordo Arancio Fuoco */
-    border: 4px solid #ffcc00 !important;
-    box-shadow: 0 0 15px #ff4500 !important;
-    filter: contrast(1.2) sepia(0.2) hue-rotate(-10deg) !important;
-}
-
-body.theme-8bit.crunch-active #game-container {
-    border-color: #ff4500 !important;
-    box-shadow: 0 0 0 4px #000, 0 0 20px #ff0000 !important;
-}
-
-body.theme-8bit.crunch-active #game-container * {
-    text-shadow: 2px 2px 0 #8b0000 !important;
-}
-
-body.theme-8bit.crunch-active #game-container .upgrade-cost {
-    color: #ffcc00 !important;
-}
-
-body.theme-8bit #building-list-container .upgrade-details {
-    flex: 0 1 auto !important;
-    width: 40% !important;
-    max-width: 45% !important;
-    min-width: 0 !important;
-    margin-right: 0 !important;
-}
-
-body.theme-8bit #building-list-container .upgrade-actions {
-    flex: 1 0 auto !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 15px !important;
-    padding-left: 10px !important;
-}
-
-body.theme-8bit #building-list-container .upgrade-count {
-    font-size: 0.9rem !important;
+body.theme-8bit .desc-base,
+body.theme-8bit .desc-hover {
+    font-size: 0.5rem !important;
     line-height: 1 !important;
-    text-align: right !important;
-    margin-right: 0 !important;
+    transition: none !important;
 }
 
-body.theme-8bit #building-list-container .buy-btn {
-    min-width: 80px !important;
-    width: auto !important;
-    flex-shrink: 0 !important;
-    margin: 0 !important;
+body.theme-8bit .skin-card {
+    padding-bottom: 10px !important;
 }
 
-body.theme-8bit #building-list-container .upgrade {
-    padding: 6px 10px !important;
-    min-height: 55px !important;
-    gap: 5px !important;
-}
-
-body.theme-8bit #click-upgrade-list .buy-btn,
-body.theme-8bit #enhancement-list .buy-btn {
-    width: 100% !important;
-    margin-top: 8px !important;
-}
-
-body.theme-8bit #click-upgrade-list .upgrade,
-body.theme-8bit #click-upgrade-list .click-upgrade,
-body.theme-8bit #enhancement-list .enhancement-upgrade {
-    padding: 10px 8px !important;
-    justify-content: center !important;
-}
-
-
+/* --- KEYFRAMES --- */
 @keyframes pixelFlash {
 
     0%,
