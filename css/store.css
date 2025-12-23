@@ -665,3 +665,24 @@
         /* Una sola colonna per dare spazio al testo */
     }
 }
+
+@media screen and (max-width: 1366px) {
+
+    #click-upgrade-list,
+    #enhancement-list {
+        grid-template-columns: 1fr;
+        /* Una sola colonna invece di due */
+    }
+
+    /* Riduci il padding interno delle card */
+    .upgrade,
+    .click-upgrade,
+    .enhancement-upgrade {
+        padding: 8px;
+    }
+
+    /* Riduci la dimensione del font del nome upgrade */
+    .upgrade-name {
+        font-size: 0.9rem;
+    }
+}

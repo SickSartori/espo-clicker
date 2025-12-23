@@ -335,3 +335,24 @@ body.theme-8bit .skin-card {
         transform: translateY(-10px);
     }
 }
+
+/* css/8bit-theme.css */
+
+/* Riduci drasticamente la dimensione del font 8-bit su schermi piccoli */
+@media screen and (max-width: 1440px) {
+    body.theme-8bit {
+        font-size: 10px !important;
+        /* Il font pixel art è grande di natura */
+    }
+
+    body.theme-8bit #game-container .upgrade-name {
+        font-size: 0.7rem !important;
+        /* Forza testo più piccolo nelle card */
+        letter-spacing: -1px;
+        /* Stringi le lettere */
+    }
+
+    body.theme-8bit .buy-btn {
+        font-size: 0.6rem !important;
+    }
+}
