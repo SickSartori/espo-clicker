@@ -27,7 +27,7 @@ Questo file è la **Fonte di Verità Assoluta**. Il gioco è **Data-Driven**: l'
 
 * **`gameData`**: Oggetto gigante che contiene:
     * **`assets`:** Registro audio/video con volumi e categorie.
-    * **`teams`:** Definizione edifici (costi, BPS).
+    * **`teams`:** Definizione teams (costi, BPS).
     * **`clickUpgrades` / `buildingEnhancements` / `prestigeUpgrades`:** Liste potenziamenti.
     * **`achievements`:** Obiettivi, condizioni logiche e premi.
     * **`skins`:** Configurazioni estetiche, rarità e temi speciali.
@@ -131,7 +131,7 @@ bug_hunter: {
     }
 }
 
-### C. Aggiungere un Edificio (Team)
+### C. Aggiungere un nuovo Team
 Vai nell'oggetto `gameData.teams`.
 
 robot_qa: {

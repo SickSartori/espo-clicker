@@ -611,7 +611,7 @@
         /* Spazio per la navbar in basso */
     }
 
-    /* Stile specifico per la card edificio su mobile */
+    /* Stile specifico per la card Teams su mobile */
     #building-list-container .upgrade {
         display: flex !important;
         flex-direction: row !important;

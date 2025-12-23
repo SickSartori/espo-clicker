@@ -239,7 +239,7 @@
                 padding: 10px; 
                 border-radius: 8px; 
                 border: 1px solid rgba(255, 107, 107, 0.3);">
-                <i class="fa-solid fa-triangle-exclamation"></i> Accettando la promozione, l'azienda resetterà i tuoi Bug ed Edifici per riassegnarti ad un nuovo progetto.
+                <i class="fa-solid fa-triangle-exclamation"></i> Accettando la promozione, l'azienda resetterà i tuoi Bug e Teams per riassegnarti ad un nuovo progetto.
             </p>
 
             <div style="background: #1e272e; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #34495e;">
@@ -338,7 +338,7 @@
                 <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
                     Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.
                     <br>
-                    <strong>Attenzione:</strong> Resettera i tuoi bug e i tuoi edifici, ma in cambio otterrai <strong>Token Lab</strong>.
+                    <strong>Attenzione:</strong> Resetter&agrave; i tuoi bug e i tuoi Teams, ma in cambio otterrai <strong>Token Lab</strong>.
                     Usa i Token nel Laboratorio per comprare potenziamenti permanenti che renderanno la tua prossima partita velocissima.
                 </p>
             </div>

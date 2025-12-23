@@ -139,7 +139,7 @@ function renderStoreSection(config) {
     // --- FIX SCROLL JUMP AVANZATO ---
     // Cerca il genitore scrollabile corretto in base al contesto (Tab, Store o Colonna)
     let scrollParent = list.closest('.tab-content'); // 1. Prova Tab (Left Column Desktop)
-    if (!scrollParent) scrollParent = list.closest('#building-store'); // 2. Prova Store Edifici (Right Column Desktop)
+    if (!scrollParent) scrollParent = list.closest('#building-store'); // 2. Prova Store Teams (Right Column Desktop)
     if (!scrollParent) scrollParent = list.closest('.game-column'); // 3. Prova Colonna (Mobile o fallback)
 
     let previousScrollTop = 0;
