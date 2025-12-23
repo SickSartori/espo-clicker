@@ -85,6 +85,10 @@
                 <i class="nav-icon fa-solid fa-chart-pie"></i>
                 <span class="nav-label">Stats</span>
             </button>
+            <button id="open-arcade-btn" class="nav-item" title="Sala Giochi">
+                <i class="nav-icon fa-solid fa-gamepad"></i>
+                <span class="nav-label">Arcade</span>
+            </button>
         </div>
 
         <div class="nav-group center">

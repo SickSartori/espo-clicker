@@ -380,3 +380,49 @@
         </div>
     </div>
 </div>
+<div id="arcade-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
+        <button class="modal-close-btn">&times;</button>
+        
+        <h2 style="border-bottom-color: #9b59b6; color: #9b59b6;">
+            <i class="fa-solid fa-gamepad"></i> Espò Arcade
+        </h2>
+        
+        <div class="settings-content" style="padding: 40px 30px;">
+            
+            <div style="margin-bottom: 25px;">
+                <i class="fa-solid fa-helmet-safety" style="
+                    font-size: 4rem; 
+                    color: #f1c40f; 
+                    /* Questo crea l'alone che segue la forma del casco */
+                    filter: drop-shadow(0 0 15px rgba(241, 196, 15, 0.6));
+                    /* Questa animazione fa solo 'respirare' l'icona senza creare box */
+                    animation: pulseButton 2s infinite ease-in-out;">
+                </i>
+            </div>
+
+            <h3 style="color: #fff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">
+                Area in Costruzione
+            </h3>
+
+            <p style="color: #bdc3c7; font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
+                Stiamo installando i nuovi cabinati e cablando i server.<br>
+                La sala giochi aprirà presto le porte!
+            </p>
+
+            <div style="
+                display: inline-block;
+                padding: 8px 16px;
+                background: rgba(155, 89, 182, 0.1); 
+                border: 1px dashed #9b59b6; 
+                border-radius: 6px; 
+                color: #9b59b6; 
+                font-size: 0.75rem; 
+                font-weight: 800;
+                text-transform: uppercase;">
+                <i class="fa-solid fa-code"></i> Status: Sviluppo
+            </div>
+
+        </div>
+    </div>
+</div>
