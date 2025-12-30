@@ -13,5 +13,5 @@
 	if(!isset($_COOKIE['user_default_language']) || is_null($_COOKIE['user_default_language']) || $_COOKIE['user_default_language'] === 0 || $lang !== $_COOKIE['user_default_language'])
 		setcookie("user_default_language", $lang, time() + 1 * YEAR);
 
-	require_once(ABSOLUTE_PATH . "/langs/" . $lang . ".php");
+	require_once("langs/" . $lang . ".php");
 ?>
