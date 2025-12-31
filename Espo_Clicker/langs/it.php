@@ -161,4 +161,46 @@
 	$labels["modals_arcade_lavori_in_corso_label1"] = "Stiamo installando i nuovi cabinati e cablando i server.";
 	$labels["modals_arcade_lavori_in_corso_label2"] = "La sala giochi aprirà presto le porte!";
 	$labels["modals_arcade_lavori_in_corso_status"] = "Status: Sviluppo";
+
+	/*----------------------------------------------------------------------------------------
+	* TAB PROMOZIONE
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["tab_promozione_titolo"] = "Laboratorio";
+	$labels["tab_promozione_label_mobile"] = "TOKEN DISPONIBILI:";
+	$labels["tab_promozione_label_tutto_acquistato"] = "Tutti i potenziamenti Lab acquisiti!";
+
+	/*----------------------------------------------------------------------------------------
+	* TAB CLICK
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["tab_click_titolo"] = "Potenziamenti Click";
+	$labels["tab_click_label_mobile"] = "Bug:";
+	$labels["tab_click_label_tutto_acquistato"] = "Nessun potenziamento disponibile.";
+
+	/*----------------------------------------------------------------------------------------
+	* TAB AUTO
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["tab_auto_titolo"] = "Migliorie Assistenti";
+	$labels["tab_auto_label_mobile"] = "Bug:";
+	$labels["tab_auto_label_tutto_acquistato"] = "Nessuna miglioria disponibile.";
+
+	/*----------------------------------------------------------------------------------------
+	* COL CENTER
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["col_center_moltiplicatore_label"] = "MOLT.";
+	$labels["col_center_bug_risolti_label"] = "BUG RISOLTI";
+	$labels["col_center_token_label"] = "TOKEN";
+	$labels["col_center_bottone_clicker_titolo"] = "Risolvi un Bug!";
+	$labels["col_center_espo_fury_titolo"] = "ESPO FURY";
+	$labels["col_center_espo_fury_bottone_label"] = "Pronto!";
+
+	/*----------------------------------------------------------------------------------------
+	* COL BUILDINGS
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["col_buildings_titolo"] = "Teams";
+	$labels["col_buildings_bug_label"] = "Bug:";
 ?>
