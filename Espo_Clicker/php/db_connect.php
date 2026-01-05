@@ -2,23 +2,20 @@
 	mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 	header('Content-Type: application/json'); 
 
-	$configFile = __DIR__ . '/config.json';
+	$configFile = __DIR__ . '/config.php';
 
-	if (!file_exists($configFile))
-	{
+	if (!file_exists($configFile)) {
 		echo json_encode(["status" => "error", "message" => "Config mancante"]);
 		exit;
 	}
 
-	$config = json_decode(file_get_contents($configFile), true);
+	// Carichiamo l'array dal file PHP
+	$config = require($configFile);
 
-	try
-	{
+	try {
 		$conn = new mysqli($config['servername'], $config['username'], $config['password'], $config['dbname'], $config['port']);
 		$conn->set_charset("utf8mb4");
-	}
-	catch (Exception $e)
-	{
+	} catch (Exception $e) {
 		echo json_encode(["status" => "error", "message" => "Connessione DB fallita: " . $e->getMessage()]);
 		exit;
 	}

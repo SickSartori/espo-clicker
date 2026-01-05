@@ -243,5 +243,17 @@
 		<script src="./js/podio.js" defer></script>
 		<script src="./js/modals.js" defer></script>		
 		<script src="./js/security_patch.js" defer></script>		
+	
+		<?php 
+			$configFile = __DIR__ . '/php/config.php';
+			if (file_exists($configFile)) {
+				$config = require($configFile);
+				if (isset($config['instancename']) && $config['instancename'] === 'dev') {
+					echo '<script src="./js/cheatboard.js" defer></script>';
+					echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
+				}
+			}
+		?>
+        
 	</body>
 </html>

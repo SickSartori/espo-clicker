@@ -1293,17 +1293,7 @@ document.addEventListener('DOMContentLoaded', () =>
             // Evita di caricarlo due volte
             if (document.querySelector('script[src="js/cheatboard.js"]')) return;
 
-            fetch('js/cheatboard.js', { method: 'HEAD' })
-                .then(response =>
-				{
-                    if (response.ok)
-					{
-                        const script = document.createElement('script');
-                        script.src = 'js/cheatboard.js';
-                        document.body.appendChild(script);
-                    }
-                })
-                .catch(e => { });
+            
         },
 
         loadCloudData: (cloudJSON) =>
@@ -1431,18 +1421,7 @@ document.addEventListener('DOMContentLoaded', () =>
         }
     };
 
-    // Dynamic Cheatboard Loader
-    fetch('js/cheatboard.js', { method: 'HEAD' })
-        .then(response =>
-		{
-            if (response.ok)
-			{
-                const script = document.createElement('script');
-                script.src = 'js/cheatboard.js';
-                document.body.appendChild(script);
-            }
-        })
-        .catch(e => { });
+    // Cheatboard loader rimosso (Gestito da index.php via Config)
 
     initializeGame();
 });
