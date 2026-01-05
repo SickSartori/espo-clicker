@@ -554,7 +554,7 @@ input:focus {
 /* --- TOAST STILE ---*/
 #toast-container {
     position: fixed !important;
-    z-index: 2147483647 !important;
+    z-index: var(--z-toast) !important;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -675,7 +675,7 @@ body.modal-open #toast-container {
     font-size: 0.9rem;
     font-weight: bold;
     white-space: nowrap;
-    z-index: 9999;
+    z-index: var(--z-loader);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     margin-bottom: 8px;
@@ -690,7 +690,7 @@ body.modal-open #toast-container {
     border: 6px solid transparent;
     border-top-color: #f1c40f;
     margin-bottom: -4px;
-    z-index: 9999;
+    z-index: var(--z-loader);
 }
 
 .tooltip-multiline[data-tooltip]:hover::after {

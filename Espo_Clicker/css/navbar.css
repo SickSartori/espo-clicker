@@ -11,7 +11,7 @@
     justify-content: space-between;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 1002;
+    z-index: var(--z-nav);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
@@ -154,6 +154,6 @@
     background-color: #e74c3c;
     border: 1px solid #151b22;
     animation: dotPulse 2s infinite;
-    z-index: 10;
+    z-index: calc(var(--z-nav) + 1);
     pointer-events: none;
 }

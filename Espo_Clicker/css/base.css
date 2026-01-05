@@ -24,6 +24,17 @@
     --font-heading: 'Rajdhani', sans-serif;
     --font-body: 'Inter', sans-serif;
     font-size: 16px;
+
+    /* --- SISTEMA Z-INDEX (Nuovo) --- */
+    --z-back: -1;       /* Sfondi, griglie */
+    --z-base: 1;        /* Contenuto base */
+    --z-content: 10;    /* Elementi interattivi gioco */
+    --z-sticky: 500;    /* Header appiccicosi */
+    --z-nav: 1000;      /* Navbar principale */
+    --z-modal: 2000;    /* Modali e backdrop */
+    --z-toast: 3000;    /* Notifiche Toast */
+    --z-overlay: 9000;  /* Effetti a tutto schermo (Video, Crunch) */
+    --z-loader: 9999;   /* Schermata caricamento */
 }
 
 body {
@@ -119,7 +130,7 @@ body::after {
     filter: blur(60px);
     animation: ambientPulse 8s ease-in-out infinite alternate;
     pointer-events: none;
-    z-index: -1;
+    z-index: var(--z-back);
 }
 
 /* Stile per la schermata blu (override sfondo) */
@@ -136,7 +147,7 @@ body.bluescreen-active {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    z-index: var(--z-back);
     /* Dietro al gioco, sopra lo sfondo base */
     display: none;
     /* Nascosto di default */
@@ -291,7 +302,7 @@ body.matrix-active .buy-btn:hover {
     width: 100%;
     height: 100%;
     background-color: #050505;
-    z-index: 99999;
+    z-index: var(--z-loader);
     /* Sopra a tutto, anche ai modali */
     display: flex;
     justify-content: center;
@@ -346,7 +357,7 @@ body.matrix-active .buy-btn:hover {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: var(--z-nav);
     opacity: 0.6;
     transition: all 0.3s;
     background: rgba(0, 0, 0, 0.5);
@@ -381,7 +392,7 @@ body.matrix-active .buy-btn:hover {
     position: fixed;
     bottom: 20px;
     left: 20px;
-    z-index: 11000;
+    z-index: var(--z-toast);
     background-color: rgba(20, 20, 20, 0.8);
     color: #bdc3c7;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -420,7 +431,7 @@ body.matrix-active .buy-btn:hover {
     left: 0;
     width: 100%;
     height: 300%;
-    z-index: 9000;
+    z-index: var(--z-overlay);
     pointer-events: none;
     display: none;
     opacity: 0.6;
@@ -504,7 +515,7 @@ body.crunch-active .upgrade-name {
     height: 100%;
     /* Altezza ridotta per concentrare il fuoco in basso */
     pointer-events: none;
-    z-index: 9001;
+    z-index: calc(var(--z-overlay) + 1);
     overflow: hidden;
     display: none;
 
@@ -543,7 +554,7 @@ body.crunch-active .upgrade-name {
     border-radius: 2px;
     filter: blur(1px);
     opacity: 0;
-    z-index: 9002;
+    z-index: calc(var(--z-overlay) + 2);
     animation: sparkFly linear forwards;
 }
 
@@ -593,7 +604,7 @@ body.crunch-active .upgrade-name {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 9000;
+    z-index: var(--z-overlay);
     opacity: 0;
     transition: opacity 0.5s;
     mix-blend-mode: overlay;

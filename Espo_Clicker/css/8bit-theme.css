@@ -3,7 +3,6 @@
 
 /* ============================================================
    TEMA 8-BIT: CLEAN CYBER
-   Scoped: Si applica solo agli elementi di gioco, non ai modali
    ============================================================ */
 
 /* SFONDO GLOBALE */
@@ -15,16 +14,15 @@ body.theme-8bit {
     background-size: 40px 40px;
 }
 
-
 /* --- RESET TIPOGRAFICO E GRAFICO PER IL GIOCO --- */
 body.theme-8bit #game-navbar *,
 body.theme-8bit #game-container *,
 body.theme-8bit #mobile-nav-bar *,
 body.theme-8bit #golden-bug {
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    font-family: 'Press Start 2P', monospace !important;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+    font-family: 'Press Start 2P', monospace;
     letter-spacing: -1px;
 }
 
@@ -33,11 +31,11 @@ body.theme-8bit #game-navbar i,
 body.theme-8bit #game-container i,
 body.theme-8bit #mobile-nav-bar i,
 body.theme-8bit #golden-bug i {
-    font-family: "Font Awesome 6 Free" !important;
-    letter-spacing: normal !important;
+    font-family: "Font Awesome 6 Free";
+    letter-spacing: normal;
 }
 
-/* --- GAME CONTAINER (Il bordo e lo sfondo principale) --- */
+/* --- GAME CONTAINER --- */
 body.theme-8bit #game-container {
     border: 2px solid #34495e;
     background-color: rgba(13, 17, 23, 0.95);
@@ -66,12 +64,12 @@ body.theme-8bit #game-navbar .nav-item:hover {
 
 body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
     animation: pixelFlash 0.5s infinite step-end;
-    box-shadow: 4px 4px 0 #000 !important;
+    box-shadow: 4px 4px 0 #000;
     transform: none;
     border-radius: 0;
 }
 
-/* --- TABS (Upgrade / Console / Teams) --- */
+/* --- TABS --- */
 body.theme-8bit #game-container .tabs-header {
     background-color: #0d1117;
     border-bottom: 2px solid #30363d;
@@ -99,81 +97,56 @@ body.theme-8bit #game-container .tab-btn.notify {
     border-bottom: 2px solid #2ecc71;
 }
 
-body.theme-8bit #game-container .tab-btn.notify::after {
-    display: none;
-}
-
-/* --- CARD UPGRADE & LISTE (Centratura e Dimensioni) --- */
+/* --- CARD UPGRADE & LISTE --- */
 body.theme-8bit #game-container .upgrade,
 body.theme-8bit #game-container .click-upgrade,
 body.theme-8bit #game-container .enhancement-upgrade,
 body.theme-8bit #game-container .prestige-upgrade {
-    background-color: #12171e !important;
-    border: 1px solid #30363d !important;
-    box-shadow: 4px 4px 0 #000 !important;
-
+    background-color: #12171e;
+    border: 1px solid #30363d;
+    box-shadow: 4px 4px 0 #000;
     display: flex;
-
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    padding: 12px 10px !important;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 10px;
     min-height: 100px;
 }
 
-/* FIX TESTI TROPPO GRANDI */
+/* FIX TESTI */
 body.theme-8bit #game-container .upgrade-name {
     color: #fff;
-    font-size: 0.6rem !important;
-    line-height: 1.1 !important;
-    margin-bottom: 5px !important;
+    font-size: 0.6rem;
+    line-height: 1.1;
+    margin-bottom: 5px;
 }
 
 body.theme-8bit #game-container .upgrade-desc {
     color: #8b949e;
-    font-size: 0.45rem !important;
-    line-height: 1.3 !important;
-    opacity: 1;
+    font-size: 0.45rem;
+    line-height: 1.3;
 }
 
 body.theme-8bit #game-container .upgrade-cost {
-    color: #58a6ff !important;
-    font-size: 0.5rem !important;
-    margin-top: 5px !important;
+    color: #58a6ff;
+    font-size: 0.5rem;
+    margin-top: 5px;
     letter-spacing: -0.5px;
-}
-
-body.theme-8bit #game-container .progress-text {
-    font-size: 0.45rem;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 0 #000;
-    line-height: 32px;
-}
-
-body.theme-8bit #game-container .progress-bar-container {
-    height: 28px !important;
-    margin-top: 8px !important;
 }
 
 /* --- BOTTONI COMPRA --- */
 body.theme-8bit #game-container .buy-btn {
-    height: 32px !important;
-    font-size: 0.55rem !important;
-
+    height: 32px;
+    font-size: 0.55rem;
     display: flex;
-
-    justify-content: center !important;
-    align-items: center !important;
-    line-height: normal !important;
-    padding: 0 !important;
-    padding-top: 2px !important;
-
-    margin: 8px auto 0 auto !important;
-    /* Centratura */
-    width: 90% !important;
-
-    box-shadow: 3px 3px 0 #000 !important;
-    border: 1px solid #fff !important;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    padding-top: 2px;
+    margin: 8px auto 0 auto;
+    width: 90%;
+    box-shadow: 3px 3px 0 #000;
+    border: 1px solid #fff;
     transition: none;
 }
 
@@ -185,12 +158,12 @@ body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned) {
 body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned):hover {
     background-color: #3fb950;
     transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 #000 !important;
+    box-shadow: 1px 1px 0 #000;
 }
 
 body.theme-8bit #game-container .buy-btn:active {
-    transform: translate(3px, 3px) !important;
-    box-shadow: none !important;
+    transform: translate(3px, 3px);
+    box-shadow: none;
 }
 
 body.theme-8bit #game-container .buy-btn:disabled {
@@ -201,53 +174,7 @@ body.theme-8bit #game-container .buy-btn:disabled {
     cursor: not-allowed;
 }
 
-body.theme-8bit #game-container .buy-btn.owned {
-    background-color: #1f2937 !important;
-    color: #60a5fa !important;
-    border-color: #374151 !important;
-    cursor: default;
-    width: auto !important;
-}
-
-/* FIX SPECIFICO PER COLONNA TEAMS (Allineamento a destra) */
-body.theme-8bit #building-list-container .upgrade {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    text-align: left !important;
-    padding: 8px 12px !important;
-}
-
-body.theme-8bit #building-list-container .upgrade-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-}
-
-body.theme-8bit #building-list-container .upgrade-count {
-    font-size: 0.8rem !important;
-}
-
-body.theme-8bit #building-list-container .buy-btn {
-    width: auto !important;
-    min-width: 75px !important;
-    margin: 0 !important;
-    flex-shrink: 0;
-}
-
-/* --- DISPLAY PUNTEGGI --- */
-body.theme-8bit #game-container #score-display {
-    color: #c90000;
-    text-shadow: 1px 1px 0 #000;
-}
-
-body.theme-8bit #game-container #cps-display {
-    background: #0d1117;
-    color: #58a6ff;
-    border: 1px solid #30363d;
-}
-
-/* --- MANAGER PHOTO (Pixel Grid Effect) --- */
+/* --- MANAGER PHOTO --- */
 body.theme-8bit #game-container #manager-photo-normal,
 body.theme-8bit #game-container #manager-photo-clicked {
     background: #050510;
@@ -259,53 +186,12 @@ body.theme-8bit #game-container #manager-photo-clicked {
     box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
     image-rendering: pixelated;
     border-radius: 0;
-    z-index: 10;
-}
-
-/* Nasconde l'alone rotondo di default */
-body.theme-8bit #game-container #clicker-btn::after {
-    display: none;
+    z-index: var(--z-content);
 }
 
 /* --- GOLDEN BUG --- */
 body.theme-8bit #golden-bug {
     animation: bouncePixel 0.5s infinite alternate;
-}
-
-body.theme-8bit #golden-bug i {
-    color: #f1c40f;
-    text-shadow: 2px 2px 0 #000;
-}
-
-/* --- COMPATIBILITÀ EVENTI (Matrix / Bluescreen) --- */
-body.theme-8bit.matrix-active #game-container {
-    background-color: transparent;
-    background-image: none;
-    border-color: #0f0;
-    box-shadow: 0 0 10px #0f0;
-}
-
-body.theme-8bit.matrix-active #game-container * {
-    color: #0f0 !important;
-    text-shadow: 2px 2px 0 #003300 !important;
-    border-color: #0f0 !important;
-    font-family: 'Courier New', monospace !important;
-}
-
-/* --- SKIN GUARDAROBA 8-BIT --- */
-body.theme-8bit .skin-desc {
-    height: 60px !important;
-}
-
-body.theme-8bit .desc-base,
-body.theme-8bit .desc-hover {
-    font-size: 0.5rem !important;
-    line-height: 1 !important;
-    transition: none !important;
-}
-
-body.theme-8bit .skin-card {
-    padding-bottom: 10px !important;
 }
 
 /* --- KEYFRAMES --- */
@@ -336,23 +222,99 @@ body.theme-8bit .skin-card {
     }
 }
 
-/* css/8bit-theme.css */
-
-/* Riduci drasticamente la dimensione del font 8-bit su schermi piccoli */
 @media screen and (max-width: 1440px) {
     body.theme-8bit {
         font-size: 10px !important;
-        /* Il font pixel art è grande di natura */
     }
 
     body.theme-8bit #game-container .upgrade-name {
         font-size: 0.7rem !important;
-        /* Forza testo più piccolo nelle card */
         letter-spacing: -1px;
-        /* Stringi le lettere */
     }
 
     body.theme-8bit .buy-btn {
         font-size: 0.6rem !important;
     }
+}
+
+
+
+
+/* =======================================================
+   FIX DEFINITIVO LEGGIBILITÀ 8-BIT
+   ======================================================= */
+
+/* 1. BARRA PROGRESSO (Sinistra e Destra) */
+body.theme-8bit #game-container .progress-text {
+    /* Dimensione bilanciata: né troppo piccola né enorme */
+    font-size: 0.5rem !important;
+
+    letter-spacing: 0 !important;
+
+    color: #fff !important;
+    z-index: 10;
+    line-height: 30px !important;
+}
+
+/* 2. LISTA TEAM (Colonna Destra) - Layout e Dimensioni */
+body.theme-8bit #building-list-container .upgrade {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 12px !important;
+    gap: 10px;
+    min-height: 80px;
+}
+
+/* Dettagli (Nome e Costo) */
+body.theme-8bit #building-list-container .upgrade-details {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left !important;
+    overflow: hidden;
+}
+
+/* Nome del Team più grande e leggibile */
+body.theme-8bit #building-list-container .upgrade-name {
+    font-size: 0.7rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 6px !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+}
+
+/* Costo e BPS */
+body.theme-8bit #building-list-container .upgrade-cost,
+body.theme-8bit #building-list-container .upgrade-bps {
+    font-size: 0.55rem !important;
+    letter-spacing: 0 !important;
+    opacity: 0.9;
+}
+
+/* 3. BOTTONI E NUMERI (Destra) */
+body.theme-8bit #building-list-container .upgrade-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    min-width: 80px;
+}
+
+/* Numero posseduto (es. 1) */
+body.theme-8bit #building-list-container .upgrade-count {
+    font-size: 1rem !important;
+    margin-right: 0 !important;
+    margin-bottom: 2px;
+}
+
+/* Bottone Compra */
+body.theme-8bit #building-list-container .buy-btn {
+    width: 100% !important;
+    margin: 0 !important;
+    font-size: 0.6rem !important;
+    padding: 8px 0 !important;
+    height: auto !important;
 }

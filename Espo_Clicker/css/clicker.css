@@ -36,7 +36,7 @@
     animation: floatUpDynamic 1.5s ease-out forwards;
     pointer-events: none;
     text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
-    z-index: 11;
+    z-index: calc(var(--z-content) + 1);
     white-space: nowrap;
     width: auto;
 
@@ -51,7 +51,7 @@
     padding: 0;
     cursor: pointer;
     transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
-    z-index: 10;
+    z-index: var(--z-content);
     position: relative;
 
     /* DIMENSIONE REATTIVA:
@@ -157,7 +157,7 @@
     color: #fff;
     padding: 6px 12px;
     border-radius: 6px;
-    z-index: 10000;
+    z-index: var(--z-loader);
     font-size: 1rem;
     font-weight: 700;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -177,7 +177,7 @@
     border-bottom-color: #ff4757;
 
     margin-top: 0px;
-    z-index: 10001;
+    z-index: var(--z-loader);
 }
 
 
@@ -261,7 +261,7 @@
     color: #facc15;
     text-shadow: 0 0 8px #facc15;
     margin-top: 10px;
-    z-index: 10;
+    z-index: var(--z-content);
     text-align: center;
 }
 
@@ -278,7 +278,7 @@
 #golden-bug {
     position: absolute;
     cursor: pointer;
-    z-index: 999;
+    z-index: calc(var(--z-nav) - 1);
 
     /* MODIFICA: Nascosto di default all'avvio! */
     display: none;
@@ -363,7 +363,7 @@ body.bluescreen-active #clicker-btn {
     width: 100vw;
     height: 100vh;
     object-fit: cover;
-    z-index: 9000;
+    z-index: var(--z-overlay);
     background: #000;
     pointer-events: auto !important;
     cursor: pointer;
@@ -388,7 +388,7 @@ body.rick-rolling #game-container {
     -webkit-backdrop-filter: none !important;
     filter: none !important;
     transform: none !important;
-    z-index: 9500 !important;
+    z-index: calc(var(--z-overlay) + 10) !important;
     /* FIX: Importante per lasciar passare i click al video sotto */
     pointer-events: none !important;
 }
