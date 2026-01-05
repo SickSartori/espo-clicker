@@ -4,8 +4,9 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title><?php echo $labels["head_titolo"]; ?></title>
-		
+		<title>
+			<?php echo $labels["head_titolo"]; ?>
+		</title>
 		<link rel="stylesheet" href="./css/keyframes.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/base.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/layout.css?v=<?php echo time(); ?>">
@@ -20,7 +21,6 @@
 		<link rel="stylesheet" href="./css/mobile.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo time(); ?>">
-
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo time(); ?>">
 		<link rel="icon" type="image/png" href="./assets/image/favicon.webp">
 	</head>
@@ -73,21 +73,18 @@
 					<p style="color: #bdc3c7; font-size: 1.1rem;">
 						<?php echo $labels["offline_sottotitolo"]; ?>
 					</p>
-					
 					<div style="margin: 20px 0;">
 						<p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">
 							<?php echo $labels["offline_server"]; ?>
 						</p>
 						<div id="offline-efficiency-display" style="font-weight: bold; color: #3498db; font-size: 1.2rem;">30%</div>
 					</div>
-
 					<div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #d35400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
 						<span id="offline-earnings-display" style="font-size: 2.5rem; font-weight: 800; color: #f1c40f; text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);">0</span>
 						<span style="font-size: 1.2rem; color: #f1c40f;">
 							<?php echo $labels["offline_bug"]; ?>
 						</span>
 					</div>
-
 					<button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
 						💰 <?php echo $labels["offline_guadagni"]; ?>
 					</button>
@@ -213,12 +210,10 @@
 				<i class="fa-solid fa-bolt"></i>
 				<span><?php echo $labels["mobile_tab_upgrade"]; ?></span>
 			</button>
-			
 			<button class="mobile-nav-btn active" data-target="center-column">
 				<i class="fa-solid fa-gamepad"></i>
 				<span><?php echo $labels["mobile_tab_console"]; ?></span>
 			</button>
-			
 			<button class="mobile-nav-btn" data-target="right-column">
 				<i class="fa-solid fa-users"></i>
 				<span><?php echo $labels["mobile_tab_team"]; ?></span>
@@ -246,14 +241,17 @@
 	
 		<?php 
 			$configFile = __DIR__ . '/php/config.php';
-			if (file_exists($configFile)) {
+
+			if (file_exists($configFile))
+			{
 				$config = require($configFile);
-				if (isset($config['instancename']) && $config['instancename'] === 'dev') {
+
+				if (isset($config['instancename']) && $config['instancename'] === 'dev')
+				{
 					echo '<script src="./js/cheatboard.js" defer></script>';
 					echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 				}
 			}
 		?>
-        
 	</body>
 </html>

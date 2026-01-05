@@ -1159,9 +1159,11 @@ const gameData = {
     }
 };
 
-// --- 3. GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
-function getInitialGameState() {
-    const state = {
+// --- GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
+function getInitialGameState()
+{
+    const state =
+	{
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
         score: 0,
         baseClickValue: 1,
@@ -1189,24 +1191,34 @@ function getInitialGameState() {
     };
 
     for (const key in gameData.teams) state.teams[key] = { count: 0 };
+
     for (const key in gameData.clickUpgrades) state.clickUpgrades[key] = { purchased: false };
+
     for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
-    for (const key in gameData.prestigeUpgrades) {
-        if (gameData.prestigeUpgrades[key].isCounted) state.prestigeUpgrades[key] = { count: 0 };
-        else state.prestigeUpgrades[key] = { purchased: false };
+
+    for (const key in gameData.prestigeUpgrades)
+	{
+        if (gameData.prestigeUpgrades[key].isCounted)
+			state.prestigeUpgrades[key] = { count: 0 };
+        else
+			state.prestigeUpgrades[key] = { purchased: false };
     }
 
     const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
-    for (const key in allAssets) {
-        if (allAssets[key].defaultVol !== undefined) state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
-    }
+
+    for (const key in allAssets)
+	{
+        if (allAssets[key].defaultVol !== undefined)
+			state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
+	}
 
     return state;
 }
 
 gameState = getInitialGameState();
 
-function resetGameToDefault() {
+function resetGameToDefault()
+{
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 

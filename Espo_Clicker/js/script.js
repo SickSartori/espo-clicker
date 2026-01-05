@@ -503,6 +503,7 @@ document.addEventListener('DOMContentLoaded', () =>
             // Salva e Feedback
             window.EspooClicker.saveGame();
             updateUI();
+			
             window.EspooClicker.showToast(gameData.texts.toasts.offlineClaim.replace('{amount}', formatNumber(amount)), 'success');
             window.EspooClicker.playSound('sound-buy');
 
@@ -565,6 +566,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
                 // SPEGNI SOLO FURY MUSIC (Fire rimosso)
                 const furyMusic = document.getElementById('sound-fury-music');
+
                 if (furyMusic)
 				{
                     furyMusic.pause();
@@ -577,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
                 // STOP PARTICELLE
                 const fireContainer = document.getElementById('fire-particles-container');
+
                 if (fireContainer)
 				{
                     fireContainer.style.display = 'none';
@@ -752,6 +755,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
         // Setup Iniziale
         if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
+
         loadGame(); // Carica salvataggi
 
         // Inizializza Audio Context (senza suonare ancora)
@@ -779,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () =>
             setTimeout(() =>
 			{
                 const loader = document.getElementById('game-loader');
+
                 if (loader)
 				{
                     loader.classList.add('hidden');
@@ -915,6 +920,7 @@ document.addEventListener('DOMContentLoaded', () =>
             console.log("Fury Mode attiva: skip caricamento skin standard.");
 
         const globalFilterSelect = document.getElementById('global-filter-select');
+
         if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8'))
 		{
             globalFilterSelect.value = 'available';
@@ -1039,8 +1045,10 @@ document.addEventListener('DOMContentLoaded', () =>
                     else if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
                     // Video Attivi (Rick Roll, Ricardo) - Aggiorna volume
-                    ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
+                    ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id =>
+					{
                         const v = document.getElementById(id);
+
                         if (v && !v.paused && v.style.display !== 'none')
 						{
                             const customVol = (typeof getCustomVolume === 'function') ? getCustomVolume(id) : 1.0;
@@ -1276,6 +1284,7 @@ document.addEventListener('DOMContentLoaded', () =>
         setMasterVolume: (volume) =>
 		{
             gameState.user.masterVolume = parseFloat(volume);
+
             document.querySelectorAll('audio').forEach(audio =>
 			{
                 if (audio.id === 'sound-snowball')
@@ -1292,8 +1301,6 @@ document.addEventListener('DOMContentLoaded', () =>
 		{
             // Evita di caricarlo due volte
             if (document.querySelector('script[src="js/cheatboard.js"]')) return;
-
-            
         },
 
         loadCloudData: (cloudJSON) =>
@@ -1347,6 +1354,7 @@ document.addEventListener('DOMContentLoaded', () =>
                     deepMerge(gameState, cloudState);
 
                     if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
+
                     for (const key in gameData.buildingEnhancements)
 					{
                         // Se nel salvataggio attuale manca questa chiave, creala!
@@ -1379,8 +1387,8 @@ document.addEventListener('DOMContentLoaded', () =>
 
                     calculatePrestigeBonus();
                     recalculateCPS();
-                    if (typeof refreshAllStores === 'function') refreshAllStores();
 
+                    if (typeof refreshAllStores === 'function') refreshAllStores();
                     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
                     if (typeof updateUI === 'function') updateUI();
 
@@ -1408,6 +1416,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
                     // --- Check offline subito dopo il login ---
                     checkOfflineProgress();
+
                     if (typeof updateAmbientVolume === 'function')
                         updateAmbientVolume();
 
