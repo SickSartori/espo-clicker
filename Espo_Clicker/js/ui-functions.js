@@ -36,7 +36,7 @@ function formatNumber(num) {
     let sign = "";
     if (num < 0) { sign = "-"; num = Math.abs(num); }
     if (num < 1000) return sign + num.toLocaleString('it-IT', { maximumFractionDigits: 2 });
-    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    const suffixes = gameData.texts.format.suffixes;
     const suffixIndex = Math.floor(Math.log10(num) / 3);
     if (suffixIndex >= suffixes.length) return sign + num.toExponential(2).replace('.', ',');
     const scaledNum = num / Math.pow(1000, suffixIndex);
@@ -53,10 +53,10 @@ function formatTime(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     let timeString = "";
-    if (days > 0) timeString += `${days}g `;
-    if (hours > 0 || days > 0) timeString += `${hours}h `;
-    if (minutes > 0 || hours > 0 || days > 0) timeString += `${minutes}m `;
-    timeString += `${seconds}s`;
+    if (days > 0) timeString += `${days}${gameData.texts.format.time.d} `;
+    if (hours > 0 || days > 0) timeString += `${hours}${gameData.texts.format.time.h} `;
+    if (minutes > 0 || hours > 0 || days > 0) timeString += `${minutes}${gameData.texts.format.time.m} `;
+    timeString += `${seconds}${gameData.texts.format.time.s}`;
     return timeString;
 }
 
@@ -366,7 +366,7 @@ function updateClickStore() {
                 purchased: state.purchased,
                 unlocked: isUnlocked,
                 canAfford: gameState.score >= data.cost,
-                label: "Compra",
+                label: gameData.texts.ui.buy,
                 // Calcolo preciso della barra di progresso
                 progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),
                 progressText: `Click: ${formatNumber(gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
@@ -399,7 +399,7 @@ function refreshAllStores() {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
                 canAfford: gameState.score >= data.cost,
-                label: "Compra",
+                label: gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
                 progressText: `${gameData.teams[data.targetTeam].name}: ${current}/${data.requiredCount}`
             };
@@ -425,13 +425,13 @@ function refreshAllStores() {
                 unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
                 canAfford: gameState.prestigePoints >= data.baseCost,
-                label: isMaxed || singlePurchased ? "POSSEDUTO" : (isMaxed ? "MAX" : "COMPRA"),
+                label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
                 costText: `Costo: ${formatNumber(data.baseCost)} Token`,
                 currentCost: data.baseCost,
                 progress: 100
             };
         },
-        setEmptyMsg: (el, mode) => { el.textContent = "Laboratorio al completo!"; }
+        setEmptyMsg: (el, mode) => { el.textContent = gameData.texts.ui.labFull; }
     });
 
     // 4. NEGOZIO TEAMS
@@ -477,7 +477,7 @@ function refreshAllStores() {
                 unlocked: true,
                 purchased: false,
                 canAfford: gameState.score >= currentCost,
-                label: "Compra",
+                label: gameData.texts.ui.buy,
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
                 bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
                 currentCost: currentCost
@@ -531,7 +531,7 @@ function updateSkinsUI() {
 
         if (isUnlocked) {
             // Skin sbloccata: Lore fissa
-            displayDescHTML = `<div class="skin-lore">${data.desc || "Nessuna descrizione"}</div>`;
+            displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
         } else if (isBuyable) {
             // Skin acquistabile: Rimuoviamo scritte descrittive per non tagliare il layout
             // Il prezzo e il tasto COMPRA sono già presenti nel footer della card
@@ -540,15 +540,15 @@ function updateSkinsUI() {
             // Skin BLOCCATA da obiettivo: Struttura per dissolvenza
             const linkedAch = skinToAchievement[key];
             let requirement = "";
-            let baseText = "???";
+            let baseText = gameData.texts.ui.unknown;
 
             if (linkedAch) {
                 const isSecretLocked = linkedAch.isSecret && !gameState.achievements[linkedAch.id || key]?.unlocked;
-                requirement = isSecretLocked ? "Obiettivo Segreto" : (linkedAch.realDesc || linkedAch.desc);
+                requirement = isSecretLocked ? gameData.texts.ui.secretGoal : (linkedAch.realDesc || linkedAch.desc);
                 baseText = linkedAch.name;
             } else if (data.unlockHint) {
                 requirement = data.unlockHint;
-                baseText = "Skin Bloccata";
+                baseText = gameData.texts.ui.skinLocked;
             }
 
             displayDescHTML = `
@@ -562,12 +562,12 @@ function updateSkinsUI() {
         // Elemento Footer (Bottone)
         let footerHtml = '';
         if (isEquipped) {
-            footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> IN USO</div>`;
+            footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
         } else if (isUnlocked) {
-            footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">USA SKIN</div>`;
+            footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
         } else if (isBuyable) {
             const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
-            const btnText = canAfford ? 'COMPRA' : 'NO TOKEN';
+            const btnText = canAfford ? gameData.texts.ui.buy.toUpperCase() : gameData.texts.ui.noToken;
             const btnStyle = canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;';
             const clickAction = canAfford ? `onclick="buySkin('${key}')"` : '';
 
@@ -576,7 +576,7 @@ function updateSkinsUI() {
                 <div class="skin-btn" style="${btnStyle}" ${clickAction}>${btnText}</div>
             `;
         } else {
-            footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATA</div>`;
+            footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> ${gameData.texts.ui.skinLocked}</div>`;
         }
 
         const card = document.createElement('div');
@@ -674,7 +674,7 @@ function updateAchievementsUI() {
         let tooltipAttr = '';
 
         if (isUnlocked && !isClaimed && data.reward) {
-            let rewardText = "Riscatta";
+            let rewardText = gameData.texts.ui.rewardClaim;
 
             if (data.reward.type === 'bugs') {
                 rewardText = `+${formatNumber(data.reward.value)} BUG`;
@@ -716,8 +716,8 @@ function updateAchievementsUI() {
             }
         }
 
-        let desc = (data.isSecret && !isUnlocked) ? "Obiettivo Segreto..." : (data.realDesc || data.desc);
-        let name = (data.isSecret && !isUnlocked) ? "???" : data.name;
+        let desc = (data.isSecret && !isUnlocked) ? gameData.texts.ui.secretGoal : (data.realDesc || data.desc);
+        let name = (data.isSecret && !isUnlocked) ? gameData.texts.ui.unknown : data.name;
 
         el.innerHTML = `
             <div class="trophy-icon-wrapper">
@@ -1028,11 +1028,11 @@ function checkTabNotifications() {
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
 
     if (canPrestige) {
-        title = "PROMOZIONE PRONTA! - " + title;
+        title = gameData.texts.ui.promotionReadyTitle + " - " + title;
     }
     else {
         // Mostra i bug correnti
-        title = formatNumber(gameState.score) + " Bug - " + title;
+        title = formatNumber(gameState.score) + " " + gameData.texts.ui.bugsTitle + " - " + title;
     }
 
     if (document.title !== title) {
@@ -1239,21 +1239,21 @@ function updateSkillButton() {
             // ATTIVO
             const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
             if (btnCrunch.className !== 'skill-btn active') btnCrunch.className = 'skill-btn active';
-            btnCrunch.childNodes[0].textContent = '🔥 BPS x7 🔥';
+            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyActive;
             if (timerDiv) timerDiv.textContent = `${timeLeft}s`;
         } else if (now < crunchTimeCooldownEnd) {
             // COOLDOWN
             const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
             if (btnCrunch.className !== 'skill-btn cooldown') btnCrunch.className = 'skill-btn cooldown';
-            btnCrunch.childNodes[0].textContent = 'Ricarica...';
+            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyCooldown;
             const m = Math.floor(timeLeft / 60);
             const s = timeLeft % 60;
             if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
             // PRONTO
             if (btnCrunch.className !== 'skill-btn') btnCrunch.className = 'skill-btn';
-            btnCrunch.childNodes[0].textContent = '🔥 ESPO FURY 🔥';
-            if (timerDiv) timerDiv.textContent = 'CLICCA!';
+            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyReady;
+            if (timerDiv) timerDiv.textContent = gameData.texts.ui.clickMe;
         }
     } else {
         if (btnCrunch.style.display !== 'none') btnCrunch.style.display = 'none';
@@ -1296,7 +1296,7 @@ function updatePrestigeVisuals() {
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
             icon.className = 'nav-icon fa-solid fa-circle-check';
-            label.textContent = 'PRONTA!';
+            label.textContent = gameData.texts.ui.promoReady;
         }
     } else {
         if (prestigeBtn.classList.contains('promotion-ready')) {
@@ -1331,10 +1331,10 @@ function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
 }
 
 function setEmptyMessage(el, mode) {
-    if (mode === 'available') el.textContent = "Nessun oggetto da comprare al momento.";
-    else if (mode === 'locked') el.textContent = "Nessun oggetto bloccato in vista.";
-    else if (mode === 'purchased') el.textContent = "Ancora nessun acquisto effettuato.";
-    else el.textContent = "Niente da mostrare.";
+    if (mode === 'available') el.textContent = gameData.texts.ui.noItemsBuy;
+    else if (mode === 'locked') el.textContent = gameData.texts.ui.noItemsLock;
+    else if (mode === 'purchased') el.textContent = gameData.texts.ui.noItemsPurchased;
+    else el.textContent = gameData.texts.ui.nothingToShow;
 }
 
 // --- HELPERS PER SKIN ---

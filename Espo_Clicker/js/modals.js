@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
             // Opzionale: Mostra un toast "Benvenuto in sala giochi"
-            if (window.EspooClicker) window.EspooClicker.showToast("Benvenuto nella Sala Server (Arcade)!", "info");
+            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.arcadeWelcome, "info");
             openModal(arcadeModal);
         });
     }
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnHeaderReset) {
         btnHeaderReset.addEventListener('click', () => {
-            if (confirm("Vuoi ripristinare i volumi predefiniti consigliati?")) {
+            if (confirm(gameData.texts.dialogs.audioResetConfirm)) {
                 const Game = window.EspooClicker;
                 if (!Game) return;
 
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Aggiorna il volume reale del gioco immediatamente
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
 
-                Game.showToast("Audio ripristinato ai valori default", "info");
+                Game.showToast(gameData.texts.toasts.audioReset, "info");
             }
         });
     }
@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
-        if (confirm("Logout?")) {
+        if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
             localStorage.removeItem('espotoolClickerSaveV8');
             location.reload();
@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const Game = getGameAPI();
         const oldPass = document.getElementById('old-password-input').value;
         const newPass = document.getElementById('new-password-input').value;
-        if (!oldPass || !newPass) { alert("Compila entrambi i campi."); return; }
+        if (!oldPass || !newPass) { alert(gameData.texts.dialogs.fillFields); return; }
 
         try {
             const res = await fetch('./php/change_password.php', {
@@ -646,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.status === 'success') {
-                Game.showToast("Password Aggiornata!", "success");
+                Game.showToast(gameData.texts.toasts.passChanged, "success");
                 sessionStorage.setItem('espooPass', newPass); // Aggiorna sessione
             } else {
                 alert(data.message);
@@ -657,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (changeUserBtn) changeUserBtn.addEventListener('click', async () => {
         const Game = getGameAPI();
         const newName = document.getElementById('new-username-input').value;
-        const password = prompt("Conferma password attuale:");
+        const password = prompt(gameData.texts.dialogs.confirmPass);
         if (!newName || !password) return;
 
         try {
@@ -670,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.getGameState().user.username = newName;
                 sessionStorage.setItem('espooUser', newName);
                 if (currentUsernameDisplay) currentUsernameDisplay.textContent = newName;
-                Game.showToast("Nome Aggiornato!", "success");
+                Game.showToast(gameData.texts.toasts.nameChanged, "success");
                 Game.saveGame();
             } else {
                 alert(data.message);
@@ -680,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', async () => {
         const password = document.getElementById('danger-zone-password').value;
-        if (!password) { alert("Inserisci la password nell'area critica."); return; }
+        if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
         if (!confirm("SEI SICURO? Questa azione è irreversibile e cancellerà tutto.")) return;
 
         const Game = getGameAPI();
@@ -709,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resetProgressBtn) {
         resetProgressBtn.addEventListener('click', async () => {
             const password = document.getElementById('danger-zone-password').value;
-            if (!password) { alert("Inserisci la password per confermare il reset."); return; }
+            if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
             if (!confirm("ATTENZIONE: Questo resetterà tutti i progressi al punto di partenza (Hard Reset). I token Lab e le Skin verranno persi. Continuare?")) return;
 
             const Game = getGameAPI();
@@ -737,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const Game = getGameAPI();
         if (Game) {
             Game.saveGame();
-            Game.showToast("Preferenze Salvate");
+            Game.showToast(gameData.texts.toasts.settingsSaved);
         }
         closeModal(settingsModal);
     });
@@ -795,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 3. INFINE fai partire l'audio (ora che i volumi sono corretti)
                 Game.tryStartAudio();
 
-                Game.showToast("Benvenuto " + u);
+                Game.showToast(gameData.texts.toasts.welcome + " " + u);
             } else {
                 alert(data.message);
             }

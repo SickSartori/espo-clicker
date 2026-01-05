@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () =>
 		catch (e)
 		{
             console.error("⚠️ Errore localStorage (Quota superata?):", e);
-            window.EspooClicker.showToast("Memoria piena! Impossibile salvare in locale.", "error");
+            window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
         }
 
         // 4. SALVATAGGIO CLOUD (Con keepalive per chiusura tab)
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
                     setTimeout(() =>
 					{
-                        if (window.EspooClicker) window.EspooClicker.showToast(`⚠️ Versione salvataggio incompatibile!`, 'warning');
+                        if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.versionMismatch, 'warning');
                     }, 500);
 
                     // In caso di incompatibilità grave, potresti decidere di non caricare o di resettare parzialmente.
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () =>
                     setTimeout(() =>
 					{
                         if (window.EspooClicker)
-							window.EspooClicker.showToast("Dati ripristinati dal Backup di sicurezza!", "warning");
+							window.EspooClicker.showToast(gameData.texts.toasts.backupRestored, "warning");
                     }, 1000);
 
                     saveGame(); // Salva subito nel main slot per rigenerarlo
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
                             setTimeout(() =>
 							{
-                                if (window.EspooClicker) window.EspooClicker.showToast("File principale corrotto. Caricato Backup.", "error");
+                                if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.fileCorrupt, "error");
                             }, 1000);
 
                             // Ripariamo il file principale
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () =>
             // Salva e Feedback
             window.EspooClicker.saveGame();
             updateUI();
-            window.EspooClicker.showToast(`Hai riscattato ${formatNumber(amount)} bug!`, 'success');
+            window.EspooClicker.showToast(gameData.texts.toasts.offlineClaim.replace('{amount}', formatNumber(amount)), 'success');
             window.EspooClicker.playSound('sound-buy');
 
             // Rimuovi listener per pulizia
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () =>
                     console.log("Espo Fury terminato. Semaforo verde.");
                 }
 
-                window.EspooClicker.showToast('Espo si è calmato.', 'info');
+                window.EspooClicker.showToast(gameData.texts.toasts.furyEnded, 'info');
             }
         }
     }
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () =>
         const loaderStatus = document.getElementById('loader-status-text');
 
         // Setup Iniziale
-        if (loaderStatus) loaderStatus.textContent = "Caricamento dati...";
+        if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
         loadGame(); // Carica salvataggi
 
         // Inizializza Audio Context (senza suonare ancora)
@@ -764,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () =>
             // Questa funzione viene chiamata ogni volta che un file finisce
             if (loaderStatus)
 			{
-                loaderStatus.textContent = `Caricamento risorse... ${percent}%`;
+                loaderStatus.textContent = `${gameData.texts.ui.loadingAssets} ${percent}%`;
 
                 // Opzionale: Se vuoi una barra visiva, puoi aggiornarla qui
                 // document.getElementById('loader-bar').style.width = percent + '%';
@@ -773,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () =>
 		.then(() =>
 		{
             // 4. TUTTO PRONTO
-            if (loaderStatus) loaderStatus.textContent = "Avvio sistema...";
+            if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.systemStart;
 
             // Ritardo minimo per estetica (evita flash troppo rapidi se in cache)
             setTimeout(() =>
@@ -1421,7 +1421,7 @@ document.addEventListener('DOMContentLoaded', () =>
                     if (typeof updateAmbientVolume === 'function')
                         updateAmbientVolume();
 
-                    showToast("Progressi scaricati dal Cloud!");
+                    showToast(gameData.texts.toasts.cloudSync);
                 }
 				catch (e)
 				{

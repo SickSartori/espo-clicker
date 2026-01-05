@@ -24,7 +24,7 @@ const RewardHandlers = {
         if (!gameState.skins.unlocked.includes(skinId)) {
             gameState.skins.unlocked.push(skinId);
             const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : skinId;
-            return `Nuova Skin: ${skinName}!`;
+            return gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
         }
         return null; // Già posseduta, niente toast
     },
@@ -51,7 +51,7 @@ function grantReward(reward) {
 
     // Mostra il toast solo se l'handler ha restituito un messaggio
     if (message) {
-        window.EspooClicker.showToast(`Riscattato: ${message}`, 'reward');
+        window.EspooClicker.showToast(gameData.texts.toasts.rewardClaimed.replace('{message}', message), 'reward');
     }
 }
 
@@ -335,7 +335,7 @@ function buySkin(skinId) {
 
         // Effetti Immediati
         playSound('sound-buy');
-        window.EspooClicker.showToast(`Skin Acquistata: ${data.name}!`, 'success');
+        window.EspooClicker.showToast(gameData.texts.toasts.skinBought.replace('{name}', data.name), 'success');
 
         // --- MODIFICA QUI: Commenta o rimuovi questa riga ---
         // equipSkin(skinId);  <-- QUESTO IMPEDISCE L'EQUIPAGGIAMENTO AUTOMATICO
@@ -350,7 +350,7 @@ function buySkin(skinId) {
 
     } else {
         playSound('sound-error');
-        window.EspooClicker.showToast("Token insufficienti!", 'error');
+        window.EspooClicker.showToast(gameData.texts.toasts.insufficientTokens, 'error');
     }
 }
 
@@ -503,7 +503,7 @@ function activateCrunchTime() {
     if (checkEventConflict('Espo Fury')) return false;
     if (now < crunchTimeCooldownEnd) {
         const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-        window.EspooClicker.showToast(`Espo si sta calmando: ${remaining}s`, 'warning');
+        window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
         clearActiveEvent();
         return false;
     }
@@ -555,7 +555,7 @@ function activateCrunchTime() {
         furyMusic.currentTime = 0;
         furyMusic.play().catch(e => { });
     }
-    window.EspooClicker.showToast('🔥 ESPO FURY ATTIVA! BPS x7! 🔥', 'success');
+    window.EspooClicker.showToast(gameData.texts.toasts.furyActive, 'success');
     return true;
 }
 
@@ -1035,7 +1035,7 @@ function buyTeam(teamKey) {
         updateUI();
     } else {
         playSound('sound-error');
-        window.EspooClicker.showToast("Bugs insufficienti!", 'error');
+        window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
     }
 }
 
@@ -1048,14 +1048,14 @@ function calculatePrestigeGained() {
 function openPrestigeContract() {
     if (gameState.totalScore < gameData.PRESTIGE_THRESHOLD) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast("Devi completare il progetto (100%) per la promozione!", "error");
+            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
         }
         return;
     }
     const gained = calculatePrestigeGained();
     if (gained < 1) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!", "error");
+            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedMore, "error");
         }
         return;
     }
@@ -1199,7 +1199,7 @@ async function executePrestige() {
         setTimeout(() => {
             overlay.style.display = 'none';
             if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast("Promozione completata! Buon lavoro!");
+                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
             }
         }, 500);
     }
@@ -1241,8 +1241,8 @@ function unlockAchievement(key) {
         gameState.achievements[key].claimed = false;
     }
     playSound('sound-achievement');
-    let msg = `🏆 Sbloccato: ${data.name}`;
-    if (data.reward) msg += " (Premio disponibile!)";
+    let msg = gameData.texts.toasts.achievementUnlock.replace('{name}', data.name);
+    if (data.reward) msg += gameData.texts.toasts.rewardAvailable;
     window.EspooClicker.showToast(msg);
     window.EspooClicker.saveGame();
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
@@ -1341,7 +1341,7 @@ function clickGoldenBug() {
     gameState.score += bonus;
     gameState.totalScore += bonus;
     gameState.lifetimeScore += bonus;
-    window.EspooClicker.showToast(`Bug Critico Risolto! +${formatNumber(bonus)} bug!`, 'reward');
+    window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
     goldenBug.style.display = 'none';
     updateUI();
 }
