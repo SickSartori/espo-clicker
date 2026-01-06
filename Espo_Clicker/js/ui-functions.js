@@ -1099,12 +1099,11 @@ function updateScoreBoard(totalBPS) {
 
     // GSAP anima il valore "visuale" verso il valore reale
     gsap.to(scoreAnimState, {
-        duration: 0.5, // Mezzo secondo per raggiungere il target
+        duration: 0.5,
         value: gameState.score,
         ease: "power1.out",
         onUpdate: () => {
-            // Aggiorna il testo ad ogni frame dell'animazione
-            setTextIfChanged('score-display', formatNumber(scoreAnimState.value));
+            setTextIfChanged('score-display', formatNumber(Math.floor(scoreAnimState.value)));
         }
     });
 
@@ -1153,7 +1152,7 @@ function updateHUD() {
 
 function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
-    setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score));
+    setTextIfChanged('bug-wallet-amount', formatNumber(Math.floor(gameState.score)));
 
     // Mobile Wallets (Aggiornamento di gruppo)
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
@@ -1549,7 +1548,7 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Bug Attuali (Wallet)</span>
-                        <span class="stat-value" style="color: #2ecc71;">${formatNumber(gameState.score)}</span>
+        <span class="stat-value" style="color: #2ecc71;">${formatNumber(Math.floor(gameState.score))}</span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label">Totale Run Attuale</span>
