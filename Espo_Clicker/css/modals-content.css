@@ -69,68 +69,189 @@
     margin-bottom: 20px;
 }
 
-.acc-details small {
-    display: block;
-    color: #7f8c8d;
-    font-size: 0.7rem;
-    text-transform: uppercase;
+
+/* --- NUOVO STILE PROFILO MODERNO --- */
+
+.profile-modern-modal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    overflow: hidden;
+    max-width: 400px !important;
 }
 
-.acc-name {
-    color: #fff;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.account-link-group {
+/* Header Minimal */
+.profile-header-section.minimal {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 30px 20px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    background: rgba(52, 152, 219, 0.1);
-    border-color: rgba(52, 152, 219, 0.3);
+    border-bottom: 1px solid #334155;
 }
 
-.account-section {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px;
-    margin-top: 10px;
+.profile-user-info {
+    text-align: center;
+    width: 100%;
 }
 
-.username-tag {
+#display-username-large {
+    margin: 0;
+    padding: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Corpo del Modale */
+.profile-body {
+    padding: 20px 25px !important;
+}
+
+.section-label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+/* Input Puliti */
+.clean-input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #475569;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+}
+
+.clean-input:focus-within {
+    border-color: #3498db;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.clean-input input {
+    color: #f1f5f9;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.action-btn-clean {
+    background: transparent;
+    border: none;
     color: #3498db;
-    font-weight: bold;
-    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0 15px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.75rem;
 }
 
-/* 5. ZONA PERICOLOSA  */
-.danger-zone-pro {
+.action-btn-clean:hover {
+    color: #fff;
+}
+
+.profile-divider {
+    border: 0;
+    height: 1px;
+    background: #334155;
+    margin: 15px 0 20px 0;
+}
+
+/* Danger Zone */
+.danger-zone-minimal {
     margin-top: 20px;
-    background: #190a0a;
-    border: 1px solid #c0392b;
-    border-radius: 8px;
-    padding: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ef4444;
 }
 
-.danger-header {
-    color: #c0392b;
-    font-weight: bold;
-    font-size: 0.8rem;
+.danger-title {
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
     margin-bottom: 10px;
-    letter-spacing: 1px;
-}
-
-.danger-input {
-    border-color: #c0392b;
-    margin-bottom: 10px;
-}
-
-.danger-input .input-icon {
-    color: #c0392b;
-}
-
-.danger-buttons-row {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 6px;
+}
+
+.danger-title::before {
+    content: '\f7ba';
+    /* Icona Biohazard FontAwesome */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+
+.danger-border {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.danger-border:focus-within {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.danger-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.danger-action-btn {
+    border: none;
+    padding: 12px 5px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+    background: #334155;
+    color: #cbd5e1;
+}
+
+.danger-action-btn i {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.danger-action-btn.soft:hover {
+    background: #475569;
+    color: #fff;
+}
+
+.danger-action-btn.orange {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.danger-action-btn.orange:hover {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: #f97316;
+}
+
+.danger-action-btn.red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.danger-action-btn.red:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
 }
 
 /* --- STILI CONTRATTO PRESTIGIO --- */

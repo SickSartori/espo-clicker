@@ -561,8 +561,24 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(leaderboardModal);
     });
 
+    // RIFERIMENTO BOTTONE CAMBIO SKIN RAPIDO
     if (openAccountBtn) openAccountBtn.addEventListener('click', () => {
         closeModal(settingsModal);
+
+        // --- LOGICA AGGIORNAMENTO PROFILO ---
+        const Game = getGameAPI();
+        if (Game) {
+            const state = Game.getGameState();
+            const user = state.user;
+
+            // Aggiorna solo il nome utente nell'header
+            const displayUser = document.getElementById('display-username-large');
+            if (displayUser) {
+                displayUser.textContent = user.username || "Giocatore";
+            }
+        }
+        // -------------------------------------
+
         openModal(accountModal);
     });
 

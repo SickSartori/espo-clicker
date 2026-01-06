@@ -139,86 +139,66 @@
 </div>
 
 <div id="account-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 450px;">
+    <div class="modal-content profile-modern-modal">
         <button class="modal-close-btn">&times;</button>
-        <h2>
-			<i class="fa-solid fa-id-card-clip"></i>
-			<?php echo $labels["modals_profilo_utente_titolo"]; ?>
-		</h2>
-        <div class="settings-content">
-            <div class="settings-group">
-                <h3 class="group-title">
-					<?php echo $labels["modals_profilo_utente_identita"]; ?>
-				</h3>
-                <div class="input-group-modern">
-                    <div class="input-icon">
-						<i class="fa-solid fa-user"></i>
-					</div>
-                    <input type="text" id="new-username-input" placeholder="<?php echo $labels["modals_profilo_nuovo_utente_placeholder"]; ?>" />
-                    <button id="change-username-btn" class="action-btn-small" title="<?php echo $labels["modals_profilo_nuovo_utente_salva"]; ?>">
-						<i class="fa-solid fa-floppy-disk"></i>
-					</button>
+        
+        <div class="profile-header-section minimal">
+            <div class="profile-user-info">
+                <h2 id="display-username-large">Giocatore</h2>
+            </div>
+        </div>
+
+        <div class="settings-content profile-body">
+            
+            <div class="form-section">
+                <label class="section-label">Modifica Nome</label>
+                <div class="input-group-modern clean-input">
+                    <input type="text" id="new-username-input" placeholder="Nuovo nome utente..." />
+                    <button id="change-username-btn" class="action-btn-clean">
+                        <i class="fa-solid fa-floppy-disk"></i> SALVA
+                    </button>
                 </div>
             </div>
-            <div class="settings-group">
-                <h3 class="group-title">
-					<?php echo $labels["modals_profilo_sicurezza"]; ?>
-				</h3>
+
+            <hr class="profile-divider">
+
+            <div class="form-section">
+                <label class="section-label">Sicurezza</label>
                 <div class="input-stack">
-                    <div class="input-group-modern">
-                        <div class="input-icon">
-							<i class="fa-solid fa-lock"></i>
-						</div>
-                        <input type="password" id="old-password-input" placeholder="<?php echo $labels["modals_profilo_sicurezza_vecchia_password"]; ?>">
-                        <button class="toggle-pass-btn icon-only" data-target="old-password-input">
-							<i class="fa-solid fa-eye"></i>
-						</button>
+                    <div class="input-group-modern clean-input">
+                        <input type="password" id="old-password-input" placeholder="Password Attuale">
                     </div>
-                    <div class="input-group-modern">
-                        <div class="input-icon">
-							<i class="fa-solid fa-key"></i>
-						</div>
-                        <input type="password" id="new-password-input" placeholder="<?php echo $labels["modals_profilo_sicurezza_nuova_password"]; ?>" />
+                    <div class="input-group-modern clean-input">
+                        <input type="password" id="new-password-input" placeholder="Nuova Password">
                         <button class="toggle-pass-btn icon-only" data-target="new-password-input">
-							<i class="fa-solid fa-eye"></i>
-						</button>
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
                     </div>
-                    <button id="change-password-btn" class="buy-btn outline-btn" style="margin-top: 5px;">
-						<?php echo $labels["modals_profilo_sicurezza_aggiorna_password"]; ?>
-					</button>
-                </div>
-            </div>
-            <div style="text-align: center; margin: 15px 0;">
-                <button id="logout-btn" class="text-link-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-					<?php echo $labels["modals_profilo_disconnetti"]; ?>
-                </button>
-            </div>
-            <div class="danger-zone-pro">
-                <div class="danger-header">
-                    <i class="fa-solid fa-biohazard"></i>
-					<?php echo $labels["modals_area_critica_titolo"]; ?>
-                </div>
-                <div class="input-group-modern danger-input">
-                    <div class="input-icon danger">
-						<i class="fa-solid fa-shield-halved"></i>
-					</div>
-                    <input type="password" id="danger-zone-password" placeholder="<?php echo $labels["modals_area_critica_conferma_password"]; ?>" />
-                    <button class="toggle-pass-btn icon-only" data-target="danger-zone-password">
-						<i class="fa-solid fa-eye"></i>
-					</button>
-                </div>
-                <div class="danger-buttons-row">
-                    <button id="reset-progress-btn" class="danger-btn-small orange" title="<?php echo $labels["modals_area_critica_resetta_progressi_placeholder"]; ?>">
-                        <i class="fa-solid fa-rotate-left"></i>
-						<?php echo $labels["modals_area_critica_resetta_progressi"]; ?>
-                    </button>
-                    <button id="delete-save-btn" class="danger-btn-small red" title="<?php echo $labels["modals_area_critica_elimina_account_placeholder"]; ?>">
-                        <i class="fa-solid fa-trash-can"></i>
-						<?php echo $labels["modals_area_critica_elimina_account"]; ?>
+                    <button id="change-password-btn" class="buy-btn ghost-btn full-width">
+                        Aggiorna Password
                     </button>
                 </div>
             </div>
+
+            <div class="danger-zone-minimal">
+                <div class="danger-title">Area Critica</div>
+                <div class="input-group-modern clean-input danger-border">
+                    <input type="password" id="danger-zone-password" placeholder="Password per confermare" />
+                </div>
+
+                <div class="danger-actions-grid">
+                    <button id="logout-btn" class="danger-action-btn soft">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                    <button id="reset-progress-btn" class="danger-action-btn orange">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button id="delete-save-btn" class="danger-action-btn red">
+                        <i class="fa-solid fa-trash"></i> Elimina
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

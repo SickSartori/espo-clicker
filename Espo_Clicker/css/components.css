@@ -43,13 +43,7 @@
     pointer-events: none;
 }
 
-.buy-btn.danger-btn {
-    background-color: #e74c3c;
-}
 
-.buy-btn.danger-btn:hover:not(:disabled) {
-    background-color: #c0392b;
-}
 
 .buy-btn.owned {
     background-color: rgba(44, 62, 80, 0.5) !important;
@@ -70,116 +64,6 @@
     background-color: #27ae60;
     box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
     transform: translateY(-2px);
-}
-
-/*
- * Classi Danger Bottone
- */
-
-.danger-btn {
-    background-color: #c0392b;
-    margin-top: 15px;
-}
-
-.danger-btn-small {
-    flex: 1;
-    padding: 10px;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    font-family: var(--font-body);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: none;
-}
-
-.danger-btn-small.red {
-    background-color: var(--danger);
-}
-
-.danger-btn-small.orange {
-    background-color: #e67e22;
-}
-
-.danger-btn-small.red:hover {
-    background-color: var(--danger-dark);
-}
-
-.danger-zone-modern {
-    margin-top: 25px;
-    background: rgba(192, 57, 43, 0.05);
-    border: 1px solid rgba(192, 57, 43, 0.3);
-    border-radius: 10px;
-    padding: 15px;
-}
-
-.danger-header {
-    color: #e74c3c;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.danger-desc {
-    font-size: 0.8rem;
-    color: #95a5a6;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-.danger-input input {
-    border-color: #c0392b;
-    /* Bordo rosso */
-}
-
-.danger-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.danger-action-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: transform 0.1s;
-}
-
-.danger-action-btn:active {
-    transform: translateY(2px);
-}
-
-.danger-action-btn.orange {
-    background-color: #e67e22;
-    box-shadow: 0 3px 0 #d35400;
-}
-
-.danger-action-btn.red {
-    background-color: #c0392b;
-    box-shadow: 0 3px 0 #922b21;
-}
-
-.danger-zone {
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #c0392b;
-    background-color: rgba(192, 57, 43, 0.1);
-    border-radius: 8px;
 }
 
 
@@ -711,6 +595,7 @@ body.modal-open #toast-container {
     bottom: 105%;
     /* Lo alza leggermente di più */
 }
+
 /* PATCH TOAST POSITION */
 body.modal-open #toast-container {
     top: 20px !important;
@@ -719,6 +604,7 @@ body.modal-open #toast-container {
     transform: none !important;
     align-items: flex-end;
 }
+
 @media only screen and (max-width: 768px) {
     body.modal-open #toast-container {
         top: auto !important;
@@ -728,5 +614,8 @@ body.modal-open #toast-container {
         transform: translateX(-50%) !important;
         width: 90% !important;
     }
-    .toast { pointer-events: auto !important; }
+
+    .toast {
+        pointer-events: auto !important;
+    }
 }
