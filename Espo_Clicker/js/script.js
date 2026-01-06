@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // SANITY CHECK: Prevenzione corruzione dati
+        // Prevenzione corruzione dati
         if (isNaN(gameState.score) || gameState.score === null) gameState.score = 0;
         if (isNaN(gameState.totalScore)) gameState.totalScore = gameState.score;
 
@@ -69,8 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             localStorage.setItem(SAVE_KEY, compressed);
 
-            // Crea un backup locale ogni tanto (o se è passato molto tempo dall'ultimo backup)
-            // Qui lo facciamo con una probabilità del 20% ad ogni autosave per non stressare lo storage
             if (Math.random() < 0.2) {
                 localStorage.setItem(BACKUP_KEY, compressed);
                 // console.log("📦 Backup di sicurezza aggiornato.");
@@ -105,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             score: scoreToSend,
                             prestige: prestigeToSend
                         })
-                    }).catch(err => console.warn("Cloud save warning:", err)); // Catch silenzioso per non bloccare
+                    }).catch(err => console.warn("Cloud save warning:", err));
             }
             catch (e) {
                 console.error("Errore preparazione cloud save:", e);
@@ -117,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkOfflineProgress() {
         const modal = document.getElementById('offline-modal');
 
-        // Se non c'è timestamp (nuovo gioco), assicuriamoci che il modale sia chiuso
         if (!gameState.lastSaveTimestamp) {
             if (modal) modal.style.display = 'none';
             return;
@@ -125,10 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const now = Date.now();
         const diffSeconds = Math.floor((now - gameState.lastSaveTimestamp) / 1000);
-        const maxOfflineSeconds = 43200; // 12 ore max (aumentato da 8h)
+        const maxOfflineSeconds = 43200;
         const effectiveSeconds = Math.min(diffSeconds, maxOfflineSeconds);
 
-        // Mostra solo se via per almeno 1 minuto
         if (effectiveSeconds > 60) {
 
             // --- CALCOLO EFFICIENZA ---
@@ -145,14 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const realEarned = rawEarned * efficiency;
 
             if (realEarned > 0) {
-                // Invece di aggiungere subito, mostriamo il modale
                 showOfflineModal(realEarned, efficiency);
-                return; // Usciamo, il modale è gestito
+                return;
             }
         }
-
-        // Se arriviamo qui, non c'è guadagno valido. 
-        // Chiudiamo il modale se era rimasto aperto da un login precedente.
         if (modal) modal.style.display = 'none';
     }
 
@@ -242,14 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.versionMismatch, 'warning');
                     }, 500);
 
-                    // In caso di incompatibilità grave, potresti decidere di non caricare o di resettare parzialmente.
-                    // Per ora carichiamo comunque per non far perdere dati all'utente.
                 }
 
                 // --- MERGE DEI DATI ---
-                // Uniamo i dati salvati con lo stato di default per garantire che le nuove variabili esistano
-
-                // Fix compatibilità: I vecchi save usavano "buildings" invece di "teams"
                 if (parsedState.buildings && !parsedState.teams) {
                     parsedState.teams = parsedState.buildings;
                     delete parsedState.buildings;
@@ -268,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // --- INIZIALIZZAZIONE STRUTTURE MANCANTI ---
-                // Se sono stati aggiunti nuovi upgrade nel codice ma non sono nel save, li creiamo ora
 
                 // Aggiorna versione save alla versione attuale del codice
                 if (window.GAME_VERSION) {
@@ -379,7 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatePrestigeBonus();
         recalculateCPS();
 
-        // AUTO-FIX AGGIUNTIVI
         for (const key in gameData.achievements) {
             const achData = gameData.achievements[key];
             const achState = gameState.achievements[key];
@@ -431,16 +416,13 @@ document.addEventListener('DOMContentLoaded', () => {
         displayEff.textContent = (efficiency * 100).toFixed(0) + "%";
 
         // Setup Bottone
-        // Usiamo una funzione anonima con rimozione listener per evitare doppi click se ricarichi
-        // Dentro showOfflineModal in script.js ...
-
         const claimHandler = () => {
             // Aggiungi i punti
             gameState.score += amount;
             gameState.totalScore += amount;
             gameState.lifetimeScore += amount;
 
-            // --- NUOVO: Aggiorna statistica offline ---
+            //Aggiorna statistica offline
             if (!gameState.totalOfflineScore) gameState.totalOfflineScore = 0;
             gameState.totalOfflineScore += amount;
 
@@ -490,7 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
             checkAchievements();         // Controlla obiettivi
             checkTabNotifications();     // Controlla i pallini rossi sui tab
 
-            // Qui puoi aggiungere altri controlli pesanti futuri (es. Auto-Save logico)
             lastSlowTick = now;
         }
 
@@ -499,7 +480,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
         // --- CONTROLLO FINE CRUNCH TIME ---
-        // Se il tempo è scaduto MA l'effetto è ancora visibile (classe presente)
         if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
             if (document.body.classList.contains('crunch-active')) {
                 document.body.classList.remove('crunch-active');
@@ -726,12 +706,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tryStart = () => {
             // 1. CONTROLLO CRITICO: Se non c'è una sessione utente, siamo al Login.
-            // In questo caso NON dobbiamo suonare, nemmeno se il modale non è ancora apparso.
             const hasSession = sessionStorage.getItem('espooUser');
 
             if (!hasSession) {
                 // Utente non loggato -> Silenzio assoluto.
-                // L'audio partirà dentro handleLogin in modals.js dopo l'accesso.
                 return;
             }
 
@@ -1242,7 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Cheatboard loader rimosso (Gestito da index.php via Config)
 
     initializeGame();
 });
