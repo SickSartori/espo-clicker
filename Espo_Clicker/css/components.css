@@ -711,3 +711,22 @@ body.modal-open #toast-container {
     bottom: 105%;
     /* Lo alza leggermente di più */
 }
+/* PATCH TOAST POSITION */
+body.modal-open #toast-container {
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    transform: none !important;
+    align-items: flex-end;
+}
+@media only screen and (max-width: 768px) {
+    body.modal-open #toast-container {
+        top: auto !important;
+        bottom: 20px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: 90% !important;
+    }
+    .toast { pointer-events: auto !important; }
+}
