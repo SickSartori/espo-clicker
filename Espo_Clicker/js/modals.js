@@ -724,7 +724,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     Game.getGameState().isDeleting = true;
 
                     alert("Progressi resettati con successo.");
+
                     localStorage.removeItem('espotoolClickerSaveV8');
+                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
+                    // ----------------------------------------------
+
                     location.reload();
                 } else {
                     alert(data.message);

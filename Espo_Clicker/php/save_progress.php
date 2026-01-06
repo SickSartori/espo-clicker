@@ -1,6 +1,6 @@
 <?php
 require_once 'api_bootstrap.php';
-require_once 'security_config.php'; // Includiamo la configurazione di sicurezza
+require_once 'security_config.php';
 
 $data = getJsonInput();
 $user = authenticate($conn, $data['username'], $data['password']);
@@ -10,7 +10,23 @@ if (!isset($data['saveData'])) {
     exit;
 }
 
-// 1. Aggiorna il salvataggio compresso (Questo lo permettiamo sempre per non far perdere progressi all'utente onesto che magari ha problemi di hash)
+// --- VALIDAZIONE SICUREZZA ---
+$newScore = isset($data['score']) ? floor($data['score']) : 0;
+$newPrestige = isset($data['prestige']) ? floor($data['prestige']) : 0;
+$clientHash = isset($data['hash']) ? $data['hash'] : '';
+
+// Ricostruzione firma
+$dataString = $newScore . '-' . $newPrestige . '-' . GAME_SECRET_KEY;
+$serverHash = hash(HASH_ALGO, $dataString);
+
+if (!hash_equals($serverHash, $clientHash)) {
+    // SECURITY FAIL: Rifiuta TUTTO, anche il salvataggio cloud
+    error_log("Security Mismatch per utente: " . $user['username']);
+    echo json_encode(["status" => "warning", "message" => "Salvataggio rifiutato: Integrità dati fallita."]);
+    exit;
+}
+
+// 1. Se l'hash è valido, procedi al salvataggio Cloud
 $saveJson = json_encode($data['saveData']);
 $stmt = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE id = ?");
 $stmt->bind_param("si", $saveJson, $user['id']);
@@ -25,13 +41,10 @@ if (isset($data['score'])) {
     $clientHash = isset($data['hash']) ? $data['hash'] : '';
     
     // Ricostruiamo la stringa originale: Punteggio-Prestigio-ChiaveSegreta
-    // NOTA: Deve corrispondere ESATTAMENTE alla logica JS
     $dataString = $newScore . '-' . $newPrestige . '-' . GAME_SECRET_KEY;
     $serverHash = hash(HASH_ALGO, $dataString);
 
     if (!hash_equals($serverHash, $clientHash)) {
-        // HASH NON VALIDO: Qualcuno sta barando modificando i pacchetti!
-        // Salviamo il gioco personale (sopra) ma NON aggiorniamo la classifica.
         echo json_encode(["status" => "warning", "message" => "Salvataggio OK, ma Classifica rifiutata (Security Mismatch)."]);
         exit;
     }
