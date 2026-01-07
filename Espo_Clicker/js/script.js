@@ -564,6 +564,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Auto-save (ogni 30s)
         saveInterval = setInterval(saveGame, 30000);
+
+		// Classifica (ogni 30s) - Nota: rimosso score/prestige dai parametri come discusso per sicurezza
+        leaderboardInterval = setInterval(() => {
+            submitScoreToLeaderboard(gameState.user.username);
+        }, 30000);
+		
         scheduleGoldenBug();
 
         // Salvataggio alla chiusura
