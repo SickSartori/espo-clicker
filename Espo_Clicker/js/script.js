@@ -7,6 +7,15 @@ let statsList, gameContainer, prestigeStore;
 let buyMultiplier = 1;
 let currentUserPassword = null;
 
+const CLIENT_SECRET_KEY = 'EspoClicker_Secret_X7k9P2mN5qR8vW1zY4cB6dE0fG3hJ';
+
+async function generateHash(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // --------- Assegnazione Variabili ---------
     clickerButton = document.getElementById('clicker-btn');
@@ -40,73 +49,61 @@ document.addEventListener('DOMContentLoaded', () => {
     const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
 
     async function saveGame() {
-        if (gameState.isDeleting) {
-            console.log("Salvataggio bloccato: Reset in corso.");
-            return;
-        }
+        if (gameState.isDeleting) return;
 
-        // Prevenzione corruzione dati
+        // Sanitizzazione
         if (isNaN(gameState.score) || gameState.score === null) gameState.score = 0;
         if (isNaN(gameState.totalScore)) gameState.totalScore = gameState.score;
 
-        // Aggiorna timestamp
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
         gameState.lastSaveTimestamp = Date.now();
 
-        // 2. SERIALIZZAZIONE E COMPRESSIONE
+        // Compressione
         let compressed = null;
         try {
             const stateJSON = JSON.stringify(gameState);
             compressed = LZString.compressToUTF16(stateJSON);
-        }
-        catch (e) {
-            console.error("❌ Errore critico compressione save:", e);
-            return; // Ferma tutto se la compressione fallisce
+        } catch (e) {
+            console.error("❌ Errore compressione:", e);
+            return;
         }
 
-        // SALVATAGGIO LOCALE (Con Backup a rotazione)
+        // Salvataggio Locale
         try {
             localStorage.setItem(SAVE_KEY, compressed);
-
-            if (Math.random() < 0.2) {
-                localStorage.setItem(BACKUP_KEY, compressed);
-                // console.log("📦 Backup di sicurezza aggiornato.");
-            }
-        }
-        catch (e) {
-            console.error("⚠️ Errore localStorage (Quota superata?):", e);
-            window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
+            if (Math.random() < 0.2) localStorage.setItem(BACKUP_KEY, compressed);
+        } catch (e) {
+            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
         }
 
-        // 4. SALVATAGGIO CLOUD (Con keepalive per chiusura tab)
+        // SALVATAGGIO CLOUD SICURO
         if (gameState.user.username && currentUserPassword) {
             try {
-                // Calcolo valori sicuri per il DB
+                // IMPORTANTE: Forza numeri interi puliti per evitare notazione scientifica (1e+21)
                 let scoreToSend = Math.floor(gameState.lifetimeScore);
-
-                if (!scoreToSend || scoreToSend <= 0)
-                    scoreToSend = Math.floor(gameState.totalScore);
-
+                if (!scoreToSend || scoreToSend <= 0) scoreToSend = Math.floor(gameState.totalScore);
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
-                // keepalive: true permette alla richiesta di finire anche se chiudi la pagina
-                fetch('./php/save_progress.php',
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        keepalive: true,
-                        body: JSON.stringify({
-                            username: gameState.user.username,
-                            password: currentUserPassword,
-                            saveData: compressed,
-                            score: scoreToSend,
-                            prestige: prestigeToSend
-                        })
-                    }).catch(err => console.warn("Cloud save warning:", err));
-            }
-            catch (e) {
-                console.error("Errore preparazione cloud save:", e);
+                // Genera la firma
+                const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
+                const signature = await generateHash(dataString);
+
+                fetch('./php/save_progress.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    body: JSON.stringify({
+                        username: gameState.user.username,
+                        password: currentUserPassword,
+                        saveData: compressed,
+                        score: scoreToSend,
+                        prestige: prestigeToSend,
+                        hash: signature // Invio hash
+                    })
+                }).catch(err => console.warn("Cloud save error:", err));
+            } catch (e) {
+                console.error("Errore hashing save:", e);
             }
         }
     }

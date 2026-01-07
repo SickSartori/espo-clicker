@@ -236,8 +236,7 @@
 		<script src="./js/game-logic.js" defer></script>
 		<script src="./js/script.js" defer></script> 
 		<script src="./js/podio.js" defer></script>
-		<script src="./js/modals.js" defer></script>		
-		<script src="./js/security_patch.js" defer></script>		
+		<script src="./js/modals.js" defer></script>				
 	
 		<?php 
 			$configFile = __DIR__ . '/php/config.php';
