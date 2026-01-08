@@ -1094,7 +1094,7 @@ function calculateVisualBPS() {
 const scoreAnimState = { value: 0 };
 
 function updateScoreBoard(totalBPS) {
-    // Se è la prima volta (o reset), allinea subito senza animazione
+    // Se è la prima volta (o reset/promozione), allinea subito senza animazione
     if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5) {
         scoreAnimState.value = gameState.score;
     }

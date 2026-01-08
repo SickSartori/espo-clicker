@@ -590,7 +590,7 @@
         if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
         if (window.EspooClicker) window.EspooClicker.saveGame();
         refreshUI();
-        toast("Skin bloccate e obiettivi reset.");
+        toast("Skin bloccate e obiettivi resettati.");
     });
 
     document.getElementById('btn-unlock-ach').addEventListener('click', () => {

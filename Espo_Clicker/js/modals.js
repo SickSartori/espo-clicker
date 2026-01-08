@@ -378,19 +378,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnAdvAudio) {
         btnAdvAudio.addEventListener('click', () => {
-            // 1. Salva lo stato attuale (es. se c'è Espo Fury attivo)
+            // Salva lo stato attuale (es. se c'è Espo Fury attivo)
             if (window.currentActiveEvent !== 'Audio Mixer') {
                 window.preMixerEvent = window.currentActiveEvent;
             }
 
-            // 2. IMPONIAMO IL BLOCCO: Questo impedisce alla musica di ripartire al reset!
+            // IMPONIAMO IL BLOCCO: Questo impedisce alla musica di ripartire al reset!
             window.currentActiveEvent = 'Audio Mixer';
 
-            // 3. Chiudi settings e apri Mixer
+            // Chiudi settings e apri Mixer
             if (settingsModal) settingsModal.style.display = 'none';
             if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
 
-            // 4. STOP TOTALE: Silenzia tutto per il test
+            // STOP TOTALE: Silenzia tutto per il test
             document.querySelectorAll('audio, video').forEach(el => {
                 if (!el.paused) {
                     el.pause();
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // 5. Genera interfaccia
+            // Genera interfaccia
             renderAudioMixer();
         });
     }

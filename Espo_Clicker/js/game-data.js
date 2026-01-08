@@ -477,7 +477,7 @@ const gameData = {
         },
         eredita: {
             name: 'Eredità Strutturale',
-            desc: 'Mantieni 1 "Assistente QA" per livello dopo il reset.',
+            desc: 'Mantieni 1 "Assistente QA" per livello dopo la promozione.',
             baseCost: 100,
             isCounted: true
         },

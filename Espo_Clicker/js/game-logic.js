@@ -1059,7 +1059,7 @@ function openPrestigeContract() {
 }
 
 async function executePrestige() {
-    // 1. Gestione Animazione Transizione
+    // Gestione Animazione Transizione
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'none';
@@ -1069,7 +1069,7 @@ async function executePrestige() {
         setTimeout(() => overlay.classList.add('active'), 10);
     }
 
-    // 2. Calcoli dei Guadagni
+    // Calcoli dei Guadagni
     const gained = calculatePrestigeGained();
     let newPrestigePoints = gameState.prestigePoints + gained;
     let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
@@ -1082,7 +1082,7 @@ async function executePrestige() {
     }
 
     // --- HARDENING: Salvataggio Sicuro dei Dati ---
-    // Definiamo qui cosa deve sopravvivere al reset. 
+    // Definiamo qui cosa deve sopravvivere alla promozione. 
     // Se aggiungi nuove feature (es. "Artefatti"), basta aggiungerle a questa lista.
     const persistentKeys = [
         'achievements',
@@ -1105,16 +1105,16 @@ async function executePrestige() {
         }
     });
 
-    // Incrementa contatore reset (statistica)
+    // Incrementa contatore promozione (statistica)
     const newResets = gameState.totalResets + 1;
 
     // Attesa scenografica (1.5 secondi)
     await new Promise(r => setTimeout(r, 1500));
 
-    // 3. RESET: Crea un nuovo stato pulito
+    // RESET: Crea un nuovo stato pulito
     let newState = getInitialGameState();
 
-    // 4. RIPRISTINO: Inserisce i dati salvati nel nuovo stato
+    // RIPRISTINO: Inserisce i dati salvati nel nuovo stato
     persistentKeys.forEach(key => {
         if (preservedData[key] !== undefined) {
             newState[key] = preservedData[key];
@@ -1127,23 +1127,23 @@ async function executePrestige() {
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
 
-    // 5. APPLICAZIONE BONUS SPECIALI (Post-Reset)
-    // A. Resetta il conteggio degli Assistenti QA
+    // APPLICAZIONE BONUS SPECIALI (Post-Reset)
+    // Resetta il conteggio degli Assistenti QA
     if (newState.teams && newState.teams.assistenteQa) {
         newState.teams.assistenteQa.count = 0;
     }
 
-    // B. Bonus Eredità (Se posseduto)
+    // Bonus Eredità (Se posseduto)
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
 
-    // C. Bonus Accelerazione (Se posseduto)
+    // Bonus Accelerazione (Se posseduto)
     if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
         newState.teams.assistenteQa.count++;
     }
 
-    // 6. SOSTITUZIONE DELLO STATO E PULIZIA
+    // SOSTITUZIONE DELLO STATO E PULIZIA
     gameState = newState;
 
     // Reset Variabili Runtime
