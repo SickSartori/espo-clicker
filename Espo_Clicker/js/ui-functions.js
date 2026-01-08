@@ -19,13 +19,16 @@ function getEl(id) {
  * Aggiorna il testo di un elemento solo se è cambiato.
  * Evita il "Layout Thrashing" del browser.
  */
-function setTextIfChanged(elementId, newText) {
-    const el = getEl(elementId);
-    // Nota: String(newText) assicura che confrontiamo stringhe (es. "100" vs 100)
-    if (el && el.textContent !== String(newText)) {
+function setTextIfChanged(elementId, newText)
+{
+    let el = getEl(elementId);
+	
+    if (el && el.textContent !== String(newText))
+	{
         el.textContent = newText;
         return true;
     }
+	
     return false;
 }
 
@@ -82,8 +85,8 @@ function startMatrixEffect() {
 
     const drops = [];
     // Inizializza le gocce (tutte partono da y=1)
-    for (let x = 0; x < columns; x++) {
-        drops[x] = 1;
+    for (let index = 0; index < columns; index++) {
+        drops[index] = 1;
     }
 
     const draw = () => {
@@ -131,12 +134,11 @@ function stopMatrixEffect() {
     }
 }
 
-// --- GENERATORE UNIVERSALE DI CARD (Nuovo Motore UI) ---
+// --- GENERATORE UNIVERSALE DI CARD ---
 function renderStoreSection(config) {
     const list = document.getElementById(config.containerId);
     if (!list) return;
 
-    // --- FIX SCROLL JUMP AVANZATO ---
     // Cerca il genitore scrollabile corretto in base al contesto (Tab, Store o Colonna)
     let scrollParent = list.closest('.tab-content'); // 1. Prova Tab (Left Column Desktop)
     if (!scrollParent) scrollParent = list.closest('#building-store'); // 2. Prova Store Teams (Right Column Desktop)
@@ -150,7 +152,7 @@ function renderStoreSection(config) {
     const mode = gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
-    // 1. MAPPING DATI
+    // MAPPING DATI
     let items = Object.keys(config.dataSource).map(key => {
         const data = config.dataSource[key];
         const state = config.stateSource[key];
@@ -175,7 +177,7 @@ function renderStoreSection(config) {
         return { key, data, state, status, sortPriority };
     });
 
-    // 2. ORDINAMENTO
+    // ORDINAMENTO
     if (config.fixedOrder || config.type === 'building') {
         // --- ORDINAMENTO FISSO (Per Teams) ---
         items.sort((a, b) => {
@@ -196,7 +198,7 @@ function renderStoreSection(config) {
         });
     }
 
-    // 3. RENDERING NEL DOM
+    // RENDERING NEL DOM
     items.forEach(item => {
         const { key, data, state, status } = item;
         const domId = `${config.type}-item-${key}`;
@@ -379,10 +381,10 @@ function updateClickStore() {
 // --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
 function refreshAllStores() {
 
-    // 1. NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
+    // NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
     updateClickStore();
 
-    // 2. NEGOZIO AUTO (MIGLIORIE)
+    // NEGOZIO AUTO (MIGLIORIE)
     renderStoreSection({
         type: 'enhancement',
         containerId: 'enhancement-list',
@@ -407,7 +409,7 @@ function refreshAllStores() {
         setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
     });
 
-    // 3. NEGOZIO PRESTIGIO
+    // NEGOZIO PRESTIGIO
     renderStoreSection({
         type: 'prestige',
         containerId: 'prestige-list-container',
@@ -434,7 +436,7 @@ function refreshAllStores() {
         setEmptyMsg: (el, mode) => { el.textContent = gameData.texts.ui.labFull; }
     });
 
-    // 4. NEGOZIO TEAMS
+    // NEGOZIO TEAMS
     renderStoreSection({
         type: 'building',
         containerId: 'building-list-container',
@@ -487,8 +489,6 @@ function refreshAllStores() {
 
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
-
-
 
 function updateSkinsUI() {
     const grid = document.getElementById('skins-grid');
@@ -1060,7 +1060,6 @@ function updateBonusCounter() {
     }
 }
 
-
 function updateUI() {
     // 1. Calcoli Preliminari (BPS Visivo)
     const activeBPS = calculateVisualBPS();
@@ -1083,9 +1082,12 @@ function updateUI() {
 function calculateVisualBPS() {
     let active = 0;
     const now = Date.now();
+
     for (let i = 0; i < clickHistory.length; i++) {
-        if (now - clickHistory[i].time < 1000) active += clickHistory[i].value;
+        if (now - clickHistory[i].time < 1000)
+			active += clickHistory[i].value;
     }
+
     return bps + active;
 }
 
@@ -1098,12 +1100,12 @@ function updateScoreBoard(totalBPS) {
     }
 
     // GSAP anima il valore "visuale" verso il valore reale
-    gsap.to(scoreAnimState, {
-        duration: 0.5,
+   	gsap.to(scoreAnimState, {
+        duration: 0.2,
         value: gameState.score,
         ease: "power1.out",
         onUpdate: () => {
-            setTextIfChanged('score-display', formatNumber(Math.floor(scoreAnimState.value)));
+            setTextIfChanged('score-display', formatNumber(Math.floor(scoreAnimState.value + Number.EPSILON)));
         }
     });
 

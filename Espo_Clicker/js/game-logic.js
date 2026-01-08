@@ -748,7 +748,6 @@ const EventHandlers = {
 };
 
 // --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
-// --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
 function triggerGameEvent(eventKey, overrideMult = null) {
     const config = gameData.events[eventKey];
     if (!config) return false;
