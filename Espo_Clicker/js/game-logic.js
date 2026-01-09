@@ -142,7 +142,7 @@ const AudioManager = {
             if (!document.getElementById(sound.id)) {
                 const audio = document.createElement('audio');
                 audio.id = sound.id;
-                audio.src = `./assets/sounds/${sound.file}`;
+                audio.src = `assets/sounds/${sound.file}`;
                 audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
                 if (sound.loop) audio.loop = true;
                 container.appendChild(audio);
@@ -291,7 +291,7 @@ function setBgMusicVolume() { AudioManager.updateAmbience(); }
 function updateAmbientVolume() { AudioManager.updateAmbience(); }
 function getCustomVolume(id) { return AudioManager.getCustomVolume(id); }
 
-// --------- 4. FUNZIONI DI ACQUISTO ---------
+// --------- FUNZIONI DI ACQUISTO ---------
 
 function finalizePurchase() {
     playSound('sound-buy');
@@ -410,7 +410,7 @@ function buyPrestigeUpgrade(upgradeKey) {
 }
 
 
-// --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
+// --------- FUNZIONI DI GIOCO PRINCIPALI ---------
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
@@ -503,12 +503,12 @@ function activateCrunchTime() {
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
             // Versione 8-Bit
-            photoNormal.src = './assets/image/espobit-fury.webp';
-            photoClicked.src = './assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/espobit-fury.webp';
+            photoClicked.src = 'assets/image/espobit-fury-click.webp';
         } else {
             // Versione Standard
-            photoNormal.src = './assets/image/espo-fury.webp';
-            photoClicked.src = './assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/espo-fury.webp';
+            photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
     // -----------------------------------------------------
@@ -605,11 +605,11 @@ function resumeCrunchTimeEffects() {
 
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
-            photoNormal.src = './assets/image/espobit-fury.webp';
-            photoClicked.src = './assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/espobit-fury.webp';
+            photoClicked.src = 'assets/image/espobit-fury-click.webp';
         } else {
-            photoNormal.src = './assets/image/espo-fury.webp';
-            photoClicked.src = './assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/espo-fury.webp';
+            photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
     // -----------------------------------------------
@@ -635,14 +635,23 @@ function resumeCrunchTimeEffects() {
 
 const EventHandlers = {
     video: (config, eventKey) => {
-        // ... (Logica Video invariata, lasciala com'è, rimuovi solo animazioni se presenti) ...
         document.body.classList.add('rick-rolling');
+
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
-            const v = document.getElementById(id);
-            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+            const videoMeme = document.getElementById(id);
+
+            if (videoMeme)
+			{
+				videoMeme.pause();
+				videoMeme.classList.add("video_display_none");
+				videoMeme.currentTime = 0;
+
+				document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+    			document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
+			}
         });
 
-        // ... (Logica scelta video) ...
+        // Logica scelta video
         let videoId = config.videos[0];
         if (config.videos.length > 1) {
             const available = config.videos.filter(id => id !== lastVideoPlayedId);
@@ -652,16 +661,22 @@ const EventHandlers = {
         lastVideoPlayedId = videoId;
 
         const video = document.getElementById(videoId);
-        if (video) {
-            if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-            video.style.display = 'block';
+        if (video)
+		{
+            if (!video.src)
+			{
+				video.src = video.getAttribute('data-src');
+				video.load();
+			}
+
+            video.classList.remove("video_display_none");
             video.currentTime = 0;
+
             const customVol = getCustomVolume(config.audioId || videoId);
             video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
             video.play().catch(e => { });
-            video.style.cursor = 'pointer';
 
-            // ... (Clone node e listener click invariati) ...
+            // Clone node e listener click invariati
             const newVideo = video.cloneNode(true);
             video.parentNode.replaceChild(newVideo, video);
             newVideo.play().catch(e => { });
@@ -684,7 +699,7 @@ const EventHandlers = {
 
             setTimeout(() => {
                 newVideo.pause();
-                newVideo.style.display = 'none';
+				newVideo.classList.add("video_display_none");
                 newVideo.removeEventListener('pointerdown', videoClickHandler);
                 document.body.classList.remove('rick-rolling');
                 AudioManager.updateAmbience(); // Ricalcola audio alla fine
@@ -695,11 +710,11 @@ const EventHandlers = {
     },
 
     css_mode: (config, eventKey) => {
-        // === LOGICA CSS (404 / Bluescreen / Matrix) ===
-        // 1. Applica la classe dell'evento al body
+        // LOGICA CSS (404 / Bluescreen / Matrix)
+        // Applica la classe dell'evento al body
         document.body.classList.add(config.cssClass);
 
-        // 2. GESTIONE SPECIFICA PER MATRIX
+        // GESTIONE SPECIFICA PER MATRIX
         if (config.cssClass === 'matrix-active') {
             // Avvia l'effetto canvas
             if (typeof startMatrixEffect === 'function') startMatrixEffect();
@@ -708,22 +723,22 @@ const EventHandlers = {
             const photoClicked = document.getElementById('manager-photo-clicked');
 
             if (photoNormal && photoClicked) {
-                // --- NUOVA LOGICA DI SCELTA SKIN MATRIX ---
+                // NUOVA LOGICA DI SCELTA SKIN MATRIX
                 // Controlla se il tema 8-bit è attivo
                 if (document.body.classList.contains('theme-8bit')) {
                     // Se sì, usa le versioni 8-bit di Matrix
-                    photoNormal.src = './assets/image/espobit-matrix.webp';
-                    photoClicked.src = './assets/image/espobit-matrix-click.webp';
+                    photoNormal.src = 'assets/image/espobit-matrix.webp';
+                    photoClicked.src = 'assets/image/espobit-matrix-click.webp';
                 } else {
                     // Altrimenti, usa le versioni standard di Matrix
-                    photoNormal.src = './assets/image/espo-matrix.webp';
-                    photoClicked.src = './assets/image/espo-matrix-click.webp';
+                    photoNormal.src = 'assets/image/espo-matrix.webp';
+                    photoClicked.src = 'assets/image/espo-matrix-click.webp';
                 }
                 // ------------------------------------------
             }
         }
 
-        // 3. GESTIONE AUDIO EVENTI (Delega al Manager Centrale)
+        // GESTIONE AUDIO EVENTI (Delega al Manager Centrale)
         // Se è l'evento di Natale (Bluescreen), gestisci il glitch audio specifico
         if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
             const snowAudio = document.getElementById('sound-snowball');
@@ -752,22 +767,22 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     const config = gameData.events[eventKey];
     if (!config) return false;
 
-    // 1. Controllo Conflitti
+    // Controllo Conflitti
     if (checkEventConflict(config.name)) return false;
 
-    // 2. Stop Audio Background (Comune a tutti)
+    // Stop Audio Background (Comune a tutti)
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) snowAudio.pause();
     const bgMusic = document.getElementById('sound-bg-music');
     if (bgMusic) bgMusic.pause();
 
-    // 3. Calcolo Moltiplicatore
+    // Calcolo Moltiplicatore
     let bonusMult = overrideMult;
     if (!bonusMult) {
         bonusMult = Math.floor(Math.random() * (config.maxMult - config.minMult + 1)) + config.minMult;
     }
 
-    // 4. Setup Stato Globale
+    // Setup Stato Globale
     isBluescreenActive = true;
     bluescreenMultiplier = bonusMult;
     recalculateCPS();
@@ -784,14 +799,14 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     const toastMsg = config.toast.replace('{mult}', bonusMult);
     window.EspooClicker.showToast(toastMsg, config.toastType);
 
-    // 5. DELEGA ALL'HANDLER SPECIFICO (Nuovo Sistema)
+    // DELEGA ALL'HANDLER SPECIFICO (Nuovo Sistema)
     if (EventHandlers[config.type]) {
         EventHandlers[config.type](config, eventKey);
     } else {
         console.warn(`Nessun handler trovato per il tipo evento: ${config.type}`);
     }
 
-    // 6. Timer Finale Comune (Cleanup e Reset)
+    // Timer Finale Comune (Cleanup e Reset)
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
         if (config.cssClass) document.body.classList.remove(config.cssClass);
@@ -803,7 +818,7 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
 
 function triggerBluescreen(multiplier) {
-    // 1. Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
+    // Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
     if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
         return triggerGameEvent('rickRoll');
     }
@@ -811,36 +826,36 @@ function triggerBluescreen(multiplier) {
         return triggerGameEvent('ricardo');
     }
 
-    // 2. Scelta Casuale: 50% Blue Screen / 50% Matrix
+    // Scelta Casuale: 50% Blue Screen / 50% Matrix
     const eventType = Math.random() < 0.5 ? 'bluescreen' : 'matrix';
 
-    // 3. Avvia l'evento scelto
+    // Avvia l'evento scelto
     return triggerGameEvent(eventType, multiplier);
 }
 
 function stopBluescreenEffect() {
-    // 1. Reset Variabili di Stato
+    // Reset Variabili di Stato
     isBluescreenActive = false;
     bluescreenMultiplier = 1;
 
-    // 2. Rimuovi TUTTE le classi CSS degli eventi
+    // Rimuovi TUTTE le classi CSS degli eventi
     document.body.classList.remove('bluescreen-active');
     document.body.classList.remove('matrix-active');
     document.body.classList.remove('rick-rolling');
 
-    // 3. Ferma l'effetto Matrix Canvas
+    // Ferma l'effetto Matrix Canvas
     if (typeof stopMatrixEffect === 'function') {
         stopMatrixEffect();
     }
 
-    // 4. Nascondi display moltiplicatore
+    // Nascondi display moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) emDisplay.style.display = 'none';
 
-    // 5. Ricalcola BPS
+    // Ricalcola BPS
     recalculateCPS();
 
-    // 6. STOP AUDIO & VIDEO EVENTI
+    // STOP AUDIO & VIDEO EVENTI
     try {
         const soundBlue = document.getElementById('sound-bluescreen');
         const soundMatrix = document.getElementById('sound-matrix');
@@ -848,21 +863,21 @@ function stopBluescreenEffect() {
 
         if (soundBlue) { soundBlue.pause(); soundBlue.currentTime = 0; }
         if (soundMatrix) { soundMatrix.pause(); soundMatrix.currentTime = 0; }
-        if (rickVideo) { rickVideo.pause(); rickVideo.style.display = 'none'; }
+        if (rickVideo) { rickVideo.pause(); rickVideo.classList.add("video_display_none"); }
     } catch (e) { }
 
-    // 7. Pulizia Glitch Audio (Natale)
+    // Pulizia Glitch Audio (Natale)
     if (audioGlitchInterval) {
         clearInterval(audioGlitchInterval);
         audioGlitchInterval = null;
     }
 
-    // 8. RIPRISTINO SKIN ORIGINALE
+    // RIPRISTINO SKIN ORIGINALE
     if (typeof applySkinVisuals === 'function') {
         applySkinVisuals(gameState.skins.current);
     }
 
-    // --- 9. FIX CRITICO: RIPRISTINO MUSICA AMBIENTE ---
+    // RIPRISTINO MUSICA AMBIENTE
     if (typeof AudioManager !== 'undefined') {
         AudioManager.updateAmbience();
     }
@@ -870,12 +885,12 @@ function stopBluescreenEffect() {
     clearActiveEvent();
 }
 
-// --- CALCOLO CENTRALIZZATO DEL VALORE CLICK ---
+// CALCOLO CENTRALIZZATO DEL VALORE CLICK
 function calculateClickValue() {
-    // 1. Valore Base (Base * Moltiplicatori Globali)
+    // Valore Base (Base * Moltiplicatori Globali)
     let val = gameState.baseClickValue * (window.clickGlobalMult || 1) * prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier;
 
-    // 2. Bonus Mano Bionica (Dipende dai BPS)
+    // Bonus Mano Bionica (Dipende dai BPS)
     if (window.gameFlags.bionicHand) {
         let percent = 0.01;
         if (window.gameFlags.divineClick) percent = 0.02;
@@ -893,10 +908,10 @@ function calculateClickValue() {
     return val;
 }
 function calculateRawClickValue() {
-    // 1. Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
+    // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
     let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
 
-    // 2. Aggiungi Mano Bionica (Se attiva)
+    // Aggiungi Mano Bionica (Se attiva)
     // Nota: La mano bionica dipende dai BPS attuali. Se vuoi il valore "puro" senza inflazione,
     // dovresti dividere i BPS per il prestigeBonus, ma solitamente si vuole vedere quanto aggiunge realmente.
     // Qui lasciamo il calcolo standard della mano bionica.
@@ -1064,7 +1079,7 @@ async function executePrestige() {
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'none';
     if (overlay) {
-        overlay.style.display = 'flex';
+        overlay.classList.remove("prestige_transition_overlay_display_none");
         playSound('sound-prestige');
         setTimeout(() => overlay.classList.add('active'), 10);
     }
@@ -1168,14 +1183,14 @@ async function executePrestige() {
     refreshAllStores();
     updateUI();
 
-    // 7. SALVATAGGIO FINALE
+    // SALVATAGGIO FINALE
     if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
 
     // Rimuovi Overlay
     if (overlay) {
         overlay.classList.remove('active');
         setTimeout(() => {
-            overlay.style.display = 'none';
+            overlay.classList.add("prestige_transition_overlay_display_none");
             if (window.EspooClicker && window.EspooClicker.showToast) {
                 window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
             }
@@ -1233,20 +1248,20 @@ function claimAchievementReward(key) {
     // Controlli di sicurezza
     if (!state || !state.unlocked || state.claimed) return;
 
-    // 1. Assegna il premio usando il nuovo sistema unificato
+    // Assegna il premio usando il nuovo sistema unificato
     if (data.reward) {
         grantReward(data.reward);
     }
 
-    // 2. Aggiorna stato
+    // Aggiorna stato
     state.claimed = true;
     playSound('sound-buy');
 
-    // 3. Ricalcola e Salva
+    // Ricalcola e Salva
     recalculateCPS();
     window.EspooClicker.saveGame();
 
-    // 4. Aggiorna UI
+    // Aggiorna UI
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
@@ -1258,10 +1273,8 @@ function scheduleGoldenBug() {
     goldenBugTimer = setTimeout(spawnGoldenBug, nextSpawnTime);
 }
 
-
-
 function spawnGoldenBug() {
-    // 1. Reset
+    // Reset
     goldenBug.style.display = 'none';
 
     const bugWidth = 60;
@@ -1282,19 +1295,19 @@ function spawnGoldenBug() {
     const randomX = Math.max(0, Math.random() * maxX);
     const randomY = Math.max(0, Math.random() * maxY);
 
-    // 5. Conversione in coordinate ASSOLUTE (per il body)
+    // Conversione in coordinate ASSOLUTE (per il body)
     // Sommiamo la posizione dell'area + lo scroll della pagina + il padding + la posizione random
     const finalLeft = rect.left + window.scrollX + padding + randomX;
     const finalTop = rect.top + window.scrollY + padding + randomY;
 
-    // 6. Applica posizione
+    // Applica posizione
     goldenBug.style.left = `${finalLeft}px`;
     goldenBug.style.top = `${finalTop}px`;
 
-    // 7. Mostra (Flex per centrare l'icona)
+    // Mostra (Flex per centrare l'icona)
     goldenBug.style.display = 'flex';
 
-    // 8. Timer Sparizione
+    // Timer Sparizione
     setTimeout(() => {
         goldenBug.style.display = 'none';
     }, 10000); // 10 secondi

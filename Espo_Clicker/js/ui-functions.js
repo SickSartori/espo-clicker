@@ -36,14 +36,19 @@ function setTextIfChanged(elementId, newText)
 
 function formatNumber(num) {
     if (num === undefined || num === null || isNaN(num)) return "0";
+
     let sign = "";
     if (num < 0) { sign = "-"; num = Math.abs(num); }
     if (num < 1000) return sign + num.toLocaleString('it-IT', { maximumFractionDigits: 2 });
+
     const suffixes = gameData.texts.format.suffixes;
     const suffixIndex = Math.floor(Math.log10(num) / 3);
+
     if (suffixIndex >= suffixes.length) return sign + num.toExponential(2).replace('.', ',');
+
     const scaledNum = num / Math.pow(1000, suffixIndex);
     let decimals = scaledNum < 10 ? 3 : (scaledNum < 100 ? 2 : 1);
+	
     return sign + scaledNum.toFixed(decimals).replace('.', ',') + " " + suffixes[suffixIndex];
 }
 
@@ -971,11 +976,9 @@ function createToastDOM(message, type) {
     }, 4000);
 }
 
-
-
-
-function checkTabNotifications() {
-    // 1. Click Tab
+function checkTabNotifications()
+{
+    // Click Tab
     let clickNotify = false;
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
@@ -985,10 +988,11 @@ function checkTabNotifications() {
             clickNotify = true; break;
         }
     }
+
     const tabClick = document.getElementById('tab-click');
     if (tabClick) clickNotify && !tabClick.classList.contains('active') ? tabClick.classList.add('notify') : tabClick.classList.remove('notify');
 
-    // 2. Auto Tab
+    // Auto Tab
     let autoNotify = false;
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
@@ -999,10 +1003,11 @@ function checkTabNotifications() {
             autoNotify = true; break;
         }
     }
+
     const tabAuto = document.getElementById('tab-auto');
     if (tabAuto) autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
-    // 3. Prestige Tab
+    // Prestige Tab
     let prestigeNotify = false;
     if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
         for (const key in gameData.prestigeUpgrades) {
@@ -1016,55 +1021,64 @@ function checkTabNotifications() {
             if (prestigeNotify) break;
         }
     }
-    const tabPrestige = document.getElementById('tab-prestige');
-    if (tabPrestige) prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
 
-    // --- 4. AGGIORNAMENTO TITOLO BROWSER (Nuova User Experience) ---
+    let tabPrestige = document.getElementById('tab-prestige');
+    if (tabPrestige)
+		prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
+
+    // --- AGGIORNAMENTO TITOLO BROWSER (Nuova User Experience) ---
     // Eseguiamo la logica direttamente qui, senza creare funzioni interne
     let title = "Espòòò Clicker";
 
     // Controlliamo se una delle variabili calcolate sopra è vera
-    const hasNotification = clickNotify || autoNotify || prestigeNotify;
     const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
 
-    if (canPrestige) {
+    if (canPrestige)
+	{
         title = gameData.texts.ui.promotionReadyTitle + " - " + title;
     }
-    else {
+    else
+	{
         // Mostra i bug correnti
         title = formatNumber(gameState.score) + " " + gameData.texts.ui.bugsTitle + " - " + title;
     }
 
-    if (document.title !== title) {
+    if (document.title !== title)
         document.title = title;
-    }
 }
 
-
-function updateBonusCounter() {
+function updateBonusCounter()
+{
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
 
     // La variabile prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
-    if (prestigeBonus > 1.05) { // Mostra solo se il bonus è significativo
-        if (counter) counter.style.display = 'block';
-        if (valueSpan) {
+    if (prestigeBonus > 1.05)	// Mostra solo se il bonus è significativo
+	{
+        if (counter)
+			counter.style.display = 'block';
+
+        if (valueSpan)
+		{
             // Mostra il moltiplicatore totale con 2 decimali
             valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
 
             // Aggiungi anche un po' di stile per farlo risaltare
             valueSpan.style.color = '#f1c40f';
         }
-    } else {
-        if (counter) counter.style.display = 'none';
+    }
+	else
+	{
+        if (counter)
+			counter.style.display = 'none';
     }
 }
 
 function updateUI() {
-    // 1. Calcoli Preliminari (BPS Visivo)
+    // Calcoli Preliminari (BPS Visivo)
     const activeBPS = calculateVisualBPS();
 
-    // 2. Aggiornamenti Sezioni
+    // Aggiornamenti Sezioni
     updateScoreBoard(activeBPS);
     updateHUD();
     updateWallets();
@@ -1072,18 +1086,19 @@ function updateUI() {
     updateSkillButton();  // Gestisce Espo Fury / Crunch Time
     updateTabsVisibility();
 
-    // 3. Notifiche e Extra
+    // Notifiche e Extra
     checkOverlayNotifications();
     updateBonusCounter();
 }
 
 // --- SOTTO-FUNZIONI (Copia queste sotto updateUI) ---
-
-function calculateVisualBPS() {
+function calculateVisualBPS()
+{
     let active = 0;
     const now = Date.now();
 
-    for (let i = 0; i < clickHistory.length; i++) {
+    for (let i = 0; i < clickHistory.length; i++)
+	{
         if (now - clickHistory[i].time < 1000)
 			active += clickHistory[i].value;
     }
@@ -1093,11 +1108,11 @@ function calculateVisualBPS() {
 
 const scoreAnimState = { value: 0 };
 
-function updateScoreBoard(totalBPS) {
+function updateScoreBoard(totalBPS)
+{
     // Se è la prima volta (o reset/promozione), allinea subito senza animazione
-    if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5) {
+    if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5)
         scoreAnimState.value = gameState.score;
-    }
 
     // GSAP anima il valore "visuale" verso il valore reale
    	gsap.to(scoreAnimState, {
@@ -1135,20 +1150,21 @@ function updateHUD() {
     const displayTokens = document.getElementById('prestige-points-display');
 
     // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
-    if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
-
+    if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0)
+	{
         // Mostra i pannelli laterali
-        if (leftPanel) leftPanel.style.display = 'flex';
-        if (rightPanel) rightPanel.style.display = 'flex';
+        if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
+        if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
 
         // Aggiorna i testi
         if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
         if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
-
-    } else {
+    }
+	else
+	{
         // Nascondi se è la prima run
-        if (leftPanel) leftPanel.style.display = 'none';
-        if (rightPanel) rightPanel.style.display = 'none';
+        if (leftPanel) leftPanel.classList.add("header_stat_box_display_none");
+        if (rightPanel) rightPanel.classList.add("header_stat_box_display_none");
     }
 }
 
@@ -1163,7 +1179,7 @@ function updateWallets() {
 }
 
 function updateStoreButtons() {
-    // A. Teams
+    // Teams
     for (const key in gameState.teams) {
         // Logica Costi
         let amountToBuy = buyMultiplier;
@@ -1188,7 +1204,7 @@ function updateStoreButtons() {
         }
     }
 
-    // B. Click Upgrades
+    // Click Upgrades
     for (const key in gameState.clickUpgrades) {
         if (!gameState.clickUpgrades[key].purchased) {
             const container = getEl(`click-upgrade-${key}`); // Usa ID contenitore se btn ID è ambiguo
@@ -1200,7 +1216,7 @@ function updateStoreButtons() {
         }
     }
 
-    // C. Enhancements
+    // Enhancements
     for (const key in gameState.buildingEnhancements) {
         if (!gameState.buildingEnhancements[key].purchased) {
             const btn = getEl(`buy-${key}`);
@@ -1209,7 +1225,7 @@ function updateStoreButtons() {
             }
         }
     }
-    // D. Prestige / Lab
+    // Prestige / Lab
     for (const key in gameState.prestigeUpgrades) {
         const data = gameData.prestigeUpgrades[key];
         const state = gameState.prestigeUpgrades[key];
@@ -1265,7 +1281,9 @@ function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
     if (tabPrestige) {
         const show = gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0;
-        tabPrestige.style.display = show ? 'block' : 'none';
+
+		if(show)
+			tabPrestige.classList.remove("tab_promozione");
     }
 }
 
@@ -1365,8 +1383,7 @@ function triggerChristmasOverlay() {
         skinsModal.style.display = 'none';
     }
     if (overlay) {
-        overlay.style.display = 'flex';
-        overlay.style.animation = 'fadeIn 0.5s';
+		overlay.classList.add("christmas_overlay_flex");
     }
     if (soundMerry) {
         soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
@@ -1374,7 +1391,7 @@ function triggerChristmasOverlay() {
         soundMerry.play().catch(e => { });
     }
     setTimeout(() => {
-        if (overlay) overlay.style.display = 'none';
+        if (overlay) overlay.classList.remove("christmas_overlay_flex");
     }, 4000);
 }
 
@@ -1397,7 +1414,7 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     const theme = skinData.themeConfig || {};
 
-    // 1. GESTIONE CLASSI BODY (Reset e Applicazione)
+    // GESTIONE CLASSI BODY (Reset e Applicazione)
     // Rimuove TUTTI i temi speciali attivi per evitare conflitti (es. 8bit + natale insieme)
     document.body.classList.remove(...bodyThemes);
 
@@ -1406,17 +1423,23 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         document.body.classList.add(theme.bodyClass);
     }
 
-    // 2. GESTIONE NEVE
-    if (snowContainer) {
-        if (theme.hasSnow) {
-            snowContainer.style.display = 'block';
-            if (snowContainer.innerHTML === '') createSnowflakes();
-        } else {
-            snowContainer.style.display = 'none';
+    // GESTIONE NEVE
+    if (snowContainer)
+		{
+        if (theme.hasSnow)
+			{
+            snowContainer.classList.add("snow_container_block");
+
+            if (snowContainer.innerHTML === '')
+				createSnowflakes(snowContainer);
+        }
+		else
+		{
+            snowContainer.classList.remove("snow_container_block");
         }
     }
 
-    // 3. GOLDEN BUG ICONA (Personalizzazione Tematica)
+    // GOLDEN BUG ICONA (Personalizzazione Tematica)
     const goldenBugIcon = document.querySelector('#golden-bug i');
     if (goldenBugIcon) {
         goldenBugIcon.className = 'fa-solid'; // Reset base FontAwesome
@@ -1431,19 +1454,19 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         }
     }
 
-    // 4. AUDIO MANAGER (Logica Centralizzata)
+    // AUDIO MANAGER (Logica Centralizzata)
     // Invece di gestire play/pause qui, diciamo al Manager di aggiornare l'ambiente.
     // Lui guarderà la skin corrente e deciderà quale traccia suonare e quali spegnere.
     if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
         AudioManager.updateAmbience();
     }
 
-    // 5. APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
+    // APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
     const applyClasses = (element, imgSrc) => {
         if (!element) return;
 
         // Aggiorna immagine
-        element.src = `./assets/image/${imgSrc}`;
+        element.src = `assets/image/${imgSrc}`;
 
         // Reset filtri (utile se venivano alterati da eventi)
         element.style.filter = 'none';
@@ -1464,14 +1487,13 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 }
 
 
-// Nuova funzione helper per creare i fiocchi (Aggiungila alla fine del file ui-functions.js)
-function createSnowflakes() {
-    const container = document.getElementById('snow-container');
-    if (!container) return;
+// Nuova funzione helper per creare i fiocchi
+function createSnowflakes(snowContainer) {
+    if (!snowContainer) return;
 
-    const numberOfSnowflakes = 60; // Numero fiocchi
+    const numberOfSnowflakes = 60;
 
-    for (let i = 0; i < numberOfSnowflakes; i++) {
+    for (let index = 0; index < numberOfSnowflakes; index++) {
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
 
@@ -1485,13 +1507,12 @@ function createSnowflakes() {
         snowflake.style.animationDelay = (Math.random() * -20) + 's';
         snowflake.style.opacity = Math.random() * 0.7 + 0.3;
 
-        container.appendChild(snowflake);
+        snowContainer.appendChild(snowflake);
     }
 }
 
-
-
-function checkOverlayNotifications() {
+function checkOverlayNotifications()
+{
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
     let hasClaimable = false;
     for (const key in gameData.achievements) {

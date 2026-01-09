@@ -380,6 +380,10 @@ body.matrix-active .buy-btn:hover {
     gap: 8px;
 }
 
+#github-link-container i {
+	font-size: 2.5rem;
+}
+
 /*--------------------------------------------------------------------------------*/
 
 /* Quick Mute */
@@ -651,7 +655,6 @@ body.crunch-active .upgrade-name {
 
     /* Riduciamo il padding del body per guadagnare spazio verticale */
     body {
-        padding-top: 70px !important;
-        /* Era 85px */
+        padding-top: 70px;
     }
 }

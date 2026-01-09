@@ -41,7 +41,7 @@
 
 		<div id="toast-container"></div>
 
-		<div id="prestige-transition-overlay" style="display: none;">
+		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
 			<div class="transition-content">
 				<div class="transition-icon">🚀</div>
 				<h2>
@@ -53,7 +53,7 @@
 			</div>
 		</div>
 		
-		<div id="christmas-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #c0392b; z-index: 10000; justify-content: center; align-items: center; flex-direction: column; color: white;">
+		<div id="christmas-overlay" class="christmas_overlay">
 			<h1 id="christmas-title">
 				🎄 <?php echo $labels["natale_titolo"]; ?> 🎄
 			</h1>
@@ -62,30 +62,30 @@
 			</p>
 		</div>
 
-		<div id="snow-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: none;"></div>
+		<div id="snow-container" class="snow_container"></div>
 
-		<div id="offline-modal" class="modal-backdrop" style="display: none; z-index: 3000;">
-			<div class="modal-content" style="text-align: center; border-color: #f39c12;">
-				<h2 style="color: #f39c12; border-bottom-color: #f39c12;">
+		<div id="offline-modal" class="modal-backdrop modal_backdrop_none">
+			<div class="modal-content offline_modal_content">
+				<h2>
 					💤 <?php echo $labels["offline_titolo"]; ?>
 				</h2>
-				<div class="settings-content" style="padding: 30px;">
-					<p style="color: #bdc3c7; font-size: 1.1rem;">
+				<div class="offline_content">
+					<p class="offline_content_sottotitolo">
 						<?php echo $labels["offline_sottotitolo"]; ?>
 					</p>
-					<div style="margin: 20px 0;">
-						<p style="text-transform: uppercase; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">
+					<div class="offline_content_efficienza_server">
+						<p class="offline_content_label_efficienza_server">
 							<?php echo $labels["offline_server"]; ?>
 						</p>
-						<div id="offline-efficiency-display" style="font-weight: bold; color: #3498db; font-size: 1.2rem;">30%</div>
+						<div id="offline-efficiency-display" class="offline_efficiency_display">30%</div>
 					</div>
-					<div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #d35400; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-						<span id="offline-earnings-display" style="font-size: 2.5rem; font-weight: 800; color: #f1c40f; text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);">0</span>
-						<span style="font-size: 1.2rem; color: #f1c40f;">
+					<div class="offline_content_guadagno">
+						<span id="offline-earnings-display" class="offline_earnings_display">0</span>
+						<span class="offline_content_guadagno_label">
 							<?php echo $labels["offline_bug"]; ?>
 						</span>
 					</div>
-					<button id="btn-claim-offline" class="buy-btn" style="background: linear-gradient(to right, #f1c40f, #e67e22); color: #2c3e50; font-size: 1.2rem; padding: 15px; width: 100%;">
+					<button id="btn-claim-offline" class="buy-btn offline_content_button">
 						💰 <?php echo $labels["offline_guadagni"]; ?>
 					</button>
 				</div>
@@ -96,19 +96,19 @@
 		
 		<nav id="game-navbar">
 			<div class="nav-group left">
-				<button id="open-help-btn" class="nav-item" title="Guida">
+				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
 					<i class="nav-icon fa-solid fa-circle-question"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_guida"]; ?>
 					</span>
 				</button>
-				<button id="open-stats-btn" class="nav-item" title="Statistiche">
+				<button id="open-stats-btn" class="nav-item" title="<?php echo $labels["navbar_stats"]; ?>">
 					<i class="nav-icon fa-solid fa-chart-pie"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_stats"]; ?>
 					</span>
 				</button>
-				<button id="open-arcade-btn" class="nav-item" title="Sala Giochi">
+				<button id="open-arcade-btn" class="nav-item" title="<?php echo $labels["navbar_arcade"]; ?>">
 					<i class="nav-icon fa-solid fa-gamepad"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_arcade"]; ?>
@@ -117,19 +117,19 @@
 			</div>
 
 			<div class="nav-group center">
-				<button id="open-achievements-btn" class="nav-item" title="Obiettivi">
+				<button id="open-achievements-btn" class="nav-item" title="<?php echo $labels["navbar_obiettivi"]; ?>">
 					<i class="nav-icon fa-solid fa-trophy"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_obiettivi"]; ?>
 					</span>
 				</button>
-				<button id="open-skins-btn" class="nav-item" title="Guardaroba">
+				<button id="open-skins-btn" class="nav-item" title="<?php echo $labels["navbar_skin"]; ?>">
 					<i class="nav-icon fa-solid fa-shirt"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_skin"]; ?>
 					</span>
 				</button>
-				<button id="open-leaderboard-btn" class="nav-item" title="Classifica">
+				<button id="open-leaderboard-btn" class="nav-item" title="<?php echo $labels["navbar_classifica"]; ?>">
 					<i class="nav-icon fa-solid fa-medal"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_classifica"]; ?>
@@ -168,7 +168,7 @@
 						<i class="fa-solid fa-robot"></i>
 						<?php echo $labels["game_container_auto_titolo"]; ?>
 					</button>
-					<button class="tab-btn" data-target="prestige-wrapper" id="tab-prestige" style="display: none;">
+					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige">
 						<i class="fa-solid fa-flask"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
@@ -198,7 +198,7 @@
 
 		<div id="github-link-container">
 			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
-				<i class="fa-brands fa-github" style="font-size: 2.5rem;"></i>
+				<i class="fa-brands fa-github"></i>
 			</a>
 		</div>
 		
@@ -220,10 +220,10 @@
 			</button>
 		</div>
 
-		<video id="rick-roll-video" style="display: none;" playsinline preload="none" data-src="./assets/video/rick-espley-video.mp4"></video>
-		<video id="ricardo-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
-		<video id="ricardo-metal-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
-		<video id="ricardo-dota-video" style="display: none;" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
+		<video id="rick-roll-video" class="rick_roll_video video_display_none" playsinline preload="none" data-src="./assets/video/rick-espley-video.mp4"></video>
+		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
+		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
+		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>

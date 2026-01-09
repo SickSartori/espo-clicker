@@ -16,6 +16,39 @@ async function generateHash(message) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Source - https://stackoverflow.com/a/66072001
+// Posted by Mohsen Alyafei, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-01-09, License - CC BY-SA 4.0
+
+/******************************************************************
+ * Converts e-Notation Numbers to Plain Numbers
+ ******************************************************************
+ * @function eToNumber(number)
+ * @version  1.00
+ * @param   {e nottation Number} valid Number in exponent format.
+ *          pass number as a string for very large 'e' numbers or with large fractions
+ *          (none 'e' number returned as is).
+ * @return  {string}  a decimal number string.
+ * @author  Mohsen Alyafei
+ * @date    17 Jan 2020
+ * Note: No check is made for NaN or undefined input numbers.
+ *
+ *****************************************************************/
+function eToNumber(num) {
+  let sign = "";
+  (num += "").charAt(0) == "-" && (num = num.substring(1), sign = "-");
+  let arr = num.split(/[e]/ig);
+  if (arr.length < 2) return sign + num;
+  let dot = (.1).toLocaleString('it-IT').substr(1, 1), n = arr[0], exp = +arr[1],
+      w = (n = n.replace(/^0+/, '')).replace(dot, ''),
+    pos = n.split(dot)[1] ? n.indexOf(dot) + exp : w.length + exp,
+    L   = pos - w.length, s = "" + BigInt(w);
+    w   = exp >= 0 ? (L >= 0 ? s + "0".repeat(L) : r()) : (pos <= 0 ? "0" + dot + "0".repeat(Math.abs(pos)) + s : r());
+  L= w.split(dot); if (L[0]==0 && L[1]==0 || (+w==0 && +s==0) ) w = 0; //** added 9/10/2021
+  return sign + w;
+  function r() {return w.replace(new RegExp(`^(.{${pos}})(.)`), `$1${dot}$2`)}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // --------- Assegnazione Variabili ---------
     clickerButton = document.getElementById('clicker-btn');
@@ -80,8 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // SALVATAGGIO CLOUD SICURO
         if (gameState.user.username && currentUserPassword) {
             try {
-                // IMPORTANTE: Forza numeri interi puliti per evitare notazione scientifica (1e+21)
-                let scoreToSend = Math.floor(gameState.lifetimeScore);
+                // Forza numeri interi puliti per evitare notazione scientifica (1e+21)
+                let scoreToSend = eToNumber(gameState.lifetimeScore.toString().replace(".", ","));
+
                 if (!scoreToSend || scoreToSend <= 0) scoreToSend = Math.floor(gameState.totalScore);
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
@@ -89,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
                 const signature = await generateHash(dataString);
 
-                fetch('./php/save_progress.php', {
+                fetch('php/save_progress.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     keepalive: true,
@@ -101,7 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         prestige: prestigeToSend,
                         hash: signature // Invio hash
                     })
-                }).catch(err => console.warn("Cloud save error:", err));
+                })
+				.then((response) => {console.log(response.json());})
+				.catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
             }
@@ -113,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('offline-modal');
 
         if (!gameState.lastSaveTimestamp) {
-            if (modal) modal.style.display = 'none';
+            if (modal) modal.classList.add("modal_backdrop_none");
             return;
         }
 
@@ -142,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
-        if (modal) modal.style.display = 'none';
+        if (modal) modal.classList.add("modal_backdrop_none");
     }
 
     // Funzione Helper per il controllo versione
@@ -424,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.totalOfflineScore += amount;
 
             // Chiudi modale
-            modal.style.display = 'none';
+            modal.classList.add("modal_backdrop_none");
 
             // Salva e Feedback
             window.EspooClicker.saveGame();
@@ -443,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newBtn.addEventListener('click', claimHandler);
 
         // Mostra
-        modal.style.display = 'flex';
+		modal.classList.remove("modal_backdrop_none");
     }
 
     let lastFrameTime = Date.now();
@@ -745,8 +781,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
 
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
-            const v = document.getElementById(id);
-            if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
+            const video = document.getElementById(id);
+
+            if (video)
+			{
+				video.pause();
+				video.classList.add("video_display_none");
+				video.currentTime = 0;
+
+				document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+    			document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
+			}
         });
 
         const soundClick = document.getElementById('sound-click');
@@ -879,10 +924,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Video Attivi (Rick Roll, Ricardo) - Aggiorna volume
                     ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
-                        const v = document.getElementById(id);
-                        if (v && !v.paused && v.style.display !== 'none') {
+                        const video = document.getElementById(id);
+                        if (video && !video.paused && !video.classList.contains("video_display_none")) {
                             const customVol = (typeof getCustomVolume === 'function') ? getCustomVolume(id) : 1.0;
-                            v.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
+                            video.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
+
+							document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+    						document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
                         }
                     });
                 }

@@ -66,14 +66,11 @@
 .column-header-aligned {
     display: flex;
     align-items: flex-end;
-    /* Allinea i tab al fondo */
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     height: 60px;
-    /* Altezza fissa per entrambi */
     min-height: 60px;
     padding: 0 15px;
-    /* Padding laterale uguale */
     box-sizing: border-box;
     flex-shrink: 0;
 }
@@ -81,18 +78,13 @@
 .tabs-header {
     gap: 5px;
     padding-bottom: 0;
-    /* I tab devono toccare il bordo inferiore */
 }
 
 .column-header-center {
     display: flex;
-    /* Flexbox invece di Grid */
     justify-content: space-between;
-    /* Spinge gli elementi ai bordi */
     align-items: center;
     position: relative;
-    /* Necessario per il posizionamento assoluto del centro */
-
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     height: 60px;
@@ -100,8 +92,7 @@
     padding: 0 15px;
     box-sizing: border-box;
     flex-shrink: 0;
-
-    overflow: visible !important;
+    overflow: visible;
     z-index: 500;
 }
 
@@ -113,7 +104,14 @@
     line-height: 1.1;
     animation: fadeIn 0.5s;
     min-width: 80px;
-    /* Riserva spazio minimo per non schiacciare */
+}
+
+.header_stat_box_display_none {
+	display: none;
+}
+
+.header_right_panel {
+	text-align: right;
 }
 
 .header-main-score {
@@ -235,6 +233,10 @@
     box-shadow: 0 -2px 10px rgba(241, 196, 15, 0.8);
 }
 
+.tab_promozione {
+	display: none;
+}
+
 .tab-btn.notify {
     animation: tabPulse 1.5s infinite ease-in-out !important;
     border-bottom-color: #2ecc71 !important;
@@ -289,8 +291,8 @@
 #center-column,
 #right-column,
 .game-column {
-    border-bottom: none !important;
-    box-shadow: none !important;
+    border-bottom: none;
+    box-shadow: none;
 }
 
 .store-section,

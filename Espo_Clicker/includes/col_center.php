@@ -1,6 +1,6 @@
 <div id="center-column" class="game-column">
     <div class="column-header-center">
-        <div id="header-left-panel" class="header-stat-box" style="display: none;">
+        <div id="header-left-panel" class="header-stat-box header_stat_box_display_none">
             <span class="header-label">
 				<i class="fa-solid fa-bolt"></i>
 				<?php echo $labels["col_center_moltiplicatore_label"]; ?>
@@ -14,7 +14,7 @@
 			</span>
             <div id="score-display">0</div>
         </div>
-        <div id="header-right-panel" class="header-stat-box" style="display: none; text-align: right;">
+        <div id="header-right-panel" class="header-stat-box header_right_panel header_stat_box_display_none">
             <span class="header-label">
 				<i class="fa-solid fa-coins"></i>
 				<?php echo $labels["col_center_token_label"]; ?>

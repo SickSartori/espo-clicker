@@ -367,10 +367,10 @@ body.bluescreen-active #clicker-btn {
 
 /* --- RICK ROLL / RICARDO MODE --- */
 
-#rick-roll-video,
-#ricardo-video,
-#ricardo-metal-video,
-#ricardo-dota-video {
+.rick_roll_video,
+.ricardo_video,
+.ricardo_metal_video,
+.ricardo_dota_video {
     position: fixed;
     top: 0;
     left: 0;
@@ -379,8 +379,13 @@ body.bluescreen-active #clicker-btn {
     object-fit: cover;
     z-index: var(--z-overlay);
     background: #000;
-    pointer-events: auto !important;
-    cursor: pointer;
+    pointer-events: auto;
+	cursor: pointer;
+    display: block;
+}
+
+.video_display_none {
+	display: none;
 }
 
 .click-feedback {
@@ -391,37 +396,36 @@ body.bluescreen-active #clicker-btn {
 }
 
 body.rick-rolling {
-    overflow: hidden !important;
+    overflow: hidden;
 }
 
 body.rick-rolling #game-container {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    filter: none !important;
-    transform: none !important;
-    z-index: calc(var(--z-overlay) + 10) !important;
-    /* FIX: Importante per lasciar passare i click al video sotto */
-    pointer-events: none !important;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    filter: none;
+    transform: none;
+    z-index: calc(var(--z-overlay) + 10);
+    pointer-events: none;
 }
 
 body.rick-rolling #click-feedback-container {
-    position: fixed !important;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 10005 !important;
-    pointer-events: none !important;
-    overflow: visible !important;
+    z-index: 10005;
+    pointer-events: none;
+    overflow: visible;
 }
 
 body.rick-rolling .click-feedback {
-    z-index: 10006 !important;
-    opacity: 1 !important;
-    pointer-events: none !important;
+    z-index: 10006;
+    opacity: 1;
+    pointer-events: none;
 }
 
 
@@ -435,27 +439,27 @@ body.rick-rolling #github-link-container,
 body.rick-rolling #header-left-panel,
 body.rick-rolling #header-right-panel,
 body.rick-rolling .header-label-main {
-    display: none !important;
+    display: none;
 }
 
 /* Disattiva contenitori */
 body.rick-rolling .header-main-score {
-    transform: none !important;
-    position: static !important;
-    display: block !important;
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    pointer-events: none !important;
+    transform: none;
+    position: static;
+    display: block;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    pointer-events: none;
 }
 
 body.rick-rolling #center-column {
-    background: transparent !important;
-    border: none !important;
-    overflow: visible !important;
-    pointer-events: none !important;
+    background: transparent;
+    border: none;
+    overflow: visible;
+    pointer-events: none;
 }
 
 /* Fix Numeri Click */
@@ -534,34 +538,31 @@ body.rick-rolling #cps-display {
     opacity: 1 !important;
 }
 
-/* 4. Moltiplicatore Evento (Ancora più sotto) */
+/* Moltiplicatore Evento */
 body.rick-rolling #event-multiplier-display {
-    position: fixed !important;
-    top: 155px !important;
-    right: 25px !important;
-    left: auto !important;
+    position: fixed;
+    top: 155px;
+    right: 25px;
+    left: auto;
+    width: auto;
+    transform: none;
+    z-index: 10020;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 6px 15px;
+    border-radius: 6px;
+    border: 1px solid #e74c3c;
 
-    width: auto !important;
-    transform: none !important;
-    z-index: 10020 !important;
-
-    background: rgba(0, 0, 0, 0.85) !important;
-    padding: 6px 15px !important;
-    border-radius: 6px !important;
-    border: 1px solid #e74c3c !important;
-
-    font-size: 1rem !important;
-    color: #e74c3c !important;
-    text-transform: uppercase !important;
-    font-weight: 800 !important;
-    text-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;
-
-    display: block !important;
-    text-align: right !important;
+    font-size: 1rem;
+    color: #e74c3c;
+    text-transform: uppercase;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+    display: block;
+    text-align: right;
 }
 
 body.rick-rolling #clicker-btn {
-    position: fixed !important;
+    position: fixed;
     bottom: 30px;
     right: 30px;
     left: auto;
@@ -569,8 +570,8 @@ body.rick-rolling #clicker-btn {
     width: 100px;
     height: 100px;
     z-index: 10002;
-    opacity: 1 !important;
-    pointer-events: auto !important;
+    opacity: 1;
+    pointer-events: auto;
     margin: 0;
 }
 
@@ -581,35 +582,28 @@ body.rick-rolling #clicker-btn img {
 
 /* Toast (Spostati per non coprire) */
 body.rick-rolling #toast-container {
-    display: flex !important;
-    opacity: 1 !important;
-    z-index: 11000 !important;
-
-    /* Centramento orizzontale */
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) !important;
-
-    /* Posizionamento verticale (20px dal bordo superiore) */
-    top: 20px !important;
-
-    /* Forza gli elementi interni al centro */
-    align-items: center !important;
+    display: flex;
+    opacity: 1;
+    z-index: 11000;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: 20px;
+    align-items: center;
     pointer-events: none;
 }
 
 body.rick-rolling .column-header-center {
-    background: transparent !important;
-    border: none !important;
+    background: transparent;
+    border: none;
     pointer-events: none;
-    /* Permette di cliccare attraverso la barra vuota */
 }
 
-/* 2. Nascondiamo specificamente i pannelli laterali e l'etichetta "BUG RISOLTI" */
+/* Nascondiamo specificamente i pannelli laterali e l'etichetta "BUG RISOLTI" */
 body.rick-rolling #header-left-panel,
 body.rick-rolling #header-right-panel,
 body.rick-rolling .header-label-main {
-    display: none !important;
+    display: none;
 }
 
 /* =========================================

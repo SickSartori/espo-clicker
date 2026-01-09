@@ -1,4 +1,4 @@
-/* 1. GROUP SETTING */
+/* GROUP SETTING */
 .settings-group {
     background-color: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -57,7 +57,7 @@
     width: 100px;
 }
 
-/* 2. ACCOUNT PREVIEW */
+/* ACCOUNT PREVIEW */
 .account-preview-card {
     display: flex;
     justify-content: space-between;
@@ -71,7 +71,6 @@
 
 
 /* --- NUOVO STILE PROFILO MODERNO --- */
-
 .profile-modern-modal {
     background: #1e293b;
     border: 1px solid #334155;
@@ -407,7 +406,6 @@
 
 
 /* --- ACHIEVEMENT / TROPHY CASE --- */
-
 #achievement-list {
     display: flex;
     flex-direction: column;
@@ -432,22 +430,17 @@
     font-size: 0.8rem;
     line-height: 1.3;
     color: #a0a0a0;
-
-    /* RIMOSSO max-width: 85% che causava problemi */
     width: 100%;
     white-space: normal;
-    /* Forza il testo ad andare a capo */
-
-    /* Clamp a 2 o 3 righe per evitare muri di testo */
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
+    box-orient: vertical;
     overflow: hidden;
 }
 
 /* Bottone per riscatto premi */
-
-
 .trophy-row {
     display: flex;
     align-items: center;
@@ -496,9 +489,7 @@
     justify-content: center;
     font-size: 1.4rem;
     color: #bdc3c7;
-
     margin-right: 15px;
-    /* Spazio tra icona e testo */
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -511,7 +502,6 @@
 /* CONTENUTO TESTO (Centro) */
 .trophy-content {
     flex: 1;
-    /* Occupa tutto lo spazio rimasto */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -525,42 +515,30 @@
     font-size: 1.1rem;
     color: #fff;
     margin-bottom: 4px;
-
-    /* Gestione testo lungo */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 
-/* AZIONE (Destra) */
+/* AZIONE */
 .trophy-action {
     width: 120px;
-    /* AUMENTATO da 80px: Fa spazio a "Skin Speciale" */
     min-width: 120px;
-    /* Non si schiaccia mai */
     display: flex;
     flex-direction: column;
-    /* Impila elementi verticalmente (Barra sopra, testo sotto) */
     justify-content: center;
     align-items: flex-end;
-    /* Allinea tutto a destra */
     flex-shrink: 0;
 }
 
-
 .trophy-flavor {
-    /* Impostazioni grafiche: piccolo e corsivo */
     font-size: 0.65rem;
     font-style: italic;
     color: #7f8c8d;
-    /* Grigio spento */
     margin-top: 5px;
     line-height: 1.2;
     white-space: normal;
-    /* Va a capo se lungo */
-
-    /* LOGICA VISIBILITÀ: Nascosto di base */
     display: none;
 }
 
@@ -571,13 +549,11 @@
 
 .trophy-done {
     font-size: 1.8rem;
-    /* Check più grande */
     color: rgba(255, 255, 255, 0.2);
 }
 
 .trophy-row.completed .trophy-done {
     color: #2ecc71;
-    /* Verde acceso se completato */
     text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
 }
 
@@ -585,18 +561,13 @@
 .trophy-progress {
     width: 100%;
     height: 6px;
-    /* Barra sottile ed elegante */
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
     position: relative;
     overflow: visible;
-    /* FONDAMENTALE: Lascia uscire il testo */
     margin-top: 5px;
-    /* Spazio sopra */
     margin-bottom: 15px;
-    /* Spazio sotto per il testo che appenderemo */
     box-shadow: none;
-    /* Rimuove ombre interne pesanti */
 }
 
 .t-prog-bar {
@@ -610,21 +581,14 @@
 .t-prog-text {
     position: absolute;
     top: 10px;
-    /* Sposta il testo 10px sotto la barra */
     left: 50%;
     transform: translateX(-50%);
-    /* Centra perfettamente */
     width: 140%;
-    /* Più largo della barra per far entrare numeri lunghi */
     text-align: center;
-
     font-family: var(--font-body);
-    /* Font leggibile (Inter) */
     font-size: 0.65rem;
-    /* Testo piccolo */
     font-weight: 600;
     color: #7f8c8d;
-    /* Grigio chiaro, non bianco sparato */
     text-shadow: none;
     white-space: nowrap;
     pointer-events: none;
@@ -645,7 +609,6 @@
     border: none;
     border-radius: 4px;
     padding: 6px 15px;
-    /* Spazio comodo */
     color: #2c3e50;
     font-weight: 800;
     cursor: pointer;
@@ -655,9 +618,7 @@
     gap: 6px;
     transition: transform 0.1s;
     white-space: nowrap;
-    /* Forza riga singola */
     flex-shrink: 0;
-    /* Impedisce schiacciamento */
     min-width: fit-content;
 }
 
@@ -682,7 +643,6 @@
     font-size: 0.8rem;
     text-transform: uppercase;
 }
-
 
 /* --- STILE MIXER AUDIO --- */
 
@@ -729,7 +689,6 @@
 /* Etichetta del suono */
 .mixer-label {
     flex: 0 0 140px;
-    /* Larghezza fissa per allineamento */
     font-size: 0.9rem;
     color: #ecf0f1;
     font-weight: 500;
@@ -753,6 +712,7 @@
 /* Slider Customizzato */
 .mixer-slider {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     background: #2c3e50;
@@ -869,4 +829,71 @@
 .header-action-btn.reset:hover {
     background: rgba(231, 76, 60, 0.2);
     box-shadow: 0 0 10px rgba(231, 76, 60, 0.2);
+}
+
+/* OFFLINE */
+.offline_modal_content {
+	text-align: center;
+	border-color: #f39c12;
+}
+
+.offline_modal_content h2{
+	color: #f39c12;
+	border-bottom-color: #f39c12;
+}
+
+.offline_content {
+	padding: 30px;
+	overflow-y: auto;
+    flex-grow: 1;
+}
+
+.offline_content_sottotitolo {
+	color: #bdc3c7;
+	font-size: 1.1rem;
+}
+
+.offline_content_efficienza_server {
+	margin: 20px 0;
+}
+
+.offline_content_label_efficienza_server {
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	color: #7f8c8d;
+	margin-bottom: 5px;
+}
+
+.offline_efficiency_display {
+	font-weight: bold;
+	color: #3498db;
+	font-size: 1.2rem;
+}
+
+.offline_content_guadagno {
+	background: rgba(243, 156, 18, 0.1);
+	border: 1px solid #d35400;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+}
+
+.offline_earnings_display {
+	font-size: 2.5rem;
+	font-weight: 800;
+	color: #f1c40f;
+	text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+}
+
+.offline_content_guadagno_label {
+	font-size: 1.2rem;
+	color: #f1c40f;
+}
+
+.offline_content_button {
+	background: linear-gradient(to right, #f1c40f, #e67e22);
+	color: #2c3e50;
+	font-size: 1.2rem;
+	padding: 15px;
+	width: 100%;
 }

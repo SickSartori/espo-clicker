@@ -29,8 +29,8 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guida";
-	$labels["navbar_stats"] = "Stats";
-	$labels["navbar_arcade"] = "Arcade";
+	$labels["navbar_stats"] = "Statistiche";
+	$labels["navbar_arcade"] = "Sala Giochi";
 	$labels["navbar_obiettivi"] = "Obiettivi";
 	$labels["navbar_skin"] = "Skin";
 	$labels["navbar_classifica"] = "Classifica";
