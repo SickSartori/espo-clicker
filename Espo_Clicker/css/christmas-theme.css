@@ -60,7 +60,7 @@ body.theme-christmas #game-container #cps-display {
 body.theme-christmas .bg-christmas {
     background: radial-gradient(circle, #fff 10%, #c0392b 90%);
     box-shadow: 0 0 40px rgba(231, 76, 60, 0.8), 0 0 10px #fff;
-    border: 4px solid #fff !important;
+    border: 4px solid #fff;
     animation: pulseGlow 2s infinite alternate;
 }
 

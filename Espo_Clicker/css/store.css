@@ -408,7 +408,7 @@
 }
 
 .prestige-upgrade .upgrade-desc {
-    color: #bdc3c7 !important;
+    color: #bdc3c7;
     font-family: var(--font-body);
     font-size: 0.7rem;
     line-height: 1.2;
@@ -416,7 +416,7 @@
 }
 
 .prestige-upgrade .upgrade-cost {
-    color: #f1c40f !important;
+    color: #f1c40f;
     font-weight: 700;
     font-size: 0.9rem;
     margin-top: 5px;
@@ -424,18 +424,18 @@
 
 .prestige-upgrade .buy-btn:hover:not(:disabled):not(.owned) {
     filter: brightness(1.1);
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4) !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
 }
 
 /* Fix Bottone MAX / POSSEDUTO (Uniformato agli altri tab) */
 .prestige-upgrade .buy-btn.owned {
-    background: rgba(44, 62, 80, 0.5) !important;
-    background-image: none !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    color: #2ecc71 !important;
-    box-shadow: none !important;
+    background: rgba(44, 62, 80, 0.5);
+    background-image: none;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    color: #2ecc71;
+    box-shadow: none;
     cursor: default;
-    width: auto !important;
+    width: auto;
     min-width: 80px;
 }
 

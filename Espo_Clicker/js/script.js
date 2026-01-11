@@ -1,7 +1,7 @@
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton, scoreDisplay, cpsDisplay, feedbackContainer, achievementList;
 let toastContainer, goldenBug, soundBluescreen, prestigeSection, prestigePointsDisplay;
-let prestigeGainDisplay, prestigeBtn, prestigeBonusDisplay, eventMultiplierDisplay;
+let prestigeGainDisplay, prestigeBonusDisplay, eventMultiplierDisplay;
 let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, rightColumn;
 let statsList, gameContainer, prestigeStore;
 let buyMultiplier = 1;
@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     prestigeSection = document.getElementById('prestige-section');
     prestigePointsDisplay = document.getElementById('prestige-points-display');
     prestigeGainDisplay = document.getElementById('prestige-gain-display');
-    prestigeBtn = document.getElementById('prestige-btn');
     prestigeBonusDisplay = document.getElementById('prestige-bonus-display');
     eventMultiplierDisplay = document.getElementById('event-multiplier-display');
     prestigeStore = document.getElementById('prestige-store');
@@ -136,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-				//.then((response) => {console.log(response.json());})
+				.then((response) => {console.log(response.json());})
 				.catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);

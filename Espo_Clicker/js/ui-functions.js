@@ -1468,9 +1468,6 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         // Aggiorna immagine
         element.src = `assets/image/${imgSrc}`;
 
-        // Reset filtri (utile se venivano alterati da eventi)
-        element.style.filter = 'none';
-
         // Rimuovi vecchie classi di sfondo rarità
         element.classList.remove(...bgClasses);
 

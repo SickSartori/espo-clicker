@@ -1,6 +1,5 @@
 #skins-grid {
     display: grid;
-    /* Card leggermente più larghe (140px) per far respirare il testo */
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
     padding: 15px;
@@ -12,26 +11,18 @@
     background-color: var(--bg-panel);
     border: 3px solid var(--border-color);
     border-radius: 12px;
-
     height: 240px;
     width: 100%;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-
     padding: 10px 10px 15px 10px;
-
     box-sizing: border-box;
     position: relative;
-
-    /* MODIFICA QUI: Cambia da hidden a visible */
     overflow: visible !important;
-
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
-    /* Aggiunto z-index alla transizione */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -88,7 +79,7 @@
     box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
 }
 
-/* --- 1. BADGE RARITÀ (In alto a destra) --- */
+/* --- BADGE RARITÀ (In alto a destra) --- */
 .skin-badge {
     position: absolute;
     top: 0;
@@ -103,7 +94,7 @@
     z-index: 5;
 }
 
-/* --- 2. IMMAGINE (Dimensione Fissa) --- */
+/* --- IMMAGINE (Dimensione Fissa) --- */
 .skin-img-container {
     width: 80px;
     height: 80px;
@@ -128,7 +119,7 @@
     opacity: 0.5;
 }
 
-/* --- 3. NOME SKIN (Altezza Fissa) --- */
+/* --- NOME SKIN (Altezza Fissa) --- */
 .skin-name-display {
     font-family: var(--font-heading);
     font-size: 0.9rem;
@@ -136,7 +127,6 @@
     color: #fff;
     text-align: center;
     width: 100%;
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -144,12 +134,11 @@
     min-height: 20px;
 }
 
-/* --- 4. DESCRIZIONE (Area Fissa) --- */
+/* --- DESCRIZIONE (Area Fissa) --- */
 
 .skin-desc {
     width: 100%;
     height: 75px;
-    /* Aumentato per 3 righe piene */
     margin-bottom: 5px;
     position: relative;
     display: flex;
@@ -157,7 +146,6 @@
     justify-content: center;
     overflow: hidden;
     line-height: 1.15;
-    /* Interlinea leggermente più stretta per compattare */
 }
 
 .skin-fade-wrapper {
@@ -181,10 +169,8 @@
     padding: 0 4px;
     box-sizing: border-box;
     font-size: 0.7rem;
-    /* Dimensione ottimale */
     white-space: normal !important;
     overflow-wrap: break-word;
-    /* Forza la rottura delle parole lunghe */
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
@@ -212,12 +198,12 @@
     font-style: italic;
 }
 
-/* --- 5. SPACER (Spinge il bottone in fondo) --- */
+/* --- SPACER (Spinge il bottone in fondo) --- */
 .skin-card-spacer {
     flex-grow: 1;
 }
 
-/* --- 6. FOOTER (Status / Bottone) --- */
+/* --- FOOTER (Status / Bottone) --- */
 .skin-footer {
     width: 100%;
     margin-top: auto;
@@ -309,32 +295,32 @@
 /* Sfondi Rarità Immagine */
 .bg-common {
     background: radial-gradient(circle, #bdc3c7 0%, #2c3e50 100%);
-    border: 4px solid #bdc3c7 !important;
+    border: 4px solid #bdc3c7;
     box-shadow: 0 0 15px rgba(189, 195, 199, 0.4);
 }
 
 .bg-rare {
     background: radial-gradient(circle, #3498db 0%, #1a5276 100%);
-    border: 4px solid #3498db !important;
+    border: 4px solid #3498db;
     box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
 }
 
 .bg-epic {
     background: radial-gradient(circle, #9b59b6 0%, #4a235a 100%);
     box-shadow: 0 0 25px rgba(155, 89, 182, 0.5);
-    border: 4px solid #8e44ad !important;
+    border: 4px solid #8e44ad;
 }
 
 .bg-legendary {
     background: radial-gradient(circle, #f1c40f 0%, #b7950b 100%);
     box-shadow: 0 0 35px rgba(241, 196, 15, 0.6);
     animation: legendaryGlow 3s infinite alternate;
-    border: 4px solid #f1c40f !important;
+    border: 4px solid #f1c40f;
 }
 
 .bg-divine {
     background: radial-gradient(circle, #fff 10%, #ffd700 40%, #b8860b 90%);
-    border: 4px solid #fff !important;
+    border: 4px solid #fff;
     box-shadow:
         0 0 20px #ffd700,
         0 0 40px #b8860b,

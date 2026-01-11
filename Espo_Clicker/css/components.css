@@ -6,16 +6,13 @@
     color: white;
     border: none;
     border-radius: 4px;
-    /* Più squadrato = più tech */
     padding: 0 15px;
     font-size: 1rem;
-    /* Rajdhani è leggibile anche più grande */
     font-weight: 700;
     font-family: var(--font-heading);
     cursor: pointer;
     transition: all 0.1s;
     height: 40px;
-    /* Altezza standard */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,7 +23,6 @@
 .buy-btn:hover:not(:disabled) {
     background-color: var(--primary-dark);
     box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
-    /* Glow effect */
 }
 
 .buy-btn:active {
@@ -34,16 +30,14 @@
 }
 
 .buy-btn:disabled {
-    background-color: rgba(0, 0, 0, 0.2) !important;
-    color: rgba(255, 255, 255, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     cursor: not-allowed;
-    box-shadow: none !important;
+    box-shadow: none;
     opacity: 0.7;
     pointer-events: none;
 }
-
-
 
 .buy-btn.owned {
     background-color: rgba(44, 62, 80, 0.5) !important;
@@ -55,7 +49,6 @@
 
 .buy-btn:not(:disabled) {
     border: 1px solid #2ecc71;
-    /* Bordo verde sottile */
     box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
     transition: all 0.2s ease;
 }
@@ -66,12 +59,9 @@
     transform: translateY(-2px);
 }
 
-
-
 /*
  * Classi Ghost Bottone
  */
-
 .ghost-btn {
     background: transparent;
     border: 1px solid #5d7c9a;
@@ -110,7 +100,6 @@
     background: none;
     border: none;
     color: #e74c3c;
-    /* Rosso spento */
     cursor: pointer;
     font-size: 0.9rem;
     text-decoration: underline;

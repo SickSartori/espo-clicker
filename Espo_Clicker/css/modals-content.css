@@ -297,12 +297,11 @@
     gap: 10px;
 }
 
-
 .prestige-btn {
     position: relative;
     overflow: hidden;
     background: linear-gradient(90deg, #f1c40f, #f39c12);
-    color: #1a1a1a !important;
+    color: #1a1a1a;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;

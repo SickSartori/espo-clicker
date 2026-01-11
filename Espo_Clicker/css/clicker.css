@@ -1,18 +1,14 @@
 /* css/clicker.css - Area Centrale di Gioco */
-
 #clicker-section {
     padding: 10px 20px;
     display: flex;
     flex-direction: column;
-
     justify-content: center;
     align-items: center;
-
     position: relative;
     flex-grow: 1;
     height: 100%;
     min-height: 0;
-
     gap: 2vh;
 }
 
@@ -42,8 +38,6 @@
 
 }
 
-
-
 /* Bottone Clicker */
 #clicker-btn {
     background: none;
@@ -53,7 +47,6 @@
     transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
     z-index: var(--z-content);
     position: relative;
-
     /* DIMENSIONE REATTIVA:
        - Minimo: 180px 
        - Ideale: 35% dell'altezza dello schermo (35vh)
@@ -62,7 +55,6 @@
     width: clamp(180px, 35vh, 280px);
     height: clamp(180px, 35vh, 280px);
     margin: 0 auto;
-
     flex-shrink: 0;
     outline: none;
     -webkit-tap-highlight-color: transparent;
@@ -101,8 +93,7 @@
     top: 0;
     left: 0;
     transition: none;
-
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    filter: none;
 }
 
 #manager-photo-clicked {
@@ -135,23 +126,15 @@
 
 #score-display[data-tooltip]:hover::after {
     content: attr(data-tooltip);
-    /* Assicuriamoci che prenda il contenuto */
-
-    /* Posizionamento SOTTO */
     top: 100%;
     bottom: auto;
-
-    /* CENTRAMENTO PERFETTO */
     left: 50%;
     transform: translateX(-50%);
-
     margin-top: 12px;
     margin-bottom: 0;
-
     width: max-content;
     min-width: auto;
     white-space: nowrap;
-
     background-color: rgba(10, 15, 20, 0.98);
     border: 1px solid #ff4757;
     color: #fff;
@@ -166,20 +149,15 @@
 #score-display[data-tooltip]:hover::before {
     content: '';
     position: absolute;
-
     top: 100%;
     bottom: auto;
-
     left: 50%;
     transform: translateX(-50%);
-
     border: 6px solid transparent;
     border-bottom-color: #ff4757;
-
     margin-top: 0px;
     z-index: var(--z-loader);
 }
-
 
 #cps-display {
     font-family: var(--font-heading);
@@ -191,7 +169,6 @@
     border-radius: 20px;
     margin-top: 32px;
 }
-
 
 /* Skill Button (Crunch Time) */
 .skill-btn {
@@ -279,44 +256,27 @@
     position: absolute;
     cursor: pointer;
     z-index: calc(var(--z-nav) - 1);
-
-    /* MODIFICA: Nascosto di default all'avvio! */
     display: none;
-
-    /* Dimensioni del contenitore */
     width: 60px;
     height: 60px;
-
-    /* Centriamo l'icona */
     align-items: center;
     justify-content: center;
-
     transition: transform 0.2s;
-
-    /* Animazioni */
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
 }
 
 #golden-bug i {
     font-size: 3rem;
-    /* Icona Grande */
     color: #facc15;
-    /* Oro di base */
-
-    /* Effetto Neon Glow */
     filter: drop-shadow(0 0 10px #facc15) drop-shadow(0 0 20px #e67e22);
-
-    /* Animazione Glitch Digitale (quella creata nel passaggio precedente) */
     animation: cyberGlitchAnim 2s infinite linear alternate-reverse;
 }
 
 #golden-bug:hover i {
     color: #fff;
-    /* Diventa bianco al passaggio */
     filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #facc15);
     transform: scale(1.2);
 }
-
 
 body #version-display {
     position: fixed;
@@ -324,7 +284,6 @@ body #version-display {
     left: 50%;
     transform: translateX(-50%);
     right: auto;
-
     z-index: 9000;
     font-size: 0.75rem;
     font-family: monospace;
@@ -345,7 +304,6 @@ body #version-display {
 }
 
 /* --- EFFETTO GLITCH 404 --- */
-
 body.bluescreen-active #game-container {
     animation: glitch-skew 0.2s infinite linear;
     filter: hue-rotate(180deg) contrast(1.2);
@@ -366,7 +324,6 @@ body.bluescreen-active #clicker-btn {
 }
 
 /* --- RICK ROLL / RICARDO MODE --- */
-
 .rick_roll_video,
 .ricardo_video,
 .ricardo_metal_video,
@@ -428,7 +385,6 @@ body.rick-rolling .click-feedback {
     pointer-events: none;
 }
 
-
 body.rick-rolling #left-column,
 body.rick-rolling #right-column,
 body.rick-rolling #version-display,
@@ -479,32 +435,26 @@ body.rick-rolling .click-feedback {
     opacity: 1 !important;
 }
 
-
 body.rick-rolling #score-display {
     position: fixed !important;
     top: 25px !important;
     right: 25px !important;
     left: auto !important;
     bottom: auto !important;
-
     width: auto !important;
-
     transform: none !important;
     margin: 0 !important;
     z-index: 10020 !important;
-
     font-family: 'Rajdhani', sans-serif !important;
     font-size: 2.2rem !important;
     font-weight: 800 !important;
     color: #f1c40f !important;
     text-shadow: 2px 2px 0 #000, 0 0 15px rgba(241, 196, 15, 0.5) !important;
-
     background: rgba(0, 0, 0, 0.85) !important;
     padding: 10px 20px !important;
     border-radius: 12px !important;
     border: 2px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
-
     text-align: right !important;
     pointer-events: auto !important;
     display: block !important;
@@ -513,26 +463,20 @@ body.rick-rolling #score-display {
 body.rick-rolling #cps-display {
     position: fixed !important;
     top: 105px !important;
-    /* Subito sotto lo score */
     right: 25px !important;
     left: auto !important;
-
     width: auto !important;
-
     transform: none !important;
     margin: 0 !important;
     z-index: 10020 !important;
-
     font-size: 1.1rem !important;
     font-weight: 700 !important;
     color: #3498db !important;
     text-shadow: 1px 1px 0 #000 !important;
-
     background: rgba(0, 0, 0, 0.85) !important;
     padding: 6px 15px !important;
     border-radius: 8px !important;
     border: 1px solid rgba(52, 152, 219, 0.3) !important;
-
     text-align: right !important;
     display: block !important;
     opacity: 1 !important;
@@ -551,7 +495,6 @@ body.rick-rolling #event-multiplier-display {
     padding: 6px 15px;
     border-radius: 6px;
     border: 1px solid #e74c3c;
-
     font-size: 1rem;
     color: #e74c3c;
     text-transform: uppercase;
