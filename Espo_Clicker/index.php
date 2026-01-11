@@ -144,7 +144,7 @@
 						<?php echo $labels["navbar_promozione"]; ?>
 					</span>
 				</button>
-				<button id="open-settings-btn" class="nav-item" title="Opzioni">
+				<button id="open-settings-btn" class="nav-item" title="<?php echo $labels["navbar_opzioni"]; ?>">
 					<i class="nav-icon fa-solid fa-gear"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_opzioni"]; ?>
@@ -153,7 +153,7 @@
 			</div>
 		</nav>
 
-		<button id="quick-mute-btn" title="Muta Tutto">
+		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>">
 			<i class="fa-solid fa-volume-high"></i>
 		</button>
 
@@ -192,12 +192,12 @@
 			<?php include 'includes/col_buildings.php'; ?>
 		</div>
 
-		<div id="golden-bug" title="Un Ticket Critico! Clicca!">
+		<div id="golden-bug" title="<?php echo $labels["index_golden_bug_title"]; ?>">
 			<i class="fa-solid fa-bug"></i>
 		</div> 
 
 		<div id="github-link-container">
-			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="Repository GitHub">
+			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="<?php echo $labels["index_github_title"]; ?>">
 				<i class="fa-brands fa-github"></i>
 			</a>
 		</div>

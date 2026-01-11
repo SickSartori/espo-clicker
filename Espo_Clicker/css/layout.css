@@ -1,19 +1,14 @@
 /* css/layout.css - Layout e Griglia */
 
 #game-container {
-
-    backdrop-filter: blur(2x);
-    -webkit-backdrop-filter: blur(4px);
-
+    backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-
     max-width: 97%;
     width: 98%;
     height: calc(100vh - 90px);
     max-height: calc(100vh - 90px);
-
     display: flex;
     flex-wrap: nowrap;
     margin: 0 auto;

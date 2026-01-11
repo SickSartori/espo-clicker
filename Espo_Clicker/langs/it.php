@@ -51,6 +51,15 @@
 	$labels["mobile_tab_console"] = "Console";
 	$labels["mobile_tab_team"] = "Team";
 
+    // GOLDEN BUG
+    $labels["index_golden_bug_title"] = "Un Ticket Critico! Clicca!";
+
+    // REPOSITORY GITHUB
+    $labels["index_github_title"] = "Repository GitHub";
+
+    // MUTE
+    $labels["index_muta_audio"] = "Muta Tutto!";
+
 	/*----------------------------------------------------------------------------------------
 	* MODALS
 	*---------------------------------------------------------------------------------------- */

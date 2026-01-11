@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-				.then((response) => {console.log(response.json());})
+				//.then((response) => {console.log(response.json());})
 				.catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
