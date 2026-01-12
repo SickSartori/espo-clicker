@@ -488,11 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             document.body.classList.add('modal-open');
-
-            if (modal.id === 'login-modal') {
-                const muteBtn = document.getElementById('quick-mute-btn');
-                if (muteBtn) muteBtn.style.display = 'none';
-            }
         }
     }
 
@@ -526,11 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!anyOpen) {
                     document.body.classList.remove('modal-open');
-                }
-
-                if (modal.id === 'login-modal') {
-                    const muteBtn = document.getElementById('quick-mute-btn');
-                    if (muteBtn) muteBtn.style.display = '';
                 }
             }
         }

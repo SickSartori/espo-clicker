@@ -225,11 +225,10 @@ body.matrix-active .buy-btn {
 
 body.matrix-active .buy-btn:hover {
     background: #fff;
-    box-shadow: 0 0 20px #fff !important;
+    box-shadow: 0 0 20px #fff;
 }
 
 /*--------------------------------------------------------------------------------*/
-
 
 /* Scrollbar Globali */
 * {
@@ -351,7 +350,7 @@ body.matrix-active .buy-btn:hover {
 /* Quick Mute */
 #login-modal[style*="flex"]~#quick-mute-btn,
 #login-modal[style*="block"]~#quick-mute-btn {
-    display: none !important;
+    display: none;
 }
 
 #quick-mute-btn {
@@ -390,7 +389,6 @@ body.matrix-active .buy-btn:hover {
 }
 
 /* --- EFFETTO CRUNCH TIME (FIAMME) --- */
-
 #crunch-overlay {
     position: fixed;
     top: 0;
@@ -412,60 +410,60 @@ body.matrix-active .buy-btn:hover {
 }
 
 body.crunch-active {
-    background: linear-gradient(-45deg, #4a0000, #2b0000, #590000, #1a0000) !important;
+    background: linear-gradient(-45deg, #4a0000, #2b0000, #590000, #1a0000);
     background-size: 400% 400%;
-    animation: gradientBG 5s ease infinite !important;
-    /* Animazione più veloce */
+    animation: gradientBG 5s ease infinite;
 }
 
 /* Assicura che il contenitore di gioco sia rossastro e semi-trasparente */
 body.crunch-active #game-container {
-    border-color: #ff4500 !important;
-    background-color: rgba(30, 0, 0, 0.9) !important;
-    /* Rosso scuro quasi opaco */
-    box-shadow: 0 0 60px rgba(255, 69, 0, 0.6) !important;
+    border-color: #ff4500;
+    background-color: rgba(30, 0, 0, 0.9);
+    box-shadow: 0 0 60px rgba(255, 69, 0, 0.6);
 }
 
 /* Rende la navbar incandescente */
 body.crunch-active #game-navbar {
-    background: linear-gradient(to bottom, #500000, #300000) !important;
-    border-bottom: 2px solid #ff4500 !important;
+    background: linear-gradient(to bottom, #500000, #300000);
+    border-bottom: 2px solid #ff4500;
     box-shadow: 0 0 20px #ff4500;
 }
 
-/* 3. Colonne laterali (Upgrade e Team) */
+/* Colonne laterali (Upgrade e Team) */
 body.crunch-active .game-column {
-    /* Tinta rossastra sulle colonne */
-    background: rgba(255, 0, 0, 0.05) !important;
-    border-right: 1px solid rgba(255, 69, 0, 0.4) !important;
+    background: rgba(255, 0, 0, 0.05);
+    border-right: 1px solid rgba(255, 69, 0, 0.4);
 }
 
-/* 4. Titoli delle sezioni */
+/* Titoli delle sezioni */
 body.crunch-active h2,
 body.crunch-active .section-header h2 {
-    color: #ffcc00 !important;
-    /* Giallo fuoco */
+    color: #ffcc00;
     text-shadow: 0 0 10px #ff4500;
 }
 
-/* 5. Bottoni "Compra" e Navigazione */
+/* Bottoni "Compra" e Navigazione */
+body.crunch-active .buy-btn:not(:disabled) {
+        background: #e67e22;
+}
+
 body.crunch-active .buy-btn:not(:disabled),
 body.crunch-active .nav-item {
-    border-color: #e67e22 !important;
+    border-color: #e67e22;
     box-shadow: 0 0 10px rgba(230, 126, 34, 0.2);
 }
 
 body.crunch-active .buy-btn:not(:disabled):hover {
-    background-color: #d35400 !important;
+    background-color: #d35400;
     box-shadow: 0 0 15px #ff4500;
 }
 
-/* 6. Barra progresso (Lock) */
+/* Barra progresso (Lock) */
 body.crunch-active .progress-bar-fill {
-    background: linear-gradient(to right, #ff4500, #ffcc00) !important;
+    background: linear-gradient(to right, #ff4500, #ffcc00);
 }
 
-/* 7. Icone e Testi vari */
+/* Icone e Testi vari */
 body.crunch-active i,
 body.crunch-active .upgrade-name {
     text-shadow: 0 0 5px rgba(255, 100, 0, 0.5);
@@ -479,14 +477,10 @@ body.crunch-active .upgrade-name {
     left: 0;
     width: 100%;
     height: 100%;
-    /* Altezza ridotta per concentrare il fuoco in basso */
     pointer-events: none;
     z-index: calc(var(--z-overlay) + 1);
     overflow: hidden;
     display: none;
-
-    /* IL SEGRETO DEL FUOCO LIQUIDO: */
-    /* Il contrasto alto "taglia" la sfocatura delle particelle rendendole nette ma fuse insieme */
     filter: contrast(200%) brightness(120%);
     background: transparent;
 }
@@ -496,16 +490,10 @@ body.crunch-active .upgrade-name {
     position: absolute;
     bottom: -30px;
     border-radius: 50%;
-    /* Gradiente dal giallo (interno) al rosso (esterno) */
     background: radial-gradient(circle, rgba(255, 255, 0, 1) 20%, rgba(255, 100, 0, 1) 50%, rgba(200, 0, 0, 0.8) 80%);
     opacity: 0;
-
-    /* Sfocatura alta per permettere la fusione */
     filter: blur(15px);
-
-    /* Mix blend screen per renderle luminose */
     mix-blend-mode: screen;
-
     animation: fireRise linear forwards;
 }
 
@@ -516,7 +504,6 @@ body.crunch-active .upgrade-name {
     width: 4px;
     height: 12px;
     background: #fff;
-    /* Bianco incandescente */
     border-radius: 2px;
     filter: blur(1px);
     opacity: 0;
@@ -533,7 +520,6 @@ body.crunch-active .upgrade-name {
 
     10% {
         opacity: 1;
-        /* Appare subito */
     }
 
     50% {
@@ -543,7 +529,6 @@ body.crunch-active .upgrade-name {
 
     100% {
         opacity: 0;
-        /* Si rimpicciolisce e diventa scura (fumo) verso l'alto */
         transform: translateY(-90vh) scale(0) translateX(calc(var(--drift) * 2));
         background: rgba(50, 50, 50, 0);
     }
@@ -574,18 +559,11 @@ body.crunch-active .upgrade-name {
     opacity: 0;
     transition: opacity 0.5s;
     mix-blend-mode: overlay;
-    /* Fonde meglio con lo sfondo scuro */
-
-    /* Vignettatura di calore: Scuro ai bordi, incandescente sotto */
     background: radial-gradient(circle at 50% 120%,
             rgba(255, 200, 0, 0.6) 0%,
-            /* Giallo nucleo */
             rgba(255, 69, 0, 0.5) 30%,
-            /* Rosso fuoco */
             rgba(100, 0, 0, 0.8) 70%,
-            /* Rosso sangue */
             rgba(0, 0, 0, 0.9) 100%
-            /* Nero fumo */
         );
 }
 
