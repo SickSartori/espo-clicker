@@ -35,18 +35,18 @@ async function generateHash(message) {
  *
  *****************************************************************/
 function eToNumber(num) {
-  let sign = "";
-  (num += "").charAt(0) == "-" && (num = num.substring(1), sign = "-");
-  let arr = num.split(/[e]/ig);
-  if (arr.length < 2) return sign + num;
-  let dot = (.1).toLocaleString('it-IT').substr(1, 1), n = arr[0], exp = +arr[1],
-      w = (n = n.replace(/^0+/, '')).replace(dot, ''),
-    pos = n.split(dot)[1] ? n.indexOf(dot) + exp : w.length + exp,
-    L   = pos - w.length, s = "" + BigInt(w);
-    w   = exp >= 0 ? (L >= 0 ? s + "0".repeat(L) : r()) : (pos <= 0 ? "0" + dot + "0".repeat(Math.abs(pos)) + s : r());
-  L= w.split(dot); if (L[0]==0 && L[1]==0 || (+w==0 && +s==0) ) w = 0; //** added 9/10/2021
-  return sign + w;
-  function r() {return w.replace(new RegExp(`^(.{${pos}})(.)`), `$1${dot}$2`)}
+    let sign = "";
+    (num += "").charAt(0) == "-" && (num = num.substring(1), sign = "-");
+    let arr = num.split(/[e]/ig);
+    if (arr.length < 2) return sign + num;
+    let dot = (.1).toLocaleString('it-IT').substr(1, 1), n = arr[0], exp = +arr[1],
+        w = (n = n.replace(/^0+/, '')).replace(dot, ''),
+        pos = n.split(dot)[1] ? n.indexOf(dot) + exp : w.length + exp,
+        L = pos - w.length, s = "" + BigInt(w);
+    w = exp >= 0 ? (L >= 0 ? s + "0".repeat(L) : r()) : (pos <= 0 ? "0" + dot + "0".repeat(Math.abs(pos)) + s : r());
+    L = w.split(dot); if (L[0] == 0 && L[1] == 0 || (+w == 0 && +s == 0)) w = 0; //** added 9/10/2021
+    return sign + w;
+    function r() { return w.replace(new RegExp(`^(.{${pos}})(.)`), `$1${dot}$2`) }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -113,9 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.user.username && currentUserPassword) {
             try {
                 // Forza numeri interi puliti per evitare notazione scientifica (1e+21)
-                let scoreToSend = eToNumber(gameState.lifetimeScore.toString().replace(".", ","));
+                let rawScore = Math.floor(gameState.lifetimeScore);
+                if (!isFinite(rawScore) || isNaN(rawScore)) rawScore = 0;
 
-                if (!scoreToSend || scoreToSend <= 0) scoreToSend = Math.floor(gameState.totalScore);
+                let scoreToSend = rawScore.toLocaleString('en-US', { useGrouping: false });
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
                 // Genera la firma
@@ -135,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-				.then((response) => {console.log(response.json());})
-				.catch(err => console.warn("Cloud save error:", err));
+                    //.then((response) => { console.log(response.json()); })
+                    .catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
             }
@@ -478,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newBtn.addEventListener('click', claimHandler);
 
         // Mostra
-		modal.classList.remove("modal_backdrop_none");
+        modal.classList.remove("modal_backdrop_none");
     }
 
     let lastFrameTime = Date.now();
@@ -782,15 +783,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
             const video = document.getElementById(id);
 
-            if (video)
-			{
-				video.pause();
-				video.classList.add("video_display_none");
-				video.currentTime = 0;
+            if (video) {
+                video.pause();
+                video.classList.add("video_display_none");
+                video.currentTime = 0;
 
-				document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
-    			document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
-			}
+                document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+                document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
+            }
         });
 
         const soundClick = document.getElementById('sound-click');
@@ -928,8 +928,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             const customVol = (typeof getCustomVolume === 'function') ? getCustomVolume(id) : 1.0;
                             video.volume = gameState.user.masterVolume * gameState.user.musicVolume * customVol;
 
-							document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
-    						document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
+                            document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+                            document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
                         }
                     });
                 }

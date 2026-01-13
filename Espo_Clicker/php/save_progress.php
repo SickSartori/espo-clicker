@@ -15,40 +15,40 @@ if (!isset($data['saveData'])) {
 }
 
 // --- VALIDAZIONE SICUREZZA ---
-$rawScore = isset($data['score']) ? $data['score'] : 0;
-$rawPrestige = isset($data['prestige']) ? $data['prestige'] : 0;
+$rawScore = isset($data['score']) ? (string)$data['score'] : "0";
+$rawPrestige = isset($data['prestige']) ? (string)$data['prestige'] : "0";
 
-// Formattazione stringa pulita
-$cleanScore = number_format((float)$rawScore, 0, '', '');
-$cleanPrestige = number_format((float)$rawPrestige, 0, '', '');
+// Pulizia base: ci assicuriamo che contengano solo caratteri validi per un numero (cifre, punti, e, +, -)
+// Questo permette di accettare sia "100000" che "1.52e+30"
+if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { 
+    $rawScore = "0"; 
+}
+if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawPrestige)) { 
+    $rawPrestige = "0"; 
+}
 
 $clientHash = isset($data['hash']) ? $data['hash'] : '';
-
-// Ricostruzione firma
-$dataString = $cleanScore . '-' . $cleanPrestige . '-' . GAME_SECRET_KEY;
+$dataString = $rawScore . '-' . $rawPrestige . '-' . GAME_SECRET_KEY;
 $serverHash = hash(HASH_ALGO, $dataString);
 
 if (!hash_equals($serverHash, $clientHash)) {
-    // Logga l'errore nel file di log del server, non a schermo
-    error_log("Security Mismatch. User: {$user['username']} | Server: $serverHash vs Client: $clientHash");
+    error_log("Security Mismatch. User: {$user['username']} | Server: $serverHash vs Client: $clientHash | Data: $dataString");
     echo json_encode(["status" => "warning", "message" => "Salvataggio rifiutato: Integrità dati fallita."]);
     exit;
 }
 
-// 1. Salvataggio Cloud
+// 1. Salvataggio Cloud (JSON Completo)
 $saveJson = json_encode($data['saveData']);
 $stmt = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE id = ?");
 $stmt->bind_param("si", $saveJson, $user['id']);
 $stmt->execute();
 
 // 2. Aggiornamento Classifica
-// Logica Rate Limit (opzionale, qui ridotta a 0 per test immediati)
+// Nota: Se il database ha colonne DECIMAL, i numeri scientifici (es. 1e+30) potrebbero essere troncati 
+// finché non aggiorneremo anche la struttura del DB nel prossimo passo.
 $allowUpdate = true; 
 
 if ($allowUpdate) {
-    // FIX COMPATIBILITÀ & OVERFLOW
-    // Usiamo una query diretta con parametri duplicati per evitare la sintassi VALUES() deprecata
-    // e garantire che DECIMAL venga trattato correttamente.
     $stmtLb = $conn->prepare("
         INSERT INTO $table_leaderboard (username, score, prestigeLevel, timestamp) 
         VALUES (?, ?, ?, NOW())
@@ -58,9 +58,8 @@ if ($allowUpdate) {
             timestamp = NOW()
     ");
     
-    // Bind: "sss" per INSERT e "ss" per UPDATE -> "sssss"
-    // Parametri: Username, Score, Prestige, Score(again), Prestige(again)
-    $stmtLb->bind_param("sssss", $user['username'], $cleanScore, $cleanPrestige, $cleanScore, $cleanPrestige);
+    // Usiamo le stringhe raw. MySQL gestirà la conversione finché i numeri non superano la capacità del campo DECIMAL.
+    $stmtLb->bind_param("sssss", $user['username'], $rawScore, $rawPrestige, $rawScore, $rawPrestige);
     
     if (!$stmtLb->execute()) {
         error_log("Leaderboard Error: " . $stmtLb->error);
