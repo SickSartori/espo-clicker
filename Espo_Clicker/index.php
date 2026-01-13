@@ -229,7 +229,8 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
     	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-
+		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
+		
 		<script src="./js/version-config.js" defer></script>
 		<script src="./js/game-data.js" defer></script>
 		<script src="./js/ui-functions.js" defer></script>
