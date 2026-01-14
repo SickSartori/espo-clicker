@@ -985,12 +985,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
-        if (window.innerWidth <= 1024) {
-            document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
-            const center = document.getElementById('center-column');
 
-            if (center) center.classList.add('mobile-active');
+        // Funzione helper per gestire le classi del body (per il Golden Bug)
+        function setMobileViewClass(targetId) {
+            document.body.classList.remove('mobile-view-left', 'mobile-view-center', 'mobile-view-right');
+            if (targetId === 'center-column') document.body.classList.add('mobile-view-center');
+            else if (targetId === 'left-column') document.body.classList.add('mobile-view-left');
+            else if (targetId === 'right-column') document.body.classList.add('mobile-view-right');
         }
+
+        // --- FIX AVVIO MOBILE: Forza la vista centrale al caricamento ---
+        if (window.innerWidth <= 1024) {
+            // 1. Imposta la classe al body per dire che siamo al centro
+            document.body.classList.add('mobile-view-center');
+
+            // 2. Assicurati che tutte le colonne siano nascoste, poi mostra il centro
+            document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
+            const centerCol = document.getElementById('center-column');
+            if (centerCol) {
+                centerCol.classList.add('mobile-active'); // <--- QUESTO FA APPARIRE IL CLICKER
+            }
+
+            // 3. Assicura che il bottone in basso "Console" sia acceso
+            mobileBtns.forEach(b => b.classList.remove('active'));
+            const centerBtn = document.querySelector('.mobile-nav-btn[data-target="center-column"]');
+            if (centerBtn) centerBtn.classList.add('active');
+        }
+        // -------------------------------------------------------------
 
         mobileBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -998,13 +1019,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('active');
 
                 const targetId = btn.getAttribute('data-target');
+
+                setMobileViewClass(targetId);
+
                 document.querySelectorAll('.game-column').forEach(col => col.classList.remove('mobile-active'));
                 const targetCol = document.getElementById(targetId);
 
                 if (targetCol) {
                     targetCol.classList.add('mobile-active');
-                    if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
                 }
+
+                if (targetId === 'left-column' && typeof refreshAllStores === 'function') refreshAllStores();
 
                 playSound('sound-click');
             });

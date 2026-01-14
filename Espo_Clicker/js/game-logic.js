@@ -1233,7 +1233,7 @@ function scheduleGoldenBug() {
 
 function spawnGoldenBug() {
     // Reset
-    goldenBug.style.display = 'none';
+    goldenBug.classList.remove('visible');
 
     const bugWidth = 60;
     const bugHeight = 60;
@@ -1263,11 +1263,11 @@ function spawnGoldenBug() {
     goldenBug.style.top = `${finalTop}px`;
 
     // Mostra (Flex per centrare l'icona)
-    goldenBug.style.display = 'flex';
+    goldenBug.classList.add('visible');
 
     // Timer Sparizione
     setTimeout(() => {
-        goldenBug.style.display = 'none';
+        goldenBug.classList.remove('visible');
     }, 10000); // 10 secondi
 
     scheduleGoldenBug();
@@ -1290,7 +1290,7 @@ function clickGoldenBug() {
     gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
 
     window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
-    if (goldenBug) goldenBug.style.display = 'none';
+    if (goldenBug) goldenBug.classList.remove('visible');
     updateUI();
 }
 
