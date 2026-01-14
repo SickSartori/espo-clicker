@@ -255,7 +255,7 @@
 #golden-bug {
     position: absolute;
     cursor: pointer;
-    z-index: calc(var(--z-nav) - 1);
+    z-index: var(--z-golden-bug);
     display: none;
     width: 60px;
     height: 60px;
@@ -263,6 +263,10 @@
     justify-content: center;
     transition: transform 0.2s;
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
+}
+
+#golden-bug.visible {
+    display: flex;
 }
 
 #golden-bug i {

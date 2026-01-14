@@ -22,19 +22,19 @@
     --font-heading: 'Rajdhani', sans-serif;
     --font-body: 'Inter', sans-serif;
     font-size: 16px;
-    --z-back: -1;       /* Sfondi, griglie */
-    --z-base: 1;        /* Contenuto base */
-    --z-content: 10;    /* Elementi interattivi gioco */
-    --z-sticky: 500;    /* Header appiccicosi */
-    --z-nav: 1000;      /* Navbar principale */
-    --z-modal: 2000;    /* Modali e backdrop */
-    --z-toast: 3000;    /* Notifiche Toast */
-    --z-overlay: 9000;  /* Effetti a tutto schermo (Video, Crunch) */
-    --z-loader: 9999;   /* Schermata caricamento */
+    --z-back: -1;
+    --z-base: 1;
+    --z-content: 10;
+    --z-sticky: 500;
+    --z-golden-bug: 900;
+    --z-nav: 1000;
+    --z-modal: 2000;
+    --z-toast: 3000;
+    --z-overlay: 9000;
+    --z-loader: 9999;
 }
 
 body {
-    /* Assicura che non ci sia scroll orizzontale */
     width: 100vw;
     overflow-x: hidden;
 }
@@ -342,7 +342,7 @@ body.matrix-active .buy-btn:hover {
 }
 
 #github-link-container i {
-	font-size: 2.5rem;
+    font-size: 2.5rem;
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -444,7 +444,7 @@ body.crunch-active .section-header h2 {
 
 /* Bottoni "Compra" e Navigazione */
 body.crunch-active .buy-btn:not(:disabled) {
-        background: #e67e22;
+    background: #e67e22;
 }
 
 body.crunch-active .buy-btn:not(:disabled),
@@ -563,8 +563,7 @@ body.crunch-active .upgrade-name {
             rgba(255, 200, 0, 0.6) 0%,
             rgba(255, 69, 0, 0.5) 30%,
             rgba(100, 0, 0, 0.8) 70%,
-            rgba(0, 0, 0, 0.9) 100%
-        );
+            rgba(0, 0, 0, 0.9) 100%);
 }
 
 /* Pulsazione schermo più aggressiva */

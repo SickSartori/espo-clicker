@@ -582,3 +582,44 @@
         background-color: rgba(255, 0, 0, 0.6);
     }
 }
+
+@keyframes marqueeScroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(calc(-100% + 50px));
+    }
+}
+
+@keyframes promoPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 5px #2ecc71;
+    }
+
+    100% {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px #2ecc71;
+    }
+}
+
+@keyframes toastEnter {
+    0% {
+        transform: translateY(-15px) scale(0.9);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes toastExit {
+    to {
+        transform: scale(0.9) translateY(-10px);
+        opacity: 0;
+    }
+}
