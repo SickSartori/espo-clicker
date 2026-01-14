@@ -22,6 +22,7 @@
 		<link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo time(); ?>">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo time(); ?>">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
 		<link rel="icon" type="image/png" href="./assets/image/favicon.webp">
 	</head>
 	<body>
@@ -224,7 +225,10 @@
 		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-video.mp4"></video>
 		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-metal-video.mp4"></video>
 		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="none" data-src="./assets/video/ricardo-milespo-dota-video.mp4"></video>
+		
+		
 
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>

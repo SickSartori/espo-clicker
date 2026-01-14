@@ -1110,20 +1110,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
 
-        // --- NUOVA FUNZIONE AUDIO INTELLIGENTE ---
         tryStartAudio: () => {
             const loginModal = document.getElementById('login-modal');
             if (loginModal && getComputedStyle(loginModal).display !== 'none') {
-                // console.log("Audio bloccato: Login in corso.");
                 return;
             }
 
-            // 2. Controlli preliminari (Volume)
+            // Controlli preliminari (Volume)
             const masterVol = gameState.user.masterVolume;
             const musicVol = gameState.user.musicVolume;
             if (masterVol <= 0 || musicVol <= 0) return;
 
-            // 2. Identifica la traccia corretta (Logica Dinamica)
+            // Identifica la traccia corretta
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
             const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
                 ? currentSkin.themeConfig.specialMusic
@@ -1131,25 +1129,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const audioToPlay = document.getElementById(targetId);
 
-            // Controlla se possiamo suonare
-            if (!audioToPlay || !audioToPlay.paused || window.currentActiveEvent) return;
+            if (window.currentActiveEvent || document.body.classList.contains('rick-rolling')) {
+                return;
+            }
 
-            // Aggiorna i volumi tramite il Manager centrale
+            // Controlla se possiamo suonare
+            if (!audioToPlay || !audioToPlay.paused) return;
+
             if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
                 AudioManager.updateAmbience();
 
-            // Tenta il Play (con gestione blocco browser)
+            // Tenta il Play
             const playPromise = audioToPlay.play();
 
             if (playPromise !== undefined) {
                 playPromise.catch(() => {
                     console.log("Autoplay bloccato: Attendo interazione...");
 
-                    // FALLBACK: Al primo click ovunque, fai partire la musica
                     const unlockAudio = () => {
-                        // Riprova a suonare (ora siamo dentro un evento utente)
+                        if (window.currentActiveEvent || document.body.classList.contains('rick-rolling')) {
+                            return;
+                        }
+
                         audioToPlay.play().then(() => {
-                            // Pulizia listener dopo il successo
                             document.removeEventListener('click', unlockAudio);
                             document.removeEventListener('keydown', unlockAudio);
                             document.removeEventListener('touchstart', unlockAudio);
@@ -1174,9 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
 
-        // --- Funzione per caricare la cheatboard su richiesta ---
         loadCheatboard: () => {
-            // Evita di caricarlo due volte
             if (document.querySelector('script[src="js/cheatboard.js"]')) return;
 
 
@@ -1218,18 +1218,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Merge dei dati grezzi
                     deepMerge(gameState, cloudState);
 
-                    // >>>>> FIX CRITICO: RIPRISTINO DECIMAL (AGGIUNTO QUI) <<<<<
                     const decimalFields = [
                         'score', 'totalScore', 'lifetimeScore', 'totalOfflineScore',
                         'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue'
                     ];
                     decimalFields.forEach(field => {
-                        // Se il campo è una stringa/numero, lo trasformiamo in Decimal
                         gameState[field] = new Decimal(gameState[field] || 0);
                     });
-                    // Fix specifico per evitare baseClickValue a 0
                     if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
-                    // >>>>> FINE FIX <<<<<
 
                     // Inizializza strutture mancanti
                     if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};

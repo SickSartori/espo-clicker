@@ -697,20 +697,23 @@ const EventHandlers = {
     video: (config, eventKey) => {
         document.body.classList.add('rick-rolling');
 
+        // 1. Reset e nascondi altri video
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
             const videoMeme = document.getElementById(id);
-
             if (videoMeme) {
                 videoMeme.pause();
                 videoMeme.classList.add("video_display_none");
                 videoMeme.currentTime = 0;
-
-                document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
-                document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
             }
         });
 
-        // Logica scelta video
+        // Nascondi pannelli laterali
+        const leftP = document.getElementById('header-left-panel');
+        const rightP = document.getElementById('header-right-panel');
+        if (leftP) leftP.classList.add("header_stat_box_display_none");
+        if (rightP) rightP.classList.add("header_stat_box_display_none");
+
+        // 2. Selezione Video
         let videoId = config.videos[0];
         if (config.videos.length > 1) {
             const available = config.videos.filter(id => id !== lastVideoPlayedId);
@@ -720,50 +723,80 @@ const EventHandlers = {
         lastVideoPlayedId = videoId;
 
         const video = document.getElementById(videoId);
+
         if (video) {
             if (!video.src) {
                 video.src = video.getAttribute('data-src');
                 video.load();
             }
 
+            // Preparazione Video
             video.classList.remove("video_display_none");
             video.currentTime = 0;
 
+            // Calcolo Volume
             const customVol = getCustomVolume(config.audioId || videoId);
             video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
-            video.play().catch(e => { });
 
-            // Clone node e listener click invariati
-            const newVideo = video.cloneNode(true);
-            video.parentNode.replaceChild(newVideo, video);
-            newVideo.play().catch(e => { });
+            // Play sicuro
+            video.play().catch(e => { console.warn("Autoplay video bloccato", e); });
 
-            const videoClickHandler = (e) => {
-                if (e.cancelable) e.preventDefault();
+            let clickOverlay = document.getElementById('video-click-overlay');
+            // Creazione Overlay
+            if (!clickOverlay) {
+                clickOverlay = document.createElement('div');
+                clickOverlay.id = 'video-click-overlay';
+                clickOverlay.style.position = 'fixed';
+                clickOverlay.style.top = '0';
+                clickOverlay.style.left = '0';
+                clickOverlay.style.width = '100vw';
+                clickOverlay.style.height = '100vh';
+                clickOverlay.style.zIndex = '9999';
+                clickOverlay.style.cursor = 'pointer';
+                clickOverlay.style.transform = 'none';
+                document.body.appendChild(clickOverlay);
+            }
+            clickOverlay.style.display = 'block';
+
+            // Handler del Click sull'Overlay
+            const overlayClickHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Creazione evento sintetico
                 const syntheticEvent = {
-                    detail: 1, clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY, target: newVideo
+                    detail: 1,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pageX: e.pageX,
+                    pageY: e.pageY,
+                    target: clickOverlay
                 };
-                resolveBug(syntheticEvent);
-                const mainBtn = document.getElementById('clicker-btn');
-                if (mainBtn) {
-                    mainBtn.classList.remove('clicked');
-                    void mainBtn.offsetWidth;
-                    mainBtn.classList.add('clicked');
-                    setTimeout(() => mainBtn.classList.remove('clicked'), 100);
-                }
-            };
-            newVideo.addEventListener('pointerdown', videoClickHandler);
 
+                // Guadagno punti
+                resolveBug(syntheticEvent);
+            };
+
+            // Usa pointerdown per reattività immediata
+            clickOverlay.addEventListener('pointerdown', overlayClickHandler);
+
+            // Timer fine evento
             setTimeout(() => {
-                newVideo.pause();
-                newVideo.classList.add("video_display_none");
-                newVideo.removeEventListener('pointerdown', videoClickHandler);
+                video.pause();
+                video.classList.add("video_display_none");
+
+                // Rimuovi Overlay e Listener
+                clickOverlay.removeEventListener('pointerdown', overlayClickHandler);
+                clickOverlay.style.display = 'none'; // Nascondi overlay
+
                 document.body.classList.remove('rick-rolling');
-                AudioManager.updateAmbience(); // Ricalcola audio alla fine
+
+                // Ripristino Audio Ambiente
+                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
             }, config.duration);
         }
 
-        AudioManager.updateAmbience(); // Silenzia background music
+        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
     },
 
     css_mode: (config, eventKey) => {
