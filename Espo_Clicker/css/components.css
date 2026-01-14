@@ -566,7 +566,6 @@ body.modal-open #toast-container {
     padding: 10px;
     /* Un po' più di aria */
     bottom: 105%;
-    /* Lo alza leggermente di più */
 }
 
 /* PATCH TOAST POSITION */
@@ -580,15 +579,36 @@ body.modal-open #toast-container {
 
 @media only screen and (max-width: 768px) {
     body.modal-open #toast-container {
-        top: auto !important;
-        bottom: 20px !important;
-        left: 50% !important;
-        right: auto !important;
-        transform: translateX(-50%) !important;
-        width: 90% !important;
+        top: auto;
+        bottom: 20px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: 90%;
     }
 
     .toast {
-        pointer-events: auto !important;
+        pointer-events: auto;
     }
+}
+
+/* PATCH TOOLTIP */
+
+.simple-tooltip[data-tooltip]:hover::before {
+    display: none !important;
+}
+
+.simple-tooltip[data-tooltip]:hover::after {
+    background-color: #000 !important;
+    border: 1px solid #333 !important;
+    color: #fff !important;
+    font-size: 0.9rem !important;
+    font-family: 'Courier New', monospace !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    bottom: 100%;
+    margin-bottom: 5px;
+    white-space: nowrap !important;
+    min-width: auto !important;
 }
