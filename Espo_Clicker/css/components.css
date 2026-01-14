@@ -432,58 +432,42 @@ input:focus {
     flex-direction: column;
     gap: 8px;
     pointer-events: none;
-
-    /* Animazione fluida quando cambia posizione */
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-
-    /* STATO 1: DEFAULT (Durante il gioco) -> CENTRALE */
     top: 150px !important;
-    /* Sotto al contatore BPS */
     left: 50% !important;
     transform: translateX(-50%) !important;
     right: auto !important;
     bottom: auto !important;
-
     align-items: center;
-    /* Messaggi centrati */
     width: auto !important;
     min-width: 300px;
 }
 
 body.modal-open #toast-container {
     top: 85px !important;
-    /* Allineato alla navbar */
     right: 20px !important;
     left: auto !important;
-    /* Rimuove il centramento */
     transform: none !important;
-
     align-items: flex-end;
-    /* Messaggi allineati a destra */
 }
 
 /* --- STILE NOTIFICA ---*/
 .toast {
     pointer-events: auto;
-
     padding: 8px 16px !important;
     font-size: 0.9rem !important;
     font-weight: 600 !important;
     border-radius: 50px !important;
-
     font-family: var(--font-body);
     font-weight: 500;
     background-color: rgba(20, 20, 20, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     backdrop-filter: blur(5px);
-
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
-
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-
     animation: toastEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
         toastExit 0.5s ease-in 3.5s forwards;
 }

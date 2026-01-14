@@ -12,11 +12,10 @@
     align-items: center;
     animation: fadeIn 0.3s ease;
     backdrop-filter: blur(3px);
-	z-index: 3000;
 }
 
 .modal_backdrop_none {
-	display: none;
+    display: none;
 }
 
 .modal-desc {
@@ -34,7 +33,6 @@
     max-width: 500px;
     max-height: 90vh;
     border-radius: 16px;
-    border: 1px solid #f39c12;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
@@ -338,7 +336,7 @@
 }
 
 .prestige_transition_overlay_display_none {
-	display: none;
+    display: none;
 }
 
 .transition-content {

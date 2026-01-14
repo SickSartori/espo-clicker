@@ -112,11 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // SALVATAGGIO CLOUD SICURO
         if (gameState.user.username && currentUserPassword) {
             try {
-                // Forza numeri interi puliti per evitare notazione scientifica (1e+21)
-                let rawScore = Math.floor(gameState.lifetimeScore);
-                if (!isFinite(rawScore) || isNaN(rawScore)) rawScore = 0;
-
-                let scoreToSend = rawScore.toLocaleString('en-US', { useGrouping: false });
+                let rawScore = new Decimal(gameState.lifetimeScore);
+                if (rawScore.lt(0)) rawScore = new Decimal(0);
+                let scoreToSend = rawScore.toFixed(0);
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
                 // Genera la firma
@@ -136,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-                    //.then((response) => { console.log(response.json()); })
+                    .then((response) => { console.log(response.json()); })
                     .catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
@@ -170,8 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
 
             // Guadagno Potenziale
-            const rawEarned = effectiveSeconds * bps;
-            const realEarned = rawEarned * efficiency;
+            const rawEarned = bps.mul(effectiveSeconds);
+            const realEarned = rawEarned.mul(efficiency);
 
             if (realEarned > 0) {
                 showOfflineModal(realEarned, efficiency);
@@ -276,6 +274,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 deepMerge(gameState, parsedState);
+
+                const decimalFields = [
+                    'score',
+                    'totalScore',
+                    'lifetimeScore',
+                    'totalOfflineScore',
+                    'prestigePoints',
+                    'lifetimePrestigePoints',
+                    'baseClickValue'
+                ];
+
+                decimalFields.forEach(field => {
+                    // Se esiste nel salvataggio lo convertiamo, altrimenti mettiamo 0
+                    gameState[field] = new Decimal(gameState[field] || 0);
+                });
+
+                if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
 
                 // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
                 if (loadedFromBackup) {
@@ -420,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
 
         // Fix BPS negativo visuale (raro bug)
-        if (bps < 0) bps = 0;
+        if (bps.lt(0)) bps = new Decimal(0);
     }
 
     function deepMerge(target, source) {
@@ -451,13 +466,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup Bottone
         const claimHandler = () => {
             // Aggiungi i punti
-            gameState.score += amount;
-            gameState.totalScore += amount;
-            gameState.lifetimeScore += amount;
+            gameState.score = gameState.score.add(amount);
+            gameState.totalScore = gameState.totalScore.add(amount);
+            gameState.lifetimeScore = gameState.lifetimeScore.add(amount);
 
-            //Aggiorna statistica offline
-            if (!gameState.totalOfflineScore) gameState.totalOfflineScore = 0;
-            gameState.totalOfflineScore += amount;
+            // Per totalOfflineScore, assicurati che sia inizializzato come Decimal prima:
+            if (!gameState.totalOfflineScore) gameState.totalOfflineScore = new Decimal(0);
+            gameState.totalOfflineScore = gameState.totalOfflineScore.add(amount);
 
             // Chiudi modale
             modal.classList.add("modal_backdrop_none");
@@ -494,10 +509,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
 
         // Calcolo Score (Veloce - Ogni frame)
-        const scoreToAdd = bps * deltaTime;
-        gameState.score += scoreToAdd;
-        gameState.totalScore += scoreToAdd;
-        gameState.lifetimeScore += scoreToAdd;
+        // FIX: Usiamo .mul() per moltiplicare e .add() per sommare
+        // bps è un Decimal, deltaTime è un Number (float). .mul accetta numeri.
+        const scoreToAdd = bps.mul(deltaTime);
+
+        gameState.score = gameState.score.add(scoreToAdd);
+        gameState.totalScore = gameState.totalScore.add(scoreToAdd);
+        gameState.lifetimeScore = gameState.lifetimeScore.add(scoreToAdd);
+
+        // playTime è un numero semplice, qui va bene +=
         gameState.totalPlayTime += deltaTime;
 
         // Slow Loop (1 volta al secondo) - OTTIMIZZAZIONE
@@ -510,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Gestione Click History (Veloce)
         const clickNow = Date.now();
+        // click.value è un Decimal, ma qui non facciamo calcoli, solo filtraggio temporale
         clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
 
         // --- CONTROLLO FINE CRUNCH TIME ---
@@ -519,18 +540,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const overlay = document.getElementById('crunch-overlay');
                 if (overlay) overlay.style.display = 'none';
 
-                // SPEGNI SOLO FURY MUSIC (Fire rimosso)
                 const furyMusic = document.getElementById('sound-fury-music');
                 if (furyMusic) {
                     furyMusic.pause();
                     furyMusic.currentTime = 0;
                 }
 
-                // Ripristina Musica Background
                 if (typeof AudioManager !== 'undefined')
                     AudioManager.updateAmbience();
 
-                // STOP PARTICELLE
                 const fireContainer = document.getElementById('fire-particles-container');
                 if (fireContainer) {
                     fireContainer.style.display = 'none';
@@ -542,12 +560,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     fireParticleInterval = null;
                 }
 
-                // RESET IMMAGINI SKIN
                 if (typeof applySkinVisuals === 'function')
                     applySkinVisuals(gameState.skins.current);
 
                 // RESET LOGICA GIOCO
-                crunchTimeMultiplier = 1;
+                crunchTimeMultiplier = new Decimal(1); // FIX: Reimposta come Decimal
                 recalculateCPS();
 
                 if (typeof updateUI === 'function') updateUI();
@@ -593,6 +610,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (statsModal && statsModal.style.display === 'flex')
                 if (typeof updateStatsUI === 'function') updateStatsUI();
+
+            let isAnyModalOpen = false;
+            document.querySelectorAll('.modal-backdrop').forEach(el => {
+                if (el.style.display === 'flex' && el.style.opacity !== '0') {
+                    isAnyModalOpen = true;
+                }
+            });
+
+            // Se nessun modale è aperto ma il body ha la classe, rimuovila
+            if (!isAnyModalOpen && document.body.classList.contains('modal-open')) {
+                document.body.classList.remove('modal-open');
+            }
+            // ---------------------------
+
         }, 100);
 
         // Auto-save (ogni 30s)
@@ -1161,105 +1192,102 @@ document.addEventListener('DOMContentLoaded', () => {
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // Parsing e Decompressione Intelligente
-                    // Il cloudJSON arriva dal PHP (json_encoded), quindi è una stringa che contiene i dati.
+                    // Parsing e Decompressione
                     let cloudDataRaw = JSON.parse(cloudJSON);
                     let cloudState;
 
                     if (typeof cloudDataRaw === 'string') {
-                        // Se è una stringa, significa che è il nostro dato compresso
                         const decompressed = LZString.decompressFromUTF16(cloudDataRaw);
-
                         if (decompressed) {
                             cloudState = JSON.parse(decompressed);
-                            console.log("☁️ Cloud: Salvataggio compresso rilevato.");
-                        }
-                        else {
-                            // Caso raro: stringa non compressa ma salvata come stringa
+                            console.log("☁️ Cloud: Salvataggio compresso caricato.");
+                        } else {
                             cloudState = JSON.parse(cloudDataRaw);
                         }
-                    }
-                    else {
-                        // Se è un oggetto, è un salvataggio vecchio (non compresso)
+                    } else {
                         cloudState = cloudDataRaw;
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
-                    // Gestione compatibilità cloud (Legacy Teams fix)
+                    // Compatibilità Legacy
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
                     }
 
+                    // Merge dei dati grezzi
                     deepMerge(gameState, cloudState);
 
+                    // >>>>> FIX CRITICO: RIPRISTINO DECIMAL (AGGIUNTO QUI) <<<<<
+                    const decimalFields = [
+                        'score', 'totalScore', 'lifetimeScore', 'totalOfflineScore',
+                        'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue'
+                    ];
+                    decimalFields.forEach(field => {
+                        // Se il campo è una stringa/numero, lo trasformiamo in Decimal
+                        gameState[field] = new Decimal(gameState[field] || 0);
+                    });
+                    // Fix specifico per evitare baseClickValue a 0
+                    if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
+                    // >>>>> FINE FIX <<<<<
+
+                    // Inizializza strutture mancanti
                     if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
                     for (const key in gameData.buildingEnhancements) {
-                        // Se nel salvataggio attuale manca questa chiave, creala!
                         if (!gameState.buildingEnhancements[key]) {
                             gameState.buildingEnhancements[key] = { purchased: false };
-                            console.log(`[Auto-Fix] Aggiunto potenziamento mancante: ${key}`);
                         }
                     }
 
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked))
                         gameState.skins = { current: 'default', unlocked: ['default'] };
 
+                    // Ripristino effetti
                     const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
-
                     if (isFuryActive && typeof resumeCrunchTimeEffects === 'function') {
-                        console.log("Cloud Sync: Fury Mode rilevata. Ripristino effetti visivi.");
                         resumeCrunchTimeEffects();
-                    }
-                    else {
+                    } else {
                         if (typeof applySkinVisuals === 'function')
                             applySkinVisuals(gameState.skins.current);
                     }
 
+                    // Username Sessione
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser)
                         gameState.user.username = currentSessionUser;
 
+                    // Ricalcoli (Ora funzioneranno perché i Decimal sono ripristinati)
                     calculatePrestigeBonus();
                     recalculateCPS();
-                    if (typeof refreshAllStores === 'function') refreshAllStores();
 
+                    if (typeof refreshAllStores === 'function') refreshAllStores();
                     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
                     if (typeof updateUI === 'function') updateUI();
 
-                    // Sovrascrivi cache locale
+                    // Sovrascrivi cache locale per allinearla
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
+                    // Recupero Skin mancanti da achievement
                     for (const key in gameData.achievements) {
                         const achData = gameData.achievements[key];
                         const achState = gameState.achievements[key];
-
-                        // Se l'obiettivo esiste, è RISCATTATO (claimed), e dà una SKIN
                         if (achState && achState.claimed && achData.reward && achData.reward.type === 'skin') {
                             const skinId = achData.reward.id;
-
-                            // Se la skin NON è nell'inventario, aggiungila ora
                             if (gameState.skins.unlocked && !gameState.skins.unlocked.includes(skinId)) {
-                                console.log(`[Auto-Fix] Recuperata skin mancante: ${skinId}`);
                                 gameState.skins.unlocked.push(skinId);
                             }
                         }
                     }
 
-                    // --- Check offline subito dopo il login ---
                     checkOfflineProgress();
-                    if (typeof updateAmbientVolume === 'function')
-                        updateAmbientVolume();
+                    if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
 
                     showToast(gameData.texts.toasts.cloudSync);
                     setTimeout(() => {
-                        // Forza l'aggiornamento dell'interfaccia audio
                         if (typeof AudioManager !== 'undefined') AudioManager.init();
-                        // Avvia la musica
                         window.EspooClicker.tryStartAudio();
                     }, 500);
-                }
-                catch (e) {
+                } catch (e) {
                     console.error("Errore parsing cloud", e);
                 }
             }

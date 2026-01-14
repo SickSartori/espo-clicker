@@ -1,21 +1,18 @@
-# Blocca l'accesso diretto a TUTTI i file che finiscono con .json
 <FilesMatch "\.json$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
+
 <IfModule mod_expires.c>
     ExpiresActive On
-    # Immagini salvate per 1 mese
     ExpiresByType image/jpg "access plus 1 month"
     ExpiresByType image/jpeg "access plus 1 month"
     ExpiresByType image/png "access plus 1 month"
     ExpiresByType image/webp "access plus 1 month"
-    # Video e Audio salvati per 1 anno
     ExpiresByType video/mp4 "access plus 1 year"
     ExpiresByType audio/mpeg "access plus 1 year"
-    # CSS e JS salvati per 1 settimana (o meno se sviluppi spesso)
     ExpiresByType text/css "access plus 1 week"
     ExpiresByType application/javascript "access plus 1 week"
 </IfModule>
-# Impedisce la visualizzazione dell'elenco dei file
+
 Options -Indexes

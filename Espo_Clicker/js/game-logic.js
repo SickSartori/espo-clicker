@@ -974,38 +974,50 @@ function calculatePrestigeGained() {
 }
 
 function openPrestigeContract() {
-    if (gameState.totalScore < gameData.PRESTIGE_THRESHOLD) {
+    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
             window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
         }
         return;
     }
+
     const gained = calculatePrestigeGained();
-    if (gained < 1) {
+    if (gained.lt(1)) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
             window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedMore, "error");
         }
         return;
     }
+
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
+
     if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
-    let currentLifetime = gameState.lifetimePrestigePoints || 0;
-    let estimatedLifetime = currentLifetime + gained;
-    let baseBonus = estimatedLifetime * 0.01;
+
+    // Calcoli per la preview
+    let currentLifetime = gameState.lifetimePrestigePoints || new Decimal(0);
+    let estimatedLifetime = currentLifetime.add(gained);
+
+    // Calcolo Bonus
+    let baseBonus = estimatedLifetime.mul(0.01);
+
     let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
-    let synergyBonus = synergyCount * (gameData.prestigeUpgrades.sinergia.bonusPerLevel || 0.001) * estimatedLifetime;
-    let totalMultiplier = 1 + baseBonus + synergyBonus;
-    if (typeof achievementsBPSBonus !== 'undefined') {
-        totalMultiplier += achievementsBPSBonus;
-    }
+    let synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
+
+    // synergy = count * 0.001 * lifetime
+    let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
+
+    let totalMultiplier = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+
     if (bonusDisplay) {
-        bonusDisplay.textContent = `Nuovo Moltiplicatore: x${formatNumber(totalMultiplier)}`;
-        bonusDisplay.style.color = "#fff";
         bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-size: 1.4rem;">x${formatNumber(totalMultiplier)}</span>`;
     }
+
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'flex';
+
+    // Aggiungi classe al body per gestire i toast
+    document.body.classList.add('modal-open');
 }
 
 async function executePrestige() {

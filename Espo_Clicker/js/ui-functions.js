@@ -386,7 +386,7 @@ function updateClickStore() {
             return {
                 purchased: state.purchased,
                 unlocked: isUnlocked,
-                canAfford: gameState.score >= data.cost,
+                canAfford: gameState.score.gte(data.cost),
                 label: gameData.texts.ui.buy,
                 // Calcolo preciso della barra di progresso
                 progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),
@@ -419,7 +419,7 @@ function refreshAllStores() {
             return {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
-                canAfford: gameState.score >= data.cost,
+                canAfford: gameState.prestigePoints.gte(data.baseCost),
                 label: gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
                 progressText: `${gameData.teams[data.targetTeam].name}: ${current}/${data.requiredCount}`
@@ -445,7 +445,7 @@ function refreshAllStores() {
                 purchased: singlePurchased,
                 unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
-                canAfford: gameState.prestigePoints >= data.baseCost,
+                canAfford: gameState.prestigePoints.gte(data.baseCost),
                 label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
                 costText: `Costo: ${formatNumber(data.baseCost)} Token`,
                 currentCost: data.baseCost,
@@ -497,7 +497,7 @@ function refreshAllStores() {
             return {
                 unlocked: true,
                 purchased: false,
-                canAfford: gameState.score >= currentCost,
+                canAfford: gameState.score.gte(currentCost),
                 label: gameData.texts.ui.buy,
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
                 bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
@@ -1101,15 +1101,16 @@ function updateUI() {
 
 // --- SOTTO-FUNZIONI (Copia queste sotto updateUI) ---
 function calculateVisualBPS() {
-    let active = 0;
+    let active = new Decimal(0);
     const now = Date.now();
 
     for (let i = 0; i < clickHistory.length; i++) {
         if (now - clickHistory[i].time < 1000)
-            active += clickHistory[i].value;
+            active = active.add(clickHistory[i].value);
     }
 
-    return bps + active;
+    // Somma BPS base (Decimal) + Click attivi (Decimal)
+    return bps.add(active);
 }
 
 const scoreAnimState = { value: 0 };
@@ -1131,12 +1132,12 @@ function updateScoreBoard(totalBPS) {
 
     const scoreEl = getEl('score-display');
     if (scoreEl) {
-        scoreEl.setAttribute('data-tooltip', Math.floor(gameState.score).toLocaleString('it-IT'));
+        scoreEl.setAttribute('data-tooltip', formatNumber(gameState.score));
     }
 
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
     const cpsEl = getEl('cps-display');
-    if (cpsEl) cpsEl.setAttribute('data-tooltip', totalBPS.toLocaleString('it-IT', { maximumFractionDigits: 1 }));
+    if (cpsEl) cpsEl.setAttribute('data-tooltip', formatNumber(totalBPS));
 
     // Aggiorna il display del click nel Main
     if (typeof calculateRawClickValue === 'function') {
@@ -1173,7 +1174,7 @@ function updateHUD() {
 
 function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
-    setTextIfChanged('bug-wallet-amount', formatNumber(Math.floor(gameState.score)));
+    setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score.floor()));
 
     // Mobile Wallets (Aggiornamento di gruppo)
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
@@ -1193,11 +1194,9 @@ function updateStoreButtons() {
             isMax = true;
         }
         const currentCost = calculateBulkCost(key, amountToBuy);
-
-        // UI Aggiornamento
         const btn = getEl(`buy-${key}`);
-        if (btn) btn.disabled = (gameState.score < currentCost);
 
+        if (btn) btn.disabled = (gameState.score.lt(currentCost));
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
             let prefix = isMax && amountToBuy > 1 ? `Costo (+${formatNumber(amountToBuy)})` :
@@ -1214,7 +1213,7 @@ function updateStoreButtons() {
             // Fallback diretto al bottone se l'ID è univoco
             const btn = getEl(`buy-${key}`);
             if (btn && !btn.classList.contains('owned')) {
-                btn.disabled = (gameState.score < gameData.clickUpgrades[key].cost);
+                btn.disabled = (gameState.score.lt(gameData.clickUpgrades[key].cost));
             }
         }
     }
@@ -1224,7 +1223,7 @@ function updateStoreButtons() {
         if (!gameState.buildingEnhancements[key].purchased) {
             const btn = getEl(`buy-${key}`);
             if (btn && !btn.classList.contains('owned')) {
-                btn.disabled = (gameState.score < gameData.buildingEnhancements[key].cost);
+                btn.disabled = (gameState.score.lt(gameData.buildingEnhancements[key].cost));
             }
         }
     }
@@ -1240,7 +1239,7 @@ function updateStoreButtons() {
         const btn = getEl(`buy-${key}`);
         if (btn && !btn.classList.contains('owned')) {
             // Controlla Token invece di Score
-            btn.disabled = (gameState.prestigePoints < data.baseCost);
+            btn.disabled = (gameState.prestigePoints.lt(data.baseCost));
         }
     }
 }
@@ -1294,19 +1293,33 @@ function updatePrestigeVisuals() {
     const prestigeBtn = document.getElementById('open-prestige-hub-btn');
     if (!prestigeBtn) return;
 
-    const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
-    const hasPrestiged = gameState.totalResets > 0;
+    // Recupera i valori in modo sicuro (gestisce null/undefined)
+    const currentScore = gameState.totalScore || new Decimal(0);
+    const threshold = gameData.PRESTIGE_THRESHOLD || new Decimal("50000000");
+    const resets = gameState.totalResets || 0;
+    const prestigePoints = gameState.prestigePoints || new Decimal(0);
+    const lifetimePoints = gameState.lifetimePrestigePoints || new Decimal(0);
 
-    if (!canPrestige && !hasPrestiged) {
+    const canPrestige = currentScore.gte(threshold);
+
+    // Mostra il bottone SE:
+    // 1. Puoi fare prestigio ORA (canPrestige)
+    // 2. OPPURE hai già fatto prestigio in passato (resets > 0)
+    // 3. OPPURE hai dei token da spendere (prestigePoints > 0)
+    const shouldShow = canPrestige || resets > 0 || prestigePoints.gt(0) || lifetimePoints.gt(0);
+
+    if (!shouldShow) {
         if (prestigeBtn.style.display !== 'none') prestigeBtn.style.display = 'none';
         return;
     }
 
+    // Se deve essere mostrato, forza il flex
     if (prestigeBtn.style.display !== 'flex') prestigeBtn.style.display = 'flex';
 
     let icon = prestigeBtn.querySelector('.nav-icon');
     let label = prestigeBtn.querySelector('span');
 
+    // Ricrea contenuto interno se manca (sicurezza)
     if (!icon || !label) {
         prestigeBtn.innerHTML = '<i class="nav-icon"></i> <span></span>';
         icon = prestigeBtn.querySelector('.nav-icon');
@@ -1314,6 +1327,7 @@ function updatePrestigeVisuals() {
     }
 
     if (canPrestige) {
+        // STATO: PRONTA!
         if (!prestigeBtn.classList.contains('promotion-ready')) {
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
@@ -1321,14 +1335,22 @@ function updatePrestigeVisuals() {
             label.textContent = gameData.texts.ui.promoReady;
         }
     } else {
+        // STATO: IN PROGRESS (Percentuale)
         if (prestigeBtn.classList.contains('promotion-ready')) {
             prestigeBtn.classList.remove('promotion-ready');
-            prestigeBtn.style.cursor = "default";
+            prestigeBtn.style.cursor = "default"; // Non cliccabile se non pronta
             icon.className = 'nav-icon fa-solid fa-rocket';
         }
 
-        const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 99).toFixed(0);
-        const newText = `${progress}%`;
+        // Calcolo percentuale sicuro
+        let progress = 0;
+        if (currentScore.gt(0)) {
+            progress = currentScore.div(threshold).mul(100).toNumber();
+        }
+        // Cap a 99% perché a 100% scatta il "canPrestige"
+        const finalPercent = Math.min(progress, 99).toFixed(0);
+
+        const newText = `${finalPercent}%`;
 
         if (label.textContent !== newText) {
             label.textContent = newText;
@@ -1534,7 +1556,7 @@ function updateStatsUI() {
     if (!statsList) return;
 
     // --- CALCOLI PRELIMINARI ---
-    const progress = Math.min((gameState.totalScore / gameData.PRESTIGE_THRESHOLD) * 100, 100);
+    const progress = gameState.totalScore.div(gameData.PRESTIGE_THRESHOLD).mul(100).min(100).toNumber();
 
     // 1. Recupera ENTRAMBI i valori
     // Valore "Pulito" (Base + Upgrade + Mano Bionica)

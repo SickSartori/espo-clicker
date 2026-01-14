@@ -957,7 +957,7 @@ const gameData = {
             target: new Decimal(50000),
             isSecret: false,
             reward: { type: 'bugs', value: new Decimal(10000) },
-            condition: () => gameState.totalScore >= 50000
+            condition: () => gameState.totalScore.gte(50000)
         },
         automationFirst: {
             name: 'Automation First',
@@ -1013,7 +1013,7 @@ const gameData = {
             target: new Decimal(10000000),
             isSecret: false,
             reward: { type: 'prestige', value: new Decimal(5) },
-            condition: () => gameState.totalScore >= 10000000
+            condition: () => gameState.totalScore.gte(10000000)
         },
         geishaUnlock: {
             name: 'Zen Master',
@@ -1031,7 +1031,7 @@ const gameData = {
             target: new Decimal(1000000000),
             isSecret: false,
             reward: { type: 'prestige', value: new Decimal(10) },
-            condition: () => gameState.totalScore >= 1000000000
+            condition: () => gameState.totalScore.gte(1000000000)
         },
         errore404: {
             name: 'Page Not Found',
