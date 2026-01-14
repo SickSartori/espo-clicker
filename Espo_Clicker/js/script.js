@@ -4,7 +4,7 @@ let toastContainer, goldenBug, soundBluescreen, prestigeSection, prestigePointsD
 let prestigeGainDisplay, prestigeBonusDisplay, eventMultiplierDisplay;
 let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, rightColumn;
 let statsList, gameContainer, prestigeStore;
-let buyMultiplier = 1;
+window.buyMultiplier = 1;
 let currentUserPassword = null;
 
 const CLIENT_SECRET_KEY = 'EspoClicker_Secret_X7k9P2mN5qR8vW1zY4cB6dE0fG3hJ';
@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Funzione Logica Cambio
         function setBuyMultiplier(value) {
-            buyMultiplier = value;
+            window.buyMultiplier = value;
 
             // Aggiorna Grafica Bottoni
             multiplierValues.forEach(val => {
@@ -889,11 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
         multiplierValues.forEach(val => {
             if (multiplierBtns[val]) {
                 multiplierBtns[val].addEventListener('click', (e) => {
-                    // Ignora click simulati strani
-                    if (e.detail !== 0) {
-                        multiplierBtns[val].blur();
-                        setBuyMultiplier(val);
-                    }
+                    multiplierBtns[val].blur();
+                    setBuyMultiplier(val);
                 });
             }
         });

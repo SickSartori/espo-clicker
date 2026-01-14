@@ -451,7 +451,10 @@ function calculateMaxAffordable(teamKey) {
     let part1 = gameState.score.mul(decR.minus(1));
     let part2 = part1.div(currentSingleCost);
     let part3 = part2.add(1);
-    let maxAmount = part3.ln().div(decR.ln()).floor();
+
+    let logNum = new Decimal(part3.ln());
+    let logDen = new Decimal(decR.ln());
+    let maxAmount = logNum.div(logDen).floor();
 
     if (maxAmount.lt(10000)) {
         let num = maxAmount.toNumber();
@@ -467,8 +470,8 @@ function calculateMaxAffordable(teamKey) {
 }
 
 function buyTeam(teamKey) {
-    let amount = buyMultiplier;
-    if (typeof buyMultiplier === 'undefined') amount = 1;
+    let amount = window.buyMultiplier;
+    if (typeof amount === 'undefined') amount = 1;
 
     if (amount === 'MAX') {
         amount = calculateMaxAffordable(teamKey);

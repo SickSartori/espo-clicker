@@ -469,10 +469,10 @@ function refreshAllStores() {
         fixedOrder: true,
         onBuy: (key) => buyTeam(key),
         getStatus: (key, data, state) => {
-            let amountToBuy = buyMultiplier;
+            let amountToBuy = window.buyMultiplier;
             let isMax = false;
 
-            if (buyMultiplier === 'MAX') {
+            if (amountToBuy === 'MAX') {
                 const max = calculateMaxAffordable(key);
                 amountToBuy = max > 0 ? max : 1;
                 isMax = true;
@@ -1112,6 +1112,11 @@ function calculateVisualBPS() {
 
 const scoreAnimState = { value: 0 };
 
+function formatFullNumber(num) {
+    if (num === undefined || num === null) return "0";
+    return new Decimal(num).floor().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 function updateScoreBoard(totalBPS) {
     // Se è la prima volta (o reset/promozione), allinea subito senza animazione
     if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5)
@@ -1129,14 +1134,17 @@ function updateScoreBoard(totalBPS) {
 
     const scoreEl = getEl('score-display');
     if (scoreEl) {
-        scoreEl.setAttribute('data-tooltip', formatNumber(gameState.score));
+        scoreEl.setAttribute('data-tooltip', formatFullNumber(gameState.score));
+        scoreEl.classList.add('simple-tooltip');
     }
 
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
     const cpsEl = getEl('cps-display');
-    if (cpsEl) cpsEl.setAttribute('data-tooltip', formatNumber(totalBPS));
+    if (cpsEl) {
+        cpsEl.setAttribute('data-tooltip', formatFullNumber(totalBPS));
+        cpsEl.classList.add('simple-tooltip');
+    }
 
-    // Aggiorna il display del click nel Main
     if (typeof calculateRawClickValue === 'function') {
         const rawClick = calculateRawClickValue();
         setTextIfChanged('raw-click-display', `Click Power: ${formatNumber(rawClick)}`);
@@ -1183,9 +1191,9 @@ function updateStoreButtons() {
     // Teams
     for (const key in gameState.teams) {
         // Logica Costi
-        let amountToBuy = buyMultiplier;
+        let amountToBuy = window.buyMultiplier;
         let isMax = false;
-        if (buyMultiplier === 'MAX') {
+        if (amountToBuy === 'MAX') {
             const max = calculateMaxAffordable(key);
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
@@ -1556,15 +1564,8 @@ function updateStatsUI() {
     const progress = gameState.totalScore.div(gameData.PRESTIGE_THRESHOLD).mul(100).min(100).toNumber();
 
     // 1. Recupera ENTRAMBI i valori
-    // Valore "Pulito" (Base + Upgrade + Mano Bionica)
-    const rawClick = (typeof calculateRawClickValue === 'function')
-        ? calculateRawClickValue()
-        : gameState.baseClickValue;
-
-    // Valore "Totale" (Con Moltiplicatore Prestigio, Eventi, ecc.)
-    const totalClick = (typeof calculateClickValue === 'function')
-        ? calculateClickValue()
-        : rawClick;
+    const rawClick = (typeof calculateRawClickValue === 'function') ? calculateRawClickValue() : gameState.baseClickValue;
+    const totalClick = (typeof calculateClickValue === 'function') ? calculateClickValue() : rawClick;
 
     // Dati Offline
     const totalOffline = gameState.totalOfflineScore || 0;
@@ -1577,7 +1578,8 @@ function updateStatsUI() {
     if (offlineEff > 1.0) offlineEff = 1.0;
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
 
-    // --- GENERAZIONE HTML ---
+    // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
+    // Nota l'aggiunta di data-tooltip="${formatFullNumber(...)}" e class="simple-tooltip"
     statsList.innerHTML = `
         <div class="stats-container">
             
@@ -1586,19 +1588,25 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Bug Attuali (Wallet)</span>
-        <span class="stat-value" style="color: #2ecc71;">${formatNumber(Math.floor(gameState.score))}</span>
+                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
+                            ${formatNumber(Math.floor(gameState.score))}
+                        </span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label">Totale Run Attuale</span>
-                        <span class="stat-value">${formatNumber(gameState.totalScore)}</span>
+                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(gameState.totalScore)}">
+                            ${formatNumber(gameState.totalScore)}
+                        </span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label">Totale Carriera</span>
-                        <span class="stat-value" style="color: #f1c40f;">${formatNumber(gameState.lifetimeScore)}</span>
+                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
+                            ${formatNumber(gameState.lifetimeScore)}
+                        </span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label">Guadagnati Offline</span>
-                        <span class="stat-value" style="color: #3498db;">
+                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(totalOffline)}">
                             ${formatNumber(totalOffline)} 
                             <span style="font-size: 0.8rem; color: #bdc3c7; font-weight: normal;">(${offlinePercentText})</span>
                         </span>
@@ -1621,7 +1629,9 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">Produzione (BPS)</span>
-                        <span class="stat-value">${formatNumber(bps)}</span>
+                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(bps)}">
+                            ${formatNumber(bps)}
+                        </span>
                     </div>
                     
                     <div class="stat-box">
