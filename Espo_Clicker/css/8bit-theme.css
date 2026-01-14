@@ -113,7 +113,7 @@ body.theme-8bit #game-container .prestige-upgrade {
     min-height: 100px;
 }
 
-/* FIX TESTI */
+/* TESTI */
 body.theme-8bit #game-container .upgrade-name {
     color: #fff;
     font-size: 0.6rem;
@@ -241,7 +241,7 @@ body.theme-8bit #golden-bug {
 
 
 /* =======================================================
-   FIX DEFINITIVO LEGGIBILITÀ 8-BIT
+   8-BIT
    ======================================================= */
 
 /* 1. BARRA PROGRESSO (Sinistra e Destra) */

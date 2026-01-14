@@ -356,7 +356,7 @@
 /* Prestigio */
 .prestige-upgrade {
     background: var(--bg-panel);
-    border: 1px solid #b7950b ;
+    border: 1px solid #b7950b;
     box-shadow: none;
     display: flex;
     flex-direction: row;
@@ -427,7 +427,7 @@
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
 }
 
-/* Fix Bottone MAX / POSSEDUTO (Uniformato agli altri tab) */
+/* MAX / POSSEDUTO */
 .prestige-upgrade .buy-btn.owned {
     background: rgba(44, 62, 80, 0.5);
     background-image: none;
@@ -593,6 +593,7 @@
 }
 
 @media screen and (max-width: 1360px) {
+
     #click-upgrade-list,
     #enhancement-list {
         grid-template-columns: 1fr;
@@ -600,6 +601,7 @@
 }
 
 @media screen and (max-width: 1366px) {
+
     #click-upgrade-list,
     #enhancement-list {
         grid-template-columns: 1fr;

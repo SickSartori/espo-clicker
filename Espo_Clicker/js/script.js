@@ -340,19 +340,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Ripristino Variabili Temporali
+                // Variabili Temporali
                 if (gameState.crunchTimeEndTime) crunchTimeEndTime = gameState.crunchTimeEndTime;
                 if (gameState.crunchTimeCooldownEnd) crunchTimeCooldownEnd = gameState.crunchTimeCooldownEnd;
 
-                // Fix Prestige Points Lifetime
+                // Prestige Points Lifetime
                 if (gameState.lifetimePrestigePoints === undefined || gameState.lifetimePrestigePoints === null)
                     gameState.lifetimePrestigePoints = gameState.prestigePoints;
 
-                // Fix Filtri
+                // Filtri
                 if (!gameState.filterSettings)
                     gameState.filterSettings = { globalFilter: 'available' };
 
-                // Ripristino Achievements
+                // Achievements
                 if (gameData.achievements) {
                     if (!gameState.achievements) gameState.achievements = {};
 
@@ -434,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.prestigeUpgrades.ticketPremium && gameState.prestigeUpgrades.ticketPremium.purchased)
             if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
 
-        // Fix BPS negativo visuale (raro bug)
         if (bps.lt(0)) bps = new Decimal(0);
     }
 
@@ -509,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
 
         // Calcolo Score (Veloce - Ogni frame)
-        // FIX: Usiamo .mul() per moltiplicare e .add() per sommare
+        // Usiamo .mul() per moltiplicare e .add() per sommare
         // bps è un Decimal, deltaTime è un Number (float). .mul accetta numeri.
         const scoreToAdd = bps.mul(deltaTime);
 

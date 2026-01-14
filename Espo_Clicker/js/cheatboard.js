@@ -9,9 +9,9 @@
     window.recalculateCPS = function () {
         originalRecalculateCPS();
 
-        // FIX CRITICO: Controllo esistenza BPS
+        // Controllo esistenza BPS
         if (typeof bps !== 'undefined') {
-            // FIX CRITICO: Usa .add() invece di += per mantenere bps come Decimal
+            // Usa .add() invece di += per mantenere bps come Decimal
             // Se bps è diventato un numero per errore, lo riconvertiamo
             if (!(bps instanceof Decimal)) {
                 bps = new Decimal(bps || 0);
@@ -381,7 +381,7 @@
 
     document.body.appendChild(container);
 
-    // --- 4. Funzioni Helper (FIXED FOR DECIMAL) ---
+    // --- 4. Funzioni Helper ---
     // Usiamo new Decimal per leggere gli input, così supporta "1e24"
     const getVal = (id) => {
         const val = document.getElementById(id).value;
@@ -417,12 +417,11 @@
         if (e.ctrlKey && e.shiftKey && e.key === 'C') togglePanel();
     });
 
-    // --- 6. LOGICA BOTTONI (FIXED) ---
+    // --- 6. LOGICA BOTTONI ---
 
     // Aggiungi Bug
     document.getElementById('btn-bugs-add').addEventListener('click', () => {
         const val = getVal('cheat-bugs-input'); // Ritorna Decimal
-        // FIX: Usa .add()
         gameState.score = gameState.score.add(val);
         gameState.totalScore = gameState.totalScore.add(val);
         gameState.lifetimeScore = gameState.lifetimeScore.add(val);
@@ -522,7 +521,7 @@
     });
 
 
-    // RANDOM CHAOS (FIXED)
+    // RANDOM CHAOS
     document.getElementById('btn-random-chaos').addEventListener('click', () => {
         // Genera valori random grandi
         const randBugs = new Decimal("1e9").mul(Math.random());
@@ -561,7 +560,7 @@
         toast(`🎲 CHAOS: +${window.EspooClicker.formatNumber(randBugs)} Bug, +${window.EspooClicker.formatNumber(randTokens)} Token!`);
     });
 
-    // GOD MODE (FIXED)
+    // GOD MODE
     document.getElementById('btn-god-mode').addEventListener('click', () => {
         // Assegnazione diretta di Decimali
         gameState.score = new Decimal("1e33"); // 1 Decilione

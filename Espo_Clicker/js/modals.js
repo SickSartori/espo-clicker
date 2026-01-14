@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
-    // 0. FUNZIONI HELPER GLOBALI (Fix Errori & Password)
+    // 0. FUNZIONI HELPER GLOBALI 
     // ==========================================
 
     // Funzione mancante: Ferma tutti i test audio
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // LOGICA VISUALIZZA PASSWORD (Fix Occhiolino)
+    // LOGICA VISUALIZZA PASSWORD
     document.querySelectorAll('.toggle-pass-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); // Evita submit form
@@ -382,8 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.currentActiveEvent !== 'Audio Mixer') {
                 window.preMixerEvent = window.currentActiveEvent;
             }
-
-            // IMPONIAMO IL BLOCCO: Questo impedisce alla musica di ripartire al reset!
             window.currentActiveEvent = 'Audio Mixer';
 
             // Chiudi settings e apri Mixer
@@ -697,9 +695,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.status === 'success') {
-                // --- FIX CRITICO: Impedisci il salvataggio automatico alla chiusura ---
+                // Impedisci il salvataggio automatico alla chiusura
                 Game.getGameState().isDeleting = true;
-                // ---------------------------------------------------------------------
+
 
                 alert("Account eliminato. Addio!");
                 sessionStorage.clear();

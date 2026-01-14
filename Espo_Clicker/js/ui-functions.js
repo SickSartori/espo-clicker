@@ -515,7 +515,6 @@ function updateSkinsUI() {
 
     grid.innerHTML = '';
 
-    // Fix dati se corrotti
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
 
@@ -719,9 +718,7 @@ function updateAchievementsUI() {
         } else if (isClaimed) {
             actionHtml = `<div class="trophy-done"><i class="fa-solid fa-check"></i></div>`;
         } else {
-            // --- FIX 3: Progress Bar con testo dentro ---
             if (!data.isSecret) {
-                // Formatta il testo (es: "50% (100/200)")
                 const valText = data.type === 'time' ? formatTime(currentVal) : formatNumber(currentVal);
                 const targetText = data.type === 'time' ? formatTime(data.target) : formatNumber(data.target);
                 const fullText = `${Math.floor(progress)}% (${valText} / ${targetText})`;

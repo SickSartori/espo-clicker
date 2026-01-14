@@ -214,25 +214,22 @@
 .stat-box .stat-label {
     font-size: 0.75rem;
     color: #95a5a6;
-    /* Grigio più tenue per non distrarre */
     text-transform: uppercase;
     font-weight: 600;
 }
 
 .stat-box .stat-value {
     font-size: 1.1rem;
-    /* Valore più grande e leggibile */
     color: #fff;
     font-weight: 700;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* --- BARRA PROGRESSO (Fix Visibilità) --- */
+/* --- BARRA PROGRESSO --- */
 .stat-progress-wrapper {
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px dashed rgba(255, 255, 255, 0.1);
-    /* Linea tratteggiata separatrice */
 }
 
 .stat-progress-info {
