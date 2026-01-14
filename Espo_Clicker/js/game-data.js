@@ -1,26 +1,27 @@
 // --------- 1. DATI E STATO DEL GIOCO (Data-Driven) ---------
 
 // Variabili Globali
-var bps = 0;
-var prestigeBonus = 1;
-var clickCPSBonus = 1;
+var bps = new Decimal(0);
+var prestigeBonus = new Decimal(1);
+var clickCPSBonus = new Decimal(1);
 var isBluescreenActive = false;
-var bluescreenMultiplier = 1;
-var crunchTimeMultiplier = 1;
+var bluescreenMultiplier = new Decimal(1);
+var crunchTimeMultiplier = new Decimal(1);
 var crunchTimeEndTime = 0;
 var crunchTimeCooldownEnd = 0;
 var clickHistory = [];
-var achievementsBPSBonus = 0;
+var achievementsBPSBonus = new Decimal(0);
 
 // --- NUOVI GLOBALS PER SISTEMA EFFETTI ---
 window.goldenBugChance = 0.001;
 window.goldenBugSpawnTime = 60000;
-window.goldenBugMult = 1;
+window.goldenBugMult = new Decimal(1);
 window.gameFlags = {};
 
 window.costScalingBase = 1.20;
 window.costScalingReduction = 0;
-window.prestigeSynergyFactor = 0;
+window.prestigeSynergyFactor = new Decimal(0);
+window.clickGlobalMult = new Decimal(1);
 // ------------------------------------------
 
 function isChristmasSeason() {
@@ -37,7 +38,7 @@ let gameState;
 
 // --- 2. DEFINIZIONE DEI DATI ---
 const gameData = {
-    PRESTIGE_THRESHOLD: 50000000,
+    PRESTIGE_THRESHOLD: new Decimal("50000000"),
 
     assets: {
         sounds: {
@@ -192,7 +193,7 @@ const gameData = {
             img: "espobit.webp",
             imgClick: "espobit-click.webp",
             rarity: "common",
-            cost: 5,
+            cost: new Decimal(5),
             themeConfig: {
                 bodyClass: 'theme-8bit',
                 specialMusic: 'sound-bg-bit',
@@ -207,7 +208,7 @@ const gameData = {
             imgClick: "esponatale-click.webp",
             rarity: "christmas",
             unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
-            cost: IS_XMAS_TIME ? undefined : 20,
+            cost: IS_XMAS_TIME ? undefined : new Decimal(20),
             themeConfig: {
                 hasSnow: true,
                 specialMusic: 'sound-snowball',
@@ -246,7 +247,7 @@ const gameData = {
             img: "esportia.webp",
             imgClick: "esportia-click.webp",
             rarity: "rare",
-            cost: 10
+            cost: new Decimal(10)
         },
         // --- EPICHE (Mid Game / Prestige) ---
         king: {
@@ -255,7 +256,7 @@ const gameData = {
             img: "espofempires.webp",
             imgClick: "espofempires-click.webp",
             rarity: "epic",
-            cost: 20 // Richiede prestigio
+            cost: new Decimal(20) // Richiede prestigio
         },
         waifu: {
             name: "Espowaifu",
@@ -263,7 +264,7 @@ const gameData = {
             img: "espowaifu.webp",
             imgClick: "espowaifu-click.webp",
             rarity: "epic",
-            cost: 20 // Richiede prestigio avanzato
+            cost: new Decimal(20) // Richiede prestigio avanzato
         },
         // --- LEGGENDARIE (Late Game - Difficili) ---
         rick: {
@@ -272,7 +273,7 @@ const gameData = {
             img: "rick-espley.webp",
             imgClick: "rick-espley-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 25.000 click manuali." // Aumentato da 10k
+            unlockHint: "Raggiungi 25.000 click manuali."
         },
         ricardo: {
             name: "Ricardo Milespo",
@@ -288,7 +289,7 @@ const gameData = {
             img: "adolf-espler.webp",
             imgClick: "adolf-espler-click.webp",
             rarity: "legendary",
-            unlockHint: "Raggiungi 50.000 click manuali." // Aumentato da 20k
+            unlockHint: "Raggiungi 50.000 click manuali."
         },
         espory: {
             name: "Freddy Espory",
@@ -296,15 +297,15 @@ const gameData = {
             img: "freddy-espory.webp",
             imgClick: "freddy-espory-click.webp",
             rarity: "legendary",
-            cost: 50
+            cost: new Decimal(50)
         },
-        // --- DIVINE (End Game - Estreme) ---
+        // --- DIVINE ---
         jesus: {
             name: "Gespo",
             desc: "Il salvatore del database.",
             img: "gespo.webp",
             imgClick: "gespo-click.webp",
-            rarity: "divine", // NUOVA RARITÀ
+            rarity: "divine",
             unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'"
         }
     },
@@ -312,49 +313,49 @@ const gameData = {
     teams: {
         assistenteQa: {
             name: 'Assistente QA',
-            baseCost: 15,
-            cpsPerUnit: 0.1,
+            baseCost: new Decimal(15),
+            cpsPerUnit: new Decimal(0.1),
             tags: ['helper']
         },
         jiraTicket: {
             name: 'Jira Ticket',
-            baseCost: 120,
-            cpsPerUnit: 1
+            baseCost: new Decimal(120),
+            cpsPerUnit: new Decimal(1)
         },
         teamQa: {
             name: 'Team QA',
-            baseCost: 1500,
-            cpsPerUnit: 8
+            baseCost: new Decimal(1500),
+            cpsPerUnit: new Decimal(8)
         },
         automazioneTest: {
             name: 'Automazione Test',
-            baseCost: 15000,
-            cpsPerUnit: 47
+            baseCost: new Decimal(15000),
+            cpsPerUnit: new Decimal(47)
         },
         metodologiaAgile: {
             name: 'Metodologia Agile',
-            baseCost: 200000,
-            cpsPerUnit: 260
+            baseCost: new Decimal(200000),
+            cpsPerUnit: new Decimal(260)
         },
         aiDebugger: {
             name: 'AI Debugger',
-            baseCost: 3500000,
-            cpsPerUnit: 1400
+            baseCost: new Decimal(3500000),
+            cpsPerUnit: new Decimal(1400)
         },
         quantumServer: {
             name: 'Quantum Server',
-            baseCost: 55000000,
-            cpsPerUnit: 7800
+            baseCost: new Decimal(55000000),
+            cpsPerUnit: new Decimal(7800)
         },
         reteNeuraleGalattica: {
             name: 'Rete Galattica',
-            baseCost: 850000000,
-            cpsPerUnit: 44000
+            baseCost: new Decimal(850000000),
+            cpsPerUnit: new Decimal(44000)
         },
         debugTemporale: {
             name: 'Debug Temporale',
-            baseCost: 15000000000,
-            cpsPerUnit: 260000
+            baseCost: new Decimal(15000000000),
+            cpsPerUnit: new Decimal(260000)
         }
     },
 
@@ -362,36 +363,36 @@ const gameData = {
         caffeForte: {
             name: 'Caffè Forte',
             desc: 'Aggiunge +1 al valore di ogni click.',
-            cost: 100,
-            clickIncrease: 1,
+            cost: new Decimal(100),
+            clickIncrease: new Decimal(1),
             requiredClicks: 10
         },
         tastieraErgonomica: {
             name: 'Tastiera Ergonomica',
             desc: 'Aggiunge +5 al valore di ogni click.',
-            cost: 500,
-            clickIncrease: 5,
+            cost: new Decimal(500),
+            clickIncrease: new Decimal(5),
             requiredClicks: 100
         },
         mouseGaming: {
             name: 'Mouse Gaming',
             desc: 'Aggiunge +10 al valore di ogni click.',
-            cost: 2000,
-            clickIncrease: 10,
+            cost: new Decimal(2000),
+            clickIncrease: new Decimal(10),
             requiredClicks: 300
         },
         ergonomiaEstrema: {
             name: 'Ergonomia Estrema',
             desc: 'Aggiunge +50 al valore di ogni click.',
-            cost: 10000,
-            clickIncrease: 50,
+            cost: new Decimal(10000),
+            clickIncrease: new Decimal(50),
             requiredClicks: 1000
         },
         aiClick: {
             name: 'Intelligenza Artificiale',
             desc: 'Aggiunge +500 al valore di ogni click.',
-            cost: 500000,
-            clickIncrease: 500,
+            cost: new Decimal(500000),
+            clickIncrease: new Decimal(500),
             requiredClicks: 7500
         },
 
@@ -399,28 +400,49 @@ const gameData = {
         doppioClick: {
             name: 'Doppio Click',
             desc: 'Raddoppia il valore base dei tuoi click.',
-            cost: 25000,
+            cost: new Decimal(25000),
             requiredClicks: 1500,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'clickGlobalMult', val: 2 }]
+            clickIncrease: new Decimal(0),
+            effects: [{
+                trigger: 'passive',
+                type: 'mult_global',
+                stat: 'clickGlobalMult',
+                val: new Decimal(2)
+            }]
         },
         manoBionica: {
             name: 'Mano Bionica',
             desc: 'Ogni click guadagna anche l\'1% dei tuoi BPS.',
-            cost: 50000,
+            cost: new Decimal(50000),
             requiredClicks: 2500,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'bionicHand', val: true }]
+            clickIncrease: new Decimal(0),
+            effects: [{
+                trigger: 'passive',
+                type: 'set_flag',
+                flag: 'bionicHand',
+                val: true
+            }]
         },
-        aiClick: { name: 'Intelligenza Artificiale', desc: 'Aggiunge +500 al valore di ogni click.', cost: 500000, clickIncrease: 500, requiredClicks: 7500 },
+        aiClick: {
+            name: 'Intelligenza Artificiale',
+            desc: 'Aggiunge +500 al valore di ogni click.',
+            cost: new Decimal(500000),
+            clickIncrease: new Decimal(500),
+            requiredClicks: 7500
+        },
 
         clickAutomatico: {
             name: 'Click Automatico',
             desc: 'Aggiunge BPS pari al numero di Assistenti QA.',
-            cost: 1000000, // Aumentato un po'
+            cost: new Decimal(1000000),
             requiredClicks: 10000,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'autoClickQA', val: true }]
+            clickIncrease: new Decimal(0),
+            effects: [{
+                trigger: 'passive',
+                type: 'set_flag',
+                flag: 'autoClickQA',
+                val: true
+            }]
         },
 
         // --- UPGRADE COSTOSI PER SBLOCCARE LE SKIN ---
@@ -428,19 +450,29 @@ const gameData = {
         hacking: {
             name: 'Hacking Etico',
             desc: 'Raddoppia la probabilità di trovare Ticket Critici.',
-            cost: 10000000, // AUMENTATO A 10 MILIONI (Per Leggendaria Ricardo)
+            cost: new Decimal(10000000),
             requiredClicks: 15000,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugChance', val: 2 }]
+            clickIncrease: new Decimal(0),
+            effects: [{
+                trigger: 'passive',
+                type: 'mult_global',
+                stat: 'goldenBugChance',
+                val: new Decimal(2)
+            }]
         },
 
         clickDivino: {
             name: 'Click Divino',
             desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
-            cost: 1000000000, // AUMENTATO A 1 MILIARDO (Per Divina Gespo)
+            cost: new Decimal(1000000000),
             requiredClicks: 100000,
-            clickIncrease: 0,
-            effects: [{ trigger: 'passive', type: 'set_flag', flag: 'divineClick', val: true }]
+            clickIncrease: new Decimal(0),
+            effects: [{
+                trigger: 'passive',
+                type: 'set_flag',
+                flag: 'divineClick',
+                val: true
+            }]
         }
     },
 
@@ -448,57 +480,67 @@ const gameData = {
         sinergia: {
             name: 'Sinergia Manageriale',
             desc: 'Ogni punto promozione vale +0.1% in più (Cumulativo).',
-            baseCost: 5,
-            bonusPerLevel: 0.001,
+            baseCost: new Decimal(5),
+            bonusPerLevel: new Decimal(0.001),
             isCounted: true,
-            effects: [{ trigger: 'passive', type: 'add_global_stat_per_level', stat: 'prestigeSynergyFactor', val: 0.001 }]
+            effects: [{
+                trigger: 'passive',
+                type: 'add_global_stat_per_level',
+                stat: 'prestigeSynergyFactor',
+                val: new Decimal(0.001)
+            }]
         },
         paracadute: {
             name: 'Paracadute d\'Oro',
             desc: 'Inizi la run con +2.000 Bug per livello.',
-            baseCost: 25,
+            baseCost: new Decimal(25),
             isCounted: true,
-            bonusPerLevel: 2000
+            bonusPerLevel: new Decimal(2000)
         },
         serverAlwaysOn: {
             name: 'Server Always-On',
             desc: 'Aumenta il guadagno offline dal 30% al 100% (+10%/liv).',
-            baseCost: 50,
+            baseCost: new Decimal(50),
             isCounted: true,
             maxLevel: 7
         },
         contrattazione: {
             name: 'Contrattazione',
             desc: 'Riduce l\'aumento dei costi dei Teams (Scaling).',
-            baseCost: 500,
+            baseCost: new Decimal(500),
             isCounted: true,
             maxLevel: 10,
-            effects: [{ trigger: 'passive', type: 'add_global_stat_per_level', stat: 'costScalingReduction', val: 0.01 }]
+            effects: [{
+                trigger: 'passive',
+                type: 'add_global_stat_per_level',
+                stat: 'costScalingReduction',
+                val: 0.01
+            }]
         },
         eredita: {
             name: 'Eredità Strutturale',
             desc: 'Mantieni 1 "Assistente QA" per livello dopo la promozione.',
-            baseCost: 100,
+            baseCost: new Decimal(100),
             isCounted: true
         },
         outsourcing: {
             name: 'Outsourcing',
             desc: 'Riduce i costi base del 5% per livello.',
-            baseCost: 300,
+            baseCost: new Decimal(300),
             isCounted: true,
             maxLevel: 5
         },
         accelerazione: {
             name: 'Accelerazione',
             desc: 'Inizi con +1 Assistente QA.',
-            baseCost: 15,
+            baseCost: new Decimal(15),
             isCounted: false
         },
         crunchTime: {
             id: 'crunchTime',
             name: 'ESPO FURY!',
             desc: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.',
-            baseCost: 200,
+            baseCost: new Decimal(200),
             isCounted: false,
             furyImage: 'espo-fury.webp',
             furyClickImage: 'espo-fury-click.webp'
@@ -506,16 +548,26 @@ const gameData = {
         bugBounty: {
             name: 'Bug Bounty',
             desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.',
-            baseCost: 75,
+            baseCost: new Decimal(75),
             isCounted: true,
-            effects: [{ trigger: 'passive', type: 'add_mult_per_level', stat: 'goldenBugMult', val: 0.2 }]
+            effects: [{
+                trigger: 'passive',
+                type: 'add_mult_per_level',
+                stat: 'goldenBugMult',
+                val: new Decimal(0.2)
+            }]
         },
         ticketPremium: {
             name: 'Ticket Premium',
             desc: 'I Ticket Critici appaiono 2 volte più spesso.',
-            baseCost: 25,
+            baseCost: new Decimal(25),
             isCounted: false,
-            effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugSpawnTime', val: 0.5 }]
+            effects: [{
+                trigger: 'passive',
+                type: 'mult_global',
+                stat: 'goldenBugSpawnTime',
+                val: new Decimal(0.5)
+            }]
         }
     },
 
@@ -524,336 +576,336 @@ const gameData = {
             name: 'Caffè Doppio',
             desc: 'Assistenti QA x2 BPS.',
             targetTeam: 'assistenteQa',
-            cost: 150,
-            multiplier: 2,
+            cost: new Decimal(150),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         caffeTriplo: {
             name: 'Caffè Triplo',
             desc: 'Assistenti QA x2 BPS.',
             targetTeam: 'assistenteQa',
-            cost: 750,
-            multiplier: 2,
+            cost: new Decimal(750),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         scrivanieErgonomiche: {
             name: 'Scrivanie Ergonomiche',
             desc: 'Assistenti QA x3 BPS.',
             targetTeam: 'assistenteQa',
-            cost: 5000,
-            multiplier: 3,
+            cost: new Decimal(5000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         formazioneAvanzata: {
             name: 'Formazione Avanzata',
             desc: 'Assistenti QA x3 BPS.',
             targetTeam: 'assistenteQa',
-            cost: 25000,
-            multiplier: 3,
+            cost: new Decimal(25000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         managerJunior: {
             name: 'Manager Junior',
             desc: 'Assistenti QA x4 BPS.',
             targetTeam: 'assistenteQa',
-            cost: 100000,
-            multiplier: 4,
+            cost: new Decimal(100000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         jiraAI: {
             name: 'Jira AI',
             desc: 'Jira Ticket x2 BPS.',
             targetTeam: 'jiraTicket',
-            cost: 1000,
-            multiplier: 2,
+            cost: new Decimal(1000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         jiraCloud: {
             name: 'Jira Cloud',
             desc: 'Jira Ticket x2 BPS.',
             targetTeam: 'jiraTicket',
-            cost: 5000,
-            multiplier: 2,
+            cost: new Decimal(5000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         jiraDataCenter: {
             name: 'Jira Data Center',
             desc: 'Jira Ticket x3 BPS.',
             targetTeam: 'jiraTicket',
-            cost: 40000,
-            multiplier: 3,
+            cost: new Decimal(40000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         jiraPremium: {
             name: 'Jira Premium',
             desc: 'Jira Ticket x3 BPS.',
             targetTeam: 'jiraTicket',
-            cost: 200000,
-            multiplier: 3,
+            cost: new Decimal(200000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         jiraSelfHealing: {
             name: 'Jira Self-Healing',
             desc: 'Jira Ticket x4 BPS.',
             targetTeam: 'jiraTicket',
-            cost: 1000000,
-            multiplier: 4,
+            cost: new Decimal(1000000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         scrum: {
             name: 'Metodologia Scrum',
             desc: 'Team QA x2 BPS.',
             targetTeam: 'teamQa',
-            cost: 11000,
-            multiplier: 2,
+            cost: new Decimal(11000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         teamLeader: {
             name: 'Team Leader',
             desc: 'Team QA x2 BPS.',
             targetTeam: 'teamQa',
-            cost: 55000,
-            multiplier: 2,
+            cost: new Decimal(55000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         certificazioneISTQB: {
             name: 'Certificazione ISTQB',
             desc: 'Team QA x3 BPS.',
             targetTeam: 'teamQa',
-            cost: 440000,
-            multiplier: 3,
+            cost: new Decimal(440000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         bonusProduttivita: {
             name: 'Bonus Produttività',
             desc: 'Team QA x3 BPS.',
             targetTeam: 'teamQa',
-            cost: 2200000,
-            multiplier: 3,
+            cost: new Decimal(2200000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         teamGlobale: {
             name: 'Team Globale 24/7',
             desc: 'Team QA x4 BPS.',
             targetTeam: 'teamQa',
-            cost: 11000000,
-            multiplier: 4,
+            cost: new Decimal(11000000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         selenium: {
             name: 'Framework Selenium',
             desc: 'Automazione x2 BPS.',
             targetTeam: 'automazioneTest',
-            cost: 120000,
-            multiplier: 2,
+            cost: new Decimal(120000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         cucumber: {
             name: 'Cucumber (BDD)',
             desc: 'Automazione x2 BPS.',
             targetTeam: 'automazioneTest',
-            cost: 600000,
-            multiplier: 2,
+            cost: new Decimal(600000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         ciCd: {
             name: 'Pipeline CI/CD',
             desc: 'Automazione x3 BPS.',
             targetTeam: 'automazioneTest',
-            cost: 4800000,
-            multiplier: 3,
+            cost: new Decimal(4800000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         docker: {
             name: 'Container Docker',
             desc: 'Automazione x3 BPS.',
             targetTeam: 'automazioneTest',
-            cost: 24000000,
-            multiplier: 3,
+            cost: new Decimal(24000000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         kubernetes: {
             name: 'Orchestrazione Kubernetes',
             desc: 'Automazione x4 BPS.',
             targetTeam: 'automazioneTest',
-            cost: 120000000,
-            multiplier: 4,
+            cost: new Decimal(120000000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         kanban: {
             name: 'Board Kanban',
             desc: 'Metodologia Agile x2 BPS.',
             targetTeam: 'metodologiaAgile',
-            cost: 1300000,
-            multiplier: 2,
+            cost: new Decimal(1300000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         safe: {
             name: 'Framework SAFe',
             desc: 'Metodologia Agile x2 BPS.',
             targetTeam: 'metodologiaAgile',
-            cost: 6500000,
-            multiplier: 2,
+            cost: new Decimal(6500000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         productOwner: {
             name: 'Product Owner Dedicato',
             desc: 'Metodologia Agile x3 BPS.',
             targetTeam: 'metodologiaAgile',
-            cost: 52000000,
-            multiplier: 3,
+            cost: new Decimal(52000000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         releaseTrain: {
             name: 'Release Train',
             desc: 'Metodologia Agile x3 BPS.',
             targetTeam: 'metodologiaAgile',
-            cost: 260000000,
-            multiplier: 3,
+            cost: new Decimal(260000000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         devOps: {
             name: 'Cultura DevOps',
             desc: 'Metodologia Agile x4 BPS.',
             targetTeam: 'metodologiaAgile',
-            cost: 1300000000,
-            multiplier: 4,
+            cost: new Decimal(1300000000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         deepLearning: {
             name: 'Deep Learning',
             desc: 'AI Debugger x2 BPS.',
             targetTeam: 'aiDebugger',
-            cost: 14000000,
-            multiplier: 2,
+            cost: new Decimal(14000000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         machineLearning: {
             name: 'Machine Learning',
             desc: 'AI Debugger x2 BPS.',
             targetTeam: 'aiDebugger',
-            cost: 70000000,
-            multiplier: 2,
+            cost: new Decimal(70000000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         retiNeurali: {
             name: 'Reti Neurali',
             desc: 'AI Debugger x3 BPS.',
             targetTeam: 'aiDebugger',
-            cost: 560000000,
-            multiplier: 3,
+            cost: new Decimal(560000000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         quantumComputing: {
             name: 'Quantum Computing',
             desc: 'AI Debugger x3 BPS.',
             targetTeam: 'aiDebugger',
-            cost: 2800000000,
-            multiplier: 3,
+            cost: new Decimal(2800000000),
+            multiplier: new Decimal(3),
             requiredCount: 50
         },
         skynet: {
             name: 'Skynet',
             desc: 'AI Debugger x4 BPS.',
             targetTeam: 'aiDebugger',
-            cost: 14000000000,
-            multiplier: 4,
+            cost: new Decimal(14000000000),
+            multiplier: new Decimal(4),
             requiredCount: 100
         },
         entanglementLink: {
             name: 'Entanglement Link',
             desc: 'Quantum Server x2 BPS.',
             targetTeam: 'quantumServer',
-            cost: 550000000,
-            multiplier: 2,
+            cost: new Decimal(550000000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         superpositionCores: {
             name: 'Superposition Cores',
             desc: 'Quantum Server x2 BPS.',
             targetTeam: 'quantumServer',
-            cost: 2750000000,
-            multiplier: 2,
+            cost: new Decimal(2750000000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         errorCorrection: {
             name: 'Quantum Error Correction',
             desc: 'Quantum Server x3 BPS.',
             targetTeam: 'quantumServer',
-            cost: 22000000000,
-            multiplier: 3,
+            cost: new Decimal(22000000000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         quantumSupremacy: {
             name: 'Supremazia Quantistica',
             desc: 'Quantum Server x4 BPS.',
             targetTeam: 'quantumServer',
-            cost: 110000000000,
-            multiplier: 4,
+            cost: new Decimal(110000000000),
+            multiplier: new Decimal(4),
             requiredCount: 50
         },
         subspaceTransceiver: {
             name: 'Subspace Transceiver',
             desc: 'Rete Galattica x2 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 8500000000,
-            multiplier: 2,
+            cost: new Decimal(8500000000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         dysonNodes: {
             name: 'Nodi Dyson',
             desc: 'Rete Galattica x2 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 42500000000,
-            multiplier: 2,
+            cost: new Decimal(42500000000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         wormholeRouting: {
             name: 'Wormhole Routing',
             desc: 'Rete Galattica x3 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 340000000000,
-            multiplier: 3,
+            cost: new Decimal(340000000000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         federazioneGalattica: {
             name: 'Federazione Galattica',
             desc: 'Rete Galattica x4 BPS.',
             targetTeam: 'reteNeuraleGalattica',
-            cost: 1700000000000,
-            multiplier: 4,
+            cost: new Decimal(1700000000000),
+            multiplier: new Decimal(4),
             requiredCount: 50
         },
         paradoxPrevention: {
             name: 'Paradox Prevention',
             desc: 'Debug Temporale x2 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 150000000000,
-            multiplier: 2,
+            cost: new Decimal(150000000000),
+            multiplier: new Decimal(2),
             requiredCount: 1
         },
         timelineBranching: {
             name: 'Timeline Branching',
             desc: 'Debug Temporale x2 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 750000000000,
-            multiplier: 2,
+            cost: new Decimal(750000000000),
+            multiplier: new Decimal(2),
             requiredCount: 10
         },
         chronosTrigger: {
             name: 'Chronos Trigger',
             desc: 'Debug Temporale x3 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 6000000000000,
-            multiplier: 3,
+            cost: new Decimal(6000000000000),
+            multiplier: new Decimal(3),
             requiredCount: 25
         },
         immutablePast: {
             name: 'Passato Immutabile',
             desc: 'Debug Temporale x4 BPS.',
             targetTeam: 'debugTemporale',
-            cost: 30000000000000,
-            multiplier: 4,
+            cost: new Decimal(30000000000000),
+            multiplier: new Decimal(4),
             requiredCount: 50
         }
     },
@@ -876,7 +928,7 @@ const gameData = {
             buildingId: 'assistenteQa',
             target: 10,
             isSecret: false,
-            reward: { type: 'bugs', value: 5000 },
+            reward: { type: 'bugs', value: new Decimal(5000) },
             condition: () => gameState.teams.assistenteQa.count >= 10
         },
         jiraWarrior: {
@@ -886,7 +938,7 @@ const gameData = {
             buildingId: 'jiraTicket',
             target: 25,
             isSecret: false,
-            reward: { type: 'bugs', value: 2000 },
+            reward: { type: 'bugs', value: new Decimal(2000) },
             condition: () => gameState.teams.jiraTicket.count >= 25
         },
         clickMaster: {
@@ -902,9 +954,9 @@ const gameData = {
             name: 'Code Monkey',
             desc: 'Accumula 50.000 bug totali.',
             type: 'score',
-            target: 50000,
+            target: new Decimal(50000),
             isSecret: false,
-            reward: { type: 'bugs', value: 10000 },
+            reward: { type: 'bugs', value: new Decimal(10000) },
             condition: () => gameState.totalScore >= 50000
         },
         automationFirst: {
@@ -914,14 +966,14 @@ const gameData = {
             buildingId: 'teamQa',
             target: 10,
             isSecret: false,
-            reward: { type: 'bugs', value: 15000 },
+            reward: { type: 'bugs', value: new Decimal(15000) },
             condition: () => gameState.teams.teamQa.count >= 10
         },
         clickGod: {
             name: 'Hardcoded Solution',
             desc: 'Raggiungi 2.000 click manuali.',
             type: 'click',
-            target: 2000,
+            target: new Decimal(2000),
             isSecret: false,
             reward: { type: 'skin', id: 'gladiator' },
             condition: () => gameState.totalClicks >= 2000
@@ -930,7 +982,7 @@ const gameData = {
             name: 'Dittatore del Mouse',
             desc: 'Raggiungi 20.000 click manuali.',
             type: 'click',
-            target: 20000,
+            target: new Decimal(20000),
             isSecret: false,
             reward: { type: 'skin', id: 'dictator' },
             condition: () => gameState.totalClicks >= 20000
@@ -942,7 +994,7 @@ const gameData = {
             buildingId: 'assistenteQa',
             target: 100,
             isSecret: false,
-            reward: { type: 'bugs', value: 50000 },
+            reward: { type: 'bugs', value: new Decimal(50000) },
             condition: () => gameState.teams.assistenteQa.count >= 100
         },
         fullStack: {
@@ -958,9 +1010,9 @@ const gameData = {
             name: 'Tech Lead',
             desc: 'Accumula 10 Milioni di bug.',
             type: 'score',
-            target: 10000000,
+            target: new Decimal(10000000),
             isSecret: false,
-            reward: { type: 'prestige', value: 5 },
+            reward: { type: 'prestige', value: new Decimal(5) },
             condition: () => gameState.totalScore >= 10000000
         },
         geishaUnlock: {
@@ -976,9 +1028,9 @@ const gameData = {
             name: 'System Architect',
             desc: 'Accumula 1 Miliardo di bug.',
             type: 'score',
-            target: 1000000000,
+            target: new Decimal(1000000000),
             isSecret: false,
-            reward: { type: 'prestige', value: 10 },
+            reward: { type: 'prestige', value: new Decimal(10) },
             condition: () => gameState.totalScore >= 1000000000
         },
         errore404: {
@@ -987,7 +1039,7 @@ const gameData = {
             type: 'custom',
             target: 1,
             isSecret: false,
-            reward: { type: 'bugs', value: 500000 },
+            reward: { type: 'bugs', value: new Decimal(500000) },
             condition: () => gameState.lastBluescreenTimestamp > 0
         },
         hacker: {
@@ -1006,7 +1058,7 @@ const gameData = {
             buildingId: 'aiDebugger',
             target: 100,
             isSecret: false,
-            reward: { type: 'prestige', value: 5 },
+            reward: { type: 'prestige', value: new Decimal(5) },
             condition: () => gameState.teams.aiDebugger.count >= 100
         },
         divinitaMouse: {
@@ -1160,22 +1212,21 @@ const gameData = {
 };
 
 // --- GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
-function getInitialGameState()
-{
+function getInitialGameState() {
     const state =
-	{
+    {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
-        score: 0,
-        baseClickValue: 1,
+        score: new Decimal(0),
+        baseClickValue: new Decimal(1),
         totalClicks: 0,
-        totalScore: 0,
-        totalOfflineScore: 0,
-        prestigePoints: 0,
-        lifetimePrestigePoints: 0,
+        totalScore: new Decimal(0),
+        totalOfflineScore: new Decimal(0),
+        prestigePoints: new Decimal(0),
+        lifetimePrestigePoints: new Decimal(0),
         totalResets: 0,
         totalGoldenBugsClicked: 0,
         totalPlayTime: 0,
-        lifetimeScore: 0,
+        lifetimeScore: new Decimal(0),
         lastSaveTimestamp: Date.now(),
         lastBluescreenTimestamp: 0,
         crunchTimeEndTime: 0,
@@ -1196,29 +1247,26 @@ function getInitialGameState()
 
     for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
 
-    for (const key in gameData.prestigeUpgrades)
-	{
+    for (const key in gameData.prestigeUpgrades) {
         if (gameData.prestigeUpgrades[key].isCounted)
-			state.prestigeUpgrades[key] = { count: 0 };
+            state.prestigeUpgrades[key] = { count: 0 };
         else
-			state.prestigeUpgrades[key] = { purchased: false };
+            state.prestigeUpgrades[key] = { purchased: false };
     }
 
     const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
 
-    for (const key in allAssets)
-	{
+    for (const key in allAssets) {
         if (allAssets[key].defaultVol !== undefined)
-			state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
-	}
+            state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
+    }
 
     return state;
 }
 
 gameState = getInitialGameState();
 
-function resetGameToDefault()
-{
+function resetGameToDefault() {
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 
@@ -1230,13 +1278,13 @@ function resetGameToDefault()
     gameState.skins = JSON.parse(JSON.stringify(freshState.skins));
     gameState.user = JSON.parse(JSON.stringify(freshState.user));
 
-    bps = 0;
-    prestigeBonus = 1;
-    clickCPSBonus = 1;
+    bps = new Decimal(0);
+    prestigeBonus = new Decimal(1);
+    clickCPSBonus = new Decimal(1);
     clickHistory = [];
 
     window.goldenBugChance = 0.001;
     window.goldenBugSpawnTime = 60000;
-    window.goldenBugMult = 1;
+    window.goldenBugMult = new Decimal(1);
     window.gameFlags = {};
 }

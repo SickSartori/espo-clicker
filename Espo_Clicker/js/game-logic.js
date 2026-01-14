@@ -9,30 +9,30 @@ let lastVideoPlayedId = null;
 const RewardHandlers = {
     // Aggiunge Bug al wallet
     bugs: (value) => {
-        gameState.score += value;
-        gameState.totalScore += value;
-        gameState.lifetimeScore += value;
-        return `+${formatNumber(value)} Bug!`;
+        let val = new Decimal(value);
+        gameState.score = gameState.score.add(val);
+        gameState.totalScore = gameState.totalScore.add(val);
+        gameState.lifetimeScore = gameState.lifetimeScore.add(val);
+        return `+${formatNumber(val)} Bug!`;
     },
     // Aggiunge Token Prestigio
     prestige: (value) => {
-        gameState.prestigePoints += value;
-        return `+${value} Token Lab!`;
+        let val = new Decimal(value);
+        gameState.prestigePoints = gameState.prestigePoints.add(val);
+        return `+${formatNumber(val)} Token Lab!`;
     },
-    // Sblocca una Skin
+    // Sblocca una Skin (Invariato)
     skin: (skinId) => {
         if (!gameState.skins.unlocked.includes(skinId)) {
             gameState.skins.unlocked.push(skinId);
             const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : skinId;
             return gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
         }
-        return null; // Già posseduta, niente toast
+        return null;
     },
-    // Moltiplicatore (Logica gestita passivamente, qui solo feedback)
     multiplier: (value) => {
         return `Bonus BPS x${value} Attivo!`;
     },
-    // NUOVO ESEMPIO: Genera subito un Golden Bug
     spawnGolden: () => {
         spawnGoldenBug();
         return "Golden Bug Avvistato!";
@@ -84,18 +84,43 @@ function clearActiveEvent() {
 function applyEffect(effect, level = 1) {
     if (!effect) return;
 
+    let lvl = new Decimal(level);
+    let val = new Decimal(effect.val);
+
     if (effect.type === 'mult_state') {
-        if (gameState.hasOwnProperty(effect.stat)) gameState[effect.stat] *= effect.val;
+        if (gameState.hasOwnProperty(effect.stat)) {
+            gameState[effect.stat] = gameState[effect.stat].mul(val);
+        }
     }
     else if (effect.type === 'mult_global') {
-        if (window.hasOwnProperty(effect.stat)) window[effect.stat] *= effect.val;
+        if (window.hasOwnProperty(effect.stat)) {
+            // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
+            if (window[effect.stat] instanceof Decimal) {
+                window[effect.stat] = window[effect.stat].mul(val);
+            } else {
+                window[effect.stat] *= effect.val;
+            }
+        }
     }
     else if (effect.type === 'add_mult_per_level') {
-        if (window.hasOwnProperty(effect.stat)) window[effect.stat] += (effect.val * level);
+        if (window.hasOwnProperty(effect.stat)) {
+            let bonus = val.mul(lvl);
+            if (window[effect.stat] instanceof Decimal) {
+                window[effect.stat] = window[effect.stat].add(bonus);
+            } else {
+                window[effect.stat] += (effect.val * level);
+            }
+        }
     }
     else if (effect.type === 'add_global_stat_per_level') {
-        // NUOVO: Aggiunge valore a una variabile globale per ogni livello
-        if (window.hasOwnProperty(effect.stat)) window[effect.stat] += (effect.val * level);
+        if (window.hasOwnProperty(effect.stat)) {
+            let bonus = val.mul(lvl);
+            if (window[effect.stat] instanceof Decimal) {
+                window[effect.stat] = window[effect.stat].add(bonus);
+            } else {
+                window[effect.stat] += (effect.val * level);
+            }
+        }
     }
     else if (effect.type === 'set_flag') {
         window.gameFlags[effect.flag] = effect.val;
@@ -106,12 +131,12 @@ function applyEffect(effect, level = 1) {
 function reapplyAllEffects() {
     // 1. Reset Totale
     window.goldenBugChance = 0.001;
-    window.goldenBugMult = 1;
+    window.goldenBugMult = new Decimal(1);
     window.goldenBugSpawnTime = 60000;
-    window.clickGlobalMult = 1;
-    window.clickCPSBonus = 1;
+    window.clickGlobalMult = new Decimal(1);
+    window.clickCPSBonus = new Decimal(1);
     window.costScalingReduction = 0;
-    window.prestigeSynergyFactor = 0;
+    window.prestigeSynergyFactor = new Decimal(0);
 
     window.gameFlags = {};
 
@@ -302,31 +327,17 @@ function finalizePurchase() {
 
 function buySkin(skinId) {
     const data = gameData.skins[skinId];
-
-    // Guard Clauses: Esce subito se c'è un problema
     if (!data || !data.cost) return;
     if (gameState.skins.unlocked.includes(skinId)) return;
 
-    if (gameState.prestigePoints >= data.cost) {
-        // Acquisto
-        gameState.prestigePoints -= data.cost;
+    if (gameState.prestigePoints.gte(data.cost)) {
+        gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
         gameState.skins.unlocked.push(skinId);
-
-        // Effetti Immediati
         playSound('sound-buy');
         window.EspooClicker.showToast(gameData.texts.toasts.skinBought.replace('{name}', data.name), 'success');
-
-        // --- MODIFICA QUI: Commenta o rimuovi questa riga ---
-        // equipSkin(skinId);  <-- QUESTO IMPEDISCE L'EQUIPAGGIAMENTO AUTOMATICO
-        // ----------------------------------------------------
-
-        // Salvataggio e UI
         window.EspooClicker.saveGame();
-
-        // Aggiorniamo solo ciò che serve
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
         if (typeof updateSkinsUI === 'function') updateSkinsUI();
-
     } else {
         playSound('sound-error');
         window.EspooClicker.showToast(gameData.texts.toasts.insufficientTokens, 'error');
@@ -337,21 +348,12 @@ function buyClickUpgrade(upgradeKey) {
     const state = gameState.clickUpgrades[upgradeKey];
     const data = gameData.clickUpgrades[upgradeKey];
 
-    // Controlla se puoi permettertelo E se non l'hai già comprato
-    if (gameState.score >= data.cost && !state.purchased) {
-
-        // 1. Logica specifica di questo acquisto
-        gameState.score -= data.cost;
-        gameState.baseClickValue += data.clickIncrease;
+    if (gameState.score.gte(data.cost) && !state.purchased) {
+        gameState.score = gameState.score.minus(data.cost);
+        gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
-
-        if (data.effects) {
-            data.effects.forEach(eff => applyEffect(eff));
-        }
-
+        if (data.effects) data.effects.forEach(eff => applyEffect(eff));
         if (upgradeKey === 'clickAutomatico') recalculateCPS();
-
-        // 2. Chiamata standard finale (sostituisce tutto il resto)
         finalizePurchase();
     }
 }
@@ -360,15 +362,10 @@ function buyTeamEnhancement(enhanceKey) {
     const state = gameState.buildingEnhancements[enhanceKey];
     const data = gameData.buildingEnhancements[enhanceKey];
 
-    if (gameState.score >= data.cost && !state.purchased) {
-        // 1. Logica di Gioco (Pagamento e Stato)
-        gameState.score -= data.cost;
+    if (gameState.score.gte(data.cost) && !state.purchased) {
+        gameState.score = gameState.score.minus(data.cost);
         state.purchased = true;
-
-        // 2. Ricalcoli necessari
         recalculateCPS();
-
-        // 3. Chiusura standard (Suono, Save, UI)
         finalizePurchase();
     }
 }
@@ -378,54 +375,55 @@ function buyPrestigeUpgrade(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const cost = data.baseCost;
 
-    // Controlli preliminari
     if (data.isCounted) {
-        if (gameState.prestigePoints < cost) return; // Non hai abbastanza token
+        if (gameState.prestigePoints.lt(cost)) return;
     } else {
-        if (gameState.prestigePoints < cost || state.purchased) return; // O povero o già comprato
+        if (gameState.prestigePoints.lt(cost) || state.purchased) return;
     }
 
-    // --- AZIONE DI ACQUISTO ---
+    gameState.prestigePoints = gameState.prestigePoints.minus(cost);
 
-    // 1. Pagamento (Comune a entrambi)
-    gameState.prestigePoints -= cost;
-
-    // 2. Aggiornamento Stato specifico
     if (data.isCounted) {
         state.count++;
-        // [GENERICO] Effetti Counted (incremento livello)
         if (data.effects) data.effects.forEach(eff => applyEffect(eff, 1));
     } else {
         state.purchased = true;
-        // [GENERICO] Effetti One-Shot
         if (data.effects) data.effects.forEach(eff => applyEffect(eff));
     }
 
-    // 3. Ricalcoli Logici
     calculatePrestigeBonus();
     recalculateCPS();
-
-    // 4. Chiusura standard (Suono, Save, UI)
     finalizePurchase();
 }
 
 
 // --------- FUNZIONI DI GIOCO PRINCIPALI ---------
+// --------- FUNZIONI MATEMATICHE (DECIMAL) ---------
+
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
 
-    // Logica Generica: usa la variabile globale 'costScalingReduction' calcolata dagli effetti
-    let r = Math.max(1.05, costScalingBase - costScalingReduction);
+    let r = 1.05;
+    if (window.costScalingBase) {
+        r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
+    }
 
-    let discountedBaseCost = data.baseCost; // Qui potresti applicare altri sconti globali
-    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
+    let decR = new Decimal(r);
+    let discountedBaseCost = data.baseCost;
+
+    let currentSingleCost = discountedBaseCost.mul(decR.pow(state.count)).floor();
 
     if (amount === 1) {
-        return Math.max(1, currentSingleCost);
+        return Decimal.max(1, currentSingleCost);
     } else {
-        const totalCost = currentSingleCost * (Math.pow(r, amount) - 1) / (r - 1);
-        return Math.max(amount, Math.floor(totalCost));
+        let num = decR.pow(amount).minus(1);
+        let den = decR.minus(1);
+
+        if (decR.eq(1)) return currentSingleCost.mul(amount);
+
+        let totalCost = currentSingleCost.mul(num).div(den).floor();
+        return Decimal.max(amount, totalCost);
     }
 }
 
@@ -433,47 +431,109 @@ function calculateTeamCost(teamKey) {
     return calculateBulkCost(teamKey, 1);
 }
 
+function calculateMaxAffordable(teamKey) {
+    const state = gameState.teams[teamKey];
+    const data = gameData.teams[teamKey];
+
+    let r = 1.05;
+    if (window.costScalingBase) r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
+    let decR = new Decimal(r);
+
+    let discountedBase = data.baseCost;
+    let currentSingleCost = discountedBase.mul(decR.pow(state.count)).floor();
+
+    if (gameState.score.lt(currentSingleCost)) return 0;
+
+    if (Math.abs(r - 1) < 0.0000001) {
+        return gameState.score.div(currentSingleCost).floor().toNumber();
+    }
+
+    let part1 = gameState.score.mul(decR.minus(1));
+    let part2 = part1.div(currentSingleCost);
+    let part3 = part2.add(1);
+    let maxAmount = part3.ln().div(decR.ln()).floor();
+
+    if (maxAmount.lt(10000)) {
+        let num = maxAmount.toNumber();
+        let cost = calculateBulkCost(teamKey, num);
+        while (num > 0 && cost.gt(gameState.score)) {
+            num--;
+            cost = calculateBulkCost(teamKey, num);
+        }
+        return num;
+    }
+
+    return maxAmount.toNumber();
+}
+
+function buyTeam(teamKey) {
+    let amount = buyMultiplier;
+    if (typeof buyMultiplier === 'undefined') amount = 1;
+
+    if (amount === 'MAX') {
+        amount = calculateMaxAffordable(teamKey);
+        if (amount === 0) return;
+    }
+
+    const state = gameState.teams[teamKey];
+    const currentCost = calculateBulkCost(teamKey, amount);
+
+    if (gameState.score.gte(currentCost)) {
+        playSound('sound-buy');
+        gameState.score = gameState.score.minus(currentCost);
+        state.count += amount;
+        recalculateCPS();
+        refreshAllStores();
+        window.EspooClicker.saveGame();
+        updateUI();
+    } else {
+        playSound('sound-error');
+        window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
+    }
+}
+
 function calculatePrestigeBonus() {
-    let baseBonus = gameState.lifetimePrestigePoints * 0.01;
+    let lifetime = gameState.lifetimePrestigePoints;
+    let baseBonus = lifetime.mul(0.01);
 
-    let synergyBonus = prestigeSynergyFactor * gameState.lifetimePrestigePoints;
+    let synergyBonus = window.prestigeSynergyFactor.mul(lifetime);
 
-    const MAX_BONUS = 10000;
-    let calculatedBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus;
-    prestigeBonus = Math.min(calculatedBonus, MAX_BONUS);
+    let calculatedBonus = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+
+    prestigeBonus = calculatedBonus;
 }
 
 function recalculateCPS() {
-    let baseCPS = 0;
+    let baseCPS = new Decimal(0);
 
     for (const key in gameState.teams) {
         if (!gameState.teams[key] || !gameData.teams[key]) continue;
         const state = gameState.teams[key];
         const data = gameData.teams[key];
 
-        let teamBPS = state.count * data.cpsPerUnit;
+        let teamBPS = new Decimal(state.count).mul(data.cpsPerUnit);
 
-        // Applicazione Enhancements (già generica, ok)
         for (const enhanceKey in gameData.buildingEnhancements) {
             if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
                 const enhancementState = gameState.buildingEnhancements[enhanceKey];
                 const enhancementData = gameData.buildingEnhancements[enhanceKey];
                 if (enhancementState.purchased && enhancementData.targetTeam === key) {
-                    teamBPS *= enhancementData.multiplier;
+                    teamBPS = teamBPS.mul(enhancementData.multiplier);
                 }
             }
         }
 
-        // NUOVA LOGICA GENERICA: Click Automatico
-        // Se il flag è attivo E il team ha il tag 'helper', aggiungi il suo numero al BPS
         if (window.gameFlags.autoClickQA && data.tags && data.tags.includes('helper')) {
-            baseCPS += state.count;
+            baseCPS = baseCPS.add(state.count);
         }
 
-        baseCPS += teamBPS;
+        baseCPS = baseCPS.add(teamBPS);
     }
 
-    bps = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
+    bps = baseCPS.mul(prestigeBonus)
+        .mul(clickCPSBonus)
+        .mul(bluescreenMultiplier)
+        .mul(crunchTimeMultiplier);
 }
 
 // 1. CRUNCH TIME
@@ -486,7 +546,7 @@ function activateCrunchTime() {
         clearActiveEvent();
         return false;
     }
-    crunchTimeMultiplier = 7;
+    crunchTimeMultiplier = new Decimal(7);
     crunchTimeEndTime = now + 30000;
     crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
     gameState.crunchTimeEndTime = crunchTimeEndTime;
@@ -582,7 +642,7 @@ function spawnFireParticle(container) {
 
 function resumeCrunchTimeEffects() {
     window.currentActiveEvent = 'Espo Fury';
-    crunchTimeMultiplier = 7;
+    crunchTimeMultiplier = new Decimal(7);
     document.body.classList.add('crunch-active');
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
@@ -640,15 +700,14 @@ const EventHandlers = {
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
             const videoMeme = document.getElementById(id);
 
-            if (videoMeme)
-			{
-				videoMeme.pause();
-				videoMeme.classList.add("video_display_none");
-				videoMeme.currentTime = 0;
+            if (videoMeme) {
+                videoMeme.pause();
+                videoMeme.classList.add("video_display_none");
+                videoMeme.currentTime = 0;
 
-				document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
-    			document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
-			}
+                document.getElementById('header-left-panel').classList.add("header_stat_box_display_none");
+                document.getElementById('header-right-panel').classList.add("header_stat_box_display_none");
+            }
         });
 
         // Logica scelta video
@@ -661,13 +720,11 @@ const EventHandlers = {
         lastVideoPlayedId = videoId;
 
         const video = document.getElementById(videoId);
-        if (video)
-		{
-            if (!video.src)
-			{
-				video.src = video.getAttribute('data-src');
-				video.load();
-			}
+        if (video) {
+            if (!video.src) {
+                video.src = video.getAttribute('data-src');
+                video.load();
+            }
 
             video.classList.remove("video_display_none");
             video.currentTime = 0;
@@ -699,7 +756,7 @@ const EventHandlers = {
 
             setTimeout(() => {
                 newVideo.pause();
-				newVideo.classList.add("video_display_none");
+                newVideo.classList.add("video_display_none");
                 newVideo.removeEventListener('pointerdown', videoClickHandler);
                 document.body.classList.remove('rick-rolling');
                 AudioManager.updateAmbience(); // Ricalcola audio alla fine
@@ -766,47 +823,32 @@ const EventHandlers = {
 function triggerGameEvent(eventKey, overrideMult = null) {
     const config = gameData.events[eventKey];
     if (!config) return false;
-
-    // Controllo Conflitti
     if (checkEventConflict(config.name)) return false;
 
-    // Stop Audio Background (Comune a tutti)
     const snowAudio = document.getElementById('sound-snowball');
     if (snowAudio) snowAudio.pause();
     const bgMusic = document.getElementById('sound-bg-music');
     if (bgMusic) bgMusic.pause();
 
-    // Calcolo Moltiplicatore
     let bonusMult = overrideMult;
     if (!bonusMult) {
         bonusMult = Math.floor(Math.random() * (config.maxMult - config.minMult + 1)) + config.minMult;
     }
 
-    // Setup Stato Globale
     isBluescreenActive = true;
-    bluescreenMultiplier = bonusMult;
+    bluescreenMultiplier = new Decimal(bonusMult); // Fondamentale: Decimal
     recalculateCPS();
 
-    // Aggiorna UI Moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
-        const msg = config.toast.replace('{mult}', bonusMult);
-        emDisplay.textContent = msg;
+        emDisplay.textContent = config.toast.replace('{mult}', bonusMult);
         emDisplay.style.display = 'block';
     }
 
-    // Toast Notifica
-    const toastMsg = config.toast.replace('{mult}', bonusMult);
-    window.EspooClicker.showToast(toastMsg, config.toastType);
+    window.EspooClicker.showToast(config.toast.replace('{mult}', bonusMult), config.toastType);
 
-    // DELEGA ALL'HANDLER SPECIFICO (Nuovo Sistema)
-    if (EventHandlers[config.type]) {
-        EventHandlers[config.type](config, eventKey);
-    } else {
-        console.warn(`Nessun handler trovato per il tipo evento: ${config.type}`);
-    }
+    if (EventHandlers[config.type]) EventHandlers[config.type](config, eventKey);
 
-    // Timer Finale Comune (Cleanup e Reset)
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
         if (config.cssClass) document.body.classList.remove(config.cssClass);
@@ -834,75 +876,48 @@ function triggerBluescreen(multiplier) {
 }
 
 function stopBluescreenEffect() {
-    // Reset Variabili di Stato
     isBluescreenActive = false;
-    bluescreenMultiplier = 1;
+    bluescreenMultiplier = new Decimal(1); // Reset a Decimal(1)
 
-    // Rimuovi TUTTE le classi CSS degli eventi
     document.body.classList.remove('bluescreen-active');
     document.body.classList.remove('matrix-active');
     document.body.classList.remove('rick-rolling');
 
-    // Ferma l'effetto Matrix Canvas
-    if (typeof stopMatrixEffect === 'function') {
-        stopMatrixEffect();
-    }
+    if (typeof stopMatrixEffect === 'function') stopMatrixEffect();
 
-    // Nascondi display moltiplicatore
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) emDisplay.style.display = 'none';
 
-    // Ricalcola BPS
     recalculateCPS();
 
-    // STOP AUDIO & VIDEO EVENTI
+    // ... (Codice audio stop esistente invariato) ...
     try {
         const soundBlue = document.getElementById('sound-bluescreen');
         const soundMatrix = document.getElementById('sound-matrix');
         const rickVideo = document.getElementById('rick-roll-video');
-
         if (soundBlue) { soundBlue.pause(); soundBlue.currentTime = 0; }
         if (soundMatrix) { soundMatrix.pause(); soundMatrix.currentTime = 0; }
         if (rickVideo) { rickVideo.pause(); rickVideo.classList.add("video_display_none"); }
     } catch (e) { }
 
-    // Pulizia Glitch Audio (Natale)
-    if (audioGlitchInterval) {
-        clearInterval(audioGlitchInterval);
-        audioGlitchInterval = null;
-    }
-
-    // RIPRISTINO SKIN ORIGINALE
-    if (typeof applySkinVisuals === 'function') {
-        applySkinVisuals(gameState.skins.current);
-    }
-
-    // RIPRISTINO MUSICA AMBIENTE
-    if (typeof AudioManager !== 'undefined') {
-        AudioManager.updateAmbience();
-    }
+    if (audioGlitchInterval) { clearInterval(audioGlitchInterval); audioGlitchInterval = null; }
+    if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
     clearActiveEvent();
 }
 
 // CALCOLO CENTRALIZZATO DEL VALORE CLICK
 function calculateClickValue() {
-    // Valore Base (Base * Moltiplicatori Globali)
-    let val = gameState.baseClickValue * (window.clickGlobalMult || 1) * prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier;
+    let val = gameState.baseClickValue
+        .mul(window.clickGlobalMult || 1)
+        .mul(prestigeBonus)
+        .mul(bluescreenMultiplier)
+        .mul(crunchTimeMultiplier);
 
-    // Bonus Mano Bionica (Dipende dai BPS)
     if (window.gameFlags.bionicHand) {
-        let percent = 0.01;
-        if (window.gameFlags.divineClick) percent = 0.02;
-
-        // Nota: bps include già TUTTI i moltiplicatori (incluso crunchTimeMultiplier),
-        // quindi la mano bionica beneficerà automaticamente del x7 anche senza modifiche qui.
-        const effectiveBPS = bps / (prestigeBonus * bluescreenMultiplier * crunchTimeMultiplier);
-
-        // Se vuoi che la mano bionica "esploda" durante la Fury, usa direttamente bps
-        // Altrimenti usa effectiveBPS per un calcolo più bilanciato.
-        // Dato che è una "Furia", consiglio di usare il BPS pieno:
-        val += (bps * percent);
+        let percent = window.gameFlags.divineClick ? 0.02 : 0.01;
+        val = val.add(bps.mul(percent));
     }
 
     return val;
@@ -912,9 +927,6 @@ function calculateRawClickValue() {
     let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
 
     // Aggiungi Mano Bionica (Se attiva)
-    // Nota: La mano bionica dipende dai BPS attuali. Se vuoi il valore "puro" senza inflazione,
-    // dovresti dividere i BPS per il prestigeBonus, ma solitamente si vuole vedere quanto aggiunge realmente.
-    // Qui lasciamo il calcolo standard della mano bionica.
     if (window.gameFlags.bionicHand) {
         let percent = 0.01;
         if (window.gameFlags.divineClick) percent = 0.02;
@@ -926,116 +938,39 @@ function calculateRawClickValue() {
 
 function resolveBug(event) {
     if (event.detail === 0) return;
-    if (clickerButton) clickerButton.blur();
+    if (typeof clickerButton !== 'undefined' && clickerButton) clickerButton.blur();
 
-    // 1. AUDIO (Delegato al Manager)
     AudioManager.playClickEffect();
 
     const currentClickValue = calculateClickValue();
 
-    // 3. AGGIORNAMENTO DATI
     clickHistory.push({ time: Date.now(), value: currentClickValue });
-    gameState.score += currentClickValue;
-    gameState.totalScore += currentClickValue;
-    gameState.lifetimeScore += currentClickValue;
+    gameState.score = gameState.score.add(currentClickValue);
+    gameState.totalScore = gameState.totalScore.add(currentClickValue);
+    gameState.lifetimeScore = gameState.lifetimeScore.add(currentClickValue);
     gameState.totalClicks++;
 
-    // 4. PARTICELLE & FEEDBACK VISIVO
-    let x, y;
-    if (event.clientX && event.clientY) {
-        x = event.pageX;
-        y = event.pageY;
-    } else {
-        const rect = clickerButton.getBoundingClientRect();
-        x = rect.left + rect.width / 2;
-        y = rect.top + rect.height / 2;
+    if (typeof showClickFeedback === 'function') showClickFeedback(event);
+
+    const btn = document.getElementById('clicker-btn');
+    if (btn) {
+        btn.classList.remove('click-shrink', 'clicked');
+        void btn.offsetWidth;
+        btn.classList.add('click-shrink', 'clicked');
+        setTimeout(() => btn.classList.remove('clicked'), 100);
     }
 
-    if (typeof createClickParticles === 'function') {
-        const containerRect = document.getElementById('click-feedback-container').getBoundingClientRect();
-        createClickParticles((x - window.scrollX) - containerRect.left, (y - window.scrollY) - containerRect.top);
-    }
-
-    showClickFeedback(event);
-
-    // Animazione Bottone
-    clickerButton.classList.remove('click-shrink', 'clicked');
-    void clickerButton.offsetWidth; // Trigger Reflow
-    clickerButton.classList.add('click-shrink', 'clicked');
-
-    setTimeout(() => {
-        clickerButton.classList.remove('clicked');
-    }, 100);
-
-    // UI
     if (typeof updateClickStore === 'function') updateClickStore();
-    updateUI();
+    if (typeof updateUI === 'function') updateUI();
 }
 
-function calculateMaxAffordable(teamKey) {
-    const state = gameState.teams[teamKey];
-    const data = gameData.teams[teamKey];
-
-    // --- Usa le variabili globali coerenti con calculateBulkCost ---
-    const r = Math.max(1.05, costScalingBase - costScalingReduction);
-    // --------------------------------------------------------------------
-
-    let discountedBaseCost = data.baseCost;
-
-    // Calcolo costo del prossimo singolo acquisto
-    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
-
-    // Se non puoi permetterti nemmeno uno, esci subito
-    if (gameState.score < currentSingleCost) return 0;
-
-    let maxAmount = 0;
-
-    // Formula inversa della somma geometrica per trovare N
-    if (Math.abs(r - 1) < 0.0000001) {
-        // Caso lineare (r quasi 1)
-        maxAmount = Math.floor(gameState.score / currentSingleCost);
-    } else {
-        // Caso geometrico (logaritmo)
-        maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
-    }
-
-    // Correzione di sicurezza per errori di precisione virgola mobile
-    // Ricalcola il costo reale per maxAmount e riduci se sfora il budget
-    let realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
-    while (maxAmount > 0 && Math.floor(realCost) > gameState.score) {
-        maxAmount--;
-        realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
-    }
-
-    return Math.max(0, maxAmount);
-}
-
-function buyTeam(teamKey) {
-    let amount = buyMultiplier;
-    if (amount === 'MAX') {
-        amount = calculateMaxAffordable(teamKey);
-        if (amount === 0) return;
-    }
-    const state = gameState.teams[teamKey];
-    const currentCost = calculateBulkCost(teamKey, amount);
-    if (gameState.score >= currentCost) {
-        playSound('sound-buy');
-        gameState.score -= currentCost;
-        state.count += amount;
-        recalculateCPS();
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
-    } else {
-        playSound('sound-error');
-        window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
-    }
-}
 
 
 
 function calculatePrestigeGained() {
-    return Math.floor(Math.sqrt(gameState.totalScore / 2000000) * 1.0);
+    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) return new Decimal(0);
+    let base = new Decimal(2000000);
+    return gameState.totalScore.div(base).sqrt().floor();
 }
 
 function openPrestigeContract() {
@@ -1074,7 +1009,6 @@ function openPrestigeContract() {
 }
 
 async function executePrestige() {
-    // Gestione Animazione Transizione
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'none';
@@ -1084,142 +1018,118 @@ async function executePrestige() {
         setTimeout(() => overlay.classList.add('active'), 10);
     }
 
-    // Calcoli dei Guadagni
     const gained = calculatePrestigeGained();
-    let newPrestigePoints = gameState.prestigePoints + gained;
-    let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
-    let newLifetimePrestigePoints = currentLifetime + gained;
+    let newPrestigePoints = gameState.prestigePoints.add(gained);
+    let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
-    // Calcolo Bonus Iniziale (Paracadute d'Oro)
-    let startBonusBugs = 0;
+    let startBonusBugs = new Decimal(0);
     if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
-        startBonusBugs = gameState.prestigeUpgrades.paracadute.count * 2000;
+        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
     }
 
-    // --- HARDENING: Salvataggio Sicuro dei Dati ---
-    // Definiamo qui cosa deve sopravvivere alla promozione. 
-    // Se aggiungi nuove feature (es. "Artefatti"), basta aggiungerle a questa lista.
-    const persistentKeys = [
-        'achievements',
-        'prestigeUpgrades',
-        'skins',
-        'user',
-        'totalClicks',
-        'totalGoldenBugsClicked',
-        'totalPlayTime',
-        'lifetimeScore',
-        'totalOfflineScore'
-    ];
-
-    // Creiamo una "cassaforte" temporanea con i dati da salvare
+    // ... (Codice salvataggio dati persistenti invariato) ...
+    const persistentKeys = ['achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore'];
     const preservedData = {};
     persistentKeys.forEach(key => {
         if (gameState[key] !== undefined) {
-            // Clona profondo per rompere i riferimenti
             preservedData[key] = JSON.parse(JSON.stringify(gameState[key]));
         }
     });
 
-    // Incrementa contatore promozione (statistica)
     const newResets = gameState.totalResets + 1;
-
-    // Attesa scenografica (1.5 secondi)
     await new Promise(r => setTimeout(r, 1500));
 
-    // RESET: Crea un nuovo stato pulito
-    let newState = getInitialGameState();
+    let newState = getInitialGameState(); // Ritorna Decimali puliti
 
-    // RIPRISTINO: Inserisce i dati salvati nel nuovo stato
     persistentKeys.forEach(key => {
         if (preservedData[key] !== undefined) {
             newState[key] = preservedData[key];
         }
     });
 
-    // Applica i nuovi valori calcolati
+    // Re-istanza Decimali Critici (fondamentale dopo JSON.parse)
+    if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
+    if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
+
     newState.prestigePoints = newPrestigePoints;
-    newState.lifetimePrestigePoints = newLifetimePrestigePoints;
+    newState.lifetimePrestigePoints = newLifetime;
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
+    newState.score = startBonusBugs;
 
-    // APPLICAZIONE BONUS SPECIALI (Post-Reset)
-    // Resetta il conteggio degli Assistenti QA
-    if (newState.teams && newState.teams.assistenteQa) {
-        newState.teams.assistenteQa.count = 0;
-    }
-
-    // Bonus Eredità (Se posseduto)
+    // ... (Codice Eredità teams invariato) ...
+    if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0;
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
-
-    // Bonus Accelerazione (Se posseduto)
     if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
         newState.teams.assistenteQa.count++;
     }
 
-    // SOSTITUZIONE DELLO STATO E PULIZIA
     gameState = newState;
 
-    // Reset Variabili Runtime
-    bps = 0;
+    bps = new Decimal(0);
     clickHistory = [];
     isBluescreenActive = false;
-    bluescreenMultiplier = 1;
+    bluescreenMultiplier = new Decimal(1);
     document.body.classList.remove('bluescreen-active');
 
-    // Stop suoni eventi precedenti
     try {
         const soundBluescreen = document.getElementById('sound-bluescreen');
         if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
     } catch (e) { }
 
-    // Ricalcola tutti gli effetti passivi (Sinergia, Sconti, ecc.)
     reapplyAllEffects();
-
-    // Aggiorna l'interfaccia
     calculatePrestigeBonus();
     recalculateCPS();
     refreshAllStores();
     updateUI();
 
-    // SALVATAGGIO FINALE
-    if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
 
-    // Rimuovi Overlay
     if (overlay) {
         overlay.classList.remove('active');
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
-            if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
-            }
+            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
         }, 500);
     }
 }
 
 function checkAchievements() {
-    let totalAchBPSBonus = 0;
+    let totalAchBPSBonus = new Decimal(0); // Inizializza come Decimal
     const isPostPrestige = gameState.totalResets > 0;
+
     for (const key in gameData.achievements) {
         const data = gameData.achievements[key];
+        // Inizializzazione sicura se manca nel save
         if (!gameState.achievements[key]) {
             gameState.achievements[key] = { unlocked: false, claimed: false };
         }
         if (gameState.achievements[key].claimed === undefined) {
             gameState.achievements[key].claimed = false;
         }
+
         const state = gameState.achievements[key];
+
+        // Skip obiettivi moltiplicatore se non sei in prestigio
         if (data.reward && data.reward.type === 'multiplier' && !isPostPrestige) {
             continue;
         }
+
+        // Sblocco automatico
         if (!state.unlocked && data.condition()) {
             unlockAchievement(key);
         }
+
+        // Calcolo Bonus Moltiplicatore (Decimal)
         if (state.claimed && data.reward && data.reward.type === 'multiplier') {
-            totalAchBPSBonus += (data.reward.value - 1);
+            // Esempio: value 1.5 diventa bonus 0.5
+            let val = new Decimal(data.reward.value).minus(1);
+            totalAchBPSBonus = totalAchBPSBonus.add(val);
         }
     }
+
     achievementsBPSBonus = totalAchBPSBonus;
     calculatePrestigeBonus();
 }
@@ -1317,23 +1227,22 @@ function spawnGoldenBug() {
 }
 
 function clickGoldenBug() {
+    const goldenBug = document.getElementById('golden-bug');
     playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
 
-    // CALCOLO SEMPLIFICATO
     const currentClickValue = calculateClickValue();
 
-    // Bonus: 30 secondi di BPS + 10 volte il click + 10 fisso
-    let bonus = (bps * 30) + (currentClickValue * 10) + 10;
+    // Formula: (BPS * 30 + Click * 10 + 10) * Multiplier
+    let bonus = bps.mul(30).add(currentClickValue.mul(10)).add(10);
+    bonus = bonus.mul(window.goldenBugMult);
 
-    // [GENERICO] Moltiplicatore Golden Bug
-    bonus *= goldenBugMult;
+    gameState.score = gameState.score.add(bonus);
+    gameState.totalScore = gameState.totalScore.add(bonus);
+    gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
 
-    gameState.score += bonus;
-    gameState.totalScore += bonus;
-    gameState.lifetimeScore += bonus;
     window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
-    goldenBug.style.display = 'none';
+    if (goldenBug) goldenBug.style.display = 'none';
     updateUI();
 }
 
