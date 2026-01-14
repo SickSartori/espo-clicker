@@ -1114,7 +1114,8 @@ const scoreAnimState = { value: 0 };
 
 function formatFullNumber(num) {
     if (num === undefined || num === null) return "0";
-    return new Decimal(num).floor().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    let str = new Decimal(num).floor().toFixed(0);
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function updateScoreBoard(totalBPS) {
