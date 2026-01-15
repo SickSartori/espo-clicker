@@ -98,7 +98,7 @@
 .nav-special-btn:hover {
     filter: brightness(1.1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 0 #71368a, 0 8px 15px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 0 #71368a, 0 8px 15px rgba(0, 0, 0, 0.4);
 }
 
 .nav-special-btn:active {
@@ -106,39 +106,40 @@
     box-shadow: 0 2px 0 #71368a;
 }
 
-.nav-special-btn.promotion-ready {
-    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
-    color: white !important;
-    border: 1px solid #2ecc71 !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
-    cursor: pointer !important;
-    opacity: 1 !important;
+/* Specificità aumentata */
+#game-navbar .nav-group .nav-special-btn.promotion-ready {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border: 1px solid #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    cursor: pointer;
+    opacity: 1;
     animation: promotionGlow 1.5s infinite alternate;
-    pointer-events: auto !important;
-    /* Forza la cliccabilità */
+    pointer-events: auto;
 }
 
-.nav-special-btn.promotion-ready:hover {
+#game-navbar .nav-group .nav-special-btn.promotion-ready:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
     filter: brightness(1.1);
 }
 
-.nav-special-btn.promotion-ready:active {
+#game-navbar .nav-group .nav-special-btn.promotion-ready:active {
     transform: translateY(1px);
 }
 
-.nav-item.notify-overlay {
-    animation: none !important;
-    transform: none !important;
-    border: none !important;
-    box-shadow: none !important;
+/* Specificità aumentata */
+#game-navbar .nav-group .nav-item.notify-overlay {
+    animation: none;
+    transform: none;
+    border: none;
+    box-shadow: none;
     background-color: transparent;
 }
 
-.nav-item.notify-overlay:hover {
+#game-navbar .nav-group .nav-item.notify-overlay:hover {
     background-color: rgba(255, 255, 255, 0.05);
-    transform: translateY(-2px) !important;
+    transform: translateY(-2px);
 }
 
 .nav-item.notify-overlay::after {
