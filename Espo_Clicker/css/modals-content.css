@@ -69,13 +69,13 @@
     margin-bottom: 20px;
 }
 
-
 /* --- NUOVO STILE PROFILO MODERNO --- */
-.profile-modern-modal {
+/* Specificità aumentata */
+#account-modal .profile-modern-modal {
     background: #1e293b;
     border: 1px solid #334155;
     overflow: hidden;
-    max-width: 400px !important;
+    max-width: 400px;
 }
 
 /* Header Minimal */
@@ -106,8 +106,8 @@
 }
 
 /* Corpo del Modale */
-.profile-body {
-    padding: 20px 25px !important;
+.profile-modern-modal .profile-body {
+    padding: 20px 25px;
 }
 
 .section-label {
@@ -183,17 +183,17 @@
 
 .danger-title::before {
     content: '\f7ba';
-    /* Icona Biohazard FontAwesome */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
 }
 
-.danger-border {
-    border-color: rgba(239, 68, 68, 0.4) !important;
+/* Specificità aumentata */
+.danger-zone-minimal .clean-input.danger-border {
+    border-color: rgba(239, 68, 68, 0.4);
 }
 
-.danger-border:focus-within {
-    border-color: #ef4444 !important;
+.danger-zone-minimal .clean-input.danger-border:focus-within {
+    border-color: #ef4444;
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
 }
 
@@ -254,15 +254,15 @@
 }
 
 /* --- STILI CONTRATTO PRESTIGIO --- */
-.contract-modal {
-    background: linear-gradient(180deg, #18202a 0%, #0f1318 100%) !important;
-    border: 1px solid rgba(241, 196, 15, 0.2) !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+#prestige-modal .contract-modal {
+    background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);
+    border: 1px solid rgba(241, 196, 15, 0.2);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
 }
 
-.contract-modal h2 {
-    background: transparent !important;
-    border: none !important;
+#prestige-modal .contract-modal h2 {
+    background: transparent;
+    border: none;
     text-shadow: 0 0 20px rgba(241, 196, 15, 0.3);
 }
 
@@ -403,7 +403,6 @@
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-
 /* --- ACHIEVEMENT / TROPHY CASE --- */
 #achievement-list {
     display: flex;
@@ -439,7 +438,6 @@
     overflow: hidden;
 }
 
-/* Bottone per riscatto premi */
 .trophy-row {
     display: flex;
     align-items: center;
@@ -454,7 +452,6 @@
     box-sizing: border-box;
 }
 
-/* STATI */
 .trophy-row.locked {
     opacity: 0.6;
     filter: grayscale(0.9);
@@ -467,7 +464,6 @@
     border-left: 5px solid #2ecc71;
 }
 
-/* Elementi "da riscattare" */
 .trophy-row.unclaimed {
     background: linear-gradient(90deg, rgba(241, 196, 15, 0.15), rgba(30, 40, 50, 0.9));
     border: 1px solid #f1c40f;
@@ -476,7 +472,6 @@
     z-index: 5;
 }
 
-/* ICONA (Sinistra) */
 .trophy-icon-wrapper {
     width: 50px;
     height: 50px;
@@ -498,7 +493,6 @@
     background: rgba(241, 196, 15, 0.1);
 }
 
-/* CONTENUTO TESTO (Centro) */
 .trophy-content {
     flex: 1;
     display: flex;
@@ -519,8 +513,6 @@
     text-overflow: ellipsis;
 }
 
-
-/* AZIONE */
 .trophy-action {
     width: 120px;
     min-width: 120px;
@@ -556,7 +548,6 @@
     text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
 }
 
-/* Barra progresso specifica per Obiettivi */
 .trophy-progress {
     width: 100%;
     height: 6px;
@@ -576,7 +567,6 @@
     transition: width 0.5s ease;
 }
 
-/* Il testo sovrapposto alla barra */
 .t-prog-text {
     position: absolute;
     top: 10px;
@@ -602,7 +592,6 @@
     min-width: fit-content;
 }
 
-/* Bottone Riscatta (Pulsante e Invitante) */
 .trophy-claim-btn {
     background: linear-gradient(to bottom, #f1c40f, #f39c12);
     border: none;
@@ -644,8 +633,6 @@
 }
 
 /* --- STILE MIXER AUDIO --- */
-
-/* Gruppo di suoni (Categoria) */
 .mixer-category {
     margin-bottom: 20px;
     background: rgba(0, 0, 0, 0.1);
@@ -667,7 +654,6 @@
     gap: 8px;
 }
 
-/* Riga del singolo suono */
 .mixer-row {
     display: flex;
     align-items: center;
@@ -685,7 +671,6 @@
     border-color: rgba(52, 152, 219, 0.3);
 }
 
-/* Etichetta del suono */
 .mixer-label {
     flex: 0 0 140px;
     font-size: 0.9rem;
@@ -699,7 +684,6 @@
     gap: 8px;
 }
 
-/* Contenitore Slider + Valore */
 .mixer-controls {
     flex-grow: 1;
     display: flex;
@@ -708,7 +692,6 @@
     margin: 0 15px;
 }
 
-/* Slider Customizzato */
 .mixer-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -737,7 +720,6 @@
     background: #3498db;
 }
 
-/* Percentuale */
 .mixer-value {
     font-family: 'Inter', monospace;
     font-size: 0.85rem;
@@ -747,7 +729,6 @@
     text-align: right;
 }
 
-/* Bottone Test (Play) */
 .mixer-test-btn {
     background: rgba(52, 152, 219, 0.1);
     border: 1px solid #3498db;
@@ -776,7 +757,6 @@
     animation: pulseButton 1s infinite;
 }
 
-/* Responsive per mobile */
 @media (max-width: 500px) {
     .mixer-row {
         flex-wrap: wrap;
@@ -832,67 +812,67 @@
 
 /* OFFLINE */
 .offline_modal_content {
-	text-align: center;
-	border-color: #f39c12;
+    text-align: center;
+    border-color: #f39c12;
 }
 
-.offline_modal_content h2{
-	color: #f39c12;
-	border-bottom-color: #f39c12;
+.offline_modal_content h2 {
+    color: #f39c12;
+    border-bottom-color: #f39c12;
 }
 
 .offline_content {
-	padding: 30px;
-	overflow-y: auto;
+    padding: 30px;
+    overflow-y: auto;
     flex-grow: 1;
 }
 
 .offline_content_sottotitolo {
-	color: #bdc3c7;
-	font-size: 1.1rem;
+    color: #bdc3c7;
+    font-size: 1.1rem;
 }
 
 .offline_content_efficienza_server {
-	margin: 20px 0;
+    margin: 20px 0;
 }
 
 .offline_content_label_efficienza_server {
-	text-transform: uppercase;
-	font-size: 0.8rem;
-	color: #7f8c8d;
-	margin-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    margin-bottom: 5px;
 }
 
 .offline_efficiency_display {
-	font-weight: bold;
-	color: #3498db;
-	font-size: 1.2rem;
+    font-weight: bold;
+    color: #3498db;
+    font-size: 1.2rem;
 }
 
 .offline_content_guadagno {
-	background: rgba(243, 156, 18, 0.1);
-	border: 1px solid #d35400;
-	padding: 15px;
-	border-radius: 8px;
-	margin-bottom: 20px;
+    background: rgba(243, 156, 18, 0.1);
+    border: 1px solid #d35400;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
 }
 
 .offline_earnings_display {
-	font-size: 2.5rem;
-	font-weight: 800;
-	color: #f1c40f;
-	text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
 }
 
 .offline_content_guadagno_label {
-	font-size: 1.2rem;
-	color: #f1c40f;
+    font-size: 1.2rem;
+    color: #f1c40f;
 }
 
 .offline_content_button {
-	background: linear-gradient(to right, #f1c40f, #e67e22);
-	color: #2c3e50;
-	font-size: 1.2rem;
-	padding: 15px;
-	width: 100%;
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+    color: #2c3e50;
+    font-size: 1.2rem;
+    padding: 15px;
+    width: 100%;
 }
