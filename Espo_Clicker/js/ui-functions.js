@@ -541,7 +541,7 @@ function updateSkinsUI() {
         const isUnlocked = unlockedList.includes(key);
         const isEquipped = currentSkin === key;
         const isBuyable = !isUnlocked && data.cost !== undefined;
-        const canAfford = isBuyable && gameState.prestigePoints >= data.cost;
+        const canAfford = isBuyable && gameState.prestigePoints.gte(data.cost);
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
         // --- LOGICA DESCRIZIONE CON TRANSIZIONE ---
