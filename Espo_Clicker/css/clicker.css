@@ -59,6 +59,8 @@
     outline: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+
+    border-radius: 50%;
 }
 
 #clicker-btn:focus {
@@ -67,6 +69,11 @@
 
 #clicker-btn:active {
     transform: scale(0.95);
+}
+
+#clicker-btn.click-shrink {
+    transform: scale(0.90);
+    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
 }
 
 #clicker-btn::after {
@@ -350,6 +357,7 @@ body #click-feedback-container .click-feedback {
 body.rick-rolling {
     overflow: hidden;
 }
+
 
 /* Specificità aumentata per vincere sullo stile base */
 body.rick-rolling #game-container {

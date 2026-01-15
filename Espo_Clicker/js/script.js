@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-                    .then((response) => { console.log(response.json()); })
+                    //.then((response) => { console.log(response.json()); })
                     .catch(err => console.warn("Cloud save error:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
@@ -695,23 +695,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
             });
         }
-
-        // VIDEO (Automatico da gameData)
-        if (gameData.assets && gameData.assets.videos) {
-            const videoKeys = Object.keys(gameData.assets.videos);
-            totalAssets += videoKeys.length;
-
-            videoKeys.forEach(key => {
-                const item = gameData.assets.videos[key];
-                const url = `./assets/video/${item.file}`; // Nota: cartella 'video' singolare
-
-                promises.push(
-                    fetch(url)
-                        .then(() => updateProgress())
-                        .catch(() => { console.warn("Video missing:", url); updateProgress(); })
-                );
-            });
-        }
+        /*
+                // VIDEO (Automatico da gameData)
+                if (gameData.assets && gameData.assets.videos) {
+                    const videoKeys = Object.keys(gameData.assets.videos);
+                    totalAssets += videoKeys.length;
+        
+                    videoKeys.forEach(key => {
+                        const item = gameData.assets.videos[key];
+                        const url = `./assets/video/${item.file}`; // Nota: cartella 'video' singolare
+        
+                        promises.push(
+                            fetch(url)
+                                .then(() => updateProgress())
+                                .catch(() => { console.warn("Video missing:", url); updateProgress(); })
+                        );
+                    });
+                }*/
 
         // Se non c'è nulla da caricare, risolvi subito
         if (totalAssets === 0) return Promise.resolve();

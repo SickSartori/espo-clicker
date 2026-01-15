@@ -2,7 +2,7 @@
 @media only screen and (max-width: 1024px) {
 
     * {
-        scrollbar-width: none;
+        scrollbar-width: thin;
         scrollbar-color: var(--primary) var(--bg-nav);
     }
 
@@ -15,7 +15,6 @@
         position: fixed;
         width: 100%;
         height: 100%;
-        background-color: #0f2027;
     }
 
     /* 2. CONTENITORE PRINCIPALE */
@@ -43,11 +42,21 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Mostra solo la colonna attiva */
-    .game-column.mobile-active {
+    #center-column {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+    }
+
+    #center-column.mobile-active {
         display: flex;
         flex-direction: column;
-        animation: fadeIn 0.2s ease-out;
+        justify-content: center;
+    }
+
+    #left-column,
+    #right-column {
+        overflow-y: auto
     }
 
     /* 4. NAVBAR SUPERIORE */
@@ -318,6 +327,7 @@
 
     /* Versione in basso a destra sopra navbar */
     #version-display {
+        padding-bottom: 50px;
         position: relative;
         z-index: 1500;
         font-size: 0.65rem;
@@ -489,7 +499,6 @@
         position: sticky;
         top: 0;
         z-index: 500;
-        background-color: #0f2027;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         padding: 10px 15px;
@@ -646,6 +655,21 @@
         font-size: 0.8rem;
         margin-right: 5px;
     }
+
+    #left-column,
+    #center-column,
+    #right-column,
+    .game-column {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #game-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
 }
 
 @media (max-width: 768px) {
@@ -719,4 +743,27 @@
         font-size: 0.7rem;
         line-height: 1.2;
     }
+}
+
+@media (hover: none) {
+
+    /* Disabilita trasformazioni hover che potrebbero bloccare l'animazione di click */
+    #clicker-btn:hover {
+        transform: none;
+    }
+
+    /* Assicura che la classe JS abbia la priorità */
+    #clicker-btn.click-shrink {
+        transform: scale(0.90);
+    }
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Sicurezza extra per le immagini dentro i bottoni */
+button img {
+    pointer-events: none;
+    /* Fa sì che il click passi direttamente al bottone */
 }

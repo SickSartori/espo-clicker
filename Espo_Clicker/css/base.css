@@ -1,11 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap');
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
 :root {
     --primary: #3498db;
     --primary-dark: #2980b9;
@@ -34,9 +28,12 @@
     --z-loader: 9999;
 }
 
+html,
 body {
-    width: 100vw;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
 }
 
 h1,
@@ -85,7 +82,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    min-height: 100vh;
     margin: 0;
     padding: 85px 10px 0 10px;
     user-select: none;

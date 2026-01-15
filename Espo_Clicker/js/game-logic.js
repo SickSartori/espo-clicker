@@ -993,7 +993,9 @@ function resolveBug(event) {
         btn.classList.remove('click-shrink', 'clicked');
         void btn.offsetWidth;
         btn.classList.add('click-shrink', 'clicked');
-        setTimeout(() => btn.classList.remove('clicked'), 100);
+        setTimeout(() => {
+            btn.classList.remove('click-shrink', 'clicked');
+        }, 100);
     }
 
     if (typeof updateClickStore === 'function') updateClickStore();
