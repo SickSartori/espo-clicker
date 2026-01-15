@@ -20,7 +20,7 @@
     padding: 10px 10px 15px 10px;
     box-sizing: border-box;
     position: relative;
-    overflow: visible !important;
+    overflow: visible;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s, z-index 0s;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -30,7 +30,6 @@
     z-index: 100;
 }
 
-/* Hover Effect */
 .skin-card.unlocked:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
@@ -73,13 +72,14 @@
     opacity: 0.8;
 }
 
-.skin-card.equipped {
-    border-color: #2ecc71 !important;
+/* Specificità aumentata */
+#skins-grid .skin-card.equipped {
+    border-color: #2ecc71;
     background: rgba(46, 204, 113, 0.08);
     box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
 }
 
-/* --- BADGE RARITÀ (In alto a destra) --- */
+/* --- BADGE RARITÀ --- */
 .skin-badge {
     position: absolute;
     top: 0;
@@ -94,13 +94,11 @@
     z-index: 5;
 }
 
-/* --- IMMAGINE (Dimensione Fissa) --- */
 .skin-img-container {
     width: 80px;
     height: 80px;
     margin-top: 15px;
     margin-bottom: 5px;
-
     border-radius: 50%;
     border: 3px solid var(--r-color);
     background: #151b22;
@@ -119,7 +117,6 @@
     opacity: 0.5;
 }
 
-/* --- NOME SKIN (Altezza Fissa) --- */
 .skin-name-display {
     font-family: var(--font-heading);
     font-size: 0.9rem;
@@ -133,8 +130,6 @@
     margin-bottom: 5px;
     min-height: 20px;
 }
-
-/* --- DESCRIZIONE (Area Fissa) --- */
 
 .skin-desc {
     width: 100%;
@@ -154,9 +149,10 @@
     height: 100%;
 }
 
-.desc-base,
-.desc-hover,
-.skin-lore {
+/* Specificità aumentata per override descrizioni */
+.skin-card .desc-base,
+.skin-card .desc-hover,
+.skin-card .skin-lore {
     position: absolute;
     top: 0;
     left: 0;
@@ -169,12 +165,11 @@
     padding: 0 4px;
     box-sizing: border-box;
     font-size: 0.7rem;
-    white-space: normal !important;
+    white-space: normal;
     overflow-wrap: break-word;
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
-/* Gestione Hover */
 .desc-hover {
     opacity: 0;
     color: #e74c3c;
@@ -198,18 +193,15 @@
     font-style: italic;
 }
 
-/* --- SPACER (Spinge il bottone in fondo) --- */
 .skin-card-spacer {
     flex-grow: 1;
 }
 
-/* --- FOOTER (Status / Bottone) --- */
 .skin-footer {
     width: 100%;
     margin-top: auto;
 }
 
-/* Stile Bottone "USA SKIN" o "COMPRA" */
 .skin-btn {
     display: block;
     width: 100%;
@@ -250,7 +242,6 @@
     color: #2ecc71;
 }
 
-/* Prezzo Token */
 .skin-price {
     font-size: 0.75rem;
     color: #f1c40f;
@@ -259,7 +250,6 @@
     font-weight: bold;
 }
 
-/* Icona Spunta equipaggiato */
 .equipped-check {
     position: absolute;
     top: 5px;
@@ -292,7 +282,6 @@
     border-radius: 3px;
 }
 
-/* Sfondi Rarità Immagine */
 .bg-common {
     background: radial-gradient(circle, #bdc3c7 0%, #2c3e50 100%);
     border: 4px solid #bdc3c7;
@@ -333,50 +322,46 @@
     bottom: auto;
     margin-top: 12px;
     margin-bottom: 0;
-
     z-index: 10000;
 }
 
-/* Gestione della freccetta (triangolo) */
 .skin-card[data-tooltip]:hover::before {
     top: 100%;
     bottom: auto;
-
     border-top-color: transparent;
     border-bottom-color: #f1c40f;
-
     margin-top: 0px;
     margin-bottom: 0;
     z-index: 10000;
 }
 
-/* Responsive */
+/* Responsive - Specificità aumentata dove necessario */
 @media (max-width: 768px) {
-    #skins-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-        padding: 10px !important;
+    body #skins-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
     }
 
-    .skin-card {
+    body .skin-card {
         min-height: 130px;
-        padding: 10px !important;
-        padding-top: 25px !important;
+        padding: 10px;
+        padding-top: 25px;
     }
 
-    .skin-img-container {
-        width: 70px !important;
-        height: 70px !important;
-        margin-bottom: 5px !important;
+    body .skin-img-container {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 5px;
     }
 
-    .skin-name-display {
-        font-size: 0.9rem !important;
-        margin-bottom: 4px !important;
+    body .skin-name-display {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
     }
 
-    .skin-desc {
-        font-size: 0.7rem !important;
-        line-height: 1.2 !important;
+    body .skin-desc {
+        font-size: 0.7rem;
+        line-height: 1.2;
     }
 }
