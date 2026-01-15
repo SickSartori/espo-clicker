@@ -39,11 +39,12 @@
     pointer-events: none;
 }
 
-.buy-btn.owned {
-    background-color: rgba(44, 62, 80, 0.5) !important;
-    color: #2ecc71 !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    cursor: default !important;
+/* Aumento specificità: 'body' + classe */
+body .buy-btn.owned {
+    background-color: rgba(44, 62, 80, 0.5);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    cursor: default;
     pointer-events: none;
 }
 
@@ -153,8 +154,7 @@ input:focus {
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
-/* 
- * Classi Input Group Moderno (Icona + Input + Bottone)
+/* * Classi Input Group Moderno (Icona + Input + Bottone)
  */
 
 .input-group-modern {
@@ -169,8 +169,9 @@ input:focus {
     overflow: hidden;
 }
 
-.input-group-modern .toggle-pass-btn {
-    position: static !important;
+/* Aumento specificità: tag 'button' */
+.input-group-modern button.toggle-pass-btn {
+    position: static;
     margin: 0;
     width: 45px;
     height: 45px;
@@ -244,15 +245,13 @@ input:focus {
     padding-right: 45px;
 }
 
-
-
 .input-stack {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/*f
+/*
  * Classi Action Button
  */
 .action-btn,
@@ -422,48 +421,49 @@ input:focus {
     animation: pulseText 0.5s 2;
 }
 
-
-
 /* --- TOAST STILE ---*/
-#toast-container {
-    position: fixed !important;
-    z-index: var(--z-toast) !important;
+/* Aumento specificità: 'body' #ID */
+body #toast-container {
+    position: fixed;
+    z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     gap: 8px;
     pointer-events: none;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    top: 150px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    right: auto !important;
-    bottom: auto !important;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    bottom: auto;
     align-items: center;
-    width: auto !important;
+    width: auto;
     min-width: 300px;
 }
 
+/* Aumento specificità per sovrascrivere la regola precedente in caso di modale aperta */
 body.modal-open #toast-container {
-    top: 85px !important;
-    right: 20px !important;
-    left: auto !important;
-    transform: none !important;
+    top: 85px;
+    right: 20px;
+    left: auto;
+    transform: none;
     align-items: flex-end;
 }
 
 /* --- STILE NOTIFICA ---*/
-.toast {
+/* Aumento specificità: ID genitore + classe */
+#toast-container .toast {
     pointer-events: auto;
-    padding: 8px 16px !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    border-radius: 50px !important;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 50px;
     font-family: var(--font-body);
     font-weight: 500;
-    background-color: rgba(20, 20, 20, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(5px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -472,44 +472,25 @@ body.modal-open #toast-container {
         toastExit 0.5s ease-in 3.5s forwards;
 }
 
-.toast-success {
-    border-left: 3px solid #2ecc71 !important;
+#toast-container .toast-success {
+    border-left: 3px solid #2ecc71;
 }
 
-.toast-error {
-    border-left: 3px solid #e74c3c !important;
+#toast-container .toast-error {
+    border-left: 3px solid #e74c3c;
 }
 
-.toast-warning {
-    border-left: 3px solid #f39c12 !important;
+#toast-container .toast-warning {
+    border-left: 3px solid #f39c12;
 }
 
-.toast-info {
-    border-left: 3px solid #3498db !important;
+#toast-container .toast-info {
+    border-left: 3px solid #3498db;
 }
 
-.toast-achievement {
-    border-left: 3px solid #f1c40f !important;
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.2) !important;
-}
-
-@keyframes toastEnter {
-    0% {
-        transform: translateY(-15px) scale(0.9);
-        opacity: 0;
-    }
-
-    100% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes toastExit {
-    to {
-        transform: scale(0.9) translateY(-10px);
-        opacity: 0;
-    }
+#toast-container .toast-achievement {
+    border-left: 3px solid #f1c40f;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
 }
 
 /* --- Classi Tooltip ---*/
@@ -550,33 +531,20 @@ body.modal-open #toast-container {
     z-index: var(--z-loader);
 }
 
-.tooltip-multiline[data-tooltip]:hover::after {
-    white-space: normal !important;
-    /* Permette al testo di andare a capo */
+/* Aumento specificità per override del tooltip base */
+body .tooltip-multiline[data-tooltip]:hover::after {
+    white-space: normal;
     min-width: 150px;
-    /* Larghezza minima */
     max-width: 220px;
-    /* Larghezza massima prima di andare a capo */
     text-align: center;
-    /* Centra il testo */
     line-height: 1.3;
-    /* Spazio tra le righe */
     font-size: 0.8rem;
-    /* Testo leggermente più piccolo */
     padding: 10px;
-    /* Un po' più di aria */
     bottom: 105%;
 }
 
 /* PATCH TOAST POSITION */
-body.modal-open #toast-container {
-    top: 20px !important;
-    right: 20px !important;
-    left: auto !important;
-    transform: none !important;
-    align-items: flex-end;
-}
-
+/* Rimosso duplicato precedente, lasciamo la media query */
 @media only screen and (max-width: 768px) {
     body.modal-open #toast-container {
         top: auto;
@@ -593,22 +561,21 @@ body.modal-open #toast-container {
 }
 
 /* PATCH TOOLTIP */
-
-.simple-tooltip[data-tooltip]:hover::before {
-    display: none !important;
+body .simple-tooltip[data-tooltip]:hover::before {
+    display: none;
 }
 
-.simple-tooltip[data-tooltip]:hover::after {
-    background-color: #000 !important;
-    border: 1px solid #333 !important;
-    color: #fff !important;
-    font-size: 0.9rem !important;
-    font-family: 'Courier New', monospace !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+body .simple-tooltip[data-tooltip]:hover::after {
+    background-color: #000;
+    border: 1px solid #333;
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     bottom: 100%;
     margin-bottom: 5px;
-    white-space: nowrap !important;
-    min-width: auto !important;
+    white-space: nowrap;
+    min-width: auto;
 }

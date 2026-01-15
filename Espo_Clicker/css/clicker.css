@@ -219,7 +219,7 @@
     box-shadow: none;
     cursor: not-allowed;
     border: 2px solid #2c3e50;
-    transform: none !important;
+    transform: none;
 }
 
 /* Timer interno */
@@ -296,15 +296,6 @@ body #version-display {
     text-shadow: 1px 1px 2px #000;
     pointer-events: none;
     white-space: nowrap;
-}
-
-/* --- MOBILE --- */
-@media (max-width: 1024px) {
-    body #version-display {
-        bottom: 95px;
-        font-size: 0.8rem;
-        opacity: 0.6;
-    }
 }
 
 /* --- EFFETTO GLITCH 404 --- */
