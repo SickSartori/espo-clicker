@@ -26,8 +26,8 @@
     <div id="clicker-section">
         <div id="click-feedback-container"></div>
         <button id="clicker-btn" title="<?php echo $labels["col_center_bottone_clicker_titolo"]; ?>">
-            <img id="manager-photo-clicked" src="./assets/image/espo-click.webp" alt="Click!" draggable="false">
-            <img id="manager-photo-normal" src="./assets/image/espo.webp" alt="Espòòò" draggable="false">
+            <img id="manager-photo-clicked" src="assets/image/espo-click.webp" alt="Click!" draggable="false">
+            <img id="manager-photo-normal" src="assets/image/espo.webp" alt="Espòòò" draggable="false">
         </button>
         <div id="cps-display">BPS: 0.0</div>
         <button id="skill-crunchTime" class="skill-btn" style="display: none;">

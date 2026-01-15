@@ -654,15 +654,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // LISTA IMMAGINI CRITICHE (Manuale)
         const imagesToLoad = [
-            './assets/image/espo.webp',
-            './assets/image/espo-click.webp',
-            './assets/image/favicon.webp',
-            './assets/image/espo-fury.webp',
-            './assets/image/espo-fury-click.webp',
-            './assets/image/bluescreen.webp',
-            './assets/image/hidden.webp',
-            './assets/image/espo-matrix.webp',
-            './assets/image/espo-matrix-click.webp',
+            'assets/image/espo.webp',
+            'assets/image/espo-click.webp',
+            'assets/image/favicon.webp',
+            'assets/image/espo-fury.webp',
+            'assets/image/espo-fury-click.webp',
+            'assets/image/bluescreen.webp',
+            'assets/image/hidden.webp',
+            'assets/image/espo-matrix.webp',
+            'assets/image/espo-matrix-click.webp',
         ];
 
         // Aggiungiamo le immagini alla lista
@@ -685,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             soundKeys.forEach(key => {
                 const item = gameData.assets.sounds[key];
-                const url = `./assets/sounds/${item.file}`;
+                const url = `assets/sounds/${item.file}`;
 
                 // Usiamo fetch per forzare il download in cache
                 promises.push(
@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
                     videoKeys.forEach(key => {
                         const item = gameData.assets.videos[key];
-                        const url = `./assets/video/${item.file}`; // Nota: cartella 'video' singolare
+                        const url = `assets/video/${item.file}`; // Nota: cartella 'video' singolare
         
                         promises.push(
                             fetch(url)

@@ -603,7 +603,7 @@ function updateSkinsUI() {
         if (isEquipped) classes += ' equipped';
         card.className = classes;
 
-        const imgSource = isUnlocked ? (data.img ? `./assets/image/${data.img}` : './assets/image/espo.webp') : './assets/image/hidden.webp';
+        const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/espo.webp') : 'assets/image/hidden.webp';
 
         card.innerHTML = `
             <div class="skin-badge">${rarityLabel}</div>
