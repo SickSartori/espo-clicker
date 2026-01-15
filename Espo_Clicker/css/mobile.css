@@ -318,9 +318,7 @@
 
     /* Versione in basso a destra sopra navbar */
     #version-display {
-        position: fixed;
-        bottom: 75px;
-        right: 10px;
+        position: relative;
         z-index: 1500;
         font-size: 0.65rem;
         opacity: 0.4;
