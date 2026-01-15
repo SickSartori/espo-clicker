@@ -167,10 +167,10 @@ body.theme-8bit #game-container .buy-btn:active {
 }
 
 body.theme-8bit #game-container .buy-btn:disabled {
-    background-color: #21262d !important;
-    color: #484f58 !important;
-    border-color: #30363d !important;
-    box-shadow: none !important;
+    background-color: #21262d;
+    color: #484f58;
+    border-color: #30363d;
+    box-shadow: none;
     cursor: not-allowed;
 }
 
@@ -224,16 +224,16 @@ body.theme-8bit #golden-bug {
 
 @media screen and (max-width: 1440px) {
     body.theme-8bit {
-        font-size: 10px !important;
+        font-size: 10px;
     }
 
     body.theme-8bit #game-container .upgrade-name {
-        font-size: 0.7rem !important;
+        font-size: 0.7rem;
         letter-spacing: -1px;
     }
 
     body.theme-8bit .buy-btn {
-        font-size: 0.6rem !important;
+        font-size: 0.6rem;
     }
 }
 
@@ -247,21 +247,21 @@ body.theme-8bit #golden-bug {
 /* 1. BARRA PROGRESSO (Sinistra e Destra) */
 body.theme-8bit #game-container .progress-text {
     /* Dimensione bilanciata: né troppo piccola né enorme */
-    font-size: 0.5rem !important;
+    font-size: 0.5rem;
 
-    letter-spacing: 0 !important;
+    letter-spacing: 0;
 
-    color: #fff !important;
+    color: #fff;
     z-index: 10;
-    line-height: 30px !important;
+    line-height: 30px;
 }
 
 /* 2. LISTA TEAM (Colonna Destra) - Layout e Dimensioni */
 body.theme-8bit #building-list-container .upgrade {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 10px 12px !important;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
     gap: 10px;
     min-height: 80px;
 }
@@ -272,24 +272,24 @@ body.theme-8bit #building-list-container .upgrade-details {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    text-align: left !important;
+    text-align: left;
     overflow: hidden;
 }
 
 /* Nome del Team più grande e leggibile */
 body.theme-8bit #building-list-container .upgrade-name {
-    font-size: 0.7rem !important;
-    line-height: 1.4 !important;
-    margin-bottom: 6px !important;
-    letter-spacing: 0 !important;
-    white-space: normal !important;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    letter-spacing: 0;
+    white-space: normal;
 }
 
 /* Costo e BPS */
 body.theme-8bit #building-list-container .upgrade-cost,
 body.theme-8bit #building-list-container .upgrade-bps {
-    font-size: 0.55rem !important;
-    letter-spacing: 0 !important;
+    font-size: 0.55rem;
+    letter-spacing: 0;
     opacity: 0.9;
 }
 
@@ -305,16 +305,16 @@ body.theme-8bit #building-list-container .upgrade-actions {
 
 /* Numero posseduto (es. 1) */
 body.theme-8bit #building-list-container .upgrade-count {
-    font-size: 1rem !important;
-    margin-right: 0 !important;
+    font-size: 1rem;
+    margin-right: 0;
     margin-bottom: 2px;
 }
 
 /* Bottone Compra */
 body.theme-8bit #building-list-container .buy-btn {
-    width: 100% !important;
-    margin: 0 !important;
-    font-size: 0.6rem !important;
-    padding: 8px 0 !important;
-    height: auto !important;
+    width: 100%;
+    margin: 0;
+    font-size: 0.6rem;
+    padding: 8px 0;
+    height: auto;
 }
