@@ -36,8 +36,27 @@ function formatNumber(num) {
     // 1. Gestione sicurezza: se è null/undefined restituisce "0"
     if (num === undefined || num === null) return "0";
 
-    // 2. Conversione Universale:
-    let decimal = new Decimal(num);
+    // 2. Conversione Universale Protetta
+    let decimal;
+
+    // Se è già un'istanza valida di Decimal, usala direttamente
+    if (num instanceof Decimal) {
+        decimal = num;
+    } else {
+        // Se è un numero puro, una stringa o un oggetto "sporco" dal JSON
+        try {
+            // Tentativo di creazione standard
+            decimal = new Decimal(num);
+        } catch (e) {
+            // Se fallisce (es. errore t.indexOf), prova a forzare la stringa o restituisci 0
+            try {
+                decimal = new Decimal(String(num));
+            } catch (e2) {
+                console.warn("Errore formattazione numero:", num);
+                return "0";
+            }
+        }
+    }
 
     // 3. Gestione Numeri Piccoli (< 1000)
     if (decimal.abs().lt(1000)) {

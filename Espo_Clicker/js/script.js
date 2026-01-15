@@ -286,8 +286,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
 
                 decimalFields.forEach(field => {
-                    // Se esiste nel salvataggio lo convertiamo, altrimenti mettiamo 0
-                    gameState[field] = new Decimal(gameState[field] || 0);
+                    let val = gameState[field];
+
+                    // Se il valore è mancante, usa 0
+                    if (val === undefined || val === null) {
+                        gameState[field] = new Decimal(0);
+                    } else {
+                        // Se è un oggetto puro (dal JSON) che ha mantissa ed esponente,
+                        // break_infinity v2 a volte preferisce che venga ricreato pulito.
+                        try {
+                            gameState[field] = new Decimal(val);
+                        } catch (e) {
+                            console.warn(`Errore ripristino campo ${field}, reset a 0.`, e);
+                            gameState[field] = new Decimal(0);
+                        }
+                    }
                 });
 
                 if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
