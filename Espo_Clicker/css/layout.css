@@ -19,7 +19,6 @@
     box-shadow:
         0 30px 60px rgba(0, 0, 0, 0.9),
         0 0 30px rgba(52, 152, 219, 0.1),
-        /* Glow blu sottile */
         inset 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -91,7 +90,7 @@
     z-index: 500;
 }
 
-/* Pannelli Laterali (Multi & Token) */
+/* Pannelli Laterali */
 .header-stat-box {
     display: flex;
     flex-direction: column;
@@ -102,11 +101,11 @@
 }
 
 .header_stat_box_display_none {
-	display: none;
+    display: none;
 }
 
 .header_right_panel {
-	text-align: right;
+    text-align: right;
 }
 
 .header-main-score {
@@ -114,15 +113,11 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    /* Centramento perfetto matematico */
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     white-space: nowrap;
-
-    /* Stile bordo/padding opzionale */
     padding: 0 20px;
     height: 70%;
 }
@@ -141,7 +136,6 @@
     font-weight: 700;
 }
 
-
 .header-label-main {
     font-size: 0.7rem;
     color: #95a5a6;
@@ -151,7 +145,6 @@
     margin-bottom: 2px;
 }
 
-/* Modifica specifica per allineare il testo a destra nel pannello destro */
 #header-right-panel {
     align-items: flex-end;
     text-align: right;
@@ -160,14 +153,12 @@
 
 .column-header-aligned {
     align-items: center;
-    /* Il testo Teams è centrato verticalmente */
     justify-content: flex-start;
 }
 
 .column-header-aligned h2 {
     margin: 0;
     font-size: 1.1rem;
-    /* Stessa dimensione font dei tab */
     color: var(--text-main);
     text-transform: uppercase;
     font-weight: 700;
@@ -183,12 +174,10 @@
     color: var(--text-muted);
     font-weight: 700;
     font-size: 1.1rem;
-    /* Aumentato per matchare font Rajdhani */
     padding: 12px 0;
     cursor: pointer;
     transition: all 0.2s ease;
     border-bottom: 3px solid transparent;
-    /* Riserva spazio per il bordo attivo */
     opacity: 0.6;
 }
 
@@ -229,31 +218,29 @@
 }
 
 .tab_promozione {
-	display: none;
+    display: none;
 }
 
-.tab-btn.notify {
-    animation: tabPulse 1.5s infinite ease-in-out !important;
-    border-bottom-color: #2ecc71 !important;
+/* Specificità aumentata per override notifica */
+.tabs-header .tab-btn.notify {
+    animation: tabPulse 1.5s infinite ease-in-out;
+    border-bottom-color: #2ecc71;
     position: relative;
 }
 
-.tab-btn.notify::after {
+.tabs-header .tab-btn.notify::after {
     content: '';
     position: absolute;
     top: 10px;
     right: 15px;
-    /* Posizione fissa a destra */
     left: auto;
     margin-left: 0;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background-color: #2ecc71;
-    /* Verde invece di rosso */
     box-shadow: 0 0 8px #2ecc71;
     animation: none;
-    /* L'animazione è sul bottone ora */
 }
 
 .tab-content,
@@ -263,42 +250,40 @@
     padding: 0;
 }
 
-/* Fix mobile */
-.game-column.mobile-active {
-    display: flex !important;
+/* Fix mobile con specificità */
+#game-container .game-column.mobile-active {
+    display: flex;
 }
 
-/* RIMOZIONE LINEA SOTTO I TAB */
-.tab-btn.active::after,
-.tab-btn::after {
-    display: none !important;
-    content: none !important;
+/* RIMOZIONE LINEA SOTTO I TAB - Specificità aumentata */
+.tabs-header .tab-btn.active::after,
+.tabs-header .tab-btn::after {
+    display: none;
+    content: none;
 }
 
-.tab-btn.active {
-    border-bottom: none !important;
-    /* Opzionale: lascia solo un leggero sfondo per indicare che è attivo */
+.tabs-header .tab-btn.active {
+    border-bottom: none;
     background: rgba(255, 255, 255, 0.05);
 }
 
 /* RIMOZIONE BORDI/OMBRE IN FONDO ALLE COLONNE */
-#left-column,
-#center-column,
-#right-column,
-.game-column {
+#game-container #left-column,
+#game-container #center-column,
+#game-container #right-column,
+#game-container .game-column {
     border-bottom: none;
     box-shadow: none;
 }
 
-.store-section,
-.section-header {
-    border-bottom: none !important;
-    border: none !important;
+#game-container .store-section,
+#game-container .section-header {
+    border-bottom: none;
+    border: none;
 }
 
 @media screen and (max-width: 1280px) and (min-width: 1025px) {
 
-    /* Riduciamo un po' le colonne laterali per dare spazio al centro */
     #left-column,
     #right-column {
         min-width: 240px;
