@@ -1013,7 +1013,7 @@ function checkTabNotifications() {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
         if (!state) continue;
-        if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score >= data.cost) {
+        if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score.gte(data.cost)) {
             clickNotify = true; break;
         }
     }
@@ -1023,31 +1023,48 @@ function checkTabNotifications() {
 
     // Auto Tab
     let autoNotify = false;
-    for (const key in gameData.buildingEnhancements) {
+    for (const key in gameData.buildingEnhancements)
+	{
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
-        if (!state) continue;
+
+        if (!state)
+			continue;
+
         const targetTeam = gameState.teams[data.targetTeam];
-        if (!state.purchased && targetTeam.count >= data.requiredCount && gameState.score >= data.cost) {
-            autoNotify = true; break;
+        if (!state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost))
+		{
+            autoNotify = true;
+			break;
         }
     }
 
     const tabAuto = document.getElementById('tab-auto');
-    if (tabAuto) autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
+    if (tabAuto)
+		autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
     // Prestige Tab
     let prestigeNotify = false;
-    if (gameState.totalResets > 0 || gameState.prestigePoints > 0) {
-        for (const key in gameData.prestigeUpgrades) {
+    if (gameState.totalResets > 0 || gameState.prestigePoints > 0)
+	{
+        for (const key in gameData.prestigeUpgrades)
+		{
             const data = gameData.prestigeUpgrades[key];
             const state = gameState.prestigeUpgrades[key];
-            if (data.isCounted) {
-                if (gameState.prestigePoints >= data.baseCost) prestigeNotify = true;
-            } else {
-                if (!state.purchased && gameState.prestigePoints >= data.baseCost) prestigeNotify = true;
+
+            if (data.isCounted)
+			{
+                if (gameState.prestigePoints.gte(data.baseCost))
+					prestigeNotify = true;
             }
-            if (prestigeNotify) break;
+			else
+			{
+                if (!state.purchased && gameState.prestigePoints.gte(data.baseCost))
+					prestigeNotify = true;
+            }
+
+            if (prestigeNotify)
+				break;
         }
     }
 
@@ -1055,20 +1072,17 @@ function checkTabNotifications() {
     if (tabPrestige)
         prestigeNotify && !tabPrestige.classList.contains('active') ? tabPrestige.classList.add('notify') : tabPrestige.classList.remove('notify');
 
-    // --- AGGIORNAMENTO TITOLO BROWSER (Nuova User Experience) ---
-    // Eseguiamo la logica direttamente qui, senza creare funzioni interne
+    // --- AGGIORNAMENTO TITOLO BROWSER ---
     let title = "Espòòò Clicker";
 
-    // Controlliamo se una delle variabili calcolate sopra è vera
-    const canPrestige = gameState.totalScore >= gameData.PRESTIGE_THRESHOLD;
+    // Controlliamo se abbiamo raggiunto il PRESTIGE_THRESHOLD
+    const canPrestige = gameState.totalScore.gte(gameData.PRESTIGE_THRESHOLD);
 
-    if (canPrestige) {
+    if (canPrestige)
         title = gameData.texts.ui.promotionReadyTitle + " - " + title;
-    }
-    else {
+    else
         // Mostra i bug correnti
         title = formatNumber(gameState.score) + " " + gameData.texts.ui.bugsTitle + " - " + title;
-    }
 
     if (document.title !== title)
         document.title = title;

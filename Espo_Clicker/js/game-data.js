@@ -1,4 +1,4 @@
-// --------- 1. DATI E STATO DEL GIOCO (Data-Driven) ---------
+// --------- DATI E STATO DEL GIOCO ---------
 
 // Variabili Globali
 var bps = new Decimal(0);
@@ -12,7 +12,6 @@ var crunchTimeCooldownEnd = 0;
 var clickHistory = [];
 var achievementsBPSBonus = new Decimal(0);
 
-// --- NUOVI GLOBALS PER SISTEMA EFFETTI ---
 window.goldenBugChance = 0.001;
 window.goldenBugSpawnTime = 60000;
 window.goldenBugMult = new Decimal(1);
@@ -22,9 +21,9 @@ window.costScalingBase = 1.20;
 window.costScalingReduction = 0;
 window.prestigeSynergyFactor = new Decimal(0);
 window.clickGlobalMult = new Decimal(1);
-// ------------------------------------------
 
-function isChristmasSeason() {
+function isChristmasSeason()
+{
     const now = new Date();
     const month = now.getMonth();
     const day = now.getDate();
@@ -32,11 +31,12 @@ function isChristmasSeason() {
     if (month === 0 && day <= 8) return true;
     return false;
 }
+
 const IS_XMAS_TIME = isChristmasSeason();
 
 let gameState;
 
-// --- 2. DEFINIZIONE DEI DATI ---
+// --- DEFINIZIONE DEI DATI ---
 const gameData = {
     PRESTIGE_THRESHOLD: new Decimal("50000000"),
 
@@ -396,7 +396,7 @@ const gameData = {
             requiredClicks: 7500
         },
 
-        // --- UPGRADE CON EFFETTI SPECIALI (Data-Driven) ---
+        // --- UPGRADE CON EFFETTI SPECIALI ---
         doppioClick: {
             name: 'Doppio Click',
             desc: 'Raddoppia il valore base dei tuoi click.',
@@ -1212,7 +1212,8 @@ const gameData = {
 };
 
 // --- GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
-function getInitialGameState() {
+function getInitialGameState()
+{
     const state =
     {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
@@ -1247,7 +1248,8 @@ function getInitialGameState() {
 
     for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
 
-    for (const key in gameData.prestigeUpgrades) {
+    for (const key in gameData.prestigeUpgrades)
+	{
         if (gameData.prestigeUpgrades[key].isCounted)
             state.prestigeUpgrades[key] = { count: 0 };
         else
@@ -1256,7 +1258,8 @@ function getInitialGameState() {
 
     const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
 
-    for (const key in allAssets) {
+    for (const key in allAssets)
+	{
         if (allAssets[key].defaultVol !== undefined)
             state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
     }
@@ -1266,7 +1269,8 @@ function getInitialGameState() {
 
 gameState = getInitialGameState();
 
-function resetGameToDefault() {
+function resetGameToDefault()
+{
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 
