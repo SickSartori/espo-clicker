@@ -1163,7 +1163,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (filterSelect) {
                     if (tab.id === 'tab-prestige') {
-                        if (!filterSelect.disabled) filterSelect.setAttribute('data-prev', filterSelect.value);
+                        if (!filterSelect.disabled)
+                            filterSelect.setAttribute('data-prev', filterSelect.value);
 
                         filterSelect.value = 'all';
                         filterSelect.disabled = true;

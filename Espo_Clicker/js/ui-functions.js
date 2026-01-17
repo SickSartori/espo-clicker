@@ -1045,7 +1045,7 @@ function checkTabNotifications() {
 
     // Prestige Tab
     let prestigeNotify = false;
-    if (gameState.totalResets > 0 || gameState.prestigePoints > 0)
+    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0))
 	{
         for (const key in gameData.prestigeUpgrades)
 		{
@@ -1088,17 +1088,19 @@ function checkTabNotifications() {
         document.title = title;
 }
 
-function updateBonusCounter() {
+function updateBonusCounter()
+{
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
 
     // La variabile prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
-    if (prestigeBonus > 1.05)	// Mostra solo se il bonus è significativo
+    if (prestigeBonus.gt(1.05))	// Mostra solo se il bonus è significativo
     {
         if (counter)
             counter.style.display = 'block';
 
-        if (valueSpan) {
+        if (valueSpan)
+        {
             // Mostra il moltiplicatore totale con 2 decimali
             valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
 
@@ -1106,7 +1108,8 @@ function updateBonusCounter() {
             valueSpan.style.color = '#f1c40f';
         }
     }
-    else {
+    else
+    {
         if (counter)
             counter.style.display = 'none';
     }
@@ -1185,7 +1188,8 @@ function updateScoreBoard(totalBPS) {
     }
 }
 
-function updateHUD() {
+function updateHUD()
+{
     // Riferimenti ai nuovi pannelli nell'header
     const leftPanel = document.getElementById('header-left-panel');
     const rightPanel = document.getElementById('header-right-panel');
@@ -1195,19 +1199,27 @@ function updateHUD() {
     const displayTokens = document.getElementById('prestige-points-display');
 
     // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
-    if (gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0) {
+    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0))
+    {
         // Mostra i pannelli laterali
         if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
         if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
 
         // Aggiorna i testi
-        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
-        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
+        if (displayCareer)
+            setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+
+        if (displayTokens)
+            setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
     }
-    else {
+    else
+    {
         // Nascondi se è la prima run
-        if (leftPanel) leftPanel.classList.add("header_stat_box_display_none");
-        if (rightPanel) rightPanel.classList.add("header_stat_box_display_none");
+        if (leftPanel)
+            leftPanel.classList.add("header_stat_box_display_none");
+
+        if (rightPanel)
+            rightPanel.classList.add("header_stat_box_display_none");
     }
 }
 
@@ -1322,10 +1334,13 @@ function updateSkillButton() {
     }
 }
 
-function updateTabsVisibility() {
+function updateTabsVisibility()
+{
     const tabPrestige = getEl('tab-prestige');
-    if (tabPrestige) {
-        const show = gameState.totalResets > 0 || gameState.prestigePoints > 0 || gameState.lifetimePrestigePoints > 0;
+
+    if (tabPrestige)
+    {
+        const show = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
 
         if (show)
             tabPrestige.classList.remove("tab_promozione");
@@ -1390,6 +1405,7 @@ function updatePrestigeVisuals() {
         if (currentScore.gt(0)) {
             progress = currentScore.div(threshold).mul(100).toNumber();
         }
+
         // Cap a 99% perché a 100% scatta il "canPrestige"
         const finalPercent = Math.min(progress, 99).toFixed(0);
 
@@ -1402,13 +1418,16 @@ function updatePrestigeVisuals() {
 }
 
 
-function updatePrestigeUI() {
+function updatePrestigeUI()
+{
     updatePrestigeVisuals();
 }
 
 
-function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
-    switch (mode) {
+function shouldItemBeVisible(mode, isPurchased, isUnlocked)
+{
+    switch (mode)
+    {
         case 'available': return isUnlocked && !isPurchased;
         case 'locked': return !isUnlocked && !isPurchased;
         case 'purchased': return isPurchased;
@@ -1522,12 +1541,12 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     // AUDIO MANAGER (Logica Centralizzata)
     // Invece di gestire play/pause qui, diciamo al Manager di aggiornare l'ambiente.
     // Lui guarderà la skin corrente e deciderà quale traccia suonare e quali spegnere.
-    if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
+    if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
         AudioManager.updateAmbience();
-    }
 
     // APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
-    const applyClasses = (element, imgSrc) => {
+    const applyClasses = (element, imgSrc) =>
+    {
         if (!element) return;
 
         // Aggiorna immagine
@@ -1537,11 +1556,10 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         element.classList.remove(...bgClasses);
 
         // Applica nuova classe sfondo in base alla rarità
-        if (skinData.rarity) {
+        if (skinData.rarity)
             element.classList.add(`bg-${skinData.rarity}`);
-        } else {
+        else
             element.classList.add('bg-common');
-        }
     };
 
     applyClasses(photoNormal, skinData.img);
@@ -1550,12 +1568,15 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
 
 // Nuova funzione helper per creare i fiocchi
-function createSnowflakes(snowContainer) {
-    if (!snowContainer) return;
+function createSnowflakes(snowContainer)
+{
+    if (!snowContainer)
+        return;
 
     const numberOfSnowflakes = 60;
 
-    for (let index = 0; index < numberOfSnowflakes; index++) {
+    for (let index = 0; index < numberOfSnowflakes; index++)
+    {
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
 
@@ -1573,35 +1594,42 @@ function createSnowflakes(snowContainer) {
     }
 }
 
-function checkOverlayNotifications() {
+function checkOverlayNotifications()
+{
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
     let hasClaimable = false;
-    for (const key in gameData.achievements) {
+    for (const key in gameData.achievements)
+    {
         const state = gameState.achievements[key];
         const data = gameData.achievements[key];
 
         // Se è sbloccato, non ancora reclamato, e ha un premio definito
-        if (state && state.unlocked && !state.claimed && data.reward) {
+        if (state && state.unlocked && !state.claimed && data.reward)
+        {
             hasClaimable = true;
             break;
         }
     }
 
     const achBtn = document.getElementById('open-achievements-btn');
-    if (achBtn) {
-        if (hasClaimable) achBtn.classList.add('notify-overlay');
-        else achBtn.classList.remove('notify-overlay');
+    if (achBtn)
+    {
+        if (hasClaimable)
+            achBtn.classList.add('notify-overlay');
+        else
+            achBtn.classList.remove('notify-overlay');
     }
 }
 
-function updateStatsUI() {
+function updateStatsUI()
+{
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
 
     // --- CALCOLI PRELIMINARI ---
     const progress = gameState.totalScore.div(gameData.PRESTIGE_THRESHOLD).mul(100).min(100).toNumber();
 
-    // 1. Recupera ENTRAMBI i valori
+    // Recupera ENTRAMBI i valori
     const rawClick = (typeof calculateRawClickValue === 'function') ? calculateRawClickValue() : gameState.baseClickValue;
     const totalClick = (typeof calculateClickValue === 'function') ? calculateClickValue() : rawClick;
 
@@ -1610,14 +1638,15 @@ function updateStatsUI() {
 
     // Calcolo Efficienza Offline
     let offlineEff = 0.30;
-    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn) {
+    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn)
         offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
-    }
-    if (offlineEff > 1.0) offlineEff = 1.0;
+
+    if (offlineEff > 1.0)
+        offlineEff = 1.0;
+
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
 
     // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
-    // Nota l'aggiunta di data-tooltip="${formatFullNumber(...)}" e class="simple-tooltip"
     statsList.innerHTML = `
         <div class="stats-container">
             

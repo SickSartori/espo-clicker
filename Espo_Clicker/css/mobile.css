@@ -127,13 +127,11 @@
         font-size: 1.2rem;
         margin: 0;
         color: #fff;
-
         position: static;
         left: 50%;
         top: 50%;
-        transform: none !important;
-
         animation: mobileIconSwitch 7s infinite;
+        transform: none;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -149,8 +147,6 @@
     body:not(.mobile-view-center) #golden-bug.visible {
         display: none;
     }
-
-
 
     /* 6. BARRA INFERIORE (Bottom Nav) - SCURA */
     #mobile-nav-bar {

@@ -375,20 +375,30 @@ function buyPrestigeUpgrade(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const cost = data.baseCost;
 
-    if (data.isCounted) {
-        if (gameState.prestigePoints.lt(cost)) return;
-    } else {
-        if (gameState.prestigePoints.lt(cost) || state.purchased) return;
+    if (data.isCounted)
+    {
+        if (gameState.prestigePoints.lt(cost))
+            return;
+    }
+    else
+    {
+        if (gameState.prestigePoints.lt(cost) || state.purchased)
+            return;
     }
 
     gameState.prestigePoints = gameState.prestigePoints.minus(cost);
 
-    if (data.isCounted) {
+    if (data.isCounted)
+    {
         state.count++;
-        if (data.effects) data.effects.forEach(eff => applyEffect(eff, 1));
-    } else {
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff, 1));
+    }
+    else
+    {
         state.purchased = true;
-        if (data.effects) data.effects.forEach(eff => applyEffect(eff));
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff));
     }
 
     calculatePrestigeBonus();
