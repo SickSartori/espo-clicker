@@ -746,7 +746,7 @@ const gameData = {
             targetTeam: 'metodologiaAgile',
             cost: new Decimal(6500000),
             multiplier: new Decimal(2),
-            requiredCount: 1
+            requiredCount: 10
         },
         productOwner: {
             name: 'Product Owner Dedicato',
