@@ -81,55 +81,65 @@ function clearActiveEvent() {
 // --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------
 
 // Applica un singolo effetto
-function applyEffect(effect, level = 1) {
-    if (!effect) return;
+function applyEffect(effect, level = 1)
+{
+    if (!effect)
+        return;
 
     let lvl = new Decimal(level);
-    let val = new Decimal(effect.val);
 
-    if (effect.type === 'mult_state') {
-        if (gameState.hasOwnProperty(effect.stat)) {
-            gameState[effect.stat] = gameState[effect.stat].mul(val);
-        }
+    if (effect.type === 'mult_state')
+    {
+        if (gameState.hasOwnProperty(effect.stat))
+            gameState[effect.stat] = gameState[effect.stat].mul(effect.val);
     }
-    else if (effect.type === 'mult_global') {
-        if (window.hasOwnProperty(effect.stat)) {
+    else if (effect.type === 'mult_global')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
             // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
-            if (window[effect.stat] instanceof Decimal) {
-                window[effect.stat] = window[effect.stat].mul(val);
-            } else {
+            if (window[effect.stat] instanceof Decimal)
+            {
+                let value = new Decimal(effect.val);
+                window[effect.stat] = window[effect.stat].mul(value);
+            }
+            else
                 window[effect.stat] *= effect.val;
-            }
         }
     }
-    else if (effect.type === 'add_mult_per_level') {
-        if (window.hasOwnProperty(effect.stat)) {
-            let bonus = val.mul(lvl);
-            if (window[effect.stat] instanceof Decimal) {
+    else if (effect.type === 'add_mult_per_level')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
+            let value = new Decimal(effect.val);
+            let bonus = value.mul(lvl);
+
+            if (window[effect.stat] instanceof Decimal)
                 window[effect.stat] = window[effect.stat].add(bonus);
-            } else {
+            else
                 window[effect.stat] += (effect.val * level);
-            }
         }
     }
-    else if (effect.type === 'add_global_stat_per_level') {
-        if (window.hasOwnProperty(effect.stat)) {
-            let bonus = val.mul(lvl);
-            if (window[effect.stat] instanceof Decimal) {
+    else if (effect.type === 'add_global_stat_per_level')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
+            let value = new Decimal(effect.val);
+            let bonus = value.mul(lvl);
+
+            if (window[effect.stat] instanceof Decimal)
                 window[effect.stat] = window[effect.stat].add(bonus);
-            } else {
+            else
                 window[effect.stat] += (effect.val * level);
-            }
         }
     }
-    else if (effect.type === 'set_flag') {
+    else if (effect.type === 'set_flag')
         window.gameFlags[effect.flag] = effect.val;
-    }
 }
 
 // Ricalcola tutti gli effetti passivi
 function reapplyAllEffects() {
-    // 1. Reset Totale
+    // Reset Totale
     window.goldenBugChance = 0.001;
     window.goldenBugMult = new Decimal(1);
     window.goldenBugSpawnTime = 60000;
@@ -140,7 +150,7 @@ function reapplyAllEffects() {
 
     window.gameFlags = {};
 
-    // 2. Click Upgrades
+    // Click Upgrades
     for (const key in gameState.clickUpgrades) {
         if (gameState.clickUpgrades[key].purchased) {
             const data = gameData.clickUpgrades[key];
@@ -148,7 +158,7 @@ function reapplyAllEffects() {
         }
     }
 
-    // 3. Prestige Upgrades
+    // Prestige Upgrades
     for (const key in gameState.prestigeUpgrades) {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
@@ -344,16 +354,23 @@ function buySkin(skinId) {
     }
 }
 
-function buyClickUpgrade(upgradeKey) {
+function buyClickUpgrade(upgradeKey)
+{
     const state = gameState.clickUpgrades[upgradeKey];
     const data = gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score.gte(data.cost) && !state.purchased) {
+    if (gameState.score.gte(data.cost) && !state.purchased)
+    {
         gameState.score = gameState.score.minus(data.cost);
         gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
-        if (data.effects) data.effects.forEach(eff => applyEffect(eff));
-        if (upgradeKey === 'clickAutomatico') recalculateCPS();
+
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff));
+
+        if (upgradeKey === 'clickAutomatico')
+            recalculateCPS();
+        
         finalizePurchase();
     }
 }

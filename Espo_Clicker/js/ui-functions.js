@@ -390,7 +390,8 @@ function renderStoreSection(config) {
     }
 }
 
-function updateClickStore() {
+function updateClickStore()
+{
     renderStoreSection({
         type: 'click',
         containerId: 'click-upgrade-list',
@@ -402,13 +403,13 @@ function updateClickStore() {
         onBuy: (key) => buyClickUpgrade(key),
         getStatus: (key, data, state) => {
             const isUnlocked = gameState.totalClicks >= data.requiredClicks;
+
             return {
                 purchased: state.purchased,
                 unlocked: isUnlocked,
                 canAfford: gameState.score.gte(data.cost),
                 label: gameData.texts.ui.buy,
-                // Calcolo preciso della barra di progresso
-                progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),
+                progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),   // Calcolo preciso della barra di progresso
                 progressText: `Click: ${formatNumber(gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
             };
         },
