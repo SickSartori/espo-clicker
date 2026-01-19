@@ -5,6 +5,7 @@ return [
     "password" => "root",
     "dbname" => "my_espooclicker",
     "port" => 3306,
-    "instancename" => "dev" // 'dev' o 'production'
+    "instancename" => "dev", // 'dev' o 'production'
+    "version" => "4.0.0"
 ];
 ?>

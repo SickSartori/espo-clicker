@@ -1,4 +1,6 @@
 <?php require_once("php/check_language.php"); ?>
+
+
 <!DOCTYPE html>
 <html lang="it">
 	<head>
@@ -7,21 +9,27 @@
 		<title>
 			<?php echo $labels["head_titolo"]; ?>
 		</title>
-		<link rel="stylesheet" href="./css/keyframes.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/base.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/layout.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/components.css?v=<?php echo time(); ?>"> 
-		<link rel="stylesheet" href="./css/navbar.css?v=<?php echo time(); ?>"> 
-		<link rel="stylesheet" href="./css/clicker.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/store.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/modals-core.css?v=<?php echo time(); ?>"> 
-		<link rel="stylesheet" href="./css/modals-content.css?v=<?php echo time(); ?>"> 
-		<link rel="stylesheet" href="./css/skins.css?v=<?php echo time(); ?>">    
-		<link rel="stylesheet" href="./css/podio.css?v=<?php echo time(); ?>">  
-		<link rel="stylesheet" href="./css/mobile.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo time(); ?>">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo time(); ?>">
+		<?php 
+			$config = require("php/config.php"); 
+			$ver = isset($config['version']) ? $config['version'] : '1.0';
+			// Se sei in sviluppo, puoi lasciare $cacheVer, ma in produzione usa $ver
+			$cacheVer = ($config['instancename'] === 'dev') ? $cacheVer : $ver;
+		?>
+		<link rel="stylesheet" href="./css/keyframes.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/base.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/layout.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/components.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="./css/navbar.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="./css/clicker.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/store.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="./css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="./css/skins.css?v=<?php echo $cacheVer; ?>">    
+		<link rel="stylesheet" href="./css/podio.css?v=<?php echo $cacheVer; ?>">  
+		<link rel="stylesheet" href="./css/mobile.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
 		<link rel="icon" type="image/png" href="assets/image/favicon.webp">
 	</head>
@@ -221,10 +229,10 @@
 			</button>
 		</div>
 
-		<video id="rick-roll-video" class="rick_roll_video video_display_none" playsinline preload="none" data-src="assets/video/rick-espley-video.mp4"></video>
-		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="none" data-src="assets/video/ricardo-milespo-video.mp4"></video>
-		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="none" data-src="assets/video/ricardo-milespo-metal-video.mp4"></video>
-		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="none" data-src="assets/video/ricardo-milespo-dota-video.mp4"></video>
+		<video id="rick-roll-video" class="rick_roll_video video_display_none" playsinline preload="metadata" data-src="assets/video/rick-espley-video.mp4"></video>
+		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-video.mp4"></video>
+		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-metal-video.mp4"></video>
+		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-dota-video.mp4"></video>
 
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
@@ -233,13 +241,13 @@
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
 
-		<script src="./js/version-config.js?v=<?php echo time(); ?>" defer></script>
-		<script src="./js/game-data.js?v=<?php echo time(); ?>" defer></script>
-		<script src="./js/ui-functions.js?v=<?php echo time(); ?>" defer></script>
-		<script src="./js/game-logic.js?v=<?php echo time(); ?>" defer></script>
-		<script src="./js/script.js?v=<?php echo time(); ?>" defer></script> 
-		<script src="./js/podio.js?v=<?php echo time(); ?>" defer></script>
-		<script src="./js/modals.js?v=<?php echo time(); ?>" defer></script>		
+		<script src="./js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="./js/game-data.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="./js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="./js/game-logic.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="./js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
+		<script src="./js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="./js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
 	
 		<?php 
 			$configFile = __DIR__ . '/php/config.php';

@@ -268,29 +268,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione Helper per il controllo versione
     function checkSaveCompatibility(savedData) {
-        if (!window.GAME_VERSION) return true; // Dev safety
+        if (!window.GAME_VERSION) return true;
 
-        // Salvataggi vecchi (senza versione) -> Incompatibili
+        // 1. Salvataggi corrotti o senza versione -> Incompatibili
         if (!savedData || !savedData.version) {
-            console.warn("Salvataggio Legacy: Reset richiesto.");
+            console.warn("Save: Versione mancante. Reset richiesto.");
             return false;
         }
 
         const current = window.GAME_VERSION;
         const saved = savedData.version;
 
-        // Controllo STAGE (Non mischiare Beta con Stable)
-        if (saved.stage !== current.stage) {
-            console.warn(`Mismatch Stage: Salvataggio ${saved.stage} vs Gioco ${current.stage}`);
-            return false;
-        }
-
-        // Regola BETA/ALPHA: Rottura su cambio Major
+        // 2. Controllo MAJOR: Se cambia il numero principale (es. v3 -> v4), rompe tutto -> Reset
+        // Questo è l'UNICO caso in cui vogliamo resettare davvero.
         if (saved.major !== current.major) {
-            console.warn(`Mismatch Major: v${saved.major} non compatibile con v${current.major}`);
+            console.warn(`Mismatch Major: Save v${saved.major} vs Game v${current.major}`);
             return false;
         }
 
+        // 3. Abbiamo RIMOSSO il controllo su 'stage' e 'minor'.
+        // Così passando da 4.0 beta a 4.0 stable NON perderai i dati.
         return true;
     }
 
@@ -340,62 +337,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
-                    console.warn("Versione incompatibile. Eseguo Reset Forzato e Backup.");
+                    console.warn("⚠️ Reset forzato per incompatibilità versione.");
 
-                    // 1. (Opzionale) Salva una copia di backup "Legacy" prima di cancellare
-                    localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
+                    // 1. Backup di sicurezza
+                    try {
+                        localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
+                    } catch (e) { }
 
-                    setTimeout(() => {
-                        if (window.EspooClicker) window.EspooClicker.showToast("Salvataggio incompatibile: Reset effettuato.", 'error');
-                    }, 500);
-
-                    // 2. Resetta lo stato in memoria ai valori di default
-                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
-
-                    // 3. Sovrascrive il salvataggio locale corrotto con quello pulito
-                    saveGame();
-
-                    // 4. IMPORTANTE: Interrompe la funzione per non caricare i dati vecchi
-                    return;
-                }
-
-                // --- MERGE DEI DATI ---
-                if (parsedState.buildings && !parsedState.teams) {
-                    parsedState.teams = parsedState.buildings;
-                    delete parsedState.buildings;
-                }
-
-                deepMerge(gameState, parsedState);
-
-                const decimalFields = [
-                    'score',
-                    'totalScore',
-                    'lifetimeScore',
-                    'totalOfflineScore',
-                    'prestigePoints',
-                    'lifetimePrestigePoints',
-                    'baseClickValue'
-                ];
-
-                decimalFields.forEach(field => {
-                    let val = gameState[field];
-
-                    // Se il valore è mancante, usa 0
-                    if (val === undefined || val === null) {
-                        gameState[field] = new Decimal(0);
-                    } else {
-                        // Se è un oggetto puro (dal JSON) che ha mantissa ed esponente,
-                        // break_infinity v2 a volte preferisce che venga ricreato pulito.
-                        try {
-                            gameState[field] = new Decimal(val);
-                        } catch (e) {
-                            console.warn(`Errore ripristino campo ${field}, reset a 0.`, e);
-                            gameState[field] = new Decimal(0);
-                        }
+                    // 2. Resetta la memoria RAM
+                    if (typeof resetGameToDefault === 'function') {
+                        resetGameToDefault();
                     }
-                });
 
-                if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
+                    // 3. AGGIORNA LA VERSIONE IN MEMORIA (Cruciale)
+                    if (window.GAME_VERSION) {
+                        gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
+                    }
+
+                    // 4. SCRITTURA FORZATA SU DISCO (Fix del Loop)
+                    // Scriviamo subito il file pulito, così al prossimo F5 è valido.
+                    try {
+                        const newStateJSON = JSON.stringify(gameState);
+                        const newCompressed = LZString.compressToUTF16(newStateJSON);
+                        localStorage.setItem(SAVE_KEY, newCompressed);
+                        console.log("✅ File di salvataggio resettato e scritto su disco.");
+                    } catch (e) {
+                        console.error("❌ Errore scrittura reset:", e);
+                    }
+
+                    // 5. Avvisa l'utente una volta sola
+                    setTimeout(() => {
+                        if (window.EspooClicker) {
+                            window.EspooClicker.showToast("Dati migrati alla nuova versione!", 'warning');
+                        }
+                    }, 1000);
+
+                }
+                else {
+                    // --- MERGE DEI DATI ---
+                    if (parsedState.buildings && !parsedState.teams) {
+                        parsedState.teams = parsedState.buildings;
+                        delete parsedState.buildings;
+                    }
+
+                    deepMerge(gameState, parsedState);
+
+                    const decimalFields = [
+                        'score',
+                        'totalScore',
+                        'lifetimeScore',
+                        'totalOfflineScore',
+                        'prestigePoints',
+                        'lifetimePrestigePoints',
+                        'baseClickValue'
+                    ];
+
+                    decimalFields.forEach(field => {
+                        let val = gameState[field];
+
+                        // Se il valore è mancante, usa 0
+                        if (val === undefined || val === null) {
+                            gameState[field] = new Decimal(0);
+                        } else {
+                            // Se è un oggetto puro (dal JSON) che ha mantissa ed esponente,
+                            // break_infinity v2 a volte preferisce che venga ricreato pulito.
+                            try {
+                                gameState[field] = new Decimal(val);
+                            } catch (e) {
+                                console.warn(`Errore ripristino campo ${field}, reset a 0.`, e);
+                                gameState[field] = new Decimal(0);
+                            }
+                        }
+                    });
+
+                    if (gameState.baseClickValue.eq(0)) gameState.baseClickValue = new Decimal(1);
+                }
 
                 // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
                 if (loadedFromBackup) {
@@ -744,82 +760,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funzione universale per precaricare TUTTO (Immagini, Audio, Video)
     function preloadAllAssets(onProgress) {
         const promises = [];
-        let totalAssets = 0;
+
+        // 1. Generazione Dinamica della lista Immagini da gameData
+        const imagesToLoad = new Set(); // Usa un Set per evitare duplicati
+
+        // Aggiungi immagini base UI
+        imagesToLoad.add('assets/image/favicon.webp');
+        imagesToLoad.add('assets/image/hidden.webp');
+        imagesToLoad.add('assets/image/bluescreen.webp');
+
+        // Estrai immagini dalle Skin (Normali e Click)
+        if (gameData.skins) {
+            Object.values(gameData.skins).forEach(skin => {
+                if (skin.img) imagesToLoad.add(`assets/image/${skin.img}`);
+                if (skin.imgClick) imagesToLoad.add(`assets/image/${skin.imgClick}`);
+            });
+        }
+
+        // Estrai immagini dai Potenziamenti Prestigio (es. Espo Fury)
+        if (gameData.prestigeUpgrades) {
+            Object.values(gameData.prestigeUpgrades).forEach(upg => {
+                if (upg.furyImage) imagesToLoad.add(`assets/image/${upg.furyImage}`);
+                if (upg.furyClickImage) imagesToLoad.add(`assets/image/${upg.furyClickImage}`);
+            });
+        }
+
+        let totalAssets = imagesToLoad.size;
         let loadedAssets = 0;
+
+        // AUDIO (Calcolo totale)
+        if (gameData.assets && gameData.assets.sounds) {
+            totalAssets += Object.keys(gameData.assets.sounds).length;
+        }
 
         // Helper per aggiornare la percentuale
         const updateProgress = () => {
             loadedAssets++;
-
-            if (onProgress) {
+            if (onProgress && totalAssets > 0) {
                 const percent = Math.floor((loadedAssets / totalAssets) * 100);
                 onProgress(percent);
             }
         };
 
-        // LISTA IMMAGINI CRITICHE (Manuale)
-        const imagesToLoad = [
-            'assets/image/espo.webp',
-            'assets/image/espo-click.webp',
-            'assets/image/favicon.webp',
-            'assets/image/espo-fury.webp',
-            'assets/image/espo-fury-click.webp',
-            'assets/image/bluescreen.webp',
-            'assets/image/hidden.webp',
-            'assets/image/espo-matrix.webp',
-            'assets/image/espo-matrix-click.webp',
-        ];
-
-        // Aggiungiamo le immagini alla lista
-        totalAssets += imagesToLoad.length;
+        // --- CARICAMENTO IMMAGINI ---
         imagesToLoad.forEach(src => {
             promises.push(
                 new Promise((resolve) => {
                     const img = new Image();
                     img.src = src;
+                    // Importante: risolvi la promise ANCHE in caso di errore per non bloccare il loader
                     img.onload = () => { updateProgress(); resolve(); };
-                    img.onerror = () => { console.warn("Img missing:", src); updateProgress(); resolve(); };
+                    img.onerror = () => { console.warn("❌ Immagine mancante:", src); updateProgress(); resolve(); };
                 })
             );
         });
 
-        // AUDIO (Automatico da gameData)
+        // --- CARICAMENTO AUDIO ---
         if (gameData.assets && gameData.assets.sounds) {
-            const soundKeys = Object.keys(gameData.assets.sounds);
-            totalAssets += soundKeys.length;
-
-            soundKeys.forEach(key => {
-                const item = gameData.assets.sounds[key];
-                const url = `assets/sounds/${item.file}`;
-
-                // Usiamo fetch per forzare il download in cache
+            Object.values(gameData.assets.sounds).forEach(sound => {
+                const url = `assets/sounds/${sound.file}`;
                 promises.push(
                     fetch(url)
                         .then(() => updateProgress())
-                        .catch(() => { console.warn("Audio missing:", url); updateProgress(); })
+                        .catch(() => { console.warn("❌ Audio mancante:", url); updateProgress(); })
                 );
             });
         }
-        /*
-                // VIDEO (Automatico da gameData)
-        if (gameData.assets && gameData.assets.videos) {
-            const videoKeys = Object.keys(gameData.assets.videos);
-            totalAssets += videoKeys.length;
-            
-            videoKeys.forEach(key => {
-                const item = gameData.assets.videos[key];
-                const url = `assets/video/${item.file}`; // Nota: cartella 'video' singolare
-                
-                promises.push(
-                    fetch(url)
-                    .then(() => updateProgress())
-                    .catch(() => { console.warn("Video missing:", url); updateProgress(); })
-                );
-            });
-        }*/
 
-        // Se non c'è nulla da caricare, risolvi subito
+        // Se non c'è nulla da caricare
         if (totalAssets === 0) return Promise.resolve();
+
+        // Attendi tutto (Promise.allSettled sarebbe meglio in ES2020, ma all va bene grazie ai catch interni)
         return Promise.all(promises);
     }
 
@@ -1312,14 +1323,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // Reset dello stato in memoria
+                    // 1. Reset preventivo della memoria per partire puliti
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
                     // Pulizia grafica
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // Parsing e Decompressione
+                    // 2. Parsing e Decompressione
                     let cloudDataRaw = JSON.parse(cloudJSON);
                     let cloudState;
 
@@ -1336,13 +1347,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
-                    // Compatibilità Legacy
+                    // --- 3. CONTROLLO COMPATIBILITÀ CLOUD ---
+                    if (!checkSaveCompatibility(cloudState)) {
+                        console.warn("⚠️ Cloud Save incompatibile: Eseguo migrazione e sovrascrittura.");
+
+
+                        // Aggiorniamo la versione alla corrente
+                        if (window.GAME_VERSION) {
+                            gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
+                        }
+
+                        // Username Sessione (lo manteniamo)
+                        const currentSessionUser = sessionStorage.getItem('espooUser');
+                        if (currentSessionUser) gameState.user.username = currentSessionUser;
+
+                        // SALVIAMO SUBITO per aggiornare il Database con la versione v4.0 corretta
+                        saveGame();
+
+                        showToast("Salvataggio Cloud aggiornato alla nuova versione!", 'warning');
+
+                        // Interrompiamo qui per non caricare i dati vecchi
+                        return;
+                    }
+                    // -----------------------------------------------------------
+
+                    // Compatibilità Legacy (per versioni minori compatibili)
                     if (cloudState.buildings && !cloudState.teams) {
                         cloudState.teams = cloudState.buildings;
                         delete cloudState.buildings;
                     }
 
-                    // Merge dei dati grezzi
+                    // 4. Se compatibile, uniamo i dati
                     deepMerge(gameState, cloudState);
 
                     const decimalFields = [
@@ -1379,7 +1414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentSessionUser && gameState.user.username !== currentSessionUser)
                         gameState.user.username = currentSessionUser;
 
-                    // Ricalcoli (Ora funzioneranno perché i Decimal sono ripristinati)
+                    // Ricalcoli
                     calculatePrestigeBonus();
                     recalculateCPS();
 
@@ -1387,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
                     if (typeof updateUI === 'function') updateUI();
 
-                    // Sovrascrivi cache locale per allinearla
+                    // Sovrascrivi cache locale per allinearla al cloud
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
                     // Recupero Skin mancanti da achievement
