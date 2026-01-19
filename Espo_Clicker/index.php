@@ -15,20 +15,20 @@
 			// Se sei in sviluppo, puoi lasciare $cacheVer, ma in produzione usa $ver
 			$cacheVer = ($config['instancename'] === 'dev') ? $cacheVer : $ver;
 		?>
-		<link rel="stylesheet" href="./css/keyframes.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/base.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/layout.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/components.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="./css/navbar.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="./css/clicker.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/store.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="./css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="./css/skins.css?v=<?php echo $cacheVer; ?>">    
-		<link rel="stylesheet" href="./css/podio.css?v=<?php echo $cacheVer; ?>">  
-		<link rel="stylesheet" href="./css/mobile.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="./css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/keyframes.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/base.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/layout.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/components.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/navbar.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/clicker.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/store.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">    
+		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">  
+		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
 		<link rel="icon" type="image/png" href="assets/image/favicon.webp">
@@ -241,13 +241,13 @@
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
 
-		<script src="./js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="./js/game-data.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="./js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="./js/game-logic.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="./js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
-		<script src="./js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="./js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
+		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/game-data.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/game-logic.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
+		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
 	
 		<?php 
 			$configFile = __DIR__ . '/php/config.php';
@@ -258,7 +258,7 @@
 
 				if (isset($config['instancename']) && $config['instancename'] === 'dev')
 				{
-					echo '<script src="./js/cheatboard.js" defer></script>';
+					echo '<script src="js/cheatboard.js" defer></script>';
 					echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 				}
 			}
