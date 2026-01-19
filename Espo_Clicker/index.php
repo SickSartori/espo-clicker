@@ -230,16 +230,16 @@
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-    	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
-		
-		<script src="./js/version-config.js" defer></script>
-		<script src="./js/game-data.js" defer></script>
-		<script src="./js/ui-functions.js" defer></script>
-		<script src="./js/game-logic.js" defer></script>
-		<script src="./js/script.js" defer></script> 
-		<script src="./js/podio.js" defer></script>
-		<script src="./js/modals.js" defer></script>				
+
+		<script src="./js/version-config.js?v=<?php echo time(); ?>" defer></script>
+		<script src="./js/game-data.js?v=<?php echo time(); ?>" defer></script>
+		<script src="./js/ui-functions.js?v=<?php echo time(); ?>" defer></script>
+		<script src="./js/game-logic.js?v=<?php echo time(); ?>" defer></script>
+		<script src="./js/script.js?v=<?php echo time(); ?>" defer></script> 
+		<script src="./js/podio.js?v=<?php echo time(); ?>" defer></script>
+		<script src="./js/modals.js?v=<?php echo time(); ?>" defer></script>		
 	
 		<?php 
 			$configFile = __DIR__ . '/php/config.php';

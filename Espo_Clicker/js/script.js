@@ -285,19 +285,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        // Regola STABLE: Sempre compatibile in avanti
-        if (current.stage === 'stable')
-            // Se siamo in stable, accettiamo anche major diverse (es. Save 1.0 su Gioco 2.0)
-            return true;
-
         // Regola BETA/ALPHA: Rottura su cambio Major
-        // Se siamo in beta, la versione Major deve coincidere.
         if (saved.major !== current.major) {
-            console.warn(`Mismatch Major (Beta): v${saved.major} non compatibile con v${current.major}`);
+            console.warn(`Mismatch Major: v${saved.major} non compatibile con v${current.major}`);
             return false;
         }
 
-        return true; // Tutto ok (es. 3.0 -> 3.1)
+        return true;
     }
 
     function loadGame() {
@@ -346,12 +340,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
-                    console.log("Versione incompatibile. Reset automatico prevenuto.");
+                    console.warn("Versione incompatibile. Eseguo Reset Forzato e Backup.");
+
+                    // 1. (Opzionale) Salva una copia di backup "Legacy" prima di cancellare
+                    localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
 
                     setTimeout(() => {
-                        if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.versionMismatch, 'warning');
+                        if (window.EspooClicker) window.EspooClicker.showToast("Salvataggio incompatibile: Reset effettuato.", 'error');
                     }, 500);
 
+                    // 2. Resetta lo stato in memoria ai valori di default
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                    // 3. Sovrascrive il salvataggio locale corrotto con quello pulito
+                    saveGame();
+
+                    // 4. IMPORTANTE: Interrompe la funzione per non caricare i dati vecchi
+                    return;
                 }
 
                 // --- MERGE DEI DATI ---
@@ -797,31 +802,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         /*
                 // VIDEO (Automatico da gameData)
-                if (gameData.assets && gameData.assets.videos) {
-                    const videoKeys = Object.keys(gameData.assets.videos);
-                    totalAssets += videoKeys.length;
-        
-                    videoKeys.forEach(key => {
-                        const item = gameData.assets.videos[key];
-                        const url = `assets/video/${item.file}`; // Nota: cartella 'video' singolare
-        
-                        promises.push(
-                            fetch(url)
-                                .then(() => updateProgress())
-                                .catch(() => { console.warn("Video missing:", url); updateProgress(); })
-                        );
-                    });
-                }*/
+        if (gameData.assets && gameData.assets.videos) {
+            const videoKeys = Object.keys(gameData.assets.videos);
+            totalAssets += videoKeys.length;
+            
+            videoKeys.forEach(key => {
+                const item = gameData.assets.videos[key];
+                const url = `assets/video/${item.file}`; // Nota: cartella 'video' singolare
+                
+                promises.push(
+                    fetch(url)
+                    .then(() => updateProgress())
+                    .catch(() => { console.warn("Video missing:", url); updateProgress(); })
+                );
+            });
+        }*/
 
         // Se non c'è nulla da caricare, risolvi subito
         if (totalAssets === 0) return Promise.resolve();
         return Promise.all(promises);
     }
 
+    // Setup Iniziale
     function initializeGame() {
         const loaderStatus = document.getElementById('loader-status-text');
 
-        // Setup Iniziale
         if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
         loadGame(); // Carica salvataggi
 
