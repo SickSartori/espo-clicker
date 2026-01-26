@@ -1,6 +1,7 @@
-<?php require_once("php/check_language.php"); ?>
-
-
+<?php
+	require_once("php/check_language.php");
+	require_once("php/check_version.php");
+?>
 <!DOCTYPE html>
 <html lang="it">
 	<head>
@@ -9,12 +10,6 @@
 		<title>
 			<?php echo $labels["head_titolo"]; ?>
 		</title>
-		<?php 
-			$config = require("php/config.php"); 
-			$ver = isset($config['version']) ? $config['version'] : '1.0';
-			// Se sei in sviluppo, puoi lasciare $cacheVer, ma in produzione usa $ver
-			$cacheVer = ($config['instancename'] === 'dev') ? $cacheVer : $ver;
-		?>
 		<link rel="stylesheet" href="css/keyframes.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/base.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/layout.css?v=<?php echo $cacheVer; ?>">
@@ -249,18 +244,12 @@
 		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
 	
-		<?php 
-			$configFile = __DIR__ . '/php/config.php';
-
-			if (file_exists($configFile))
+		<?php
+			// Uso la stessa variabile usata nella libreria check_version.php
+			if (isset($config['instanceName']) && $config['instanceName'] === 'dev')
 			{
-				$config = require($configFile);
-
-				if (isset($config['instancename']) && $config['instancename'] === 'dev')
-				{
-					echo '<script src="js/cheatboard.js" defer></script>';
-					echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-				}
+				echo '<script src="js/cheatboard.js" defer></script>';
+				echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 			}
 		?>
 	</body>

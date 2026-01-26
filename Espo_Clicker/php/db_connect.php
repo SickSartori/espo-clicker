@@ -21,6 +21,6 @@
 	}
 
 	// Nomi tabelle corretti
-	$table_users = 'users_' . $config['instancename'];
-	$table_leaderboard = 'leaderboard_' . $config['instancename'];
+	$table_users = 'users_' . $config['instanceName'];
+	$table_leaderboard = 'leaderboard_' . $config['instanceName'];
 ?>
