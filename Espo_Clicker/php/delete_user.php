@@ -1,5 +1,5 @@
 <?php
-require_once 'api_bootstrap.php';
+require_once __DIR__ . '/api_bootstrap.php';
 $data = getJsonInput();
 $user = authenticate($conn, $data['username'], $data['password']);
 

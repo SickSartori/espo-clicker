@@ -1,6 +1,6 @@
 <?php
-require_once 'api_bootstrap.php';
-require_once 'security_config.php';
+require_once __DIR__ . '/api_bootstrap.php';
+require_once __DIR__ . '/security_config.php';
 
 // Disable error reporting to screen to avoid breaking JSON
 error_reporting(0);

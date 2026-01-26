@@ -644,13 +644,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!oldPass || !newPass) { alert(gameData.texts.dialogs.fillFields); return; }
 
         try {
-            const res = await fetch('./php/change_password.php', {
+            const res = await fetch('php/change_password.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: Game.getGameState().user.username, oldPassword: oldPass, newPassword: newPass })
             });
             const data = await res.json();
             if (data.status === 'success') {
                 Game.showToast(gameData.texts.toasts.passChanged, "success");
+				Game.setPassword(newPass);	// Aggiorno la password per le varie funzioni di salvataggio
                 sessionStorage.setItem('espooPass', newPass); // Aggiorna sessione
             } else {
                 alert(data.message);
@@ -665,7 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newName || !password) return;
 
         try {
-            const res = await fetch('./php/change_username.php', {
+            const res = await fetch('php/change_username.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: Game.getGameState().user.username, password: password, newUsername: newName })
             });
@@ -689,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const Game = getGameAPI();
         try {
-            const res = await fetch('./php/delete_user.php', {
+            const res = await fetch('php/delete_user.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
             });
@@ -718,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const Game = getGameAPI();
             try {
-                const res = await fetch('./php/reset_progress.php', {
+                const res = await fetch('php/reset_progress.php', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
                 });
@@ -759,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginButton.disabled = true;
         try {
-            const res = await fetch('./php/login_register.php', {
+            const res = await fetch('php/login_register.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p })
             });
             const data = await res.json();

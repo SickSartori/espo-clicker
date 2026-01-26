@@ -1,6 +1,6 @@
 <?php
 // template/php/api_bootstrap.php
-require_once 'db_connect.php';
+require_once __DIR__ . '/db_connect.php';
 
 // Imposta header standard per tutte le risposte
 header('Content-Type: application/json');
