@@ -1,7 +1,7 @@
 const GAME_VERSION = {
-    major: 4,       // Cambia questo per rompere la compatibilità in Beta
+    major: 1,       // Cambia questo per rompere la compatibilità in Beta
     minor: 0,       // Cambia questo per aggiornamenti "sicuri"
-    stage: 'beta',  // 'stable' o 'beta'
+    stage: 'stable',  // 'stable' o 'beta'
 
     // Funzione per stampare la versione (es. "v3.1 beta")
     toString: function () {
