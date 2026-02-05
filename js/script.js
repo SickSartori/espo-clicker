@@ -719,7 +719,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // LOGICA (30 FPS)
-        gameLoopInterval = setInterval(gameLoop, 33);
+        function startGameLoop() {
+            gameLoop();
+            requestAnimationFrame(startGameLoop);
+        }
+
+        // Avvio
+        requestAnimationFrame(startGameLoop);
 
         // GRAFICA (10 FPS)
         uiLoopInterval = setInterval(() => {
@@ -1058,7 +1064,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Aggiorna Slider nelle impostazioni se aperto
                     const mSlider = document.getElementById('master-slider');
-                    if (mSlider) mSlider.value = gameState.user.masterVolume;
+                    const mDisplay = document.getElementById('master-vol-display');
+
+                    if (mSlider) {
+                        mSlider.value = gameState.user.masterVolume;
+                    }
+
+                    if (mDisplay) {
+                        mDisplay.textContent = Math.round(gameState.user.masterVolume * 100);
+                    }
 
                     // Audio Ambiente (Bg music, snow, 8-bit, etc)
                     if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
