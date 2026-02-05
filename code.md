@@ -7,147 +7,211 @@ Questa documentazione analizza la struttura, la logica di gioco e il funzionamen
 ## 🏗️ 1. Architettura del Sistema
 
 Il progetto segue un'architettura **Client-Server**:
-* **Frontend (Client):** Gestisce tutta la logica di gioco (calcolo risorse, acquisti, eventi, rendering UI) in tempo reale tramite JavaScript. Lo stato è mantenuto in memoria e sincronizzato con `localStorage` e il Server.
+* **Frontend (Client):** Gestisce tutta la logica di gioco (calcolo risorse, acquisti, eventi, rendering UI) in tempo reale tramite JavaScript. Lo stato è mantenuto in memoria e sincronizzato con `localStorage` (con compressione LZString) e il Server.
 * **Backend (Server):** Espone API RESTful in PHP per autenticazione, salvataggio cloud, reset progressi e gestione della classifica globale.
-* **Database:** MySQL per memorizzare utenti, salvataggi (BLOB JSON) e punteggi.
+* **Database:** MySQL per memorizzare utenti, salvataggi (BLOB JSON compresso) e punteggi.
 
 ---
 
 ## 🕹️ 2. Logica Frontend (JavaScript)
 
-Il cuore del gioco è suddiviso in diversi moduli JS caricati in `index.php`.
+Il cuore del gioco è suddiviso in diversi moduli JS modulari caricati in `index.php`.
 
 ### A. Configurazione & Versioning (`version-config.js`)
-**[NUOVO]** Questo file è il punto di ingresso per la definizione della versione del gioco.
-* Definisce l'oggetto globale `GAME_VERSION` contenente `major`, `minor` e `stage` (es. *beta*, *stable*).
-* Funge da "Source of Truth" per i controlli di compatibilità dei salvataggi.
+Punto di ingresso per la definizione della versione.
+* Definisce l'oggetto globale `GAME_VERSION` (`major`, `minor`, `stage`).
+* Gestisce i controlli di compatibilità dei salvataggi (evita di caricare salvataggi *Beta* su versioni *Stable* e viceversa).
 
-### B. Gestione Dati (`game-data.js`)
-Questo file definisce lo "State" (stato mutabile) e la "Config" (dati statici).
+### B. Gestione Dati (`game-data.js`) - **[CORE]**
+Questo file è la **Fonte di Verità Assoluta**. Il gioco è **Data-Driven**: l'interfaccia si costruisce leggendo questo file.
 
-* **`gameState`**: Un oggetto gigante che contiene tutto ciò che deve essere salvato (punteggio, edifici posseduti, upgrade acquistati, statistiche totali, skin equipaggiata, versione del salvataggio).
-* **`gameData`**: Contiene le costanti di gioco:
-    * `teams`: Configurazioni edifici (costo base, BPS - Bug Per Second).
-    * `clickUpgrades` & `buildingEnhancements`: Potenziamenti per click e automazione.
-    * `achievements`: Lista obiettivi e condizioni di sblocco.
-    * `skins`: Configurazioni estetiche.
-    * `prestigeUpgrades`: Potenziamenti acquistabili dopo il reset (Ascensione).
+* **`gameData`**: Oggetto gigante che contiene:
+    * **`assets`:** Registro audio/video con volumi e categorie.
+    * **`teams`:** Definizione teams (costi, BPS).
+    * **`clickUpgrades` / `buildingEnhancements` / `prestigeUpgrades`:** Liste potenziamenti.
+    * **`achievements`:** Obiettivi, condizioni logiche e premi.
+    * **`skins`:** Configurazioni estetiche, rarità e temi speciali.
+    * **`events`:** Configurazioni eventi (durata, moltiplicatori, video).
 
 ### C. Motore di Gioco (`game-logic.js`)
-Contiene la matematica e le regole di business.
+Gestisce la matematica, l'economia e gli eventi.
 
-* **Funzioni Core:**
-    * `recalculateCPS()`: Ricalcola i **BPS** (Bug Per Second) totali.
-    * `clickCookie(event)`: Gestisce il click manuale, applicando bonus ed eventi.
-    * `gameLoop()`: Eseguito 30 volte al secondo. Aggiunge le risorse e gestisce i timer.
-* **Sistema Economico:**
-    * `calculateBulkCost()`: Calcola i prezzi cumulativi (1x, 5x, 10x, MAX).
-* **Eventi:**
-    * `triggerBluescreen()`, `triggerRickRoll()`: Eventi casuali che modificano il moltiplicatore globale.
-* **Prestigio (Ascension):**
-    * `executePrestige()`: Esegue il "Soft Reset". Mantiene Skin e Achievements, converte i Bug in Token Lab.
+* **Audio Manager:** Gestione centralizzata dei volumi con priorità (Evento > Natale > Background) e supporto "Smart Resume" per aggirare i blocchi autoplay dei browser.
+* **Event System (`EventHandlers`):** Sistema estensibile per gestire tipi di eventi diversi (Video, CSS Glitch) senza catene di `if/else`.
+* **Calcoli Economici:**
+    * `calculateClickValue()`: Centralizza la logica di guadagno per click (Click + Mano Bionica + Fury).
+    * `calculateBulkCost()` & `calculateMaxAffordable()`: Formule matematiche sincronizzate per acquisti multipli (1x, 5x, MAX).
 
 ### D. Gestione Interfaccia (`ui-functions.js` & `modals.js`)
-Si occupa di manipolare il DOM e gestire le finestre.
+Manipolazione del DOM ottimizzata.
 
-* **Navbar & Layout:** Gestisce la nuova barra di navigazione in alto (Dashboard style) e la responsività mobile.
-* **Aggiornamento UI:** `updateUI()`, `refreshAllStores()`, `updateSkinsUI()`.
-* **Modali:** Gestione apertura/chiusura finestre (Impostazioni, Account, Podio).
+* **Rendering Dinamico (`renderStoreSection`):** Una singola funzione genera l'HTML per *tutti* i negozi (Click, Auto, Lab) leggendo i dati.
+* **DOM Caching:** Uso di `getEl()` e `setTextIfChanged()` per ridurre al minimo il repaint del browser e migliorare le performance su mobile.
+* **Mixer Audio:** Generazione automatica degli slider del volume nelle impostazioni basata sugli asset registrati.
 
 ### E. Main Controller (`script.js`)
-Il punto d'ingresso che lega tutto.
+Il collante dell'applicazione.
 
-* **Inizializzazione:** Carica la configurazione, verifica la versione (`checkSaveCompatibility`), costruisce i negozi e avvia i loop.
-* **Salvataggio:** Gestisce il salvataggio su `localStorage` e cloud (`save_progress.php`).
+* **Game Loop:**
+    * **Fast Loop (30fps):** Calcolo risorse e logica di base.
+    * **Slow Loop (1fps):** Controlli pesanti (Achievement, Notifiche Tab) per risparmiare CPU.
+* **Salvataggio (LZ-String):** Implementa la compressione dei dati JSON prima di salvarli in LocalStorage o Cloud, riducendo le dimensioni dell'80%.
 
 ---
 
 ## 🖥️ 3. Logica Backend (PHP & SQL)
 
-Il backend serve per la persistenza cloud e la sicurezza.
-
-### Database (`databasecreation.sql`)
-* `users`: Tabella utenti (ID, username, password hash, save_data JSON).
-* `leaderboard`: Tabella classifiche (username, score massimo, livello prestigio).
-* **Multi-Environment:** Supporto per tabelle `_production` e `_dev` gestite da `config.json`.
+### Database
+* **`users`:** ID, username, hash password, `save_data` (LONGTEXT).
+* **`leaderboard`:** username, score (max), prestigeLevel.
+* **Configurazione:** `db_connect.php` usa `config.json` per switchare tra ambienti (es. tabelle `_dev` vs `_production`).
 
 ### API Endpoints
-1.  **Auth (`login_register.php`):** Gestisce login e registrazione.
-2.  **Salvataggio (`save_progress.php`):** Riceve il JSON del `gameState` e lo salva nel DB.
-3.  **Reset (`reset_progress.php`):** **[NUOVO]** Imposta a `NULL` il salvataggio nel DB e rimuove l'utente dalla classifica, mantenendo l'account attivo. Richiede verifica password.
-4.  **Classifica (`submit_score.php`):** Aggiorna i punteggi per la leaderboard pubblica.
-5.  **Account:** Cambio username, password e cancellazione utente.
+1.  **`login_register.php`:** Gestisce accesso e creazione account (hash password sicuro).
+2.  **`save_progress.php`:** Riceve la stringa compressa LZString e la salva nel DB.
+3.  **`submit_score.php`:** Estrae i dati chiave (Score, Livello) dal salvataggio per aggiornare la classifica pubblica.
+4.  **`reset_progress.php` / `delete_user.php`:** Gestione reset e GDPR (cancellazione dati).
 
 ---
 
-## 🚀 4. Funzionalità Chiave & Sistema di Gioco
+## 🚀 4. Funzionalità Chiave
 
-### Sistema di Prestigio (Laboratorio)
-Quando il giocatore accumula abbastanza risorse, può effettuare una "Promozione".
-* **Soft Reset:** Perde edifici e bug.
-* **Guadagno:** Ottiene **Token Lab**.
-* **Vantaggio:** Acquista upgrade permanenti che velocizzano le run successive.
-
-### Sistema di Versioning & Compatibilità 📦
-Il gioco implementa un sistema intelligente per gestire gli aggiornamenti senza corrompere i salvataggi, definito in `version-config.js`.
-
-La logica di compatibilità (`checkSaveCompatibility` in `script.js`) segue queste regole:
-
-1.  **Stable Channel:**
-    * I salvataggi marcati come `stable` sono **sempre compatibili** con versioni future `stable`.
-    * *Esempio:* Save v1.0 -> Gioco v2.5 = **Compatibile**.
-
-2.  **Beta/Alpha Channel (Sviluppo):**
-    * La compatibilità è garantita solo se la **Major Version** coincide.
-    * Se la Major cambia, il salvataggio viene resettato automaticamente per evitare conflitti.
-    * *Esempio:* Save v3.0 Beta -> Gioco v3.1 Beta = **Compatibile**.
-    * *Esempio:* Save v3.5 Beta -> Gioco v4.0 Beta = **RESET (Incompatibile)**.
-
-3.  **Cross-Stage Protection:**
-    * Non è possibile caricare salvataggi Beta su Stable (e viceversa).
-    * *Esempio:* Save v3.9 Beta -> Gioco v1.0 Stable = **RESET**.
-
-### Gestione Reset & Hard Reset 🛡️
-Il gioco offre due livelli di pulizia dati:
-
-1.  **Reset Progressi (Utente):**
-    * Accessibile dalle Impostazioni.
-    * Richiede la **Password**.
-    * Cancella i progressi (Skin, Bug, Upgrade) ma **mantiene l'account** e il nome utente.
-    * Implementato via server (`reset_progress.php`).
-
-2.  **Hard Reset (Sviluppatore):**
-    * Accessibile dalla **Cheatboard**.
-    * Non richiede password (ma è nascosto).
-    * Cancella tutto istantaneamente e forza il ricaricamento.
+1.  **Data-Driven Design:** Aggiungere contenuti non richiede modifiche alla logica JS.
+2.  **Sistema Prestigio (Laboratorio):** Soft reset che converte i progressi in Token per acquistare potenziamenti permanenti e Skin esclusive.
+3.  **Eventi Dinamici:**
+    * **Golden Bug:** Apparizione casuale di bug dorati cliccabili.
+    * **Espo Fury:** Abilità attiva (Cooldown) che moltiplica BPS x7.
+    * **Eventi Visivi:** Errore 404 (Glitch CSS) e Rick Roll (Video Overlay).
+4.  **Sistema Skin Avanzato:** Le skin non cambiano solo l'immagine, ma possono attivare "Temi" completi (Musica, Neve, Classi CSS).
 
 ---
 
-## 📂 5. Struttura Cartelle
-```text
+## 🛠️ 5. Guida all'Espansione (Modding)
+
+Per aggiungere nuovi contenuti al gioco, devi modificare **SOLO** il file `template/js/game-data.js`.
+Ecco come fare per ogni categoria.
+
+### A. Aggiungere una Nuova Skin
+Vai nell'oggetto `gameData.skins`.
+
+cyber_espo: {
+    name: "Cyber Espo",
+    desc: "Il futuro è buggato.",
+    img: "cyber.webp",          // Deve essere in assets/image/
+    imgClick: "cyber-click.webp",
+    rarity: "legendary",        // common, rare, epic, legendary
+    cost: 50,                   // Costo in Token (opzionale)
+    unlockHint: "Sblocca l'obiettivo 'Hacker'", // Testo se bloccata
+    
+    // [OPZIONALE] Configurazione Tema Speciale
+    themeConfig: {
+        bodyClass: 'theme-cyber',       // Classe CSS aggiunta al body
+        specialMusic: 'sound-synthwave',// ID audio (vedi sezione Suoni)
+        goldenBugImg: 'drone.png'       // Cambia l'aspetto del Golden Bug
+    }
+}
+
+### B. Aggiungere una Obiettivo (Achievement)
+Vai nell'oggetto `gameData.achievements`.
+
+bug_hunter: {
+    name: "Cacciatore",
+    desc: "Clicca su 100 Golden Bug.",
+    type: 'custom', 
+    target: 100,
+    isSecret: false, // Se true, mostra "???" finché non sbloccato
+    
+    // CONDIZIONE: Quando diventa vero?
+    condition: () => gameState.totalGoldenBugsClicked >= 100,
+    
+    // PREMIO: Cosa ottiene il giocatore?
+    reward: { 
+        type: 'bugs',    // Tipi: 'bugs', 'skin', 'prestige', 'multiplier'
+        value: 500000 
+    }
+}
+
+### C. Aggiungere un nuovo Team
+Vai nell'oggetto `gameData.teams`.
+
+robot_qa: {
+    name: 'Robot QA',
+    baseCost: 10000,
+    cpsPerUnit: 50, // Bug risolti al secondo da 1 unità
+    tags: ['robot'] // Tag per logiche future (es. potenziamenti specifici)
+}
+
+### D. Aggiungere un Potenziamento (Upgrade)
+Scegli l'elenco giusto in gameData:
+
+# clickUpgrades (Negozio Sinistra - Tab Click)
+
+# buildingEnhancements (Negozio Sinistra - Tab Auto)
+
+# prestigeUpgrades (Negozio Laboratorio)
+
+Esempio Potenziamento Auto (buildingEnhancements):
+
+olio_motore: {
+    name: 'Olio Motore',
+    desc: 'Robot QA raddoppiano la produzione.',
+    targetTeam: 'robot_qa', // Deve corrispondere all'ID del team creato sopra
+    cost: 500000,
+    multiplier: 2,          // Moltiplicatore x2
+    requiredCount: 10,      // Sbloccato quando hai 10 Robot QA
+    purchased: false        // Sempre false di default
+}
+Esempio Potenziamento Prestigio (prestigeUpgrades):
+
+tasche_bucate: {
+    name: 'Tasche Bucate',
+    desc: 'Inizi con +1000 Bug dopo il reset.',
+    baseCost: 10,           // Costo in Token
+    isCounted: true,        // true = livelli infiniti, false = compra una volta
+    effects: [              // Effetti passivi generici
+        { trigger: 'passive', type: 'add_start_bugs', val: 1000 }
+    ]
+}
+
+### E. Aggiungere Suoni o Video
+Vai nell'oggetto `gameData.assets`. Il sistema caricherà i file e creerà i controlli nel Mixer Audio.
+
+nuova_music: {
+    id: 'sound-synthwave',
+    file: 'music/synthwave.mp3', // Percorso relativo in assets/sounds/
+    name: 'Musica Cyber',
+    type: 'music',               // 'music' o 'sfx'
+    category: 'ambiente',        // 'ambiente', 'effetti' o 'eventi'
+    loop: true,
+    defaultVol: 0.3
+}
+
+## 📂 6. Struttura Cartelle
 /
 ├── index.php              # Entry point HTML
 ├── css/                   # Fogli di stile
-│   ├── base.css           # Stili globali e reset
-│   ├── layout.css         # Griglia e struttura colonne
-│   ├── clicker.css        # Area centrale (bottone, effetti)
-│   ├── store.css          # Negozi e card upgrade
-│   ├── modals.css         # Finestre e Navbar
-│   ├── mobile.css         # Media queries
+│   ├── base.css           # Reset e variabili globali
+│   ├── layout.css         # Griglia colonne
+│   ├── clicker.css        # Stili gioco centrale
+│   ├── store.css          # Stili negozi e card
+│   ├── modals-core.css    # Struttura finestre modali
+│   ├── mobile.css         # Adattamento smartphone
 │   └── ...
 ├── js/                    # Logica Frontend
-│   ├── version-config.js  # [NUOVO] Configurazione versione
-│   ├── game-data.js       # Stato Iniziale e Costanti
-│   ├── game-logic.js      # Matematica e Regole
-│   ├── script.js          # Controller e Caricamento
-│   ├── ui-functions.js    # Rendering DOM
-│   ├── modals.js          # Gestione finestre e Account
-│   ├── podio.js           # Logica Classifica
-│   └── cheatboard.js      # Strumenti Dev (Console)
-├── php/                   # API Backend
+│   ├── version-config.js  # Versione gioco
+│   ├── game-data.js       # [CORE] Dati e Configurazioni
+│   ├── game-logic.js      # [CORE] Logica Matematica ed Eventi
+│   ├── script.js          # Controller Principale
+│   ├── ui-functions.js    # Rendering Grafico
+│   ├── modals.js          # Gestione Finestre e Audio
+│   ├── cheatboard.js      # Pannello Sviluppatore (nascosto)
+│   └── podio.js           # Classifica
+├── php/                   # Backend API
 │   ├── db_connect.php     # Connessione DB
-│   ├── login_register.php # Auth
-│   ├── save_progress.php  # Cloud Save
-│   ├── reset_progress.php # [NUOVO] Reset Dati
+│   ├── api_bootstrap.php  # Header comuni e Auth
+│   ├── save_progress.php  # Endpoint Salvataggio
 │   └── ...
-└── template/image/ & sounds/ # Assets
+└── template/assets/       # File Statici
+    ├── image/             # Skin, Icone
+    ├── sounds/            # MP3
+    └── video/             # MP4 per eventi

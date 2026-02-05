@@ -1,0 +1,320 @@
+/* IMPORTO FONT PIXEL ART */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* ============================================================
+   TEMA 8-BIT: CLEAN CYBER
+   ============================================================ */
+
+/* SFONDO GLOBALE */
+body.theme-8bit {
+    background-color: #0b1016;
+    background-image:
+        linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* --- RESET TIPOGRAFICO E GRAFICO PER IL GIOCO --- */
+body.theme-8bit #game-navbar *,
+body.theme-8bit #game-container *,
+body.theme-8bit #mobile-nav-bar *,
+body.theme-8bit #golden-bug {
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+    font-family: 'Press Start 2P', monospace;
+    letter-spacing: -1px;
+}
+
+/* Ripristino FontAwesome per le icone */
+body.theme-8bit #game-navbar i,
+body.theme-8bit #game-container i,
+body.theme-8bit #mobile-nav-bar i,
+body.theme-8bit #golden-bug i {
+    font-family: "Font Awesome 6 Free";
+    letter-spacing: normal;
+}
+
+/* --- GAME CONTAINER --- */
+body.theme-8bit #game-container {
+    border: 2px solid #34495e;
+    background-color: rgba(13, 17, 23, 0.95);
+    box-shadow: 0 0 0 4px #000;
+}
+
+/* --- NAVBAR --- */
+body.theme-8bit #game-navbar {
+    background-color: #161b22;
+    border-bottom: 2px solid #30363d;
+    height: 70px;
+    padding: 0 15px;
+}
+
+body.theme-8bit #game-navbar .nav-item {
+    color: #8b949e;
+    border: 1px solid transparent;
+}
+
+body.theme-8bit #game-navbar .nav-item:hover {
+    color: #fff;
+    background-color: #21262d;
+    border-color: #8b949e;
+    transform: translateY(-2px);
+}
+
+body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
+    animation: pixelFlash 0.5s infinite step-end;
+    box-shadow: 4px 4px 0 #000;
+    transform: none;
+    border-radius: 0;
+}
+
+/* --- TABS --- */
+body.theme-8bit #game-container .tabs-header {
+    background-color: #0d1117;
+    border-bottom: 2px solid #30363d;
+}
+
+body.theme-8bit #game-container .tab-btn {
+    background-color: #161b22;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    border-bottom: none;
+    font-size: 0.6rem;
+    padding: 12px 5px;
+}
+
+body.theme-8bit #game-container .tab-btn.active {
+    background-color: #3498db;
+    color: #fff;
+    border-color: #3498db;
+    z-index: 10;
+}
+
+body.theme-8bit #game-container .tab-btn.notify {
+    animation: pixelFlash 1s infinite step-end;
+    border: 2px solid #2ecc71;
+    border-bottom: 2px solid #2ecc71;
+}
+
+/* --- CARD UPGRADE & LISTE --- */
+body.theme-8bit #game-container .upgrade,
+body.theme-8bit #game-container .click-upgrade,
+body.theme-8bit #game-container .enhancement-upgrade,
+body.theme-8bit #game-container .prestige-upgrade {
+    background-color: #12171e;
+    border: 1px solid #30363d;
+    box-shadow: 4px 4px 0 #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 10px;
+    min-height: 100px;
+}
+
+/* TESTI */
+body.theme-8bit #game-container .upgrade-name {
+    color: #fff;
+    font-size: 0.6rem;
+    line-height: 1.1;
+    margin-bottom: 5px;
+}
+
+body.theme-8bit #game-container .upgrade-desc {
+    color: #8b949e;
+    font-size: 0.45rem;
+    line-height: 1.3;
+}
+
+body.theme-8bit #game-container .upgrade-cost {
+    color: #58a6ff;
+    font-size: 0.5rem;
+    margin-top: 5px;
+    letter-spacing: -0.5px;
+}
+
+/* --- BOTTONI COMPRA --- */
+body.theme-8bit #game-container .buy-btn {
+    height: 32px;
+    font-size: 0.55rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    padding-top: 2px;
+    margin: 8px auto 0 auto;
+    width: 90%;
+    box-shadow: 3px 3px 0 #000;
+    border: 1px solid #fff;
+    transition: none;
+}
+
+body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned) {
+    background-color: #2ea043;
+    color: #fff;
+}
+
+body.theme-8bit #game-container .buy-btn:not(:disabled):not(.owned):hover {
+    background-color: #3fb950;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #000;
+}
+
+body.theme-8bit #game-container .buy-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+}
+
+body.theme-8bit #game-container .buy-btn:disabled {
+    background-color: #21262d;
+    color: #484f58;
+    border-color: #30363d;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* --- MANAGER PHOTO --- */
+body.theme-8bit #game-container #manager-photo-normal,
+body.theme-8bit #game-container #manager-photo-clicked {
+    background: #050510;
+    background-image:
+        linear-gradient(rgba(88, 166, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 166, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border: 2px solid #58a6ff;
+    box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
+    image-rendering: pixelated;
+    border-radius: 0;
+    z-index: var(--z-content);
+}
+
+/* --- GOLDEN BUG --- */
+body.theme-8bit #golden-bug {
+    animation: bouncePixel 0.5s infinite alternate;
+}
+
+/* --- KEYFRAMES --- */
+@keyframes pixelFlash {
+
+    0%,
+    49% {
+        background-color: #2ecc71;
+        color: #000;
+        border-color: #fff;
+    }
+
+    50%,
+    100% {
+        background-color: transparent;
+        color: #2ecc71;
+        border-color: #2ecc71;
+    }
+}
+
+@keyframes bouncePixel {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-10px);
+    }
+}
+
+@media screen and (max-width: 1440px) {
+    body.theme-8bit {
+        font-size: 10px;
+    }
+
+    body.theme-8bit #game-container .upgrade-name {
+        font-size: 0.7rem;
+        letter-spacing: -1px;
+    }
+
+    body.theme-8bit .buy-btn {
+        font-size: 0.6rem;
+    }
+}
+
+
+
+
+/* =======================================================
+   8-BIT
+   ======================================================= */
+
+/* 1. BARRA PROGRESSO (Sinistra e Destra) */
+body.theme-8bit #game-container .progress-text {
+    /* Dimensione bilanciata: né troppo piccola né enorme */
+    font-size: 0.5rem;
+
+    letter-spacing: 0;
+
+    color: #fff;
+    z-index: 10;
+    line-height: 30px;
+}
+
+/* 2. LISTA TEAM (Colonna Destra) - Layout e Dimensioni */
+body.theme-8bit #building-list-container .upgrade {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 10px;
+    min-height: 80px;
+}
+
+/* Dettagli (Nome e Costo) */
+body.theme-8bit #building-list-container .upgrade-details {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    overflow: hidden;
+}
+
+/* Nome del Team più grande e leggibile */
+body.theme-8bit #building-list-container .upgrade-name {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    letter-spacing: 0;
+    white-space: normal;
+}
+
+/* Costo e BPS */
+body.theme-8bit #building-list-container .upgrade-cost,
+body.theme-8bit #building-list-container .upgrade-bps {
+    font-size: 0.55rem;
+    letter-spacing: 0;
+    opacity: 0.9;
+}
+
+/* 3. BOTTONI E NUMERI (Destra) */
+body.theme-8bit #building-list-container .upgrade-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    min-width: 80px;
+}
+
+/* Numero posseduto (es. 1) */
+body.theme-8bit #building-list-container .upgrade-count {
+    font-size: 1rem;
+    margin-right: 0;
+    margin-bottom: 2px;
+}
+
+/* Bottone Compra */
+body.theme-8bit #building-list-container .buy-btn {
+    width: 100%;
+    margin: 0;
+    font-size: 0.6rem;
+    padding: 8px 0;
+    height: auto;
+}

@@ -1,6 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
+    // 0. FUNZIONI HELPER GLOBALI 
+    // ==========================================
+
+    // Funzione mancante: Ferma tutti i test audio
+    window.stopAllTestAudio = function () {
+        document.querySelectorAll('audio, video').forEach(media => {
+            // Non fermare la musica di background se non siamo nel mixer
+            // Ma per sicurezza nel test, mettiamo in pausa se sta suonando
+            if (!media.paused && media.id !== 'sound-bg-music') {
+                media.pause();
+                media.currentTime = 0;
+            }
+            // Se è un video di test, nascondilo
+            if (media.tagName === 'VIDEO' && media.id.startsWith('video-')) {
+                media.style.display = 'none';
+            }
+        });
+    };
+
+    // Funzione mancante: Resetta le icone dei bottoni Play
+    window.resetTestButtons = function () {
+        document.querySelectorAll('.mixer-test-btn').forEach(btn => {
+            btn.classList.remove('playing');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'fa-solid fa-play';
+                icon.style.marginLeft = '2px';
+            }
+        });
+    };
+
+    // LOGICA VISUALIZZA PASSWORD
+    document.querySelectorAll('.toggle-pass-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); // Evita submit form
+
+            // Trova l'input target
+            let input;
+            const targetId = btn.getAttribute('data-target');
+            if (targetId) {
+                input = document.getElementById(targetId);
+            } else {
+                // Fallback: cerca l'input vicino
+                input = btn.closest('.input-group-modern').querySelector('input');
+            }
+
+            if (input) {
+                // Alterna tipo
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+
+                // Alterna icona
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (type === 'text') {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                }
+            }
+        });
+    });
+
+    // ==========================================
     // 1. RIFERIMENTI DOM PRINCIPALI
     // ==========================================
 
@@ -42,6 +109,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const changeUserBtn = document.getElementById('change-username-btn');
     const deleteSaveBtn = document.getElementById('delete-save-btn');
     const currentUsernameDisplay = document.getElementById('current-username-display');
+    // Music
+    const audio = document.getElementById('bg-music');
+    // 1. Aggiungi il riferimento
+    const openArcadeBtn = document.getElementById('open-arcade-btn');
+    const arcadeModal = document.getElementById('arcade-modal');
+
+    // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
+    if (openArcadeBtn) {
+        openArcadeBtn.addEventListener('click', () => {
+            // Opzionale: Mostra un toast "Benvenuto in sala giochi"
+            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.arcadeWelcome, "info");
+            openModal(arcadeModal);
+        });
+    }
+
+
+    // Funzione per tentare il play
+    function tryPlayMusic() {
+        const playPromise = audio.play();
+
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // L'autoplay è partito!
+            })
+                .catch(error => {
+                    // L'autoplay è stato bloccato.
+                    console.log("Autoplay bloccato dal browser. Serve interazione.");
+                    // Qui potresti mostrare un pulsante "Clicca per riattivare l'audio"
+                });
+        }
+    }
+
+    // Se stavi suonando prima del refresh (salvato in localStorage?), riprova:
+    if (localStorage.getItem('musicPlaying') === 'true') {
+        tryPlayMusic();
+    }
+
+    // ==========================================
+    // --- GESTIONE PRESTIGIO / PROMOZIONE ---
+    // ==========================================
+    const openPrestigeBtn = document.getElementById('open-prestige-hub-btn');
+    const btnConfirmPrestige = document.getElementById('btn-confirm-prestige');
+
+    // --- GESTIONE PRESTIGIO ---
+    if (openPrestigeBtn) {
+        openPrestigeBtn.addEventListener('click', () => {
+            if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+            if (typeof openPrestigeContract === 'function') {
+                openPrestigeContract();
+            }
+        });
+    }
+
+    if (btnConfirmPrestige) {
+        btnConfirmPrestige.addEventListener('click', () => {
+            if (typeof executePrestige === 'function') {
+                executePrestige();
+            }
+        });
+    }
 
     // ==========================================
     // 2. LOGICA MIXER AUDIO AVANZATO
@@ -49,307 +176,285 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnAdvAudio = document.getElementById('open-advanced-audio-btn');
     const modalAdvAudio = document.getElementById('advanced-audio-modal');
-    const closeAdvAudio = document.getElementById('close-advanced-audio-btn');
-    const btnBackToSettings = document.getElementById('back-to-settings-btn');
-    const listAdvAudio = document.getElementById('advanced-audio-list');
-    const btnResetAudio = document.getElementById('reset-audio-defaults');
+    const btnHeaderBack = document.getElementById('header-back-btn');
+    const btnHeaderReset = document.getElementById('header-reset-btn');
 
-    // Variabile per ricordare i suoni messi in pausa entrando nel mixer
-    let soundsPausedByMixer = [];
+    // --- FUNZIONE HELPER PER GENERARE LA RIGA HTML ---
+    function createMixerRow(id, name, val) {
+        const row = document.createElement('div');
+        row.className = 'mixer-row';
+        const color = val === 0 ? '#7f8c8d' : '#3498db';
 
-    // Mappa ID Logico -> ID HTML Reale (per i video)
-    const mediaMap = {
-        'video-rick': 'rick-roll-video',
-        'video-ricardo': 'ricardo-video'
-    };
+        row.innerHTML = `
+            <div class="mixer-label" title="${name}">${name}</div>
+            <div class="mixer-controls">
+                <input type="range" class="mixer-slider" 
+                       data-target="${id}" 
+                       min="0" max="1" step="0.1" 
+                       value="${val}">
+                <span class="mixer-value" style="color: ${color};">
+                    ${Math.round(val * 100)}%
+                </span>
+            </div>
+            <button class="mixer-test-btn" data-target="${id}" title="Prova Audio">
+                <i class="fa-solid fa-play" style="margin-left: 2px;"></i>
+            </button>
+        `;
 
-    // Configurazione Gruppi UI
-    const mixerGroups = {
-        'ambiente': {
-            title: '🎵 Musica & Ambiente',
-            icon: 'fa-music',
-            ids: ['sound-bg-music', 'sound-snowball', 'sound-fire', 'sound-bluescreen']
-        },
-        'eventi': {
-            title: '🎬 Video & Eventi',
-            icon: 'fa-film',
-            ids: ['video-rick', 'video-ricardo', 'sound-merry', 'sound-golden']
-        },
-        'effetti': {
-            title: '🔊 Effetti Sonori',
-            icon: 'fa-volume-high',
-            ids: ['sound-click', 'sound-buy', 'sound-achievement', 'sound-prestige', 'sound-error', 'sound-hover']
-        }
-    };
+        // --- NUOVO: Stop Audio Automatico quando il mouse esce dalla riga ---
+        row.addEventListener('mouseleave', () => {
+            const btn = row.querySelector('.mixer-test-btn');
+            const targetId = btn.getAttribute('data-target');
+            const el = document.getElementById(targetId);
 
-    const audioLabels = {
-        'sound-click': 'Click', 'sound-buy': 'Shop', 'sound-achievement': 'Obiettivo',
-        'sound-error': 'Errore', 'sound-golden': 'Golden Bug', 'sound-prestige': 'Prestigio',
-        'sound-hover': 'Hover', 'sound-bluescreen': 'Loop 404', 'sound-fire': 'Loop Fuoco',
-        'sound-snowball': 'Loop Neve', 'sound-bg-music': 'Musica Base', 'sound-merry': 'Jingle Natale',
-        'video-rick': 'Video: Rick', 'video-ricardo': 'Video: Ricardo'
-    };
+            // Se l'elemento esiste e (sta suonando OPPURE il bottone dice che sta suonando)
+            if (el && (!el.paused || btn.classList.contains('playing'))) {
+                // 1. Ferma l'audio
+                el.pause();
+                el.currentTime = 0;
 
-    // --- RENDERIZZAZIONE LISTA MIXER ---
+                // 2. Resetta graficamente il bottone
+                btn.classList.remove('playing');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-solid fa-play';
+                    icon.style.marginLeft = '2px';
+                }
+
+                // 3. Nascondi video se necessario (pulizia extra)
+                if (el.tagName === 'VIDEO') {
+                    el.style.display = 'none';
+                }
+            }
+        });
+
+        return row;
+    }
+
     function renderAudioMixer() {
+        const listAdvAudio = document.getElementById('advanced-audio-list');
         if (!listAdvAudio) return;
         listAdvAudio.innerHTML = '';
 
         const Game = getGameAPI();
-        // Fallback se l'oggetto non esiste ancora
-        if (!Game.getGameState().user.audioCustom) {
-            if (btnResetAudio) btnResetAudio.click();
-            return;
-        }
+        const assets = gameData.assets;
+        const userAudio = Game.getGameState().user.audioCustom;
 
-        const customAudio = Game.getGameState().user.audioCustom;
-
-        // Helper per creare una singola riga
-        const createMixerRow = (id) => {
-            const val = customAudio[id];
-            if (val === undefined) return null;
-
-            const row = document.createElement('div');
-            row.className = 'mixer-row';
-
-            // Colore percentuale dinamico
-            let percColor = val > 1 ? '#e74c3c' : (val === 0 ? '#7f8c8d' : '#3498db');
-
-            row.innerHTML = `
-                <div class="mixer-label" title="${audioLabels[id]}">
-                    ${audioLabels[id]}
-                </div>
-                
-                <div class="mixer-controls">
-                    <input type="range" class="mixer-slider" 
-                           data-target="${id}" min="0" max="1" step="0.01" value="${val}">
-                    <span class="mixer-value" style="color: ${percColor};">${Math.round(val * 100)}%</span>
-                </div>
-
-                <button class="mixer-test-btn" data-target="${id}" title="Prova Audio">
-                    <i class="fa-solid fa-play" style="font-size: 0.8rem; margin-left: 2px;"></i>
-                </button>
-            `;
-            return row;
+        // Categorie
+        const categories = {
+            'ambiente': { title: 'Musica & Ambiente', icon: 'fa-music', items: [] },
+            'eventi': { title: 'Video & Eventi', icon: 'fa-film', items: [] },
+            'effetti': { title: 'Effetti Sonori', icon: 'fa-volume-high', items: [] }
         };
 
-        // Generazione Gruppi e Righe
-        for (const [groupKey, groupData] of Object.entries(mixerGroups)) {
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'mixer-category';
+        const allAssets = { ...assets.sounds, ...assets.videos };
 
-            // Titolo Categoria
-            const groupTitle = document.createElement('div');
-            groupTitle.className = 'mixer-category-title';
-            groupTitle.innerHTML = `<i class="fa-solid ${groupData.icon}"></i> ${groupData.title}`;
-            groupDiv.appendChild(groupTitle);
-
-            let hasItems = false;
-            groupData.ids.forEach(audioId => {
-                const row = createMixerRow(audioId);
-                if (row) {
-                    groupDiv.appendChild(row);
-                    hasItems = true;
-                }
-            });
-
-            if (hasItems) listAdvAudio.appendChild(groupDiv);
+        // Popola categorie
+        for (const [key, data] of Object.entries(allAssets)) {
+            if (categories[data.category]) {
+                categories[data.category].items.push({ key, ...data });
+            }
         }
 
-        // Listener: Slider Input (Salvataggio Live)
+        // Genera HTML
+        for (const [catKey, catData] of Object.entries(categories)) {
+            if (catData.items.length === 0) continue;
+
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'mixer-category';
+            groupDiv.innerHTML = `<div class="mixer-category-title"><i class="fa-solid ${catData.icon}"></i> ${catData.title}</div>`;
+
+            catData.items.forEach(item => {
+                // Inizializza volume se manca
+                if (userAudio[item.id] === undefined) {
+                    userAudio[item.id] = item.defaultVol;
+                }
+                const row = createMixerRow(item.id, item.name, userAudio[item.id]);
+                groupDiv.appendChild(row);
+            });
+
+            listAdvAudio.appendChild(groupDiv);
+        }
+
+        // Listener Slider (Aggiornamento Tempo Reale)
         listAdvAudio.querySelectorAll('.mixer-slider').forEach(input => {
             input.addEventListener('input', (e) => {
                 const targetId = e.target.getAttribute('data-target');
                 const newVal = parseFloat(e.target.value);
 
-                // Aggiorna stato
                 Game.getGameState().user.audioCustom[targetId] = newVal;
 
-                // Aggiorna UI Percentuale
+                // Aggiorna UI percentuale
                 const valSpan = e.target.parentElement.querySelector('.mixer-value');
                 valSpan.textContent = Math.round(newVal * 100) + '%';
                 valSpan.style.color = newVal === 0 ? '#7f8c8d' : '#3498db';
 
-                // Aggiorna volume live (Nota: updateAmbientVolume aggiorna i volumi, ma se sono in pausa restano in pausa)
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+                // Applica volume in tempo reale se sta suonando
+                const activeEl = document.getElementById(targetId);
+                if (activeEl && !activeEl.paused) {
+                    const userVol = Game.getGameState().user;
+                    // Determina canale
+                    const isMusic = activeEl.classList.contains('music') || targetId.includes('music') || targetId.includes('bluescreen'); // Logica base
+                    // Migliore: guarda gameData.assets se possibile, o usa convenzione
+                    let channelVol = userVol.sfxVolume;
+                    if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen') {
+                        channelVol = userVol.musicVolume;
+                    }
+
+                    activeEl.volume = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * newVal));
+                }
             });
         });
 
-        // Listener: Bottone Test (Play/Stop)
+        // Listener Test Buttons
         listAdvAudio.querySelectorAll('.mixer-test-btn').forEach(btn => {
             btn.addEventListener('click', () => handleTestAudioClick(btn));
         });
     }
 
-    // Gestione Play/Stop Anteprima
     function handleTestAudioClick(btn) {
         const targetId = btn.getAttribute('data-target');
         const icon = btn.querySelector('i');
-        const Game = getGameAPI();
-        const userVol = Game.getGameState().user;
-        const elementId = mediaMap[targetId] || targetId;
-        const el = document.getElementById(elementId);
+        const el = document.getElementById(targetId);
 
         if (!el) return;
 
-        // Se sta suonando questo stesso suono, fermalo
+        // Se sta già suonando, ferma
         if (!el.paused && !el.ended) {
             el.pause();
             el.currentTime = 0;
-            resetTestButtons();
+            btn.classList.remove('playing');
+            icon.className = 'fa-solid fa-play';
+            icon.style.marginLeft = '2px';
             return;
         }
 
-        // Ferma eventuali altri test in corso
-        stopAllTestAudio();
-        resetTestButtons();
+        // Ferma altri test
+        window.stopAllTestAudio();
+        window.resetTestButtons();
 
-        // Caricamento Lazy per i Video (se non hanno src)
-        if (el.tagName === 'VIDEO' && !el.getAttribute('src')) {
-            const src = el.getAttribute('data-src');
-            if (src) { el.setAttribute('src', src); el.load(); }
+        const Game = getGameAPI();
+        const userVol = Game.getGameState().user;
+
+        // Calcola Volume Reale
+        let channelVol = userVol.sfxVolume;
+        if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen' || targetId.includes('video')) {
+            channelVol = userVol.musicVolume;
         }
 
-        // Calcolo Volume Test
-        const channelVol = targetId.startsWith('video-') || targetId === 'sound-bg-music'
-            ? userVol.musicVolume : userVol.sfxVolume;
-        const testVol = userVol.masterVolume * channelVol * userVol.audioCustom[targetId];
+        const customVal = Game.getGameState().user.audioCustom[targetId];
+        const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * customVal));
 
-        el.volume = testVol;
+        // Setup Video (se necessario)
+        if (el.tagName === 'VIDEO') {
+            el.style.display = 'block';
+            el.style.zIndex = '99999'; // Sopra al modale per vederlo, o nascondilo e senti solo audio
+            // Per il test mixer, forse meglio sentire solo l'audio o mostrare una preview?
+            // Per ora lo lasciamo hidden nel CSS base o lo mostriamo
+            el.style.display = 'none'; // Sentiamo solo l'audio per il test
+        }
+
+        el.volume = finalVol;
         el.currentTime = 0;
 
-        // Se è un video, nascondiamolo (vogliamo solo l'audio nel mixer)
-        if (targetId.startsWith('video-')) el.style.display = 'none';
-
-        // Riproduci
         el.play().then(() => {
-            // UI Attiva
             btn.classList.add('playing');
             icon.className = 'fa-solid fa-stop';
             icon.style.marginLeft = '0';
 
-            // Reset a fine riproduzione
+            // Auto-reset a fine traccia
             el.onended = () => {
                 btn.classList.remove('playing');
                 icon.className = 'fa-solid fa-play';
                 icon.style.marginLeft = '2px';
             };
-
-            // Timeout sicurezza per loop infiniti (es. fuoco)
-            if (el.loop) {
-                setTimeout(() => { if (!el.paused) { el.pause(); el.onended(); } }, 3000);
+        }).catch(e => {
+            // Ignora l'errore se è stato causato da una pausa improvvisa (AbortError)
+            if (e.name !== 'AbortError') {
+                console.error("Errore playback test:", e);
             }
-        }).catch(err => console.log("Test play error", err));
-    }
-
-    function resetTestButtons() {
-        document.querySelectorAll('.mixer-test-btn').forEach(b => {
-            b.classList.remove('playing');
-            const i = b.querySelector('i');
-            i.className = 'fa-solid fa-play';
-            i.style.marginLeft = '2px';
         });
     }
 
-    function stopAllTestAudio() {
-        // Ferma solo i suoni di test attivi.
-        // I suoni di gioco originali sono gestiti separatamente dall'array soundsPausedByMixer
-        document.querySelectorAll('audio, video').forEach(media => {
-            if (!media.paused) media.pause();
-        });
-    }
-
-    // --- NAVIGAZIONE: PAUSA & RIPRESA INTELLIGENTE ---
-
-    // 1. APERTURA MIXER
     if (btnAdvAudio) {
         btnAdvAudio.addEventListener('click', () => {
-            // A. Salva i suoni che stanno suonando e mettili in pausa
-            soundsPausedByMixer = [];
-            document.querySelectorAll('audio, video').forEach(media => {
-                if (!media.paused && !media.ended) {
-                    soundsPausedByMixer.push(media);
-                    media.pause();
+            // Salva lo stato attuale (es. se c'è Espo Fury attivo)
+            if (window.currentActiveEvent !== 'Audio Mixer') {
+                window.preMixerEvent = window.currentActiveEvent;
+            }
+            window.currentActiveEvent = 'Audio Mixer';
+
+            // Chiudi settings e apri Mixer
+            if (settingsModal) settingsModal.style.display = 'none';
+            if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
+
+            // STOP TOTALE: Silenzia tutto per il test
+            document.querySelectorAll('audio, video').forEach(el => {
+                if (!el.paused) {
+                    el.pause();
+                    // Resetta solo se non è la bg-music (per riprenderla dopo se serve)
+                    // ma per sicurezza nel mixer vogliamo silenzio, quindi ok pausa.
+                    if (el.id !== 'sound-bg-music' && el.id !== 'sound-snowball') {
+                        el.currentTime = 0;
+                    }
                 }
             });
 
-            // B. Attiva "Semaforo" per impedire che il gioco riavvii la musica mentre siamo nel menu
-            if (!window.currentActiveEvent) {
-                window.currentActiveEvent = 'Audio Mixer';
-            }
-
-            // C. Genera UI e Mostra
+            // Genera interfaccia
             renderAudioMixer();
-            if (settingsModal) settingsModal.style.display = 'none'; // Nascondi Opzioni
-            if (modalAdvAudio) modalAdvAudio.style.display = 'flex'; // Mostra Mixer
         });
     }
+    if (btnHeaderBack) {
+        btnHeaderBack.addEventListener('click', () => {
+            // Chiudi Mixer
+            if (modalAdvAudio) modalAdvAudio.style.display = 'none';
 
-    // Helper per chiudere il mixer e ripristinare il gioco
-    function closeMixerAndResume() {
-        // A. Ferma eventuali suoni di TEST avviati nel mixer
-        document.querySelectorAll('audio, video').forEach(media => {
-            // Se sta suonando MA non era nella lista dei suoni di gioco originali, spegnilo.
-            if (!media.paused && !soundsPausedByMixer.includes(media)) {
-                media.pause();
-                media.currentTime = 0;
+            // Riapri Settings
+            if (settingsModal) settingsModal.style.display = 'flex';
+
+            // Ferma test
+            window.stopAllTestAudio();
+            window.resetTestButtons();
+
+            // 6. RIPRISTINA LO STATO PRECEDENTE
+            window.currentActiveEvent = window.preMixerEvent || null;
+            window.preMixerEvent = null;
+
+            if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
+                AudioManager.updateAmbience();
+            }
+
+            // 7. SMART RESUME (Fallback per musica background standard)
+            if (window.EspooClicker && typeof window.EspooClicker.tryStartAudio === 'function') {
+                window.EspooClicker.tryStartAudio();
             }
         });
-        resetTestButtons();
+    }
 
-        // B. Rilascia il Semaforo (solo se era bloccato dal Mixer)
-        if (window.currentActiveEvent === 'Audio Mixer') {
-            window.currentActiveEvent = null;
-        }
+    if (btnHeaderReset) {
+        btnHeaderReset.addEventListener('click', () => {
+            if (confirm(gameData.texts.dialogs.audioResetConfirm)) {
+                const Game = window.EspooClicker;
+                if (!Game) return;
 
-        // C. Riprendi i suoni originali
-        // Nota: updateAmbientVolume viene chiamato dagli slider, quindi i volumi sono già aggiornati nel DOM
-        soundsPausedByMixer.forEach(media => {
-            if (media.paused) {
-                // Aggiorna il volume prima di riprendere (per applicare le modifiche fatte)
+                const assets = gameData.assets;
+                // Unisci suoni e video per resettarli tutti
+                const allAssets = { ...assets.sounds, ...assets.videos };
+
+                // Ripristina i valori nel salvataggio usando il 'defaultVol' di game-data
+                for (const [key, data] of Object.entries(allAssets)) {
+                    if (data.defaultVol !== undefined) {
+                        Game.getGameState().user.audioCustom[data.id] = data.defaultVol;
+                    }
+                }
+
+                Game.saveGame();
+                renderAudioMixer(); // Ridisegna gli slider con i nuovi valori
+
+                // Aggiorna il volume reale del gioco immediatamente
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
-                media.play().catch(e => console.log("Resume error", e));
-            }
-        });
-        soundsPausedByMixer = []; // Pulisci la memoria
 
-        // D. Nascondi Modale
-        if (modalAdvAudio) modalAdvAudio.style.display = 'none';
-    }
-
-    // 2. CHIUSURA (X) -> Torna al Gioco
-    if (closeAdvAudio) {
-        // Clone trick per pulire listener precedenti
-        const newClose = closeAdvAudio.cloneNode(true);
-        closeAdvAudio.parentNode.replaceChild(newClose, closeAdvAudio);
-
-        newClose.addEventListener('click', closeMixerAndResume);
-    }
-
-    // 3. INDIETRO -> Torna al Menu Opzioni
-    if (btnBackToSettings) {
-        btnBackToSettings.addEventListener('click', () => {
-            closeMixerAndResume(); // Ripristina suoni gioco
-            if (settingsModal) settingsModal.style.display = 'flex'; // Riapri Opzioni
-        });
-    }
-
-    // --- RESET PREDEFINITI ---
-    if (btnResetAudio) {
-        btnResetAudio.addEventListener('click', () => {
-            if (confirm("Ripristinare i volumi predefiniti?")) {
-                const Game = getGameAPI();
-                // Valori di default
-                Game.getGameState().user.audioCustom = {
-                    'sound-click': 0.4, 'sound-buy': 0.4, 'sound-achievement': 0.4,
-                    'sound-bluescreen': 0.3, 'sound-snowball': 0.2, 'sound-bg-music': 0.05,
-                    'sound-fire': 0.5, 'sound-error': 1.0, 'sound-golden': 1.0,
-                    'sound-prestige': 1.0, 'sound-hover': 1.0, 'sound-merry': 1.0,
-                    'video-rick': 0.5, 'video-ricardo': 0.5
-                };
-                renderAudioMixer(); // Ridisegna slider
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
-                Game.showToast("Volumi ripristinati.", "info");
+                Game.showToast(gameData.texts.toasts.audioReset, "info");
             }
         });
     }
@@ -359,46 +464,112 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     function getGameAPI() { return window.EspooClicker || null; }
-    function openModal(modal) { if (modal) modal.style.display = 'flex'; }
-    function closeModal(modal) { if (modal) modal.style.display = 'none'; }
+    function openModal(modal) {
+        if (modal) {
+            // 1. Prepara lo stato iniziale (invisibile e piccolo)
+            modal.style.display = 'flex';
+            modal.style.opacity = 0;
 
-    // Achievements
+            // Cerca il contenuto interno per animarlo (o l'intero modale se preferisci)
+            const content = modal.querySelector('.modal-content');
+
+            // 2. Animazione GSAP
+            if (content) {
+                gsap.fromTo(content,
+                    { scale: 0.8, opacity: 0, y: 20 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" } // Effetto rimbalzo
+                );
+                // Anima anche lo sfondo scuro
+                gsap.to(modal, { opacity: 1, duration: 0.3 });
+            } else {
+                modal.style.opacity = 1; // Fallback
+            }
+
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function closeModal(modal) {
+        if (modal) {
+            const content = modal.querySelector('.modal-content');
+
+            // Animazione di uscita (veloce)
+            if (content) {
+                gsap.to(content, {
+                    scale: 0.8,
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.in",
+                    onComplete: () => {
+                        modal.style.display = 'none';
+                        finishClose();
+                    }
+                });
+                gsap.to(modal, { opacity: 0, duration: 0.2 });
+            } else {
+                modal.style.display = 'none';
+                finishClose();
+            }
+
+            function finishClose() {
+                let anyOpen = false;
+                document.querySelectorAll('.modal-backdrop').forEach(m => {
+                    if (m.style.display === 'flex' && m !== modal && m.style.opacity !== '0') anyOpen = true;
+                });
+
+                if (!anyOpen) {
+                    document.body.classList.remove('modal-open');
+                }
+            }
+        }
+    }
+
     if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
         openModal(achievementsModal);
     });
 
-    // Help & Skins
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => openModal(helpModal));
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         if (typeof updateSkinsUI === 'function') updateSkinsUI();
         openModal(skinsModal);
     });
 
-    // Stats
     if (openStatsBtn) openStatsBtn.addEventListener('click', () => {
         const Game = getGameAPI();
         if (Game) Game.updateStatsUI();
         openModal(statsModal);
     });
 
-    // Settings (Apertura)
     if (openSettingsBtn) openSettingsBtn.addEventListener('click', openSettingsModal);
 
-    // Leaderboard
     if (openLeaderboardBtn) openLeaderboardBtn.addEventListener('click', () => {
         const Game = getGameAPI();
         if (Game && Game.loadLeaderboard) Game.loadLeaderboard();
         openModal(leaderboardModal);
     });
 
-    // Account (Da Settings)
+    // RIFERIMENTO BOTTONE CAMBIO SKIN RAPIDO
     if (openAccountBtn) openAccountBtn.addEventListener('click', () => {
         closeModal(settingsModal);
+
+        // --- LOGICA AGGIORNAMENTO PROFILO ---
+        const Game = getGameAPI();
+        if (Game) {
+            const state = Game.getGameState();
+            const user = state.user;
+
+            // Aggiorna solo il nome utente nell'header
+            const displayUser = document.getElementById('display-username-large');
+            if (displayUser) {
+                displayUser.textContent = user.username || "Giocatore";
+            }
+        }
+        // -------------------------------------
+
         openModal(accountModal);
     });
 
-    // Chiusura Globale (X buttons)
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-close-btn')) {
@@ -406,10 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    // ==========================================
-    // 4. FUNZIONI DI SUPPORTO & LOGIN
-    // ==========================================
 
     function openSettingsModal() {
         const Game = getGameAPI();
@@ -423,7 +590,6 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(settingsModal);
     }
 
-    // Helper per Slider Base (Settings)
     function setupAudioControl(slider, display, key, isMusic = false) {
         if (!slider) return;
         const Game = window.EspooClicker;
@@ -436,15 +602,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const val = parseFloat(slider.value);
             Game.getGameState().user[key] = val;
             if (display) display.textContent = Math.round(val * 100);
-
-            // Aggiornamento live per master o musica
             if (isMusic || key === 'masterVolume') {
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
             }
         });
     }
 
-    // Inizializzazione Ritardata (aspetta che window.EspooClicker sia pronto)
     const initInterval = setInterval(() => {
         if (window.EspooClicker) {
             clearInterval(initInterval);
@@ -452,7 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
             setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
 
-            // Check Auto Login
             const sessUser = sessionStorage.getItem('espooUser');
             const sessPass = sessionStorage.getItem('espooPass');
             if (sessUser && sessPass) {
@@ -465,30 +627,130 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 100);
 
-    // Handlers Account
     if (loginButton) loginButton.addEventListener('click', handleLogin);
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
-        if (confirm("Logout?")) {
+        if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
             localStorage.removeItem('espotoolClickerSaveV8');
             location.reload();
         }
     });
 
-    // ... Handler pulsanti Change User/Pass/Delete omessi per brevità, sono identici a prima ...
-    // Se servono completi, li trovi nella versione precedente del file. 
-    // Qui ho incluso le parti logiche per audio e login.
+    // Handler pulsanti Account (change user/pass/delete)
+    if (changePassBtn) changePassBtn.addEventListener('click', async () => {
+        const Game = getGameAPI();
+        const oldPass = document.getElementById('old-password-input').value;
+        const newPass = document.getElementById('new-password-input').value;
+        if (!oldPass || !newPass) { alert(gameData.texts.dialogs.fillFields); return; }
+
+        try {
+            const res = await fetch('php/change_password.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: Game.getGameState().user.username, oldPassword: oldPass, newPassword: newPass })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Game.showToast(gameData.texts.toasts.passChanged, "success");
+				Game.setPassword(newPass);	// Aggiorno la password per le varie funzioni di salvataggio
+                sessionStorage.setItem('espooPass', newPass); // Aggiorna sessione
+            } else {
+                alert(data.message);
+            }
+        } catch (e) { console.error(e); }
+    });
+
+    if (changeUserBtn) changeUserBtn.addEventListener('click', async () => {
+        const Game = getGameAPI();
+        const newName = document.getElementById('new-username-input').value;
+        const password = prompt(gameData.texts.dialogs.confirmPass);
+        if (!newName || !password) return;
+
+        try {
+            const res = await fetch('php/change_username.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: Game.getGameState().user.username, password: password, newUsername: newName })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Game.getGameState().user.username = newName;
+                sessionStorage.setItem('espooUser', newName);
+                if (currentUsernameDisplay) currentUsernameDisplay.textContent = newName;
+                Game.showToast(gameData.texts.toasts.nameChanged, "success");
+                Game.saveGame();
+            } else {
+                alert(data.message);
+            }
+        } catch (e) { console.error(e); }
+    });
+
+    if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', async () => {
+        const password = document.getElementById('danger-zone-password').value;
+        if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
+        if (!confirm("SEI SICURO? Questa azione è irreversibile e cancellerà tutto.")) return;
+
+        const Game = getGameAPI();
+        try {
+            const res = await fetch('php/delete_user.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                // Impedisci il salvataggio automatico alla chiusura
+                Game.getGameState().isDeleting = true;
+
+
+                alert("Account eliminato. Addio!");
+                sessionStorage.clear();
+                localStorage.clear(); // Pulisce tutto il browser
+                localStorage.removeItem('espotoolClickerSaveV8'); // Doppia sicurezza
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (e) { console.error(e); }
+    });
+    const resetProgressBtn = document.getElementById('reset-progress-btn');
+    if (resetProgressBtn) {
+        resetProgressBtn.addEventListener('click', async () => {
+            const password = document.getElementById('danger-zone-password').value;
+            if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
+            if (!confirm("ATTENZIONE: Questo resetterà tutti i progressi al punto di partenza (Hard Reset). I token Lab e le Skin verranno persi. Continuare?")) return;
+
+            const Game = getGameAPI();
+            try {
+                const res = await fetch('php/reset_progress.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    // Evita che il salvataggio automatico sovrascriva il reset
+                    Game.getGameState().isDeleting = true;
+
+                    alert("Progressi resettati con successo.");
+
+                    localStorage.removeItem('espotoolClickerSaveV8');
+                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
+                    // ----------------------------------------------
+
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { console.error(e); }
+        });
+    }
 
     if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
         const Game = getGameAPI();
         if (Game) {
             Game.saveGame();
-            Game.showToast("Preferenze Salvate");
+            Game.showToast(gameData.texts.toasts.settingsSaved);
         }
         closeModal(settingsModal);
     });
 
-    // Funzione Login
     async function handleLogin() {
         const Game = getGameAPI();
         if (!Game) return;
@@ -498,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginButton.disabled = true;
         try {
-            const res = await fetch('./php/login_register.php', {
+            const res = await fetch('php/login_register.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p })
             });
             const data = await res.json();
@@ -506,15 +768,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
+
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV8');
                     Game.getGameState().user.username = u;
                     Game.saveGame();
                 }
+
                 closeModal(loginModal);
                 Game.startGameRoutines();
-                Game.showToast("Benvenuto " + u);
+
+
+                // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
+                if (typeof window.updateAmbientVolume === 'function') {
+                    window.updateAmbientVolume();
+                }
+
+                // 2. POI aggiorna gli slider visivi (perché non sembrino rotti se apri le opzioni)
+                const userVol = Game.getGameState().user;
+                if (masterSlider) {
+                    masterSlider.value = userVol.masterVolume;
+                    if (masterDisplay) masterDisplay.textContent = Math.round(userVol.masterVolume * 100);
+                }
+                if (sfxSlider) {
+                    sfxSlider.value = userVol.sfxVolume;
+                    if (sfxDisplay) sfxDisplay.textContent = Math.round(userVol.sfxVolume * 100);
+                }
+                if (musicSlider) {
+                    musicSlider.value = userVol.musicVolume;
+                    if (musicDisplay) musicDisplay.textContent = Math.round(userVol.musicVolume * 100);
+                }
+
+                // 3. INFINE fai partire l'audio (ora che i volumi sono corretti)
+                Game.tryStartAudio();
+
+                Game.showToast(gameData.texts.toasts.welcome + " " + u);
             } else {
                 alert(data.message);
             }
@@ -522,7 +812,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loginButton.disabled = false;
     }
 
-    // Gestione tasto Invio su Login
     function setupEnterKey(inputElement, actionBtn) {
         if (inputElement) {
             inputElement.addEventListener('keypress', (e) => {

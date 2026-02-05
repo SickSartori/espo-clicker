@@ -1,900 +1,377 @@
-
 // --- GESTIONE CONFLITTI EVENTI (SEMAFORO) ---
 let fireParticleInterval = null;
 let lastRicardoVideoId = null;
 
 window.currentActiveEvent = null; // Il "Semaforo"
 let audioGlitchInterval = null;
+let lastVideoPlayedId = null;
+
+const RewardHandlers = {
+    // Aggiunge Bug al wallet
+    bugs: (value) => {
+        let val = new Decimal(value);
+        gameState.score = gameState.score.add(val);
+        gameState.totalScore = gameState.totalScore.add(val);
+        gameState.lifetimeScore = gameState.lifetimeScore.add(val);
+        return `+${formatNumber(val)} Bug!`;
+    },
+    // Aggiunge Token Prestigio
+    prestige: (value) => {
+        let val = new Decimal(value);
+        gameState.prestigePoints = gameState.prestigePoints.add(val);
+        return `+${formatNumber(val)} Token Lab!`;
+    },
+    // Sblocca una Skin (Invariato)
+    skin: (skinId) => {
+        if (!gameState.skins.unlocked.includes(skinId)) {
+            gameState.skins.unlocked.push(skinId);
+            const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : skinId;
+            return gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
+        }
+        return null;
+    },
+    multiplier: (value) => {
+        return `Bonus BPS x${value} Attivo!`;
+    },
+    spawnGolden: () => {
+        spawnGoldenBug();
+        return "Golden Bug Avvistato!";
+    }
+};
+
+/**
+ * Funzione generica per assegnare un premio
+ * @param {Object} reward - Oggetto ricompensa {type, value/id}
+ */
+function grantReward(reward) {
+    if (!reward || !RewardHandlers[reward.type]) return;
+
+    // Chiama l'handler specifico passandogli il valore o l'ID
+    const message = RewardHandlers[reward.type](reward.value || reward.id);
+
+    // Mostra il toast solo se l'handler ha restituito un messaggio
+    if (message) {
+        window.EspooClicker.showToast(gameData.texts.toasts.rewardClaimed.replace('{message}', message), 'reward');
+    }
+}
+
+// Funzione per inviare il punteggio al leaderboard
 
 function checkEventConflict(newEventName) {
     if (window.currentActiveEvent) {
         window.EspooClicker.showToast(`⛔ Occupato: Evento "${window.currentActiveEvent}" in corso!`, 'error');
-        return true; // C'è conflitto (BLOCCA)
+        return true;
     }
-    window.currentActiveEvent = newEventName; // Blocca il sistema
-    return false; // Nessun conflitto (PROCEDI)
+    window.currentActiveEvent = newEventName;
+    return false;
 }
 
 function clearActiveEvent() {
     console.log(`Evento "${window.currentActiveEvent}" terminato.`);
-    window.currentActiveEvent = null;
+
+    if (window.currentActiveEvent === 'Audio Mixer') {
+        window.preMixerEvent = null;
+        console.log("Evento scaduto durante il Mixer. Backup pulito.");
+    } else {
+        // Comportamento standard
+        window.currentActiveEvent = null;
+    }
 }
 
-// --------- 3. FUNZIONI AUDIO AVANZATE ---------
-function playSound(id, type = 'sfx') {
-    const originalSound = document.getElementById(id);
-    if (!originalSound) return;
+// --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------
 
-    // 1. Recupera il moltiplicatore custom dal Mixer (o usa 1.0 se non esiste)
-    // Questo collega finalmente lo slider al suono reale!
-    const customVol = (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined)
-        ? gameState.user.audioCustom[id]
-        : 1.0;
-
-    // 2. Calcolo Volume Finale (Master * Canale * CustomMixer)
-    const master = gameState.user.masterVolume;
-    const channel = type === 'music' ? gameState.user.musicVolume : gameState.user.sfxVolume;
-
-    let finalVolume = master * channel * customVol;
-
-    // NOTA: Ho rimosso i vecchi "if (id === 'sound-click') volume * 0.4" 
-    // perché ora sono gestiti dai valori di default nel game-data.js 
-    // e modificabili dall'utente nel menu.
-
-    if (finalVolume <= 0) {
-        if (type === 'music') originalSound.pause();
+// Applica un singolo effetto
+function applyEffect(effect, level = 1)
+{
+    if (!effect)
         return;
+
+    let lvl = new Decimal(level);
+
+    if (effect.type === 'mult_state')
+    {
+        if (gameState.hasOwnProperty(effect.stat))
+            gameState[effect.stat] = gameState[effect.stat].mul(effect.val);
     }
-
-    try {
-        if (type === 'sfx') {
-            const soundClone = originalSound.cloneNode();
-            soundClone.volume = finalVolume;
-
-            const playPromise = soundClone.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    soundClone.addEventListener('ended', () => {
-                        soundClone.remove();
-                    });
-                })
-                    .catch(e => {
-                        // Ignora errori di autoplay o interruzione
-                        // console.warn("Audio clone error:", e); 
-                    });
+    else if (effect.type === 'mult_global')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
+            // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
+            if (window[effect.stat] instanceof Decimal)
+            {
+                let value = new Decimal(effect.val);
+                window[effect.stat] = window[effect.stat].mul(value);
             }
-        } else {
-            // --- MUSICA (Singola istanza) ---
-            originalSound.volume = finalVolume;
-            const playPromise = originalSound.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => { });
+            else
+                window[effect.stat] *= effect.val;
+        }
+    }
+    else if (effect.type === 'add_mult_per_level')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
+            let value = new Decimal(effect.val);
+            let bonus = value.mul(lvl);
+
+            if (window[effect.stat] instanceof Decimal)
+                window[effect.stat] = window[effect.stat].add(bonus);
+            else
+                window[effect.stat] += (effect.val * level);
+        }
+    }
+    else if (effect.type === 'add_global_stat_per_level')
+    {
+        if (window.hasOwnProperty(effect.stat))
+        {
+            let value = new Decimal(effect.val);
+            let bonus = value.mul(lvl);
+
+            if (window[effect.stat] instanceof Decimal)
+                window[effect.stat] = window[effect.stat].add(bonus);
+            else
+                window[effect.stat] += (effect.val * level);
+        }
+    }
+    else if (effect.type === 'set_flag')
+        window.gameFlags[effect.flag] = effect.val;
+}
+
+// Ricalcola tutti gli effetti passivi
+function reapplyAllEffects() {
+    // Reset Totale
+    window.goldenBugChance = 0.001;
+    window.goldenBugMult = new Decimal(1);
+    window.goldenBugSpawnTime = 60000;
+    window.clickGlobalMult = new Decimal(1);
+    window.clickCPSBonus = new Decimal(1);
+    window.costScalingReduction = 0;
+    window.prestigeSynergyFactor = new Decimal(0);
+
+    window.gameFlags = {};
+
+    // Click Upgrades
+    for (const key in gameState.clickUpgrades) {
+        if (gameState.clickUpgrades[key].purchased) {
+            const data = gameData.clickUpgrades[key];
+            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+        }
+    }
+
+    // Prestige Upgrades
+    for (const key in gameState.prestigeUpgrades) {
+        const state = gameState.prestigeUpgrades[key];
+        const data = gameData.prestigeUpgrades[key];
+        if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
+            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
+        }
+    }
+}
+
+// --------- 3. AUDIO MANAGER CENTRALIZZATO ---------
+const AudioManager = {
+    init() {
+        const container = document.body;
+        for (const key in gameData.assets.sounds) {
+            const sound = gameData.assets.sounds[key];
+            if (!document.getElementById(sound.id)) {
+                const audio = document.createElement('audio');
+                audio.id = sound.id;
+                audio.src = `assets/sounds/${sound.file}`;
+                audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
+                if (sound.loop) audio.loop = true;
+                container.appendChild(audio);
             }
         }
-    } catch (e) { console.warn("Audio error:", e); }
-}
+        this.updateAmbience();
+    },
 
-function setBgMusicVolume() {
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (!bgMusic) return;
-
-    // --- NUOVA LOGICA: Check Skin Natale ---
-    // Se la skin è Natale, fermiamo la musica base (perché c'è già quella della neve)
-    if (gameState.skins.current === 'christmas') {
-        if (!bgMusic.paused) {
-            bgMusic.pause();
-            bgMusic.currentTime = 0; // Opzionale: resetta all'inizio
+    getCustomVolume(id) {
+        if (gameState && gameState.user && gameState.user.audioCustom) {
+            const val = gameState.user.audioCustom[id];
+            return (val !== undefined) ? val : 1.0;
         }
-        return; // Esce dalla funzione, ignorando il calcolo del volume sotto
-    }
-    // ---------------------------------------
+        return 1.0;
+    },
 
-    const BASE_VOLUME_MULTIPLIER = 0.05;
-    const master = gameState.user.masterVolume;
-    const music = gameState.user.musicVolume;
+    play(id, type = 'sfx') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const master = gameState.user.masterVolume;
+        if (master <= 0) return;
+        const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
+        const custom = this.getCustomVolume(id);
+        const finalVol = Math.max(0, Math.min(1, master * channel * custom));
+        if (finalVol < 0.01) return;
 
-    // Applica il volume calcolato solo se NON siamo a Natale
-    bgMusic.volume = master * music * BASE_VOLUME_MULTIPLIER;
+        try {
+            if (type === 'sfx') {
+                const clone = el.cloneNode();
+                clone.volume = finalVol;
+                clone.play().then(() => {
+                    clone.addEventListener('ended', () => clone.remove());
+                }).catch(e => { });
+            } else {
+                el.volume = finalVol;
+                if (el.paused) el.play().catch(e => { });
+            }
+        } catch (e) { console.warn("Audio error:", e); }
+    },
 
-    // Se il volume è > 0 e non è in pausa (e non siamo in un evento che la blocca), assicuriamoci che suoni
-    if (bgMusic.paused && bgMusic.volume > 0 && !window.currentActiveEvent) {
-        bgMusic.play().catch(e => { });
-    }
-}
-
-function updateAmbientVolume() {
-    setBgMusicVolume(); // Gestisce la musica base
-
-    const master = gameState.user.masterVolume;
-    const music = gameState.user.musicVolume;
-    const sfx = gameState.user.sfxVolume;
-
-    // Helper: prende il valore custom o 1.0 se non esiste
-    const getVol = (id) => (gameState.user.audioCustom && gameState.user.audioCustom[id] !== undefined) ? gameState.user.audioCustom[id] : 1.0;
-
-    // --- ERRORE 404 ---
-    const bluescreen = document.getElementById('sound-bluescreen');
-    if (bluescreen) {
-        bluescreen.volume = master * music * getVol('sound-bluescreen');
-    }
-
-    // --- VIDEO RICK ROLL ---
-    const rickVideo = document.getElementById('rick-roll-video');
-    if (rickVideo) {
-        // Applica il custom volume 'video-rick'
-        rickVideo.volume = master * music * getVol('video-rick');
-    }
-
-    // --- VIDEO RICARDO (Tutti e 3) ---
-    const ricardoIds = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
-    ricardoIds.forEach(id => {
-        const vid = document.getElementById(id);
-        if (vid) {
-            // Applica il custom volume 'video-ricardo'
-            vid.volume = master * music * getVol('video-ricardo');
+    playClickEffect() {
+        // ... (Logica click effect invariata, puoi lasciarla com'era o copiarla dal vecchio file) ...
+        const sound = document.getElementById('sound-click');
+        if (!sound) return;
+        let rate = 1.0;
+        let volumeMult = 1.0;
+        if (isBluescreenActive) {
+            if (document.body.classList.contains('rick-rolling')) {
+                volumeMult = 0.2;
+            } else {
+                rate = 0.2 + Math.random() * 1.6;
+                volumeMult = 0.5 + Math.random();
+            }
         }
-    });
+        const master = gameState.user.masterVolume * gameState.user.sfxVolume;
+        sound.volume = Math.max(0, Math.min(1, master * volumeMult));
+        sound.playbackRate = rate;
+        sound.currentTime = 0;
+        sound.play().catch(e => { });
+    },
 
-    // --- LOOP EFFETTI ---
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) fireSound.volume = master * sfx * getVol('sound-fire');
+    // --- IL NUOVO CERVELLO AUDIO ---
+    updateAmbience() {
+        // 1. Identifica TUTTI i player musicali (Loop)
+        // Raccogliamo tutti gli ID che sono definiti come 'music' nei dati o usati per eventi
+        const allMusicTracks = [
+            'sound-bg-music',
+            'sound-snowball',
+            'sound-fury-music',
+            'sound-bluescreen',
+            'sound-matrix'
+        ];
 
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.volume = master * music * getVol('sound-snowball');
-}
+        // Aggiungi musiche delle skin (es. sound-bg-bit)
+        for (let key in gameData.skins) {
+            const conf = gameData.skins[key].themeConfig;
+            if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
+                allMusicTracks.push(conf.specialMusic);
+            }
+        }
 
-// Funzione per acquistare Skin con Token Lab
-function buySkin(skinId) {
-    const data = gameData.skins[skinId];
+        // 2. Determina il "Target Track" in base alla PRIORITÀ
+        let targetTrackId = null;
 
-    // Controlli di sicurezza
-    if (!data || !data.cost || data.cost === 0) return;
-    if (gameState.skins.unlocked.includes(skinId)) return; // Già posseduta
+        // PRIORITÀ 0: Audio Mixer (Test) - Silenzio totale
+        if (window.currentActiveEvent === 'Audio Mixer') {
+            targetTrackId = null;
+        }
+        // PRIORITÀ 1: Video (Rick/Ricardo) - Silenzio (gestito dal video tag)
+        else if (document.body.classList.contains('rick-rolling')) {
+            targetTrackId = null;
+        }
+        // PRIORITÀ 2: Espo Fury (Fuoco)
+        else if (gameState.crunchTimeEndTime > Date.now()) {
+            targetTrackId = 'sound-fury-music';
+        }
+        // PRIORITÀ 3: Eventi CSS (Matrix / 404)
+        else if (isBluescreenActive) {
+            if (document.body.classList.contains('matrix-active')) {
+                targetTrackId = 'sound-matrix';
+            } else {
+                // Natale Glitch o Normale Bluescreen
+                targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
+            }
+        }
+        // PRIORITÀ 4: Skin Attiva (Base)
+        else {
+            const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+            targetTrackId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
+                ? currentSkin.themeConfig.specialMusic
+                : 'sound-bg-music';
+        }
 
-    if (gameState.prestigePoints >= data.cost) {
-        // Transazione
-        gameState.prestigePoints -= data.cost;
-        gameState.skins.unlocked.push(skinId);
+        // 3. APPLICAZIONE (Play Target, Pause Others)
+        allMusicTracks.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
 
-        if (typeof playSound === 'function') playSound('sound-buy');
-        window.EspooClicker.showToast("Skin Acquistata: " + data.name + "!", 'success');
+            if (id === targetTrackId) {
+                // Questo è quello che deve suonare
+                const volume = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(id);
 
-        // Equipaggia subito
-        equipSkin(skinId);
-
-        // Salva e aggiorna
-        window.EspooClicker.saveGame();
-        if (typeof updatePrestigeUI === 'function') updatePrestigeUI(); // Aggiorna contatore token
-        if (typeof updateSkinsUI === 'function') updateSkinsUI(); // Aggiorna Guardaroba
-    } else {
-        playSound('sound-error');
-        window.EspooClicker.showToast("Token insufficienti!", 'error');
-    }
-}
-
-
-// --------- 4. FUNZIONI DI GIOCO PRINCIPALI ---------
-function calculateBulkCost(teamKey, amount) {
-    const data = gameData.teams[teamKey];
-    const state = gameState.teams[teamKey];
-
-    // Logica Scaling (Contrattazione)
-    let scalingBase = 1.20;
-    if (gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
-        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
-        scalingBase = Math.max(1.05, scalingBase - reduction);
-    }
-    const r = scalingBase;
-
-    let discountedBaseCost = data.baseCost;
-
-    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
-
-    if (amount === 1) {
-        return Math.max(1, currentSingleCost);
-    } else {
-        const totalCost = currentSingleCost * (Math.pow(r, amount) - 1) / (r - 1);
-        return Math.max(amount, Math.floor(totalCost));
-    }
-}
-
-function calculateTeamCost(teamKey) {
-    return calculateBulkCost(teamKey, 1);
-}
-
-function calculatePrestigeBonus() {
-    const pData = gameData.prestigeUpgrades;
-    const pState = gameState.prestigeUpgrades;
-
-    let baseBonus = gameState.lifetimePrestigePoints * 0.01;
-    let synergyCount = pState.sinergia.count;
-    let synergyBonus = synergyCount * pData.sinergia.bonusPerLevel * gameState.lifetimePrestigePoints;
-    const MAX_BONUS = 10000;
-    let calculatedBonus = 1 + baseBonus + synergyBonus + achievementsBPSBonus;
-
-    prestigeBonus = Math.min(calculatedBonus, MAX_BONUS);
-}
-
-
-
-function recalculateCPS() {
-    let baseCPS = 0;
-
-    // Ciclo sui Teams
-    for (const key in gameState.teams) {
-        // Sicurezza: Se il team esiste nel save ma non nei dati (o viceversa), salta
-        if (!gameState.teams[key] || !gameData.teams[key]) continue;
-
-        const state = gameState.teams[key];
-        const data = gameData.teams[key];
-
-        let teamBPS = state.count * data.cpsPerUnit;
-
-        // Ciclo sulle Migliorie (Enhancements)
-        for (const enhanceKey in gameData.buildingEnhancements) {
-            if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
-                const enhancementState = gameState.buildingEnhancements[enhanceKey];
-                const enhancementData = gameData.buildingEnhancements[enhanceKey];
-
-                if (enhancementState.purchased && enhancementData.targetTeam === key) {
-                    teamBPS *= enhancementData.multiplier;
+                // Eccezione: Glitch di Natale suona strano, gestito a parte nel timer, qui diamo solo il volume
+                if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
+                    // Lascia che l'intervallo audioGlitchInterval gestisca il play/pause
+                } else {
+                    el.volume = Math.max(0, Math.min(1, volume));
+                    if (el.paused && volume > 0) {
+                        el.play().catch(e => { });
+                    }
+                }
+            } else {
+                // Questo deve stare zitto
+                if (!el.paused) {
+                    el.pause();
+                    el.currentTime = 0;
                 }
             }
-        }
-        baseCPS += teamBPS;
-    }
-
-    // Bonus Click Automatico
-    if (gameState.clickUpgrades && gameState.clickUpgrades.clickAutomatico && gameState.clickUpgrades.clickAutomatico.purchased) {
-        baseCPS += gameState.teams.assistenteQa.count;
-    }
-
-    cookiesPerSecond = baseCPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier * crunchTimeMultiplier;
-}
-
-// 1. CRUNCH TIME
-function activateCrunchTime() {
-    const now = Date.now();
-
-    // Check Conflitto
-    if (checkEventConflict('Crunch Time')) return false;
-
-    // Check Cooldown
-    if (now < crunchTimeCooldownEnd) {
-        const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-        window.EspooClicker.showToast(`Crunch Time in ricarica: ${remaining}s`, 'warning');
-        clearActiveEvent(); // Rilascia subito il lock se fallisce
-        return false;
-    }
-
-    // Attivazione
-    crunchTimeMultiplier = 7;
-    crunchTimeEndTime = now + 30000;
-    crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
-    gameState.crunchTimeEndTime = crunchTimeEndTime;
-    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-
-    recalculateCPS();
-    if (typeof updateUI === 'function') updateUI();
-    if (window.EspooClicker) window.EspooClicker.saveGame();
-
-    document.body.classList.add('crunch-active');
-    const overlay = document.getElementById('crunch-overlay');
-    if (overlay) overlay.style.display = 'block';
-
-    const fireContainer = document.getElementById('fire-particles-container');
-    if (fireContainer) {
-        fireContainer.style.display = 'block';
-        if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
-    }
-
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) {
-        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
-        fireSound.currentTime = 0;
-        fireSound.play().catch(e => { });
-    }
-
-    window.EspooClicker.showToast('🔥 CRUNCH TIME ATTIVO! BPS x7! 🔥', 'success');
-    return true; // Successo
-}
-
-// --- NUOVA FUNZIONE HELPER PER CREARE IL FUOCO ---
-function spawnFireParticle(container) {
-    // 1. Genera la FIAMMA (Blob)
-    const p = document.createElement('div');
-    p.classList.add('fire-particle');
-
-    const left = Math.random() * 100;
-    p.style.left = `${left}%`;
-
-    // Dimensioni variabili: alcune enormi (base), alcune piccole (punte)
-    // Più grande è, più "liquido" sembrerà l'effetto
-    const size = 60 + Math.random() * 100;
-    p.style.width = `${size}px`;
-    p.style.height = `${size}px`;
-
-    // Velocità variabile
-    const duration = 1.5 + Math.random() * 2.5;
-    p.style.animationDuration = `${duration}s`;
-
-    // Drift (Spostamento laterale simulando vento)
-    // Più forte al centro, meno ai lati
-    const drift = (Math.random() - 0.5) * 150;
-    p.style.setProperty('--drift', `${drift}px`);
-
-    // Variazione colore (più giallo o più rosso)
-    // Manipoliamo leggermente l'opacità per variare l'intensità
-    p.style.opacity = 0.5 + Math.random() * 0.5;
-
-    container.appendChild(p);
-    setTimeout(() => p.remove(), duration * 1000);
-
-    // 2. Genera SCINTILLE (Sparks) - 30% di probabilità per ogni fiamma
-    if (Math.random() < 0.3) {
-        const s = document.createElement('div');
-        s.classList.add('fire-spark');
-        s.style.left = `${left + (Math.random() * 10 - 5)}%`; // Vicino alla fiamma madre
-
-        const sDuration = 0.5 + Math.random() * 1; // Molto veloci
-        s.style.animationDuration = `${sDuration}s`;
-
-        container.appendChild(s);
-        setTimeout(() => s.remove(), sDuration * 1000);
-    }
-}
-
-function resumeCrunchTimeEffects() {
-    // 1. Ripristina Variabile Globale
-    crunchTimeMultiplier = 7;
-
-    // 2. Riattiva Effetti Visivi CSS
-    document.body.classList.add('crunch-active');
-    const overlay = document.getElementById('crunch-overlay');
-    if (overlay) overlay.style.display = 'block';
-
-    const fireContainer = document.getElementById('fire-particles-container');
-    if (fireContainer) {
-        fireContainer.style.display = 'block';
-        if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 40);
-    }
-
-    // 4. Riavvia Audio (Gestione Blocco Autoplay)
-    const fireSound = document.getElementById('sound-fire');
-    if (fireSound) {
-        fireSound.volume = gameState.user.masterVolume * gameState.user.sfxVolume * 0.5;
-        // Tentativo di play
-        const playPromise = fireSound.play();
-
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                console.log("Autoplay bloccato. Attesa click utente per audio fuoco.");
-                // Se il browser blocca l'audio al refresh, lo avvia al primo click
-                const forcePlay = () => {
-                    fireSound.play();
-                    document.removeEventListener('click', forcePlay);
-                };
-                document.addEventListener('click', forcePlay);
-            });
-        }
-    }
-
-    // Forza ricalcolo BPS immediato
-    recalculateCPS();
-    if (typeof updateUI === 'function') updateUI();
-}
-
-function triggerBluescreen(multiplier) {
-    // Redirect Skin (Rick/Ricardo hanno la priorità se equipaggiati)
-    if (gameState.skins.current === 'rick' && Math.random() < 0.8) return triggerRickRoll();
-    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) return triggerRicardoEvent();
-
-    if (checkEventConflict('System Error 404')) return false;
-
-    isBluescreenActive = true;
-    bluescreenMultiplier = multiplier;
-    document.body.classList.add('bluescreen-active');
-
-    recalculateCPS();
-
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) {
-        emDisplay.textContent = `ERRORE DI SISTEMA! x${multiplier}!`;
-        emDisplay.style.display = 'block';
-    }
-
-    // --- LOGICA AUDIO SPECIALE ---
-    if (gameState.skins.current === 'christmas') {
-        // Se è Natale: NON suonare l'errore standard, ma GLITCHA la musica di Natale
-        const snowAudio = document.getElementById('sound-snowball');
-        if (snowAudio && !snowAudio.paused) {
-            if (audioGlitchInterval) clearInterval(audioGlitchInterval);
-            audioGlitchInterval = setInterval(() => {
-                // Cambia velocità a caso (distorsione)
-                snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
-                // Volume a scatti (stutter)
-                snowAudio.volume = (Math.random() < 0.3) ? 0 : (gameState.user.masterVolume * gameState.user.musicVolume) * 0.2;
-            }, 100);
-        }
-    } else {
-        // Standard
-        playSound('sound-bluescreen', 'music');
-    }
-
-    setTimeout(() => { stopBluescreenEffect(); }, 30000);
-    return true;
-}
-
-function stopBluescreenEffect() {
-    isBluescreenActive = false;
-    bluescreenMultiplier = 1;
-    document.body.classList.remove('bluescreen-active');
-    document.body.classList.remove('rick-rolling'); // Sicurezza extra
-
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) emDisplay.style.display = 'none';
-
-    recalculateCPS();
-
-    // Stop Audio Eventi
-    try {
-        const soundBluescreen = document.getElementById('sound-bluescreen');
-        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
-
-        // Stop Video se ancora attivi
-        const rickVideo = document.getElementById('rick-roll-video');
-        if (rickVideo) { rickVideo.pause(); rickVideo.style.display = 'none'; }
-    } catch (e) { }
-
-    // Stop Glitch Natale
-    if (audioGlitchInterval) {
-        clearInterval(audioGlitchInterval);
-        audioGlitchInterval = null;
-    }
-
-    // --- FIX RIAVVIO MUSICA BACKGROUND ---
-    // Questo blocco assicura che la musica riparta DOPO l'evento
-    const snowAudio = document.getElementById('sound-snowball');
-    const bgMusic = document.getElementById('sound-bg-music');
-    const masterVol = gameState.user.masterVolume;
-
-    // Calcoliamo se dobbiamo suonare (volume > 0)
-    if (masterVol > 0) {
-        if (gameState.skins.current === 'christmas') {
-            // Logica Natale
-            if (snowAudio) {
-                snowAudio.playbackRate = 1.0;
-                snowAudio.volume = (masterVol * gameState.user.musicVolume) * 0.2;
-                // Riavvia solo se era in pausa
-                if (snowAudio.paused) snowAudio.play().catch(e => console.log("Attesa interazione per riavvio neve"));
-            }
-        } else {
-            // Logica Normale
-            if (bgMusic) {
-                setBgMusicVolume(); // Reimposta volume corretto
-                if (bgMusic.paused) bgMusic.play().catch(e => console.log("Attesa interazione per riavvio musica"));
-            }
-        }
-    }
-
-    // Rilascia il lock dell'evento
-    clearActiveEvent();
-}
-
-// 3. RICK ROLL
-function triggerRickRoll() {
-    if (checkEventConflict('Rick Roll')) return false;
-
-    const video = document.getElementById('rick-roll-video');
-    if (!video) { clearActiveEvent(); return false; }
-
-    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-
-    // Stop suoni ambiente
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.pause();
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) bgMusic.pause();
-
-    // Setup Moltiplicatore
-    let rickMultiplier = Math.floor(Math.random() * 8) + 5;
-    isBluescreenActive = true;
-    bluescreenMultiplier = rickMultiplier;
-    recalculateCPS();
-
-    document.body.classList.add('rick-rolling');
-
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) {
-        emDisplay.textContent = `🔥 RICK BONUS: BPS x${rickMultiplier} 🔥`;
-        emDisplay.style.display = 'block';
-    }
-
-    video.style.display = 'block';
-    video.currentTime = 0;
-    // Volume basso (2%) per Rick
-    const rickVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-rick'] !== undefined)
-        ? gameState.user.audioCustom['video-rick'] : 0.02;
-    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * rickVol;
-
-    video.play().catch(e => { });
-
-    window.EspooClicker.showToast(`🎵 RICK ROLL! (x${rickMultiplier}) 🎵`, 'achievement');
-
-    // --- NUOVA LOGICA CLICK VIDEO ---
-    video.style.cursor = 'pointer';
-
-    const videoClickHandler = (e) => {
-        // Evita lo scroll o zoom su mobile
-        // e.preventDefault(); // (Opzionale: scommenta se da problemi su mobile)
-
-        // Creiamo un evento sintetico con le coordinate corrette per clickCookie
-        // 'pointerdown' gestisce sia mouse che touch
-        const syntheticEvent = {
-            detail: 1, // Simula un click reale
-            clientX: e.clientX,
-            clientY: e.clientY,
-            pageX: e.pageX,
-            pageY: e.pageY,
-            target: video
-        };
-
-        // Chiama la funzione di click principale
-        clickCookie(syntheticEvent);
-
-        // Piccolo effetto visivo di "pressione" sul video
-        video.style.transform = 'scale(0.98)';
-        setTimeout(() => video.style.transform = 'scale(1)', 50);
-    };
-
-    // Usa 'pointerdown' per la massima compatibilità Mobile/Desktop senza doppi click
-    video.addEventListener('pointerdown', videoClickHandler);
-
-    setTimeout(() => {
-        document.body.classList.remove('rick-rolling');
-        video.pause();
-        video.style.display = 'none';
-
-        // Pulizia importante
-        video.style.transform = 'none';
-        video.style.cursor = 'default';
-        video.removeEventListener('pointerdown', videoClickHandler);
-
-        stopBluescreenEffect();
-    }, 60000);
-
-    return true;
-}
-
-// 4. RICARDO FLEX
-function triggerRicardoEvent() {
-    if (checkEventConflict('Ricardo Flex')) return false;
-
-    const allVideos = ['ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'];
-
-    // Pulizia preventiva
-    allVideos.forEach(id => {
-        const v = document.getElementById(id);
-        if (v) { v.pause(); v.style.display = 'none'; v.currentTime = 0; }
-    });
-
-    // Selezione Casuale Video
-    let availableVideos = allVideos.filter(id => id !== lastRicardoVideoId);
-    if (availableVideos.length === 0) availableVideos = allVideos;
-    const selectedId = availableVideos[Math.floor(Math.random() * availableVideos.length)];
-    lastRicardoVideoId = selectedId;
-
-    const video = document.getElementById(selectedId);
-    if (!video) { clearActiveEvent(); return false; }
-    if (!video.src) { video.src = video.getAttribute('data-src'); video.load(); }
-
-    // Stop suoni
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.pause();
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) bgMusic.pause(); // Aggiunto per sicurezza
-
-    let bonusMult = Math.floor(Math.random() * 8) + 5;
-    isBluescreenActive = true;
-    bluescreenMultiplier = bonusMult;
-    recalculateCPS();
-
-    document.body.classList.add('rick-rolling');
-
-    const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) {
-        emDisplay.textContent = `🔥 FLEX BONUS: BPS x${bonusMult} 🔥`;
-        emDisplay.style.display = 'block';
-    }
-
-    video.style.display = 'block';
-    video.currentTime = 0;
-    // Ricardo al 80% (ha bisogno di volume alto)
-    const ricardoVol = (gameState.user.audioCustom && gameState.user.audioCustom['video-ricardo'] !== undefined)
-        ? gameState.user.audioCustom['video-ricardo'] : 0.8;
-    video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * ricardoVol;
-
-    video.play().catch(e => { });
-
-    window.EspooClicker.showToast(`💪 PURE POWER! (x${bonusMult}) 💪`, 'achievement');
-
-    // --- NUOVA LOGICA CLICK VIDEO ---
-    video.style.cursor = 'pointer';
-
-    const videoClickHandler = (e) => {
-        const syntheticEvent = {
-            detail: 1,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            pageX: e.pageX,
-            pageY: e.pageY,
-            target: video
-        };
-
-        clickCookie(syntheticEvent);
-
-        video.style.transform = 'scale(0.99)'; // Effetto leggermente diverso per Ricardo
-        setTimeout(() => video.style.transform = 'scale(1)', 50);
-    };
-
-    video.addEventListener('pointerdown', videoClickHandler);
-
-    setTimeout(() => {
-        document.body.classList.remove('rick-rolling');
-
-        // Cleanup completo su TUTTI i video possibili
-        allVideos.forEach(id => {
-            const v = document.getElementById(id);
-            if (v) {
-                v.pause();
-                v.style.display = 'none';
-                v.currentTime = 0;
-                v.style.transform = 'none';
-                v.style.cursor = 'default';
-                v.removeEventListener('pointerdown', videoClickHandler);
-            }
         });
-
-        stopBluescreenEffect();
-    }, 45000);
-
-    return true;
-}
-
-function triggerChristmasEvent(key) {
-    if (checkEventConflict('Merry Christmas')) return;
-
-    const overlay = document.getElementById('christmas-overlay');
-    const soundMerry = document.getElementById('sound-merry');
-
-    if (overlay) {
-        overlay.style.display = 'flex';
-        overlay.style.animation = 'fadeIn 0.5s';
     }
+};
 
-    if (soundMerry) {
-        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
-        soundMerry.play().catch(e => console.log(e));
-    }
+// --- WRAPPERS PER COMPATIBILITÀ (Non rompere il codice esistente) ---
+function playSound(id, type) { AudioManager.play(id, type); }
+function setBgMusicVolume() { AudioManager.updateAmbience(); }
+function updateAmbientVolume() { AudioManager.updateAmbience(); }
+function getCustomVolume(id) { return AudioManager.getCustomVolume(id); }
 
-    const skinId = 'christmas';
-    if (!gameState.skins.unlocked.includes(skinId)) {
-        gameState.skins.unlocked.push(skinId);
-    }
+// --------- FUNZIONI DI ACQUISTO ---------
 
-    gameState.achievements[key].claimed = true;
-
-    equipSkin(skinId);
-
+function finalizePurchase() {
+    playSound('sound-buy');
+    refreshAllStores(); // Ridisegna i negozi per aggiornare i tasti (grigi/verdi)
     window.EspooClicker.saveGame();
-
-    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
-
-    setTimeout(() => {
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
-    }, 4000);
-}
-
-function clickCookie(event) {
-    if (event.detail === 0) return;
-    if (clickerButton) clickerButton.blur();
-
-    // --- 🔊 GESTIONE AUDIO EVENTI ---
-    if (isBluescreenActive) {
-        const sound = document.getElementById('sound-click');
-
-        if (sound) {
-            // CASO 1: RICARDO / RICK ROLL (Audio Pulito ma Basso)
-            if (document.body.classList.contains('rick-rolling')) {
-                sound.playbackRate = 1; // Velocità normale (pulito)
-
-                // Volume ridotto (es. 20% del volume master) per non coprire la musica/video
-                // Modifica 0.2 con un altro valore se lo vuoi più/meno alto
-                sound.volume = (gameState.user.masterVolume * gameState.user.sfxVolume) * 0.2;
-
-                sound.currentTime = 0;
-                sound.play().catch(e => { });
-            }
-            // CASO 2: BLUE SCREEN 404 (Audio Glitchato)
-            else {
-                // Cambia la velocità di riproduzione a caso (Effetto Glitch)
-                sound.playbackRate = 0.2 + Math.random() * 1.6;
-
-                // Volume instabile e alto
-                sound.volume = Math.max(0, Math.min(1, gameState.user.masterVolume * (0.5 + Math.random())));
-
-                sound.currentTime = 0;
-                sound.play().catch(e => { });
-            }
-        }
-    } else {
-        // CASO 3: GIOCO NORMALE
-        // Reset fondamentale: se l'evento finisce, il suono deve tornare normale!
-        const sound = document.getElementById('sound-click');
-        if (sound && sound.playbackRate !== 1) {
-            sound.playbackRate = 1;
-            sound.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
-        }
-        playSound('sound-click');
-    }
-    // ------------------------------------
-
-    // --- LOGICA PUNTEGGIO (Invariata) ---
-    let clickBonusPercent = 0.01;
-    if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
-    let clickValuePercentBonus = 0;
-    if (gameState.clickUpgrades.manoBionica.purchased) {
-        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
-    }
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier) + clickValuePercentBonus;
-
-    clickHistory.push({ time: Date.now(), value: currentClickValue });
-
-    gameState.score += currentClickValue;
-    gameState.totalScore += currentClickValue;
-    gameState.lifetimeScore += currentClickValue;
-    gameState.totalClicks++;
-
-    // --- EFFETTI VISIVI (Particelle, Feedback, ecc.) ---
-
-    // 1. Calcolo coordinate
-    let x, y;
-    if (event.clientX && event.clientY) {
-        const rect = document.getElementById('clicker-section').getBoundingClientRect();
-        // Coordinate assolute pagina per le particelle (append al body)
-        x = event.pageX;
-        y = event.pageY;
-    } else {
-        const rect = clickerButton.getBoundingClientRect();
-        x = rect.left + rect.width / 2;
-        y = rect.top + rect.height / 2;
-    }
-
-    // 2. Particelle (Se la funzione esiste)
-    if (typeof createClickParticles === 'function') {
-        // Calcolo relativo per il container feedback
-        const containerRect = document.getElementById('click-feedback-container').getBoundingClientRect();
-        const relX = (event.clientX || (x - window.scrollX)) - containerRect.left;
-        const relY = (event.clientY || (y - window.scrollY)) - containerRect.top;
-        createClickParticles(relX, relY);
-    }
-
-    // 3. Feedback Testuale
-    showClickFeedback(event);
-
-    // 4. Animazione Bottone
-    clickerButton.classList.remove('click-shrink');
-    clickerButton.classList.remove('clicked'); // Reset preventivo
-
-    void clickerButton.offsetWidth; // Trigger reflow (resetta l'animazione)
-
-    clickerButton.classList.add('click-shrink'); // Effetto "rimbalzo"
-    clickerButton.classList.add('clicked');      // Effetto "cambio immagine" (CSS opacity)
-
-    setTimeout(() => {
-        clickerButton.classList.remove('click-shrink');
-        clickerButton.classList.remove('clicked'); // Torna all'immagine normale
-    }, 100); // 100ms di durata
-
-    // --- AGGIORNAMENTO UI ---
-    if (typeof updateClickStore === 'function') updateClickStore();
     updateUI();
 }
 
-function calculateMaxAffordable(teamKey) {
-    const state = gameState.teams[teamKey];
-    const data = gameData.teams[teamKey];
+function buySkin(skinId) {
+    const data = gameData.skins[skinId];
+    if (!data || !data.cost) return;
+    if (gameState.skins.unlocked.includes(skinId)) return;
 
-    // --- FIX 1: CALCOLO DINAMICO DI R (Sincronizzato con Contrattazione) ---
-    // Prima era hardcodato a 1.20, ora legge il potenziamento reale
-    let scalingBase = 1.20;
-    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.contrattazione && gameState.prestigeUpgrades.contrattazione.count > 0) {
-        let reduction = gameState.prestigeUpgrades.contrattazione.count * 0.01;
-        scalingBase = Math.max(1.05, scalingBase - reduction);
-    }
-    const r = scalingBase;
-    // -------------------------------------------------------------------
-
-    let discountedBaseCost = data.baseCost;
-
-    // Calcolo del costo del prossimo singolo edificio
-    const currentSingleCost = Math.floor(discountedBaseCost * Math.pow(r, state.count));
-
-    // Se non puoi permetterti nemmeno uno, ritorna 0
-    if (gameState.score < currentSingleCost) return 0;
-
-    // --- FORMULA GEOMETRICA INVERSA ---
-    // CostoTotale = CostoBase * (r^n - 1) / (r - 1)
-    // Risolviamo per n
-
-    let maxAmount = 0;
-
-    // Caso limite matematico (se r fosse 1, ma qui è min 1.05)
-    if (Math.abs(r - 1) < 0.0000001) {
-        maxAmount = Math.floor(gameState.score / currentSingleCost);
-    } else {
-        maxAmount = Math.floor(Math.log(1 + (gameState.score * (r - 1) / currentSingleCost)) / Math.log(r));
-    }
-
-    // Ricalcoliamo il costo esatto per la quantità trovata
-    let realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
-
-    // Se il costo supera i soldi (anche di poco), riduciamo la quantità di 1 finché non rientra
-    // Usiamo un while per sicurezza assoluta, ma di solito basta 1 iterazione.
-    while (maxAmount > 0 && Math.floor(realCost) > gameState.score) {
-        maxAmount--;
-        realCost = currentSingleCost * (Math.pow(r, maxAmount) - 1) / (r - 1);
-    }
-
-    return Math.max(0, maxAmount);
-}
-
-function buyTeam(teamKey) {
-    // Determina la quantità
-    let amount = buyMultiplier;
-    if (amount === 'MAX') {
-        amount = calculateMaxAffordable(teamKey);
-        if (amount === 0) return; // Non puoi permettertene nemmeno uno
-    }
-
-    const state = gameState.teams[teamKey];
-    const currentCost = calculateBulkCost(teamKey, amount);
-
-    if (gameState.score >= currentCost) {
+    if (gameState.prestigePoints.gte(data.cost)) {
+        gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
+        gameState.skins.unlocked.push(skinId);
         playSound('sound-buy');
-        gameState.score -= currentCost;
-        state.count += amount; // Usa amount calcolato
-        recalculateCPS();
-        refreshAllStores();
+        window.EspooClicker.showToast(gameData.texts.toasts.skinBought.replace('{name}', data.name), 'success');
         window.EspooClicker.saveGame();
-        updateUI();
+        if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
+        if (typeof updateSkinsUI === 'function') updateSkinsUI();
     } else {
-        playSound('sound-error'); // <--- FEEDBACK NEGATIVO
-        window.EspooClicker.showToast("Bugs insufficienti!", 'error');
+        playSound('sound-error');
+        window.EspooClicker.showToast(gameData.texts.toasts.insufficientTokens, 'error');
     }
 }
 
-function buyClickUpgrade(upgradeKey) {
+function buyClickUpgrade(upgradeKey)
+{
     const state = gameState.clickUpgrades[upgradeKey];
     const data = gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score >= data.cost && !state.purchased) {
-        playSound('sound-buy');
-        gameState.score -= data.cost;
-        gameState.baseClickValue += data.clickIncrease;
-
-        if (upgradeKey === 'hacking') goldenBugChance *= 2;
-        if (upgradeKey === 'doppioClick') gameState.baseClickValue *= 2;
-        if (upgradeKey === 'clickAutomatico') recalculateCPS();
-
+    if (gameState.score.gte(data.cost) && !state.purchased)
+    {
+        gameState.score = gameState.score.minus(data.cost);
+        gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
+
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff));
+
+        if (upgradeKey === 'clickAutomatico')
+            recalculateCPS();
+        
+        finalizePurchase();
     }
 }
 
@@ -902,14 +379,11 @@ function buyTeamEnhancement(enhanceKey) {
     const state = gameState.buildingEnhancements[enhanceKey];
     const data = gameData.buildingEnhancements[enhanceKey];
 
-    if (gameState.score >= data.cost && !state.purchased) {
-        playSound('sound-buy');
-        gameState.score -= data.cost;
+    if (gameState.score.gte(data.cost) && !state.purchased) {
+        gameState.score = gameState.score.minus(data.cost);
         state.purchased = true;
         recalculateCPS();
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
+        finalizePurchase();
     }
 }
 
@@ -918,261 +392,794 @@ function buyPrestigeUpgrade(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const cost = data.baseCost;
 
-    if (data.isCounted) {
-        if (gameState.prestigePoints >= cost) {
-            playSound('sound-buy');
-            gameState.prestigePoints -= cost;
-            state.count++;
-            calculatePrestigeBonus();
-            recalculateCPS();
-            refreshAllStores();
-            window.EspooClicker.saveGame();
-            updateUI();
-        }
+    if (data.isCounted)
+    {
+        if (gameState.prestigePoints.lt(cost))
+            return;
+    }
+    else
+    {
+        if (gameState.prestigePoints.lt(cost) || state.purchased)
+            return;
+    }
+
+    gameState.prestigePoints = gameState.prestigePoints.minus(cost);
+
+    if (data.isCounted)
+    {
+        state.count++;
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff, 1));
+    }
+    else
+    {
+        state.purchased = true;
+        if (data.effects)
+            data.effects.forEach(eff => applyEffect(eff));
+    }
+
+    calculatePrestigeBonus();
+    recalculateCPS();
+    finalizePurchase();
+}
+
+
+// --------- FUNZIONI DI GIOCO PRINCIPALI ---------
+// --------- FUNZIONI MATEMATICHE (DECIMAL) ---------
+
+function calculateBulkCost(teamKey, amount) {
+    const data = gameData.teams[teamKey];
+    const state = gameState.teams[teamKey];
+
+    let r = 1.05;
+    if (window.costScalingBase) {
+        r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
+    }
+
+    let decR = new Decimal(r);
+    let discountedBaseCost = data.baseCost;
+
+    let currentSingleCost = discountedBaseCost.mul(decR.pow(state.count)).floor();
+
+    if (amount === 1) {
+        return Decimal.max(1, currentSingleCost);
     } else {
-        if (gameState.prestigePoints >= cost && !state.purchased) {
-            playSound('sound-buy');
-            gameState.prestigePoints -= cost;
-            state.purchased = true;
-            if (upgradeKey === 'ticketPremium') goldenBugSpawnTime *= 0.5;
-            calculatePrestigeBonus();
-            recalculateCPS();
-            refreshAllStores();
-            window.EspooClicker.saveGame();
-            updateUI();
-        }
+        let num = decR.pow(amount).minus(1);
+        let den = decR.minus(1);
+
+        if (decR.eq(1)) return currentSingleCost.mul(amount);
+
+        let totalCost = currentSingleCost.mul(num).div(den).floor();
+        return Decimal.max(amount, totalCost);
     }
 }
 
-// --------- 5. FUNZIONI DI PRESTIGIO ---------
-
-function calculatePrestigeGained() {
-    return Math.floor(Math.sqrt(gameState.totalScore / 2000000) * 1.0);
+function calculateTeamCost(teamKey) {
+    return calculateBulkCost(teamKey, 1);
 }
 
-// 1. Apre il modale e mostra i dati (NON Resetta ancora)
-function openPrestigeContract() {
-    // 1. Controlla se è possibile fare prestigio
-    const gained = calculatePrestigeGained();
+function calculateMaxAffordable(teamKey) {
+    const state = gameState.teams[teamKey];
+    const data = gameData.teams[teamKey];
 
-    // Se guadagno è 0, NON aprire, o mostra toast di avviso
-    if (gained < 1) {
+    let r = 1.05;
+    if (window.costScalingBase) r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
+    let decR = new Decimal(r);
+
+    let discountedBase = data.baseCost;
+    let currentSingleCost = discountedBase.mul(decR.pow(state.count)).floor();
+
+    if (gameState.score.lt(currentSingleCost)) return 0;
+
+    if (Math.abs(r - 1) < 0.0000001) {
+        return gameState.score.div(currentSingleCost).floor().toNumber();
+    }
+
+    let part1 = gameState.score.mul(decR.minus(1));
+    let part2 = part1.div(currentSingleCost);
+    let part3 = part2.add(1);
+
+    let logNum = new Decimal(part3.ln());
+    let logDen = new Decimal(decR.ln());
+    let maxAmount = logNum.div(logDen).floor();
+
+    if (maxAmount.lt(10000)) {
+        let num = maxAmount.toNumber();
+        let cost = calculateBulkCost(teamKey, num);
+        while (num > 0 && cost.gt(gameState.score)) {
+            num--;
+            cost = calculateBulkCost(teamKey, num);
+        }
+        return num;
+    }
+
+    return maxAmount.toNumber();
+}
+
+function buyTeam(teamKey) {
+    let amount = window.buyMultiplier;
+    if (typeof amount === 'undefined') amount = 1;
+
+    if (amount === 'MAX') {
+        amount = calculateMaxAffordable(teamKey);
+        if (amount === 0) return;
+    }
+
+    const state = gameState.teams[teamKey];
+    const currentCost = calculateBulkCost(teamKey, amount);
+
+    if (gameState.score.gte(currentCost)) {
+        playSound('sound-buy');
+        gameState.score = gameState.score.minus(currentCost);
+        state.count += amount;
+        recalculateCPS();
+        refreshAllStores();
+        window.EspooClicker.saveGame();
+        updateUI();
+    } else {
+        playSound('sound-error');
+        window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
+    }
+}
+
+function calculatePrestigeBonus() {
+    let lifetime = gameState.lifetimePrestigePoints;
+    let baseBonus = lifetime.mul(0.01);
+
+    let synergyBonus = window.prestigeSynergyFactor.mul(lifetime);
+
+    let calculatedBonus = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+
+    prestigeBonus = calculatedBonus;
+}
+
+function recalculateCPS() {
+    let baseCPS = new Decimal(0);
+
+    for (const key in gameState.teams) {
+        if (!gameState.teams[key] || !gameData.teams[key]) continue;
+        const state = gameState.teams[key];
+        const data = gameData.teams[key];
+
+        let teamBPS = new Decimal(state.count).mul(data.cpsPerUnit);
+
+        for (const enhanceKey in gameData.buildingEnhancements) {
+            if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
+                const enhancementState = gameState.buildingEnhancements[enhanceKey];
+                const enhancementData = gameData.buildingEnhancements[enhanceKey];
+                if (enhancementState.purchased && enhancementData.targetTeam === key) {
+                    teamBPS = teamBPS.mul(enhancementData.multiplier);
+                }
+            }
+        }
+
+        if (window.gameFlags.autoClickQA && data.tags && data.tags.includes('helper')) {
+            baseCPS = baseCPS.add(state.count);
+        }
+
+        baseCPS = baseCPS.add(teamBPS);
+    }
+
+    bps = baseCPS.mul(prestigeBonus)
+        .mul(clickCPSBonus)
+        .mul(bluescreenMultiplier)
+        .mul(crunchTimeMultiplier);
+}
+
+// 1. CRUNCH TIME
+function activateCrunchTime() {
+    const now = Date.now();
+    if (checkEventConflict('Espo Fury')) return false;
+    if (now < crunchTimeCooldownEnd) {
+        const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
+        window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
+        clearActiveEvent();
+        return false;
+    }
+    crunchTimeMultiplier = new Decimal(7);
+    crunchTimeEndTime = now + 30000;
+    crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
+    gameState.crunchTimeEndTime = crunchTimeEndTime;
+    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    recalculateCPS();
+    if (typeof updateUI === 'function') updateUI();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+    document.body.classList.add('crunch-active');
+
+    // --- MODIFICA QUI: Scelta Immagine in base al tema ---
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+
+    if (photoNormal && photoClicked) {
+        if (document.body.classList.contains('theme-8bit')) {
+            // Versione 8-Bit
+            photoNormal.src = 'assets/image/espobit-fury.webp';
+            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else {
+            // Versione Standard
+            photoNormal.src = 'assets/image/espo-fury.webp';
+            photoClicked.src = 'assets/image/espo-fury-click.webp';
+        }
+    }
+    // -----------------------------------------------------
+
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    // ... (resto della funzione invariato: particelle, audio, ecc.)
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (fireParticleInterval) clearInterval(fireParticleInterval);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
+    }
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
+    const furyMusic = document.getElementById('sound-fury-music');
+    if (furyMusic) {
+        const furyVol = getCustomVolume('sound-fury-music');
+        furyMusic.volume = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
+        furyMusic.currentTime = 0;
+        furyMusic.play().catch(e => { });
+    }
+    window.EspooClicker.showToast(gameData.texts.toasts.furyActive, 'success');
+    return true;
+}
+
+function spawnFireParticle(container) {
+    // 1. Particella Fiamma (Grande e Lenta)
+    const p = document.createElement('div');
+    p.classList.add('fire-particle');
+
+    // Posizione
+    const left = Math.random() * 100;
+    p.style.left = `${left}%`;
+
+    // Dimensioni variabili (più grandi al centro per effetto "falò")
+    // Usiamo dimensioni maggiori per coprire più area con meno elementi
+    const sizeBase = 60 + Math.random() * 120;
+    p.style.width = `${sizeBase}px`;
+    p.style.height = `${sizeBase * 1.2}px`;
+
+    // Durata
+    const duration = 1.5 + Math.random() * 2;
+    p.style.animation = `fireRise ${duration}s ease-out forwards`;
+
+    // Drift (Vento laterale casuale)
+    const drift = (Math.random() - 0.5) * 150;
+    p.style.setProperty('--drift', `${drift}px`);
+
+    container.appendChild(p);
+
+    // Pulizia
+    setTimeout(() => { if (p.parentNode) p.remove(); }, duration * 1000);
+
+    // 2. Scintille (Veloci e luminose) - Solo il 30% delle volte per non intasare
+    if (Math.random() < 0.3) {
+        const s = document.createElement('div');
+        s.classList.add('fire-spark');
+        s.style.left = `${left + (Math.random() * 20 - 10)}%`;
+
+        const sDuration = 0.5 + Math.random() * 1.5;
+        s.style.animation = `sparkFly ${sDuration}s linear forwards`;
+
+        container.appendChild(s);
+        setTimeout(() => { if (s.parentNode) s.remove(); }, sDuration * 1000);
+    }
+}
+
+function resumeCrunchTimeEffects() {
+    window.currentActiveEvent = 'Espo Fury';
+    crunchTimeMultiplier = new Decimal(7);
+    document.body.classList.add('crunch-active');
+    const overlay = document.getElementById('crunch-overlay');
+    if (overlay) overlay.style.display = 'block';
+
+    // ... (particelle e audio stop invariati)
+    const fireContainer = document.getElementById('fire-particles-container');
+    if (fireContainer) {
+        fireContainer.style.display = 'block';
+        if (fireParticleInterval) clearInterval(fireParticleInterval);
+        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
+    }
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
+
+    // --- MODIFICA QUI: Scelta Immagine al Resume ---
+    const photoNormal = document.getElementById('manager-photo-normal');
+    const photoClicked = document.getElementById('manager-photo-clicked');
+
+    if (photoNormal && photoClicked) {
+        if (document.body.classList.contains('theme-8bit')) {
+            photoNormal.src = 'assets/image/espobit-fury.webp';
+            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else {
+            photoNormal.src = 'assets/image/espo-fury.webp';
+            photoClicked.src = 'assets/image/espo-fury-click.webp';
+        }
+    }
+    // -----------------------------------------------
+
+    const furyMusic = document.getElementById('sound-fury-music');
+    // ... (resto logica audio invariata)
+    if (furyMusic) {
+        const furyVol = getCustomVolume('sound-fury-music');
+        const targetVol = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
+        furyMusic.volume = targetVol;
+        furyMusic.currentTime = 0;
+        const playPromise = furyMusic.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                // ... (gestione autoplay bloccato invariata)
+            });
+        }
+    }
+    recalculateCPS();
+    if (typeof updateUI === 'function') updateUI();
+}
+
+
+const EventHandlers = {
+    video: (config, eventKey) => {
+        document.body.classList.add('rick-rolling');
+
+        // 1. Reset e nascondi altri video
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
+            const videoMeme = document.getElementById(id);
+            if (videoMeme) {
+                videoMeme.pause();
+                videoMeme.classList.add("video_display_none");
+                videoMeme.currentTime = 0;
+            }
+        });
+
+        // Nascondi pannelli laterali
+        const leftP = document.getElementById('header-left-panel');
+        const rightP = document.getElementById('header-right-panel');
+        if (leftP) leftP.classList.add("header_stat_box_display_none");
+        if (rightP) rightP.classList.add("header_stat_box_display_none");
+
+        // 2. Selezione Video
+        let videoId = config.videos[0];
+        if (config.videos.length > 1) {
+            const available = config.videos.filter(id => id !== lastVideoPlayedId);
+            const pool = available.length > 0 ? available : config.videos;
+            videoId = pool[Math.floor(Math.random() * pool.length)];
+        }
+        lastVideoPlayedId = videoId;
+
+        const video = document.getElementById(videoId);
+
+        if (video) {
+            if (!video.src) {
+                video.src = video.getAttribute('data-src');
+                video.load();
+            }
+
+            // Preparazione Video
+            video.classList.remove("video_display_none");
+            video.currentTime = 0;
+
+            // Calcolo Volume
+            const customVol = getCustomVolume(config.audioId || videoId);
+            video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
+
+            // Play sicuro
+            video.play().catch(e => { console.warn("Autoplay video bloccato", e); });
+
+            let clickOverlay = document.getElementById('video-click-overlay');
+            // Creazione Overlay
+            if (!clickOverlay) {
+                clickOverlay = document.createElement('div');
+                clickOverlay.id = 'video-click-overlay';
+                clickOverlay.style.position = 'fixed';
+                clickOverlay.style.top = '0';
+                clickOverlay.style.left = '0';
+                clickOverlay.style.width = '100vw';
+                clickOverlay.style.height = '100vh';
+                clickOverlay.style.zIndex = '9999';
+                clickOverlay.style.cursor = 'pointer';
+                clickOverlay.style.transform = 'none';
+                document.body.appendChild(clickOverlay);
+            }
+            clickOverlay.style.display = 'block';
+
+            // Handler del Click sull'Overlay
+            const overlayClickHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Creazione evento sintetico
+                const syntheticEvent = {
+                    detail: 1,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pageX: e.pageX,
+                    pageY: e.pageY,
+                    target: clickOverlay
+                };
+
+                // Guadagno punti
+                resolveBug(syntheticEvent);
+            };
+
+            // Usa pointerdown per reattività immediata
+            clickOverlay.addEventListener('pointerdown', overlayClickHandler);
+
+            // Timer fine evento
+            setTimeout(() => {
+                video.pause();
+                video.classList.add("video_display_none");
+
+                // Rimuovi Overlay e Listener
+                clickOverlay.removeEventListener('pointerdown', overlayClickHandler);
+                clickOverlay.style.display = 'none'; // Nascondi overlay
+
+                document.body.classList.remove('rick-rolling');
+
+                // Ripristino Audio Ambiente
+                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+            }, config.duration);
+        }
+
+        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+    },
+
+    css_mode: (config, eventKey) => {
+        // LOGICA CSS (404 / Bluescreen / Matrix)
+        // Applica la classe dell'evento al body
+        document.body.classList.add(config.cssClass);
+
+        // GESTIONE SPECIFICA PER MATRIX
+        if (config.cssClass === 'matrix-active') {
+            // Avvia l'effetto canvas
+            if (typeof startMatrixEffect === 'function') startMatrixEffect();
+
+            const photoNormal = document.getElementById('manager-photo-normal');
+            const photoClicked = document.getElementById('manager-photo-clicked');
+
+            if (photoNormal && photoClicked) {
+                // NUOVA LOGICA DI SCELTA SKIN MATRIX
+                // Controlla se il tema 8-bit è attivo
+                if (document.body.classList.contains('theme-8bit')) {
+                    // Se sì, usa le versioni 8-bit di Matrix
+                    photoNormal.src = 'assets/image/espobit-matrix.webp';
+                    photoClicked.src = 'assets/image/espobit-matrix-click.webp';
+                } else {
+                    // Altrimenti, usa le versioni standard di Matrix
+                    photoNormal.src = 'assets/image/espo-matrix.webp';
+                    photoClicked.src = 'assets/image/espo-matrix-click.webp';
+                }
+                // ------------------------------------------
+            }
+        }
+
+        // GESTIONE AUDIO EVENTI (Delega al Manager Centrale)
+        // Se è l'evento di Natale (Bluescreen), gestisci il glitch audio specifico
+        if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
+            const snowAudio = document.getElementById('sound-snowball');
+            if (snowAudio) {
+                snowAudio.play();
+                // Avvia il glitch casuale
+                if (audioGlitchInterval) clearInterval(audioGlitchInterval);
+                audioGlitchInterval = setInterval(() => {
+                    snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
+                    const baseVol = gameState.user.masterVolume * gameState.user.musicVolume;
+                    snowAudio.volume = (Math.random() < 0.3) ? 0 : Math.max(0, Math.min(1, baseVol * 0.2));
+                }, 100);
+            }
+        } else {
+            // Per Matrix e Bluescreen standard, lascia che l'AudioManager decida cosa suonare
+            // (es. sound-matrix.mp3 o sound-bluescreen.mp3)
+            if (typeof AudioManager !== 'undefined') {
+                AudioManager.updateAmbience();
+            }
+        }
+    }
+};
+
+// --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
+function triggerGameEvent(eventKey, overrideMult = null) {
+    const config = gameData.events[eventKey];
+    if (!config) return false;
+    if (checkEventConflict(config.name)) return false;
+
+    const snowAudio = document.getElementById('sound-snowball');
+    if (snowAudio) snowAudio.pause();
+    const bgMusic = document.getElementById('sound-bg-music');
+    if (bgMusic) bgMusic.pause();
+
+    let bonusMult = overrideMult;
+    if (!bonusMult) {
+        bonusMult = Math.floor(Math.random() * (config.maxMult - config.minMult + 1)) + config.minMult;
+    }
+
+    isBluescreenActive = true;
+    bluescreenMultiplier = new Decimal(bonusMult); // Fondamentale: Decimal
+    recalculateCPS();
+
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) {
+        emDisplay.textContent = config.toast.replace('{mult}', bonusMult);
+        emDisplay.style.display = 'block';
+    }
+
+    window.EspooClicker.showToast(config.toast.replace('{mult}', bonusMult), config.toastType);
+
+    if (EventHandlers[config.type]) EventHandlers[config.type](config, eventKey);
+
+    setTimeout(() => {
+        document.body.classList.remove('rick-rolling');
+        if (config.cssClass) document.body.classList.remove(config.cssClass);
+        stopBluescreenEffect();
+    }, config.duration);
+
+    return true;
+}
+
+
+function triggerBluescreen(multiplier) {
+    // Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
+    if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
+        return triggerGameEvent('rickRoll');
+    }
+    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
+        return triggerGameEvent('ricardo');
+    }
+
+    // Scelta Casuale: 50% Blue Screen / 50% Matrix
+    const eventType = Math.random() < 0.5 ? 'bluescreen' : 'matrix';
+
+    // Avvia l'evento scelto
+    return triggerGameEvent(eventType, multiplier);
+}
+
+function stopBluescreenEffect() {
+    isBluescreenActive = false;
+    bluescreenMultiplier = new Decimal(1); // Reset a Decimal(1)
+
+    document.body.classList.remove('bluescreen-active');
+    document.body.classList.remove('matrix-active');
+    document.body.classList.remove('rick-rolling');
+
+    if (typeof stopMatrixEffect === 'function') stopMatrixEffect();
+
+    const emDisplay = document.getElementById('event-multiplier-display');
+    if (emDisplay) emDisplay.style.display = 'none';
+
+    recalculateCPS();
+
+    // ... (Codice audio stop esistente invariato) ...
+    try {
+        const soundBlue = document.getElementById('sound-bluescreen');
+        const soundMatrix = document.getElementById('sound-matrix');
+        const rickVideo = document.getElementById('rick-roll-video');
+        if (soundBlue) { soundBlue.pause(); soundBlue.currentTime = 0; }
+        if (soundMatrix) { soundMatrix.pause(); soundMatrix.currentTime = 0; }
+        if (rickVideo) { rickVideo.pause(); rickVideo.classList.add("video_display_none"); }
+    } catch (e) { }
+
+    if (audioGlitchInterval) { clearInterval(audioGlitchInterval); audioGlitchInterval = null; }
+    if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
+    clearActiveEvent();
+}
+
+// CALCOLO CENTRALIZZATO DEL VALORE CLICK
+function calculateClickValue() {
+    let val = gameState.baseClickValue
+        .mul(window.clickGlobalMult || 1)
+        .mul(prestigeBonus)
+        .mul(bluescreenMultiplier)
+        .mul(crunchTimeMultiplier);
+
+    if (window.gameFlags.bionicHand) {
+        let percent = window.gameFlags.divineClick ? 0.02 : 0.01;
+        val = val.add(bps.mul(percent));
+    }
+
+    return val;
+}
+function calculateRawClickValue() {
+    // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
+    let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
+
+    // Aggiungi Mano Bionica (Se attiva)
+    if (window.gameFlags.bionicHand) {
+        let percent = 0.01;
+        if (window.gameFlags.divineClick) percent = 0.02;
+        val += (bps * percent);
+    }
+
+    return val;
+}
+
+function resolveBug(event) {
+    if (event.detail === 0) return;
+    if (typeof clickerButton !== 'undefined' && clickerButton) clickerButton.blur();
+
+    AudioManager.playClickEffect();
+
+    const currentClickValue = calculateClickValue();
+
+    clickHistory.push({ time: Date.now(), value: currentClickValue });
+    gameState.score = gameState.score.add(currentClickValue);
+    gameState.totalScore = gameState.totalScore.add(currentClickValue);
+    gameState.lifetimeScore = gameState.lifetimeScore.add(currentClickValue);
+    gameState.totalClicks++;
+
+    if (typeof showClickFeedback === 'function') showClickFeedback(event);
+
+    const btn = document.getElementById('clicker-btn');
+    if (btn) {
+        btn.classList.remove('click-shrink', 'clicked');
+        void btn.offsetWidth;
+        btn.classList.add('click-shrink', 'clicked');
+        setTimeout(() => {
+            btn.classList.remove('click-shrink', 'clicked');
+        }, 100);
+    }
+
+    if (typeof updateClickStore === 'function') updateClickStore();
+    if (typeof updateUI === 'function') updateUI();
+}
+
+
+
+
+function calculatePrestigeGained() {
+    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) return new Decimal(0);
+    let base = new Decimal(2000000);
+    return gameState.totalScore.div(base).sqrt().floor();
+}
+
+function openPrestigeContract() {
+    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast("Devi accumulare più bug per ottenere una promozione!", "error");
+            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
         }
         return;
     }
 
-    // 2. Popola i dati nel NUOVO modale unico
+    const gained = calculatePrestigeGained();
+    if (gained.lt(1)) {
+        if (window.EspooClicker && window.EspooClicker.showToast) {
+            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedMore, "error");
+        }
+        return;
+    }
+
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
 
     if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
 
-    // Calcolo anteprima bonus futuro
-    let currentLifetime = gameState.lifetimePrestigePoints || 0;
-    let estimatedLifetime = currentLifetime + gained;
-    let baseBonus = estimatedLifetime * 0.01;
+    // Calcoli per la preview
+    let currentLifetime = gameState.lifetimePrestigePoints || new Decimal(0);
+    let estimatedLifetime = currentLifetime.add(gained);
+
+    // Calcolo Bonus
+    let baseBonus = estimatedLifetime.mul(0.01);
+
     let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
-    let synergyBonus = synergyCount * (gameData.prestigeUpgrades.sinergia.bonusPerLevel || 0.001) * estimatedLifetime;
-    let totalPercent = ((baseBonus + synergyBonus) * 100).toFixed(1);
+    let synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
 
-    if (bonusDisplay) bonusDisplay.textContent = `Nuovo Totale: +${totalPercent}%`;
+    // synergy = count * 0.001 * lifetime
+    let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
 
-    // 3. Mostra il modale unico
+    let totalMultiplier = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+
+    if (bonusDisplay) {
+        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-size: 1.4rem;">x${formatNumber(totalMultiplier)}</span>`;
+    }
+
     const modal = document.getElementById('prestige-modal');
     if (modal) modal.style.display = 'flex';
+
+    // Aggiungi classe al body per gestire i toast
+    document.body.classList.add('modal-open');
 }
 
-// 2. Esegui il reset (Chiamata dal bottone "Firma")
 async function executePrestige() {
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
-
-    // 1. Chiudi modale contratto
     if (modal) modal.style.display = 'none';
-
-    // 2. Avvia Animazione Overlay
     if (overlay) {
-        overlay.style.display = 'flex';
+        overlay.classList.remove("prestige_transition_overlay_display_none");
         playSound('sound-prestige');
-        // Timeout breve per permettere al browser di renderizzare il display:flex prima dell'opacity
         setTimeout(() => overlay.classList.add('active'), 10);
     }
 
-    // 3. Calcoli di Prestigio (Back-end logic)
     const gained = calculatePrestigeGained();
-    let newPrestigePoints = gameState.prestigePoints + gained;
-    let currentLifetime = gameState.lifetimePrestigePoints !== undefined ? gameState.lifetimePrestigePoints : gameState.prestigePoints;
-    let newLifetimePrestigePoints = currentLifetime + gained;
+    let newPrestigePoints = gameState.prestigePoints.add(gained);
+    let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
-    let startBonusBugs = 0;
-
+    let startBonusBugs = new Decimal(0);
     if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
-        // 2000 bug per livello
-        startBonusBugs = gameState.prestigeUpgrades.paracadute.count * 2000;
+        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
     }
 
+    // ... (Codice salvataggio dati persistenti invariato) ...
+    const persistentKeys = ['achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore'];
+    const preservedData = {};
+    persistentKeys.forEach(key => {
+        if (gameState[key] !== undefined) {
+            preservedData[key] = JSON.parse(JSON.stringify(gameState[key]));
+        }
+    });
 
-
-    // Salva i dati che devono persistere
-    let oldAchievements = JSON.parse(JSON.stringify(gameState.achievements));
-    let oldPrestigeUpgrades = JSON.parse(JSON.stringify(gameState.prestigeUpgrades));
-    let oldSkins = JSON.parse(JSON.stringify(gameState.skins)); // <--- AGGIUNTO: Salva le skin attuali
-    let oldTotalResets = gameState.totalResets + 1;
-    let oldTotalClicks = gameState.totalClicks;
-    let oldGoldenBugs = gameState.totalGoldenBugsClicked;
-    let oldPlayTime = gameState.totalPlayTime;
-    let oldLifetimeScore = gameState.lifetimeScore;
-    let oldUser = gameState.user;
-
-    // ATTESA SCENICA (1.5 secondi)
-    // Diamo tempo all'utente di vedere l'animazione "Promozione in corso"
+    const newResets = gameState.totalResets + 1;
     await new Promise(r => setTimeout(r, 1500));
 
-    // 4. RESET DELLO STATO (Soft Reset)
-    let newState = createNewGameState();
+    let newState = getInitialGameState(); // Ritorna Decimali puliti
 
+    persistentKeys.forEach(key => {
+        if (preservedData[key] !== undefined) {
+            newState[key] = preservedData[key];
+        }
+    });
+
+    // Re-istanza Decimali Critici (fondamentale dopo JSON.parse)
+    if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
+    if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
+
+    newState.prestigePoints = newPrestigePoints;
+    newState.lifetimePrestigePoints = newLifetime;
+    newState.totalResets = newResets;
+    newState.lastSaveTimestamp = Date.now();
+    newState.score = startBonusBugs;
+
+    // ... (Codice Eredità teams invariato) ...
+    if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0;
     if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
-        // Mantieni N Assistenti QA
         newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
     }
-
-    // Re-inietta i dati persistenti
-    newState.prestigePoints = newPrestigePoints;
-    newState.lifetimePrestigePoints = newLifetimePrestigePoints;
-
-    if (startBonusBugs > 0) {
-        newState.score = startBonusBugs;
-        newState.totalScore = startBonusBugs;
-    }
-
-    newState.achievements = oldAchievements;
-    newState.prestigeUpgrades = oldPrestigeUpgrades;
-    newState.skins = oldSkins; // <--- AGGIUNTO: Ripristina le skin
-    newState.totalResets = oldTotalResets;
-    newState.totalClicks = oldTotalClicks;
-    newState.totalGoldenBugsClicked = oldGoldenBugs;
-    newState.totalPlayTime = oldPlayTime;
-    newState.lifetimeScore = oldLifetimeScore;
-    newState.user = oldUser;
-    newState.lastSaveTimestamp = Date.now();
-
-    // Gestione bonus "Accelerazione" (Start con 1 QA)
     if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
-        newState.teams.assistenteQa.count = 1;
+        newState.teams.assistenteQa.count++;
     }
 
-    // Sovrascrivi la variabile globale gameState
-    // Nota: Usiamo Object.assign per mantenere il riferimento dell'oggetto se necessario, 
-    // ma qui sostituiamo proprio le proprietà per sicurezza.
     gameState = newState;
 
-    // Reset Variabili Temporanee Logic
-    cookiesPerSecond = 0;
-    clickHistory = []; // Pulisce il grafico BPS
+    bps = new Decimal(0);
+    clickHistory = [];
     isBluescreenActive = false;
-    bluescreenMultiplier = 1;
-    document.body.classList.remove('bluescreen-active'); // Rimuove sfondo blu se c'era
+    bluescreenMultiplier = new Decimal(1);
+    document.body.classList.remove('bluescreen-active');
+
     try {
         const soundBluescreen = document.getElementById('sound-bluescreen');
         if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
     } catch (e) { }
 
-    // 5. AGGIORNAMENTO UI TOTALE
-    calculatePrestigeBonus(); // Ricalcola i bonus base
+    reapplyAllEffects();
+    calculatePrestigeBonus();
     recalculateCPS();
-
-    // Forza il refresh grafico di tutti i negozi (resetta classi 'purchased', barre progresso, costi)
     refreshAllStores();
     updateUI();
 
-    // Salva il nuovo stato pulito
-    if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
 
-    // 6. Rimuovi Overlay
     if (overlay) {
         overlay.classList.remove('active');
         setTimeout(() => {
-            overlay.style.display = 'none';
-            if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast("Promozione completata! Buon lavoro!");
-            }
-        }, 500); // Aspetta la fine della transizione CSS (0.5s)
+            overlay.classList.add("prestige_transition_overlay_display_none");
+            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
+        }, 500);
     }
 }
-
-// In template/js/game-logic.js
-
-async function submitScoreToLeaderboard(username) {
-    // Nota: Score e Prestige non vengono più passati come parametri.
-    // Il server li prenderà dal salvataggio nel database per sicurezza.
-
-    const password = window.EspooClicker ? window.EspooClicker.getPassword() : null;
-
-    if (!password || !username) return;
-
-    // Inviamo il salvataggio PRIMA di aggiornare la classifica per essere sicuri
-    // che il DB abbia i dati più freschi.
-    if (window.EspooClicker && window.EspooClicker.saveGame) {
-        await window.EspooClicker.saveGame();
-    }
-
-    try {
-        const response = await fetch('./php/submit_score.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: username,
-                password: password
-                // Non inviamo più score o prestigeLevel qui!
-            })
-        });
-        // const res = await response.json();
-        // console.log("Leaderboard sync:", res); // Debug opzionale
-    } catch (error) {
-        console.warn("Sync classifica fallito (offline?)");
-    }
-}
-
-function createNewGameState() {
-    // 1. Ottieni una copia fresca e COMPLETA dallo stato iniziale definito in game-data.js
-    // Questo assicura che se aggiungi nuovi edifici/upgrade lì, appariranno anche qui.
-    const freshState = getInitialGameState();
-
-    // Facciamo una deep copy per evitare riferimenti condivisi
-    const newState = JSON.parse(JSON.stringify(freshState));
-
-    // 2. Ripristina SOLO ciò che deve persistere tra i reset
-    // Mantiene gli achievement sbloccati (come da standard Prestige)
-    // Nota: Usiamo una copia sicura anche qui
-    newState.achievements = JSON.parse(JSON.stringify(gameState.achievements));
-
-    // Mantiene le impostazioni utente (volume, nome)
-    newState.user = JSON.parse(JSON.stringify(gameState.user));
-
-    // Mantiene i filtri dei negozi
-    if (gameState.filterSettings) {
-        newState.filterSettings = JSON.parse(JSON.stringify(gameState.filterSettings));
-    }
-
-    // Nota: PrestigePoints e Upgrade Prestigio vengono reiniettati 
-    // esplicitamente dentro la funzione executePrestige(), quindi non serve farlo qui.
-
-    return newState;
-}
-
-// --------- 7. LOOP DI GIOCO E OBIETTIVI ---------
 
 function checkAchievements() {
-    // FIX: Calcola il bonus BPS totale dagli obiettivi all'inizio
-    let totalAchBPSBonus = 0;
-    const isPostPrestige = gameState.totalResets > 0; // Check per il requisito di Prestigio
+    let totalAchBPSBonus = new Decimal(0); // Inizializza come Decimal
+    const isPostPrestige = gameState.totalResets > 0;
 
     for (const key in gameData.achievements) {
         const data = gameData.achievements[key];
-
-        // Inizializza se manca
+        // Inizializzazione sicura se manca nel save
         if (!gameState.achievements[key]) {
             gameState.achievements[key] = { unlocked: false, claimed: false };
         }
@@ -1182,94 +1189,69 @@ function checkAchievements() {
 
         const state = gameState.achievements[key];
 
-        // Se l'achievement ha un premio (data.reward) E non è post-prestigio, salta il check per ora.
-        // Questo impedisce che l'utente sblocchi i bonus BPS prima del primo reset.
+        // Skip obiettivi moltiplicatore se non sei in prestigio
         if (data.reward && data.reward.type === 'multiplier' && !isPostPrestige) {
             continue;
         }
 
-        // 1. Sblocca se condizione vera e non ancora sbloccato
+        // Sblocco automatico
         if (!state.unlocked && data.condition()) {
             unlockAchievement(key);
         }
 
-        // 2. Calcola il Bonus BPS dagli achievement già RISCATTATI
+        // Calcolo Bonus Moltiplicatore (Decimal)
         if (state.claimed && data.reward && data.reward.type === 'multiplier') {
-            totalAchBPSBonus += (data.reward.value - 1); // Somma solo la parte bonus (es. x1.1 -> 0.1)
+            // Esempio: value 1.5 diventa bonus 0.5
+            let val = new Decimal(data.reward.value).minus(1);
+            totalAchBPSBonus = totalAchBPSBonus.add(val);
         }
     }
 
-    // Aggiorna il bonus globale e ricalcola
     achievementsBPSBonus = totalAchBPSBonus;
-    calculatePrestigeBonus(); // Chiama il ricalcolo combinato
+    calculatePrestigeBonus();
 }
 
 function unlockAchievement(key) {
     const data = gameData.achievements[key];
     gameState.achievements[key].unlocked = true;
     gameState.achievements[key].unlockTime = Date.now();
-
-    // FIX: Se NON c'è un premio, segnalo subito come riscattato/completato
     if (!data.reward) {
         gameState.achievements[key].claimed = true;
     } else {
         gameState.achievements[key].claimed = false;
     }
-
     playSound('sound-achievement');
-
-    // Messaggio diverso in base al premio
-    let msg = `🏆 Sbloccato: ${data.name}`;
-    if (data.reward) msg += " (Premio disponibile!)";
-
+    let msg = gameData.texts.toasts.achievementUnlock.replace('{name}', data.name);
+    if (data.reward) msg += gameData.texts.toasts.rewardAvailable;
     window.EspooClicker.showToast(msg);
-
     window.EspooClicker.saveGame();
-
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
 }
 
-// NUOVA FUNZIONE: RISCATTA PREMIO
 function claimAchievementReward(key) {
     const state = gameState.achievements[key];
     const data = gameData.achievements[key];
 
+    // Controlli di sicurezza
     if (!state || !state.unlocked || state.claimed) return;
 
+    // Assegna il premio usando il nuovo sistema unificato
     if (data.reward) {
-        let toastType = 'reward';
-        if (data.reward.type === 'bugs') {
-            gameState.score += data.reward.value;
-            gameState.totalScore += data.reward.value;
-            window.EspooClicker.showToast(`Riscattato: +${formatNumber(data.reward.value)} Bug!`, toastType);
-        }
-        else if (data.reward.type === 'prestige') {
-            gameState.prestigePoints += data.reward.value;
-            window.EspooClicker.showToast(`Riscattato: +${data.reward.value} Token Lab!`, toastType);
-        }
-        else if (data.reward.type === 'skin') {
-            const skinId = data.reward.id;
-            if (!gameState.skins.unlocked.includes(skinId)) {
-                gameState.skins.unlocked.push(skinId);
-                // QUI SOLO MESSAGGIO TOAST, NESSUN EVENTO GRAFICO
-                window.EspooClicker.showToast(`Nuova Skin Riscattata: ${gameData.skins[skinId].name}!`, 'success');
-            }
-        }
-        else if (data.reward.type === 'multiplier') {
-            window.EspooClicker.showToast(`Riscattato: Bonus BPS Attivo!`, toastType);
-        }
+        grantReward(data.reward);
     }
 
+    // Aggiorna stato
     state.claimed = true;
     playSound('sound-buy');
+
+    // Ricalcola e Salva
     recalculateCPS();
     window.EspooClicker.saveGame();
+
+    // Aggiorna UI
     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
     if (typeof updateSkinsUI === 'function') updateSkinsUI();
 }
-
-
-// --------- 8. BUG CRITICO (GOLDEN BUG) ---------
 
 let goldenBugTimer;
 function scheduleGoldenBug() {
@@ -1279,53 +1261,70 @@ function scheduleGoldenBug() {
 }
 
 function spawnGoldenBug() {
-    goldenBug.style.display = 'none';
-    let bugWidth = goldenBug.style.width;
-    let bugHeight = goldenBug.style.height;
-    const offsetAreaAnimation = 40;
-    const rect = document.getElementById('center-column').getBoundingClientRect();
-    const spawnWidth = rect.width;
-    const spawnHeight = rect.height;
-    const x = Math.random() * (spawnWidth - (bugWidth / 2));
-    const y = Math.random() * (spawnHeight - (bugHeight / 2));
-    goldenBug.style.left = `${rect.left + x - offsetAreaAnimation}px`;
-    goldenBug.style.top = `${rect.top + y - offsetAreaAnimation}px`;
-    goldenBug.style.display = 'block';
-    setTimeout(() => { goldenBug.style.display = 'none'; }, 10000);
+    // Reset
+    goldenBug.classList.remove('visible');
+
+    const bugWidth = 60;
+    const bugHeight = 60;
+
+    const padding = 20;
+
+    const targetArea = document.getElementById('clicker-section');
+    if (!targetArea) return;
+
+    const rect = targetArea.getBoundingClientRect();
+
+    // Calcolo con dimensioni corrette
+    const maxX = rect.width - bugWidth - (padding * 2);
+    const maxY = rect.height - bugHeight - (padding * 2);
+
+    // Evita valori negativi se lo schermo è minuscolo
+    const randomX = Math.max(0, Math.random() * maxX);
+    const randomY = Math.max(0, Math.random() * maxY);
+
+    // Conversione in coordinate ASSOLUTE (per il body)
+    // Sommiamo la posizione dell'area + lo scroll della pagina + il padding + la posizione random
+    const finalLeft = rect.left + window.scrollX + padding + randomX;
+    const finalTop = rect.top + window.scrollY + padding + randomY;
+
+    // Applica posizione
+    goldenBug.style.left = `${finalLeft}px`;
+    goldenBug.style.top = `${finalTop}px`;
+
+    // Mostra (Flex per centrare l'icona)
+    goldenBug.classList.add('visible');
+
+    // Timer Sparizione
+    setTimeout(() => {
+        goldenBug.classList.remove('visible');
+    }, 10000); // 10 secondi
+
     scheduleGoldenBug();
     return true;
 }
 
 function clickGoldenBug() {
+    const goldenBug = document.getElementById('golden-bug');
     playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
 
-    let clickBonusPercent = 0.01;
-    if (gameState.clickUpgrades.clickDivino.purchased) clickBonusPercent = 0.02;
-    let clickValuePercentBonus = 0;
-    if (gameState.clickUpgrades.manoBionica.purchased) {
-        clickValuePercentBonus = (cookiesPerSecond / (prestigeBonus * bluescreenMultiplier)) * clickBonusPercent;
-    }
-    const currentClickValue = (gameState.baseClickValue * prestigeBonus * bluescreenMultiplier);
-    let bonus = (cookiesPerSecond * 30) + (currentClickValue * 10) + 10;
-    if (gameState.prestigeUpgrades.bugBounty && gameState.prestigeUpgrades.bugBounty.count > 0) {
-        const bountyMult = 1 + (gameState.prestigeUpgrades.bugBounty.count * 0.20); // +20% per livello
-        bonus *= bountyMult;
-    }
-    gameState.score += bonus;
-    gameState.totalScore += bonus;
-    gameState.lifetimeScore += bonus;
+    const currentClickValue = calculateClickValue();
 
-    window.EspooClicker.showToast(`Bug Critico Risolto! +${formatNumber(bonus)} bug!`, 'reward');
-    goldenBug.style.display = 'none';
+    // Formula: (BPS * 30 + Click * 10 + 10) * Multiplier
+    let bonus = bps.mul(30).add(currentClickValue.mul(10)).add(10);
+    bonus = bonus.mul(window.goldenBugMult);
+
+    gameState.score = gameState.score.add(bonus);
+    gameState.totalScore = gameState.totalScore.add(bonus);
+    gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
+
+    window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
+    if (goldenBug) goldenBug.classList.remove('visible');
     updateUI();
 }
 
-// --------- 11. EASTER EGG ---------
-
 let originalTitle = document.title;
 document.addEventListener('visibilitychange', () => {
-    // Aggiungiamo l'emoji 🐞 qui perché il browser non supporta FontAwesome nel titolo tab
     if (document.hidden) document.title = '🐞 I bug si accumulano...';
     else document.title = originalTitle;
 });

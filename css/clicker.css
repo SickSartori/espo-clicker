@@ -1,5 +1,4 @@
 /* css/clicker.css - Area Centrale di Gioco */
-
 #clicker-section {
     padding: 10px 20px;
     display: flex;
@@ -8,9 +7,9 @@
     align-items: center;
     position: relative;
     flex-grow: 1;
-    min-height: 450px;
-    gap: 10px;
-    padding-top: 10px;
+    height: 100%;
+    min-height: 0;
+    gap: 2vh;
 }
 
 /* Feedback (+1 click) */
@@ -33,7 +32,10 @@
     animation: floatUpDynamic 1.5s ease-out forwards;
     pointer-events: none;
     text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
-    z-index: 11;
+    z-index: calc(var(--z-content) + 1);
+    white-space: nowrap;
+    width: auto;
+
 }
 
 /* Bottone Clicker */
@@ -43,14 +45,22 @@
     padding: 0;
     cursor: pointer;
     transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
-    z-index: 10;
+    z-index: var(--z-content);
     position: relative;
-    width: 230px;
-    height: 230px;
+    /* DIMENSIONE REATTIVA:
+       - Minimo: 180px 
+       - Ideale: 35% dell'altezza dello schermo (35vh)
+       - Massimo: 280px 
+    */
+    width: clamp(180px, 35vh, 280px);
+    height: clamp(180px, 35vh, 280px);
+    margin: 0 auto;
     flex-shrink: 0;
     outline: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+
+    border-radius: 50%;
 }
 
 #clicker-btn:focus {
@@ -61,16 +71,36 @@
     transform: scale(0.95);
 }
 
+#clicker-btn.click-shrink {
+    transform: scale(0.90);
+    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+}
+
+#clicker-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(52, 152, 219, 0.2) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+}
+
 #manager-photo-normal,
 #manager-photo-clicked {
-    width: 220px;
-    height: 220px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
     position: absolute;
     top: 0;
     left: 0;
     transition: none;
+    filter: none;
 }
 
 #manager-photo-clicked {
@@ -88,63 +118,63 @@
 
 /* Punteggi */
 #score-display {
-    font-size: 3.5rem;
-    font-weight: 900;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 4vh, 2.5rem);
     color: #ff4757;
-    margin-top: 10px;
-    z-index: 10;
-    text-shadow: 0 0 15px rgba(255, 71, 87, 0.6), 2px 2px 0px rgba(0, 0, 0, 0.5);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+    text-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
+    line-height: 1;
     transition: transform 0.1s;
     position: relative;
+    cursor: help;
 }
 
-#score-label {
-    font-size: 1.3rem;
-    color: #bdc3c7;
-    z-index: 10;
+#score-display[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    top: 100%;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 12px;
+    margin-bottom: 0;
+    width: max-content;
+    min-width: auto;
+    white-space: nowrap;
+    background-color: rgba(10, 15, 20, 0.98);
+    border: 1px solid #ff4757;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    z-index: var(--z-loader);
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+#score-display[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: #ff4757;
+    margin-top: 0px;
+    z-index: var(--z-loader);
 }
 
 #cps-display {
+    font-family: var(--font-heading);
     font-size: 1.2rem;
-    color: #ecf0f1;
-    margin-top: 10px;
-    font-weight: 500;
-    z-index: 10;
-}
-
-/* HUD Stats Bar */
-.hud-stats-bar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    width: fit-content;
-    margin: 0 auto 20px auto;
-    padding: 10px 40px;
-    background: rgba(30, 40, 50, 0.8);
-    border: 1px solid #f1c40f;
-    border-radius: 50px;
-}
-
-.hud-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.hud-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
+    font-weight: 600;
     color: #bdc3c7;
-}
-
-.hud-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-top: 32px;
 }
 
 /* Skill Button (Crunch Time) */
@@ -153,9 +183,9 @@
     color: white;
     border: none;
     box-shadow: 0 3px 0 #a04000, 0 4px 10px rgba(230, 126, 34, 0.3);
-    padding: 8px 30px;
+    padding: 1vh 30px;
     font-size: 1rem;
-    margin-top: 20px;
+    margin-top: 2vh;
     border-radius: 8px;
     font-family: 'Inter', sans-serif;
     font-weight: 500;
@@ -196,7 +226,7 @@
     box-shadow: none;
     cursor: not-allowed;
     border: 2px solid #2c3e50;
-    transform: none !important;
+    transform: none;
 }
 
 /* Timer interno */
@@ -215,7 +245,7 @@
     color: #facc15;
     text-shadow: 0 0 8px #facc15;
     margin-top: 10px;
-    z-index: 10;
+    z-index: var(--z-content);
     text-align: center;
 }
 
@@ -232,38 +262,50 @@
 #golden-bug {
     position: absolute;
     cursor: pointer;
-    z-index: 999;
+    z-index: var(--z-golden-bug);
     display: none;
-    transition: all 0.3s;
+    width: 60px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
-    filter: drop-shadow(0 0 10px #facc15);
 }
 
-#golden-bug:hover {
+#golden-bug.visible {
+    display: flex;
+}
+
+#golden-bug i {
+    font-size: 3rem;
+    color: #facc15;
+    filter: drop-shadow(0 0 10px #facc15) drop-shadow(0 0 20px #e67e22);
+    animation: cyberGlitchAnim 2s infinite linear alternate-reverse;
+}
+
+#golden-bug:hover i {
+    color: #fff;
+    filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #facc15);
     transform: scale(1.2);
-    filter: drop-shadow(0 0 15px #fff);
 }
 
-#golden-bug img {
-    width: 50px;
-    height: 50px;
-    animation: inherit;
-}
-
-#version-display {
+body #version-display {
     position: fixed;
-    bottom: 10px;
-    right: 48.9%;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    z-index: 9000;
     font-size: 0.75rem;
-    color: #95a5a6;
-    opacity: 0.6;
-    z-index: 5;
-    user-select: text;
+    font-family: monospace;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.25);
+    text-shadow: 1px 1px 2px #000;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 /* --- EFFETTO GLITCH 404 --- */
-
-/* Quando il body ha la classe bluescreen-active (evento 404 attivo) */
 body.bluescreen-active #game-container {
     animation: glitch-skew 0.2s infinite linear;
     filter: hue-rotate(180deg) contrast(1.2);
@@ -283,136 +325,182 @@ body.bluescreen-active #clicker-btn {
     animation: glitch-flash 0.5s infinite;
 }
 
-/* --- RICK ROLL / RICARDO MODE --- */
-
-#rick-roll-video,
-#ricardo-video,
-#ricardo-metal-video,
-#ricardo-dota-video {
+.rick_roll_video,
+.ricardo_video,
+.ricardo_metal_video,
+.ricardo_dota_video {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     object-fit: cover;
-    z-index: 9000;
+    z-index: var(--z-overlay);
     background: #000;
+    pointer-events: auto;
+    cursor: pointer;
+    display: block;
+}
+
+.video_display_none {
+    display: none;
+}
+
+/* Aumento specificità per sovrascrivere regole base */
+body #click-feedback-container .click-feedback {
+    white-space: nowrap;
+    width: auto;
+    max-width: none;
+    min-width: auto;
 }
 
 body.rick-rolling {
-    overflow: hidden !important;
+    overflow: hidden;
 }
 
+
+/* Specificità aumentata per vincere sullo stile base */
 body.rick-rolling #game-container {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    filter: none !important;
-    transform: none !important;
-    z-index: 9500 !important;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    filter: none;
+    transform: none;
+    z-index: calc(var(--z-overlay) + 10);
     pointer-events: none;
 }
 
-/* Nascondi colonne e elementi superflui */
-body.rick-rolling #left-column,
-body.rick-rolling #right-column,
-body.rick-rolling #hud-stats-container,
-body.rick-rolling #score-label,
-body.rick-rolling #version-display,
-body.rick-rolling #prestige-bonus-display,
-body.rick-rolling .skill-btn,
-body.rick-rolling #overlay-buttons-container,
-body.rick-rolling #github-link-container {
-    display: none !important;
-}
-
-body.rick-rolling #center-column {
-    background: transparent !important;
-    border: none !important;
-    overflow: visible !important;
-}
-
-/* Fix Numeri Click */
 body.rick-rolling #click-feedback-container {
-    position: fixed !important;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 10005 !important;
+    z-index: 10005;
     pointer-events: none;
-    overflow: visible !important;
+    overflow: visible;
 }
 
 body.rick-rolling .click-feedback {
-    z-index: 10006 !important;
-    opacity: 1 !important;
+    z-index: 10006;
+    opacity: 1;
+    pointer-events: none;
 }
 
-/* HUD Evento */
-body.rick-rolling #score-display {
-    position: fixed !important;
-    top: 20px;
-    right: 20px;
-    left: auto;
+body.rick-rolling #left-column,
+body.rick-rolling #right-column,
+body.rick-rolling #version-display,
+body.rick-rolling #prestige-bonus-display,
+body.rick-rolling .skill-btn,
+body.rick-rolling #overlay-buttons-container,
+body.rick-rolling #github-link-container,
+body.rick-rolling #header-left-panel,
+body.rick-rolling #header-right-panel,
+body.rick-rolling .header-label-main {
+    display: none;
+}
+
+/* Disattiva contenitori */
+body.rick-rolling .header-main-score {
     transform: none;
-    z-index: 10001;
-    display: block !important;
-    font-size: 2.2rem;
-    color: #f1c40f;
-    text-shadow: 2px 2px 0 #000;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 5px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
+    position: static;
+    display: block;
+    width: 0;
+    height: 0;
     margin: 0;
-    text-align: right;
-    pointer-events: auto;
+    padding: 0;
+    border: none;
+    pointer-events: none;
 }
 
-body.rick-rolling #cps-display {
-    position: fixed !important;
-    top: 85px;
-    right: 20px;
-    left: auto;
-    transform: none;
-    z-index: 10001;
-    display: block !important;
-    opacity: 1 !important;
-    font-size: 1.3rem;
-    color: #3498db;
-    text-shadow: 1px 1px 0 #000;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 4px 15px;
-    border-radius: 8px;
-    margin: 0;
-    text-align: right;
+body.rick-rolling #center-column {
+    background: transparent;
+    border: none;
+    overflow: visible;
+    pointer-events: none;
 }
 
-body.rick-rolling #event-multiplier-display {
-    position: fixed !important;
-    top: 135px;
-    right: 20px;
+/* Fix Numeri Click */
+/* Uso body.rick-rolling per dare più peso rispetto alla regola base .click-feedback */
+body.rick-rolling #click-feedback-container .click-feedback {
+    z-index: 10006;
+    opacity: 1;
+}
+
+/* QUI LA PARTE CRITICA: Uso ID chaining per superare #score-display base */
+body.rick-rolling #game-container #score-display {
+    position: fixed;
+    top: 25px;
+    right: 25px;
     left: auto;
     bottom: auto;
+    width: auto;
     transform: none;
-    z-index: 10001;
-    display: block !important;
-    font-size: 0.9rem;
-    color: #e74c3c;
-    font-weight: 600;
-    text-transform: uppercase;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 4px 10px;
+    margin: 0;
+    z-index: 10020;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #f1c40f;
+    text-shadow: 2px 2px 0 #000, 0 0 15px rgba(241, 196, 15, 0.5);
+    background: rgba(0, 0, 0, 0.85);
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: right;
+    pointer-events: auto;
+    display: block;
+}
+
+body.rick-rolling #game-container #cps-display {
+    position: fixed;
+    top: 105px;
+    right: 25px;
+    left: auto;
+    width: auto;
+    transform: none;
+    margin: 0;
+    z-index: 10020;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #3498db;
+    text-shadow: 1px 1px 0 #000;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 6px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    text-align: right;
+    display: block;
+    opacity: 1;
+}
+
+/* Moltiplicatore Evento */
+body.rick-rolling #event-multiplier-display {
+    position: fixed;
+    top: 155px;
+    right: 25px;
+    left: auto;
+    width: auto;
+    transform: none;
+    z-index: 10020;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 6px 15px;
     border-radius: 6px;
-    box-shadow: none;
+    border: 1px solid #e74c3c;
+    font-size: 1rem;
+    color: #e74c3c;
+    text-transform: uppercase;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+    display: block;
+    text-align: right;
 }
 
 body.rick-rolling #clicker-btn {
-    position: fixed !important;
+    position: fixed;
     bottom: 30px;
     right: 30px;
     left: auto;
@@ -420,8 +508,8 @@ body.rick-rolling #clicker-btn {
     width: 100px;
     height: 100px;
     z-index: 10002;
-    opacity: 1 !important;
-    pointer-events: auto !important;
+    opacity: 1;
+    pointer-events: auto;
     margin: 0;
 }
 
@@ -430,12 +518,55 @@ body.rick-rolling #clicker-btn img {
     height: 100%;
 }
 
+/* Toast (Spostati per non coprire) */
 body.rick-rolling #toast-container {
-    display: flex !important;
-    opacity: 1 !important;
-    z-index: 11000 !important;
-    right: auto !important;
-    left: 20px !important;
-    top: 20px !important;
+    display: flex;
+    opacity: 1;
+    z-index: 11000;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: 20px;
+    align-items: center;
     pointer-events: none;
+}
+
+body.rick-rolling .column-header-center {
+    background: transparent;
+    border: none;
+    pointer-events: none;
+}
+
+/* Nascondiamo specificamente i pannelli laterali e l'etichetta "BUG RISOLTI" */
+body.rick-rolling #header-left-panel,
+body.rick-rolling #header-right-panel,
+body.rick-rolling .header-label-main {
+    display: none;
+}
+
+/* =========================================
+   EFFETTO BORDO INFIAMMATO (ESPO FURY)
+========================================= */
+
+body.crunch-active #clicker-btn {
+    border-radius: 50%;
+    border: 4px solid #ff4500;
+    animation: fury-fire-pulse 1.5s infinite alternate ease-in-out;
+    transition: border-color 0.5s, box-shadow 0.5s, background-color 0.5s;
+}
+
+body.crunch-active #clicker-btn:active {
+    box-shadow:
+        inset 0 0 30px #ffd700,
+        0 0 40px #ff4500;
+    transform: scale(0.95);
+}
+
+/* Specificità aumentata per sovrascrivere stili ID base */
+body.crunch-active #clicker-btn #manager-photo-normal,
+body.crunch-active #clicker-btn #manager-photo-clicked {
+    background: radial-gradient(circle, #ffffcc 10%, #ffaa00 40%, #cc0000 100%);
+    box-shadow: inset 0 0 15px #ff0000, 0 0 10px #ff4500;
+    border-color: #ffcc00;
+    z-index: 5;
 }

@@ -2,172 +2,67 @@
  * Classi Comuni Bottoni
  */
 .buy-btn {
-    background-color: #3498db;
+    background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    font-weight: bold;
+    border-radius: 4px;
+    padding: 0 15px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
     cursor: pointer;
-    transition: background-color 0.2s;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    height: 50px;
-    padding: 0 20px;
+    transition: all 0.1s;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .buy-btn:hover:not(:disabled) {
-    background-color: #2980b9;
+    background-color: var(--primary-dark);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
 }
 
-.buy-btn:disabled {
-    background-color: #5d7c9a;
-    color: #9cb3c9;
-    cursor: not-allowed;
-    text-shadow: none;
-}
-
-.buy-btn.danger-btn {
-    background-color: #e74c3c;
-}
-
-.buy-btn.danger-btn:hover:not(:disabled) {
-    background-color: #c0392b;
-}
-
-.buy-btn.owned {
-    background-color: rgba(44, 62, 80, 0.5) !important;
-    color: #2ecc71 !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    cursor: default !important;
-    pointer-events: none;
-}
-
-/*
- * Classi Danger Bottone
- */
-
-.danger-btn {
-    background-color: #c0392b;
-    margin-top: 15px;
-}
-
-.danger-btn-small {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 40px;
-}
-
-.danger-btn-small.orange {
-    background: #e67e22;
-}
-
-.danger-btn-small.orange:hover {
-    background: #d35400;
-}
-
-.danger-btn-small.red {
-    background: #c0392b;
-}
-
-.danger-btn-small.red:hover {
-    background: #a93226;
-}
-
-.danger-zone-modern {
-    margin-top: 25px;
-    background: rgba(192, 57, 43, 0.05);
-    border: 1px solid rgba(192, 57, 43, 0.3);
-    border-radius: 10px;
-    padding: 15px;
-}
-
-.danger-header {
-    color: #e74c3c;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.danger-desc {
-    font-size: 0.8rem;
-    color: #95a5a6;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-.danger-input input {
-    border-color: #c0392b;
-    /* Bordo rosso */
-}
-
-.danger-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.danger-action-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: transform 0.1s;
-}
-
-.danger-action-btn:active {
+.buy-btn:active {
     transform: translateY(2px);
 }
 
-.danger-action-btn.orange {
-    background-color: #e67e22;
-    box-shadow: 0 3px 0 #d35400;
+.buy-btn:disabled {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.7;
+    pointer-events: none;
 }
 
-.danger-action-btn.red {
-    background-color: #c0392b;
-    box-shadow: 0 3px 0 #922b21;
+/* Aumento specificità: 'body' + classe */
+body .buy-btn.owned {
+    background-color: rgba(44, 62, 80, 0.5);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    cursor: default;
+    pointer-events: none;
 }
 
-.danger-zone {
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #c0392b;
-    background-color: rgba(192, 57, 43, 0.1);
-    border-radius: 8px;
+.buy-btn:not(:disabled) {
+    border: 1px solid #2ecc71;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+    transition: all 0.2s ease;
 }
 
-
+.buy-btn:not(:disabled):hover {
+    background-color: #27ae60;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    transform: translateY(-2px);
+}
 
 /*
  * Classi Ghost Bottone
  */
-
 .ghost-btn {
     background: transparent;
     border: 1px solid #5d7c9a;
@@ -206,7 +101,6 @@
     background: none;
     border: none;
     color: #e74c3c;
-    /* Rosso spento */
     cursor: pointer;
     font-size: 0.9rem;
     text-decoration: underline;
@@ -247,28 +141,27 @@ input[type=range]::-webkit-slider-thumb {
 input[type="text"],
 input[type="password"],
 input[type="number"] {
-    font-family: 'Inter', sans-serif;
-    font-size: 1.1rem;
-    padding: 15px;
-    background-color: #1a252f;
-    border: 1px solid #4a6582;
-    border-radius: 8px;
-    color: #fff;
-    width: 100%;
-    box-sizing: border-box;
-    height: 50px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-family: var(--font-heading);
+    height: 45px;
 }
 
+input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
 
-/* 
- * Classi Input Group Moderno (Icona + Input + Bottone)
+/* * Classi Input Group Moderno (Icona + Input + Bottone)
  */
 
 .input-group-modern {
     display: flex;
     align-items: center;
-    background-color: #1a252f;
-    border: 1px solid #34495e;
+    background-color: var(--bg-panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 0;
     transition: border-color 0.2s;
@@ -276,8 +169,9 @@ input[type="number"] {
     overflow: hidden;
 }
 
-.input-group-modern .toggle-pass-btn {
-    position: static !important;
+/* Aumento specificità: tag 'button' */
+.input-group-modern button.toggle-pass-btn {
+    position: static;
     margin: 0;
     width: 45px;
     height: 45px;
@@ -297,7 +191,7 @@ input[type="number"] {
 }
 
 .input-group-modern:focus-within {
-    border-color: #3498db;
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
@@ -350,8 +244,6 @@ input[type="number"] {
     width: 100%;
     padding-right: 45px;
 }
-
-
 
 .input-stack {
     display: flex;
@@ -529,106 +421,79 @@ input[type="number"] {
     animation: pulseText 0.5s 2;
 }
 
-
-/*
- * Classi Toast Container
- */
-#toast-container {
+/* --- TOAST STILE ---*/
+/* Aumento specificità: 'body' #ID */
+body #toast-container {
     position: fixed;
-    top: 80px;
-    /* Sotto la navbar */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 11000;
-    /* Sopra tutto */
+    z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     gap: 8px;
     pointer-events: none;
-    /* FONDAMENTALE: Lascia passare i click ai bottoni sotto! */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    bottom: auto;
     align-items: center;
     width: auto;
-    max-width: 90%;
+    min-width: 300px;
 }
 
-/*
- * Classi Toast
- */
-.toast {
+/* Aumento specificità per sovrascrivere la regola precedente in caso di modale aperta */
+body.modal-open #toast-container {
+    top: 85px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    align-items: flex-end;
+}
+
+/* --- STILE NOTIFICA ---*/
+/* Aumento specificità: ID genitore + classe */
+#toast-container .toast {
+    pointer-events: auto;
     padding: 8px 16px;
-    /* Più piccoli */
-    border-radius: 20px;
-    /* Arrotondati a pillola */
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
-
-    /* Sfondo scuro semi-trasparente con blur (Glassmorphism) */
-    background-color: rgba(20, 20, 20, 0.75);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease-out;
-
-    /* Animazione entrata/uscita */
-    animation: slideDownFade 0.3s ease-out forwards, fadeOut 0.5s ease-in 3.5s forwards;
-
-    /* Layout interno */
+    border-radius: 50px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    background-color: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    /* Bordo sottile */
+    animation: toastEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+        toastExit 0.5s ease-in 3.5s forwards;
 }
 
-.toast-success {
-    color: #2ecc71;
-    border-color: rgba(46, 204, 113, 0.3);
+#toast-container .toast-success {
+    border-left: 3px solid #2ecc71;
 }
 
-.toast-error {
-    color: #e74c3c;
-    border-color: rgba(231, 76, 60, 0.3);
+#toast-container .toast-error {
+    border-left: 3px solid #e74c3c;
 }
 
-.toast-warning {
-    color: #f39c12;
-    border-color: rgba(243, 156, 18, 0.3);
+#toast-container .toast-warning {
+    border-left: 3px solid #f39c12;
 }
 
-.toast-info {
-    color: #3498db;
-    border-color: rgba(52, 152, 219, 0.3);
+#toast-container .toast-info {
+    border-left: 3px solid #3498db;
 }
 
-.toast-achievement {
-    color: #f1c40f;
-    border-color: rgba(241, 196, 15, 0.3);
+#toast-container .toast-achievement {
+    border-left: 3px solid #f1c40f;
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
 }
 
-.toast-reward {
-    color: #a29bfe;
-    border-color: rgba(162, 155, 254, 0.3);
-}
-
-@keyframes slideDownFade {
-    from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.9);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/*
- * Classi Tooltip
- */
+/* --- Classi Tooltip ---*/
 [data-tooltip] {
     position: relative;
     cursor: help;
@@ -648,7 +513,7 @@ input[type="number"] {
     font-size: 0.9rem;
     font-weight: bold;
     white-space: nowrap;
-    z-index: 9999;
+    z-index: var(--z-loader);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     margin-bottom: 8px;
@@ -663,5 +528,54 @@ input[type="number"] {
     border: 6px solid transparent;
     border-top-color: #f1c40f;
     margin-bottom: -4px;
-    z-index: 9999;
+    z-index: var(--z-loader);
+}
+
+/* Aumento specificità per override del tooltip base */
+body .tooltip-multiline[data-tooltip]:hover::after {
+    white-space: normal;
+    min-width: 150px;
+    max-width: 220px;
+    text-align: center;
+    line-height: 1.3;
+    font-size: 0.8rem;
+    padding: 10px;
+    bottom: 105%;
+}
+
+/* PATCH TOAST POSITION */
+/* Rimosso duplicato precedente, lasciamo la media query */
+@media only screen and (max-width: 768px) {
+    body.modal-open #toast-container {
+        top: auto;
+        bottom: 20px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: 90%;
+    }
+
+    .toast {
+        pointer-events: auto;
+    }
+}
+
+/* PATCH TOOLTIP */
+body .simple-tooltip[data-tooltip]:hover::before {
+    display: none;
+}
+
+body .simple-tooltip[data-tooltip]:hover::after {
+    background-color: #000;
+    border: 1px solid #333;
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    bottom: 100%;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    min-width: auto;
 }

@@ -1,13 +1,16 @@
 <?php
-include 'db_connect.php';
+include __DIR__ . '/db_connect.php';
 
-// Seleziona dalla LEADERBOARD dinamica
-$sql = "SELECT username, score, prestigeLevel, timestamp FROM $table_leaderboard ORDER BY prestigeLevel DESC, score DESC LIMIT 10";
+$sql = "SELECT username, score, prestigeLevel, timestamp 
+        FROM $table_leaderboard 
+        ORDER BY prestigeLevel DESC, CAST(score AS DECIMAL(65,0)) DESC, timestamp ASC 
+        LIMIT 10";
+
 $result = $conn->query($sql);
 
 $leaderboard = [];
 
-if ($result->num_rows > 0) {
+if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
         $leaderboard[] = $row;
     }

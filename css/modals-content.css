@@ -1,4 +1,4 @@
-/* 1. GROUP SETTING */
+/* GROUP SETTING */
 .settings-group {
     background-color: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -57,7 +57,7 @@
     width: 100px;
 }
 
-/* 2. ACCOUNT PREVIEW */
+/* ACCOUNT PREVIEW */
 .account-preview-card {
     display: flex;
     justify-content: space-between;
@@ -69,80 +69,200 @@
     margin-bottom: 20px;
 }
 
-.acc-details small {
-    display: block;
-    color: #7f8c8d;
-    font-size: 0.7rem;
-    text-transform: uppercase;
+/* --- NUOVO STILE PROFILO MODERNO --- */
+/* Specificità aumentata */
+#account-modal .profile-modern-modal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    overflow: hidden;
+    max-width: 400px;
 }
 
-.acc-name {
-    color: #fff;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.account-link-group {
+/* Header Minimal */
+.profile-header-section.minimal {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 30px 20px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    background: rgba(52, 152, 219, 0.1);
-    border-color: rgba(52, 152, 219, 0.3);
+    border-bottom: 1px solid #334155;
 }
 
-.account-section {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px;
-    margin-top: 10px;
+.profile-user-info {
+    text-align: center;
+    width: 100%;
 }
 
-.username-tag {
+#display-username-large {
+    margin: 0;
+    padding: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Corpo del Modale */
+.profile-modern-modal .profile-body {
+    padding: 20px 25px;
+}
+
+.section-label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+/* Input Puliti */
+.clean-input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #475569;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+}
+
+.clean-input:focus-within {
+    border-color: #3498db;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.clean-input input {
+    color: #f1f5f9;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.action-btn-clean {
+    background: transparent;
+    border: none;
     color: #3498db;
-    font-weight: bold;
-    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0 15px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.75rem;
 }
 
-/* 5. ZONA PERICOLOSA  */
-.danger-zone-pro {
+.action-btn-clean:hover {
+    color: #fff;
+}
+
+.profile-divider {
+    border: 0;
+    height: 1px;
+    background: #334155;
+    margin: 15px 0 20px 0;
+}
+
+/* Danger Zone */
+.danger-zone-minimal {
     margin-top: 20px;
-    background: #190a0a;
-    border: 1px solid #c0392b;
-    border-radius: 8px;
-    padding: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ef4444;
 }
 
-.danger-header {
-    color: #c0392b;
-    font-weight: bold;
-    font-size: 0.8rem;
+.danger-title {
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
     margin-bottom: 10px;
-    letter-spacing: 1px;
-}
-
-.danger-input {
-    border-color: #c0392b;
-    margin-bottom: 10px;
-}
-
-.danger-input .input-icon {
-    color: #c0392b;
-}
-
-.danger-buttons-row {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 6px;
+}
+
+.danger-title::before {
+    content: '\f7ba';
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+
+/* Specificità aumentata */
+.danger-zone-minimal .clean-input.danger-border {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.danger-zone-minimal .clean-input.danger-border:focus-within {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.danger-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.danger-action-btn {
+    border: none;
+    padding: 12px 5px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+    background: #334155;
+    color: #cbd5e1;
+}
+
+.danger-action-btn i {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.danger-action-btn.soft:hover {
+    background: #475569;
+    color: #fff;
+}
+
+.danger-action-btn.orange {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.danger-action-btn.orange:hover {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: #f97316;
+}
+
+.danger-action-btn.red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.danger-action-btn.red:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
 }
 
 /* --- STILI CONTRATTO PRESTIGIO --- */
-.contract-modal {
-    background: linear-gradient(180deg, #18202a 0%, #0f1318 100%) !important;
-    border: 1px solid rgba(241, 196, 15, 0.2) !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+#prestige-modal .contract-modal {
+    background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);
+    border: 1px solid rgba(241, 196, 15, 0.2);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
 }
 
-.contract-modal h2 {
-    background: transparent !important;
-    border: none !important;
+#prestige-modal .contract-modal h2 {
+    background: transparent;
+    border: none;
     text-shadow: 0 0 20px rgba(241, 196, 15, 0.3);
 }
 
@@ -177,12 +297,11 @@
     gap: 10px;
 }
 
-
 .prestige-btn {
     position: relative;
     overflow: hidden;
     background: linear-gradient(90deg, #f1c40f, #f39c12);
-    color: #1a1a1a !important;
+    color: #1a1a1a;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -276,283 +395,6 @@
     text-align: center;
 }
 
-.contract-columns {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.contract-column {
-    flex: 1;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.contract-column.loss {
-    border: 1px solid rgba(231, 76, 60, 0.3);
-}
-
-.contract-column.gain {
-    border: 1px solid rgba(46, 204, 113, 0.3);
-    background-color: rgba(46, 204, 113, 0.05);
-}
-
-.contract-column h3 {
-    margin-top: 0;
-    border-bottom: 1px solid #fff;
-    padding-bottom: 5px;
-    font-size: 1.1rem;
-}
-
-.contract-column.loss h3 {
-    color: #e74c3c;
-    border-color: #e74c3c;
-}
-
-.contract-column.gain h3 {
-    color: #2ecc71;
-    border-color: #2ecc71;
-}
-
-.contract-column ul {
-    list-style: none;
-    padding: 0;
-    margin: 10px 0;
-    color: #c0392b;
-}
-
-/* Achievement */
-
-.achievement.claimable {
-    border: 3px solid #f1c40f;
-    background-color: rgba(241, 196, 15, 0.15);
-    box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
-    animation: achievementPulse 1.5s infinite alternate;
-}
-
-.achievement-done {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #2ecc71;
-    text-align: right;
-}
-
-.achievement.achievement-secret {
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px dashed #7f8c8d;
-    color: #7f8c8d;
-    font-style: italic;
-    opacity: 0.7;
-}
-
-.achievement {
-    border: 1px solid #4a6582;
-    /* Bordo sottile di base */
-    padding: 18px;
-    margin-bottom: 12px;
-    background-color: #2c3e50;
-    /* Sfondo card più scuro per contrasto */
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    transition: all 0.2s ease;
-}
-
-.achievement:hover:not(.locked):not(.claimable) {
-    background-color: #3d5570;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6), 0 0 5px #5dade2;
-}
-
-/* SBLOCCATO */
-.achievement.unlocked {
-    background-color: rgba(46, 204, 113, 0.1);
-    /* Sfondo verde tenue */
-    border-color: #2ecc71;
-}
-
-/* BLOCCATO */
-.achievement.locked {
-    opacity: 0.8;
-    border-style: dashed;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* SEGRETO */
-.achievement.secret {
-    opacity: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-style: italic;
-    color: #7f8c8d;
-    padding: 10px;
-}
-
-.achievement-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.achievement-header [data-tooltip]:hover::after {
-    left: auto !important;
-    right: 0 !important;
-    transform: translateX(0) !important;
-
-    margin-right: -5px;
-}
-
-.achievement-header [data-tooltip]:hover::before {
-    left: auto !important;
-    right: 18px !important;
-    transform: translateX(0) !important;
-}
-
-.achievement-name {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.5px;
-    flex-grow: 1;
-}
-
-.achievement.locked .achievement-name {
-    color: #bdc3c7;
-}
-
-.achievement-desc {
-    font-size: 0.9rem;
-    color: #bdc3c7;
-    margin-bottom: 5px;
-}
-
-.achievement-flavor {
-    font-size: 0.8rem;
-    font-style: italic;
-    color: #95a5a6;
-    margin-bottom: 8px;
-}
-
-.achievement-reward {
-    font-size: 0.85rem;
-    color: #f1c40f;
-    font-weight: bold;
-    margin-top: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-
-/* BARRA PROGRESSO */
-.ach-progress-container {
-    height: 25px;
-    /* Più alta e visibile */
-    border: 1px solid #3498db;
-    background-color: #1a252f;
-    border-radius: 4px;
-    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
-    position: relative;
-    margin-top: 10px;
-}
-
-.ach-progress-bar {
-    background: linear-gradient(to right, #3498db, #5dade2);
-    box-shadow: 0 0 10px #5dade2;
-    transition: width 0.4s ease-out;
-    height: 100%;
-}
-
-.ach-progress-text {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding-left: 10px;
-
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #fff;
-    text-shadow: 0 0 5px #000;
-    z-index: 2;
-    box-sizing: border-box;
-    white-space: nowrap;
-}
-
-/* Area Reward Ridisegnata */
-.reward-box-container {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 15px 0;
-    display: flex;
-    flex-direction: row;
-    /* Affiancati su Desktop */
-    justify-content: space-around;
-    align-items: center;
-    gap: 15px;
-}
-
-.reward-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    flex: 1;
-}
-
-.reward-icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
-}
-
-.reward-value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.1;
-}
-
-.reward-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #7f8c8d;
-    margin-top: 4px;
-    letter-spacing: 1px;
-}
-
-/* Colori specifici */
-.token-color {
-    color: #f1c40f;
-    text-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
-}
-
-.bonus-color {
-    color: #2ecc71;
-    text-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
-}
-
-/* Separatore verticale tra i reward */
-.reward-divider {
-    width: 1px;
-    height: 50px;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
 /* Footer Bottoni - Desktop */
 .contract-footer {
     display: flex;
@@ -561,9 +403,236 @@
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* --- STILE MIXER AUDIO AVANZATO --- */
+/* --- ACHIEVEMENT / TROPHY CASE --- */
+#achievement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    padding-bottom: 30px;
+}
 
-/* Gruppo di suoni (Categoria) */
+.achievement-title,
+.toast-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.achievement-desc,
+.trophy-desc {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #a0a0a0;
+    width: 100%;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    overflow: hidden;
+}
+
+.trophy-row {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 40, 50, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 80px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.trophy-row.locked {
+    opacity: 0.6;
+    filter: grayscale(0.9);
+    border-left: 5px solid #7f8c8d;
+}
+
+.trophy-row.completed {
+    background: linear-gradient(90deg, rgba(46, 204, 113, 0.1), rgba(30, 40, 50, 0.8));
+    border: 1px solid #2ecc71;
+    border-left: 5px solid #2ecc71;
+}
+
+.trophy-row.unclaimed {
+    background: linear-gradient(90deg, rgba(241, 196, 15, 0.15), rgba(30, 40, 50, 0.9));
+    border: 1px solid #f1c40f;
+    border-left: 5px solid #f1c40f;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+}
+
+.trophy-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #bdc3c7;
+    margin-right: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.trophy-row.completed .trophy-icon-wrapper {
+    color: #f1c40f;
+    border-color: #f1c40f;
+    background: rgba(241, 196, 15, 0.1);
+}
+
+.trophy-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 10px;
+    min-width: 0;
+}
+
+.trophy-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trophy-action {
+    width: 120px;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.trophy-flavor {
+    font-size: 0.65rem;
+    font-style: italic;
+    color: #7f8c8d;
+    margin-top: 5px;
+    line-height: 1.2;
+    white-space: normal;
+    display: none;
+}
+
+.trophy-row.completed .trophy-flavor {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.trophy-done {
+    font-size: 1.8rem;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.trophy-row.completed .trophy-done {
+    color: #2ecc71;
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+.trophy-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    box-shadow: none;
+}
+
+.t-prog-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.t-prog-text {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140%;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-shadow: none;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.reward-button {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    min-width: fit-content;
+}
+
+.trophy-claim-btn {
+    background: linear-gradient(to bottom, #f1c40f, #f39c12);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 15px;
+    color: #2c3e50;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d35400;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.1s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: fit-content;
+}
+
+.reward-button,
+.trophy-claim-btn {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 6px 0;
+    justify-content: center;
+}
+
+.trophy-claim-btn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.trophy-claim-btn:hover {
+    filter: brightness(1.1);
+}
+
+.claim-text {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+/* --- STILE MIXER AUDIO --- */
 .mixer-category {
     margin-bottom: 20px;
     background: rgba(0, 0, 0, 0.1);
@@ -585,7 +654,6 @@
     gap: 8px;
 }
 
-/* Riga del singolo suono */
 .mixer-row {
     display: flex;
     align-items: center;
@@ -603,10 +671,8 @@
     border-color: rgba(52, 152, 219, 0.3);
 }
 
-/* Etichetta del suono */
 .mixer-label {
     flex: 0 0 140px;
-    /* Larghezza fissa per allineamento */
     font-size: 0.9rem;
     color: #ecf0f1;
     font-weight: 500;
@@ -618,7 +684,6 @@
     gap: 8px;
 }
 
-/* Contenitore Slider + Valore */
 .mixer-controls {
     flex-grow: 1;
     display: flex;
@@ -627,9 +692,9 @@
     margin: 0 15px;
 }
 
-/* Slider Customizzato */
 .mixer-slider {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     background: #2c3e50;
@@ -655,7 +720,6 @@
     background: #3498db;
 }
 
-/* Percentuale */
 .mixer-value {
     font-family: 'Inter', monospace;
     font-size: 0.85rem;
@@ -665,7 +729,6 @@
     text-align: right;
 }
 
-/* Bottone Test (Play) */
 .mixer-test-btn {
     background: rgba(52, 152, 219, 0.1);
     border: 1px solid #3498db;
@@ -694,7 +757,6 @@
     animation: pulseButton 1s infinite;
 }
 
-/* Responsive per mobile */
 @media (max-width: 500px) {
     .mixer-row {
         flex-wrap: wrap;
@@ -710,4 +772,107 @@
     .mixer-controls {
         margin: 0 10px 0 0;
     }
+}
+
+.modal-header-custom {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.header-action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ecf0f1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.header-action-btn.reset {
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.3);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.header-action-btn.reset:hover {
+    background: rgba(231, 76, 60, 0.2);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.2);
+}
+
+/* OFFLINE */
+.offline_modal_content {
+    text-align: center;
+    border-color: #f39c12;
+}
+
+.offline_modal_content h2 {
+    color: #f39c12;
+    border-bottom-color: #f39c12;
+}
+
+.offline_content {
+    padding: 30px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.offline_content_sottotitolo {
+    color: #bdc3c7;
+    font-size: 1.1rem;
+}
+
+.offline_content_efficienza_server {
+    margin: 20px 0;
+}
+
+.offline_content_label_efficienza_server {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+}
+
+.offline_efficiency_display {
+    font-weight: bold;
+    color: #3498db;
+    font-size: 1.2rem;
+}
+
+.offline_content_guadagno {
+    background: rgba(243, 156, 18, 0.1);
+    border: 1px solid #d35400;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.offline_earnings_display {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+}
+
+.offline_content_guadagno_label {
+    font-size: 1.2rem;
+    color: #f1c40f;
+}
+
+.offline_content_button {
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+    color: #2c3e50;
+    font-size: 1.2rem;
+    padding: 15px;
+    width: 100%;
 }

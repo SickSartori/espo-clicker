@@ -1,36 +1,74 @@
 <?php
-include 'db_connect.php';
-header('Content-Type: application/json');
+require_once __DIR__ . '/api_bootstrap.php';
+require_once __DIR__ . '/security_config.php';
 
-$data = json_decode(file_get_contents('php://input'), true);
-$username = $data['username'];
-$password = $data['password'];
+// Disable error reporting to screen to avoid breaking JSON
+error_reporting(0);
+ini_set('display_errors', 0);
+
+// Receive JSON input
+$data = getJsonInput();
+$user = authenticate($conn, $data['username'], $data['password']);
 
 if (!isset($data['saveData'])) {
-    die(json_encode(["status" => "error", "message" => "Nessun dato di salvataggio."]));
+    echo json_encode(["status" => "error", "message" => "No data provided."]);
+    exit;
 }
 
-$saveData = json_encode($data['saveData']); 
+// --- SECURITY VALIDATION ---
+$rawScore = isset($data['score']) ? (string)$data['score'] : "0";
+$rawPrestige = isset($data['prestige']) ? (string)$data['prestige'] : "0";
 
-// Verifica su USERS dinamica
-$check = $conn->prepare("SELECT password_hash FROM $table_users WHERE username = ?");
-$check->bind_param("s", $username);
-$check->execute();
-$res = $check->get_result();
-
-if ($res->num_rows > 0) {
-    $row = $res->fetch_assoc();
-    if (password_verify($password, $row['password_hash'])) {
-        // Aggiorna salvataggio
-        $update = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE username = ?");
-        $update->bind_param("ss", $saveData, $username);
-        $update->execute();
-        echo json_encode(["status" => "success"]);
-    } else {
-        echo json_encode(["status" => "error", "message" => "Password errata."]);
-    }
-} else {
-    echo json_encode(["status" => "error", "message" => "Utente non trovato."]);
+// Basic cleanup
+if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { 
+    $rawScore = "0"; 
 }
+if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawPrestige)) { 
+    $rawPrestige = "0"; 
+}
+
+// Hash check
+$clientHash = isset($data['hash']) ? $data['hash'] : '';
+$dataString = $rawScore . '-' . $rawPrestige . '-' . GAME_SECRET_KEY;
+$serverHash = hash(HASH_ALGO, $dataString);
+
+if (!hash_equals($serverHash, $clientHash)) {
+    // Log invalid hash attempt
+    error_log("Security Mismatch. User: {$user['username']}");
+    echo json_encode(["status" => "warning", "message" => "Save rejected: Integrity check failed."]);
+    exit;
+}
+
+// 1. Save Cloud Data (Full JSON)
+$saveJson = json_encode($data['saveData']);
+$stmt = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE id = ?");
+$stmt->bind_param("si", $saveJson, $user['id']);
+
+if (!$stmt->execute()) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Database save failed."]);
+    exit;
+}
+
+// 2. Update Leaderboard
+// Since score is VARCHAR, we cannot easily use GREATEST in SQL. 
+// We overwrite the score with the latest save. Game client logic should ensure score doesn't decrease.
+$stmtLb = $conn->prepare("
+    INSERT INTO $table_leaderboard (username, score, prestigeLevel, timestamp) 
+    VALUES (?, ?, ?, NOW())
+    ON DUPLICATE KEY UPDATE 
+        score = VALUES(score), 
+        prestigeLevel = VALUES(prestigeLevel),
+        timestamp = NOW()
+");
+
+$stmtLb->bind_param("sss", $user['username'], $rawScore, $rawPrestige);
+
+if (!$stmtLb->execute()) {
+    // Log leaderboard error but don't fail the main save request
+    error_log("Leaderboard Error: " . $stmtLb->error);
+}
+
+echo json_encode(["status" => "success", "message" => "Saved and Verified"]);
 $conn->close();
 ?>

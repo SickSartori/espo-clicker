@@ -1,0 +1,162 @@
+/* ============================================================
+   TEMA NATALIZIO: ESPÒ NATALE
+   Scoped: Si applica solo alla UI di gioco (Container e Navbar)
+   ============================================================ */
+
+/* --- GAME CONTAINER --- */
+/* Verde scuro trasparente con bordi rossi */
+body.theme-christmas #game-container {
+    background-color: rgba(11, 60, 40, 0.9);
+    border: 2px solid #c0392b;
+    box-shadow: 0 0 30px rgba(192, 57, 43, 0.5);
+}
+
+/* Colonne laterali */
+body.theme-christmas #game-container .game-column {
+    border-right: 1px solid rgba(192, 57, 43, 0.3);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- NAVBAR --- */
+body.theme-christmas #game-navbar {
+    background: #1a0a0a;
+    border-bottom: 2px solid #27ae60;
+}
+
+/* --- TITOLI SEZIONI --- */
+body.theme-christmas #game-container .store-section h2,
+body.theme-christmas #game-container .section-header h2 {
+    color: #e74c3c;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+}
+
+/* --- BOTTONI COMPRA (Verdi con bordo rosso) --- */
+body.theme-christmas #game-container .buy-btn:not(:disabled) {
+    background: linear-gradient(to bottom, #27ae60, #145a32);
+    border: 1px solid #c0392b;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.theme-christmas #game-container .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #2ecc71, #1e8449);
+    box-shadow: 0 0 15px #c0392b;
+}
+
+/* --- PUNTEGGI --- */
+body.theme-christmas #game-container #score-display {
+    color: #ecf0f1;
+    text-shadow: 2px 2px 0 #000, 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+body.theme-christmas #game-container #cps-display {
+    color: #f1c40f;
+    /* Oro */
+}
+
+/* --- MAIN BUTTON BACKGROUND --- */
+/* Sfondo dietro al personaggio principale */
+body.theme-christmas .bg-christmas {
+    background: radial-gradient(circle, #fff 10%, #c0392b 90%);
+    box-shadow: 0 0 40px rgba(231, 76, 60, 0.8), 0 0 10px #fff;
+    border: 4px solid #fff;
+    animation: pulseGlow 2s infinite alternate;
+}
+
+/* --- COMPATIBILITÀ RICK ROLL --- */
+body.theme-christmas.rick-rolling #game-container {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+body.theme-christmas.rick-rolling .game-column {
+    border: none;
+    background: transparent;
+}
+
+/* --- ANIMAZIONI SPECIFICHE --- */
+.christmas-title {
+    font-size: 4rem;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    animation: pulseButton 1s infinite;
+}
+
+.christmas-subtitle {
+    font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .christmas-title {
+        font-size: 8vw;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .christmas-subtitle {
+        font-size: 1rem;
+        padding: 0 20px;
+    }
+}
+
+/* --- EFFETTO NEVE (Overlay Globale) --- */
+.snow_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+    display: none;
+}
+
+.snow_container_block {
+    display: block;
+}
+
+.snowflake {
+    position: absolute;
+    top: -20px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-20px) translateX(0px);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: translateY(105vh) translateX(50px);
+        opacity: 0.2;
+    }
+}
+
+.christmas_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #c0392b;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+}
+
+.christmas_overlay_flex {
+    display: flex;
+    animation: fadeIn 0.5s;
+}
