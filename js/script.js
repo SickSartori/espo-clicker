@@ -1337,14 +1337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
                 try {
-                    // 1. Reset preventivo della memoria per partire puliti
-                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
-
-                    // Pulizia grafica
-                    const achList = document.getElementById('achievement-list');
-                    if (achList) achList.innerHTML = '';
-
-                    // 2. Parsing e Decompressione
+                    // 1. Parsing e Decompressione Preliminare
                     let cloudDataRaw = JSON.parse(cloudJSON);
                     let cloudState;
 
@@ -1361,10 +1354,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
-                    // --- 3. CONTROLLO COMPATIBILITÀ CLOUD ---
+                    // --- 2. PROTEZIONE ANTI-ROLLBACK ---
+                    if (gameState && gameState.lifetimeScore) {
+                        const localScore = new Decimal(gameState.lifetimeScore);
+                        const cloudTotal = new Decimal(cloudState.lifetimeScore || 0);
+
+                        if (localScore.gte(cloudTotal)) {
+                            console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
+
+                            const currentSessionUser = sessionStorage.getItem('espooUser');
+                            if (currentSessionUser && gameState.user.username !== currentSessionUser) {
+                                gameState.user.username = currentSessionUser;
+                            }
+
+                            saveGame();
+                            updateUI();
+                            return;
+                        }
+                    }
+                    // ---------------------------------------------------
+
+                    // 3. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
+                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                    // Pulizia grafica liste
+                    const achList = document.getElementById('achievement-list');
+                    if (achList) achList.innerHTML = '';
+
+                    // --- 4. CONTROLLO COMPATIBILITÀ CLOUD ---
                     if (!checkSaveCompatibility(cloudState)) {
                         console.warn("⚠️ Cloud Save incompatibile: Eseguo migrazione e sovrascrittura.");
-
 
                         // Aggiorniamo la versione alla corrente
                         if (window.GAME_VERSION) {
@@ -1375,15 +1394,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         const currentSessionUser = sessionStorage.getItem('espooUser');
                         if (currentSessionUser) gameState.user.username = currentSessionUser;
 
-                        // SALVIAMO SUBITO per aggiornare il Database con la versione v4.0 corretta
+                        // SALVIAMO SUBITO per aggiornare il Database con la versione corretta
                         saveGame();
 
                         showToast("Salvataggio Cloud aggiornato alla nuova versione!", 'warning');
-
-                        // Interrompiamo qui per non caricare i dati vecchi
                         return;
                     }
-                    // -----------------------------------------------------------
 
                     // Compatibilità Legacy (per versioni minori compatibili)
                     if (cloudState.buildings && !cloudState.teams) {
@@ -1391,9 +1407,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         delete cloudState.buildings;
                     }
 
-                    // 4. Se compatibile, uniamo i dati
+                    // 5. Uniamo i dati (Merge)
                     deepMerge(gameState, cloudState);
 
+                    // 6. Ripristino oggetti Decimali
                     const decimalFields = [
                         'score', 'totalScore', 'lifetimeScore', 'totalOfflineScore',
                         'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue'
@@ -1414,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!gameState.skins || !Array.isArray(gameState.skins.unlocked))
                         gameState.skins = { current: 'default', unlocked: ['default'] };
 
-                    // Ripristino effetti
+                    // Ripristino effetti attivi
                     const isFuryActive = (gameState.crunchTimeEndTime > Date.now());
                     if (isFuryActive && typeof resumeCrunchTimeEffects === 'function') {
                         resumeCrunchTimeEffects();
@@ -1428,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentSessionUser && gameState.user.username !== currentSessionUser)
                         gameState.user.username = currentSessionUser;
 
-                    // Ricalcoli
+                    // Ricalcoli logica
                     calculatePrestigeBonus();
                     recalculateCPS();
 
@@ -1436,10 +1453,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
                     if (typeof updateUI === 'function') updateUI();
 
-                    // Sovrascrivi cache locale per allinearla al cloud
+                    // Sovrascrivi cache locale per allinearla al cloud caricato
                     localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
 
-                    // Recupero Skin mancanti da achievement
+                    // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in gameData.achievements) {
                         const achData = gameData.achievements[key];
                         const achState = gameState.achievements[key];
@@ -1459,6 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (typeof AudioManager !== 'undefined') AudioManager.init();
                         window.EspooClicker.tryStartAudio();
                     }, 500);
+
                 } catch (e) {
                     console.error("Errore parsing cloud", e);
                 }
