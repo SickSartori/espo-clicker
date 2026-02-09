@@ -267,8 +267,8 @@ const gameData = {
             cost: new Decimal(20) // Richiede prestigio avanzato
         },
         bob: {
-            name: "Espònge Bob",
-            desc: "Sono pronto, sono pronto!",
+            name: "EspòngeBob",
+            desc: "Sono pronto, Promozione!",
             img: "esponge-bob.webp",
             imgClick: "esponge-bob-click.webp",
             rarity: "epic",
