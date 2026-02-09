@@ -221,8 +221,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         hash: signature // Invio hash
                     })
                 })
-                    //.then((response) => { console.log(response.json()); })
-                    .catch(err => console.warn("Cloud save error:", err));
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'conflict') {
+                            // Avvisa l'utente che i dati sul server sono migliori
+                            window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
+                        }
+                    })
+                    .catch(err => console.warn("Errore Salvataggio Cloud:", err));
             } catch (e) {
                 console.error("Errore hashing save:", e);
             }
