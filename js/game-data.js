@@ -177,6 +177,30 @@ const gameData = {
                 loop: true,
                 defaultVol: 0.3
             },
+            'space-shoot': {
+                id: 'sound-space-shoot',
+                file: 'arcade/assets/space-shoot.wav', // Percorso centralizzato .wav
+                name: 'Space Shoot',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.4
+            },
+            'space-boom': {
+                id: 'sound-space-boom',
+                file: 'arcade/assets/space-boom.wav', // Percorso centralizzato .wav
+                name: 'Space Explosion',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.5
+            },
+            'arcade-gameover': {
+                id: 'sound-arcade-gameover',
+                file: 'arcade/assets/game-over.mp3', // Condiviso .mp3
+                name: 'Arcade Game Over',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.6
+            },
         },
         videos: {
             'rick-roll-video': {

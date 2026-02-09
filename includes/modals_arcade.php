@@ -25,15 +25,15 @@
                         <button class="arcade-play-btn">GIOCA</button>
                     </div>
 
-                    <div class="arcade-game-card locked">
-                        <div class="game-thumb">
+                    <div class="arcade-game-card space-theme" onclick="if(window.initSpaceGame) window.initSpaceGame()">
+                        <div class="game-thumb space-thumb">
                             <i class="fa-solid fa-shuttle-space"></i>
                         </div>
                         <div class="game-info">
                             <div class="game-title">SPACE IMPACT</div>
-                            <div class="game-desc">In arrivo</div>
+                            <div class="game-desc">Distruggi i Bug Alieni!</div>
                         </div>
-                        <button class="arcade-play-btn" disabled>BLOCCATO</button>
+                        <button class="arcade-play-btn">GIOCA</button>
                     </div>
 
                     <div class="arcade-game-card locked">

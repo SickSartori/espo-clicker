@@ -1,16 +1,16 @@
 // code/arcade/snake/js/snake.js
 
-(function() {
+(function () {
     // --- CONFIGURAZIONE ---
     const CONFIG = {
-        gridSize: 20, 
+        gridSize: 20,
         speed: 110, // Leggermente più veloce per divertimento
         colors: {
             body: '#3498db',      // Blu Espò
             head: '#ecf0f1',      // Bianco (Fallback)
             food: '#e74c3c',      // Rosso Bug
-            bg: '#050a10',        
-            grid: 'rgba(52, 152, 219, 0.1)' 
+            bg: '#050a10',
+            grid: 'rgba(52, 152, 219, 0.1)'
         },
         headImageSrc: 'assets/image/espo.webp' // Fallback base
     };
@@ -19,11 +19,11 @@
     let gameInterval;
     let snake = [];
     let food = {};
-    let direction = 'right'; 
+    let direction = 'right';
     let nextDirection = 'right';
     let score = 0;
     let isGameRunning = false;
-    
+
     // Immagine testa dinamica
     const headImg = new Image();
     headImg.src = CONFIG.headImageSrc;
@@ -33,7 +33,7 @@
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
             const currentSkin = gs.skins.current || 'default';
-            
+
             // Accediamo a gameData globalmente
             if (typeof gameData !== 'undefined' && gameData.skins[currentSkin]) {
                 const skinImg = gameData.skins[currentSkin].img;
@@ -45,24 +45,24 @@
     }
 
     // --- INIT ---
-    window.initSnakeGame = function() {
+    window.initSnakeGame = function () {
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
-        
+
         if (selector) selector.style.display = 'none';
 
         if (gameContainer) {
             gameContainer.style.display = 'flex';
             gameContainer.style.flexDirection = 'column';
             gameContainer.style.alignItems = 'center';
-            gameContainer.innerHTML = ''; 
+            gameContainer.innerHTML = '';
         } else return;
 
         // Aggiorna la skin prima di iniziare
         updateSnakeSkin();
 
         // 1. Calcolo Larghezza Widescreen
-        const maxWidth = Math.min(800, window.innerWidth - 40); 
+        const maxWidth = Math.min(800, window.innerWidth - 40);
         const canvasWidth = Math.floor(maxWidth / CONFIG.gridSize) * CONFIG.gridSize;
 
         // 2. Header (Pulsante Menu + Punteggio)
@@ -93,7 +93,7 @@
         canvasWrapper.style.position = 'relative';
         canvasWrapper.style.width = canvasWidth + 'px';
         canvasWrapper.style.height = '400px';
-        
+
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
         canvas.width = canvasWidth;
@@ -116,16 +116,16 @@
         gameContainer.appendChild(canvasWrapper);
 
         drawStaticScreen();
-        
+
         document.removeEventListener('keydown', handleInput);
         document.addEventListener('keydown', handleInput);
         setupTouchControls(canvas);
     };
 
-    window.exitSnakeGame = function() {
+    window.exitSnakeGame = function () {
         if (gameInterval) clearInterval(gameInterval);
         isGameRunning = false;
-        
+
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
 
@@ -134,20 +134,20 @@
             gameContainer.style.display = 'none';
         }
         if (selector) selector.style.display = 'block';
-        
+
         document.removeEventListener('keydown', handleInput);
     };
 
-    window.startSnakeRun = function() {
+    window.startSnakeRun = function () {
         const startY = Math.floor((canvas.height / CONFIG.gridSize) / 2);
         const startX = Math.floor((canvas.width / CONFIG.gridSize) / 2) - 2;
-        snake = [{x: startX, y: startY}, {x: startX-1, y: startY}, {x: startX-2, y: startY}]; 
-        
+        snake = [{ x: startX, y: startY }, { x: startX - 1, y: startY }, { x: startX - 2, y: startY }];
+
         direction = 'right';
         nextDirection = 'right';
         score = 0;
         isGameRunning = true;
-        
+
         document.getElementById('snake-overlay').style.display = 'none';
         updateScoreUI(0);
         spawnFood();
@@ -157,9 +157,9 @@
     };
 
     function gameLoop() {
-        direction = nextDirection; 
+        direction = nextDirection;
         const head = { ...snake[0] };
-        
+
         if (direction === 'right') head.x++;
         else if (direction === 'left') head.x--;
         else if (direction === 'up') head.y--;
@@ -183,7 +183,7 @@
         if (head.x === food.x && head.y === food.y) {
             score++;
             updateScoreUI(score);
-            if (window.EspooClicker) window.EspooClicker.playSound('sound-buy'); 
+            if (window.EspooClicker) window.EspooClicker.playSound('sound-buy');
             spawnFood();
         } else {
             snake.pop();
@@ -209,7 +209,7 @@
         ctx.fillStyle = CONFIG.colors.food;
         // Piccolo tremolio per il cibo (glitch effect)
         const jitter = Math.random() > 0.9 ? 1 : 0;
-        ctx.fillRect((food.x * s) + jitter, (food.y * s) + jitter, s-2, s-2);
+        ctx.fillRect((food.x * s) + jitter, (food.y * s) + jitter, s - 2, s - 2);
 
         // Serpente
         snake.forEach((part, index) => {
@@ -221,17 +221,17 @@
                 try {
                     ctx.save();
                     ctx.beginPath();
-                    ctx.arc(px + s/2, py + s/2, s/2 + 1, 0, Math.PI*2);
+                    ctx.arc(px + s / 2, py + s / 2, s / 2 + 1, 0, Math.PI * 2);
                     ctx.closePath();
                     ctx.clip();
                     ctx.drawImage(headImg, px, py, s, s);
-                    
+
                     // Bordo per contrasto
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 1;
                     ctx.stroke();
                     ctx.restore();
-                } catch(e) {
+                } catch (e) {
                     ctx.fillStyle = CONFIG.colors.head;
                     ctx.fillRect(px, py, s, s);
                 }
@@ -248,7 +248,7 @@
     function drawStaticScreen() {
         ctx.fillStyle = CONFIG.colors.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.strokeStyle = CONFIG.colors.grid;
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -258,12 +258,12 @@
 
         // Logo Sfondo
         const size = 100;
-        try { 
+        try {
             ctx.save();
             ctx.globalAlpha = 0.2;
-            ctx.drawImage(headImg, (canvas.width/2)-(size/2), (canvas.height/2)-(size/2), size, size); 
+            ctx.drawImage(headImg, (canvas.width / 2) - (size / 2), (canvas.height / 2) - (size / 2), size, size);
             ctx.restore();
-        } catch(e){}
+        } catch (e) { }
     }
 
     function spawnFood() {
@@ -285,17 +285,20 @@
     function gameOver() {
         clearInterval(gameInterval);
         isGameRunning = false;
-        
+
+        // Usa l'ID condiviso definito in game-data
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
+
         let reward = 0;
         if (typeof bps !== 'undefined') {
-             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-             const safeReward = bpsVal.mul(score).mul(0.5); 
-             reward = safeReward;
+            const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
+            const safeReward = bpsVal.mul(score).mul(0.5);
+            reward = safeReward;
         }
 
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
-            
+
             if (score > 0) {
                 gs.score = gs.score.add(reward);
                 window.EspooClicker.showToast(`🐍 GAME OVER! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
@@ -306,9 +309,9 @@
             if (score > currentHigh) {
                 gs.arcadeHighScores.snake = score;
                 window.EspooClicker.showToast(`🏆 NUOVO RECORD: ${score}!`, 'achievement');
-                
+
                 const displayEl = document.getElementById('arcade-high-score');
-                if(displayEl) displayEl.textContent = score;
+                if (displayEl) displayEl.textContent = score;
             }
 
             window.EspooClicker.saveGame();
@@ -329,13 +332,13 @@
 
     function updateScoreUI(val) {
         const el = document.getElementById('snake-score');
-        if(el) el.textContent = `BUG RISOLTI: ${val}`;
+        if (el) el.textContent = `BUG RISOLTI: ${val}`;
     }
 
     function handleInput(e) {
         if (!isGameRunning) return;
-        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
-        switch(e.key) {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
+        switch (e.key) {
             case 'ArrowUp': case 'w': case 'W': if (direction !== 'down') nextDirection = 'up'; break;
             case 'ArrowDown': case 's': case 'S': if (direction !== 'up') nextDirection = 'down'; break;
             case 'ArrowLeft': case 'a': case 'A': if (direction !== 'right') nextDirection = 'left'; break;
@@ -348,8 +351,8 @@
         element.addEventListener('touchstart', (e) => {
             tsX = e.changedTouches[0].screenX; tsY = e.changedTouches[0].screenY;
             if (isGameRunning) e.preventDefault();
-        }, {passive: false});
-        element.addEventListener('touchmove', (e) => { if (isGameRunning) e.preventDefault(); }, {passive: false});
+        }, { passive: false });
+        element.addEventListener('touchmove', (e) => { if (isGameRunning) e.preventDefault(); }, { passive: false });
         element.addEventListener('touchend', (e) => {
             if (!isGameRunning) return;
             let teX = e.changedTouches[0].screenX; let teY = e.changedTouches[0].screenY;
@@ -361,6 +364,6 @@
                 if (yDiff > 0 && direction !== 'up') nextDirection = 'down';
                 else if (yDiff < 0 && direction !== 'down') nextDirection = 'up';
             }
-        }, {passive: false});
+        }, { passive: false });
     }
 })();

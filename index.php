@@ -1,6 +1,6 @@
 <?php
-	require_once("php/check_language.php");
-	require_once("php/check_version.php");
+require_once("php/check_language.php");
+require_once("php/check_version.php");
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -26,6 +26,7 @@
 		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
@@ -247,14 +248,14 @@
 		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
 		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
-			// Uso la stessa variabile usata nella libreria check_version.php
-			if (isset($config['instanceName']) && $config['instanceName'] === 'dev')
-			{
-				echo '<script src="js/cheatboard.js" defer></script>';
-				echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-			}
-		?>
+// Uso la stessa variabile usata nella libreria check_version.php
+if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
+	echo '<script src="js/cheatboard.js" defer></script>';
+	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
+}
+?>
 	</body>
 </html>

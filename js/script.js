@@ -830,7 +830,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- CARICAMENTO AUDIO ---
         if (gameData.assets && gameData.assets.sounds) {
             Object.values(gameData.assets.sounds).forEach(sound => {
-                const url = `assets/sounds/${sound.file}`;
+
+                // --- MODIFICA QUI ---
+                let url;
+                if (sound.file.includes('/')) {
+                    url = sound.file;
+                } else {
+                    url = `assets/sounds/${sound.file}`;
+                }
+                // --------------------
+
                 promises.push(
                     fetch(url)
                         .then(() => updateProgress())

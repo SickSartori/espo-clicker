@@ -168,7 +168,14 @@ const AudioManager = {
             if (!document.getElementById(sound.id)) {
                 const audio = document.createElement('audio');
                 audio.id = sound.id;
-                audio.src = `assets/sounds/${sound.file}`;
+
+                // Se il file contiene una barra, usa il percorso completo (es. arcade/assets/...)
+                if (sound.file.includes('/')) {
+                    audio.src = sound.file;
+                } else {
+                    audio.src = `assets/sounds/${sound.file}`;
+                }
+
                 audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
                 if (sound.loop) audio.loop = true;
                 container.appendChild(audio);

@@ -1,0 +1,112 @@
+/* code/arcade/space/css/space.css */
+
+/* Stile specifico per il Canvas di Space Impact */
+#space-canvas {
+    background-color: #000;
+    border: 3px solid #e74c3c;
+    /* Rosso/Arancio Arcade */
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    border-radius: 4px;
+    image-rendering: pixelated;
+    /* Fondamentale per la pixel art */
+    cursor: none;
+    /* Nascondiamo il mouse nel canvas */
+}
+
+/* Thumb nel menu */
+.space-theme .game-thumb {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    text-shadow: 0 0 5px #e74c3c;
+}
+
+.space-theme:hover {
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.space-theme:hover .arcade-play-btn {
+    background: #c0392b;
+}
+
+/* UI Overlay per i controlli Mobile (D-PAD + FIRE) */
+#space-mobile-controls {
+    display: none;
+    /* Nascosto su desktop */
+    width: 100%;
+    max-width: 800px;
+    margin-top: 10px;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.d-pad {
+    display: grid;
+    grid-template-columns: 50px 50px 50px;
+    grid-template-rows: 50px 50px;
+    gap: 5px;
+}
+
+.fire-btn-group {
+    display: flex;
+    align-items: center;
+}
+
+.ctrl-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #555;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.ctrl-btn:active {
+    background: rgba(231, 76, 60, 0.5);
+    border-color: #e74c3c;
+}
+
+.btn-up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.btn-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.btn-right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.btn-down {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.btn-fire {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(231, 76, 60, 0.2);
+    border-color: #e74c3c;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Mostra controlli solo su schermi touch/piccoli */
+@media (max-width: 1024px) {
+    #space-mobile-controls {
+        display: flex;
+    }
+}
