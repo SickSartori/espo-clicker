@@ -81,25 +81,20 @@ function clearActiveEvent() {
 // --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------
 
 // Applica un singolo effetto
-function applyEffect(effect, level = 1)
-{
+function applyEffect(effect, level = 1) {
     if (!effect)
         return;
 
     let lvl = new Decimal(level);
 
-    if (effect.type === 'mult_state')
-    {
+    if (effect.type === 'mult_state') {
         if (gameState.hasOwnProperty(effect.stat))
             gameState[effect.stat] = gameState[effect.stat].mul(effect.val);
     }
-    else if (effect.type === 'mult_global')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'mult_global') {
+        if (window.hasOwnProperty(effect.stat)) {
             // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
-            if (window[effect.stat] instanceof Decimal)
-            {
+            if (window[effect.stat] instanceof Decimal) {
                 let value = new Decimal(effect.val);
                 window[effect.stat] = window[effect.stat].mul(value);
             }
@@ -107,10 +102,8 @@ function applyEffect(effect, level = 1)
                 window[effect.stat] *= effect.val;
         }
     }
-    else if (effect.type === 'add_mult_per_level')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'add_mult_per_level') {
+        if (window.hasOwnProperty(effect.stat)) {
             let value = new Decimal(effect.val);
             let bonus = value.mul(lvl);
 
@@ -120,10 +113,8 @@ function applyEffect(effect, level = 1)
                 window[effect.stat] += (effect.val * level);
         }
     }
-    else if (effect.type === 'add_global_stat_per_level')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'add_global_stat_per_level') {
+        if (window.hasOwnProperty(effect.stat)) {
             let value = new Decimal(effect.val);
             let bonus = value.mul(lvl);
 
@@ -245,13 +236,16 @@ const AudioManager = {
         // Raccogliamo tutti gli ID che sono definiti come 'music' nei dati o usati per eventi
         const allMusicTracks = [
             'sound-bg-music',
+            'sound-bg-music-v2',
+            'sound-bg-music-v3',
             'sound-snowball',
             'sound-fury-music',
             'sound-bluescreen',
-            'sound-matrix'
+            'sound-matrix',
+            'sound-bg-bit' // Assicurati che le nuove tracce siano qui o caricate via skin
         ];
 
-        // Aggiungi musiche delle skin (es. sound-bg-bit)
+        // Aggiungi musiche delle skin (es. sound-bg-bit) in modo dinamico
         for (let key in gameData.skins) {
             const conf = gameData.skins[key].themeConfig;
             if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
@@ -283,12 +277,18 @@ const AudioManager = {
                 targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
         }
-        // PRIORITÀ 4: Skin Attiva (Base)
+        // PRIORITÀ 4: Skin Attiva (Base) o Selezione Utente
         else {
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
-            targetTrackId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
-                ? currentSkin.themeConfig.specialMusic
-                : 'sound-bg-music';
+
+            // A. SE la skin ha una musica speciale (Tema vincolante), quella VINCE sempre
+            if (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic) {
+                targetTrackId = currentSkin.themeConfig.specialMusic;
+            }
+            // B. ALTRIMENTI, usa la scelta dell'utente (o fallback sul default)
+            else {
+                targetTrackId = gameState.user.bgMusicSelection || 'sound-bg-music';
+            }
         }
 
         // 3. APPLICAZIONE (Play Target, Pause Others)
@@ -354,13 +354,11 @@ function buySkin(skinId) {
     }
 }
 
-function buyClickUpgrade(upgradeKey)
-{
+function buyClickUpgrade(upgradeKey) {
     const state = gameState.clickUpgrades[upgradeKey];
     const data = gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score.gte(data.cost) && !state.purchased)
-    {
+    if (gameState.score.gte(data.cost) && !state.purchased) {
         gameState.score = gameState.score.minus(data.cost);
         gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
@@ -370,7 +368,7 @@ function buyClickUpgrade(upgradeKey)
 
         if (upgradeKey === 'clickAutomatico')
             recalculateCPS();
-        
+
         finalizePurchase();
     }
 }
@@ -392,27 +390,23 @@ function buyPrestigeUpgrade(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const cost = data.baseCost;
 
-    if (data.isCounted)
-    {
+    if (data.isCounted) {
         if (gameState.prestigePoints.lt(cost))
             return;
     }
-    else
-    {
+    else {
         if (gameState.prestigePoints.lt(cost) || state.purchased)
             return;
     }
 
     gameState.prestigePoints = gameState.prestigePoints.minus(cost);
 
-    if (data.isCounted)
-    {
+    if (data.isCounted) {
         state.count++;
         if (data.effects)
             data.effects.forEach(eff => applyEffect(eff, 1));
     }
-    else
-    {
+    else {
         state.purchased = true;
         if (data.effects)
             data.effects.forEach(eff => applyEffect(eff));

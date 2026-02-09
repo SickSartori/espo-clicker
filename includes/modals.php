@@ -70,6 +70,21 @@
                 <h3 class="group-title">
 					<?php echo $labels["modals_opzioni_contenuto_audio"]; ?>
 				</h3>
+                <div class="slider-row" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <span class="slider-icon">
+                    <i class="fa-solid fa-compact-disc"></i>
+                </span>
+                <div class="slider-wrapper" style="width: 100%;">
+                    <label><?php echo "Musica di Sfondo"; // O usa una variabile $labels se preferisci ?></label>
+                    
+                    <select id="bg-music-select" class="clean-input" style="width: 100%; padding: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid #4a6582; color: white; border-radius: 4px;">
+                    </select>
+                    
+                    <div id="bg-music-lock-msg" style="display:none; font-size: 0.7rem; color: #e74c3c; margin-top: 4px;">
+                        <i class="fa-solid fa-lock"></i> Bloccato dalla Skin attuale
+                    </div>
+                </div>
+            </div>
                 <div class="slider-row">
                     <span class="slider-icon">
 						<i class="fa-solid fa-volume-high"></i>

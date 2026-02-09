@@ -1,89 +1,280 @@
-## 📄 Gameplay Estensivo di Espòòò Clicker
+# 📘 Documentazione Tecnica: Espòòò Clicker
 
-**Espòòò Clicker** è un gioco di progressione incrementale (clicker/idle) il cui ciclo di gioco è incentrato sulla risoluzione di "Bug Risolti" attraverso l'interazione manuale e l'automazione. 
-Il gioco presenta sistemi di potenziamento a breve e lungo termine e meccaniche di *soft-reset* (Promozione) per un'espansione infinita.
+Questa documentazione analizza la struttura, la logica di gioco e il funzionamento del backend del progetto. Il gioco è un **Incremental Clicker Game** basato su web (HTML5/JS) con un backend PHP/MySQL per la persistenza dei dati e le classifiche.
 
-### I. Fase Iniziale e Core Loop
+---
 
-#### 1. Accesso e Inizializzazione
-All'avvio, il giocatore deve inserire un nome utente, necessario per il salvataggio dei progressi e la partecipazione al **Podio Online**. 
-Il gioco carica o crea un `gameState` iniziale, impostando il valore base di un click a 1 Bug.
+## 🏗️ 1. Architettura del Sistema
 
-#### 2. Risoluzione Manuale (Clicking)
-Il fulcro del gioco è il pulsante centrale, raffigurante il manager Espòòò. Ogni click:
-* Incrementa il saldo attuale (`score`) e i punteggi cumulativi (`totalScore`, `lifetimeScore`).
-* Riproduce il suono `sound-click`.
-* Genera un feedback visivo che mostra i Bug guadagnati.
-* Il valore del click è influenzato da Potenziamenti Click, Bonus Promozione e dall'eventuale Moltiplicatore Blue Screen.
+Il progetto segue un'architettura **Client-Server**:
+* **Frontend (Client):** Gestisce tutta la logica di gioco (calcolo risorse, acquisti, eventi, rendering UI) in tempo reale tramite JavaScript. Lo stato è mantenuto in memoria e sincronizzato con `localStorage` (con compressione LZString) e il Server.
+* **Backend (Server):** Espone API RESTful in PHP per autenticazione, salvataggio cloud, reset progressi e gestione della classifica globale.
+* **Database:** MySQL per memorizzare utenti, salvataggi (BLOB JSON compresso) e punteggi.
 
-#### 3. Produzione Automatica (BPS)
-Il gioco si basa sul calcolo dei **BPS (Bugs Per Second)**, che vengono automaticamente aggiunti al punteggio 10 volte al secondo (intervallo di 100ms) tramite la `gameLoop`.
+---
 
-### II. Sistemi di Progressione
+## 🕹️ 2. Logica Frontend (JavaScript)
 
-La progressione è gestita attraverso tre diversi negozi che si sbloccano man mano che il giocatore accumula Bug e totalizza click.
+Il cuore del gioco è suddiviso in diversi moduli JS modulari caricati in `index.php`.
 
-#### A. Squadra (Team)
-(Colonna Destra - Teams)
+### A. Configurazione & Versioning (`version-config.js`)
+Punto di ingresso per la definizione della versione.
+* Definisce l'oggetto globale `GAME_VERSION` (`major`, `minor`, `stage`).
+* Gestisce i controlli di compatibilità dei salvataggi (evita di caricare salvataggi *Beta* su versioni *Stable* e viceversa).
 
-Questi sono gli acquisti fondamentali per l'automazione.
+### B. Gestione Dati (`game-data.js`) - **[CORE]**
+Questo file è la **Fonte di Verità Assoluta**. Il gioco è **Data-Driven**: l'interfaccia si costruisce leggendo questo file.
 
-| Acquisto (Esempio) | Tipo di Acquisto | Costo e Meccanica |
-| :--- | :--- | :--- |
-| **Assistente QA** | Elemento base del Team (BPS 0.1). | Il costo aumenta del **15%** per ogni unità già posseduta: $\text{Costo} = \text{Costo Base} \times 1.15^\text{Conteggio}$. |
-| **Squadra QA Junior** | Team più avanzato (BPS 8). | Ogni acquisto incrementa permanentemente il BPS totale del gioco. |
-| **AI Debugger** | Acquisto finale (BPS 1400). | Il negozio scompare solo in caso di *Promozione*. |
+* **`gameData`**: Oggetto gigante che contiene:
+    * **`assets`:** Registro audio/video con volumi e categorie.
+    * **`teams`:** Definizione teams (costi, BPS).
+    * **`clickUpgrades` / `buildingEnhancements` / `prestigeUpgrades`:** Liste potenziamenti.
+    * **`achievements`:** Obiettivi, condizioni logiche e premi.
+    * **`skins`:** Configurazioni estetiche, rarità e temi speciali.
+    * **`events`:** Configurazioni eventi (durata, moltiplicatori, video).
 
-#### B. Potenziamenti Click (Upgrade)
-(Colonna Sinistra - Potenziamenti Te Stesso)
+### C. Motore di Gioco (`game-logic.js`)
+Gestisce la matematica, l'economia e gli eventi.
 
-Questi acquisti singoli migliorano sia la risoluzione manuale che, in alcuni casi, la produzione automatica.
+* **Audio Manager:** Gestione centralizzata dei volumi con priorità (Evento > Natale > Background) e supporto "Smart Resume" per aggirare i blocchi autoplay dei browser. Supporta la **persistenza della musica scelta** dall'utente.
+* **Event System (`EventHandlers`):** Sistema estensibile per gestire tipi di eventi diversi (Video, CSS Glitch) senza catene di `if/else`.
+* **Calcoli Economici:**
+    * `calculateClickValue()`: Centralizza la logica di guadagno per click (Click + Mano Bionica + Fury).
+    * `calculateBulkCost()` & `calculateMaxAffordable()`: Formule matematiche sincronizzate per acquisti multipli (1x, 5x, MAX).
 
-| Potenziamento (Esempio) | Requisito di Sblocco | Effetto |
-| :--- | :--- | :--- |
-| **Caffè Forte** | 10 Click Totali | Aggiunge un valore fisso al click base (+1). |
-| **Mano Bionica** | 1.000 Click Totali | Aggiunge l'**1%** del BPS corrente al valore di ogni click. |
-| **Click Divino** | 50.000 Click Totali | Migliora la Mano Bionica, portando il bonus BPS per click al **2%**. |
-| **Click Automatico** | 10.000 Click Totali | Aggiunge BPS extra pari al numero di `Assistenti QA` posseduti. |
-| **Hacking Etico** | 5.000 Click Totali | Raddoppia la probabilità di trovare Ticket Critici. |
+### D. Gestione Interfaccia (`ui-functions.js` & `modals.js`)
+Manipolazione del DOM ottimizzata.
 
-#### C. Migliorie Team (Enhancements)
-(Colonna Sinistra - Migliorie)
+* **Rendering Dinamico (`renderStoreSection`):** Una singola funzione genera l'HTML per *tutti* i negozi (Click, Auto, Lab) leggendo i dati.
+* **DOM Caching:** Uso di `getEl()` e `setTextIfChanged()` per ridurre al minimo il repaint del browser e migliorare le performance su mobile.
+* **Modals & Settings:** Gestione dei popup, incluso il **selettore della musica di sfondo** con logica di sblocco per tema.
 
-Questi sono potenziamenti unici che moltiplicano la produttività di specifiche unità del Team (Squadra). La sezione è visibile solo quando ci sono elementi acquistabili.
+### E. Main Controller (`script.js`)
+Il collante dell'applicazione.
 
-* **Sblocco:** Ogni miglioramento ha un costo in Bug e richiede un numero minimo di unità del Team specifico (`requiredCount`) (es. 1, 10, 25, 50 o 100 unità).
-* **Funzione:** Forniscono moltiplicatori (x2, x3, x4) al BPS generato dall'unità Team associata (es. `Caffè Doppio` moltiplica per 2 il BPS dell'Assistente QA).
+* **Game Loop:**
+    * **Fast Loop (30fps):** Calcolo risorse e logica di base.
+    * **Slow Loop (1fps):** Controlli pesanti (Achievement, Notifiche Tab) per risparmiare CPU.
+* **Salvataggio (LZ-String):** Implementa la compressione dei dati JSON prima di salvarli in LocalStorage o Cloud, riducendo le dimensioni dell'80%.
 
-### III. Eventi Dinamici e Moltiplicatori
+---
 
-| Evento | Meccanica di Trigger | Bonus e Durata |
-| :--- | :--- | :--- |
-| **Ticket Critico (Golden Bug)** | Appare casualmente, con un timer di spawn di base di 60-180 secondi. | Cliccarlo concede un bonus istantaneo calcolato come `(BPS * 30) + (ClickValue * 10) + 10` Bug. |
-| **ERRORE DI SISTEMA! (Bluescreen)** | Ha una piccola probabilità di apparire, aumentata se il punteggio o i click totali contengono la sequenza **'404'**. | Applica un moltiplicatore di BPS e Click (fino a x4) per **30 secondi**, con sfondo Blue Screen e audio in loop. |
+## 🖥️ 3. Logica Backend (PHP & SQL)
 
-### IV. Promozione (Prestige System)
+### Database
+* **`users`:** ID, username, hash password, `save_data` (LONGTEXT).
+* **`leaderboard`:** username, score (max), prestigeLevel.
+* **Configurazione:** `db_connect.php` usa `config.json` per switchare tra ambienti (es. tabelle `_dev` vs `_production`).
 
-La Promozione è il sistema di *soft-reset* del gioco che introduce una valuta persistente.
+### API Endpoints
+1.  **`login_register.php`:** Gestisce accesso e creazione account (hash password sicuro).
+2.  **`save_progress.php`:** Riceve la stringa compressa LZString e la salva nel DB. Include controlli anti-rollback.
+3.  **`submit_score.php`:** Estrae i dati chiave (Score, Livello) dal salvataggio per aggiornare la classifica pubblica.
+4.  **`reset_progress.php` / `delete_user.php`:** Gestione reset e GDPR (cancellazione dati).
 
-#### 1. Calcolo e Reset
-* **Sblocco:** La sezione si sblocca quando i Bug Risolti Totali (`totalScore`) raggiungono **1.000.000**.
-* **Punti Promozione (PP):** Vengono guadagnati al reset tramite la formula: $\text{floor}(\sqrt{\frac{\text{Bug Risolti Totali}}{1.000.000}} \times 1.5)$.
-* **Reset:** Resetta tutto (score, Team, upgrade click), ma mantiene PP, Obiettivi, tempo di gioco e Potenziamenti Promozione.
+---
 
-#### 2. Vantaggi Permanenti
-* **Bonus PP Base:** Ogni PP accumulato fornisce un moltiplicatore permanente dell'**1%** al BPS e al Click Value per le run future.
-* **Potenziamenti Promozione:** Acquistabili con i PP, forniscono vantaggi strategici persistenti:
-    * **Sinergia Manageriale:** Aumenta l'efficacia di ogni PP dello 0.1% aggiuntivo (Acquisto multiplo).
-    * **Accelerazione Iniziale:** Inizia ogni run con 1 `Assistente QA` gratuito.
-    * **Ticket Premium:** Dimezza il tempo di spawn dei Ticket Critici.
+## 🚀 4. Funzionalità Chiave
 
-### V. Meta-Progressione e Stato
+1.  **Data-Driven Design:** Aggiungere contenuti non richiede modifiche alla logica JS.
+2.  **Sistema Prestigio (Laboratorio):** Soft reset che converte i progressi in Token per acquistare potenziamenti permanenti e Skin esclusive.
+3.  **Eventi Dinamici:**
+    * **Golden Bug:** Apparizione casuale di bug dorati cliccabili.
+    * **Espo Fury:** Abilità attiva (Cooldown) che moltiplica BPS x7.
+    * **Eventi Visivi:** Errore 404 (Glitch CSS) e Rick Roll (Video Overlay).
+4.  **Sistema Skin Avanzato:** Le skin non cambiano solo l'immagine, ma possono attivare "Temi" completi (Musica, Neve, Classi CSS).
 
-| Funzionalità | Descrizione | Persistenza |
-| :--- | :--- | :--- |
-| **Salvataggio** | Il gioco salva automaticamente lo stato locale (`gameState`) ogni 5 secondi. | Locale (`localStorage`). |
-| **Podio Online** | Il punteggio attuale e il livello Promozione sono inviati al server ogni 30 secondi. | Server MySQL. Il punteggio viene aggiornato solo se è un nuovo record. |
-| **Obiettivi (Achievements)** | Sbloccati al raggiungimento di pietre miliari specifiche (es. `primoClick`, `unodiTutto`). | Permanenti, anche dopo il Reset. |
-| **Statistiche** | Accessibile tramite modale, mostra metriche totali (tempo di gioco, click totali, bug di sempre, ecc.). | Permanenti. |
-| **Impostazioni** | Permette di regolare il volume e di resettare completamente il gioco, cancellando anche i punteggi dal Podio Online. | Locale (Volume) e Server (Punteggio). |
+---
+
+## 🛠️ 5. Guida all'Espansione (Modding)
+
+Per aggiungere nuovi contenuti al gioco, segui queste istruzioni. La maggior parte delle modifiche avviene in `js/game-data.js`.
+
+### A. Aggiungere una Nuova Skin
+Vai in `js/game-data.js` -> `gameData.skins`.
+
+```javascript
+cyber_espo: {
+    name: "Cyber Espo",
+    desc: "Il futuro è buggato.",
+    img: "cyber.webp",          // Deve essere in assets/image/
+    imgClick: "cyber-click.webp",
+    rarity: "legendary",        // common, rare, epic, legendary
+    cost: new Decimal(50),      // Costo in Token (opzionale)
+    unlockHint: "Sblocca l'obiettivo 'Hacker'", // Testo se bloccata
+    
+    // [OPZIONALE] Configurazione Tema Speciale (obbliga una musica specifica)
+    themeConfig: {
+        bodyClass: 'theme-cyber',       // Classe CSS aggiunta al body
+        specialMusic: 'sound-synthwave',// ID audio (vedi sezione Suoni)
+        goldenBugIcon: 'fa-robot',      // Icona FontAwesome
+        goldenBugColor: '#00ff00'       // Colore icona
+    }
+}
+
+```
+
+### B. Aggiungere un Obiettivo (Achievement)
+
+Vai in `js/game-data.js` -> `gameData.achievements`.
+
+```javascript
+bug_hunter: {
+    name: "Cacciatore",
+    desc: "Clicca su 100 Golden Bug.",
+    type: 'custom', 
+    target: 100,
+    isSecret: false, // Se true, mostra "???" finché non sbloccato
+    
+    // CONDIZIONE: Quando diventa vero?
+    condition: () => gameState.totalGoldenBugsClicked >= 100,
+    
+    // PREMIO: Cosa ottiene il giocatore?
+    reward: { 
+        type: 'bugs',    // Tipi: 'bugs', 'skin', 'prestige', 'multiplier'
+        value: new Decimal(500000) 
+    }
+}
+
+```
+
+### C. Aggiungere un nuovo Team
+
+Vai in `js/game-data.js` -> `gameData.teams`.
+
+```javascript
+robot_qa: {
+    name: 'Robot QA',
+    baseCost: new Decimal(10000),
+    cpsPerUnit: new Decimal(50), // Bug risolti al secondo da 1 unità
+    tags: ['robot'] // Tag per logiche future (es. potenziamenti specifici)
+}
+
+```
+
+### D. Aggiungere un Potenziamento (Upgrade)
+
+Scegli l'elenco giusto in `gameData`:
+
+* `clickUpgrades` (Negozio Sinistra - Tab Click)
+* `buildingEnhancements` (Negozio Sinistra - Tab Auto)
+* `prestigeUpgrades` (Negozio Laboratorio)
+
+Esempio Potenziamento Auto (`buildingEnhancements`):
+
+```javascript
+olio_motore: {
+    name: 'Olio Motore',
+    desc: 'Robot QA raddoppiano la produzione.',
+    targetTeam: 'robot_qa', // Deve corrispondere all'ID del team creato sopra
+    cost: new Decimal(500000),
+    multiplier: new Decimal(2), // Moltiplicatore x2
+    requiredCount: 10,      // Sbloccato quando hai 10 Robot QA
+    purchased: false        // Sempre false di default
+}
+
+```
+
+### E. Aggiungere Suoni o Video (Generico)
+
+Vai in `js/game-data.js` -> `gameData.assets`.
+
+```javascript
+nuova_music: {
+    id: 'sound-synthwave',
+    file: 'music/synthwave.mp3', // Percorso relativo in assets/sounds/
+    name: 'Musica Cyber',
+    type: 'music',               // 'music' o 'sfx'
+    category: 'ambiente',        // 'ambiente', 'effetti' o 'eventi'
+    loop: true,
+    defaultVol: 0.3
+}
+
+```
+
+### F. Aggiungere Musica di Sfondo (Selezionabile nel Menu)
+
+Per aggiungere una traccia che l'utente può scegliere dalle Opzioni, devi modificare **3 file**.
+
+1. **Definizione Dati (`js/game-data.js`):**
+Aggiungi la traccia come spiegato sopra in `gameData.assets.sounds`.
+```javascript
+'bg-music-new': {
+    id: 'sound-bg-new',
+    file: 'new-track.mp3',
+    name: 'Nuova Traccia',
+    type: 'music',
+    category: 'ambiente',
+    loop: true,
+    defaultVol: 0.3
+}
+
+```
+
+
+2. **Logica Menu (`js/modals.js`):**
+Nella funzione `openSettingsModal`, aggiungi l'ID della traccia alla mappa `musicUnlockMap`.
+* Usa `null` se è sbloccata da subito.
+* Usa `'nome_skin'` se si sblocca solo possedendo quella skin.
+
+
+```javascript
+const musicUnlockMap = {
+    'sound-bg-music': null,
+    'sound-bg-new': null,        // <--- AGGIUNTA
+    'sound-bg-bit': 'espobit'    // <--- Esempio sbloccabile
+};
+
+```
+
+
+3. **Logica Audio (`js/game-logic.js`):**
+Nella funzione `updateAmbience` (dentro l'`AudioManager`), aggiungi l'ID della traccia all'array `allMusicTracks`. Questo permette al gioco di spegnerla quando ne parte un'altra.
+```javascript
+const allMusicTracks = [
+    'sound-bg-music',
+    'sound-bg-new', // <--- AGGIUNTA
+    // ... altre tracce ...
+];
+
+```
+
+
+
+## 📂 6. Struttura Cartelle
+
+```
+/
+├── index.php              # Entry point HTML
+├── css/                   # Fogli di stile
+│   ├── base.css           # Reset e variabili globali
+│   ├── layout.css         # Griglia colonne
+│   ├── clicker.css        # Stili gioco centrale
+│   ├── store.css          # Stili negozi e card
+│   ├── modals-core.css    # Struttura finestre modali
+│   ├── mobile.css         # Adattamento smartphone
+│   └── ...
+├── js/                    # Logica Frontend
+│   ├── version-config.js  # Versione gioco
+│   ├── game-data.js       # [CORE] Dati e Configurazioni
+│   ├── game-logic.js      # [CORE] Logica Matematica ed Eventi
+│   ├── script.js          # Controller Principale
+│   ├── ui-functions.js    # Rendering Grafico
+│   ├── modals.js          # Gestione Finestre e Audio
+│   ├── cheatboard.js      # Pannello Sviluppatore (nascosto)
+│   └── podio.js           # Classifica
+├── php/                   # Backend API
+│   ├── db_connect.php     # Connessione DB
+│   ├── api_bootstrap.php  # Header comuni e Auth
+│   ├── save_progress.php  # Endpoint Salvataggio
+│   └── ...
+└── template/assets/       # File Statici
+    ├── image/             # Skin, Icone
+    ├── sounds/            # MP3
+    └── video/             # MP4 per eventi
+
+```
+
+```
+
+```

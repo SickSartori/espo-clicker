@@ -1039,9 +1039,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             muteBtn.addEventListener('click', () => {
                 const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+
+                // Identifica la traccia corretta (FIX APPLICATO QUI)
                 const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
                     ? currentSkin.themeConfig.specialMusic
-                    : 'sound-bg-music';
+                    : (gameState.user.bgMusicSelection || 'sound-bg-music');
 
                 const targetAudio = document.getElementById(targetId);
                 const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
@@ -1281,9 +1283,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Identifica la traccia corretta
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+
+            // Logica Priorità: 1. Skin Theme (es. Natale) -> 2. Preferenza Utente -> 3. Default
             const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
                 ? currentSkin.themeConfig.specialMusic
-                : 'sound-bg-music';
+                : (gameState.user.bgMusicSelection || 'sound-bg-music');
 
             const audioToPlay = document.getElementById(targetId);
 
@@ -1308,8 +1312,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (window.currentActiveEvent || document.body.classList.contains('rick-rolling')) {
                             return;
                         }
-
-                        audioToPlay.play().then(() => {
+                        // Riprova con la traccia corretta
+                        const retryAudio = document.getElementById(targetId);
+                        if (retryAudio) retryAudio.play().then(() => {
                             document.removeEventListener('click', unlockAudio);
                             document.removeEventListener('keydown', unlockAudio);
                             document.removeEventListener('touchstart', unlockAudio);
@@ -1390,6 +1395,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // --- 4. CONTROLLO COMPATIBILITÀ CLOUD ---
                     if (!checkSaveCompatibility(cloudState)) {
                         console.warn("⚠️ Cloud Save incompatibile: Eseguo migrazione e sovrascrittura.");
+
+                        // Sincronizziamo i punteggi dal Cloud AL Locale PRIMA di salvare.
+                        // Questo serve a passare il controllo "Anti-Rollback" del file PHP.
+                        if (cloudState.score) gameState.score = new Decimal(cloudState.score);
+                        if (cloudState.totalScore) gameState.totalScore = new Decimal(cloudState.totalScore);
+                        if (cloudState.lifetimeScore) gameState.lifetimeScore = new Decimal(cloudState.lifetimeScore);
+                        if (cloudState.prestigePoints) gameState.prestigePoints = new Decimal(cloudState.prestigePoints);
+                        if (cloudState.totalResets) gameState.totalResets = cloudState.totalResets;
 
                         // Aggiorniamo la versione alla corrente
                         if (window.GAME_VERSION) {

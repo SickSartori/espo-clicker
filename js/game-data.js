@@ -22,8 +22,7 @@ window.costScalingReduction = 0;
 window.prestigeSynergyFactor = new Decimal(0);
 window.clickGlobalMult = new Decimal(1);
 
-function isChristmasSeason()
-{
+function isChristmasSeason() {
     const now = new Date();
     const month = now.getMonth();
     const day = now.getDate();
@@ -45,7 +44,25 @@ const gameData = {
             'bg-music': {
                 id: 'sound-bg-music',
                 file: 'bg-music.mp3',
-                name: 'Musica Base',
+                name: 'Musica V1',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'bg-music-v2': {
+                id: 'sound-bg-music-v2',
+                file: 'bg-music-v2.mp3',
+                name: 'Musica V2',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'bg-music-v3': {
+                id: 'sound-bg-music-v3',
+                file: 'bg-music-v3.mp3',
+                name: 'Musica V3',
                 type: 'music',
                 category: 'ambiente',
                 loop: true,
@@ -1220,13 +1237,12 @@ const gameData = {
 };
 
 // --- GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
-function getInitialGameState()
-{
+function getInitialGameState() {
     const state =
     {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
-        arcadeHighScores: { 
-            snake: 0 
+        arcadeHighScores: {
+            snake: 0
         },
         score: new Decimal(0),
         baseClickValue: new Decimal(1),
@@ -1250,7 +1266,14 @@ function getInitialGameState()
         prestigeUpgrades: {},
         buildingEnhancements: {},
         achievements: {},
-        user: { username: 'Giocatore', masterVolume: 0.8, sfxVolume: 1.0, musicVolume: 0.5, audioCustom: {} }
+        user: {
+            username: 'Giocatore',
+            masterVolume: 0.8,
+            sfxVolume: 1.0,
+            musicVolume: 0.5,
+            audioCustom: {},
+            bgMusicSelection: 'sound-bg-music'
+        }
     };
 
     for (const key in gameData.teams) state.teams[key] = { count: 0 };
@@ -1259,8 +1282,7 @@ function getInitialGameState()
 
     for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
 
-    for (const key in gameData.prestigeUpgrades)
-	{
+    for (const key in gameData.prestigeUpgrades) {
         if (gameData.prestigeUpgrades[key].isCounted)
             state.prestigeUpgrades[key] = { count: 0 };
         else
@@ -1269,8 +1291,7 @@ function getInitialGameState()
 
     const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
 
-    for (const key in allAssets)
-	{
+    for (const key in allAssets) {
         if (allAssets[key].defaultVol !== undefined)
             state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
     }
@@ -1280,8 +1301,7 @@ function getInitialGameState()
 
 gameState = getInitialGameState();
 
-function resetGameToDefault()
-{
+function resetGameToDefault() {
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 
