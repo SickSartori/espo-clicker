@@ -19,11 +19,14 @@
 		<link rel="stylesheet" href="css/store.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
 		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">    
 		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">  
 		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
+
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
 		<link rel="icon" type="image/png" href="assets/image/favicon.webp">
@@ -97,7 +100,7 @@
 		</div>
 		
 		<?php include 'includes/modals.php'; ?>
-		
+		<?php include 'includes/modals_arcade.php'; ?>
 		<nav id="game-navbar">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
@@ -243,6 +246,7 @@
 		<script src="js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
 		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
+		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
 			// Uso la stessa variabile usata nella libreria check_version.php

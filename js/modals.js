@@ -118,8 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            // Opzionale: Mostra un toast "Benvenuto in sala giochi"
-            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.arcadeWelcome, "info");
+            // Recupera il record salvato
+            const Game = window.EspooClicker;
+            if (Game) {
+                const state = Game.getGameState();
+                // Se non esiste ancora l'oggetto, mostra 0
+                const highScore = (state.arcadeHighScores && state.arcadeHighScores.snake) ? state.arcadeHighScores.snake : 0;
+                
+                // Aggiorna l'HTML
+                const scoreDisplay = document.getElementById('arcade-high-score');
+                if (scoreDisplay) scoreDisplay.textContent = highScore;
+            }
+
             openModal(arcadeModal);
         });
     }
