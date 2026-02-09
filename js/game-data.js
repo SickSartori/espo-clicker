@@ -266,10 +266,18 @@ const gameData = {
             rarity: "epic",
             cost: new Decimal(20) // Richiede prestigio avanzato
         },
+        bob: {
+            name: "Espònge Bob",
+            desc: "Sono pronto, sono pronto!",
+            img: "esponge-bob.webp",
+            imgClick: "esponge-bob-click.webp",
+            rarity: "epic",
+            cost: new Decimal(25) // Richiede prestigio avanzato
+        },
         // --- LEGGENDARIE (Late Game - Difficili) ---
         rick: {
             name: "Rick Espley",
-            desc: "Never gonna give you up.",
+            desc: "Never gonna give you up!",
             img: "rick-espley.webp",
             imgClick: "rick-espley-click.webp",
             rarity: "legendary",
