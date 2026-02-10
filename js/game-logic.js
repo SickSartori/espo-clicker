@@ -217,11 +217,19 @@ const AudioManager = {
     },
 
     playClickEffect() {
-        // ... (Logica click effect invariata, puoi lasciarla com'era o copiarla dal vecchio file) ...
-        const sound = document.getElementById('sound-click');
+        // Default: Suono click standard
+        let soundId = 'sound-click';
+
+        if (document.body.classList.contains('theme-super') && gameState.crunchTimeEndTime > Date.now()) {
+            soundId = 'sound-fireball';
+        }
+
+        const sound = document.getElementById(soundId);
         if (!sound) return;
+
         let rate = 1.0;
         let volumeMult = 1.0;
+
         if (isBluescreenActive) {
             if (document.body.classList.contains('rick-rolling')) {
                 volumeMult = 0.2;
@@ -229,18 +237,43 @@ const AudioManager = {
                 rate = 0.2 + Math.random() * 1.6;
                 volumeMult = 0.5 + Math.random();
             }
+        } 
+        // [NUOVO] Variazione pitch per la fireball per renderla meno ripetitiva
+        else if (soundId === 'sound-fireball') {
+            rate = 0.9 + Math.random() * 0.2; // Pitch tra 0.9 e 1.1
         }
+
         const master = gameState.user.masterVolume * gameState.user.sfxVolume;
-        sound.volume = Math.max(0, Math.min(1, master * volumeMult));
+        
+        // Se è un suono custom (fireball), controlliamo se ha un volume specifico nel mixer
+        const customVol = AudioManager.getCustomVolume(soundId);
+        
+        sound.volume = Math.max(0, Math.min(1, master * volumeMult * customVol));
         sound.playbackRate = rate;
         sound.currentTime = 0;
         sound.play().catch(e => { });
     },
 
-    // --- IL NUOVO CERVELLO AUDIO ---
+
     updateAmbience() {
-        // 1. Identifica TUTTI i player musicali (Loop)
-        // Raccogliamo tutti gli ID che sono definiti come 'music' nei dati o usati per eventi
+        if (!sessionStorage.getItem('espooUser')) {
+            const tracksToStop = [
+                'sound-bg-music', 'sound-bg-music-v2', 'sound-bg-music-v3', 
+                'sound-snowball', 'sound-fury-music', 'sound-bluescreen', 
+                'sound-matrix', 'sound-bg-bit'
+            ];
+            
+            tracksToStop.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.paused) {
+                    el.pause();
+                    el.currentTime = 0;
+                }
+            });
+            return; // Interrompe qui la funzione
+        }
+
+        // --- LOGICA NORMALE DI GIOCO ---
         const allMusicTracks = [
             'sound-bg-music',
             'sound-bg-music-v2',
@@ -249,10 +282,10 @@ const AudioManager = {
             'sound-fury-music',
             'sound-bluescreen',
             'sound-matrix',
-            'sound-bg-bit' // Assicurati che le nuove tracce siano qui o caricate via skin
+            'sound-bg-bit' 
         ];
 
-        // Aggiungi musiche delle skin (es. sound-bg-bit) in modo dinamico
+        // Aggiungi musiche delle skin in modo dinamico
         for (let key in gameData.skins) {
             const conf = gameData.skins[key].themeConfig;
             if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
@@ -260,56 +293,45 @@ const AudioManager = {
             }
         }
 
-        // 2. Determina il "Target Track" in base alla PRIORITÀ
         let targetTrackId = null;
 
-        // PRIORITÀ 0: Audio Mixer (Test) - Silenzio totale
+        // Priorità Eventi
         if (window.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
         }
-        // PRIORITÀ 1: Video (Rick/Ricardo) - Silenzio (gestito dal video tag)
         else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
         }
-        // PRIORITÀ 2: Espo Fury (Fuoco)
         else if (gameState.crunchTimeEndTime > Date.now()) {
             targetTrackId = 'sound-fury-music';
         }
-        // PRIORITÀ 3: Eventi CSS (Matrix / 404)
         else if (isBluescreenActive) {
             if (document.body.classList.contains('matrix-active')) {
                 targetTrackId = 'sound-matrix';
             } else {
-                // Natale Glitch o Normale Bluescreen
                 targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
         }
-        // PRIORITÀ 4: Skin Attiva (Base) o Selezione Utente
         else {
+            // Priorità Skin vs Selezione Utente
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
-
-            // A. SE la skin ha una musica speciale (Tema vincolante), quella VINCE sempre
             if (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic) {
                 targetTrackId = currentSkin.themeConfig.specialMusic;
-            }
-            // B. ALTRIMENTI, usa la scelta dell'utente (o fallback sul default)
-            else {
+            } else {
                 targetTrackId = gameState.user.bgMusicSelection || 'sound-bg-music';
             }
         }
 
-        // 3. APPLICAZIONE (Play Target, Pause Others)
+        // Applica Play/Pause
         allMusicTracks.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
 
             if (id === targetTrackId) {
-                // Questo è quello che deve suonare
                 const volume = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(id);
-
-                // Eccezione: Glitch di Natale suona strano, gestito a parte nel timer, qui diamo solo il volume
+                // Eccezione per glitch natalizio gestito altrove
                 if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
-                    // Lascia che l'intervallo audioGlitchInterval gestisca il play/pause
+                     // managed by audioGlitchInterval
                 } else {
                     el.volume = Math.max(0, Math.min(1, volume));
                     if (el.paused && volume > 0) {
@@ -317,7 +339,6 @@ const AudioManager = {
                     }
                 }
             } else {
-                // Questo deve stare zitto
                 if (!el.paused) {
                     el.pause();
                     el.currentTime = 0;
@@ -570,24 +591,33 @@ function recalculateCPS() {
 // 1. CRUNCH TIME
 function activateCrunchTime() {
     const now = Date.now();
+    
+    // 1. Controlli Preliminari
     if (checkEventConflict('Espo Fury')) return false;
+    
     if (now < crunchTimeCooldownEnd) {
         const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
         window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
         clearActiveEvent();
         return false;
     }
+
+    // 2. Attivazione Logica
     crunchTimeMultiplier = new Decimal(7);
     crunchTimeEndTime = now + 30000;
     crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
+    
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    
     recalculateCPS();
+    
     if (typeof updateUI === 'function') updateUI();
     if (window.EspooClicker) window.EspooClicker.saveGame();
+    
     document.body.classList.add('crunch-active');
 
-    // --- MODIFICA QUI: Scelta Immagine in base al tema ---
+    // 3. Gestione Immagini (Supporto Temi: 8-Bit, Super, Standard)
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
@@ -596,35 +626,36 @@ function activateCrunchTime() {
             // Versione 8-Bit
             photoNormal.src = 'assets/image/espobit-fury.webp';
             photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else if (document.body.classList.contains('theme-super')) {
+            // Versione Super Espo
+            photoNormal.src = 'assets/image/super-espofury.webp';
+            photoClicked.src = 'assets/image/super-espofury-click.webp';
         } else {
             // Versione Standard
             photoNormal.src = 'assets/image/espo-fury.webp';
             photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
-    // -----------------------------------------------------
 
+    // 4. Overlay & Particelle
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
-    // ... (resto della funzione invariato: particelle, audio, ecc.)
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
         fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
-    const furyMusic = document.getElementById('sound-fury-music');
-    if (furyMusic) {
-        const furyVol = getCustomVolume('sound-fury-music');
-        furyMusic.volume = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
-        furyMusic.currentTime = 0;
-        furyMusic.play().catch(e => { });
+
+    // 5. Gestione Audio Centralizzata
+    // Invece di mettere in pausa manualmente, diciamo al manager di aggiornare l'ambiente.
+    // Lui capirà che la Fury è attiva e farà partire 'sound-fury-music' spegnendo il resto.
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.updateAmbience();
     }
+
+    // 6. Feedback Utente
     window.EspooClicker.showToast(gameData.texts.toasts.furyActive, 'success');
     return true;
 }
@@ -672,25 +703,23 @@ function spawnFireParticle(container) {
 }
 
 function resumeCrunchTimeEffects() {
+    // 1. Ripristino Stato
     window.currentActiveEvent = 'Espo Fury';
     crunchTimeMultiplier = new Decimal(7);
     document.body.classList.add('crunch-active');
+    
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
-    // ... (particelle e audio stop invariati)
+    // 2. Ripristino Particelle
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
         fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
 
-    // --- MODIFICA QUI: Scelta Immagine al Resume ---
+    // 3. Ripristino Immagini (Supporto Temi: 8-Bit, Super, Standard)
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
@@ -698,27 +727,22 @@ function resumeCrunchTimeEffects() {
         if (document.body.classList.contains('theme-8bit')) {
             photoNormal.src = 'assets/image/espobit-fury.webp';
             photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else if (document.body.classList.contains('theme-super')) {
+            photoNormal.src = 'assets/image/super-espofury.webp';
+            photoClicked.src = 'assets/image/super-espofury-click.webp';
         } else {
             photoNormal.src = 'assets/image/espo-fury.webp';
             photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
-    // -----------------------------------------------
 
-    const furyMusic = document.getElementById('sound-fury-music');
-    // ... (resto logica audio invariata)
-    if (furyMusic) {
-        const furyVol = getCustomVolume('sound-fury-music');
-        const targetVol = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
-        furyMusic.volume = targetVol;
-        furyMusic.currentTime = 0;
-        const playPromise = furyMusic.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                // ... (gestione autoplay bloccato invariata)
-            });
-        }
+    // 4. Ripristino Audio Centralizzato
+    // Forza l'aggiornamento per assicurarsi che la musica Fury riparta se la pagina è stata ricaricata
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.updateAmbience();
     }
+
+    // 5. Aggiornamento Logica
     recalculateCPS();
     if (typeof updateUI === 'function') updateUI();
 }

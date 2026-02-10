@@ -1008,17 +1008,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Aggiorna Grafica Bottoni
             multiplierValues.forEach(val => {
                 if (multiplierBtns[val]) {
-                    // Rimuovi colore inline per far lavorare il CSS
                     multiplierBtns[val].style.backgroundColor = '';
 
                     if (val === value)
-                        multiplierBtns[val].classList.add('active'); // Usa classe CSS
+                        multiplierBtns[val].classList.add('active');
                     else
                         multiplierBtns[val].classList.remove('active');
                 }
             });
 
-            playSound('sound-click');
             refreshAllStores();
             updateUI();
         }
@@ -1028,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (multiplierBtns[val]) {
                 multiplierBtns[val].addEventListener('click', (e) => {
                     multiplierBtns[val].blur();
+                    playSound('sound-click');
                     setBuyMultiplier(val);
                 });
             }
@@ -1281,60 +1280,16 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
 
         tryStartAudio: () => {
-            const loginModal = document.getElementById('login-modal');
-            if (loginModal && getComputedStyle(loginModal).display !== 'none') {
+            // 1. Controllo Sessione
+            if (!sessionStorage.getItem('espooUser')) {
                 return;
             }
 
-            // Controlli preliminari (Volume)
-            const masterVol = gameState.user.masterVolume;
-            const musicVol = gameState.user.musicVolume;
-            if (masterVol <= 0 || musicVol <= 0) return;
+            // 2. Controllo Volume Master
+            if (gameState.user.masterVolume <= 0) return;
 
-            // Identifica la traccia corretta
-            const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
-
-            // Logica Priorità: 1. Skin Theme (es. Natale) -> 2. Preferenza Utente -> 3. Default
-            const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
-                ? currentSkin.themeConfig.specialMusic
-                : (gameState.user.bgMusicSelection || 'sound-bg-music');
-
-            const audioToPlay = document.getElementById(targetId);
-
-            if (window.currentActiveEvent || document.body.classList.contains('rick-rolling')) {
-                return;
-            }
-
-            // Controlla se possiamo suonare
-            if (!audioToPlay || !audioToPlay.paused) return;
-
-            if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
+            if (typeof AudioManager !== 'undefined') {
                 AudioManager.updateAmbience();
-
-            // Tenta il Play
-            const playPromise = audioToPlay.play();
-
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    console.log("Autoplay bloccato: Attendo interazione...");
-
-                    const unlockAudio = () => {
-                        if (window.currentActiveEvent || document.body.classList.contains('rick-rolling')) {
-                            return;
-                        }
-                        // Riprova con la traccia corretta
-                        const retryAudio = document.getElementById(targetId);
-                        if (retryAudio) retryAudio.play().then(() => {
-                            document.removeEventListener('click', unlockAudio);
-                            document.removeEventListener('keydown', unlockAudio);
-                            document.removeEventListener('touchstart', unlockAudio);
-                        }).catch(e => { });
-                    };
-
-                    document.addEventListener('click', unlockAudio, { once: true });
-                    document.addEventListener('keydown', unlockAudio, { once: true });
-                    document.addEventListener('touchstart', unlockAudio, { once: true });
-                });
             }
         },
         setMasterVolume: (volume) => {

@@ -75,7 +75,7 @@ const gameData = {
                 type: 'music',
                 category: 'ambiente',
                 loop: true,
-                defaultVol: 0.3
+                defaultVol: 0.1
             },
             'snowball': {
                 id: 'sound-snowball',
@@ -188,7 +188,7 @@ const gameData = {
             },
             'space-shoot': {
                 id: 'sound-space-shoot',
-                file: 'arcade/assets/space-shoot.wav', // Percorso centralizzato .wav
+                file: 'arcade/assets/space-shoot.wav', 
                 name: 'Space Shoot',
                 type: 'sfx',
                 category: 'effetti',
@@ -196,7 +196,7 @@ const gameData = {
             },
             'space-boom': {
                 id: 'sound-space-boom',
-                file: 'arcade/assets/space-boom.wav', // Percorso centralizzato .wav
+                file: 'arcade/assets/space-boom.wav', 
                 name: 'Space Explosion',
                 type: 'sfx',
                 category: 'effetti',
@@ -204,11 +204,19 @@ const gameData = {
             },
             'arcade-gameover': {
                 id: 'sound-arcade-gameover',
-                file: 'arcade/assets/game-over.mp3', // Condiviso .mp3
+                file: 'arcade/assets/game-over.mp3', 
                 name: 'Arcade Game Over',
                 type: 'sfx',
                 category: 'effetti',
                 defaultVol: 0.6
+            },
+            'fireball': {
+                id: 'sound-fireball',
+                file: 'fireball.mp3', 
+                name: 'Fireball',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.3
             },
         },
         videos: {
