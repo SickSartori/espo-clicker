@@ -385,24 +385,24 @@ body.matrix-active .buy-btn:hover {
 }
 
 /* --- EFFETTO CRUNCH TIME (FIAMME) --- */
+
 #crunch-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 300%;
-    z-index: var(--z-overlay);
+    height: 100%;
     pointer-events: none;
-    display: none;
-    opacity: 0.6;
-    mix-blend-mode: screen;
-    background: linear-gradient(to top,
-            rgba(255, 69, 0, 0.8) 0%,
-            rgba(255, 140, 0, 0.5) 30%,
-            rgba(255, 215, 0, 0.2) 60%,
-            transparent 100%);
-    background-size: 100% 100%;
-    animation: risingHeat 2s linear infinite;
+    z-index: var(--z-overlay);
+    opacity: 0;
+    transition: opacity 0.5s;
+    mix-blend-mode: overlay;
+    background: radial-gradient(circle at 50% 120%,
+            rgba(255, 200, 0, 0.6) 0%,
+            rgba(255, 69, 0, 0.5) 30%,
+            rgba(100, 0, 0, 0.8) 70%,
+            rgba(0, 0, 0, 0.9) 100%);
+    animation: none; 
 }
 
 body.crunch-active {
@@ -544,23 +544,7 @@ body.crunch-active .upgrade-name {
 }
 
 /* Overlay Rosso/Arancio migliorato */
-#crunch-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: var(--z-overlay);
-    opacity: 0;
-    transition: opacity 0.5s;
-    mix-blend-mode: overlay;
-    background: radial-gradient(circle at 50% 120%,
-            rgba(255, 200, 0, 0.6) 0%,
-            rgba(255, 69, 0, 0.5) 30%,
-            rgba(100, 0, 0, 0.8) 70%,
-            rgba(0, 0, 0, 0.9) 100%);
-}
+
 
 /* Pulsazione schermo più aggressiva */
 @keyframes crunchPulse {

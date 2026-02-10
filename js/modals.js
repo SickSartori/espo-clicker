@@ -476,26 +476,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function getGameAPI() { return window.EspooClicker || null; }
     function openModal(modal) {
         if (modal) {
-            // 1. Prepara lo stato iniziale (invisibile e piccolo)
+            // 1. Prepara lo stato iniziale
             modal.style.display = 'flex';
             modal.style.opacity = 0;
 
-            // Cerca il contenuto interno per animarlo (o l'intero modale se preferisci)
             const content = modal.querySelector('.modal-content');
 
             // 2. Animazione GSAP
             if (content) {
                 gsap.fromTo(content,
                     { scale: 0.8, opacity: 0, y: 20 },
-                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" } // Effetto rimbalzo
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
                 );
-                // Anima anche lo sfondo scuro
                 gsap.to(modal, { opacity: 1, duration: 0.3 });
             } else {
-                modal.style.opacity = 1; // Fallback
+                modal.style.opacity = 1;
             }
 
             document.body.classList.add('modal-open');
+
+            // --- FIX AUDIO ---
+            // Suona SOLO se il modale NON è quello di login
+            if (modal.id !== 'login-modal') {
+                if (typeof AudioManager !== 'undefined') {
+                    AudioManager.playClickEffect();
+                } else if (typeof playSound === 'function') {
+                    playSound('sound-click');
+                }
+            }
         }
     }
 
