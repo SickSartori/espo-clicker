@@ -3,8 +3,7 @@ include __DIR__ . '/db_connect.php';
 
 $sql = "SELECT username, score, prestigeLevel, timestamp 
         FROM $table_leaderboard 
-        ORDER BY prestigeLevel DESC, CAST(score AS DECIMAL(65,0)) DESC, timestamp ASC 
-        LIMIT 10";
+        ORDER BY prestigeLevel DESC, CAST(score AS DECIMAL(65,0)) DESC, timestamp ASC";
 
 $result = $conn->query($sql);
 
