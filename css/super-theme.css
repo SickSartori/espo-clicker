@@ -1,0 +1,195 @@
+/* code/css/super-theme.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* --- SFONDO MONDO SUPER --- */
+body.theme-super {
+    background-color: #6b8cff; 
+    background-image: 
+        linear-gradient(to top, #c04800 0%, #c04800 40px, #000 40px, #000 44px, transparent 44px),
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 5%, transparent 5%),
+        radial-gradient(circle at 80% 50%, rgba(255,255,255,0.4) 8%, transparent 8%);
+    background-attachment: fixed;
+    font-family: 'Press Start 2P', cursive;
+}
+
+/* --- GAME CONTAINER (Stile Castello/Mattoni) --- */
+body.theme-super #game-container {
+    background-color: #000;
+    border: 4px solid #fff;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+    border-radius: 4px;
+}
+
+/* --- NAVBAR --- */
+body.theme-super #game-navbar {
+    background-color: #c04800; 
+    border-bottom: 4px solid #000;
+}
+
+/* --- COLONNE --- */
+body.theme-super .game-column {
+    background-color: #222; 
+    border-right: 4px solid #000;
+}
+
+body.theme-super .tabs-header {
+    background-color: #000;
+}
+
+/* --- BOTTONI TAB --- */
+body.theme-super .tab-btn {
+    background: #ffce15;
+    color: #000;
+    border: 2px solid #000;
+    margin-right: 5px;
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3);
+}
+
+body.theme-super .tab-btn.active {
+    background: #e70010; /* Rosso Mario */
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 2px 2px 0 #000;
+}
+
+/* --- CARD UPGRADE (Stile Blocchi Blu Sotterranei) --- */
+body.theme-super .upgrade, 
+body.theme-super .click-upgrade,
+body.theme-super .prestige-upgrade,
+body.theme-super .enhancement-upgrade {
+    background-color: #004080;
+    border: 4px solid #000;
+    box-shadow: inset 4px 4px 0 rgba(255,255,255,0.2);
+    color: #fff;
+    margin-bottom: 10px;
+    border-radius: 0;
+}
+
+body.theme-super .upgrade-name {
+    color: #ffce15;
+    text-shadow: 2px 2px 0 #000;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+body.theme-super #game-container .upgrade.locked-item,
+body.theme-super #game-container .click-upgrade.locked-item,
+body.theme-super #game-container .enhancement-upgrade.locked-item,
+body.theme-super #game-container .prestige-upgrade.locked-item {
+    background-color: #050505;       
+    border: 4px dashed #444;         
+    box-shadow: none;                
+    opacity: 0.6;                    
+    filter: grayscale(100%);         
+    transform: scale(0.98);          
+    pointer-events: none;         
+}
+
+/* Spegni i testi colorati (Titoli) */
+body.theme-super #game-container .locked-item .upgrade-name,
+body.theme-super #game-container .locked-item .upgrade-desc {
+    color: #555;
+    text-shadow: none;
+}
+
+/* Stile della barra di progresso per i bloccati */
+body.theme-super #game-container .locked-item .progress-bar-container {
+    background-color: #222;
+    border: 2px solid #444;
+    height: 20px;
+    margin-top: 5px;
+}
+
+body.theme-super #game-container .locked-item .progress-bar-fill {
+    background: #666; 
+}
+
+body.theme-super #game-container .locked-item .progress-text {
+    color: #888;
+    font-size: 0.6rem;
+    text-shadow: none;
+}
+body.theme-super #game-container .buy-btn:disabled {
+    background: #575757;          
+    border: 2px solid #222;       
+    color: #999;                  
+    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5); 
+    cursor: not-allowed;          
+    transform: none;              
+    filter: grayscale(100%);      
+}
+
+body.theme-super #game-container .buy-btn:disabled:hover {
+    filter: brightness(0.8);
+    transform: none;
+}
+
+/* --- BOTTONI COMPRA (Verdi Tubo) --- */
+body.theme-super .buy-btn {
+    background: linear-gradient(to bottom, #00aa00, #008800);
+    border: 2px solid #fff;
+    color: #fff;
+    box-shadow: 2px 2px 0 #000;
+    text-shadow: 1px 1px 0 #000;
+    border-radius: 0;
+}
+
+body.theme-super .buy-btn:hover:not(:disabled) {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
+/* --- GOLDEN BUG --- */
+body.theme-super #golden-bug {
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    background-image: url('../assets/image/super-block.webp'); 
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    
+    animation: blockFloat 0.8s infinite alternate ease-in-out;
+    
+    /* --- PER RENDERLO SEMPRE VISIBILE (DEBUG) --- */
+    /* Decommenta le due righe sotto per tenerlo fisso a schermo mentre lavori */
+    /* display: flex; */
+    /* opacity: 1; */
+}
+
+body.theme-super #golden-bug i {
+    display: none;
+}
+body.theme-super #golden-bug:active {
+    transform: translateY(-15px) scale(1.1);
+    filter: brightness(1.2); 
+}
+
+/* --- IMMAGINE MANAGER --- */
+body.theme-super #clicker-btn img {
+    image-rendering: pixelated;
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 4px #000;
+    border-radius: 0;
+}
+
+@keyframes blockFloat {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-5px); }
+}
+
+/* Responsive fix */
+@media screen and (max-width: 1024px) {
+    body.theme-super #mobile-nav-bar {
+        background-color: #c04800;
+        border-top: 4px solid #000;
+    }
+    
+    body.theme-super .mobile-nav-btn.active {
+        color: #ffce15;
+        background: rgba(0,0,0,0.2);
+    }
+}

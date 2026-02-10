@@ -68,6 +68,15 @@ const gameData = {
                 loop: true,
                 defaultVol: 0.3
             },
+            'bg-music-super': {
+                id: 'sound-bg-music-super',
+                file: 'bg-music-super.mp3',
+                name: 'Super Espò',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
             'snowball': {
                 id: 'sound-snowball',
                 file: 'nonsnowball.mp3',
@@ -347,6 +356,20 @@ const gameData = {
             imgClick: "freddy-espory-click.webp",
             rarity: "legendary",
             cost: new Decimal(50)
+        },
+        superespo: {
+            name: "Super Espò",
+            desc: "It’s-a Me, Espò!",
+            img: "super-espo.webp",
+            imgClick: "super-espo-click.webp",
+            rarity: "legendary",
+            cost: new Decimal(100),
+            themeConfig: {
+                bodyClass: 'theme-super',
+                specialMusic: 'sound-bg-music-super',
+                goldenBugIcon: 'fa-question', 
+                goldenBugColor: '#ffffff' 
+            }
         },
         // --- DIVINE ---
         jesus: {

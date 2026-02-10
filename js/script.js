@@ -780,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imagesToLoad.add('assets/image/favicon.webp');
         imagesToLoad.add('assets/image/hidden.webp');
         imagesToLoad.add('assets/image/bluescreen.webp');
+        imagesToLoad.add('assets/image/super-block.webp');
 
         // Estrai immagini dalle Skin (Normali e Click)
         if (gameData.skins) {

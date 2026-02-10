@@ -1496,14 +1496,11 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     // Lista classi di sfondo (rarità) da rimuovere per pulizia
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
-
-    // Lista classi dei temi globali da rimuovere dal body
-    const bodyThemes = ['theme-christmas', 'theme-8bit'];
+    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super']; 
 
     const theme = skinData.themeConfig || {};
 
-    // GESTIONE CLASSI BODY (Reset e Applicazione)
-    // Rimuove TUTTI i temi speciali attivi per evitare conflitti (es. 8bit + natale insieme)
+
     document.body.classList.remove(...bodyThemes);
 
     // Applica il nuovo tema se previsto dalla skin

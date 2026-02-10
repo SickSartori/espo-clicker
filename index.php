@@ -25,6 +25,7 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/super-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
 
