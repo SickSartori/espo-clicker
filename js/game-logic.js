@@ -1045,7 +1045,16 @@ function resolveBug(event) {
     if (event.detail === 0) return;
     if (typeof clickerButton !== 'undefined' && clickerButton) clickerButton.blur();
 
-    AudioManager.playClickEffect();
+    const isSuperTheme = document.body.classList.contains('theme-super');
+    const isFuryActive = (typeof crunchTimeEndTime !== 'undefined' && crunchTimeEndTime > Date.now());
+
+    if (isSuperTheme && isFuryActive) {
+        if (window.EspooClicker && window.EspooClicker.playSound) {
+            window.EspooClicker.playSound('sound-fireball');
+        }
+    } else {
+        AudioManager.playClickEffect();
+    }
 
     const currentClickValue = calculateClickValue();
 
