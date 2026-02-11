@@ -102,7 +102,7 @@ function formatTime(totalSeconds) {
 }
 
 
-let matrixInterval = null;
+let matrixFrameId = null;
 
 function startMatrixEffect() {
     const canvas = document.getElementById('matrix-canvas');
@@ -146,11 +146,12 @@ function startMatrixEffect() {
             // Incrementa Y
             drops[i]++;
         }
+        matrixFrameId = requestAnimationFrame(draw);
     };
 
     // Loop a 30 FPS
-    if (matrixInterval) clearInterval(matrixInterval);
-    matrixInterval = setInterval(draw, 33);
+    if (matrixFrameId) cancelAnimationFrame(matrixFrameId);
+    draw();
 
     // Gestione Resize
     window.addEventListener('resize', () => {
@@ -160,9 +161,9 @@ function startMatrixEffect() {
 }
 
 function stopMatrixEffect() {
-    if (matrixInterval) {
-        clearInterval(matrixInterval);
-        matrixInterval = null;
+    if (matrixFrameId) {
+        cancelAnimationFrame(matrixFrameId);
+        matrixFrameId = null;
     }
     // Pulisci il canvas (opzionale, ma pulito)
     const canvas = document.getElementById('matrix-canvas');
