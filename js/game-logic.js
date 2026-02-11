@@ -1142,20 +1142,31 @@ async function executePrestige() {
     if (modal) modal.style.display = 'none';
     if (overlay) {
         overlay.classList.remove("prestige_transition_overlay_display_none");
-        playSound('sound-prestige');
+        if (typeof playSound === 'function') playSound('sound-prestige');
         setTimeout(() => overlay.classList.add('active'), 10);
     }
 
-    const gained = calculatePrestigeGained();
+    // Salviamo il filtro corrente PRIMA di toccare qualsiasi cosa
+    const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter) 
+                        ? gameState.filterSettings.globalFilter 
+                        : 'available';
+
+    // Calcolo Punti
+    let gained = new Decimal(0);
+    if (typeof calculatePrestigeGained === 'function') {
+        gained = calculatePrestigeGained();
+    }
+    
     let newPrestigePoints = gameState.prestigePoints.add(gained);
     let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
+    // Bonus Paracadute (Bug iniziali)
     let startBonusBugs = new Decimal(0);
     if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
         startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
     }
 
-    // ... (Codice salvataggio dati persistenti invariato) ...
+    // Salvataggio Dati Persistenti
     const persistentKeys = ['achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore'];
     const preservedData = {};
     persistentKeys.forEach(key => {
@@ -1165,61 +1176,90 @@ async function executePrestige() {
     });
 
     const newResets = gameState.totalResets + 1;
+    
+    // Attesa animazione
     await new Promise(r => setTimeout(r, 1500));
 
-    let newState = getInitialGameState(); // Ritorna Decimali puliti
+    // RESET: Generazione Stato Pulito
+    let newState = getInitialGameState(); 
 
+    // Ripristino Dati Persistenti
     persistentKeys.forEach(key => {
         if (preservedData[key] !== undefined) {
             newState[key] = preservedData[key];
         }
     });
 
-    // Re-istanza Decimali Critici (fondamentale dopo JSON.parse)
+    // Ripristiniamo il filtro salvato nel nuovo stato
+    if (!newState.filterSettings) newState.filterSettings = {};
+    newState.filterSettings.globalFilter = savedFilter;
+
+    // Ricostruzione Decimali Critici (dopo il JSON parse)
     if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
     if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
+    if (typeof newState.score === 'string') newState.score = new Decimal(newState.score);
 
     newState.prestigePoints = newPrestigePoints;
     newState.lifetimePrestigePoints = newLifetime;
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
-    newState.score = startBonusBugs;
+    newState.score = startBonusBugs; // Applica il bonus paracadute
 
-    // ... (Codice Eredità teams invariato) ...
-    if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0;
-    if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
-        newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
-    }
-    if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
-        newState.teams.assistenteQa.count++;
+    // Logica Eredità Assistenti (Team QA)
+    if (newState.teams && newState.teams.assistenteQa) {
+        newState.teams.assistenteQa.count = 0; // Reset base
+        
+        // Eredità
+        if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
+            newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
+        }
+        // Accelerazione
+        if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
+            newState.teams.assistenteQa.count++;
+        }
     }
 
+    // Applicazione Nuovo Stato
     gameState = newState;
 
-    bps = new Decimal(0);
+    // Reset Variabili Runtime
+    if (typeof bps !== 'undefined') bps = new Decimal(0);
     clickHistory = [];
     isBluescreenActive = false;
     bluescreenMultiplier = new Decimal(1);
     document.body.classList.remove('bluescreen-active');
 
+    // Ferma suoni evento
     try {
         const soundBluescreen = document.getElementById('sound-bluescreen');
         if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
     } catch (e) { }
 
-    reapplyAllEffects();
-    calculatePrestigeBonus();
-    recalculateCPS();
-    refreshAllStores();
-    updateUI();
+    // Sincronizza visivamente il menu a tendina
+    const filterSelect = document.getElementById('global-filter-select');
+    if (filterSelect) {
+        filterSelect.value = savedFilter;
+    }
 
+    // Aggiornamento Totale Interfaccia
+    if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+    calculatePrestigeBonus();
+    if (typeof recalculateCPS === 'function') recalculateCPS();
+    
+    // Refresh Negozi (Ora vedrà il filtro corretto!)
+    if (typeof refreshAllStores === 'function') refreshAllStores();
+    if (typeof updateUI === 'function') updateUI();
+
+    // Salvataggio Immediato
     if (window.EspooClicker) window.EspooClicker.saveGame();
 
+    // Rimozione Overlay
     if (overlay) {
         overlay.classList.remove('active');
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
-            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
+            if (window.EspooClicker && gameData.texts) 
+                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
         }, 500);
     }
 }

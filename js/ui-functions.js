@@ -665,10 +665,14 @@ function updateAchievementsUI() {
         'custom': 'fa-star'
     };
 
-    Object.keys(gameData.achievements).forEach(key => {
+Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
+
+        if (data.season && !window.isSeasonActive(data.season) && !state.unlocked) {
+            return; // Salta questo giro del ciclo
+        }
 
         const isUnlocked = state.unlocked;
         const isClaimed = state.claimed;
