@@ -221,17 +221,17 @@ const AudioManager = {
 
         // 1. Priorità Assoluta: Super Star Mode
         if (document.body.classList.contains('super-star-active')) {
-            soundId = 'sound-click'; // Usa click normale (pulito)
-            // Oppure usa 'sound-star-click' se vuoi un suono specifico tipo moneta
+            soundId = 'sound-click';
         }
-        // 2. Evento Espo Fury (Fuoco)
+        // 2. Evento Espo Fury (Fuoco) -> FIX: Solo se c'è la skin Super Espo
         else if (document.body.classList.contains('crunch-active')) {
-            soundId = 'sound-fireball';
+            if (gameState.skins.current === 'superespo') {
+                soundId = 'sound-fireball';
+            }
         }
         // 3. Evento 404/Matrix/Rick (Glitch)
         else if (isBluescreenActive) {
-            // Qui entrava per errore prima. Ora l'IF sopra lo blocca.
-            soundId = 'sound-click'; 
+            soundId = 'sound-click';
         }
 
         const sound = document.getElementById(soundId);
@@ -240,27 +240,25 @@ const AudioManager = {
         let rate = 1.0;
         let volumeMult = 1.0;
 
-        // Gestione Pitch e Volume per Eventi Glitch (Escludendo Super Star)
         if (isBluescreenActive && !document.body.classList.contains('super-star-active')) {
             if (document.body.classList.contains('rick-rolling')) {
                 volumeMult = 0.2;
             } else {
-                rate = 0.2 + Math.random() * 1.6; // Glitch pitch
+                rate = 0.2 + Math.random() * 1.6;
                 volumeMult = 0.5 + Math.random();
             }
-        } 
-        else if (soundId === 'sound-fireball') {
-            rate = 0.9 + Math.random() * 0.2; 
         }
-        // Super Star: Pitch leggermente alto e felice
+        else if (soundId === 'sound-fireball') {
+            rate = 0.9 + Math.random() * 0.2;
+        }
         else if (document.body.classList.contains('super-star-active')) {
-            rate = 1.1 + Math.random() * 0.1; 
-            volumeMult = 0.8;
+            rate = 1.1 + Math.random() * 0.1;
+            volumeMult = 0.7;
         }
 
         const master = gameState.user.masterVolume * gameState.user.sfxVolume;
         const customVol = AudioManager.getCustomVolume(soundId);
-        
+
         sound.volume = Math.max(0, Math.min(1, master * volumeMult * customVol));
         sound.playbackRate = rate;
         sound.currentTime = 0;
@@ -271,11 +269,11 @@ const AudioManager = {
     updateAmbience() {
         if (!sessionStorage.getItem('espooUser')) {
             const tracksToStop = [
-                'sound-bg-music', 'sound-bg-music-v2', 'sound-bg-music-v3', 
-                'sound-snowball', 'sound-fury-music', 'sound-bluescreen', 
+                'sound-bg-music', 'sound-bg-music-v2', 'sound-bg-music-v3',
+                'sound-snowball', 'sound-fury-music', 'sound-bluescreen',
                 'sound-matrix', 'sound-bg-bit'
             ];
-            
+
             tracksToStop.forEach(id => {
                 const el = document.getElementById(id);
                 if (el && !el.paused) {
@@ -347,7 +345,7 @@ const AudioManager = {
                 const volume = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(id);
                 // Eccezione per glitch natalizio gestito altrove
                 if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
-                     // managed by audioGlitchInterval
+                    // managed by audioGlitchInterval
                 } else {
                     el.volume = Math.max(0, Math.min(1, volume));
                     if (el.paused && volume > 0) {
@@ -607,10 +605,10 @@ function recalculateCPS() {
 // 1. CRUNCH TIME
 function activateCrunchTime() {
     const now = Date.now();
-    
+
     // 1. Controlli Preliminari
     if (checkEventConflict('Espo Fury')) return false;
-    
+
     if (now < crunchTimeCooldownEnd) {
         const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
         window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
@@ -622,15 +620,15 @@ function activateCrunchTime() {
     crunchTimeMultiplier = new Decimal(7);
     crunchTimeEndTime = now + 30000;
     crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
-    
+
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-    
+
     recalculateCPS();
-    
+
     if (typeof updateUI === 'function') updateUI();
     if (window.EspooClicker) window.EspooClicker.saveGame();
-    
+
     document.body.classList.add('crunch-active');
 
     // 3. Gestione Immagini (Supporto Temi: 8-Bit, Super, Standard)
@@ -723,7 +721,7 @@ function resumeCrunchTimeEffects() {
     window.currentActiveEvent = 'Espo Fury';
     crunchTimeMultiplier = new Decimal(7);
     document.body.classList.add('crunch-active');
-    
+
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
@@ -1147,16 +1145,16 @@ async function executePrestige() {
     }
 
     // Salviamo il filtro corrente PRIMA di toccare qualsiasi cosa
-    const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter) 
-                        ? gameState.filterSettings.globalFilter 
-                        : 'available';
+    const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
+        ? gameState.filterSettings.globalFilter
+        : 'available';
 
     // Calcolo Punti
     let gained = new Decimal(0);
     if (typeof calculatePrestigeGained === 'function') {
         gained = calculatePrestigeGained();
     }
-    
+
     let newPrestigePoints = gameState.prestigePoints.add(gained);
     let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
@@ -1176,12 +1174,12 @@ async function executePrestige() {
     });
 
     const newResets = gameState.totalResets + 1;
-    
+
     // Attesa animazione
     await new Promise(r => setTimeout(r, 1500));
 
     // RESET: Generazione Stato Pulito
-    let newState = getInitialGameState(); 
+    let newState = getInitialGameState();
 
     // Ripristino Dati Persistenti
     persistentKeys.forEach(key => {
@@ -1208,7 +1206,7 @@ async function executePrestige() {
     // Logica Eredità Assistenti (Team QA)
     if (newState.teams && newState.teams.assistenteQa) {
         newState.teams.assistenteQa.count = 0; // Reset base
-        
+
         // Eredità
         if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
             newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
@@ -1245,7 +1243,7 @@ async function executePrestige() {
     if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
     calculatePrestigeBonus();
     if (typeof recalculateCPS === 'function') recalculateCPS();
-    
+
     // Refresh Negozi (Ora vedrà il filtro corretto!)
     if (typeof refreshAllStores === 'function') refreshAllStores();
     if (typeof updateUI === 'function') updateUI();
@@ -1258,7 +1256,7 @@ async function executePrestige() {
         overlay.classList.remove('active');
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
-            if (window.EspooClicker && gameData.texts) 
+            if (window.EspooClicker && gameData.texts)
                 window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
         }, 500);
     }
