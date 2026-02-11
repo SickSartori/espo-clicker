@@ -167,160 +167,73 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8';
     const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
 
-    let saveWorker = null;
+    async function saveGame() {
+        if (gameState.isDeleting) return;
 
-function initSaveWorker() {
-    saveWorker = new Worker('js/worker-save.js');
-    
-    saveWorker.onmessage = function(e) {
-        if (e.data.status === 'success') {
-            const compressed = e.data.data;
-            const ctx = e.data.context; // Recupera i dati auth passati all'andata
+        // Sanitizzazione
+        if (isNaN(gameState.score) || gameState.score === null) gameState.score = 0;
+        if (isNaN(gameState.totalScore)) gameState.totalScore = gameState.score;
 
-            // 1. Salvataggio Locale (Main Thread)
-            try {
-                localStorage.setItem('espotoolClickerSaveV8', compressed);
-                // Backup casuale (20% di probabilità)
-                if (Math.random() < 0.2) localStorage.setItem('espotoolClickerSaveV8_Backup', compressed);
-            } catch (err) {
-                if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
-            }
+        gameState.crunchTimeEndTime = crunchTimeEndTime;
+        gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+        gameState.lastSaveTimestamp = Date.now();
 
-            // 2. Salvataggio Cloud (Se c'erano le credenziali nel contesto)
-            if (ctx && ctx.hasAuth) {
-                fetch('php/save_progress.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    keepalive: true,
-                    body: JSON.stringify({
-                        username: ctx.username,
-                        password: ctx.password,
-                        saveData: compressed,
-                        score: ctx.scoreToSend,
-                        prestige: ctx.prestigeToSend,
-                        hash: ctx.signature
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'conflict') {
-                        window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
-                    }
-                })
-                .catch(err => console.warn("Errore Salvataggio Cloud:", err));
-            }
-        } else {
-            console.error("❌ Worker Error:", e.data.error);
-        }
-    };
-}
-
-async function saveGame() {
-    if (gameState.isDeleting) return;
-
-    // Sanitizzazione Dati
-    if (isNaN(gameState.score) || gameState.score === null) gameState.score = 0;
-    if (isNaN(gameState.totalScore)) gameState.totalScore = gameState.score;
-
-    gameState.crunchTimeEndTime = crunchTimeEndTime;
-    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-    gameState.lastSaveTimestamp = Date.now();
-
-    // Preparazione Dati per il Cloud (Calcolati ORA per consistenza)
-    let context = { hasAuth: false };
-    
-    if (gameState.user.username && currentUserPassword) {
-        let rawScore = new Decimal(gameState.lifetimeScore);
-        if (rawScore.lt(0)) rawScore = new Decimal(0);
-        
-        let scoreToSend = rawScore.toFixed(0);
-        let prestigeToSend = Math.floor(gameState.totalResets || 0);
-        
-        // Generazione Hash (Deve essere fatta nel main thread perché crypto.subtle è qui)
-        const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
-        let signature = "";
-        try {
-            signature = await generateHash(dataString);
-        } catch(e) { 
-            console.error("Hash error", e); 
-        }
-
-        context = {
-            hasAuth: true,
-            username: gameState.user.username,
-            password: currentUserPassword,
-            scoreToSend: scoreToSend,
-            prestigeToSend: prestigeToSend,
-            signature: signature
-        };
-    }
-
-    // --- RAMO 1: WEB WORKER (Performance Mode) ---
-    if (window.Worker) {
-        if (!saveWorker) initSaveWorker();
-
-        // Cloniamo lo stato per passarlo al worker (rimuove riferimenti circolari e funzioni)
-        // structuredClone è più veloce di JSON.parse(JSON.stringify) sui browser moderni
-        let stateClone;
-        try {
-            stateClone = typeof structuredClone === 'function' ? structuredClone(gameState) : JSON.parse(JSON.stringify(gameState));
-        } catch(e) {
-            // Fallback per browser vecchi o oggetti complessi
-            stateClone = JSON.parse(JSON.stringify(gameState));
-        }
-
-        // Inviamo al worker: Stato da comprimere + Contesto Auth
-        saveWorker.postMessage({
-            state: stateClone,
-            context: context
-        });
-
-    } else {
-        // --- RAMO 2: FALLBACK SINCRONO (Per compatibilità totale) ---
-        // Se il browser non supporta i Worker, usiamo il vecchio metodo che blocca il thread per un attimo
-        
+        // Compressione
         let compressed = null;
         try {
             const stateJSON = JSON.stringify(gameState);
             compressed = LZString.compressToUTF16(stateJSON);
         } catch (e) {
-            console.error("❌ Errore compressione (Sync):", e);
+            console.error("❌ Errore compressione:", e);
             return;
         }
 
-        // Locale
+        // Salvataggio Locale
         try {
-            localStorage.setItem('espotoolClickerSaveV8', compressed);
-            if (Math.random() < 0.2) localStorage.setItem('espotoolClickerSaveV8_Backup', compressed);
+            localStorage.setItem(SAVE_KEY, compressed);
+            if (Math.random() < 0.2) localStorage.setItem(BACKUP_KEY, compressed);
         } catch (e) {
             if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
         }
 
-        // Cloud
-        if (context.hasAuth) {
-            fetch('php/save_progress.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                keepalive: true,
-                body: JSON.stringify({
-                    username: context.username,
-                    password: context.password,
-                    saveData: compressed,
-                    score: context.scoreToSend,
-                    prestige: context.prestigeToSend,
-                    hash: context.signature
+        // SALVATAGGIO CLOUD SICURO
+        if (gameState.user.username && currentUserPassword) {
+            try {
+                let rawScore = new Decimal(gameState.lifetimeScore);
+                if (rawScore.lt(0)) rawScore = new Decimal(0);
+                let scoreToSend = rawScore.toFixed(0);
+                const prestigeToSend = Math.floor(gameState.totalResets || 0);
+
+                // Genera la firma
+                const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
+                const signature = await generateHash(dataString);
+
+                fetch('php/save_progress.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    body: JSON.stringify({
+                        username: gameState.user.username,
+                        password: currentUserPassword,
+                        saveData: compressed,
+                        score: scoreToSend,
+                        prestige: prestigeToSend,
+                        hash: signature // Invio hash
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'conflict') {
-                    window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
-                }
-            })
-            .catch(err => console.warn("Errore Salvataggio Cloud (Sync):", err));
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'conflict') {
+                            // Avvisa l'utente che i dati sul server sono migliori
+                            window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
+                        }
+                    })
+                    .catch(err => console.warn("Errore Salvataggio Cloud:", err));
+            } catch (e) {
+                console.error("Errore hashing save:", e);
+            }
         }
     }
-}
 
     // --- FUNZIONE CHECK OFFLINE ---
     function checkOfflineProgress() {
