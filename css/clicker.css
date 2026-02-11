@@ -422,7 +422,6 @@ body.rick-rolling #center-column {
     pointer-events: none;
 }
 
-/* Fix Numeri Click */
 /* Uso body.rick-rolling per dare più peso rispetto alla regola base .click-feedback */
 body.rick-rolling #click-feedback-container .click-feedback {
     z-index: 10006;

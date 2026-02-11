@@ -495,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.body.classList.add('modal-open');
 
-            // --- FIX AUDIO ---
             // Suona SOLO se il modale NON è quello di login
             if (modal.id !== 'login-modal') {
                 if (typeof AudioManager !== 'undefined') {
@@ -609,7 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (masterDisplay) masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
 
-        // --- FIX GESTIONE MUSICA ---
         const oldMusicSelect = document.getElementById('bg-music-select');
         const lockMsg = document.getElementById('bg-music-lock-msg');
 
@@ -718,24 +716,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const initInterval = setInterval(() => {
-        if (window.EspooClicker) {
-            clearInterval(initInterval);
-            setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
-            setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
-            setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+    function initModalBindings() {
+        const Game = window.EspooClicker;
+        if (!Game) return;
 
-            const sessUser = sessionStorage.getItem('espooUser');
-            const sessPass = sessionStorage.getItem('espooPass');
-            if (sessUser && sessPass) {
-                loginInput.value = sessUser;
-                loginPasswordInput.value = sessPass;
-                loginButton.click();
-            } else {
-                openModal(loginModal);
-            }
+        // Setup Slider Audio
+        setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+        setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+        setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+
+        // Auto-Login da sessione
+        const sessUser = sessionStorage.getItem('espooUser');
+        const sessPass = sessionStorage.getItem('espooPass');
+        if (sessUser && sessPass) {
+            loginInput.value = sessUser;
+            loginPasswordInput.value = sessPass;
+            loginButton.click();
+        } else {
+            openModal(loginModal);
         }
-    }, 100);
+        
+        console.log("✅ Modals.js inizializzato via Evento.");
+    }
+
+    // Logica ibrida: Se il gioco è già pronto, esegui subito. Altrimenti aspetta l'evento.
+    if (window.EspooClicker) {
+        initModalBindings();
+    } else {
+        document.addEventListener('EspoGameReady', initModalBindings);
+    }
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
     if (logoutBtn) logoutBtn.addEventListener('click', () => {

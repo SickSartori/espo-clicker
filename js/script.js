@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
                     }
 
-                    // 4. SCRITTURA FORZATA SU DISCO (Fix del Loop)
+                    // 4. SCRITTURA FORZATA SU DISCO
                     // Scriviamo subito il file pulito, così al prossimo F5 è valido.
                     try {
                         const newStateJSON = JSON.stringify(gameState);
@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
+        if (deltaTime > 86400) return; // Tab in background da molto tempo
 
         // Calcolo Score (Veloce - Ogni frame)
         // Usiamo .mul() per moltiplicare e .add() per sommare
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     applySkinVisuals(gameState.skins.current);
 
                 // RESET LOGICA GIOCO
-                crunchTimeMultiplier = new Decimal(1); // FIX: Reimposta come Decimal
+                crunchTimeMultiplier = new Decimal(1); // Reimposta come Decimal
                 recalculateCPS();
 
                 if (typeof updateUI === 'function') updateUI();
@@ -1049,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
             muteBtn.addEventListener('click', () => {
                 const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
 
-                // Identifica la traccia corretta (FIX APPLICATO QUI)
+                // Identifica la traccia corretta
                 const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
                     ? currentSkin.themeConfig.specialMusic
                     : (gameState.user.bgMusicSelection || 'sound-bg-music');
@@ -1141,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (targetId === 'right-column') document.body.classList.add('mobile-view-right');
         }
 
-        // --- FIX AVVIO MOBILE: Forza la vista centrale al caricamento ---
+        // Avvio MOBILE
         if (window.innerWidth <= 1024) {
             // 1. Imposta la classe al body per dire che siamo al centro
             document.body.classList.add('mobile-view-center');
@@ -1467,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-
-
     initializeGame();
+    document.dispatchEvent(new Event('EspoGameReady'));
+    console.log("✅ Evento EspoGameReady inviato.");
 });

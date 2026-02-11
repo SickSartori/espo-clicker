@@ -250,7 +250,7 @@
     padding: 0;
 }
 
-/* Fix mobile con specificità */
+/* Mobile */
 #game-container .game-column.mobile-active {
     display: flex;
 }
