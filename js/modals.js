@@ -741,6 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
             localStorage.removeItem('espotoolClickerSaveV8');
+            localStorage.removeItem('espotoolClickerSaveV8_Backup');
             location.reload();
         }
     });
