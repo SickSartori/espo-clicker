@@ -144,6 +144,11 @@ window.gameData.skins = {
         img: "gespo.webp",
         imgClick: "gespo-click.webp",
         rarity: "divine",
-        unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'"
+        unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
+        themeConfig: {
+            specialMusic: 'bg-music-divine',
+            goldenBugIcon: 'fa-sun',
+            goldenBugColor: '#f1c40f'
+        }
     }
 };
