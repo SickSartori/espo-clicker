@@ -575,27 +575,27 @@ function recalculateCPS() {
     let baseCPS = new Decimal(0);
 
     for (const key in gameState.teams) {
-        if (!gameState.teams[key] || !gameData.teams[key]) continue;
-        const state = gameState.teams[key];
-        const data = gameData.teams[key];
+        const teamState = gameState.teams[key];
+        const teamData = gameData.teams[key]; // Recupera dati statici
 
-        let teamBPS = new Decimal(state.count).mul(data.cpsPerUnit);
+        if (!teamData) continue;
 
-        for (const enhanceKey in gameData.buildingEnhancements) {
-            if (gameState.buildingEnhancements && gameState.buildingEnhancements[enhanceKey]) {
-                const enhancementState = gameState.buildingEnhancements[enhanceKey];
-                const enhancementData = gameData.buildingEnhancements[enhanceKey];
-                if (enhancementState.purchased && enhancementData.targetTeam === key) {
-                    teamBPS = teamBPS.mul(enhancementData.multiplier);
+        if (teamState.count > 0) {
+            let teamBPS = new Decimal(teamData.cpsPerUnit);
+
+            // Applica potenziamenti al singolo team
+            for (const upgKey in gameState.buildingEnhancements) {
+                const upgState = gameState.buildingEnhancements[upgKey];
+                const upgData = gameData.buildingEnhancements[upgKey];
+
+                if (upgState.purchased && upgData && upgData.targetTeam === key) {
+                    teamBPS = teamBPS.mul(upgData.multiplier);
                 }
             }
-        }
 
-        if (window.gameFlags.autoClickQA && data.tags && data.tags.includes('helper')) {
-            baseCPS = baseCPS.add(state.count);
+            // Somma al totale
+            bps = bps.add(teamBPS.mul(teamState.count));
         }
-
-        baseCPS = baseCPS.add(teamBPS);
     }
 
     bps = baseCPS.mul(prestigeBonus)

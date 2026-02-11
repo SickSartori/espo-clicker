@@ -241,13 +241,28 @@ require_once("php/check_version.php");
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
 
+		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/game-data.js?v=<?php echo $cacheVer; ?>" defer></script>
+
+		<!-- Gamedata -->
+		<script src="js/data/core.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/gamestate.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/assets.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/skins.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/teams.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/upgrades.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/achievements.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/events.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/texts.js?v=<?php echo $cacheVer; ?>" defer></script>
+
+		<!-- Game logic -->
 		<script src="js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/game-logic.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
 		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
+		
+		<!-- Arcade -->
 		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
 	

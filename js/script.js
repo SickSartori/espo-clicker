@@ -255,8 +255,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let efficiency = 0.30; // Base 30%
 
             // Controllo di sicurezza per evitare crash se l'upgrade non è ancora nel save
-            if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn)
+            if (gameState.prestigeUpgrades && 
+                gameState.prestigeUpgrades.serverAlwaysOn && 
+                gameData.prestigeUpgrades && 
+                gameData.prestigeUpgrades.serverAlwaysOn)
+            {
                 efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+            }
 
             if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
 

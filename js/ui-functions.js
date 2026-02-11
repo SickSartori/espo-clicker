@@ -435,15 +435,20 @@ function refreshAllStores() {
         btnClass: 'enhancement-btn',
         onBuy: (key) => buyTeamEnhancement(key),
         getStatus: (key, data, state) => {
-            const targetTeam = gameState.teams[data.targetTeam];
-            const current = targetTeam ? targetTeam.count : 0;
+            const targetTeamState = gameState.teams[data.targetTeam];
+            const targetTeamData = gameData.teams[data.targetTeam];
+            
+            const current = targetTeamState ? targetTeamState.count : 0;
+            const teamName = targetTeamData ? targetTeamData.name : "???"; 
+
             return {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
                 canAfford: gameState.prestigePoints.gte(data.baseCost),
                 label: gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
-                progressText: `${gameData.teams[data.targetTeam].name}: ${current}/${data.requiredCount}`
+                // Qui avveniva l'errore: ora usiamo la variabile sicura 'teamName'
+                progressText: `${teamName}: ${current}/${data.requiredCount}`
             };
         },
         setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
@@ -505,6 +510,9 @@ function refreshAllStores() {
             for (const enhanceKey in gameState.buildingEnhancements) {
                 const eData = gameData.buildingEnhancements[enhanceKey];
                 const eState = gameState.buildingEnhancements[enhanceKey];
+                
+                if (!eData) continue; 
+
                 if (eData.targetTeam === key && eState.purchased) {
                     teamBPS *= eData.multiplier;
                 }
@@ -1068,18 +1076,19 @@ function checkTabNotifications() {
     // Auto Tab
     let autoNotify = false;
     for (const key in gameData.buildingEnhancements)
-	{
+    {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
 
-        if (!state)
-			continue;
+        // Se manca lo stato o i dati, salta
+        if (!state || !data) continue;
 
         const targetTeam = gameState.teams[data.targetTeam];
-        if (!state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost))
-		{
+
+        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost))
+        {
             autoNotify = true;
-			break;
+            break;
         }
     }
 
@@ -1280,6 +1289,7 @@ function updateWallets() {
 function updateStoreButtons() {
     // Teams
     for (const key in gameState.teams) {
+        if (!gameData.teams[key]) continue;
         // Logica Costi
         let amountToBuy = window.buyMultiplier;
         let isMax = false;
@@ -1303,6 +1313,7 @@ function updateStoreButtons() {
 
     // Click Upgrades
     for (const key in gameState.clickUpgrades) {
+        if (!gameData.clickUpgrades[key]) continue;
         if (!gameState.clickUpgrades[key].purchased) {
             const container = getEl(`click-upgrade-${key}`); // Usa ID contenitore se btn ID è ambiguo
             // Fallback diretto al bottone se l'ID è univoco
@@ -1315,6 +1326,7 @@ function updateStoreButtons() {
 
     // Enhancements
     for (const key in gameState.buildingEnhancements) {
+        if (!gameData.buildingEnhancements[key]) continue;
         if (!gameState.buildingEnhancements[key].purchased) {
             const btn = getEl(`buy-${key}`);
             if (btn && !btn.classList.contains('owned')) {
