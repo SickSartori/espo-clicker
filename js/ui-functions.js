@@ -1343,10 +1343,11 @@ function updateSkillButton() {
     const btnCrunch = getEl('skill-crunchTime');
     if (!btnCrunch) return;
 
-    if (document.body.classList.contains('rick-rolling')) {
+    if (document.body.classList.contains('rick-rolling') || isBluescreenActive) {
         btnCrunch.style.display = 'none';
         return;
     }
+
     if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
         if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
 

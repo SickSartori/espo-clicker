@@ -635,12 +635,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-music': null,
                 'sound-bg-music-v2': null,
                 'sound-bg-music-v3': null,
-                'sound-bg-bit': 'espobit'
-                // Nota: sound-snowball rimosso perché esclusivo del tema
+                'sound-bg-bit': 'espobit',
+                'sound-snowball': 'christmas',
+                'sound-bg-music-super': 'superespo'
             };
 
             const sounds = gameData.assets.sounds;
-            const excludedTracks = ['sound-bluescreen', 'sound-matrix', 'sound-fury-music', 'sound-snowball'];
+            const excludedTracks = ['sound-bluescreen', 'sound-matrix', 'sound-fury-music', 'sound-star'];
 
             // 5. Popola le opzioni
             for (const [key, sound] of Object.entries(sounds)) {

@@ -620,3 +620,61 @@
         opacity: 0;
     }
 }
+/*Super Star Event*/
+@keyframes rgb-cycle {
+    0% { filter: hue-rotate(0deg) brightness(1.2); }
+    100% { filter: hue-rotate(360deg) brightness(1.2); }
+}
+
+@keyframes rgb-ui-cycle {
+    0% { color: #ff4757; border-color: #ff4757; }
+    33% { color: #2ecc71; border-color: #2ecc71; }
+    66% { color: #3498db; border-color: #3498db; }
+    100% { color: #ff4757; border-color: #ff4757; }
+}
+
+@keyframes rgb-bg-super {
+    0% { background-color: #ff4757; }
+    33% { background-color: #2ecc71; }
+    66% { background-color: #3498db; }
+    100% { background-color: #ff4757; }
+}
+
+@keyframes superStarPulse {
+    from { transform: scale(1); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+    to { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 255, 255, 0.8); }
+}
+
+@keyframes superFuryPulse {
+    0% {
+        border-color: #f8b800;
+        background-color: #b00000;
+    }
+    50% {
+        border-color: #fff;
+        background-color: #e70010;
+    }
+    100% {
+        border-color: #f8b800;
+        background-color: #b00000;
+    }
+}
+/*Super Espo*/
+@keyframes superTabPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(248, 184, 0, 0);
+        transform: translateY(0);
+        text-shadow: none;
+    }
+    100% {
+        box-shadow: 0 0 15px #f8b800, inset 0 0 10px #f8b800;
+        background-color: #b8860b; 
+        color: #fff;               
+        transform: translateY(-2px);
+        text-shadow: 2px 2px 0 #000;
+    }
+}
+@keyframes blockFloat {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-5px); }
+}
