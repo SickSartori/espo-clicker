@@ -345,6 +345,7 @@
 
                 <div class="control-row">
                     <button id="btn-event-golden" class="cheat-btn gold" title="Fa apparire un Golden Bug istantaneamente"><i class="fa-solid fa-bug"></i> Golden Bug</button>
+                    <button id="btn-event-star" class="cheat-btn gold" title="Attiva evento Super Star"><i class="fa-solid fa-star"></i> Super Star</button>
                 </div>
                  <div class="control-row">
                     <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta il tempo di attesa di Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
@@ -607,6 +608,14 @@
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
             toast("Golden Bug generato");
+        }
+    });
+
+    document.getElementById('btn-event-star').addEventListener('click', () => {
+        const mult = getIntVal('cheat-404-input'); // Riutilizziamo l'input del moltiplicatore per comodità
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('superStarMode', mult);
+            toast(`⭐ Super Star (x${mult}) attivata`);
         }
     });
 

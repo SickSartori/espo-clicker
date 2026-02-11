@@ -104,6 +104,15 @@ const gameData = {
                 loop: true,
                 defaultVol: 0.4
             },
+            'star': {
+                id: 'sound-star',
+                file: 'star.mp3',
+                name: 'Super Star',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 1.0
+            },
             'fury-theme': {
                 id: 'sound-fury-music',
                 file: 'fury-theme.mp3',
@@ -1205,6 +1214,17 @@ const gameData = {
             maxMult: 5,
             toast: "SYSTEM HACKED! x{mult}!",
             toastType: "error"
+        },
+        superStarMode: {
+            name: 'Super Star Mode',
+            type: 'css_mode',
+            cssClass: 'super-star-active',
+            audioId: 'sound-star',
+            duration: 30000,
+            minMult: 5,
+            maxMult: 10,
+            toast: "⭐ SUPER STAR! x{mult}! ⭐",
+            toastType: "achievement"
         }
     },
     texts: {

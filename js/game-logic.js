@@ -217,11 +217,21 @@ const AudioManager = {
     },
 
     playClickEffect() {
-        // Default: Suono click standard
         let soundId = 'sound-click';
 
-        if (document.body.classList.contains('theme-super') && gameState.crunchTimeEndTime > Date.now()) {
+        // 1. Priorità Assoluta: Super Star Mode
+        if (document.body.classList.contains('super-star-active')) {
+            soundId = 'sound-click'; // Usa click normale (pulito)
+            // Oppure usa 'sound-star-click' se vuoi un suono specifico tipo moneta
+        }
+        // 2. Evento Espo Fury (Fuoco)
+        else if (document.body.classList.contains('crunch-active')) {
             soundId = 'sound-fireball';
+        }
+        // 3. Evento 404/Matrix/Rick (Glitch)
+        else if (isBluescreenActive) {
+            // Qui entrava per errore prima. Ora l'IF sopra lo blocca.
+            soundId = 'sound-click'; 
         }
 
         const sound = document.getElementById(soundId);
@@ -230,22 +240,25 @@ const AudioManager = {
         let rate = 1.0;
         let volumeMult = 1.0;
 
-        if (isBluescreenActive) {
+        // Gestione Pitch e Volume per Eventi Glitch (Escludendo Super Star)
+        if (isBluescreenActive && !document.body.classList.contains('super-star-active')) {
             if (document.body.classList.contains('rick-rolling')) {
                 volumeMult = 0.2;
             } else {
-                rate = 0.2 + Math.random() * 1.6;
+                rate = 0.2 + Math.random() * 1.6; // Glitch pitch
                 volumeMult = 0.5 + Math.random();
             }
         } 
-        // [NUOVO] Variazione pitch per la fireball per renderla meno ripetitiva
         else if (soundId === 'sound-fireball') {
-            rate = 0.9 + Math.random() * 0.2; // Pitch tra 0.9 e 1.1
+            rate = 0.9 + Math.random() * 0.2; 
+        }
+        // Super Star: Pitch leggermente alto e felice
+        else if (document.body.classList.contains('super-star-active')) {
+            rate = 1.1 + Math.random() * 0.1; 
+            volumeMult = 0.8;
         }
 
         const master = gameState.user.masterVolume * gameState.user.sfxVolume;
-        
-        // Se è un suono custom (fireball), controlliamo se ha un volume specifico nel mixer
         const customVol = AudioManager.getCustomVolume(soundId);
         
         sound.volume = Math.max(0, Math.min(1, master * volumeMult * customVol));
@@ -282,7 +295,8 @@ const AudioManager = {
             'sound-fury-music',
             'sound-bluescreen',
             'sound-matrix',
-            'sound-bg-bit' 
+            'sound-bg-bit',
+            'sound-star'
         ];
 
         // Aggiungi musiche delle skin in modo dinamico
@@ -308,6 +322,8 @@ const AudioManager = {
         else if (isBluescreenActive) {
             if (document.body.classList.contains('matrix-active')) {
                 targetTrackId = 'sound-matrix';
+            } else if (document.body.classList.contains('super-star-active')) {
+                targetTrackId = 'sound-star';
             } else {
                 targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
@@ -948,18 +964,19 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
 
 function triggerBluescreen(multiplier) {
-    // Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
+    // 1. Priorità Skin Speciali esistenti (Rick / Ricardo)
     if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
         return triggerGameEvent('rickRoll');
     }
     if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
         return triggerGameEvent('ricardo');
     }
-
-    // Scelta Casuale: 50% Blue Screen / 50% Matrix
+    // 2. Priorità Skin Super Espò
+    if (gameState.skins.current === 'superespo') {
+        return triggerGameEvent('superStarMode', multiplier);
+    }
+    // 3. Scelta Casuale Standard (Solo per altre skin): 50% Blue Screen / 50% Matrix
     const eventType = Math.random() < 0.5 ? 'bluescreen' : 'matrix';
-
-    // Avvia l'evento scelto
     return triggerGameEvent(eventType, multiplier);
 }
 
