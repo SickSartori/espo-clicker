@@ -16,3 +16,14 @@ window.isChristmasSeason = function() {
 
 // Costante calcolata subito
 window.IS_XMAS_TIME = window.isChristmasSeason();
+
+window.isSeasonActive = function(seasonId) {
+    if (!seasonId) return true;
+    
+    // Logica per Natale
+    if (seasonId === 'christmas') return window.IS_XMAS_TIME;
+    // if (seasonId === 'halloween') return ...;
+    // if (seasonId === 'easter') return ...;
+
+    return false;
+};

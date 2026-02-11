@@ -165,6 +165,7 @@ window.gameData.achievements = {
             type: 'custom',
             target: 1,
             isSecret: false,
+            season: 'christmas',
             reward: { type: 'skin', id: 'christmas' },
             condition: () => IS_XMAS_TIME
         }
