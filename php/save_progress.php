@@ -46,8 +46,17 @@ $stmtCheck->close();
 
 // Funzione per confrontare numeri molto grandi (stringhe)
 function isNewScoreHigher($new, $old) {
-    // Rimuovi eventuali notazioni scientifiche se presenti o gestiscile, 
-    // ma assumendo numeri interi salvati come stringhe:
+    // Normalizzazione: Rimuove spazi e converte in lowercase
+    $new = strtolower(trim($new));
+    $old = strtolower(trim($old));
+
+    // Gestione Notazione Scientifica (es. 1e+25)
+    // Se rileviamo 'e', usiamo il float per il confronto (perde precisione sulle unità, ma evita il blocco errato)
+    if (strpos($new, 'e') !== false || strpos($old, 'e') !== false) {
+        return (float)$new >= (float)$old;
+    }
+
+    // Confronto Standard per stringhe numeriche intere (Più preciso per BigInt)
     if (strlen($new) > strlen($old)) return true;
     if (strlen($new) < strlen($old)) return false;
     return strcmp($new, $old) >= 0;
