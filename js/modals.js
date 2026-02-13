@@ -728,25 +728,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto-Login da sessione
         const sessUser = sessionStorage.getItem('espooUser');
         const sessPass = sessionStorage.getItem('espooPass');
-        if (sessUser && sessPass) {
+
+        if (sessUser && sessPass)
+		{			
+			Game.getGameState().user.username = sessUser;
             loginInput.value = sessUser;
             loginPasswordInput.value = sessPass;
             loginButton.click();
-        } else {
-            openModal(loginModal);
         }
+		else
+            openModal(loginModal);
         
         console.log("✅ Modals.js inizializzato via Evento.");
     }
 
     // Logica ibrida: Se il gioco è già pronto, esegui subito. Altrimenti aspetta l'evento.
-    if (window.EspooClicker) {
+    if (window.EspooClicker)
         initModalBindings();
-    } else {
+    else
         document.addEventListener('EspoGameReady', initModalBindings);
-    }
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
+
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
@@ -852,8 +855,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     localStorage.removeItem('espotoolClickerSaveV8');
                     localStorage.removeItem('espotoolClickerSaveV8_Backup');
-                    // ----------------------------------------------
-
                     location.reload();
                 } else {
                     alert(data.message);
