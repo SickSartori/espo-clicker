@@ -592,7 +592,7 @@ function recalculateCPS() {
             }
 
             // Somma al totale
-            bps = bps.add(teamBPS.mul(teamState.count));
+            baseCPS = baseCPS.add(teamBPS.mul(teamState.count));
         }
     }
 
