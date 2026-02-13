@@ -896,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Se abbiamo una sessione E il loader è finito, proviamo a suonare.
                     if (hasSession) {
                         window.EspooClicker.tryStartAudio();
+						startGameRoutines();
                     }
 
                 }, 500);
