@@ -5,6 +5,9 @@
         scrollbar-width: thin;
         scrollbar-color: var(--primary) var(--bg-nav);
     }
+    #open-arcade-btn {
+        display: none;
+    }
 
     /* 1. GLOBAL & SCROLL LOCK */
     body {

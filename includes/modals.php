@@ -70,6 +70,21 @@
                 <h3 class="group-title">
 					<?php echo $labels["modals_opzioni_contenuto_audio"]; ?>
 				</h3>
+                <div class="slider-row" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <span class="slider-icon">
+                    <i class="fa-solid fa-compact-disc"></i>
+                </span>
+                <div class="slider-wrapper" style="width: 100%;">
+                    <label><?php echo "Musica di Sfondo"; // O usa una variabile $labels se preferisci ?></label>
+                    
+                    <select id="bg-music-select" class="clean-input" style="width: 100%; padding: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid #4a6582; color: white; border-radius: 4px;">
+                    </select>
+                    
+                    <div id="bg-music-lock-msg" style="display:none; font-size: 0.7rem; color: #e74c3c; margin-top: 4px;">
+                        <i class="fa-solid fa-lock"></i> Bloccato dalla Skin attuale
+                    </div>
+                </div>
+            </div>
                 <div class="slider-row">
                     <span class="slider-icon">
 						<i class="fa-solid fa-volume-high"></i>
@@ -455,48 +470,6 @@
 						<?php echo $labels["modals_manuale_punto_7_label3"]; ?>
 					</li>
                 </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="arcade-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 500px; text-align: center;">
-        <button class="modal-close-btn">&times;</button>
-        <h2 style="border-bottom-color: #9b59b6; color: #9b59b6;">
-            <i class="fa-solid fa-gamepad"></i>
-			<?php echo $labels["modals_arcade_titolo"]; ?>
-        </h2>
-        <div class="settings-content" style="padding: 40px 30px;">
-            <div style="margin-bottom: 25px;">
-                <i class="fa-solid fa-helmet-safety" style="
-                    font-size: 4rem; 
-                    color: #f1c40f; 
-                    /* Questo crea l'alone che segue la forma del casco */
-                    filter: drop-shadow(0 0 15px rgba(241, 196, 15, 0.6));
-                    /* Questa animazione fa solo 'respirare' l'icona senza creare box */
-                    animation: pulseButton 2s infinite ease-in-out;">
-                </i>
-            </div>
-            <h3 style="color: #fff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">
-				<?php echo $labels["modals_arcade_lavori_in_corso_titolo"]; ?>
-            </h3>
-            <p style="color: #bdc3c7; font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
-				<?php echo $labels["modals_arcade_lavori_in_corso_label1"]; ?>
-				<br>
-				<?php echo $labels["modals_arcade_lavori_in_corso_label2"]; ?>
-            </p>
-            <div style="
-                display: inline-block;
-                padding: 8px 16px;
-                background: rgba(155, 89, 182, 0.1); 
-                border: 1px dashed #9b59b6; 
-                border-radius: 6px; 
-                color: #9b59b6; 
-                font-size: 0.75rem; 
-                font-weight: 800;
-                text-transform: uppercase;">
-                <i class="fa-solid fa-code"></i>
-				<?php echo $labels["modals_arcade_lavori_in_corso_status"]; ?>
             </div>
         </div>
     </div>

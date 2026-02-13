@@ -22,8 +22,7 @@ window.costScalingReduction = 0;
 window.prestigeSynergyFactor = new Decimal(0);
 window.clickGlobalMult = new Decimal(1);
 
-function isChristmasSeason()
-{
+function isChristmasSeason() {
     const now = new Date();
     const month = now.getMonth();
     const day = now.getDate();
@@ -45,11 +44,38 @@ const gameData = {
             'bg-music': {
                 id: 'sound-bg-music',
                 file: 'bg-music.mp3',
-                name: 'Musica Base',
+                name: 'Musica V1',
                 type: 'music',
                 category: 'ambiente',
                 loop: true,
                 defaultVol: 0.3
+            },
+            'bg-music-v2': {
+                id: 'sound-bg-music-v2',
+                file: 'bg-music-v2.mp3',
+                name: 'Musica V2',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'bg-music-v3': {
+                id: 'sound-bg-music-v3',
+                file: 'bg-music-v3.mp3',
+                name: 'Musica V3',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.3
+            },
+            'bg-music-super': {
+                id: 'sound-bg-music-super',
+                file: 'bg-music-super.mp3',
+                name: 'Super Espò',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 0.1
             },
             'snowball': {
                 id: 'sound-snowball',
@@ -77,6 +103,15 @@ const gameData = {
                 category: 'ambiente',
                 loop: true,
                 defaultVol: 0.4
+            },
+            'star': {
+                id: 'sound-star',
+                file: 'star.mp3',
+                name: 'Super Star',
+                type: 'music',
+                category: 'ambiente',
+                loop: true,
+                defaultVol: 1.0
             },
             'fury-theme': {
                 id: 'sound-fury-music',
@@ -158,6 +193,38 @@ const gameData = {
                 type: 'music',
                 category: 'ambiente',
                 loop: true,
+                defaultVol: 0.3
+            },
+            'space-shoot': {
+                id: 'sound-space-shoot',
+                file: 'arcade/assets/space-shoot.wav', 
+                name: 'Space Shoot',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.4
+            },
+            'space-boom': {
+                id: 'sound-space-boom',
+                file: 'arcade/assets/space-boom.wav', 
+                name: 'Space Explosion',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.5
+            },
+            'arcade-gameover': {
+                id: 'sound-arcade-gameover',
+                file: 'arcade/assets/game-over.mp3', 
+                name: 'Arcade Game Over',
+                type: 'sfx',
+                category: 'effetti',
+                defaultVol: 0.6
+            },
+            'fireball': {
+                id: 'sound-fireball',
+                file: 'fireball.mp3', 
+                name: 'Fireball',
+                type: 'sfx',
+                category: 'effetti',
                 defaultVol: 0.3
             },
         },
@@ -266,10 +333,18 @@ const gameData = {
             rarity: "epic",
             cost: new Decimal(20) // Richiede prestigio avanzato
         },
+        bob: {
+            name: "EspòngeBob",
+            desc: "Sono pronto, Promozione!",
+            img: "esponge-bob.webp",
+            imgClick: "esponge-bob-click.webp",
+            rarity: "epic",
+            cost: new Decimal(25) // Richiede prestigio avanzato
+        },
         // --- LEGGENDARIE (Late Game - Difficili) ---
         rick: {
             name: "Rick Espley",
-            desc: "Never gonna give you up.",
+            desc: "Never gonna give you up!",
             img: "rick-espley.webp",
             imgClick: "rick-espley-click.webp",
             rarity: "legendary",
@@ -298,6 +373,20 @@ const gameData = {
             imgClick: "freddy-espory-click.webp",
             rarity: "legendary",
             cost: new Decimal(50)
+        },
+        superespo: {
+            name: "Super Espò",
+            desc: "It’s-a Me, Espò!",
+            img: "super-espo.webp",
+            imgClick: "super-espo-click.webp",
+            rarity: "legendary",
+            cost: new Decimal(100),
+            themeConfig: {
+                bodyClass: 'theme-super',
+                specialMusic: 'sound-bg-music-super',
+                goldenBugIcon: 'fa-question', 
+                goldenBugColor: '#ffffff' 
+            }
         },
         // --- DIVINE ---
         jesus: {
@@ -1125,6 +1214,17 @@ const gameData = {
             maxMult: 5,
             toast: "SYSTEM HACKED! x{mult}!",
             toastType: "error"
+        },
+        superStarMode: {
+            name: 'Super Star Mode',
+            type: 'css_mode',
+            cssClass: 'super-star-active',
+            audioId: 'sound-star',
+            duration: 30000,
+            minMult: 5,
+            maxMult: 10,
+            toast: "⭐ SUPER STAR! x{mult}! ⭐",
+            toastType: "achievement"
         }
     },
     texts: {
@@ -1212,11 +1312,13 @@ const gameData = {
 };
 
 // --- GENERAZIONE AUTOMATICA DELLO STATO INIZIALE ---
-function getInitialGameState()
-{
+function getInitialGameState() {
     const state =
     {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
+        arcadeHighScores: {
+            snake: 0
+        },
         score: new Decimal(0),
         baseClickValue: new Decimal(1),
         totalClicks: 0,
@@ -1239,7 +1341,14 @@ function getInitialGameState()
         prestigeUpgrades: {},
         buildingEnhancements: {},
         achievements: {},
-        user: { username: 'Giocatore', masterVolume: 0.8, sfxVolume: 1.0, musicVolume: 0.5, audioCustom: {} }
+        user: {
+            username: 'Giocatore',
+            masterVolume: 0.8,
+            sfxVolume: 1.0,
+            musicVolume: 0.5,
+            audioCustom: {},
+            bgMusicSelection: 'sound-bg-music'
+        }
     };
 
     for (const key in gameData.teams) state.teams[key] = { count: 0 };
@@ -1248,8 +1357,7 @@ function getInitialGameState()
 
     for (const key in gameData.buildingEnhancements) state.buildingEnhancements[key] = { purchased: false };
 
-    for (const key in gameData.prestigeUpgrades)
-	{
+    for (const key in gameData.prestigeUpgrades) {
         if (gameData.prestigeUpgrades[key].isCounted)
             state.prestigeUpgrades[key] = { count: 0 };
         else
@@ -1258,8 +1366,7 @@ function getInitialGameState()
 
     const allAssets = { ...gameData.assets.sounds, ...gameData.assets.videos };
 
-    for (const key in allAssets)
-	{
+    for (const key in allAssets) {
         if (allAssets[key].defaultVol !== undefined)
             state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
     }
@@ -1269,8 +1376,7 @@ function getInitialGameState()
 
 gameState = getInitialGameState();
 
-function resetGameToDefault()
-{
+function resetGameToDefault() {
     const freshState = getInitialGameState();
     Object.assign(gameState, freshState);
 

@@ -118,8 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            // Opzionale: Mostra un toast "Benvenuto in sala giochi"
-            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.arcadeWelcome, "info");
+            // Recupera il record salvato
+            const Game = window.EspooClicker;
+            if (Game) {
+                const state = Game.getGameState();
+                // Se non esiste ancora l'oggetto, mostra 0
+                const highScore = (state.arcadeHighScores && state.arcadeHighScores.snake) ? state.arcadeHighScores.snake : 0;
+
+                // Aggiorna l'HTML
+                const scoreDisplay = document.getElementById('arcade-high-score');
+                if (scoreDisplay) scoreDisplay.textContent = highScore;
+            }
+
             openModal(arcadeModal);
         });
     }
@@ -466,26 +476,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function getGameAPI() { return window.EspooClicker || null; }
     function openModal(modal) {
         if (modal) {
-            // 1. Prepara lo stato iniziale (invisibile e piccolo)
+            // 1. Prepara lo stato iniziale
             modal.style.display = 'flex';
             modal.style.opacity = 0;
 
-            // Cerca il contenuto interno per animarlo (o l'intero modale se preferisci)
             const content = modal.querySelector('.modal-content');
 
             // 2. Animazione GSAP
             if (content) {
                 gsap.fromTo(content,
                     { scale: 0.8, opacity: 0, y: 20 },
-                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" } // Effetto rimbalzo
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
                 );
-                // Anima anche lo sfondo scuro
                 gsap.to(modal, { opacity: 1, duration: 0.3 });
             } else {
-                modal.style.opacity = 1; // Fallback
+                modal.style.opacity = 1;
             }
 
             document.body.classList.add('modal-open');
+
+            // --- FIX AUDIO ---
+            // Suona SOLO se il modale NON è quello di login
+            if (modal.id !== 'login-modal') {
+                if (typeof AudioManager !== 'undefined') {
+                    AudioManager.playClickEffect();
+                } else if (typeof playSound === 'function') {
+                    playSound('sound-click');
+                }
+            }
         }
     }
 
@@ -581,12 +599,104 @@ document.addEventListener('DOMContentLoaded', () => {
     function openSettingsModal() {
         const Game = getGameAPI();
         if (!Game) return;
-        const userSettings = Game.getGameState().user;
+        const gameState = Game.getGameState();
+        const userSettings = gameState.user;
+
+        // Aggiornamento UI esistente (Username e Slider)
         if (currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
         if (masterSlider) {
             masterSlider.value = userSettings.masterVolume;
-            masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
+            if (masterDisplay) masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
+
+        // --- FIX GESTIONE MUSICA ---
+        const oldMusicSelect = document.getElementById('bg-music-select');
+        const lockMsg = document.getElementById('bg-music-lock-msg');
+
+        if (oldMusicSelect) {
+            // 1. Inizializza la preferenza se manca (per salvataggi vecchi)
+            if (!userSettings.bgMusicSelection) userSettings.bgMusicSelection = 'sound-bg-music';
+
+            // 2. Controlla se la skin attuale FORZA la musica
+            const currentSkinId = gameState.skins.current;
+            const currentSkinData = gameData.skins[currentSkinId];
+            const isThemeLocked = currentSkinData && currentSkinData.themeConfig && currentSkinData.themeConfig.specialMusic;
+
+            // 3. Crea un NUOVO elemento select pulito (clone superficiale per rimuovere listener vecchi)
+            const newSelect = oldMusicSelect.cloneNode(false); // false = non copiare le option vecchie
+
+            // Gestione UI Blocco
+            newSelect.disabled = isThemeLocked;
+            newSelect.style.opacity = isThemeLocked ? '0.5' : '1';
+            if (lockMsg) lockMsg.style.display = isThemeLocked ? 'block' : 'none';
+
+            // 4. Mappatura Sblocchi (Definizione regole)
+            const musicUnlockMap = {
+                'sound-bg-music': null,
+                'sound-bg-music-v2': null,
+                'sound-bg-music-v3': null,
+                'sound-bg-bit': 'espobit',
+                'sound-snowball': 'christmas',
+                'sound-bg-music-super': 'superespo'
+            };
+
+            const sounds = gameData.assets.sounds;
+            const excludedTracks = ['sound-bluescreen', 'sound-matrix', 'sound-fury-music', 'sound-star'];
+
+            // 5. Popola le opzioni
+            for (const [key, sound] of Object.entries(sounds)) {
+                if (sound.type === 'music' && sound.category === 'ambiente' && !excludedTracks.includes(sound.id)) {
+
+                    const requiredSkin = musicUnlockMap[sound.id];
+                    const isUnlocked = !requiredSkin || gameState.skins.unlocked.includes(requiredSkin);
+
+                    if (isUnlocked) {
+                        const option = document.createElement('option');
+                        option.value = sound.id;
+                        option.textContent = sound.name;
+
+                        // Seleziona quella salvata
+                        if (sound.id === userSettings.bgMusicSelection) {
+                            option.selected = true;
+                        }
+                        newSelect.appendChild(option);
+                    }
+                }
+            }
+
+            // Se bloccato dal tema, aggiungi l'opzione forzata visuale
+            if (isThemeLocked) {
+                const forcedId = currentSkinData.themeConfig.specialMusic;
+                if (!newSelect.querySelector(`option[value="${forcedId}"]`)) {
+                    // Cerca il nome del suono forzato
+                    let forcedName = "Tema Skin";
+                    for (const k in sounds) { if (sounds[k].id === forcedId) forcedName = sounds[k].name; }
+
+                    const option = document.createElement('option');
+                    option.value = forcedId;
+                    option.textContent = forcedName + " (Bloccato)";
+                    newSelect.appendChild(option);
+                }
+                newSelect.value = forcedId;
+            }
+
+            // 6. Listener Aggiornato (Usa Game.getGameState() direttamente per sicurezza)
+            newSelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                // Aggiorna lo stato globale
+                Game.getGameState().user.bgMusicSelection = val;
+
+                // Applica subito l'audio
+                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
+                // Salva
+                Game.saveGame();
+            });
+
+            // 7. Sostituisci il vecchio select nel DOM con quello nuovo
+            oldMusicSelect.parentNode.replaceChild(newSelect, oldMusicSelect);
+        }
+
         openModal(settingsModal);
     }
 
@@ -632,6 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
             localStorage.removeItem('espotoolClickerSaveV8');
+            localStorage.removeItem('espotoolClickerSaveV8_Backup');
             location.reload();
         }
     });
@@ -651,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.status === 'success') {
                 Game.showToast(gameData.texts.toasts.passChanged, "success");
-				Game.setPassword(newPass);	// Aggiorno la password per le varie funzioni di salvataggio
+                Game.setPassword(newPass);	// Aggiorno la password per le varie funzioni di salvataggio
                 sessionStorage.setItem('espooPass', newPass); // Aggiorna sessione
             } else {
                 alert(data.message);

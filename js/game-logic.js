@@ -81,25 +81,20 @@ function clearActiveEvent() {
 // --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------
 
 // Applica un singolo effetto
-function applyEffect(effect, level = 1)
-{
+function applyEffect(effect, level = 1) {
     if (!effect)
         return;
 
     let lvl = new Decimal(level);
 
-    if (effect.type === 'mult_state')
-    {
+    if (effect.type === 'mult_state') {
         if (gameState.hasOwnProperty(effect.stat))
             gameState[effect.stat] = gameState[effect.stat].mul(effect.val);
     }
-    else if (effect.type === 'mult_global')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'mult_global') {
+        if (window.hasOwnProperty(effect.stat)) {
             // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
-            if (window[effect.stat] instanceof Decimal)
-            {
+            if (window[effect.stat] instanceof Decimal) {
                 let value = new Decimal(effect.val);
                 window[effect.stat] = window[effect.stat].mul(value);
             }
@@ -107,10 +102,8 @@ function applyEffect(effect, level = 1)
                 window[effect.stat] *= effect.val;
         }
     }
-    else if (effect.type === 'add_mult_per_level')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'add_mult_per_level') {
+        if (window.hasOwnProperty(effect.stat)) {
             let value = new Decimal(effect.val);
             let bonus = value.mul(lvl);
 
@@ -120,10 +113,8 @@ function applyEffect(effect, level = 1)
                 window[effect.stat] += (effect.val * level);
         }
     }
-    else if (effect.type === 'add_global_stat_per_level')
-    {
-        if (window.hasOwnProperty(effect.stat))
-        {
+    else if (effect.type === 'add_global_stat_per_level') {
+        if (window.hasOwnProperty(effect.stat)) {
             let value = new Decimal(effect.val);
             let bonus = value.mul(lvl);
 
@@ -177,7 +168,14 @@ const AudioManager = {
             if (!document.getElementById(sound.id)) {
                 const audio = document.createElement('audio');
                 audio.id = sound.id;
-                audio.src = `assets/sounds/${sound.file}`;
+
+                // Se il file contiene una barra, usa il percorso completo (es. arcade/assets/...)
+                if (sound.file.includes('/')) {
+                    audio.src = sound.file;
+                } else {
+                    audio.src = `assets/sounds/${sound.file}`;
+                }
+
                 audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
                 if (sound.loop) audio.loop = true;
                 container.appendChild(audio);
@@ -219,39 +217,89 @@ const AudioManager = {
     },
 
     playClickEffect() {
-        // ... (Logica click effect invariata, puoi lasciarla com'era o copiarla dal vecchio file) ...
-        const sound = document.getElementById('sound-click');
+        let soundId = 'sound-click';
+
+        // 1. Priorità Assoluta: Super Star Mode
+        if (document.body.classList.contains('super-star-active')) {
+            soundId = 'sound-click'; // Usa click normale (pulito)
+            // Oppure usa 'sound-star-click' se vuoi un suono specifico tipo moneta
+        }
+        // 2. Evento Espo Fury (Fuoco)
+        else if (document.body.classList.contains('crunch-active')) {
+            soundId = 'sound-fireball';
+        }
+        // 3. Evento 404/Matrix/Rick (Glitch)
+        else if (isBluescreenActive) {
+            // Qui entrava per errore prima. Ora l'IF sopra lo blocca.
+            soundId = 'sound-click'; 
+        }
+
+        const sound = document.getElementById(soundId);
         if (!sound) return;
+
         let rate = 1.0;
         let volumeMult = 1.0;
-        if (isBluescreenActive) {
+
+        // Gestione Pitch e Volume per Eventi Glitch (Escludendo Super Star)
+        if (isBluescreenActive && !document.body.classList.contains('super-star-active')) {
             if (document.body.classList.contains('rick-rolling')) {
                 volumeMult = 0.2;
             } else {
-                rate = 0.2 + Math.random() * 1.6;
+                rate = 0.2 + Math.random() * 1.6; // Glitch pitch
                 volumeMult = 0.5 + Math.random();
             }
+        } 
+        else if (soundId === 'sound-fireball') {
+            rate = 0.9 + Math.random() * 0.2; 
         }
+        // Super Star: Pitch leggermente alto e felice
+        else if (document.body.classList.contains('super-star-active')) {
+            rate = 1.1 + Math.random() * 0.1; 
+            volumeMult = 0.8;
+        }
+
         const master = gameState.user.masterVolume * gameState.user.sfxVolume;
-        sound.volume = Math.max(0, Math.min(1, master * volumeMult));
+        const customVol = AudioManager.getCustomVolume(soundId);
+        
+        sound.volume = Math.max(0, Math.min(1, master * volumeMult * customVol));
         sound.playbackRate = rate;
         sound.currentTime = 0;
         sound.play().catch(e => { });
     },
 
-    // --- IL NUOVO CERVELLO AUDIO ---
+
     updateAmbience() {
-        // 1. Identifica TUTTI i player musicali (Loop)
-        // Raccogliamo tutti gli ID che sono definiti come 'music' nei dati o usati per eventi
+        if (!sessionStorage.getItem('espooUser')) {
+            const tracksToStop = [
+                'sound-bg-music', 'sound-bg-music-v2', 'sound-bg-music-v3', 
+                'sound-snowball', 'sound-fury-music', 'sound-bluescreen', 
+                'sound-matrix', 'sound-bg-bit'
+            ];
+            
+            tracksToStop.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.paused) {
+                    el.pause();
+                    el.currentTime = 0;
+                }
+            });
+            return; // Interrompe qui la funzione
+        }
+
+        // --- LOGICA NORMALE DI GIOCO ---
         const allMusicTracks = [
             'sound-bg-music',
+            'sound-bg-music-v2',
+            'sound-bg-music-v3',
             'sound-snowball',
             'sound-fury-music',
             'sound-bluescreen',
-            'sound-matrix'
+            'sound-matrix',
+            'sound-bg-bit',
+            'sound-star'
         ];
 
-        // Aggiungi musiche delle skin (es. sound-bg-bit)
+        // Aggiungi musiche delle skin in modo dinamico
         for (let key in gameData.skins) {
             const conf = gameData.skins[key].themeConfig;
             if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
@@ -259,50 +307,47 @@ const AudioManager = {
             }
         }
 
-        // 2. Determina il "Target Track" in base alla PRIORITÀ
         let targetTrackId = null;
 
-        // PRIORITÀ 0: Audio Mixer (Test) - Silenzio totale
+        // Priorità Eventi
         if (window.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
         }
-        // PRIORITÀ 1: Video (Rick/Ricardo) - Silenzio (gestito dal video tag)
         else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
         }
-        // PRIORITÀ 2: Espo Fury (Fuoco)
         else if (gameState.crunchTimeEndTime > Date.now()) {
             targetTrackId = 'sound-fury-music';
         }
-        // PRIORITÀ 3: Eventi CSS (Matrix / 404)
         else if (isBluescreenActive) {
             if (document.body.classList.contains('matrix-active')) {
                 targetTrackId = 'sound-matrix';
+            } else if (document.body.classList.contains('super-star-active')) {
+                targetTrackId = 'sound-star';
             } else {
-                // Natale Glitch o Normale Bluescreen
                 targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
         }
-        // PRIORITÀ 4: Skin Attiva (Base)
         else {
+            // Priorità Skin vs Selezione Utente
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
-            targetTrackId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
-                ? currentSkin.themeConfig.specialMusic
-                : 'sound-bg-music';
+            if (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic) {
+                targetTrackId = currentSkin.themeConfig.specialMusic;
+            } else {
+                targetTrackId = gameState.user.bgMusicSelection || 'sound-bg-music';
+            }
         }
 
-        // 3. APPLICAZIONE (Play Target, Pause Others)
+        // Applica Play/Pause
         allMusicTracks.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
 
             if (id === targetTrackId) {
-                // Questo è quello che deve suonare
                 const volume = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(id);
-
-                // Eccezione: Glitch di Natale suona strano, gestito a parte nel timer, qui diamo solo il volume
+                // Eccezione per glitch natalizio gestito altrove
                 if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
-                    // Lascia che l'intervallo audioGlitchInterval gestisca il play/pause
+                     // managed by audioGlitchInterval
                 } else {
                     el.volume = Math.max(0, Math.min(1, volume));
                     if (el.paused && volume > 0) {
@@ -310,7 +355,6 @@ const AudioManager = {
                     }
                 }
             } else {
-                // Questo deve stare zitto
                 if (!el.paused) {
                     el.pause();
                     el.currentTime = 0;
@@ -354,13 +398,11 @@ function buySkin(skinId) {
     }
 }
 
-function buyClickUpgrade(upgradeKey)
-{
+function buyClickUpgrade(upgradeKey) {
     const state = gameState.clickUpgrades[upgradeKey];
     const data = gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score.gte(data.cost) && !state.purchased)
-    {
+    if (gameState.score.gte(data.cost) && !state.purchased) {
         gameState.score = gameState.score.minus(data.cost);
         gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
@@ -370,7 +412,7 @@ function buyClickUpgrade(upgradeKey)
 
         if (upgradeKey === 'clickAutomatico')
             recalculateCPS();
-        
+
         finalizePurchase();
     }
 }
@@ -392,27 +434,23 @@ function buyPrestigeUpgrade(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const cost = data.baseCost;
 
-    if (data.isCounted)
-    {
+    if (data.isCounted) {
         if (gameState.prestigePoints.lt(cost))
             return;
     }
-    else
-    {
+    else {
         if (gameState.prestigePoints.lt(cost) || state.purchased)
             return;
     }
 
     gameState.prestigePoints = gameState.prestigePoints.minus(cost);
 
-    if (data.isCounted)
-    {
+    if (data.isCounted) {
         state.count++;
         if (data.effects)
             data.effects.forEach(eff => applyEffect(eff, 1));
     }
-    else
-    {
+    else {
         state.purchased = true;
         if (data.effects)
             data.effects.forEach(eff => applyEffect(eff));
@@ -569,24 +607,33 @@ function recalculateCPS() {
 // 1. CRUNCH TIME
 function activateCrunchTime() {
     const now = Date.now();
+    
+    // 1. Controlli Preliminari
     if (checkEventConflict('Espo Fury')) return false;
+    
     if (now < crunchTimeCooldownEnd) {
         const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
         window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
         clearActiveEvent();
         return false;
     }
+
+    // 2. Attivazione Logica
     crunchTimeMultiplier = new Decimal(7);
     crunchTimeEndTime = now + 30000;
     crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
+    
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    
     recalculateCPS();
+    
     if (typeof updateUI === 'function') updateUI();
     if (window.EspooClicker) window.EspooClicker.saveGame();
+    
     document.body.classList.add('crunch-active');
 
-    // --- MODIFICA QUI: Scelta Immagine in base al tema ---
+    // 3. Gestione Immagini (Supporto Temi: 8-Bit, Super, Standard)
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
@@ -595,35 +642,36 @@ function activateCrunchTime() {
             // Versione 8-Bit
             photoNormal.src = 'assets/image/espobit-fury.webp';
             photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else if (document.body.classList.contains('theme-super')) {
+            // Versione Super Espo
+            photoNormal.src = 'assets/image/super-espofury.webp';
+            photoClicked.src = 'assets/image/super-espofury-click.webp';
         } else {
             // Versione Standard
             photoNormal.src = 'assets/image/espo-fury.webp';
             photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
-    // -----------------------------------------------------
 
+    // 4. Overlay & Particelle
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
-    // ... (resto della funzione invariato: particelle, audio, ecc.)
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
         fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
-    const furyMusic = document.getElementById('sound-fury-music');
-    if (furyMusic) {
-        const furyVol = getCustomVolume('sound-fury-music');
-        furyMusic.volume = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
-        furyMusic.currentTime = 0;
-        furyMusic.play().catch(e => { });
+
+    // 5. Gestione Audio Centralizzata
+    // Invece di mettere in pausa manualmente, diciamo al manager di aggiornare l'ambiente.
+    // Lui capirà che la Fury è attiva e farà partire 'sound-fury-music' spegnendo il resto.
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.updateAmbience();
     }
+
+    // 6. Feedback Utente
     window.EspooClicker.showToast(gameData.texts.toasts.furyActive, 'success');
     return true;
 }
@@ -671,25 +719,23 @@ function spawnFireParticle(container) {
 }
 
 function resumeCrunchTimeEffects() {
+    // 1. Ripristino Stato
     window.currentActiveEvent = 'Espo Fury';
     crunchTimeMultiplier = new Decimal(7);
     document.body.classList.add('crunch-active');
+    
     const overlay = document.getElementById('crunch-overlay');
     if (overlay) overlay.style.display = 'block';
 
-    // ... (particelle e audio stop invariati)
+    // 2. Ripristino Particelle
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
         if (fireParticleInterval) clearInterval(fireParticleInterval);
         fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) { bgMusic.pause(); bgMusic.currentTime = 0; }
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) { snowAudio.pause(); snowAudio.currentTime = 0; }
 
-    // --- MODIFICA QUI: Scelta Immagine al Resume ---
+    // 3. Ripristino Immagini (Supporto Temi: 8-Bit, Super, Standard)
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
 
@@ -697,27 +743,22 @@ function resumeCrunchTimeEffects() {
         if (document.body.classList.contains('theme-8bit')) {
             photoNormal.src = 'assets/image/espobit-fury.webp';
             photoClicked.src = 'assets/image/espobit-fury-click.webp';
+        } else if (document.body.classList.contains('theme-super')) {
+            photoNormal.src = 'assets/image/super-espofury.webp';
+            photoClicked.src = 'assets/image/super-espofury-click.webp';
         } else {
             photoNormal.src = 'assets/image/espo-fury.webp';
             photoClicked.src = 'assets/image/espo-fury-click.webp';
         }
     }
-    // -----------------------------------------------
 
-    const furyMusic = document.getElementById('sound-fury-music');
-    // ... (resto logica audio invariata)
-    if (furyMusic) {
-        const furyVol = getCustomVolume('sound-fury-music');
-        const targetVol = gameState.user.masterVolume * gameState.user.musicVolume * furyVol;
-        furyMusic.volume = targetVol;
-        furyMusic.currentTime = 0;
-        const playPromise = furyMusic.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                // ... (gestione autoplay bloccato invariata)
-            });
-        }
+    // 4. Ripristino Audio Centralizzato
+    // Forza l'aggiornamento per assicurarsi che la musica Fury riparta se la pagina è stata ricaricata
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.updateAmbience();
     }
+
+    // 5. Aggiornamento Logica
     recalculateCPS();
     if (typeof updateUI === 'function') updateUI();
 }
@@ -923,18 +964,19 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
 
 function triggerBluescreen(multiplier) {
-    // Priorità Skin Speciali (Rick / Ricardo) - Vincono sempre se attivi
+    // 1. Priorità Skin Speciali esistenti (Rick / Ricardo)
     if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
         return triggerGameEvent('rickRoll');
     }
     if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
         return triggerGameEvent('ricardo');
     }
-
-    // Scelta Casuale: 50% Blue Screen / 50% Matrix
+    // 2. Priorità Skin Super Espò
+    if (gameState.skins.current === 'superespo') {
+        return triggerGameEvent('superStarMode', multiplier);
+    }
+    // 3. Scelta Casuale Standard (Solo per altre skin): 50% Blue Screen / 50% Matrix
     const eventType = Math.random() < 0.5 ? 'bluescreen' : 'matrix';
-
-    // Avvia l'evento scelto
     return triggerGameEvent(eventType, multiplier);
 }
 

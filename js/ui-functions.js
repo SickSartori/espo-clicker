@@ -102,7 +102,7 @@ function formatTime(totalSeconds) {
 }
 
 
-let matrixInterval = null;
+let matrixFrameId = null;
 
 function startMatrixEffect() {
     const canvas = document.getElementById('matrix-canvas');
@@ -146,11 +146,12 @@ function startMatrixEffect() {
             // Incrementa Y
             drops[i]++;
         }
+        matrixFrameId = requestAnimationFrame(draw);
     };
 
     // Loop a 30 FPS
-    if (matrixInterval) clearInterval(matrixInterval);
-    matrixInterval = setInterval(draw, 33);
+    if (matrixFrameId) cancelAnimationFrame(matrixFrameId);
+    draw();
 
     // Gestione Resize
     window.addEventListener('resize', () => {
@@ -160,9 +161,9 @@ function startMatrixEffect() {
 }
 
 function stopMatrixEffect() {
-    if (matrixInterval) {
-        clearInterval(matrixInterval);
-        matrixInterval = null;
+    if (matrixFrameId) {
+        cancelAnimationFrame(matrixFrameId);
+        matrixFrameId = null;
     }
     // Pulisci il canvas (opzionale, ma pulito)
     const canvas = document.getElementById('matrix-canvas');
@@ -786,18 +787,74 @@ function updateAchievementsUI() {
 }
 
 function showClickFeedback(event) {
-    // 1. Recupera il contenitore in modo sicuro
     const feedbackContainer = document.getElementById('click-feedback-container');
     if (!feedbackContainer) return;
 
+    // --- SUPER STAR MODE ---
+if (document.body.classList.contains('super-star-active')) {
+    const feedbackContainer = document.getElementById('click-feedback-container');
+    if (!feedbackContainer) return;
+
+    const container = document.createElement('div');
+    container.className = 'click-feedback-star';
+    container.style.pointerEvents = 'none';
+    container.style.position = 'absolute'; // Cambiato da fixed a absolute per seguire i valori
+    container.style.zIndex = '10005';
+
+    const img = document.createElement('img');
+    img.src = 'assets/image/star.png';
+    img.onerror = () => {
+        img.remove();
+        container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
+    };
+    container.appendChild(img);
+
+    // Coordinate identiche ai valori numerici
+    const rect = feedbackContainer.getBoundingClientRect();
+    let startX, startY;
+    const size = 18; // Stella piccola come richiesto
+
+    if (event && event.clientX && event.clientY) {
+        startX = event.clientX - rect.left - (size / 2);
+        startY = event.clientY - rect.top - (size / 2);
+    } else {
+        const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+        startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
+        startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
+    }
+
+    container.style.left = `${startX}px`;
+    container.style.top = `${startY}px`;
+    container.style.width = `${size}px`;
+    container.style.height = `${size}px`;
+
+    feedbackContainer.appendChild(container);
+
+    if (typeof gsap !== 'undefined') {
+        gsap.fromTo(container,
+            { scale: 0.5, opacity: 1, y: 0 },
+            {
+                duration: 0.7,
+                y: -150, // Sale verso l'alto come i +1
+                x: (Math.random() - 0.5) * 60,
+                scale: 1.2,
+                rotation: Math.random() * 360,
+                opacity: 0,
+                ease: "power1.out",
+                onComplete: () => container.remove()
+            }
+        );
+    } else {
+        container.remove(); // Fallback rapido
+    }
+    return; // Impedisce la generazione del +1 standard durante l'evento
+}
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
-    // Impostazioni base CSS per evitare che interferiscano
     feedback.style.position = 'absolute';
     feedback.style.pointerEvents = 'none';
     feedback.style.userSelect = 'none';
-    // Rimuoviamo l'animazione CSS se presente nella classe, lasciando fare a GSAP
     feedback.style.animation = 'none';
 
     // --- VARIABILI LOGICA DI GIOCO ---
@@ -808,7 +865,6 @@ function showClickFeedback(event) {
     const isBlueScreen = (typeof isBluescreenActive !== 'undefined') ? isBluescreenActive : false;
     const currentScore = gameState.score || 0;
 
-    // Variabili per l'animazione GSAP
     let animDuration = 1.2;
     let startScale = 0.5;
     let endScale = 1.0;
@@ -824,12 +880,10 @@ function showClickFeedback(event) {
         feedback.style.zIndex = '100';
         feedback.style.textShadow = '2px 2px 0px red';
 
-        // Animazione "Glitchy" elastica
         animDuration = 2;
         endScale = 1.5;
         easeType = "elastic.out(1, 0.3)";
 
-        // Trigger Logica 404
         let dynamicMultiplier = Math.floor(2 + Math.random() * 3);
         gameState.lastBluescreenTimestamp = now;
         if (window.EspooClicker) window.EspooClicker.saveGame();
@@ -843,32 +897,27 @@ function showClickFeedback(event) {
 
         feedback.textContent = `+${formatNumber(val)}`;
 
-        // Calcolo Critico Visivo
         const critChance = (typeof window.goldenBugChance !== 'undefined') ? window.goldenBugChance : 0.001;
         const isCrit = Math.random() < (critChance * 10);
 
-        // Stili di Base
         let color = '#ffffff';
         let size = '1.1rem';
         let weight = 'bold';
         let shadow = '0 0 4px rgba(0,0,0,0.9)';
 
-        // Varianti Tema
         if (document.body.classList.contains('theme-christmas')) {
             color = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
             shadow = '0 0 5px #fff';
         } else if (isCrit) {
-            // Colpo Critico
             color = '#f1c40f';
             size = '1.5rem';
             weight = '900';
             shadow = '0 0 15px rgba(241, 196, 15, 0.8)';
             feedback.style.zIndex = '50';
 
-            // Animazione "Pop" Esplosiva
             startScale = 0.5;
             endScale = 1.5;
-            easeType = "back.out(2)"; // Rimbalzo accentuato
+            easeType = "back.out(2)";
         }
 
         feedback.style.color = color;
@@ -882,21 +931,17 @@ function showClickFeedback(event) {
     let startX, startY;
 
     if (event && event.clientX && event.clientY) {
-        // Click del mouse: posizione esatta del cursore relativa al container
         startX = event.clientX - rect.left;
         startY = event.clientY - rect.top;
     } else {
-        // Click simulato o touch impreciso: centro del bottone
         const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
         startX = (btnRect.left + btnRect.width / 2) - rect.left;
         startY = (btnRect.top + btnRect.height / 2) - rect.top;
     }
 
-    // Aggiungi variazione casuale per non sovrapporre i numeri
     const randomOffsetX = (Math.random() - 0.5) * 50;
     const randomOffsetY = (Math.random() - 0.5) * 50;
 
-    // Posiziona l'elemento inizialmente (invisibile o quasi)
     feedback.style.left = `${startX + randomOffsetX}px`;
     feedback.style.top = `${startY + randomOffsetY}px`;
 
@@ -908,15 +953,15 @@ function showClickFeedback(event) {
             {
                 opacity: 1,
                 scale: startScale,
-                rotation: Math.random() * 30 - 15 // Rotazione iniziale casuale
+                rotation: Math.random() * 30 - 15
             },
             {
                 duration: animDuration,
-                y: endY, // Sale verso l'alto
-                x: (Math.random() * 40 - 20), // Leggera deriva laterale tipo fumo
+                y: endY,
+                x: (Math.random() * 40 - 20),
                 opacity: 0,
                 scale: endScale,
-                rotation: Math.random() * 60 - 30, // Ruota mentre sale
+                rotation: Math.random() * 60 - 30,
                 ease: easeType,
                 onComplete: () => {
                     if (feedback.parentNode) feedback.remove();
@@ -924,8 +969,6 @@ function showClickFeedback(event) {
             }
         );
     } else {
-        // Fallback di sicurezza se la libreria non è caricata
-        console.warn("GSAP non trovato. Uso fallback semplice.");
         feedback.style.transition = "all 1s ease-out";
         requestAnimationFrame(() => {
             feedback.style.transform = `translateY(-100px)`;
@@ -1300,10 +1343,11 @@ function updateSkillButton() {
     const btnCrunch = getEl('skill-crunchTime');
     if (!btnCrunch) return;
 
-    if (document.body.classList.contains('rick-rolling')) {
+    if (document.body.classList.contains('rick-rolling') || isBluescreenActive) {
         btnCrunch.style.display = 'none';
         return;
     }
+
     if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
         if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
 
@@ -1496,14 +1540,11 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     // Lista classi di sfondo (rarità) da rimuovere per pulizia
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
-
-    // Lista classi dei temi globali da rimuovere dal body
-    const bodyThemes = ['theme-christmas', 'theme-8bit'];
+    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super']; 
 
     const theme = skinData.themeConfig || {};
 
-    // GESTIONE CLASSI BODY (Reset e Applicazione)
-    // Rimuove TUTTI i temi speciali attivi per evitare conflitti (es. 8bit + natale insieme)
+
     document.body.classList.remove(...bodyThemes);
 
     // Applica il nuovo tema se previsto dalla skin

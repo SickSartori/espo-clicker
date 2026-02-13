@@ -1,0 +1,174 @@
+/* code/css/modals-arcade.css */
+
+/* --- STRUTTURA CABINATO (Pulita & Widescreen) --- */
+.arcade-cabinet {
+    background-color: #111;
+    border: 4px solid #2c3e50;
+    box-shadow: 0 0 40px rgba(52, 152, 219, 0.2);
+    border-radius: 20px;
+    /* MODIFICA: Larghezza aumentata a 850px per widescreen */
+    max-width: 850px; 
+    width: 95%;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header semplice (stile originale) */
+.arcade-header {
+    background: #000;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #333;
+    position: relative;
+    z-index: 1000;
+    flex-shrink: 0;
+}
+
+.arcade-title-neon {
+    font-family: 'Courier New', monospace;
+    font-weight: 900;
+    font-size: 2rem;
+    color: #f1c40f;
+    text-shadow: 0 0 10px #e67e22;
+    letter-spacing: 4px;
+    line-height: 1;
+}
+
+.arcade-subtitle {
+    font-size: 0.8rem;
+    color: #3498db;
+    letter-spacing: 2px;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
+.arcade-close {
+    color: #e74c3c;
+    top: 15px;
+    right: 15px;
+    opacity: 0.8;
+    z-index: 1001;
+}
+
+.arcade-close:hover {
+    opacity: 1;
+    text-shadow: 0 0 10px #e74c3c;
+}
+
+/* --- CONTENUTO --- */
+.arcade-screen-container {
+    padding: 20px;
+    background: #0a0a0a;
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Griglia Giochi */
+.arcade-games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Card Stile Originale */
+.arcade-game-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid #444;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.arcade-game-card:hover {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.1);
+    transform: translateY(-3px);
+}
+
+.arcade-game-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-style: dashed;
+}
+
+/* Thumbnails */
+.game-thumb {
+    width: 60px;
+    height: 60px;
+    background: #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+    color: #fff;
+}
+
+.snake-theme .game-thumb { 
+    color: #2ecc71; 
+    border-color: #2ecc71; 
+}
+
+.game-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.game-desc {
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+.arcade-play-btn {
+    background: #3498db;
+    color: #fff;
+    border: none;
+    padding: 6px 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    width: 100%;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.arcade-game-card:hover .arcade-play-btn {
+    background: #2980b9;
+}
+
+/* Footer Minimal (Senza Insert Coin) */
+.arcade-footer {
+    background: #050505;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: center; /* Centrato */
+    align-items: center;
+    border-top: 2px solid #333;
+    font-family: monospace;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.highscore-ticker {
+    color: #e74c3c;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
