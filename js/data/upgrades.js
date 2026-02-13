@@ -210,69 +210,341 @@ window.gameData.prestigeUpgrades= {
         }
 };
 
-window.gameData.buildingEnhancements = {
+window.gameData.buildingEnhancements= {
         caffeDoppio: {
             name: 'Caffè Doppio',
-            desc: 'Aumenta la produzione di Assistenti QA del 10%.',
-            cost: new Decimal(1000),
-            team: 'assistenteQa',
-            type: 'mult',
-            val: new Decimal(1.1)
+            desc: 'Assistenti QA x2 BPS.',
+            targetTeam: 'assistenteQa',
+            cost: new Decimal(150),
+            multiplier: new Decimal(2),
+            requiredCount: 1
         },
-        testSuMacchineDiverse: {
-            name: 'Test su Macchine Diverse',
-            desc: 'Aumenta la produzione di Team QA del 10%.',
-            cost: new Decimal(10000),
-            team: 'teamQa',
-            type: 'mult',
-            val: new Decimal(1.1)
+        caffeTriplo: {
+            name: 'Caffè Triplo',
+            desc: 'Assistenti QA x2 BPS.',
+            targetTeam: 'assistenteQa',
+            cost: new Decimal(750),
+            multiplier: new Decimal(2),
+            requiredCount: 10
         },
-        frameworkAvanzato: {
-            name: 'Framework Avanzato',
-            desc: 'Aumenta la produzione di Automazione Test del 10%.',
+        scrivanieErgonomiche: {
+            name: 'Scrivanie Ergonomiche',
+            desc: 'Assistenti QA x3 BPS.',
+            targetTeam: 'assistenteQa',
+            cost: new Decimal(5000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        formazioneAvanzata: {
+            name: 'Formazione Avanzata',
+            desc: 'Assistenti QA x3 BPS.',
+            targetTeam: 'assistenteQa',
+            cost: new Decimal(25000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        managerJunior: {
+            name: 'Manager Junior',
+            desc: 'Assistenti QA x4 BPS.',
+            targetTeam: 'assistenteQa',
             cost: new Decimal(100000),
-            team: 'automazioneTest',
-            type: 'mult',
-            val: new Decimal(1.1)
+            multiplier: new Decimal(4),
+            requiredCount: 100
         },
-        riunioniEfficaci: {
-            name: 'Riunioni Efficaci',
-            desc: 'Aumenta la produzione di Metodologia Agile del 10%.',
+        jiraAI: {
+            name: 'Jira AI',
+            desc: 'Jira Ticket x2 BPS.',
+            targetTeam: 'jiraTicket',
+            cost: new Decimal(1000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        jiraCloud: {
+            name: 'Jira Cloud',
+            desc: 'Jira Ticket x2 BPS.',
+            targetTeam: 'jiraTicket',
+            cost: new Decimal(5000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        jiraDataCenter: {
+            name: 'Jira Data Center',
+            desc: 'Jira Ticket x3 BPS.',
+            targetTeam: 'jiraTicket',
+            cost: new Decimal(40000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        jiraPremium: {
+            name: 'Jira Premium',
+            desc: 'Jira Ticket x3 BPS.',
+            targetTeam: 'jiraTicket',
+            cost: new Decimal(200000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        jiraSelfHealing: {
+            name: 'Jira Self-Healing',
+            desc: 'Jira Ticket x4 BPS.',
+            targetTeam: 'jiraTicket',
             cost: new Decimal(1000000),
-            team: 'metodologiaAgile',
-            type: 'mult',
-            val: new Decimal(1.1)
+            multiplier: new Decimal(4),
+            requiredCount: 100
         },
-        debugProfondo: {
-            name: 'Debug Profondo',
-            desc: 'Aumenta la produzione di AI Debugger del 10%.',
-            cost: new Decimal(100000000),
-            team: 'aiDebugger',
-            type: 'mult',
-            val: new Decimal(1.1)
+        scrum: {
+            name: 'Metodologia Scrum',
+            desc: 'Team QA x2 BPS.',
+            targetTeam: 'teamQa',
+            cost: new Decimal(11000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
         },
-        cloudIbrido: {
-            name: 'Cloud Ibrido',
-            desc: 'Aumenta la produzione di Quantum Server del 10%.',
-            cost: new Decimal(10000000000),
-            team: 'quantumServer',
-            type: 'mult',
-            val: new Decimal(1.1)
+        teamLeader: {
+            name: 'Team Leader',
+            desc: 'Team QA x2 BPS.',
+            targetTeam: 'teamQa',
+            cost: new Decimal(55000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
         },
-        connessioneGalattica: {
-            name: 'Connessione Galattica',
-            desc: 'Aumenta la produzione di Rete Galattica del 10%.',
-            cost: new Decimal(1000000000000),
-            team: 'reteNeuraleGalattica',
-            type: 'mult',
-            val: new Decimal(1.1)
+        certificazioneISTQB: {
+            name: 'Certificazione ISTQB',
+            desc: 'Team QA x3 BPS.',
+            targetTeam: 'teamQa',
+            cost: new Decimal(440000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
         },
-        timeTravelDebugging: {
-            name: 'Time Travel Debugging',
-            desc: 'Aumenta la produzione di Debug Temporale del 10%.',
-            cost: new Decimal(100000000000000),
-            team: 'debugTemporale',
-            type: 'mult',
-            val: new Decimal(1.1)
+        bonusProduttivita: {
+            name: 'Bonus Produttività',
+            desc: 'Team QA x3 BPS.',
+            targetTeam: 'teamQa',
+            cost: new Decimal(2200000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        teamGlobale: {
+            name: 'Team Globale 24/7',
+            desc: 'Team QA x4 BPS.',
+            targetTeam: 'teamQa',
+            cost: new Decimal(11000000),
+            multiplier: new Decimal(4),
+            requiredCount: 100
+        },
+        selenium: {
+            name: 'Framework Selenium',
+            desc: 'Automazione x2 BPS.',
+            targetTeam: 'automazioneTest',
+            cost: new Decimal(120000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        cucumber: {
+            name: 'Cucumber (BDD)',
+            desc: 'Automazione x2 BPS.',
+            targetTeam: 'automazioneTest',
+            cost: new Decimal(600000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        ciCd: {
+            name: 'Pipeline CI/CD',
+            desc: 'Automazione x3 BPS.',
+            targetTeam: 'automazioneTest',
+            cost: new Decimal(4800000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        docker: {
+            name: 'Container Docker',
+            desc: 'Automazione x3 BPS.',
+            targetTeam: 'automazioneTest',
+            cost: new Decimal(24000000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        kubernetes: {
+            name: 'Orchestrazione Kubernetes',
+            desc: 'Automazione x4 BPS.',
+            targetTeam: 'automazioneTest',
+            cost: new Decimal(120000000),
+            multiplier: new Decimal(4),
+            requiredCount: 100
+        },
+        kanban: {
+            name: 'Board Kanban',
+            desc: 'Metodologia Agile x2 BPS.',
+            targetTeam: 'metodologiaAgile',
+            cost: new Decimal(1300000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        safe: {
+            name: 'Framework SAFe',
+            desc: 'Metodologia Agile x2 BPS.',
+            targetTeam: 'metodologiaAgile',
+            cost: new Decimal(6500000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        productOwner: {
+            name: 'Product Owner Dedicato',
+            desc: 'Metodologia Agile x3 BPS.',
+            targetTeam: 'metodologiaAgile',
+            cost: new Decimal(52000000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        releaseTrain: {
+            name: 'Release Train',
+            desc: 'Metodologia Agile x3 BPS.',
+            targetTeam: 'metodologiaAgile',
+            cost: new Decimal(260000000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        devOps: {
+            name: 'Cultura DevOps',
+            desc: 'Metodologia Agile x4 BPS.',
+            targetTeam: 'metodologiaAgile',
+            cost: new Decimal(1300000000),
+            multiplier: new Decimal(4),
+            requiredCount: 100
+        },
+        deepLearning: {
+            name: 'Deep Learning',
+            desc: 'AI Debugger x2 BPS.',
+            targetTeam: 'aiDebugger',
+            cost: new Decimal(14000000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        machineLearning: {
+            name: 'Machine Learning',
+            desc: 'AI Debugger x2 BPS.',
+            targetTeam: 'aiDebugger',
+            cost: new Decimal(70000000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        retiNeurali: {
+            name: 'Reti Neurali',
+            desc: 'AI Debugger x3 BPS.',
+            targetTeam: 'aiDebugger',
+            cost: new Decimal(560000000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        quantumComputing: {
+            name: 'Quantum Computing',
+            desc: 'AI Debugger x3 BPS.',
+            targetTeam: 'aiDebugger',
+            cost: new Decimal(2800000000),
+            multiplier: new Decimal(3),
+            requiredCount: 50
+        },
+        skynet: {
+            name: 'Skynet',
+            desc: 'AI Debugger x4 BPS.',
+            targetTeam: 'aiDebugger',
+            cost: new Decimal(14000000000),
+            multiplier: new Decimal(4),
+            requiredCount: 100
+        },
+        entanglementLink: {
+            name: 'Entanglement Link',
+            desc: 'Quantum Server x2 BPS.',
+            targetTeam: 'quantumServer',
+            cost: new Decimal(550000000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        superpositionCores: {
+            name: 'Superposition Cores',
+            desc: 'Quantum Server x2 BPS.',
+            targetTeam: 'quantumServer',
+            cost: new Decimal(2750000000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        errorCorrection: {
+            name: 'Quantum Error Correction',
+            desc: 'Quantum Server x3 BPS.',
+            targetTeam: 'quantumServer',
+            cost: new Decimal(22000000000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        quantumSupremacy: {
+            name: 'Supremazia Quantistica',
+            desc: 'Quantum Server x4 BPS.',
+            targetTeam: 'quantumServer',
+            cost: new Decimal(110000000000),
+            multiplier: new Decimal(4),
+            requiredCount: 50
+        },
+        subspaceTransceiver: {
+            name: 'Subspace Transceiver',
+            desc: 'Rete Galattica x2 BPS.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: new Decimal(8500000000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        dysonNodes: {
+            name: 'Nodi Dyson',
+            desc: 'Rete Galattica x2 BPS.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: new Decimal(42500000000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        wormholeRouting: {
+            name: 'Wormhole Routing',
+            desc: 'Rete Galattica x3 BPS.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: new Decimal(340000000000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        federazioneGalattica: {
+            name: 'Federazione Galattica',
+            desc: 'Rete Galattica x4 BPS.',
+            targetTeam: 'reteNeuraleGalattica',
+            cost: new Decimal(1700000000000),
+            multiplier: new Decimal(4),
+            requiredCount: 50
+        },
+        paradoxPrevention: {
+            name: 'Paradox Prevention',
+            desc: 'Debug Temporale x2 BPS.',
+            targetTeam: 'debugTemporale',
+            cost: new Decimal(150000000000),
+            multiplier: new Decimal(2),
+            requiredCount: 1
+        },
+        timelineBranching: {
+            name: 'Timeline Branching',
+            desc: 'Debug Temporale x2 BPS.',
+            targetTeam: 'debugTemporale',
+            cost: new Decimal(750000000000),
+            multiplier: new Decimal(2),
+            requiredCount: 10
+        },
+        chronosTrigger: {
+            name: 'Chronos Trigger',
+            desc: 'Debug Temporale x3 BPS.',
+            targetTeam: 'debugTemporale',
+            cost: new Decimal(6000000000000),
+            multiplier: new Decimal(3),
+            requiredCount: 25
+        },
+        immutablePast: {
+            name: 'Passato Immutabile',
+            desc: 'Debug Temporale x4 BPS.',
+            targetTeam: 'debugTemporale',
+            cost: new Decimal(30000000000000),
+            multiplier: new Decimal(4),
+            requiredCount: 50
         }
     };
