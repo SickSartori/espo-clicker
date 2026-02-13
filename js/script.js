@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
                     } catch (e) { }
 
-                    // 2. Resetta la memoria RAM
+                    // 2. Resetta la cache
                     if (typeof resetGameToDefault === 'function') {
                         resetGameToDefault();
                     }
@@ -908,11 +908,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof AudioManager !== 'undefined')
             AudioManager.init();
 
-        const bgMusic = document.getElementById('sound-bg-music');
-        const snowAudio = document.getElementById('sound-snowball');
-        const masterVol = gameState.user.masterVolume;
-        const musicVol = gameState.user.musicVolume;
-
         const tryStart = () => {
             // 1. CONTROLLO CRITICO: Se non c'è una sessione utente, siamo al Login.
             const hasSession = sessionStorage.getItem('espooUser');
@@ -1354,7 +1349,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             return;
                         }
                     }
-                    // ---------------------------------------------------
 
                     // 3. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
@@ -1473,6 +1467,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+
     initializeGame();
     document.dispatchEvent(new Event('EspoGameReady'));
     console.log("✅ Evento EspoGameReady inviato.");

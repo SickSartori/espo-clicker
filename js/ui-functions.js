@@ -419,8 +419,8 @@ function updateClickStore()
 }
 
 // --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
-function refreshAllStores() {
-
+function refreshAllStores()
+{
     // NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
     updateClickStore();
 
