@@ -294,7 +294,8 @@ const AudioManager = {
             'sound-bluescreen',
             'sound-matrix',
             'sound-bg-bit',
-            'sound-star'
+            'sound-star',
+			'bg-music-divine'
         ];
 
         // Aggiungi musiche delle skin in modo dinamico
@@ -466,11 +467,10 @@ function buyPrestigeUpgrade(upgradeKey) {
 function calculateBulkCost(teamKey, amount) {
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
-
     let r = 1.05;
-    if (window.costScalingBase) {
+
+    if (window.costScalingBase)
         r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
-    }
 
     let decR = new Decimal(r);
     let discountedBaseCost = data.baseCost;
@@ -490,9 +490,9 @@ function calculateBulkCost(teamKey, amount) {
     }
 }
 
-function calculateTeamCost(teamKey) {
+/*function calculateTeamCost(teamKey) {
     return calculateBulkCost(teamKey, 1);
-}
+}*/
 
 function calculateMaxAffordable(teamKey) {
     const state = gameState.teams[teamKey];

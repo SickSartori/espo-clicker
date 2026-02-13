@@ -635,7 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-music-v3': null,
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
-                'sound-bg-music-super': 'superespo'
+                'sound-bg-music-super': 'superespo',
+                'bg-music-divine': 'jesus'
             };
 
             const sounds = gameData.assets.sounds;
