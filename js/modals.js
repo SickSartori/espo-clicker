@@ -900,7 +900,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeModal(loginModal);
                 Game.startGameRoutines();
 
-
                 // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
                 if (typeof window.updateAmbientVolume === 'function') {
                     window.updateAmbientVolume();

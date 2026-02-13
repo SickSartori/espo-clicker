@@ -267,11 +267,11 @@ require_once("php/check_version.php");
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
-// Uso la stessa variabile usata nella libreria check_version.php
-if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
-	echo '<script src="js/cheatboard.js" defer></script>';
-	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-}
-?>
+			// Uso la stessa variabile usata nella libreria check_version.php
+			if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
+				echo '<script src="js/cheatboard.js" defer></script>';
+				echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
+			}
+		?>
 	</body>
 </html>
