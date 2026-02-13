@@ -21,7 +21,7 @@ window.prestigeSynergyFactor = new Decimal(0);
 window.clickGlobalMult = new Decimal(1);
 
 // Variabile contenitore dello stato
-let gameState;
+var gameState;
 
 // --- FUNZIONE GENERAZIONE STATO ---
 function getInitialGameState() {
@@ -100,6 +100,9 @@ function getInitialGameState() {
     return state;
 }
 
+// Inizializza lo stato subito dopo aver caricato questo file
+gameState = getInitialGameState();
+
 // --- FUNZIONE RESET ---
 function resetGameToDefault() {
     const freshState = getInitialGameState();
@@ -125,6 +128,3 @@ function resetGameToDefault() {
     window.goldenBugMult = new Decimal(1);
     window.gameFlags = {};
 }
-
-// Inizializza lo stato subito dopo aver caricato questo file
-gameState = getInitialGameState();

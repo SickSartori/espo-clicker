@@ -234,19 +234,18 @@ require_once("php/check_version.php");
 		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-metal-video.mp4"></video>
 		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-dota-video.mp4"></video>
 
-		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2"></script>
+		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
 
 		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
 
 		<!-- Gamedata -->
 		<script src="js/data/core.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/gamestate.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/data/assets.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/data/skins.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/data/teams.js?v=<?php echo $cacheVer; ?>" defer></script>
@@ -254,6 +253,7 @@ require_once("php/check_version.php");
 		<script src="js/data/achievements.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/data/events.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/data/texts.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/data/gamestate.js?v=<?php echo $cacheVer; ?>" defer></script>
 
 		<!-- Game logic -->
 		<script src="js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
