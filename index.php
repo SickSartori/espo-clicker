@@ -229,11 +229,6 @@ require_once("php/check_version.php");
 			</button>
 		</div>
 
-		<video id="rick-roll-video" class="rick_roll_video video_display_none" playsinline preload="metadata" data-src="assets/video/rick-espley-video.mp4"></video>
-		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-video.mp4"></video>
-		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-metal-video.mp4"></video>
-		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-dota-video.mp4"></video>
-
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
@@ -267,11 +262,11 @@ require_once("php/check_version.php");
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
-			// Uso la stessa variabile usata nella libreria check_version.php
-			if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
-				echo '<script src="js/cheatboard.js" defer></script>';
-				echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-			}
-		?>
+// Uso la stessa variabile usata nella libreria check_version.php
+if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
+	echo '<script src="js/cheatboard.js" defer></script>';
+	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
+}
+?>
 	</body>
 </html>
