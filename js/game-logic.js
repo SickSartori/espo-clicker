@@ -63,17 +63,20 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const state = gameState.prestigeUpgrades[upgradeKey];
 
-    // Se l'upgrade non è cumulativo (es. Paracadute), costa sempre il prezzo base
     if (!data.isCounted) {
         return data.baseCost;
     }
 
-    // Fattore di crescita: ogni livello costa il 50% in più del precedente
     const growthFactor = new Decimal(1.5);
     const currentLevel = state.count || 0;
 
-    // Ritorna: Base * (1.5 ^ Livello)
-    return data.baseCost.mul(growthFactor.pow(currentLevel)).floor();
+    let rawCost = data.baseCost.mul(growthFactor.pow(currentLevel));
+
+    if (rawCost.gte(100)) {
+        return new Decimal(rawCost.toPrecision(3));
+    }
+
+    return rawCost.floor();
 }
 
 /**
