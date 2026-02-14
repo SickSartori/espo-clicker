@@ -255,11 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let efficiency = 0.30; // Base 30%
 
             // Controllo di sicurezza per evitare crash se l'upgrade non è ancora nel save
-            if (gameState.prestigeUpgrades && 
-                gameState.prestigeUpgrades.serverAlwaysOn && 
-                gameData.prestigeUpgrades && 
-                gameData.prestigeUpgrades.serverAlwaysOn)
-            {
+            if (gameState.prestigeUpgrades &&
+                gameState.prestigeUpgrades.serverAlwaysOn &&
+                gameData.prestigeUpgrades &&
+                gameData.prestigeUpgrades.serverAlwaysOn) {
                 efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
             }
 
@@ -776,89 +775,129 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione universale per precaricare TUTTO (Immagini, Audio, Video)
     function preloadAllAssets(onProgress) {
-        const promises = [];
+        const criticalPromises = [];
+        const backgroundPromises = [];
 
-        // 1. Generazione Dinamica della lista Immagini da gameData
-        const imagesToLoad = new Set(); // Usa un Set per evitare duplicati
+        // 1. ASSET CRITICI (Immagini base)
+        const criticalImages = new Set([
+            'assets/image/favicon.webp',
+            'assets/image/hidden.webp',
+            'assets/image/bluescreen.webp',
+            'assets/image/super-block.webp'
+        ]);
+        const backgroundImages = new Set();
 
-        // Aggiungi immagini base UI
-        imagesToLoad.add('assets/image/favicon.webp');
-        imagesToLoad.add('assets/image/hidden.webp');
-        imagesToLoad.add('assets/image/bluescreen.webp');
-        imagesToLoad.add('assets/image/super-block.webp');
+        // Identifica la skin corrente per caricare SOLO quella
+        let currentSkinId = 'default';
+        if (gameState && gameState.skins && gameState.skins.current) {
+            currentSkinId = gameState.skins.current;
+        }
 
-        // Estrai immagini dalle Skin (Normali e Click)
         if (gameData.skins) {
-            Object.values(gameData.skins).forEach(skin => {
-                if (skin.img) imagesToLoad.add(`assets/image/${skin.img}`);
-                if (skin.imgClick) imagesToLoad.add(`assets/image/${skin.imgClick}`);
+            Object.keys(gameData.skins).forEach(key => {
+                const skin = gameData.skins[key];
+                if (key === currentSkinId) {
+                    if (skin.img) criticalImages.add(`assets/image/${skin.img}`);
+                    if (skin.imgClick) criticalImages.add(`assets/image/${skin.imgClick}`);
+                } else {
+                    if (skin.img) backgroundImages.add(`assets/image/${skin.img}`);
+                    if (skin.imgClick) backgroundImages.add(`assets/image/${skin.imgClick}`);
+                }
             });
         }
 
-        // Estrai immagini dai Potenziamenti Prestigio (es. Espo Fury)
+        // Le immagini della Fury vanno in background
         if (gameData.prestigeUpgrades) {
             Object.values(gameData.prestigeUpgrades).forEach(upg => {
-                if (upg.furyImage) imagesToLoad.add(`assets/image/${upg.furyImage}`);
-                if (upg.furyClickImage) imagesToLoad.add(`assets/image/${upg.furyClickImage}`);
+                if (upg.furyImage) backgroundImages.add(`assets/image/${upg.furyImage}`);
+                if (upg.furyClickImage) backgroundImages.add(`assets/image/${upg.furyClickImage}`);
             });
         }
 
-        let totalAssets = imagesToLoad.size;
-        let loadedAssets = 0;
+        // 2. AUDIO CRITICI (Solo UI ed eventuale musica della skin corrente)
+        const criticalAudioIds = ['sound-click', 'sound-buy', 'sound-error', 'sound-golden', 'sound-achievement'];
 
-        // AUDIO (Calcolo totale)
-        if (gameData.assets && gameData.assets.sounds) {
-            totalAssets += Object.keys(gameData.assets.sounds).length;
+        const currentSkinConf = gameData.skins[currentSkinId]?.themeConfig;
+        if (currentSkinConf && currentSkinConf.specialMusic) {
+            criticalAudioIds.push(currentSkinConf.specialMusic);
+        } else if (gameState && gameState.user && gameState.user.bgMusicSelection) {
+            criticalAudioIds.push(gameState.user.bgMusicSelection);
+        } else {
+            criticalAudioIds.push('sound-bg-music');
         }
 
-        // Helper per aggiornare la percentuale
+        let totalCritical = criticalImages.size + criticalAudioIds.length;
+        let loadedCritical = 0;
+
         const updateProgress = () => {
-            loadedAssets++;
-            if (onProgress && totalAssets > 0) {
-                const percent = Math.floor((loadedAssets / totalAssets) * 100);
-                onProgress(percent);
+            loadedCritical++;
+            if (onProgress && totalCritical > 0) {
+                onProgress(Math.floor((loadedCritical / totalCritical) * 100));
             }
         };
 
-        // --- CARICAMENTO IMMAGINI ---
-        imagesToLoad.forEach(src => {
-            promises.push(
+        // --- CARICAMENTO IMMAGINI CRITICHE ---
+        criticalImages.forEach(src => {
+            criticalPromises.push(
                 new Promise((resolve) => {
                     const img = new Image();
                     img.src = src;
-                    // Importante: risolvi la promise ANCHE in caso di errore per non bloccare il loader
                     img.onload = () => { updateProgress(); resolve(); };
-                    img.onerror = () => { console.warn("❌ Immagine mancante:", src); updateProgress(); resolve(); };
+                    img.onerror = () => { console.warn("Manca img:", src); updateProgress(); resolve(); };
                 })
             );
         });
 
-        // --- CARICAMENTO AUDIO ---
+        // --- CARICAMENTO AUDIO MISTO ---
         if (gameData.assets && gameData.assets.sounds) {
             Object.values(gameData.assets.sounds).forEach(sound => {
+                let url = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
 
-                // --- MODIFICA QUI ---
-                let url;
-                if (sound.file.includes('/')) {
-                    url = sound.file;
+                if (criticalAudioIds.includes(sound.id)) {
+                    // Blocca il caricamento finché non ha finito
+                    criticalPromises.push(fetch(url).then(() => updateProgress()).catch(() => updateProgress()));
                 } else {
-                    url = `assets/sounds/${sound.file}`;
+                    // Lascialo scaricare in background
+                    backgroundPromises.push(fetch(url).catch(() => { }));
                 }
-                // --------------------
-
-                promises.push(
-                    fetch(url)
-                        .then(() => updateProgress())
-                        .catch(() => { console.warn("❌ Audio mancante:", url); updateProgress(); })
-                );
             });
         }
 
-        // Se non c'è nulla da caricare
-        if (totalAssets === 0) return Promise.resolve();
+        // --- DOPO I CRITICI, CARICA IL BACKGROUND E I VIDEO ---
+        Promise.all(criticalPromises).then(() => {
+            backgroundImages.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+            Promise.all(backgroundPromises);
 
-        // Attendi tutto (Promise.allSettled sarebbe meglio in ES2020, ma all va bene grazie ai catch interni)
-        return Promise.all(promises);
+            // Inietta i tag video nell'HTML in modo pigro
+            injectVideosLazily();
+        });
+
+        return totalCritical === 0 ? Promise.resolve() : Promise.all(criticalPromises);
+    }
+
+    // Crea i tag <video> pesanti dinamicamente e li aggiunge in background
+    function injectVideosLazily() {
+        const videoData = [
+            { id: 'rick-roll-video', class: 'rick_roll_video', src: 'assets/video/rick-espley-video.mp4' },
+            { id: 'ricardo-video', class: 'ricardo_video', src: 'assets/video/ricardo-milespo-video.mp4' },
+            { id: 'ricardo-metal-video', class: 'ricardo_metal_video', src: 'assets/video/ricardo-milespo-metal-video.mp4' },
+            { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' }
+        ];
+
+        videoData.forEach(v => {
+            if (!document.getElementById(v.id)) {
+                const videoEl = document.createElement('video');
+                videoEl.id = v.id;
+                videoEl.className = `${v.class} video_display_none`;
+                videoEl.playsInline = true;
+                videoEl.preload = "none"; // Evita di scaricare il video prima del tempo
+                videoEl.setAttribute('data-src', v.src);
+                document.body.appendChild(videoEl);
+            }
+        });
     }
 
     // Setup Iniziale
@@ -896,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Se abbiamo una sessione E il loader è finito, proviamo a suonare.
                     if (hasSession) {
                         window.EspooClicker.tryStartAudio();
-						startGameRoutines();
+                        startGameRoutines();
                     }
 
                 }, 500);
