@@ -1565,14 +1565,15 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     const photoClicked = document.getElementById('manager-photo-clicked');
     const snowContainer = document.getElementById('snow-container');
 
-    // Lista classi di sfondo (rarità) da rimuovere per pulizia
-    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
-    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super'];
-
     const theme = skinData.themeConfig || {};
 
-
-    document.body.classList.remove(...bodyThemes);
+    // 1. RIMOZIONE DINAMICA TEMI DAL BODY
+    // Invece di avere un array fisso, cerchiamo tutte le classi che iniziano con "theme-" e le rimuoviamo
+    Array.from(document.body.classList).forEach(cls => {
+        if (cls.startsWith('theme-')) {
+            document.body.classList.remove(cls);
+        }
+    });
 
     // Applica il nuovo tema se previsto dalla skin
     if (theme.bodyClass) {
@@ -1621,8 +1622,12 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         // Aggiorna immagine
         element.src = `assets/image/${imgSrc}`;
 
-        // Rimuovi vecchie classi di sfondo rarità
-        element.classList.remove(...bgClasses);
+        // Rimuovi dinamicamente le vecchie classi di rarità che iniziano con "bg-"
+        Array.from(element.classList).forEach(cls => {
+            if (cls.startsWith('bg-')) {
+                element.classList.remove(cls);
+            }
+        });
 
         // Applica nuova classe sfondo in base alla rarità
         if (skinData.rarity)

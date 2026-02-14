@@ -93,7 +93,6 @@ function getPrestigeThreshold() {
     // Calcolo grezzo
     let rawThreshold = baseThreshold.mul(growthFactor.pow(resets));
 
-    // TRUCCO PER LE CIFRE TONDE:
     // Trasforma in notazione a 3 cifre (es. "1.11e8") e lo riconverte in Decimal
     let cleanThreshold = new Decimal(rawThreshold.toPrecision(3));
 
@@ -328,18 +327,24 @@ const AudioManager = {
         }
 
         // --- LOGICA NORMALE DI GIOCO ---
-        const allMusicTracks = [
-            'sound-bg-music',
-            'sound-bg-music-v2',
-            'sound-bg-music-v3',
-            'sound-snowball',
-            'sound-fury-music',
-            'sound-bluescreen',
-            'sound-matrix',
-            'sound-bg-bit',
-            'sound-star',
-            'bg-music-divine'
-        ];
+        const allMusicTracks = [];
+
+        // 1. Pesca TUTTE le tracce musicali (type: 'music') dinamicamente dal file assets.js
+        if (gameData.assets && gameData.assets.sounds) {
+            for (let key in gameData.assets.sounds) {
+                if (gameData.assets.sounds[key].type === 'music') {
+                    allMusicTracks.push(gameData.assets.sounds[key].id);
+                }
+            }
+        }
+
+        // 2. Sicurezza aggiuntiva: Aggiungi musiche dichiarate direttamente nelle skin
+        for (let key in gameData.skins) {
+            const conf = gameData.skins[key].themeConfig;
+            if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
+                allMusicTracks.push(conf.specialMusic);
+            }
+        }
 
         // Aggiungi musiche delle skin in modo dinamico
         for (let key in gameData.skins) {
