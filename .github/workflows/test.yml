@@ -18,20 +18,21 @@ jobs:
       - name: Checkout del codice sorgente
         uses: actions/checkout@v4 # Scarica i file dalla repository
 
+      # MODIFICA: Aggiornato per gestire config.php (PHP) invece di config.json
+      # Usa 'sed' per cercare la chiave "instanceName" e impostarla a "dev"
       - name: 🔧 Set config to DEV
         run: |
-          jq '.instancename = "dev"' php/config.json > php/config.tmp && mv php/config.tmp php/config.json
+          sed -i 's/"instanceName" => ".*"/"instanceName" => "dev"/' code/php/config.php
 
       # Step 2: Caricamento FTP
-      # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
-      # L'azione FTP caricherà direttamente tutti i file scaricati.
       - name: Caricamento FTP su Server
         uses: SamKirkland/FTP-Deploy-Action@master
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_REMOTE_PATH }} 
+          server-dir: ${{ secrets.FTP_REMOTE_PATH }}
+          local-dir: ./code/ # MODIFICA: Carica solo il contenuto della cartella 'code'
           exclude: |
             **/.git*
             **/.git*/**
