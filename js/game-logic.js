@@ -81,16 +81,20 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
  * Formula: SogliaBase * (Moltiplicatore ^ Resets)
  */
 function getPrestigeThreshold() {
-    const baseThreshold = new Decimal("50000000"); // 50 Milioni (Soglia iniziale)
+    const baseThreshold = new Decimal("50000000"); // 50 Milioni
     const resets = gameState.totalResets || 0;
 
-    // Fattore di crescita: ogni reset moltiplica la soglia richiesta per 5.
-    // 0 reset -> 50 Milioni
-    // 1 reset -> 250 Milioni
-    // 2 reset -> 1.25 Miliardi
-    const growthFactor = new Decimal(5);
+    // Fattore di crescita (sostituisci il 5 con il valore che hai scelto per ottenere 110M)
+    const growthFactor = new Decimal(2.5);
 
-    return baseThreshold.mul(growthFactor.pow(resets));
+    // Calcolo grezzo
+    let rawThreshold = baseThreshold.mul(growthFactor.pow(resets));
+
+    // TRUCCO PER LE CIFRE TONDE:
+    // Trasforma in notazione a 3 cifre (es. "1.11e8") e lo riconverte in Decimal
+    let cleanThreshold = new Decimal(rawThreshold.toPrecision(3));
+
+    return cleanThreshold;
 }
 
 function checkEventConflict(newEventName) {
