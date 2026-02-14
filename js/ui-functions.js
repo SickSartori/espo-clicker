@@ -227,13 +227,22 @@ function renderStoreSection(config) {
     } else {
         // --- ORDINAMENTO DINAMICO (Per Upgrade, Skin, Lab) ---
         items.sort((a, b) => {
-            // Prima per Priorità (Acquistabili -> Bloccati -> Posseduti)
+            // 1. Prima per Priorità (Acquistabili -> Bloccati -> Posseduti/MAX)
+            // Questo fa in modo che le cose esaurite vadano in fondo, come hai chiesto.
             if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
 
-            // Poi per Costo (dal più economico)
-            const costA = a.status.currentCost || a.data.baseCost || a.data.cost || 0;
-            const costB = b.status.currentCost || b.data.baseCost || b.data.cost || 0;
-            return costA - costB;
+            // 2. Poi per Costo BASE (Fisso) invece del Costo Attuale
+            // Così le card non saltano quando il prezzo aumenta dopo un acquisto
+            const baseCostA = a.data.baseCost !== undefined ? a.data.baseCost : (a.data.cost || 0);
+            const baseCostB = b.data.baseCost !== undefined ? b.data.baseCost : (b.data.cost || 0);
+
+            if (baseCostA !== baseCostB) {
+                return baseCostA - baseCostB;
+            }
+
+            // 3. Sicurezza extra: se due oggetti hanno lo stesso costo base,
+            // li teniamo fermi usando l'ordine alfabetico del loro ID (key)
+            return a.key.localeCompare(b.key);
         });
     }
 
@@ -437,9 +446,9 @@ function refreshAllStores()
         getStatus: (key, data, state) => {
             const targetTeamState = gameState.teams[data.targetTeam];
             const targetTeamData = gameData.teams[data.targetTeam];
-            
+
             const current = targetTeamState ? targetTeamState.count : 0;
-            const teamName = targetTeamData ? targetTeamData.name : "???"; 
+            const teamName = targetTeamData ? targetTeamData.name : "???";
 
             return {
                 purchased: state.purchased,
@@ -467,14 +476,16 @@ function refreshAllStores()
         getStatus: (key, data, state) => {
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
             const singlePurchased = !data.isCounted && state.purchased;
+            const actualCost = data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost;
+
             return {
                 purchased: singlePurchased,
                 unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
-                canAfford: gameState.prestigePoints.gte(data.baseCost),
+                canAfford: gameState.prestigePoints.gte(actualCost), // Usa actualCost
                 label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
-                costText: `Costo: ${formatNumber(data.baseCost)} Token`,
-                currentCost: data.baseCost,
+                costText: `Costo: ${formatNumber(actualCost)} Token`, // Usa actualCost
+                currentCost: actualCost, // Usa actualCost
                 progress: 100
             };
         },
@@ -510,8 +521,8 @@ function refreshAllStores()
             for (const enhanceKey in gameState.buildingEnhancements) {
                 const eData = gameData.buildingEnhancements[enhanceKey];
                 const eState = gameState.buildingEnhancements[enhanceKey];
-                
-                if (!eData) continue; 
+
+                if (!eData) continue;
 
                 if (eData.targetTeam === key && eState.purchased) {
                     teamBPS *= eData.multiplier;
@@ -665,7 +676,7 @@ function updateAchievementsUI() {
         'custom': 'fa-star'
     };
 
-Object.keys(gameData.achievements).forEach(key => {
+    Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
@@ -803,64 +814,64 @@ function showClickFeedback(event) {
     if (!feedbackContainer) return;
 
     // --- SUPER STAR MODE ---
-if (document.body.classList.contains('super-star-active')) {
-    const feedbackContainer = document.getElementById('click-feedback-container');
-    if (!feedbackContainer) return;
+    if (document.body.classList.contains('super-star-active')) {
+        const feedbackContainer = document.getElementById('click-feedback-container');
+        if (!feedbackContainer) return;
 
-    const container = document.createElement('div');
-    container.className = 'click-feedback-star';
-    container.style.pointerEvents = 'none';
-    container.style.position = 'absolute'; // Cambiato da fixed a absolute per seguire i valori
-    container.style.zIndex = '10005';
+        const container = document.createElement('div');
+        container.className = 'click-feedback-star';
+        container.style.pointerEvents = 'none';
+        container.style.position = 'absolute'; // Cambiato da fixed a absolute per seguire i valori
+        container.style.zIndex = '10005';
 
-    const img = document.createElement('img');
-    img.src = 'assets/image/star.png';
-    img.onerror = () => {
-        img.remove();
-        container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
-    };
-    container.appendChild(img);
+        const img = document.createElement('img');
+        img.src = 'assets/image/star.png';
+        img.onerror = () => {
+            img.remove();
+            container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
+        };
+        container.appendChild(img);
 
-    // Coordinate identiche ai valori numerici
-    const rect = feedbackContainer.getBoundingClientRect();
-    let startX, startY;
-    const size = 18; // Stella piccola come richiesto
+        // Coordinate identiche ai valori numerici
+        const rect = feedbackContainer.getBoundingClientRect();
+        let startX, startY;
+        const size = 18; // Stella piccola come richiesto
 
-    if (event && event.clientX && event.clientY) {
-        startX = event.clientX - rect.left - (size / 2);
-        startY = event.clientY - rect.top - (size / 2);
-    } else {
-        const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
-        startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
-        startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
+        if (event && event.clientX && event.clientY) {
+            startX = event.clientX - rect.left - (size / 2);
+            startY = event.clientY - rect.top - (size / 2);
+        } else {
+            const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+            startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
+            startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
+        }
+
+        container.style.left = `${startX}px`;
+        container.style.top = `${startY}px`;
+        container.style.width = `${size}px`;
+        container.style.height = `${size}px`;
+
+        feedbackContainer.appendChild(container);
+
+        if (typeof gsap !== 'undefined') {
+            gsap.fromTo(container,
+                { scale: 0.5, opacity: 1, y: 0 },
+                {
+                    duration: 0.7,
+                    y: -150, // Sale verso l'alto come i +1
+                    x: (Math.random() - 0.5) * 60,
+                    scale: 1.2,
+                    rotation: Math.random() * 360,
+                    opacity: 0,
+                    ease: "power1.out",
+                    onComplete: () => container.remove()
+                }
+            );
+        } else {
+            container.remove(); // Fallback rapido
+        }
+        return; // Impedisce la generazione del +1 standard durante l'evento
     }
-
-    container.style.left = `${startX}px`;
-    container.style.top = `${startY}px`;
-    container.style.width = `${size}px`;
-    container.style.height = `${size}px`;
-
-    feedbackContainer.appendChild(container);
-
-    if (typeof gsap !== 'undefined') {
-        gsap.fromTo(container,
-            { scale: 0.5, opacity: 1, y: 0 },
-            {
-                duration: 0.7,
-                y: -150, // Sale verso l'alto come i +1
-                x: (Math.random() - 0.5) * 60,
-                scale: 1.2,
-                rotation: Math.random() * 360,
-                opacity: 0,
-                ease: "power1.out",
-                onComplete: () => container.remove()
-            }
-        );
-    } else {
-        container.remove(); // Fallback rapido
-    }
-    return; // Impedisce la generazione del +1 standard durante l'evento
-}
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
@@ -1098,7 +1109,7 @@ function checkTabNotifications() {
 
     const tabAuto = document.getElementById('tab-auto');
     if (tabAuto)
-		autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
+        autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
     // Prestige Tab
     let prestigeNotify = false;
@@ -1112,16 +1123,16 @@ function checkTabNotifications() {
             if (data.isCounted)
 			{
                 if (gameState.prestigePoints.gte(data.baseCost))
-					prestigeNotify = true;
+                    prestigeNotify = true;
             }
 			else
 			{
                 if (!state.purchased && gameState.prestigePoints.gte(data.baseCost))
-					prestigeNotify = true;
+                    prestigeNotify = true;
             }
 
             if (prestigeNotify)
-				break;
+                break;
         }
     }
 
@@ -1133,7 +1144,7 @@ function checkTabNotifications() {
     let title = "Espòòò Clicker";
 
     // Controlliamo se abbiamo raggiunto il PRESTIGE_THRESHOLD
-    const canPrestige = gameState.totalScore.gte(gameData.PRESTIGE_THRESHOLD);
+    const canPrestige = gameState.totalScore.gte(getPrestigeThreshold());
 
     if (canPrestige)
         title = gameData.texts.ui.promotionReadyTitle + " - " + title;
@@ -1350,7 +1361,7 @@ function updateStoreButtons() {
         const btn = getEl(`buy-${key}`);
         if (btn && !btn.classList.contains('owned')) {
             // Controlla Token invece di Score
-            btn.disabled = (gameState.prestigePoints.lt(data.baseCost));
+            btn.disabled = (gameState.prestigePoints.lt(data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost));
         }
     }
 }
@@ -1414,7 +1425,7 @@ function updatePrestigeVisuals() {
 
     // Recupera i valori in modo sicuro (gestisce null/undefined)
     const currentScore = gameState.totalScore || new Decimal(0);
-    const threshold = gameData.PRESTIGE_THRESHOLD || new Decimal("50000000");
+    const threshold = getPrestigeThreshold();
     const resets = gameState.totalResets || 0;
     const prestigePoints = gameState.prestigePoints || new Decimal(0);
     const lifetimePoints = gameState.lifetimePrestigePoints || new Decimal(0);
@@ -1556,7 +1567,7 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     // Lista classi di sfondo (rarità) da rimuovere per pulizia
     const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
-    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super']; 
+    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super'];
 
     const theme = skinData.themeConfig || {};
 
@@ -1684,8 +1695,11 @@ function updateStatsUI()
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
 
-    // --- CALCOLI PRELIMINARI ---
-    const progress = gameState.totalScore.div(gameData.PRESTIGE_THRESHOLD).mul(100).min(100).toNumber();
+    // 1. Recupera la soglia dinamica attuale
+    const threshold = getPrestigeThreshold();
+
+    // 2. Calcola il progresso basandosi sulla soglia
+    const progress = gameState.totalScore.div(threshold).mul(100).min(100).toNumber();
 
     // Recupera ENTRAMBI i valori
     const rawClick = (typeof calculateRawClickValue === 'function') ? calculateRawClickValue() : gameState.baseClickValue;
@@ -1740,7 +1754,12 @@ function updateStatsUI()
                 
                 <div class="stat-progress-wrapper">
                     <div class="stat-progress-info">
-                        <span>Progresso Promozione</span>
+                        <span>
+                            Progresso Promozione 
+                            <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
+                                (Obiettivo: <span class="simple-tooltip" data-tooltip="${formatFullNumber(threshold)}">${formatNumber(threshold)}</span>)
+                            </span>
+                        </span>
                         <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(2)}%</span>
                     </div>
                     <div class="stat-progress-bg">

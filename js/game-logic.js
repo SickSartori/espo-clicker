@@ -55,7 +55,43 @@ function grantReward(reward) {
     }
 }
 
-// Funzione per inviare il punteggio al leaderboard
+/**
+ * Calcola il costo scalato per i potenziamenti del Laboratorio (Prestigio)
+ * Formula: CostoBase * (Moltiplicatore ^ Livello)
+ */
+function calculatePrestigeUpgradeCost(upgradeKey) {
+    const data = gameData.prestigeUpgrades[upgradeKey];
+    const state = gameState.prestigeUpgrades[upgradeKey];
+
+    // Se l'upgrade non è cumulativo (es. Paracadute), costa sempre il prezzo base
+    if (!data.isCounted) {
+        return data.baseCost;
+    }
+
+    // Fattore di crescita: ogni livello costa il 50% in più del precedente
+    const growthFactor = new Decimal(1.5);
+    const currentLevel = state.count || 0;
+
+    // Ritorna: Base * (1.5 ^ Livello)
+    return data.baseCost.mul(growthFactor.pow(currentLevel)).floor();
+}
+
+/**
+ * Calcola la nuova soglia per ottenere la Promozione.
+ * Formula: SogliaBase * (Moltiplicatore ^ Resets)
+ */
+function getPrestigeThreshold() {
+    const baseThreshold = new Decimal("50000000"); // 50 Milioni (Soglia iniziale)
+    const resets = gameState.totalResets || 0;
+
+    // Fattore di crescita: ogni reset moltiplica la soglia richiesta per 5.
+    // 0 reset -> 50 Milioni
+    // 1 reset -> 250 Milioni
+    // 2 reset -> 1.25 Miliardi
+    const growthFactor = new Decimal(5);
+
+    return baseThreshold.mul(growthFactor.pow(resets));
+}
 
 function checkEventConflict(newEventName) {
     if (window.currentActiveEvent) {
@@ -295,7 +331,7 @@ const AudioManager = {
             'sound-matrix',
             'sound-bg-bit',
             'sound-star',
-			'bg-music-divine'
+            'bg-music-divine'
         ];
 
         // Aggiungi musiche delle skin in modo dinamico
@@ -1082,13 +1118,13 @@ function resolveBug(event) {
 
 
 function calculatePrestigeGained() {
-    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) return new Decimal(0);
+    if (gameState.totalScore.lt(getPrestigeThreshold())) return new Decimal(0);
     let base = new Decimal(2000000);
     return gameState.totalScore.div(base).sqrt().floor();
 }
 
 function openPrestigeContract() {
-    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) {
+    if (gameState.totalScore.lt(getPrestigeThreshold())) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
             window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
         }
