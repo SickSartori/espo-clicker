@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 leaderboardList.innerHTML = ''; // Pulisci
                 scores.forEach((entry, index) => {
                     const item = document.createElement('div');
-                    // Aggiungi una classe speciale se è la top 3 per lo styling CSS
                     let rankClass = '';
                     if (index === 0) rankClass = 'rank-1';
                     else if (index === 1) rankClass = 'rank-2';
@@ -49,16 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Gestione Icona Rango
                     let rankDisplay = `#${index + 1}`;
-                    if (index === 0) rankDisplay = '<i class="fa-solid fa-trophy" style="color: #f1c40f;"></i>'; // Oro
-                    if (index === 1) rankDisplay = '<i class="fa-solid fa-medal" style="color: #bdc3c7;"></i>'; // Argento
-                    if (index === 2) rankDisplay = '<i class="fa-solid fa-medal" style="color: #cd7f32;"></i>'; // Bronzo
+                    if (index === 0) rankDisplay = '<i class="fa-solid fa-trophy" style="color: #f1c40f;"></i>';
+                    if (index === 1) rankDisplay = '<i class="fa-solid fa-medal" style="color: #bdc3c7;"></i>';
+                    if (index === 2) rankDisplay = '<i class="fa-solid fa-medal" style="color: #cd7f32;"></i>';
 
-                    // Gestione Livello (Prestigio)
+                    // Gestione Livello
                     let level = entry.prestigeLevel || 0;
-                    // Badge colorato per il livello
                     let prestigeBadge = `<span class="level-badge">LIV. ${level}</span>`;
 
-                    // Controlla se è l'utente corrente (opzionale, richiede di sapere l'username locale)
+                    // --- FIX: GESTIONE FOTO PROFILO (SKIN) ---
+                    let skinId = entry.equippedSkin || 'default';
+                    // Recuperiamo i dati della skin (se esiste, altrimenti default)
+                    let skinData = window.gameData.skins[skinId] || window.gameData.skins['default'];
+                    let avatarImg = skinData.img ? `assets/image/${skinData.img}` : 'assets/image/espo.webp';
+
+                    // Colore del bordo in base alla rarità
+                    const rColors = {
+                        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+                        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+                    };
+                    let borderColor = rColors[skinData.rarity] || rColors['common'];
+
+                    let avatarHTML = `<img src="${avatarImg}" class="leaderboard-avatar" style="border-color: ${borderColor};">`;
+                    // ----------------------------------------
+
                     const currentUsername = sessionStorage.getItem('espooUser');
                     if (entry.username === currentUsername) {
                         item.classList.add('is-me');
@@ -68,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="lb-left">
                             <span class="leaderboard-rank">${rankDisplay}</span>
                             <div class="lb-user-info">
+                                ${avatarHTML}
                                 <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
                                 ${prestigeBadge}
                             </div>

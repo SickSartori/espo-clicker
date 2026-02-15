@@ -28,6 +28,18 @@
     transform: translateX(5px);
 }
 
+.leaderboard-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid;
+    /* Il colore viene iniettato dal JS in base alla rarità */
+    background-color: #111;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+}
+
 /* Sezione Sinistra (Rank + Info) */
 .lb-left {
     display: flex;

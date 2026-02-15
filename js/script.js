@@ -218,7 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveData: compressed,
                         score: scoreToSend,
                         prestige: prestigeToSend,
-                        hash: signature // Invio hash
+                        equippedSkin: gameState.skins.current,
+                        hash: signature
                     })
                 })
                     .then(response => response.json())
