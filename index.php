@@ -20,7 +20,8 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
 		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
 		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">    
+		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/skins-modern.css?v=<?php echo $cacheVer; ?>">    
 		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">  
 		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">

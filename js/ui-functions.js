@@ -400,8 +400,7 @@ function renderStoreSection(config) {
     }
 }
 
-function updateClickStore()
-{
+function updateClickStore() {
     renderStoreSection({
         type: 'click',
         containerId: 'click-upgrade-list',
@@ -428,8 +427,7 @@ function updateClickStore()
 }
 
 // --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
-function refreshAllStores()
-{
+function refreshAllStores() {
     // NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
     updateClickStore();
 
@@ -549,12 +547,63 @@ function refreshAllStores()
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
 
+let currentSkinFilter = 'all'; // all, unlocked, locked
+let currentRarityFilter = 'all';
+let modernSkinsArray = []; // Array per scorrere le skin filtrate
+let modernCurrentIndex = 0; // Indice della skin a fuoco
+
+// Listener per i filtri e lo switch (eseguiti una sola volta all'avvio)
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup Switch Legacy/Modern
+    const toggleUI = document.getElementById('skins-ui-toggle');
+    if (toggleUI) {
+        const pref = localStorage.getItem('useModernSkinsUI');
+        toggleUI.checked = pref !== 'false'; // Default a true
+
+        toggleUI.addEventListener('change', (e) => {
+            localStorage.setItem('useModernSkinsUI', e.target.checked);
+            updateSkinsUI();
+        });
+    }
+
+    // Setup Filtri Stato
+    document.querySelectorAll('.skin-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentSkinFilter = e.target.getAttribute('data-filter');
+            updateSkinsUI();
+        });
+    });
+
+    // Setup Filtro Rarità
+    const raritySelect = document.getElementById('skin-rarity-filter');
+    if (raritySelect) {
+        raritySelect.addEventListener('change', (e) => {
+            currentRarityFilter = e.target.value;
+            updateSkinsUI();
+        });
+    }
+});
+
+// Funzione principale per aggiornare la modale delle skin
 function updateSkinsUI() {
-    const grid = document.getElementById('skins-grid');
-    if (!grid) return;
+    const gridLegacy = document.getElementById('skins-grid-legacy');
+    const gridModern = document.getElementById('skins-grid-modern');
+    const toggleUI = document.getElementById('skins-ui-toggle');
 
-    grid.innerHTML = '';
+    if (!gridLegacy || !gridModern) return;
 
+    const useModern = toggleUI ? toggleUI.checked : true;
+
+    gridLegacy.style.display = useModern ? 'none' : 'grid';
+    gridModern.style.display = useModern ? 'flex' : 'none';
+
+    gridLegacy.innerHTML = '';
+    gridModern.innerHTML = '';
+    modernSkinsArray = []; // Svuota l'array per il carousel
+
+    // Sicurezza salvataggi
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
 
@@ -563,10 +612,9 @@ function updateSkinsUI() {
 
     const rarityMap = {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'NATALE'
+        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
     };
 
-    // Mappatura Skin ID -> Obiettivo
     const skinToAchievement = {};
     for (const achKey in gameData.achievements) {
         const ach = gameData.achievements[achKey];
@@ -576,6 +624,32 @@ function updateSkinsUI() {
         }
     }
 
+    // CONTROLLO E DISABILITAZIONE FILTRO "BLOCCATE"
+    let lockedCount = 0;
+    for (const key in gameData.skins) {
+        if (!unlockedList.includes(key)) lockedCount++;
+    }
+
+    const lockedFilterBtn = document.querySelector('.skin-filter-btn[data-filter="locked"]');
+    if (lockedFilterBtn) {
+        if (lockedCount === 0) {
+            lockedFilterBtn.disabled = true;
+            lockedFilterBtn.style.pointerEvents = 'none'; // Previene hover e click
+
+            // Se eravamo proprio nella tab "Bloccate" quando è stata comprata l'ultima skin, torniamo a "Tutte"
+            if (currentSkinFilter === 'locked') {
+                currentSkinFilter = 'all';
+                document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
+                const allBtn = document.querySelector('.skin-filter-btn[data-filter="all"]');
+                if (allBtn) allBtn.classList.add('active');
+            }
+        } else {
+            lockedFilterBtn.disabled = false;
+            lockedFilterBtn.style.pointerEvents = 'auto';
+        }
+    }
+
+    // 1. ELABORAZIONE DATI E FILTRI
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
@@ -584,22 +658,16 @@ function updateSkinsUI() {
         const canAfford = isBuyable && gameState.prestigePoints.gte(data.cost);
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
-        // --- LOGICA DESCRIZIONE CON TRANSIZIONE ---
-        let displayDescHTML = "";
+        // Filtri
+        if (currentSkinFilter === 'unlocked' && !isUnlocked) continue;
+        if (currentSkinFilter === 'locked' && isUnlocked) continue;
+        if (currentRarityFilter !== 'all' && data.rarity !== currentRarityFilter) continue;
 
-        if (isUnlocked) {
-            // Skin sbloccata: Lore fissa
-            displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
-        } else if (isBuyable) {
-            // Skin acquistabile: Rimuoviamo scritte descrittive per non tagliare il layout
-            // Il prezzo e il tasto COMPRA sono già presenti nel footer della card
-            displayDescHTML = `<div class="skin-lore"></div>`;
-        } else {
-            // Skin BLOCCATA da obiettivo: Struttura per dissolvenza
+        let requirement = "";
+        let baseText = gameData.texts.ui.unknown;
+
+        if (!isUnlocked && !isBuyable) {
             const linkedAch = skinToAchievement[key];
-            let requirement = "";
-            let baseText = gameData.texts.ui.unknown;
-
             if (linkedAch) {
                 const isSecretLocked = linkedAch.isSecret && !gameState.achievements[linkedAch.id || key]?.unlocked;
                 requirement = isSecretLocked ? gameData.texts.ui.secretGoal : (linkedAch.realDesc || linkedAch.desc);
@@ -608,56 +676,226 @@ function updateSkinsUI() {
                 requirement = data.unlockHint;
                 baseText = gameData.texts.ui.skinLocked;
             }
-
-            displayDescHTML = `
-        <div class="skin-fade-wrapper">
-            <div class="desc-base">${baseText}</div>
-            <div class="desc-hover">${requirement}</div>
-        </div>
-    `;
         }
-
-        // Elemento Footer (Bottone)
-        let footerHtml = '';
-        if (isEquipped) {
-            footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
-        } else if (isUnlocked) {
-            footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
-        } else if (isBuyable) {
-            const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
-            const btnText = canAfford ? gameData.texts.ui.buy.toUpperCase() : gameData.texts.ui.noToken;
-            const btnStyle = canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;';
-            const clickAction = canAfford ? `onclick="buySkin('${key}')"` : '';
-
-            footerHtml = `
-                <div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
-                <div class="skin-btn" style="${btnStyle}" ${clickAction}>${btnText}</div>
-            `;
-        } else {
-            footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> ${gameData.texts.ui.skinLocked}</div>`;
-        }
-
-        const card = document.createElement('div');
-        let classes = `skin-card rarity-${data.rarity || 'common'}`;
-        if (isUnlocked) classes += ' unlocked'; else classes += ' locked';
-        if (isEquipped) classes += ' equipped';
-        card.className = classes;
 
         const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/espo.webp') : 'assets/image/hidden.webp';
 
-        card.innerHTML = `
-            <div class="skin-badge">${rarityLabel}</div>
-            <div class="skin-img-container">
-                <img src="${imgSource}" class="skin-img">
+        // Creazione Oggetto per il Carousel Moderno
+        const skinObj = {
+            id: key, data, isUnlocked, isEquipped, isBuyable, canAfford,
+            rarityLabel, requirement, baseText, imgSource
+        };
+        modernSkinsArray.push(skinObj);
+
+        // ==========================================
+        // RENDERING LEGACY (Il vecchio design a griglia)
+        // ==========================================
+        if (!useModern) {
+            let displayDescHTML = "";
+            if (isUnlocked) displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
+            else if (isBuyable) displayDescHTML = `<div class="skin-lore"></div>`;
+            else displayDescHTML = `<div class="skin-fade-wrapper"><div class="desc-base">${baseText}</div><div class="desc-hover">${requirement}</div></div>`;
+
+            let footerHtml = '';
+            if (isEquipped) footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
+            else if (isUnlocked) footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
+            else if (isBuyable) {
+                const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
+                footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
+                              <div class="skin-btn" style="${canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
+            } else footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
+
+            const card = document.createElement('div');
+            card.className = `skin-card rarity-${data.rarity || 'common'} ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+            card.innerHTML = `
+                <div class="skin-badge">${rarityLabel}</div>
+                <div class="skin-img-container"><img src="${imgSource}" class="skin-img"></div>
+                <div class="skin-name-display" title="${data.name}">${data.name}</div>
+                <div class="skin-desc">${displayDescHTML}</div>
+                <div class="skin-card-spacer"></div>
+                <div class="skin-footer">${footerHtml}</div>`;
+            gridLegacy.appendChild(card);
+        }
+    }
+
+    // Gestone Messaggio Vuoto
+    if (modernSkinsArray.length === 0) {
+        const msg = `<div style="text-align: center; color: #7f8c8d; padding: 40px; font-style: italic; width: 100%;">Nessuna skin corrisponde ai filtri.</div>`;
+        if (useModern) gridModern.innerHTML = msg; else gridLegacy.innerHTML = msg;
+        return;
+    }
+
+    // ==========================================
+    // RENDERING MODERNO (Carousel Cover Flow)
+    // ==========================================
+    if (useModern) {
+        // Cerca l'indice della skin equipaggiata se presente nell'array filtrato, altrimenti parti da 0
+        modernCurrentIndex = Math.max(0, modernSkinsArray.findIndex(s => s.isEquipped));
+
+        // Crea la struttura base del Carousel e del Pannello
+        gridModern.innerHTML = `
+            <div class="carousel-stage" id="carousel-stage">
+                <button class="carousel-nav-btn" id="carousel-prev"><i class="fa-solid fa-chevron-left"></i></button>
+                <div id="carousel-track" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
+                <button class="carousel-nav-btn" id="carousel-next"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-            <div class="skin-name-display" title="${data.name}">${data.name}</div>
-            <div class="skin-desc">${displayDescHTML}</div>
-            <div class="skin-card-spacer"></div>
-            <div class="skin-footer">${footerHtml}</div>
+            <div class="modern-info-panel" id="modern-info-panel"></div>
         `;
 
-        grid.appendChild(card);
+        const track = document.getElementById('carousel-track');
+
+        // Genera gli elementi (immagini) nel track
+        modernSkinsArray.forEach((skin, index) => {
+            const item = document.createElement('div');
+            item.className = `carousel-item ${!skin.isUnlocked ? 'locked' : ''}`;
+            item.setAttribute('data-index', index);
+
+            // Variabili CSS per i colori della rarità (glow del bordo)
+            const rColors = {
+                'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+                'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+            };
+            const rGlows = {
+                'common': 'rgba(189,195,199,0.4)', 'rare': 'rgba(52,152,219,0.4)', 'epic': 'rgba(155,89,182,0.4)',
+                'legendary': 'rgba(241,196,15,0.4)', 'divine': 'rgba(255,238,144,0.6)', 'christmas': 'rgba(231,76,60,0.4)'
+            };
+
+            const color = rColors[skin.data.rarity] || rColors['common'];
+            const glow = rGlows[skin.data.rarity] || rGlows['common'];
+
+            item.style.setProperty('--r-color', color);
+            item.style.setProperty('--r-color-glow', glow);
+
+            item.innerHTML = `
+                <img src="${skin.imgSource}">
+                <div class="carousel-badge">${skin.rarityLabel}</div>
+                ${!skin.isUnlocked ? '<i class="fa-solid fa-lock carousel-lock"></i>' : ''}
+            `;
+
+            // Cliccare su un elemento laterale lo porta al centro
+            item.addEventListener('click', () => {
+                if (modernCurrentIndex !== index) {
+                    modernCurrentIndex = index;
+                    renderModernCarousel();
+                }
+            });
+
+            track.appendChild(item);
+        });
+
+        // Eventi Frecce Navigazione
+        document.getElementById('carousel-prev').addEventListener('click', () => {
+            if (modernCurrentIndex > 0) {
+                modernCurrentIndex--;
+                renderModernCarousel();
+            }
+        });
+
+        document.getElementById('carousel-next').addEventListener('click', () => {
+            if (modernCurrentIndex < modernSkinsArray.length - 1) {
+                modernCurrentIndex++;
+                renderModernCarousel();
+            }
+        });
+
+        // Esegue il render iniziale
+        renderModernCarousel();
     }
+}
+
+// Funzione helper per aggiornare posizioni 3D e Pannello Info
+function renderModernCarousel() {
+    const items = document.querySelectorAll('.carousel-item');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+
+    // Abilita/Disabilita frecce
+    if (prevBtn) prevBtn.style.opacity = modernCurrentIndex === 0 ? '0.3' : '1';
+    if (nextBtn) nextBtn.style.opacity = modernCurrentIndex === modernSkinsArray.length - 1 ? '0.3' : '1';
+
+    // Assegna le classi CSS per le posizioni 3D
+    items.forEach((item, index) => {
+        item.className = 'carousel-item ' + (!modernSkinsArray[index].isUnlocked ? 'locked' : '');
+
+        const diff = index - modernCurrentIndex;
+
+        if (diff === 0) item.classList.add('active');
+        else if (diff === -1) item.classList.add('prev-1');
+        else if (diff === -2) item.classList.add('prev-2');
+        else if (diff === 1) item.classList.add('next-1');
+        else if (diff === 2) item.classList.add('next-2');
+        else item.classList.add('hidden'); // Troppo lontani
+    });
+
+    // Aggiorna il Pannello Informazioni in basso
+    const panel = document.getElementById('modern-info-panel');
+    if (!panel) return;
+
+    const skin = modernSkinsArray[modernCurrentIndex];
+    if (!skin) return;
+
+    // --- AGGIUNTA: Passa i colori della rarità ai contenitori padre ---
+    const gridModern = document.getElementById('skins-grid-modern');
+
+    const rColors = {
+        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+    };
+    const rGlows = {
+        'common': 'rgba(189,195,199,0.1)', 'rare': 'rgba(52,152,219,0.2)', 'epic': 'rgba(155,89,182,0.2)',
+        'legendary': 'rgba(241,196,15,0.2)', 'divine': 'rgba(255,238,144,0.3)', 'christmas': 'rgba(231,76,60,0.2)'
+    };
+
+    const color = rColors[skin.data.rarity] || rColors['common'];
+    const glow = rGlows[skin.data.rarity] || rGlows['common'];
+
+    if (gridModern) gridModern.style.setProperty('--bg-glow-color', glow);
+    if (panel) {
+        panel.style.setProperty('--r-color', color);
+        panel.style.setProperty('--r-color-glow', glow);
+    }
+    // ------------------------------------------------------------------
+
+    let descHtml = '';
+    if (skin.isUnlocked) {
+        descHtml = `<div class="modern-info-desc">"${skin.data.desc || '...'}"</div>`;
+    } else if (skin.isBuyable) {
+        descHtml = `<div class="modern-info-desc">Disponibile nel Negozio del Laboratorio.</div>`;
+    } else {
+        descHtml = `
+            <div class="modern-info-desc" style="color:#7f8c8d; font-style:normal;">${skin.baseText}</div>
+            <div class="modern-info-requirement"><i class="fa-solid fa-circle-exclamation"></i> ${skin.requirement}</div>
+        `;
+    }
+
+    let actionHtml = '';
+    if (skin.isEquipped) {
+        actionHtml = `<button class="modern-btn-large modern-btn-equipped"><i class="fa-solid fa-check"></i> IN USO</button>`;
+    } else if (skin.isUnlocked) {
+        actionHtml = `<button class="modern-btn-large modern-btn-equip" onclick="equipSkin('${skin.id}')">EQUIPAGGIA SKIN</button>`;
+    } else if (skin.isBuyable) {
+        if (skin.canAfford) {
+            actionHtml = `
+                <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-buy" onclick="buySkin('${skin.id}')">COMPRA SKIN</button>
+            `;
+        } else {
+            actionHtml = `
+                <div style="color: #e74c3c; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-disabled" disabled>TOKEN INSUFFICIENTI</button>
+            `;
+        }
+    } else {
+        actionHtml = `<button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> BLOCCATA</button>`;
+    }
+
+    panel.innerHTML = `
+        <div class="modern-info-title">${skin.data.name}</div>
+        ${descHtml}
+        <div class="modern-info-action">
+            ${actionHtml}
+        </div>
+    `;
 }
 
 
@@ -1090,8 +1328,7 @@ function checkTabNotifications() {
 
     // Auto Tab
     let autoNotify = false;
-    for (const key in gameData.buildingEnhancements)
-    {
+    for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
 
@@ -1100,8 +1337,7 @@ function checkTabNotifications() {
 
         const targetTeam = gameState.teams[data.targetTeam];
 
-        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost))
-        {
+        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost)) {
             autoNotify = true;
             break;
         }
@@ -1113,20 +1349,16 @@ function checkTabNotifications() {
 
     // Prestige Tab
     let prestigeNotify = false;
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0))
-	{
-        for (const key in gameData.prestigeUpgrades)
-		{
+    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0)) {
+        for (const key in gameData.prestigeUpgrades) {
             const data = gameData.prestigeUpgrades[key];
             const state = gameState.prestigeUpgrades[key];
 
-            if (data.isCounted)
-			{
+            if (data.isCounted) {
                 if (gameState.prestigePoints.gte(data.baseCost))
                     prestigeNotify = true;
             }
-			else
-			{
+            else {
                 if (!state.purchased && gameState.prestigePoints.gte(data.baseCost))
                     prestigeNotify = true;
             }
@@ -1156,8 +1388,7 @@ function checkTabNotifications() {
         document.title = title;
 }
 
-function updateBonusCounter()
-{
+function updateBonusCounter() {
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
 
@@ -1167,8 +1398,7 @@ function updateBonusCounter()
         if (counter)
             counter.style.display = 'block';
 
-        if (valueSpan)
-        {
+        if (valueSpan) {
             // Mostra il moltiplicatore totale con 2 decimali
             valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
 
@@ -1176,8 +1406,7 @@ function updateBonusCounter()
             valueSpan.style.color = '#f1c40f';
         }
     }
-    else
-    {
+    else {
         if (counter)
             counter.style.display = 'none';
     }
@@ -1256,8 +1485,7 @@ function updateScoreBoard(totalBPS) {
     }
 }
 
-function updateHUD()
-{
+function updateHUD() {
     // Riferimenti ai nuovi pannelli nell'header
     const leftPanel = document.getElementById('header-left-panel');
     const rightPanel = document.getElementById('header-right-panel');
@@ -1267,8 +1495,7 @@ function updateHUD()
     const displayTokens = document.getElementById('prestige-points-display');
 
     // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0))
-    {
+    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0)) {
         // Mostra i pannelli laterali
         if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
         if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
@@ -1280,8 +1507,7 @@ function updateHUD()
         if (displayTokens)
             setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
     }
-    else
-    {
+    else {
         // Nascondi se è la prima run
         if (leftPanel)
             leftPanel.classList.add("header_stat_box_display_none");
@@ -1406,12 +1632,10 @@ function updateSkillButton() {
     }
 }
 
-function updateTabsVisibility()
-{
+function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
 
-    if (tabPrestige)
-    {
+    if (tabPrestige) {
         const show = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
 
         if (show)
@@ -1490,16 +1714,13 @@ function updatePrestigeVisuals() {
 }
 
 
-function updatePrestigeUI()
-{
+function updatePrestigeUI() {
     updatePrestigeVisuals();
 }
 
 
-function shouldItemBeVisible(mode, isPurchased, isUnlocked)
-{
-    switch (mode)
-    {
+function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
+    switch (mode) {
         case 'available': return isUnlocked && !isPurchased;
         case 'locked': return !isUnlocked && !isPurchased;
         case 'purchased': return isPurchased;
@@ -1615,8 +1836,7 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         AudioManager.updateAmbience();
 
     // APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
-    const applyClasses = (element, imgSrc) =>
-    {
+    const applyClasses = (element, imgSrc) => {
         if (!element) return;
 
         // Aggiorna immagine
@@ -1642,15 +1862,13 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
 
 // Nuova funzione helper per creare i fiocchi
-function createSnowflakes(snowContainer)
-{
+function createSnowflakes(snowContainer) {
     if (!snowContainer)
         return;
 
     const numberOfSnowflakes = 60;
 
-    for (let index = 0; index < numberOfSnowflakes; index++)
-    {
+    for (let index = 0; index < numberOfSnowflakes; index++) {
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
 
@@ -1668,26 +1886,22 @@ function createSnowflakes(snowContainer)
     }
 }
 
-function checkOverlayNotifications()
-{
+function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
     let hasClaimable = false;
-    for (const key in gameData.achievements)
-    {
+    for (const key in gameData.achievements) {
         const state = gameState.achievements[key];
         const data = gameData.achievements[key];
 
         // Se è sbloccato, non ancora reclamato, e ha un premio definito
-        if (state && state.unlocked && !state.claimed && data.reward)
-        {
+        if (state && state.unlocked && !state.claimed && data.reward) {
             hasClaimable = true;
             break;
         }
     }
 
     const achBtn = document.getElementById('open-achievements-btn');
-    if (achBtn)
-    {
+    if (achBtn) {
         if (hasClaimable)
             achBtn.classList.add('notify-overlay');
         else
@@ -1695,8 +1909,7 @@ function checkOverlayNotifications()
     }
 }
 
-function updateStatsUI()
-{
+function updateStatsUI() {
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
 

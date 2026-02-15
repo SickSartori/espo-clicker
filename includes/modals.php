@@ -328,25 +328,43 @@
 </div>
 
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
-        <button class="modal-close-btn">&times;</button>
+    <div class="modal-content" style="max-width: 850px; width: 95%;"> <button class="modal-close-btn">&times;</button>
         <h2>
 			<i class="fa-solid fa-shirt"></i>
 			<?php echo $labels["modals_guardaroba_titolo"]; ?>
 		</h2>
-        <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
-			<?php echo $labels["modals_guardaroba_label1"]; ?>
-            <br>
-			<?php echo $labels["modals_guardaroba_label2"]; ?>
-        </p>
-        <div id="skins-grid" style="
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-            gap: 15px; 
-            padding: 20px; 
-            overflow-y: auto; 
-            max-height: 60vh;">
-		</div>
+        
+        <div class="skins-controls-bar">
+            <div class="skins-filters">
+                <button class="skin-filter-btn active" data-filter="all">Tutte</button>
+                <button class="skin-filter-btn" data-filter="unlocked">Sbloccate</button>
+                <button class="skin-filter-btn" data-filter="locked">Bloccate</button>
+                
+                <select id="skin-rarity-filter" class="clean-input skin-select-filter">
+                    <option value="all">Tutte le Rarità</option>
+                    <option value="common">Comune</option>
+                    <option value="rare">Rara</option>
+                    <option value="epic">Epica</option>
+                    <option value="legendary">Leggendaria</option>
+                    <option value="divine">Divina</option>
+                    <option value="christmas">Festiva</option>
+                </select>
+            </div>
+            
+            <div class="skins-toggle-wrapper">
+                <span style="font-size: 0.8rem; color: #bdc3c7; margin-right: 8px;">Nuovo UI</span>
+                <label class="modern-switch">
+                    <input type="checkbox" id="skins-ui-toggle" checked>
+                    <span class="modern-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="skins-grid-legacy" class="skins-grid-container" style="display: none;">
+            </div>
+        
+        <div id="skins-grid-modern" class="skins-grid-container">
+            </div>
     </div>
 </div>
 
