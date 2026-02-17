@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
+            window.currentActiveEvent = 'Arcade Mode';
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
             openModal(arcadeModal);
 
             // Inizializza l'anteprima col primo gioco
@@ -159,8 +162,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        item.addEventListener('mouseenter', updatePreview);
-        item.addEventListener('click', updatePreview);
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('active')) {
+                if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                    window.EspooClicker.playSound('sound-arcade-hover');
+                }
+            }
+            updatePreview();
+        });
+
+        item.addEventListener('click', () => {
+            updatePreview();
+            if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                window.EspooClicker.playSound('sound-click'); // Suono click normale per la selezione
+            }
+        });
     });
 
 
@@ -619,7 +635,12 @@ document.addEventListener('DOMContentLoaded', () => {
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-close-btn')) {
-                modal.style.display = 'none';
+                closeModal(modal);
+
+                if (modal.id === 'arcade-modal' && window.currentActiveEvent === 'Arcade Mode') {
+                    window.currentActiveEvent = null;
+                    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                }
             }
         });
     });

@@ -360,6 +360,9 @@ const AudioManager = {
         if (window.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
         }
+        else if (window.currentActiveEvent === 'Arcade Mode') {
+            targetTrackId = 'sound-arcade-theme';
+        }
         else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
         }

@@ -45,6 +45,40 @@ window.gameData.assets = {
             loop: true,
             defaultVol: 0.3
         },
+        // --- SUONI ARCADE ---
+        'arcade-theme': {
+            id: 'sound-arcade-theme',
+            file: 'arcade/assets/arcade-theme.mp3',
+            name: 'Espò Arcade',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.25
+        },
+        'arcade-hover': {
+            id: 'sound-arcade-hover',
+            file: 'arcade/assets/arcade-hover.wav',
+            name: 'Arcade Hover',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.2
+        },
+        'arcade-start': {
+            id: 'sound-arcade-start',
+            file: 'arcade/assets/arcade-start.wav',
+            name: 'Arcade Start',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.6
+        },
+        'snake-eat': {
+            id: 'sound-snake-eat',
+            file: 'arcade/assets/snake-eat.wav',
+            name: 'Snake Mangia',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.4
+        },
         'snowball': {
             id: 'sound-snowball',
             file: 'nonsnowball.mp3',

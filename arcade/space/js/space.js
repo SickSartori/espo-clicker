@@ -164,6 +164,8 @@
     };
 
     window.startSpaceRun = function () {
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-start');
+
         document.getElementById('space-overlay').style.display = 'none';
         resetGame();
         isRunning = true;

@@ -135,6 +135,8 @@
     };
 
     window.startSnakeRun = function () {
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-start');
+
         const startY = Math.floor((canvas.height / CONFIG.gridSize) / 2);
         const startX = Math.floor((canvas.width / CONFIG.gridSize) / 2) - 2;
         snake = [{ x: startX, y: startY }, { x: startX - 1, y: startY }, { x: startX - 2, y: startY }];
@@ -179,7 +181,7 @@
         if (head.x === food.x && head.y === food.y) {
             score++;
             updateScoreUI(score);
-            if (window.EspooClicker) window.EspooClicker.playSound('sound-buy');
+            if (window.EspooClicker) window.EspooClicker.playSound('sound-snake-eat');
             spawnFood();
         } else {
             snake.pop();
