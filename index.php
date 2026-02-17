@@ -29,6 +29,7 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="css/super-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>">
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">

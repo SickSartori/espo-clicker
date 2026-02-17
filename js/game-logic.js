@@ -1115,14 +1115,24 @@ function resolveBug(event) {
 
     if (typeof showClickFeedback === 'function') showClickFeedback(event);
 
+    // --- NUOVA LOGICA ANIMAZIONE CLICK ---
+    // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
     const btn = document.getElementById('clicker-btn');
     if (btn) {
+        // Rimuoviamo subito le classi per "spezzare" lo stato attuale
         btn.classList.remove('click-shrink', 'clicked');
+
+        // Il trucco magico: forza il browser a ridisegnare l'elemento immediatamente
         void btn.offsetWidth;
+
+        // Applichiamo le classi per lo schiacciamento e il cambio volto
         btn.classList.add('click-shrink', 'clicked');
+
+        // Timer abbassato a 50ms (allineato ai 0.05s del CSS) per consentire
+        // all'immagine di riprendersi anche durante un tapping frenetico
         setTimeout(() => {
             btn.classList.remove('click-shrink', 'clicked');
-        }, 100);
+        }, 50);
     }
 
     if (typeof updateClickStore === 'function') updateClickStore();
@@ -1179,9 +1189,16 @@ function openPrestigeContract() {
     }
 
     const modal = document.getElementById('prestige-modal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.style.opacity = '1';
+            content.style.transform = 'scale(1)';
+        }
+    }
 
-    // Aggiungi classe al body per gestire i toast
     document.body.classList.add('modal-open');
 }
 
@@ -1195,7 +1212,6 @@ async function executePrestige() {
         setTimeout(() => overlay.classList.add('active'), 10);
     }
 
-    // Salviamo il filtro corrente PRIMA di toccare qualsiasi cosa
     const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
         ? gameState.filterSettings.globalFilter
         : 'available';
