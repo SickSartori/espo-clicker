@@ -633,14 +633,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
         const now = Date.now();
-        const deltaTime = (now - lastFrameTime) / 1000;
+        let deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        if (deltaTime > 86400) return; // Tab in background da molto tempo
+        // Se il delta time è maggiore di 2 secondi, il gioco era in background.
+        // Ignoriamo questo grosso salto temporale qui, perché verrà gestito 
+        // dal checkOfflineProgress() che si attiva al caricamento o al focus.
+        if (deltaTime > 2) {
+            deltaTime = 0.1; // Fallback per far ripartire il loop dolcemente
+        }
 
         // Calcolo Score (Veloce - Ogni frame)
-        // Usiamo .mul() per moltiplicare e .add() per sommare
-        // bps è un Decimal, deltaTime è un Number (float). .mul accetta numeri.
         const scoreToAdd = bps.mul(deltaTime);
 
         gameState.score = gameState.score.add(scoreToAdd);
@@ -769,7 +772,24 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleGoldenBug();
 
         // Salvataggio alla chiusura
-        window.addEventListener('beforeunload', () => { saveGame(); });
+        const handleAppClose = () => {
+            // Forza un salvataggio sincrono in localStorage (sempre garantito)
+            if (gameState && !gameState.isDeleting) {
+                gameState.lastSaveTimestamp = Date.now();
+                const compressed = LZString.compressToUTF16(JSON.stringify(gameState));
+                localStorage.setItem('espotoolClickerSaveV8', compressed);
+            }
+            // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
+            saveGame();
+        };
+
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                handleAppClose();
+            }
+        });
+        window.addEventListener('pagehide', handleAppClose);
+        window.addEventListener('beforeunload', handleAppClose);
         console.log("Cicli di gioco avviati correttamente.");
     }
 
