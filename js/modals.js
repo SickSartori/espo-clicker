@@ -118,21 +118,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            // Recupera il record salvato
-            const Game = window.EspooClicker;
-            if (Game) {
-                const state = Game.getGameState();
-                // Se non esiste ancora l'oggetto, mostra 0
-                const highScore = (state.arcadeHighScores && state.arcadeHighScores.snake) ? state.arcadeHighScores.snake : 0;
-
-                // Aggiorna l'HTML
-                const scoreDisplay = document.getElementById('arcade-high-score');
-                if (scoreDisplay) scoreDisplay.textContent = highScore;
-            }
-
             openModal(arcadeModal);
+
+            // Inizializza l'anteprima col primo gioco
+            const firstGame = document.querySelector('.arcade-menu-item:not(.locked)');
+            if (firstGame) firstGame.dispatchEvent(new Event('mouseenter'));
         });
     }
+
+    // Logica Hover/Click sul menu Arcade
+    document.querySelectorAll('.arcade-menu-item:not(.locked)').forEach(item => {
+        const updatePreview = () => {
+            // Aggiorna stato attivo menu
+            document.querySelectorAll('.arcade-menu-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            // Preleva dati
+            const gameKey = item.getAttribute('data-game');
+            const title = item.getAttribute('data-title');
+            const color = item.getAttribute('data-color');
+            const iconClass = item.getAttribute('data-icon');
+            const desc = item.getAttribute('data-desc');
+
+            // Aggiorna DOM
+            const iconEl = document.getElementById('preview-icon');
+            const titleEl = document.getElementById('preview-title');
+            const descEl = document.getElementById('preview-desc');
+            const scoreEl = document.getElementById('preview-highscore');
+
+            if (iconEl) { iconEl.className = `fa-solid ${iconClass}`; iconEl.style.color = color; }
+            if (titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
+            if (descEl) descEl.textContent = desc;
+
+            // Recupera High Score
+            const Game = window.EspooClicker;
+            if (Game && scoreEl) {
+                const state = Game.getGameState();
+                const score = (state.arcadeHighScores && state.arcadeHighScores[gameKey]) ? state.arcadeHighScores[gameKey] : 0;
+                scoreEl.textContent = score;
+            }
+        };
+
+        item.addEventListener('mouseenter', updatePreview);
+        item.addEventListener('click', updatePreview);
+    });
 
 
     // Funzione per tentare il play
@@ -730,16 +759,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const sessUser = sessionStorage.getItem('espooUser');
         const sessPass = sessionStorage.getItem('espooPass');
 
-        if (sessUser && sessPass)
-		{			
-			Game.getGameState().user.username = sessUser;
+        if (sessUser && sessPass) {
+            Game.getGameState().user.username = sessUser;
             loginInput.value = sessUser;
             loginPasswordInput.value = sessPass;
             loginButton.click();
         }
-		else
+        else
             openModal(loginModal);
-        
+
         console.log("✅ Modals.js inizializzato via Evento.");
     }
 

@@ -80,31 +80,35 @@
             gameContainer.innerHTML = '';
         } else return;
 
-        // Header
+        // Header Standardizzato
+        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.space) ? gs.arcadeHighScores.space : 0;
+
         const headerDiv = document.createElement('div');
-        headerDiv.style.width = '100%';
-        headerDiv.style.maxWidth = '800px';
-        headerDiv.style.display = 'flex';
-        headerDiv.style.justifyContent = 'space-between';
-        headerDiv.style.marginBottom = '10px';
+        headerDiv.className = 'arcade-game-topbar';
+
         headerDiv.innerHTML = `
             <button class="arcade-btn secondary" onclick="window.exitSpaceGame()">
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
-            <div class="arcade-score-display" id="space-score-ui">SCORE: 0 | HP: 3</div>
+            <div class="arcade-stats-box" id="space-score-ui">
+                <span class="stat">PUNTI: <span class="val-score">0</span></span>
+                <span class="stat">VITA: <span class="val-hp">3</span></span>
+                <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
+            </div>
         `;
         gameContainer.appendChild(headerDiv);
 
-        // Canvas Wrapper
+        // Canvas Wrapper (con effetto CRT accensione)
         const canvasWrapper = document.createElement('div');
         canvasWrapper.style.position = 'relative';
+        canvasWrapper.className = 'crt-turn-on crt-effect';
 
         canvas = document.createElement('canvas');
         canvas.id = 'space-canvas';
         canvas.width = CONFIG.width;
         canvas.height = CONFIG.height;
         ctx = canvas.getContext('2d');
-        // Disattiva antialiasing per look pixel
         ctx.imageSmoothingEnabled = false;
 
         canvasWrapper.appendChild(canvas);
@@ -114,13 +118,13 @@
         overlay.id = 'space-overlay';
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
-            <div style="color:#e74c3c; font-family:'Rajdhani'; font-size:2rem; margin-bottom:10px; font-weight:900; letter-spacing:3px;">
+            <div style="color:#e74c3c; font-family:'Rajdhani'; font-size:2.5rem; margin-bottom:10px; font-weight:900; letter-spacing:3px; text-shadow: 0 0 15px #e74c3c;">
                 SPACE IMPACT
             </div>
-            <div style="color:#aaa; margin-bottom:20px; font-family:monospace;">
+            <div style="color:#bdc3c7; margin-bottom:20px; font-family:monospace; font-size: 0.9rem;">
                 WASD / Frecce per muoverti <br> SPAZIO per sparare
             </div>
-            <button class="arcade-btn" onclick="window.startSpaceRun()">MISSION START</button>
+            <button class="arcade-btn" onclick="window.startSpaceRun()">INIZIA MISSIONE</button>
         `;
         canvasWrapper.appendChild(overlay);
         gameContainer.appendChild(canvasWrapper);
@@ -152,7 +156,7 @@
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
         if (gameContainer) { gameContainer.innerHTML = ''; gameContainer.style.display = 'none'; }
-        if (selector) selector.style.display = 'grid'; // O block a seconda del tuo CSS
+        if (selector) selector.style.display = 'flex'; // O block a seconda del tuo CSS
 
         // Rimuovi listener tastiera specifici
         document.removeEventListener('keydown', handleKeyDown);
@@ -372,7 +376,17 @@
 
     function updateUI() {
         const el = document.getElementById('space-score-ui');
-        if (el) el.innerHTML = `SCORE: <span style="color:#f1c40f">${score}</span> | HP: <span style="color:${lives > 1 ? '#2ecc71' : '#e74c3c'}">${lives}</span>`;
+        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.space) ? gs.arcadeHighScores.space : 0;
+
+        if (el) {
+            const hpColor = lives > 1 ? '#f1c40f' : '#e74c3c';
+            el.innerHTML = `
+                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
+                <span class="stat">VITA: <span class="val-hp" style="color:${hpColor}">${lives}</span></span>
+                <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
+            `;
+        }
     }
 
     function rectIntersect(r1, r2) {
