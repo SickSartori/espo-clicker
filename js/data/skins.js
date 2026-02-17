@@ -14,6 +14,7 @@ window.gameData.skins = {
         rarity: "common",
         cost: new Decimal(5),
         themeConfig: {
+            cssFile: '8bit-theme.css',
             bodyClass: 'theme-8bit',
             specialMusic: 'sound-bg-bit',
             goldenBugIcon: 'fa-gamepad',
@@ -29,7 +30,8 @@ window.gameData.skins = {
         unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
         cost: IS_XMAS_TIME ? undefined : new Decimal(20),
         themeConfig: {
-            hasSnow: true,
+            cssFile: 'christmas-theme.css',
+            vfx: 'snow',
             specialMusic: 'sound-snowball',
             bodyClass: 'theme-christmas',
             goldenBugIcon: 'fa-gift',
@@ -132,6 +134,7 @@ window.gameData.skins = {
         rarity: "legendary",
         cost: new Decimal(100),
         themeConfig: {
+            cssFile: 'super-theme.css',
             bodyClass: 'theme-super',
             specialMusic: 'sound-bg-music-super',
             goldenBugIcon: 'fa-question',
@@ -150,5 +153,5 @@ window.gameData.skins = {
             goldenBugIcon: 'fa-sun',
             goldenBugColor: '#f1c40f'
         }
-    }
+    },
 };

@@ -85,6 +85,23 @@ function formatNumber(num) {
     return decimal.toExponential(2).replace('.', ',');
 }
 
+// --- LAZY LOAD CSS ---
+const loadedThemes = new Set();
+
+function loadThemeCSS(themeFile) {
+    if (!themeFile || loadedThemes.has(themeFile)) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    // Recupera la versione della cache globale o usa un fallback
+    const v = window.GAME_VERSION ? window.GAME_VERSION.major : Date.now();
+    link.href = `css/${themeFile}?v=${v}`;
+
+    document.head.appendChild(link);
+    loadedThemes.add(themeFile);
+    console.log(`[Tema] Caricato dinamicamente: ${themeFile}`);
+}
+
 function formatTime(totalSeconds) {
     totalSeconds = Math.floor(totalSeconds);
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -547,10 +564,11 @@ function refreshAllStores() {
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
 
-let currentSkinFilter = 'all'; // all, unlocked, locked
+let currentSkinFilter = 'all';
 let currentRarityFilter = 'all';
-let modernSkinsArray = []; // Array per scorrere le skin filtrate
-let modernCurrentIndex = 0; // Indice della skin a fuoco
+let modernSkinsArray = [];
+let modernCurrentIndex = 0;
+let lastViewedSkinId = null;
 
 // Listener per i filtri e lo switch (eseguiti una sola volta all'avvio)
 document.addEventListener('DOMContentLoaded', () => {
@@ -729,8 +747,18 @@ function updateSkinsUI() {
     // RENDERING MODERNO (Carousel Cover Flow)
     // ==========================================
     if (useModern) {
-        // Cerca l'indice della skin equipaggiata se presente nell'array filtrato, altrimenti parti da 0
-        modernCurrentIndex = Math.max(0, modernSkinsArray.findIndex(s => s.isEquipped));
+        modernCurrentIndex = 0;
+        let foundIndex = -1;
+
+        if (lastViewedSkinId) {
+            foundIndex = modernSkinsArray.findIndex(s => s.id === lastViewedSkinId);
+        }
+
+        if (foundIndex !== -1) {
+            modernCurrentIndex = foundIndex;
+        } else {
+            modernCurrentIndex = Math.max(0, modernSkinsArray.findIndex(s => s.isEquipped));
+        }
 
         // Crea la struttura base del Carousel e del Pannello
         gridModern.innerHTML = `
@@ -833,6 +861,7 @@ function renderModernCarousel() {
 
     const skin = modernSkinsArray[modernCurrentIndex];
     if (!skin) return;
+    lastViewedSkinId = skin.id;
 
     // --- AGGIUNTA: Passa i colori della rarità ai contenitori padre ---
     const gridModern = document.getElementById('skins-grid-modern');
@@ -1777,83 +1806,140 @@ function triggerChristmasOverlay() {
 
 let christmasAudioInitialized = false;
 
+// --- GESTORE UNIFICATO EFFETTI VISIVI (VFX) ---
+const VFXManager = {
+    intervals: {},
+    frames: {},
+
+    stopAll() {
+        // Ferma i loop
+        for (let key in this.intervals) clearInterval(this.intervals[key]);
+        for (let key in this.frames) cancelAnimationFrame(this.frames[key]);
+        this.intervals = {};
+        this.frames = {};
+
+        // Pulisce il DOM
+        const snow = document.getElementById('snow-container');
+        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block"); }
+
+        const fire = document.getElementById('fire-particles-container');
+        if (fire) { fire.innerHTML = ''; fire.style.display = 'none'; }
+
+        const matrix = document.getElementById('matrix-canvas');
+        if (matrix) {
+            const ctx = matrix.getContext('2d');
+            ctx.clearRect(0, 0, matrix.width, matrix.height);
+        }
+    },
+
+    start(effectType) {
+        // Non stoppiamo tutto se stiamo per attivare qualcosa, 
+        // lo farà applySkinVisuals per gestire layer combinati.
+
+        if (effectType === 'snow') this.spawnSnow();
+        if (effectType === 'fire') this.spawnFire();
+        if (effectType === 'matrix') this.spawnMatrix();
+    },
+
+    spawnSnow() {
+        const container = document.getElementById('snow-container');
+        if (!container) return;
+        container.classList.add("snow_container_block");
+        if (container.children.length > 0) return; // Già generata
+
+        for (let i = 0; i < 60; i++) {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            const size = Math.random() * 5 + 3 + 'px';
+            flake.style.width = size; flake.style.height = size;
+            flake.style.left = Math.random() * 100 + 'vw';
+            flake.style.animationDuration = (Math.random() * 7 + 5) + 's';
+            flake.style.animationDelay = (Math.random() * -20) + 's';
+            flake.style.opacity = Math.random() * 0.7 + 0.3;
+            container.appendChild(flake);
+        }
+    },
+
+    spawnFire() {
+        const container = document.getElementById('fire-particles-container');
+        if (!container) return;
+        container.style.display = 'block';
+
+        if (this.intervals.fire) clearInterval(this.intervals.fire);
+
+        // La funzione spawnFireParticle è quella esistente in game-logic.js
+        this.intervals.fire = setInterval(() => {
+            if (typeof spawnFireParticle === 'function') spawnFireParticle(container);
+        }, 100);
+    },
+
+    spawnMatrix() {
+        // La logica esistente di startMatrixEffect in ui-functions.js
+        if (typeof startMatrixEffect === 'function') startMatrixEffect();
+    }
+};
 
 function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
+    const theme = skinData.themeConfig || {};
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
-    const snowContainer = document.getElementById('snow-container');
 
-    const theme = skinData.themeConfig || {};
-
-    // 1. RIMOZIONE DINAMICA TEMI DAL BODY
-    // Invece di avere un array fisso, cerchiamo tutte le classi che iniziano con "theme-" e le rimuoviamo
+    // 1. PULIZIA TOTALE (Temi vecchi, Variabili Inline, VFX)
     Array.from(document.body.classList).forEach(cls => {
-        if (cls.startsWith('theme-')) {
-            document.body.classList.remove(cls);
-        }
+        if (cls.startsWith('theme-')) document.body.classList.remove(cls);
     });
+    document.body.style = ''; // Pulisce le var CSS custom
+    VFXManager.stopAll();
 
-    // Applica il nuovo tema se previsto dalla skin
+    // 2. LAZY LOAD CSS ESTERNI (Per temi strutturali complessi come 8bit o Super)
+    if (theme.cssFile) {
+        loadThemeCSS(theme.cssFile);
+    }
+
+    // 3. APPLICAZIONE VARIABILI CSS CUSTOM (Per varianti di colore leggere)
+    if (theme.cssVars) {
+        for (const [property, value] of Object.entries(theme.cssVars)) {
+            document.body.style.setProperty(property, value);
+        }
+    }
+
+    // 4. APPLICAZIONE CLASSE BODY
     if (theme.bodyClass) {
         document.body.classList.add(theme.bodyClass);
     }
 
-    // GESTIONE NEVE
-    if (snowContainer) {
-        if (theme.hasSnow) {
-            snowContainer.classList.add("snow_container_block");
-
-            if (snowContainer.innerHTML === '')
-                createSnowflakes(snowContainer);
-        }
-        else {
-            snowContainer.classList.remove("snow_container_block");
-        }
+    // 5. APPLICAZIONE EFFETTI VISIVI (Neve, Fuoco, ecc.)
+    if (theme.vfx) {
+        VFXManager.start(theme.vfx);
     }
 
-    // GOLDEN BUG ICONA (Personalizzazione Tematica)
+    // (Gestione Golden Bug e Audio invariata...)
     const goldenBugIcon = document.querySelector('#golden-bug i');
     if (goldenBugIcon) {
-        goldenBugIcon.className = 'fa-solid'; // Reset base FontAwesome
-        goldenBugIcon.style.color = '';       // Reset colore inline
-
+        goldenBugIcon.className = 'fa-solid';
+        goldenBugIcon.style.color = '';
         if (theme.goldenBugIcon) {
             goldenBugIcon.classList.add(theme.goldenBugIcon);
             if (theme.goldenBugColor) goldenBugIcon.style.color = theme.goldenBugColor;
         } else {
-            // Default icon
             goldenBugIcon.classList.add('fa-bug');
         }
     }
 
-    // AUDIO MANAGER (Logica Centralizzata)
-    // Invece di gestire play/pause qui, diciamo al Manager di aggiornare l'ambiente.
-    // Lui guarderà la skin corrente e deciderà quale traccia suonare e quali spegnere.
     if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
         AudioManager.updateAmbience();
 
-    // APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
+    // Applica le immagini centrali
     const applyClasses = (element, imgSrc) => {
         if (!element) return;
-
-        // Aggiorna immagine
         element.src = `assets/image/${imgSrc}`;
-
-        // Rimuovi dinamicamente le vecchie classi di rarità che iniziano con "bg-"
         Array.from(element.classList).forEach(cls => {
-            if (cls.startsWith('bg-')) {
-                element.classList.remove(cls);
-            }
+            if (cls.startsWith('bg-')) element.classList.remove(cls);
         });
-
-        // Applica nuova classe sfondo in base alla rarità
-        if (skinData.rarity)
-            element.classList.add(`bg-${skinData.rarity}`);
-        else
-            element.classList.add('bg-common');
+        element.classList.add(`bg-${skinData.rarity || 'common'}`);
     };
 
     applyClasses(photoNormal, skinData.img);
@@ -1861,30 +1947,6 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 }
 
 
-// Nuova funzione helper per creare i fiocchi
-function createSnowflakes(snowContainer) {
-    if (!snowContainer)
-        return;
-
-    const numberOfSnowflakes = 60;
-
-    for (let index = 0; index < numberOfSnowflakes; index++) {
-        const snowflake = document.createElement('div');
-        snowflake.className = 'snowflake';
-
-        const size = Math.random() * 5 + 3 + 'px';
-        snowflake.style.width = size;
-        snowflake.style.height = size;
-
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        const duration = Math.random() * 7 + 5;
-        snowflake.style.animationDuration = duration + 's';
-        snowflake.style.animationDelay = (Math.random() * -20) + 's';
-        snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-
-        snowContainer.appendChild(snowflake);
-    }
-}
 
 function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)

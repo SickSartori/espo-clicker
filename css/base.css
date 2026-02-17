@@ -402,7 +402,7 @@ body.matrix-active .buy-btn:hover {
             rgba(255, 69, 0, 0.5) 30%,
             rgba(100, 0, 0, 0.8) 70%,
             rgba(0, 0, 0, 0.9) 100%);
-    animation: none; 
+    animation: none;
 }
 
 body.crunch-active {
@@ -505,6 +505,26 @@ body.crunch-active .upgrade-name {
     opacity: 0;
     z-index: calc(var(--z-overlay) + 2);
     animation: sparkFly linear forwards;
+}
+
+.christmas_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #c0392b;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+}
+
+.christmas_overlay_flex {
+    display: flex;
+    animation: fadeIn 0.5s;
 }
 
 /* Animazione Fiamma che sale e ondeggia */

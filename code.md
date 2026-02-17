@@ -30,7 +30,7 @@ Questo file è la **Fonte di Verità Assoluta**. Il gioco è **Data-Driven**: l'
     * **`teams`:** Definizione teams (costi, BPS).
     * **`clickUpgrades` / `buildingEnhancements` / `prestigeUpgrades`:** Liste potenziamenti.
     * **`achievements`:** Obiettivi, condizioni logiche e premi.
-    * **`skins`:** Configurazioni estetiche, rarità e temi speciali.
+    * **`skins`:** Configurazioni estetiche, rarità, VFX e temi speciali.
     * **`events`:** Configurazioni eventi (durata, moltiplicatori, video).
 
 ### C. Motore di Gioco (`game-logic.js`)
@@ -40,20 +40,20 @@ Gestisce la matematica, l'economia e gli eventi.
 * **Event System (`EventHandlers`):** Sistema estensibile per gestire tipi di eventi diversi (Video, CSS Glitch) senza catene di `if/else`.
 * **Calcoli Economici:**
     * `calculateClickValue()`: Centralizza la logica di guadagno per click (Click + Mano Bionica + Fury).
-    * `calculateBulkCost()` & `calculateMaxAffordable()`: Formule matematiche sincronizzate per acquisti multipli (1x, 5x, MAX).
+    * `calculateBulkCost()` & `calculateMaxAffordable()`: Formule matematiche sincronizzate per acquisti multipli (1x, 5x, MAX). Supportano numeri colossali tramite `break_infinity.js`.
 
 ### D. Gestione Interfaccia (`ui-functions.js` & `modals.js`)
-Manipolazione del DOM ottimizzata.
+Manipolazione del DOM ottimizzata per alte prestazioni (60fps).
 
 * **Rendering Dinamico (`renderStoreSection`):** Una singola funzione genera l'HTML per *tutti* i negozi (Click, Auto, Lab) leggendo i dati.
 * **DOM Caching:** Uso di `getEl()` e `setTextIfChanged()` per ridurre al minimo il repaint del browser e migliorare le performance su mobile.
-* **Mixer Audio:** Generazione automatica degli slider del volume nelle impostazioni basata sugli asset registrati.
+* **Gestore VFX & Temi (`VFXManager` e `loadThemeCSS`):** Modulo centralizzato che carica i file CSS pesanti solo quando servono (Lazy Load), applica le Variabili CSS per le palette di colori e gestisce la riproduzione/pulizia degli effetti particellari (fuoco, neve, matrix) per evitare sovraccarichi o memory leak.
 
 ### E. Main Controller (`script.js`)
 Il collante dell'applicazione.
 
 * **Game Loop:**
-    * **Fast Loop (30fps):** Calcolo risorse e logica di base.
+    * **Fast Loop (30fps):** Calcolo risorse e logica di base basato su `deltaTime` (protetto dai salti temporali in background su mobile).
     * **Slow Loop (1fps):** Controlli pesanti (Achievement, Notifiche Tab) per risparmiare CPU.
 * **Salvataggio (LZ-String):** Implementa la compressione dei dati JSON prima di salvarli in LocalStorage o Cloud, riducendo le dimensioni dell'80%.
 
@@ -64,12 +64,12 @@ Il collante dell'applicazione.
 ### Database
 * **`users`:** ID, username, hash password, `save_data` (LONGTEXT).
 * **`leaderboard`:** username, score (max), prestigeLevel.
-* **Configurazione:** `db_connect.php` usa `config.json` per switchare tra ambienti (es. tabelle `_dev` vs `_production`).
+* **Configurazione:** `db_connect.php` usa `config.php` per switchare tra ambienti (es. tabelle `_dev` vs `_production`).
 
 ### API Endpoints
-1.  **`login_register.php`:** Gestisce accesso e creazione account (hash password sicuro).
-2.  **`save_progress.php`:** Riceve la stringa compressa LZString e la salva nel DB.
-3.  **`submit_score.php`:** Estrae i dati chiave (Score, Livello) dal salvataggio per aggiornare la classifica pubblica.
+1.  **`login_register.php`:** Gestisce accesso, hash password e genera un Token Dinamico di Sessione per blindare le chiamate successive.
+2.  **`save_progress.php`:** Riceve la stringa compressa e la salva nel DB validandola tramite l'Hash HMAC con il Token di Sessione. Implementa un controllo Anti-Rollback.
+3.  **`submit_score.php`:** Aggiornamento della classifica pubblica (ordinata per Prestigio e poi Score).
 4.  **`reset_progress.php` / `delete_user.php`:** Gestione reset e GDPR (cancellazione dati).
 
 ---
@@ -82,32 +82,42 @@ Il collante dell'applicazione.
     * **Golden Bug:** Apparizione casuale di bug dorati cliccabili.
     * **Espo Fury:** Abilità attiva (Cooldown) che moltiplica BPS x7.
     * **Eventi Visivi:** Errore 404 (Glitch CSS) e Rick Roll (Video Overlay).
-4.  **Sistema Skin Avanzato:** Le skin non cambiano solo l'immagine, ma possono attivare "Temi" completi (Musica, Neve, Classi CSS).
+4.  **Sistema Skin Avanzato e Modulare:** Le skin non cambiano solo l'immagine, ma agiscono come "Registi" dell'interfaccia. Possono modificare al volo i colori del gioco iniettando Variabili CSS, avviare colonne sonore specifiche, caricare layout CSS addizionali in Lazy-Load (es. 8-Bit) o attivare effetti particellari specifici tramite il VFX Manager.
 
 ---
 
 ## 🛠️ 5. Guida all'Espansione (Modding)
 
-Per aggiungere nuovi contenuti al gioco, devi modificare **SOLO** il file `template/js/game-data.js`.
+Per aggiungere nuovi contenuti al gioco, devi modificare **SOLO** il file `template/js/game-data.js` (o i file `data/` specifici).
 Ecco come fare per ogni categoria.
 
-### A. Aggiungere una Nuova Skin
+### A. Aggiungere una Nuova Skin (Leggera o Complessa)
 Vai nell'oggetto `gameData.skins`.
 
+```javascript
 cyber_espo: {
     name: "Cyber Espo",
     desc: "Il futuro è buggato.",
     img: "cyber.webp",          // Deve essere in assets/image/
     imgClick: "cyber-click.webp",
-    rarity: "legendary",        // common, rare, epic, legendary
-    cost: 50,                   // Costo in Token (opzionale)
+    rarity: "legendary",        // common, rare, epic, legendary, divine
+    cost: new Decimal(50),      // Costo in Token
     unlockHint: "Sblocca l'obiettivo 'Hacker'", // Testo se bloccata
     
-    // [OPZIONALE] Configurazione Tema Speciale
+    // [OPZIONALE] Configurazione Tema Avanzata
     themeConfig: {
+        // Usa solo le variabili per ricolorare il tema senza creare nuovi CSS!
+        cssVars: {
+            '--primary': '#8e44ad',
+            '--bg-dark': '#1a0000'
+        },
+        // Oppure carica un intero CSS strutturale (Lazy Load)
+        cssFile: 'cyber-theme.css', 
+        
         bodyClass: 'theme-cyber',       // Classe CSS aggiunta al body
-        specialMusic: 'sound-synthwave',// ID audio (vedi sezione Suoni)
-        goldenBugImg: 'drone.png'       // Cambia l'aspetto del Golden Bug
+        specialMusic: 'sound-synthwave',// ID audio riprodotto in loop
+        goldenBugIcon: 'fa-microchip',  // Cambia l'icona del Golden Bug
+        vfx: 'matrix'                   // Attiva un effetto visivo (snow, fire, matrix)
     }
 }
 
