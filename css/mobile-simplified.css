@@ -166,14 +166,14 @@
     }
 
     /* Rimpiccioliamo drasticamente le skin laterali per dare spazio alla centrale */
-    html body .carousel-item.prev-1,
-    html body .carousel-item.next-1 {
-        transform: translateX(110px) scale(0.6) rotateY(-30deg) !important;
+    html body #skins-grid-modern .carousel-item.prev-1,
+    html body #skins-grid-modern .carousel-item.next-1 {
+        transform: translateX(110px) scale(0.6) rotateY(-30deg);
         opacity: 0.4;
     }
 
-    html body #carousel-track .carousel-item.prev-1 {
-        transform: translateX(-110px) scale(0.6) rotateY(30deg) !important;
+    html body #skins-grid-modern .carousel-item.prev-1 {
+        transform: translateX(-110px) scale(0.6) rotateY(30deg);
     }
 
     /* Pannello Info compatto */

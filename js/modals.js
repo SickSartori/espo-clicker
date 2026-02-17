@@ -939,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
+                Game.setSaveToken(data.save_token);
 
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {

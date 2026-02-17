@@ -21,13 +21,20 @@ $rawPrestige = isset($data['prestige']) ? (string)$data['prestige'] : "0";
 // Cleanup base
 if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { $rawScore = "0"; }
 
-// Hash check (Mantieni la tua logica di sicurezza esistente qui)
+// RECUPERO TOKEN DINAMICO DI SESSIONE
+$sessionToken = isset($_SESSION['save_token']) ? $_SESSION['save_token'] : '';
+
+if (empty($sessionToken)) {
+    echo json_encode(["status" => "warning", "message" => "Save rejected: Session expired. Please reload."]);
+    exit;
+}
+
+// Hash check dinamico (Usa $sessionToken invece di GAME_SECRET_KEY)
 $clientHash = isset($data['hash']) ? $data['hash'] : '';
-$dataString = $rawScore . '-' . $rawPrestige . '-' . GAME_SECRET_KEY;
+$dataString = $rawScore . '-' . $rawPrestige . '-' . $sessionToken;
 $serverHash = hash(HASH_ALGO, $dataString);
 
 if (!hash_equals($serverHash, $clientHash)) {
-    // ... Log errore hash ...
     echo json_encode(["status" => "warning", "message" => "Save rejected: Integrity check failed."]);
     exit;
 }

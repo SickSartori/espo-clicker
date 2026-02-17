@@ -7,7 +7,6 @@ let statsList, gameContainer, prestigeStore;
 window.buyMultiplier = 1;
 let currentUserPassword = null;
 
-const CLIENT_SECRET_KEY = 'EspoClicker_Secret_X7k9P2mN5qR8vW1zY4cB6dE0fG3hJ';
 
 async function generateHash(message) {
     // 1. Tenta API Nativa (Veloce, richiede HTTPS o Localhost)
@@ -197,15 +196,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // SALVATAGGIO CLOUD SICURO
-        if (gameState.user.username && currentUserPassword) {
+        if (gameState.user.username && currentUserPassword && currentSaveToken) {
             try {
                 let rawScore = new Decimal(gameState.lifetimeScore);
                 if (rawScore.lt(0)) rawScore = new Decimal(0);
                 let scoreToSend = rawScore.toFixed(0);
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
-                // Genera la firma
-                const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
+                // Genera la firma usando il token dinamico
+                const dataString = `${scoreToSend}-${prestigeToSend}-${currentSaveToken}`;
                 const signature = await generateHash(dataString);
 
                 fetch('php/save_progress.php', {
@@ -1319,6 +1318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formatNumber: formatNumber,
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
+        setSaveToken: (token) => { currentSaveToken = token; },
 
         tryStartAudio: () => {
             // 1. Controllo Sessione

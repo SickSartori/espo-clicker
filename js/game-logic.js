@@ -1078,13 +1078,13 @@ function calculateClickValue() {
 }
 function calculateRawClickValue() {
     // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
-    let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
+    let val = gameState.baseClickValue.mul(window.clickGlobalMult || 1);
 
     // Aggiungi Mano Bionica (Se attiva)
     if (window.gameFlags.bionicHand) {
         let percent = 0.01;
         if (window.gameFlags.divineClick) percent = 0.02;
-        val += (bps * percent);
+        val = val.add(bps.mul(percent));
     }
 
     return val;
