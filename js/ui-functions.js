@@ -33,32 +33,20 @@ function setTextIfChanged(elementId, newText) {
 // ---------  FUNZIONI DI FORMATTORE ---------
 
 function formatNumber(num) {
-    // 1. Gestione sicurezza: se è null/undefined restituisce "0"
     if (num === undefined || num === null) return "0";
 
-    // 2. Conversione Universale Protetta
     let decimal;
-
-    // Se è già un'istanza valida di Decimal, usala direttamente
     if (num instanceof Decimal) {
         decimal = num;
     } else {
-        // Se è un numero puro, una stringa o un oggetto "sporco" dal JSON
-        try {
-            // Tentativo di creazione standard
-            decimal = new Decimal(num);
-        } catch (e) {
-            // Se fallisce (es. errore t.indexOf), prova a forzare la stringa o restituisci 0
-            try {
-                decimal = new Decimal(String(num));
-            } catch (e2) {
-                console.warn("Errore formattazione numero:", num);
-                return "0";
-            }
+        try { decimal = new Decimal(num); }
+        catch (e) {
+            try { decimal = new Decimal(String(num)); }
+            catch (e2) { return "0"; }
         }
     }
 
-    // 3. Gestione Numeri Piccoli (< 1000)
+    // Per i numeri piccoli standard
     if (decimal.abs().lt(1000)) {
         let val = decimal.toNumber();
         if (Number.isInteger(val)) return val.toLocaleString('it-IT');
@@ -71,21 +59,44 @@ function formatNumber(num) {
 					  "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
 					  "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];	// 1Utg -> 999Qag
 
-    // L'esponente ci dice quanto è grande il numero (es. 1e6 ha esponente 6)
-    let exponent = decimal.e;
+    // Recupero universale e sicuro per Break_infinity
+    let exponent = decimal.exponent !== undefined ? decimal.exponent : decimal.e;
+    let mantissa = decimal.mantissa !== undefined ? decimal.mantissa : decimal.m;
 
-    // L'indice del suffisso è l'esponente diviso 3 (es. 6/3 = indice 2 -> "M")
     let suffixIndex = Math.floor(exponent / 3);
 
     // 5. Caso: Suffisso Disponibile
-    if (suffixIndex < suffixes.length) {
-        // Dividiamo per 1000^indice per ottenere il numero "base" (es. 1.500.000 / 1e6 = 1.5)
-        let scaled = decimal.div(new Decimal("1e" + (suffixIndex * 3)));
-        return scaled.toFixed(2).replace('.', ',') + " " + suffixes[suffixIndex];
+    if (suffixIndex > 0 && suffixIndex < suffixes.length) {
+        let power = exponent % 3;
+        let scaled = mantissa * Math.pow(10, power);
+
+        // Evita che 999.999 diventi "1000,00" forzando lo scatto al suffisso successivo
+        if (scaled >= 999.995) {
+            scaled /= 1000;
+            suffixIndex++;
+        }
+
+        // Ulteriore controllo nel caso il "salto" sondi oltre la lunghezza dell'array
+        if (suffixIndex < suffixes.length) {
+            return scaled.toFixed(2).replace('.', ',') + " " + suffixes[suffixIndex];
+        }
     }
 
-    // 6. Caso: Numero Enorme (Notazione Scientifica Pulita)
+    // Se andiamo oltre il Qag, usa la notazione scientifica pulita
     return decimal.toExponential(2).replace('.', ',');
+}
+
+function formatFullNumber(num) {
+    if (num === undefined || num === null) return "0";
+    let decimal = new Decimal(num).floor();
+
+    // Evita che la RegExp distrugga la stringa se il numero è in notazione scientifica
+    if (decimal.gte(1e21)) {
+        return formatNumber(decimal);
+    }
+
+    let str = decimal.toFixed(0);
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 // --- LAZY LOAD CSS ---
