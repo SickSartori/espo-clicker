@@ -225,6 +225,7 @@ input:checked+.modern-slider:before {
     cursor: pointer;
     border-radius: 50%;
     transform-style: preserve-3d;
+	border: 4px solid var(--r-color, #bdc3c7);
 }
 
 /* L'immagine dentro l'elemento */
@@ -233,7 +234,6 @@ input:checked+.modern-slider:before {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid var(--r-color, #bdc3c7);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     background: #111;
     transition: all 0.4s;
