@@ -6,6 +6,7 @@ let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, righ
 let statsList, gameContainer, prestigeStore;
 window.buyMultiplier = 1;
 let currentUserPassword = null;
+let currentSaveToken = null;
 
 
 async function generateHash(message) {
