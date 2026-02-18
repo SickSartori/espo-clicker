@@ -66,7 +66,10 @@ function formatNumber(num) {
     }
 
     // 4. Gestione Suffissi (k, M, B, T...)
-    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
+					  "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
+					  "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
+					  "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];	// 1Utg -> 999Qag
 
     // L'esponente ci dice quanto è grande il numero (es. 1e6 ha esponente 6)
     let exponent = decimal.e;
