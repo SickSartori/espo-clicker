@@ -22,8 +22,10 @@ if ($check->get_result()->num_rows > 0) {
 // Aggiorna
 $conn->begin_transaction();
 try {
-    $conn->query("DELETE FROM $table_leaderboard WHERE username = '" . $conn->real_escape_string($newUsername) . "'");
-    
+    $stmt1 = $conn->prepare("DELETE FROM $table_leaderboard WHERE username = ?");
+    $stmt1->bind_param("s", $newUsername);
+    $stmt1->execute();
+
     $upd = $conn->prepare("UPDATE $table_users SET username = ? WHERE id = ?");
     $upd->bind_param("si", $newUsername, $user['id']);
     $upd->execute();
@@ -34,7 +36,8 @@ try {
 
     $conn->commit();
     echo json_encode(["status" => "success", "message" => "Nome aggiornato!"]);
-} catch (Exception $e) {
+}
+catch (Exception $e) {
     $conn->rollback();
     echo json_encode(["status" => "error", "message" => "Errore DB."]);
 }
