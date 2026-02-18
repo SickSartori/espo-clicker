@@ -640,7 +640,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (modal.id === 'arcade-modal' && window.currentActiveEvent === 'Arcade Mode') {
                     window.currentActiveEvent = null;
                     if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                    if (typeof window.exitSnakeGame === 'function') window.exitSnakeGame();
+                    if (typeof window.exitSpaceGame === 'function') window.exitSpaceGame();
                 }
+
             }
         });
     });
