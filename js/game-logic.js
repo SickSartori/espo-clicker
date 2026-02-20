@@ -1483,7 +1483,9 @@ let originalTitle = document.title;
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) document.title = '🐞 I bug si accumulano...';
     else document.title = originalTitle;
-    if (document.visibilityState === 'visible') {
+
+    if (document.visibilityState === 'visible')
+	{
         lastFrameTime = Date.now(); // Resetta il timer per evitare salti
         checkOfflineProgress();       // Controlla se mostrare il modale offline
     }

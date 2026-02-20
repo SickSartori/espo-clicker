@@ -54,46 +54,46 @@ function formatNumber(num) {
     }
 
     // 4. Gestione Suffissi (k, M, B, T...)
-    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
+    /*const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
 					  "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
 					  "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
-					  "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];	// 1Utg -> 999Qag
+					  "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];*/	// 1Utg -> 999Qag
 
     // Recupero universale e sicuro per Break_infinity
     let exponent = decimal.exponent !== undefined ? decimal.exponent : decimal.e;
     let mantissa = decimal.mantissa !== undefined ? decimal.mantissa : decimal.m;
-
     let suffixIndex = Math.floor(exponent / 3);
 
     // 5. Caso: Suffisso Disponibile
-    if (suffixIndex > 0 && suffixIndex < suffixes.length) {
+    if (suffixIndex > 0 && suffixIndex < gameData.texts.format.suffixes.length)
+	{
         let power = exponent % 3;
         let scaled = mantissa * Math.pow(10, power);
 
         // Evita che 999.999 diventi "1000,00" forzando lo scatto al suffisso successivo
-        if (scaled >= 999.995) {
+        if (scaled >= 999.995)
+		{
             scaled /= 1000;
             suffixIndex++;
         }
 
         // Ulteriore controllo nel caso il "salto" sondi oltre la lunghezza dell'array
-        if (suffixIndex < suffixes.length) {
-            return scaled.toFixed(2).replace('.', ',') + " " + suffixes[suffixIndex];
-        }
+        if (suffixIndex < gameData.texts.format.suffixes.length)
+            return scaled.toFixed(2).replace('.', ',') + " " + gameData.texts.format.suffixes[suffixIndex];
     }
 
     // Se andiamo oltre il Qag, usa la notazione scientifica pulita
     return decimal.toExponential(2).replace('.', ',');
 }
 
-function formatFullNumber(num) {
+function formatFullNumber(num)
+{
     if (num === undefined || num === null) return "0";
     let decimal = new Decimal(num).floor();
 
     // Evita che la RegExp distrugga la stringa se il numero è in notazione scientifica
-    if (decimal.gte(1e21)) {
+    if (decimal.gte(1e21))
         return formatNumber(decimal);
-    }
 
     let str = decimal.toFixed(0);
     return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -102,11 +102,13 @@ function formatFullNumber(num) {
 // --- LAZY LOAD CSS ---
 const loadedThemes = new Set();
 
-function loadThemeCSS(themeFile) {
+function loadThemeCSS(themeFile)
+{
     if (!themeFile || loadedThemes.has(themeFile)) return;
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
+	
     // Recupera la versione della cache globale o usa un fallback
     const v = window.GAME_VERSION ? window.GAME_VERSION.major : Date.now();
     link.href = `css/${themeFile}?v=${v}`;
