@@ -278,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Funzione Helper per il controllo versione
+    // Funzione Helper per il controllo versione
     function checkSaveCompatibility(savedData) {
         if (!window.GAME_VERSION) return true;
 
@@ -290,15 +291,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const current = window.GAME_VERSION;
         const saved = savedData.version;
 
-        // 2. Controllo MAJOR: Se cambia il numero principale (es. v3 -> v4), rompe tutto -> Reset
-        // Questo è l'UNICO caso in cui vogliamo resettare davvero.
+        // 2. Se il gioco è in versione STABLE, accettiamo le vecchie major version.
+        // Questo permette al 'deepMerge' di unire i vecchi dati con le nuove strutture
+        // senza cancellare i progressi dei giocatori.
+        if (current.stage === 'stable') {
+            if (saved.major !== current.major) {
+                console.info(`Migrazione Major: Save v${saved.major} -> Game v${current.major} (Stable). Permessa.`);
+            }
+            return true;
+        }
+
+        // 3. Se siamo in BETA (dev), manteniamo il controllo rigoroso: 
+        // se la major cambia, rompe tutto -> Reset forzato per test.
         if (saved.major !== current.major) {
-            console.warn(`Mismatch Major: Save v${saved.major} vs Game v${current.major}`);
+            console.warn(`Mismatch Major: Save v${saved.major} vs Game v${current.major} (Beta). Reset Forzato.`);
             return false;
         }
 
-        // 3. Abbiamo RIMOSSO il controllo su 'stage' e 'minor'.
-        // Così passando da 4.0 beta a 4.0 stable NON perderai i dati.
         return true;
     }
 
