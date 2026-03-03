@@ -290,7 +290,7 @@
         let reward = 0;
         if (typeof bps !== 'undefined') {
             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-            const safeReward = bpsVal.mul(score).mul(0.5);
+            const safeReward = bpsVal.mul(score).mul(0.05);
             reward = safeReward;
         }
 

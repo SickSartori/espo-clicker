@@ -277,8 +277,7 @@
                         score += (e.type === 1 ? 10 : 50);
                         enemies.splice(i, 1);
                         updateUI();
-                        // Premio in Bug Clicker?
-                        if (window.EspooClicker) window.EspooClicker.getGameState().score = window.EspooClicker.getGameState().score.add(1);
+
                     }
                     break;
                 }
@@ -354,16 +353,34 @@
 
         // Usa l'ID condiviso definito in game-data
         if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
-        // Save Highscore
+        
+        // --- NUOVO CALCOLO RICOMPENSA (SCALING BPS) ---
+        let reward = new Decimal(0);
+        if (typeof bps !== 'undefined') {
+            const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
+            // In Space Impact lo score sale di 10/50 punti alla volta.
+            // Un moltiplicatore di 0.05 mantiene il premio bilanciato rispetto a Snake.
+            reward = bpsVal.mul(score).mul(0.05);
+        }
+
+        // Save Highscore & Dai Ricompensa
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
+            
+            if (score > 0) {
+                gs.score = gs.score.add(reward);
+                window.EspooClicker.showToast(`🚀 MISSIONE FALLITA! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
+            }
+
             if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
 
             if (score > (gs.arcadeHighScores.space || 0)) {
                 gs.arcadeHighScores.space = score;
                 window.EspooClicker.showToast(`🏆 RECORD SPACE: ${score}!`, 'achievement');
             }
+            
             window.EspooClicker.saveGame();
+            if (typeof updateUI === 'function') updateUI();
         }
 
         const overlay = document.getElementById('space-overlay');

@@ -1375,11 +1375,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
 
-        loadCheatboard: () => {
-            if (document.querySelector('script[src="js/cheatboard.js"]')) return;
-
-
-        },
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
