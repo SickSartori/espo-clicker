@@ -548,3 +548,23 @@ window.gameData.buildingEnhancements= {
             requiredCount: 50
         }
     };
+window.gameData.superUpgrades = {
+    fastStart: {
+        name: 'Avvio Rapido',
+        desc: 'Inizia ogni Universo con +10.000 Bug e 5 Assistenti QA.',
+        cost: new Decimal(1),
+        isCounted: false
+    },
+    qDiscount: {
+        name: 'Compressione Dati',
+        desc: 'Tutti gli upgrade del Laboratorio costano il 15% in meno.',
+        cost: new Decimal(2),
+        isCounted: false
+    },
+    keepTeams: {
+        name: 'Persistenza Memoria',
+        desc: 'Mantieni i primi 5 livelli di ogni Team dopo una Promozione normale.',
+        cost: new Decimal(3),
+        isCounted: false
+    }
+};

@@ -229,6 +229,14 @@ window.gameData.assets = {
             category: 'effetti',
             defaultVol: 0.3
         },
+        'pucci': {
+            id: 'sound-pucci',
+            file: 'pucci-made-in-heaven.mp3',
+            name: 'Made in Heaven',
+            type: 'sfx',
+            category: 'eventi',
+            defaultVol: 0.8
+        },
     },
 
     videos: {
@@ -245,6 +253,13 @@ window.gameData.assets = {
             name: 'Video: Ricardo',
             category: 'eventi',
             defaultVol: 0.5
+        },
+        'bigbang-video': {
+            id: 'video-bigbang',
+            file: 'bigbang-espoclicker.mp4',
+            name: 'Video: Big Bang Formattazione',
+            category: 'eventi',
+            defaultVol: 1.0
         }
     }
 };

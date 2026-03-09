@@ -180,6 +180,9 @@ require_once("php/check_version.php");
 						<i class="fa-solid fa-flask"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
+					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" style="display:none; color: #9b59b6;">
+						<i class="fa-solid fa-atom"></i> Q-Lab
+					</button>
 				</div>
 				
 				<div id="global-filter-section">
@@ -194,6 +197,7 @@ require_once("php/check_version.php");
 				<?php include 'includes/tab_click.php'; ?>
 				<?php include 'includes/tab_auto.php'; ?>
 				<?php include 'includes/tab_prestige.php'; ?>
+				<?php include 'includes/tab_quantum.php'; ?>
 			</div>
 
 			<?php include 'includes/col_center.php'; ?>

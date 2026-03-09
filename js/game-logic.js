@@ -69,13 +69,17 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
 
     const growthFactor = new Decimal(1.5);
     const currentLevel = state.count || 0;
-
+    
     let rawCost = data.baseCost.mul(growthFactor.pow(currentLevel));
+
+    // --- NUOVO: SCONTO QUANTICO (15%) ---
+    if (gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased) {
+        rawCost = rawCost.mul(0.85);
+    }
 
     if (rawCost.gte(100)) {
         return new Decimal(rawCost.toPrecision(3));
     }
-
     return rawCost.floor();
 }
 
@@ -187,7 +191,8 @@ function reapplyAllEffects() {
     for (const key in gameState.clickUpgrades) {
         if (gameState.clickUpgrades[key].purchased) {
             const data = gameData.clickUpgrades[key];
-            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+            // Controllo anti-crash
+            if (data && data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
         }
     }
 
@@ -195,6 +200,10 @@ function reapplyAllEffects() {
     for (const key in gameState.prestigeUpgrades) {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
+        
+        // CONTROLLO ANTI-CRASH (Ignora i vecchi salvataggi rimossi)
+        if (!data) continue; 
+        
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
             if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
         }
@@ -509,6 +518,23 @@ function buyPrestigeUpgrade(upgradeKey) {
     calculatePrestigeBonus();
     recalculateCPS();
     finalizePurchase();
+}
+
+function buySuperUpgrade(upgradeKey) {
+    const state = gameState.superUpgrades[upgradeKey];
+    const data = gameData.superUpgrades[upgradeKey];
+
+    if (gameState.qBits.lt(data.cost) || state.purchased) return;
+
+    gameState.qBits = gameState.qBits.minus(data.cost);
+    state.purchased = true;
+
+    playSound('sound-buy');
+    if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+    recalculateCPS();
+    if (typeof refreshAllStores === 'function') refreshAllStores();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+    if (typeof updateUI === 'function') updateUI();
 }
 
 
@@ -1189,6 +1215,51 @@ function openPrestigeContract() {
     }
 
     const modal = document.getElementById('prestige-modal');
+    
+    // --- LOGICA FORMATTAZIONE (MADE IN HEAVEN) ---
+    const isFormattingReady = window.gameFlags && window.gameFlags.formattazioneUnlocked;
+    const modalTitle = modal.querySelector('h2');
+    const confirmBtn = document.getElementById('btn-confirm-prestige');
+    const warningText = modal.querySelector('p');
+
+    if (isFormattingReady) {
+        // Stile e testi apocalittici
+        modal.style.borderColor = '#9b59b6';
+        modalTitle.style.color = '#9b59b6';
+        modalTitle.style.borderBottomColor = 'rgba(155, 89, 182, 0.2)';
+        modalTitle.innerHTML = '<i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)';
+        
+        warningText.innerHTML = '<i class="fa-solid fa-skull"></i> ATTENZIONE: Questa azione distruggerà l\'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br>Conserverai Skin, Obiettivi e Statistiche globali. Otterrai <b>Quantum Bits</b>.';
+        warningText.style.color = '#fff';
+        warningText.style.background = 'rgba(155, 89, 182, 0.3)';
+        warningText.style.borderColor = '#9b59b6';
+
+        // Modifica i box per mostrare i QBits invece dei Token
+        let qBitsEarned = new Decimal(1).add(gameState.prestigePoints.div(5000).floor()); // 1 QBit base + 1 ogni 5000 token avanzati
+        tokenDisplay.textContent = `+${formatNumber(qBitsEarned)} QBit`;
+        tokenDisplay.style.color = '#9b59b6';
+        tokenDisplay.style.textShadow = '0 0 20px rgba(155, 89, 182, 0.5)';
+        tokenDisplay.parentElement.previousElementSibling.textContent = "OTTERRAI SUBITO";
+        tokenDisplay.parentElement.nextElementSibling.textContent = "Quantum Bits";
+
+        bonusDisplay.innerHTML = `L\'Inizio di una nuova Era.`;
+
+        confirmBtn.innerHTML = '<i class="fa-solid fa-meteor"></i> MADE IN HEAVEN';
+        confirmBtn.style.background = 'linear-gradient(135deg, #8e44ad, #2c3e50)';
+        confirmBtn.style.boxShadow = '0 4px 15px rgba(155, 89, 182, 0.5)';
+        confirmBtn.style.color = '#fff';
+        
+        // Attacchiamo un attributo per sapere cosa eseguire
+        confirmBtn.setAttribute('data-action', 'format');
+    } else {
+        // Ripristina lo stile normale se per qualche motivo torna indietro
+        modal.style.borderColor = '#f1c40f';
+        modalTitle.style.color = '#f1c40f';
+        modalTitle.style.borderBottomColor = 'rgba(241, 196, 15, 0.2)';
+        modalTitle.innerHTML = '<i class="fa-solid fa-certificate"></i> Promozione';
+        confirmBtn.setAttribute('data-action', 'prestige');
+        // ... (lascia che il CSS base si applichi)
+    }
     if (modal) {
         modal.style.display = 'flex';
         modal.style.opacity = '1';
@@ -1225,14 +1296,13 @@ async function executePrestige() {
     let newPrestigePoints = gameState.prestigePoints.add(gained);
     let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
-    // Bonus Paracadute (Bug iniziali)
-    let startBonusBugs = new Decimal(0);
-    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
-        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
-    }
-
-    // Salvataggio Dati Persistenti
-    const persistentKeys = ['achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore'];
+    // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game)
+    const persistentKeys = [
+        'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 
+        'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
+        'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni'
+    ];
+    
     const preservedData = {};
     persistentKeys.forEach(key => {
         if (gameState[key] !== undefined) {
@@ -1263,24 +1333,50 @@ async function executePrestige() {
     if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
     if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
     if (typeof newState.score === 'string') newState.score = new Decimal(newState.score);
+    if (newState.qBits !== undefined && typeof newState.qBits === 'string') newState.qBits = new Decimal(newState.qBits);
+    if (newState.lifetimeQBits !== undefined && typeof newState.lifetimeQBits === 'string') newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
 
     newState.prestigePoints = newPrestigePoints;
     newState.lifetimePrestigePoints = newLifetime;
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
-    newState.score = startBonusBugs; // Applica il bonus paracadute
 
-    // Logica Eredità Assistenti (Team QA)
-    if (newState.teams && newState.teams.assistenteQa) {
-        newState.teams.assistenteQa.count = 0; // Reset base
+    // --- PARACADUTE & FAST START (Bonus Bug Iniziali) ---
+    let startBonusBugs = new Decimal(0);
+    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
+        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
+    }
+    if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
+        startBonusBugs = startBonusBugs.add(10000);
+    }
+    newState.score = startBonusBugs; 
 
-        // Eredità
-        if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
-            newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
+    // --- LOGICA EREDITÀ & KEEP TEAMS ---
+    if (newState.teams) {
+        // 1. Keep Teams (Mantieni 5 livelli di ogni team)
+        if (gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased) {
+            for (const key in gameState.teams) {
+                if (gameState.teams[key].count > 0) {
+                    newState.teams[key].count = Math.min(5, gameState.teams[key].count);
+                }
+            }
+        } else {
+            // Se non hai Keep Teams, azzera almeno l'Assistente QA prima di applicare i bonus vecchi
+            if (newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0; 
         }
-        // Accelerazione
-        if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
-            newState.teams.assistenteQa.count++;
+
+        // 2. Eredità Classica (Bonus Assistente QA)
+        if (newState.teams.assistenteQa) {
+            if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
+                newState.teams.assistenteQa.count = Math.max(newState.teams.assistenteQa.count, gameState.prestigeUpgrades.eredita.count);
+            }
+            if (newState.prestigeUpgrades.accelerazione && gameState.prestigeUpgrades.accelerazione.purchased) {
+                newState.teams.assistenteQa.count++;
+            }
+            // Fast Start: +5 Assistenti QA
+            if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
+                newState.teams.assistenteQa.count += 5;
+            }
         }
     }
 
@@ -1327,6 +1423,118 @@ async function executePrestige() {
                 window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
         }, 500);
     }
+}
+
+function executeFormattingSequence() {
+    // 1. Chiusura Interfaccia
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    document.body.classList.remove('modal-open');
+
+    // 2. Ferma la musica di sottofondo
+    const bgmId = gameState.user.bgMusicSelection || 'sound-bg-music';
+    const bgm = document.getElementById(bgmId);
+    if (bgm) bgm.pause();
+
+    window.currentActiveEvent = 'Formatting';
+
+    // 3. Mostra Schermata Nera di Preparazione (Creata dinamicamente)
+    let prepOverlay = document.getElementById('format-prep-overlay');
+    if (!prepOverlay) {
+        prepOverlay = document.createElement('div');
+        prepOverlay.id = 'format-prep-overlay';
+        prepOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center;
+            color: #9b59b6; font-family: monospace; font-size: 2.5rem; font-weight: bold; text-align: center;
+        `;
+        document.body.appendChild(prepOverlay);
+    }
+    prepOverlay.innerHTML = "PREPARAZIONE FORMATTAZIONE<br><span style='font-size: 1.5rem; opacity: 0.7;'>Caricamento dati...</span>";
+    prepOverlay.style.display = 'flex';
+
+    // 4. MADE IN HEAVEN! (Pucci Audio)
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.play('sound-pucci', 'eventi');
+    }
+
+    // Calcolo QBits (1 base + 1 ogni 5000 token)
+    let qBitsEarned = new Decimal(1).add(gameState.prestigePoints.div(5000).floor());
+
+    // Salvataggio dati SUPER-persistenti
+    const superPersistentData = {
+        achievements: JSON.parse(JSON.stringify(gameState.achievements)),
+        skins: JSON.parse(JSON.stringify(gameState.skins)),
+        user: JSON.parse(JSON.stringify(gameState.user)),
+        lifetimeScore: gameState.lifetimeScore,
+        totalClicks: gameState.totalClicks,
+        totalPlayTime: gameState.totalPlayTime,
+        totalGoldenBugsClicked: gameState.totalGoldenBugsClicked,
+        totalFormattazioni: (gameState.totalFormattazioni || 0) + 1,
+        qBits: (gameState.qBits || new Decimal(0)).add(qBitsEarned),
+        lifetimeQBits: (gameState.lifetimeQBits || new Decimal(0)).add(qBitsEarned),
+        superUpgrades: gameState.superUpgrades ? JSON.parse(JSON.stringify(gameState.superUpgrades)) : {}
+    };
+
+    // 5. Timer per avviare il Big Bang (3.5 secondi - aspetta la fine dell'urlo di Pucci)
+    setTimeout(() => {
+        prepOverlay.style.display = 'none';
+
+        const video = document.getElementById('video-bigbang');
+        if (video) {
+            video.classList.remove('video_display_none');
+            video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+            video.play().catch(e => console.warn("Video bloccato", e));
+        }
+
+        // === HARD RESET DEL GIOCO (Dietro le quinte mentre c'è il video) ===
+        let newState = getInitialGameState();
+        Object.assign(newState, superPersistentData);
+        
+        newState.lifetimeScore = new Decimal(newState.lifetimeScore);
+        newState.qBits = new Decimal(newState.qBits);
+        newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
+        newState.lastSaveTimestamp = Date.now();
+
+        // Bonus Eredità Formattazione (Fast Start & Keep Teams)
+        let startBonusBugs = new Decimal(0);
+        if (newState.superUpgrades && newState.superUpgrades.fastStart && newState.superUpgrades.fastStart.purchased) {
+            startBonusBugs = startBonusBugs.add(10000);
+            if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count += 5;
+        }
+        newState.score = startBonusBugs;
+        
+        gameState = newState;
+        bps = new Decimal(0);
+        clickHistory = [];
+        window.gameFlags = {};
+
+        if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+        calculatePrestigeBonus();
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+        
+        // 6. Fine Sequenza (Il video dura 22 secondi)
+        setTimeout(() => {
+            if (video) {
+                video.pause();
+                video.classList.add('video_display_none');
+            }
+            
+            window.currentActiveEvent = null;
+            if (typeof refreshAllStores === 'function') refreshAllStores();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience(); // Riavvia BGM
+            
+            // Vai alla tab Q-Lab in automatico per mostrare i Q-Bits appena presi
+            const tabQuantum = document.getElementById('tab-quantum');
+            if (tabQuantum) tabQuantum.click();
+
+            if (window.EspooClicker) {
+                window.EspooClicker.saveGame();
+                window.EspooClicker.showToast(`FORMATTAZIONE CONCLUSA! +${formatNumber(qBitsEarned)} Q-BITS`, 'achievement');
+            }
+        }, 22000); 
+        
+    }, 3500); 
 }
 
 function checkAchievements() {
@@ -1478,15 +1686,3 @@ function clickGoldenBug() {
     if (goldenBug) goldenBug.classList.remove('visible');
     updateUI();
 }
-
-let originalTitle = document.title;
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.title = '🐞 I bug si accumulano...';
-    else document.title = originalTitle;
-
-    if (document.visibilityState === 'visible')
-	{
-        lastFrameTime = Date.now(); // Resetta il timer per evitare salti
-        checkOfflineProgress();       // Controlla se mostrare il modale offline
-    }
-});

@@ -287,12 +287,18 @@ function renderStoreSection(config) {
 
         // Filtri Visibilità
         let isVisible = false;
-        if (config.type === 'building') isVisible = true;
-        else if (data.alwaysVisible) isVisible = true;
-        else if (mode === 'all') isVisible = true;
-        else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
-        else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
-        else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
+        
+        // NUOVO CONTROLLO CUSTOM: Se l'oggetto ha condizioni speciali, sovrascrivi
+        if (data.customVisible && !data.customVisible()) {
+            isVisible = false;
+        } else {
+            if (config.type === 'building') isVisible = true;
+            else if (data.alwaysVisible) isVisible = true;
+            else if (mode === 'all') isVisible = true;
+            else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
+            else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
+            else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
+        }
 
         if (!isVisible) { if (el) el.style.display = 'none'; return; }
         visibleCount++;
@@ -576,6 +582,33 @@ function refreshAllStores() {
             };
         }
     });
+
+    // NEGOZIO QUANTICO (Q-Lab)
+    if (gameState.totalFormattazioni > 0 || gameState.qBits.gt(0)) {
+        renderStoreSection({
+            type: 'quantum',
+            containerId: 'quantum-list-container',
+            emptyId: 'quantum-empty',
+            dataSource: gameData.superUpgrades,
+            stateSource: gameState.superUpgrades,
+            cardClass: 'prestige-upgrade quantum-card', // Ricicliamo la struttura lab
+            btnClass: 'quantum-btn',
+            onBuy: (key) => { if(typeof buySuperUpgrade === 'function') buySuperUpgrade(key); },
+            getStatus: (key, data, state) => {
+                return {
+                    purchased: state.purchased,
+                    unlocked: !state.purchased,
+                    isMaxed: false,
+                    canAfford: gameState.qBits.gte(data.cost),
+                    label: state.purchased ? gameData.texts.ui.owned : gameData.texts.ui.buy.toUpperCase(),
+                    costText: `Costo: ${formatNumber(data.cost)} qBit`,
+                    currentCost: data.cost,
+                    progress: 100
+                };
+            },
+            setEmptyMsg: (el, mode) => { el.textContent = "Tecnologia massima raggiunta."; }
+        });
+    }
 
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
@@ -1565,8 +1598,16 @@ function updateHUD() {
 function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
     setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score.floor()));
+    
+    // Aggiorna Q-Bits anche nell'header in alto
+    setTextIfChanged('qbit-wallet-amount', formatNumber(gameState.qBits));
+    setTextIfChanged('header-qbit-display', formatNumber(gameState.qBits));
 
-    // Mobile Wallets (Aggiornamento di gruppo)
+    // Aggiorna Q-Bits in attesa nel bottone di formattazione
+    const pendingQBits = new Decimal(1).add(gameState.prestigePoints.div(5000).floor());
+    setTextIfChanged('pending-qbits-display', `+${formatNumber(pendingQBits)} Q-Bit`);
+
+    // Mobile Wallets
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
         if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
     });
@@ -1625,6 +1666,9 @@ function updateStoreButtons() {
         const data = gameData.prestigeUpgrades[key];
         const state = gameState.prestigeUpgrades[key];
 
+        // CONTROLLO ANTI-CRASH
+        if (!data) continue;
+
         // Se è già maxato o posseduto (non contato), il bottone è gestito come 'owned' dal render, lo ignoriamo
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) continue;
         if (!data.isCounted && state.purchased) continue;
@@ -1679,12 +1723,22 @@ function updateSkillButton() {
 
 function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
-
     if (tabPrestige) {
         const show = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
+        if (show) tabPrestige.classList.remove("tab_promozione");
+    }
 
-        if (show)
-            tabPrestige.classList.remove("tab_promozione");
+    const tabQuantum = getEl('tab-quantum');
+    const headerQbit = getEl('header-qbit-container');
+    
+    // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
+    const isQuantumUnlocked = gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+
+    if (tabQuantum) {
+        tabQuantum.style.display = isQuantumUnlocked ? 'flex' : 'none';
+    }
+    if (headerQbit) {
+        headerQbit.style.display = isQuantumUnlocked ? 'flex' : 'none';
     }
 }
 

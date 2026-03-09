@@ -219,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         score: scoreToSend,
                         prestige: prestigeToSend,
                         equippedSkin: gameState.skins.current,
+                        totalFormattazioni: gameState.totalFormattazioni || 0,
                         hash: signature
                     })
                 })
@@ -409,7 +410,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         'totalOfflineScore',
                         'prestigePoints',
                         'lifetimePrestigePoints',
-                        'baseClickValue'
+                        'baseClickValue',
+                        'qBits',
+                        'lifetimeQBits'
                     ];
 
                     decimalFields.forEach(field => {
@@ -914,7 +917,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'rick-roll-video', class: 'rick_roll_video', src: 'assets/video/rick-espley-video.mp4' },
             { id: 'ricardo-video', class: 'ricardo_video', src: 'assets/video/ricardo-milespo-video.mp4' },
             { id: 'ricardo-metal-video', class: 'ricardo_metal_video', src: 'assets/video/ricardo-milespo-metal-video.mp4' },
-            { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' }
+            { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' },
+            { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
         ];
 
         videoData.forEach(v => {
@@ -936,6 +940,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
         loadGame(); // Carica salvataggi
+
+        const btnFormat = document.getElementById('btn-execute-format');
+        if (btnFormat) {
+            btnFormat.addEventListener('click', () => {
+                if (confirm("Sei sicuro di voler riavviare l'universo? Perderai Bug, Token e Team in cambio di Q-Bits!")) {
+                    if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+                }
+            });
+        }
 
         // Inizializza Audio Context (senza suonare ancora)
         if (typeof AudioManager !== 'undefined')
@@ -1462,7 +1475,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 6. Ripristino oggetti Decimali
                     const decimalFields = [
                         'score', 'totalScore', 'lifetimeScore', 'totalOfflineScore',
-                        'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue'
+                        'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue',
+                        'qBits', 'lifetimeQBits'
                     ];
                     decimalFields.forEach(field => {
                         gameState[field] = new Decimal(gameState[field] || 0);
@@ -1532,6 +1546,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+
+    let originalTitle = document.title;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) document.title = '🐞 I bug si accumulano...';
+            else document.title = originalTitle;
+
+            if (document.visibilityState === 'visible') {
+                lastFrameTime = Date.now(); // Resetta il timer per evitare salti
+                checkOfflineProgress();       // Controlla se mostrare il modale offline
+            }
+        });
 
     initializeGame();
     document.dispatchEvent(new Event('EspoGameReady'));

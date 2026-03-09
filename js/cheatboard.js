@@ -1,6 +1,5 @@
 (function () {
     // --- 0. Stato Globale Cheat ---
-    // Usiamo Decimal anche qui per coerenza nei calcoli
     window.cheatBPSBonus = new Decimal(0);
 
     // --- 1. Hook nella Logica di Gioco ---
@@ -9,17 +8,11 @@
     window.recalculateCPS = function () {
         originalRecalculateCPS();
 
-        // Controllo esistenza BPS
         if (typeof bps !== 'undefined') {
-            // Usa .add() invece di += per mantenere bps come Decimal
-            // Se bps è diventato un numero per errore, lo riconvertiamo
             if (!(bps instanceof Decimal)) {
                 bps = new Decimal(bps || 0);
             }
-
             bps = bps.add(window.cheatBPSBonus);
-
-            // Sicurezza: non andare sotto zero
             if (bps.lt(0)) bps = new Decimal(0);
         }
     };
@@ -123,7 +116,7 @@
             gap: 12px; 
         }
         .cheat-group-title { 
-               font-size: 0.7rem; 
+            font-size: 0.7rem; 
             color: #888; 
             text-transform: uppercase; 
             font-weight: 700; 
@@ -183,89 +176,32 @@
         .cheat-btn:active { 
             transform: translateY(1px); 
         }
-        .cheat-btn.primary { 
-            border-color: #00ff9d; 
-            color: #00ff9d; 
-            background: rgba(0, 255, 157, 0.05); 
-        }
-        .cheat-btn.primary:hover { 
-            background: rgba(0, 255, 157, 0.15); 
-        }
-        .cheat-btn.danger { 
-            border-color: #ff4757; 
-            color: #ff4757; 
-            background: rgba(255, 71, 87, 0.05); 
-        }
-        .cheat-btn.danger:hover { 
-            background: rgba(255, 71, 87, 0.15); 
-        }
-        .cheat-btn.gold { 
-            border-color: #f1c40f; 
-            color: #f1c40f; 
-            background: rgba(241, 196, 15, 0.05); 
-        }
-        .cheat-btn.gold:hover { 
-            background: rgba(241, 196, 15, 0.15); 
-        }
-        .cheat-btn.matrix { 
-            border-color: #0f0; 
-            color: #0f0; 
-            background: rgba(0, 255, 0, 0.05); 
-        }
-        .cheat-btn.matrix:hover { 
-            background: rgba(0, 255, 0, 0.15); 
-            text-shadow: 0 0 5px #0f0; 
-        }
-        .cheat-btn.info { 
-            border-color: #3498db; 
-            color: #3498db; 
-            background: rgba(52, 152, 219, 0.05); 
-        }
-        .cheat-btn.info:hover { 
-            background: rgba(52, 152, 219, 0.15); 
-        }
-        .cheat-btn.chaos { 
-            border-color: #9b59b6; 
-            color: #9b59b6; 
-            background: rgba(155, 89, 182, 0.05); 
-        }
-        .cheat-btn.chaos:hover { 
-            background: rgba(155, 89, 182, 0.15); 
-        }
-        #cheatboard-content::-webkit-scrollbar { 
-            width: 5px; 
-        }
-        #cheatboard-content::-webkit-scrollbar-thumb { 
-            background: #333; 
-            border-radius: 3px; 
-        }
+        .cheat-btn.primary { border-color: #00ff9d; color: #00ff9d; background: rgba(0, 255, 157, 0.05); }
+        .cheat-btn.primary:hover { background: rgba(0, 255, 157, 0.15); }
+        .cheat-btn.danger { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.05); }
+        .cheat-btn.danger:hover { background: rgba(255, 71, 87, 0.15); }
+        .cheat-btn.gold { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
+        .cheat-btn.gold:hover { background: rgba(241, 196, 15, 0.15); }
+        .cheat-btn.matrix { border-color: #0f0; color: #0f0; background: rgba(0, 255, 0, 0.05); }
+        .cheat-btn.matrix:hover { background: rgba(0, 255, 0, 0.15); text-shadow: 0 0 5px #0f0; }
+        .cheat-btn.info { border-color: #3498db; color: #3498db; background: rgba(52, 152, 219, 0.05); }
+        .cheat-btn.info:hover { background: rgba(52, 152, 219, 0.15); }
+        .cheat-btn.chaos { border-color: #e67e22; color: #e67e22; background: rgba(230, 126, 34, 0.05); }
+        .cheat-btn.chaos:hover { background: rgba(230, 126, 34, 0.15); }
+        
+        /* NUOVO STILE: QUANTUM */
+        .cheat-btn.quantum { border-color: #9b59b6; color: #9b59b6; background: rgba(155, 89, 182, 0.05); }
+        .cheat-btn.quantum:hover { background: rgba(155, 89, 182, 0.15); box-shadow: 0 0 10px rgba(155, 89, 182, 0.3); }
+
+        #cheatboard-content::-webkit-scrollbar { width: 5px; }
+        #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         @media only screen and (max-width: 768px) {
-            #cheatboard-container { 
-                width: 92%; 
-                max-width: none; 
-            }
-            #cheatboard-handle { 
-                top: 140px; 
-                right: -35px; 
-                width: 35px; 
-                height: 40px; 
-            }
-            .control-row { 
-                flex-wrap: wrap; 
-            }
-            .cheat-input { 
-                flex: 1 1 100%; 
-                margin-bottom: 5px; 
-                height: 45px; 
-            }
-            .cheat-btn { 
-                flex: 1 1 100%; 
-                height: 50px; 
-                font-size: 0.9rem; 
-            }
-            .control-row .cheat-btn:not(:first-child) { 
-                flex: 1; 
-            }
+            #cheatboard-container { width: 92%; max-width: none; }
+            #cheatboard-handle { top: 140px; right: -35px; width: 35px; height: 40px; }
+            .control-row { flex-wrap: wrap; }
+            .cheat-input { flex: 1 1 100%; margin-bottom: 5px; height: 45px; }
+            .cheat-btn { flex: 1 1 100%; height: 50px; font-size: 0.9rem; }
+            .control-row .cheat-btn:not(:first-child) { flex: 1; }
         }
     `;
 
@@ -297,6 +233,18 @@
                 </div>
                 <div class="control-row">
                     <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco in avanti"><i class="fa-solid fa-forward"></i> Skip 1h</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">End-Game (NG+)</div>
+                <div class="control-row">
+                    <input type="text" id="cheat-qbits-input" class="cheat-input" placeholder="Q-Bits" value="10">
+                    <button id="btn-qbits-add" class="cheat-btn quantum" title="Aggiunge Quantum Bits"><i class="fa-solid fa-atom"></i> Q-Bits</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-format-ready" class="cheat-btn quantum" title="Imposta i requisiti per il Riavvio Universo (NG+)"><i class="fa-solid fa-meteor"></i> NG+ Ready</button>
+                    <button id="btn-add-format" class="cheat-btn quantum" title="Aggiunge +1 al contatore Formattazioni"><i class="fa-solid fa-plus"></i> Format</button>
                 </div>
             </div>
 
@@ -383,7 +331,6 @@
     document.body.appendChild(container);
 
     // --- 4. Funzioni Helper ---
-    // Usiamo new Decimal per leggere gli input, così supporta "1e24"
     const getVal = (id) => {
         const val = document.getElementById(id).value;
         try {
@@ -393,7 +340,6 @@
         }
     };
 
-    // Per i campi che devono rimanere interi (come i click manuali)
     const getIntVal = (id) => parseInt(document.getElementById(id).value) || 0;
 
     const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
@@ -422,7 +368,7 @@
 
     // Aggiungi Bug
     document.getElementById('btn-bugs-add').addEventListener('click', () => {
-        const val = getVal('cheat-bugs-input'); // Ritorna Decimal
+        const val = getVal('cheat-bugs-input'); 
         gameState.score = gameState.score.add(val);
         gameState.totalScore = gameState.totalScore.add(val);
         gameState.lifetimeScore = gameState.lifetimeScore.add(val);
@@ -432,7 +378,7 @@
 
     // Aggiungi Token Lab
     document.getElementById('btn-tokens-add').addEventListener('click', () => {
-        const val = getVal('cheat-tokens-input'); // Ritorna Decimal
+        const val = getVal('cheat-tokens-input');
         gameState.prestigePoints = gameState.prestigePoints.add(val);
         if (gameState.lifetimePrestigePoints) {
             gameState.lifetimePrestigePoints = gameState.lifetimePrestigePoints.add(val);
@@ -444,22 +390,55 @@
         toast(`Aggiunti ${window.EspooClicker.formatNumber(val)} Token Lab`);
     });
 
+    // --- NUOVA LOGICA END-GAME ---
+
+    // Aggiungi Q-Bits
+    document.getElementById('btn-qbits-add').addEventListener('click', () => {
+        const val = getVal('cheat-qbits-input');
+        if (!gameState.qBits) gameState.qBits = new Decimal(0);
+        if (!gameState.lifetimeQBits) gameState.lifetimeQBits = new Decimal(0);
+        
+        gameState.qBits = gameState.qBits.add(val);
+        gameState.lifetimeQBits = gameState.lifetimeQBits.add(val);
+        refreshUI();
+        toast(`Aggiunti ${window.EspooClicker.formatNumber(val)} Q-Bits`);
+    });
+
+    // NG+ Ready
+    document.getElementById('btn-format-ready').addEventListener('click', () => {
+        if (gameState.totalResets < 20) gameState.totalResets = 20;
+        if (!gameState.prestigePoints) gameState.prestigePoints = new Decimal(0);
+        gameState.prestigePoints = gameState.prestigePoints.add(1000);
+        
+        if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+        refreshUI();
+        toast("Requisiti NG+ soddisfatti! Vai nel Lab.");
+    });
+
+    // +1 Formattazione
+    document.getElementById('btn-add-format').addEventListener('click', () => {
+        if (!gameState.totalFormattazioni) gameState.totalFormattazioni = 0;
+        gameState.totalFormattazioni += 1;
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        refreshUI();
+        toast("Contatore Formattazioni aumentato (+1)");
+    });
+
     // Salto Temporale
     document.getElementById('btn-time-warp').addEventListener('click', () => {
-        // bps è Decimal
         if (bps.lte(0)) { toast("BPS è 0! Impossibile viaggiare."); return; }
         const seconds = 3600;
-        const gain = bps.mul(seconds); // Decimal * Number = Decimal
+        const gain = bps.mul(seconds);
 
         gameState.score = gameState.score.add(gain);
         gameState.totalScore = gameState.totalScore.add(gain);
         gameState.lifetimeScore = gameState.lifetimeScore.add(gain);
-        gameState.totalPlayTime += seconds; // Playtime è numero
+        gameState.totalPlayTime += seconds;
         refreshUI();
         toast(`Salto Temporale! (+${window.EspooClicker ? window.EspooClicker.formatNumber(gain) : gain} Bug)`);
     });
 
-    // Aggiungi Click (Questi sono interi, usiamo getIntVal e +=)
+    // Aggiungi Click
     document.getElementById('btn-clicks-add').addEventListener('click', () => {
         const val = getIntVal('cheat-clicks-input');
         gameState.totalClicks += val;
@@ -469,7 +448,7 @@
 
     // Aggiungi Bonus BPS
     document.getElementById('btn-bps-add').addEventListener('click', () => {
-        const val = getVal('cheat-bps-input'); // Decimal
+        const val = getVal('cheat-bps-input');
         window.cheatBPSBonus = window.cheatBPSBonus.add(val);
         refreshUI();
         toast(`Bonus BPS +${window.EspooClicker.formatNumber(val)} attivato`);
@@ -490,6 +469,10 @@
                 gameState.prestigeUpgrades[key].purchased = true;
             }
         }
+        // Sblocca anche il Quantum Lab
+        for (let key in gameData.superUpgrades) {
+            if (gameState.superUpgrades[key]) gameState.superUpgrades[key].purchased = true;
+        }
         refreshUI();
         if (window.EspooClicker) window.EspooClicker.saveGame();
         toast("Tutto lo shop è stato sbloccato!");
@@ -508,6 +491,9 @@
                 gameState.prestigeUpgrades[key].purchased = false;
             }
         }
+        for (let key in gameData.superUpgrades) {
+            if (gameState.superUpgrades[key]) gameState.superUpgrades[key].purchased = false;
+        }
         refreshUI();
         if (window.EspooClicker) window.EspooClicker.saveGame();
         toast("Tutto lo shop è stato bloccato.");
@@ -521,10 +507,8 @@
         toast("Rinforzi arrivati! (+100 unità a tutti)");
     });
 
-
     // RANDOM CHAOS
     document.getElementById('btn-random-chaos').addEventListener('click', () => {
-        // Genera valori random grandi
         const randBugs = new Decimal("1e9").mul(Math.random());
         const randTokens = new Decimal("5000").mul(Math.random());
 
@@ -563,10 +547,10 @@
 
     // GOD MODE
     document.getElementById('btn-god-mode').addEventListener('click', () => {
-        // Assegnazione diretta di Decimali
         gameState.score = new Decimal("1e33"); // 1 Decilione
         gameState.totalScore = new Decimal("1e33");
         gameState.prestigePoints = new Decimal("1e15"); // 1 Quadrilione
+        gameState.qBits = new Decimal("1000000"); // 1 Milione di QBits
 
         document.getElementById('btn-unlock-skins').click();
         document.getElementById('btn-unlock-ach').click();
@@ -612,7 +596,7 @@
     });
 
     document.getElementById('btn-event-star').addEventListener('click', () => {
-        const mult = getIntVal('cheat-404-input'); // Riutilizziamo l'input del moltiplicatore per comodità
+        const mult = getIntVal('cheat-404-input'); 
         if (typeof triggerGameEvent === 'function') {
             triggerGameEvent('superStarMode', mult);
             toast(`⭐ Super Star (x${mult}) attivata`);
@@ -629,7 +613,6 @@
 
     document.getElementById('btn-prestige-ready').addEventListener('click', () => {
         if (gameData.PRESTIGE_THRESHOLD) {
-            // soglia + 1
             const readyScore = gameData.PRESTIGE_THRESHOLD.add(1);
             gameState.totalScore = readyScore;
             gameState.score = readyScore;

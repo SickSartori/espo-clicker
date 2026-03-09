@@ -219,8 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnConfirmPrestige) {
         btnConfirmPrestige.addEventListener('click', () => {
-            if (typeof executePrestige === 'function') {
-                executePrestige();
+            const action = btnConfirmPrestige.getAttribute('data-action');
+            if (action === 'format') {
+                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+            } else {
+                if (typeof executePrestige === 'function') executePrestige();
             }
         });
     }

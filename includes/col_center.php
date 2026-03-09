@@ -15,11 +15,18 @@
             <div id="score-display">0</div>
         </div>
         <div id="header-right-panel" class="header-stat-box header_right_panel header_stat_box_display_none">
-            <span class="header-label">
-				<i class="fa-solid fa-coins"></i>
-				<?php echo $labels["col_center_token_label"]; ?>
-			</span>
-            <span id="prestige-points-display" class="header-value" style="color: #3498db;">0</span>
+            <div style="display: flex; gap: 20px; justify-content: flex-end; align-items: center;">
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span class="header-label">
+                        <i class="fa-solid fa-coins"></i> <?php echo $labels["col_center_token_label"]; ?>
+                    </span>
+                    <span id="prestige-points-display" class="header-value" style="color: #3498db;">0</span>
+                </div>
+                <div id="header-qbit-container" style="display: none; flex-direction: column; align-items: flex-end;">
+                    <span class="header-label"><i class="fa-solid fa-atom"></i> Q-BITS</span>
+                    <span id="header-qbit-display" class="header-value" style="color: #9b59b6;">0</span>
+                </div>
+            </div>
         </div>
     </div>
 

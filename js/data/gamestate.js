@@ -36,6 +36,9 @@ function getInitialGameState() {
         prestigePoints: new Decimal(0),
         lifetimePrestigePoints: new Decimal(0),
         totalResets: 0,
+        totalFormattazioni: 0,
+        qBits: new Decimal(0),
+        lifetimeQBits: new Decimal(0),
         totalGoldenBugsClicked: 0,
         totalPlayTime: 0,
         lifetimeScore: new Decimal(0),
@@ -48,6 +51,7 @@ function getInitialGameState() {
         teams: {},
         clickUpgrades: {},
         prestigeUpgrades: {},
+        superUpgrades: {},
         buildingEnhancements: {},
         achievements: {},
         user: {
@@ -96,7 +100,12 @@ function getInitialGameState() {
                 state.user.audioCustom[allAssets[key].id] = allAssets[key].defaultVol;
         }
     }
-
+    if (window.gameData.superUpgrades) {
+        for (const key in window.gameData.superUpgrades) {
+            state.superUpgrades[key] = { purchased: false };
+        }
+    }
+    
     return state;
 }
 

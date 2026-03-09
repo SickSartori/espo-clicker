@@ -72,6 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     let avatarHTML = `<img src="${avatarImg}" class="leaderboard-avatar" style="border-color: ${borderColor};">`;
                     // ----------------------------------------
 
+                    // Gestione Formattazioni (NG+)
+                    let formattazioni = entry.totalFormattazioni ? parseInt(entry.totalFormattazioni) : 0;
+                    let formatBadge = '';
+                    if (formattazioni > 0) {
+                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="Formattazioni (NG+)"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
+                    }
+
                     const currentUsername = sessionStorage.getItem('espooUser');
                     if (entry.username === currentUsername) {
                         item.classList.add('is-me');
@@ -84,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${avatarHTML}
                                 <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
                                 ${prestigeBadge}
+                                ${formatBadge}
                             </div>
                         </div>
                         <span class="leaderboard-score">${Game.formatNumber(entry.score)} <i class="fa-solid fa-bug"></i></span>
