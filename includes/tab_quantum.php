@@ -13,7 +13,12 @@
                 <span style="color: #7f8c8d; font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 5px;">ENERGIA RICAVATA:</span>
                 <span id="pending-qbits-display" style="color: #9b59b6; font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);">+0 Q-Bit</span>
             </div>
-            <button id="btn-execute-format" class="buy-btn quantum-btn" style="width: 100%; height: 45px; font-size: 1rem;"><i class="fa-solid fa-meteor"></i> AVVIA FORMATTAZIONE</button>
+            
+            <div id="format-requirement-warning" style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: none;">
+                <i class="fa-solid fa-lock"></i> Richiede 20 Promozioni (Attuali: <span id="current-resets-display">0</span>/20)
+            </div>
+
+            <button id="btn-open-format-modal" class="buy-btn quantum-btn" style="width: 100%; height: 45px; font-size: 1rem;"><i class="fa-solid fa-meteor"></i> AVVIA FORMATTAZIONE</button>
         </div>
 
         <div class="section-header">

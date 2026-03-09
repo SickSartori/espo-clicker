@@ -941,12 +941,52 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
         loadGame(); // Carica salvataggi
 
-        const btnFormat = document.getElementById('btn-execute-format');
-        if (btnFormat) {
-            btnFormat.addEventListener('click', () => {
-                if (confirm("Sei sicuro di voler riavviare l'universo? Perderai Bug, Token e Team in cambio di Q-Bits!")) {
-                    if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+        const btnFormatOpen = document.getElementById('btn-open-format-modal');
+        const btnFormatExecute = document.getElementById('btn-execute-format'); // Fallback se c'è ancora l'id vecchio
+        const formatModal = document.getElementById('format-modal');
+        const btnConfirmFormat = document.getElementById('btn-confirm-format');
+
+        const openFormatHandler = () => {
+            // CONTROLLO DI SICUREZZA
+            if ((gameState.totalResets || 0) < 20) {
+                if (window.EspooClicker) window.EspooClicker.showToast("Devi effettuare almeno 20 Promozioni in questo Universo per formattare!", "error");
+                return;
+            }
+
+            if (formatModal) {
+                const tokenDiv = gameState.prestigePoints.div(10000);
+                let bonusQbits = new Decimal(0);
+                if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+                let qBitsEarned = new Decimal(1).add(bonusQbits);
+
+                formatModal.style.display = 'flex';
+                formatModal.style.opacity = '1';
+                document.body.classList.add('modal-open');
+                playSound('sound-click');
+            }
+        };
+
+        if (btnFormatOpen) btnFormatOpen.addEventListener('click', openFormatHandler);
+        if (btnFormatExecute) btnFormatExecute.addEventListener('click', openFormatHandler);
+
+        if (btnConfirmFormat) {
+            btnConfirmFormat.addEventListener('click', () => {
+                // TRUCCO ANTI-BLOCCO: Inizializza il video nel momento esatto del click umano
+                const video = document.getElementById('video-bigbang');
+                if (video) {
+                    if (!video.src) video.src = video.getAttribute('data-src');
+                    video.volume = 0; // Muto temporaneamente
+
+                    let p = video.play();
+                    if (p !== undefined) {
+                        p.then(() => {
+                            video.pause();
+                            video.currentTime = 0;
+                        }).catch(e => { console.warn("Trick Autoplay fallito:", e); });
+                    }
                 }
+
+                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
             });
         }
 
@@ -1548,15 +1588,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let originalTitle = document.title;
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) document.title = '🐞 I bug si accumulano...';
-            else document.title = originalTitle;
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) document.title = '🐞 I bug si accumulano...';
+        else document.title = originalTitle;
 
-            if (document.visibilityState === 'visible') {
-                lastFrameTime = Date.now(); // Resetta il timer per evitare salti
-                checkOfflineProgress();       // Controlla se mostrare il modale offline
-            }
-        });
+        if (document.visibilityState === 'visible') {
+            lastFrameTime = Date.now(); // Resetta il timer per evitare salti
+            checkOfflineProgress();       // Controlla se mostrare il modale offline
+        }
+    });
 
     initializeGame();
     document.dispatchEvent(new Event('EspoGameReady'));

@@ -69,7 +69,7 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
 
     const growthFactor = new Decimal(1.5);
     const currentLevel = state.count || 0;
-    
+
     let rawCost = data.baseCost.mul(growthFactor.pow(currentLevel));
 
     // --- NUOVO: SCONTO QUANTICO (15%) ---
@@ -200,10 +200,10 @@ function reapplyAllEffects() {
     for (const key in gameState.prestigeUpgrades) {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
-        
+
         // CONTROLLO ANTI-CRASH (Ignora i vecchi salvataggi rimossi)
-        if (!data) continue; 
-        
+        if (!data) continue;
+
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
             if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
         }
@@ -1215,7 +1215,7 @@ function openPrestigeContract() {
     }
 
     const modal = document.getElementById('prestige-modal');
-    
+
     // --- LOGICA FORMATTAZIONE (MADE IN HEAVEN) ---
     const isFormattingReady = window.gameFlags && window.gameFlags.formattazioneUnlocked;
     const modalTitle = modal.querySelector('h2');
@@ -1228,14 +1228,17 @@ function openPrestigeContract() {
         modalTitle.style.color = '#9b59b6';
         modalTitle.style.borderBottomColor = 'rgba(155, 89, 182, 0.2)';
         modalTitle.innerHTML = '<i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)';
-        
+
         warningText.innerHTML = '<i class="fa-solid fa-skull"></i> ATTENZIONE: Questa azione distruggerà l\'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br>Conserverai Skin, Obiettivi e Statistiche globali. Otterrai <b>Quantum Bits</b>.';
         warningText.style.color = '#fff';
         warningText.style.background = 'rgba(155, 89, 182, 0.3)';
         warningText.style.borderColor = '#9b59b6';
 
         // Modifica i box per mostrare i QBits invece dei Token
-        let qBitsEarned = new Decimal(1).add(gameState.prestigePoints.div(5000).floor()); // 1 QBit base + 1 ogni 5000 token avanzati
+        const tokenDiv = gameState.prestigePoints.div(10000);
+        let bonusQbits = new Decimal(0);
+        if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+        let qBitsEarned = new Decimal(1).add(bonusQbits); // 1 QBit base + 1 ogni 5000 token avanzati
         tokenDisplay.textContent = `+${formatNumber(qBitsEarned)} QBit`;
         tokenDisplay.style.color = '#9b59b6';
         tokenDisplay.style.textShadow = '0 0 20px rgba(155, 89, 182, 0.5)';
@@ -1248,7 +1251,7 @@ function openPrestigeContract() {
         confirmBtn.style.background = 'linear-gradient(135deg, #8e44ad, #2c3e50)';
         confirmBtn.style.boxShadow = '0 4px 15px rgba(155, 89, 182, 0.5)';
         confirmBtn.style.color = '#fff';
-        
+
         // Attacchiamo un attributo per sapere cosa eseguire
         confirmBtn.setAttribute('data-action', 'format');
     } else {
@@ -1298,11 +1301,11 @@ async function executePrestige() {
 
     // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game)
     const persistentKeys = [
-        'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 
+        'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks',
         'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
         'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni'
     ];
-    
+
     const preservedData = {};
     persistentKeys.forEach(key => {
         if (gameState[key] !== undefined) {
@@ -1347,22 +1350,25 @@ async function executePrestige() {
         startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
     }
     if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
-        startBonusBugs = startBonusBugs.add(10000);
+        startBonusBugs = startBonusBugs.add(1000000);
     }
-    newState.score = startBonusBugs; 
+    newState.score = startBonusBugs;
 
     // --- LOGICA EREDITÀ & KEEP TEAMS ---
+    // --- LOGICA EREDITÀ & KEEP TEAMS ---
     if (newState.teams) {
-        // 1. Keep Teams (Mantieni 5 livelli di ogni team)
+        // 1. Keep Teams (Mantieni 5 livelli SOLO dei team base)
+        const baseTeamsAllowed = ['assistenteQa', 'jiraTicket', 'teamQa']; // Limitato ai primi 3
+
         if (gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased) {
             for (const key in gameState.teams) {
-                if (gameState.teams[key].count > 0) {
+                if (gameState.teams[key].count > 0 && baseTeamsAllowed.includes(key)) {
                     newState.teams[key].count = Math.min(5, gameState.teams[key].count);
                 }
             }
         } else {
             // Se non hai Keep Teams, azzera almeno l'Assistente QA prima di applicare i bonus vecchi
-            if (newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0; 
+            if (newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0;
         }
 
         // 2. Eredità Classica (Bonus Assistente QA)
@@ -1370,10 +1376,10 @@ async function executePrestige() {
             if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
                 newState.teams.assistenteQa.count = Math.max(newState.teams.assistenteQa.count, gameState.prestigeUpgrades.eredita.count);
             }
-            if (newState.prestigeUpgrades.accelerazione && gameState.prestigeUpgrades.accelerazione.purchased) {
+            if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
                 newState.teams.assistenteQa.count++;
             }
-            // Fast Start: +5 Assistenti QA
+            // Fast Start buffato: +5 Assistenti QA e +1M Bug
             if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
                 newState.teams.assistenteQa.count += 5;
             }
@@ -1437,30 +1443,56 @@ function executeFormattingSequence() {
 
     window.currentActiveEvent = 'Formatting';
 
-    // 3. Mostra Schermata Nera di Preparazione (Creata dinamicamente)
+    // 3. Creazione Schermata Cinematografica (Testo Estetico + Contenitore Progress Bar)
     let prepOverlay = document.getElementById('format-prep-overlay');
     if (!prepOverlay) {
         prepOverlay = document.createElement('div');
         prepOverlay.id = 'format-prep-overlay';
         prepOverlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center;
-            color: #9b59b6; font-family: monospace; font-size: 2.5rem; font-weight: bold; text-align: center;
+            background: #000; z-index: 99999; display: block; pointer-events: none;
+        `;
+
+        prepOverlay.innerHTML = `
+            <div id="format-text-phase" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
+                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">PREPARAZIONE FORMATTAZIONE</h1>
+                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">Caricamento dati in corso...</p>
+            </div>
+            
+            <div id="format-video-phase" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:transparent;">
+                <div style="position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:70%; z-index:100001;">
+                    <div style="color:#fff; font-family:'Courier New', monospace; font-size:1.2rem; font-weight:bold; margin-bottom:10px; text-align:center; text-shadow:2px 2px 4px #000;">
+                        RIPRISTINO UNIVERSO IN CORSO...
+                    </div>
+                    <div style="width:100%; height:20px; background:rgba(0,0,0,0.7); border:2px solid #9b59b6; border-radius:10px; overflow:hidden;">
+                        <div id="format-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #8e44ad, #d2b4de); box-shadow:0 0 10px #9b59b6; transition: width 22s linear;"></div>
+                    </div>
+                </div>
+            </div>
         `;
         document.body.appendChild(prepOverlay);
+    } else {
+        document.getElementById('format-text-phase').style.display = 'flex';
+        document.getElementById('format-video-phase').style.display = 'none';
+        document.getElementById('format-progress-bar').style.width = '0%';
+        prepOverlay.style.display = 'block';
     }
-    prepOverlay.innerHTML = "PREPARAZIONE FORMATTAZIONE<br><span style='font-size: 1.5rem; opacity: 0.7;'>Caricamento dati...</span>";
-    prepOverlay.style.display = 'flex';
 
-    // 4. MADE IN HEAVEN! (Pucci Audio)
+    // Assicurati che all'inizio lo sfondo sia nero puro
+    prepOverlay.style.background = '#000';
+
+    // 4. Avvia Audio di Pucci
     if (typeof AudioManager !== 'undefined') {
         AudioManager.play('sound-pucci', 'eventi');
     }
 
-    // Calcolo QBits (1 base + 1 ogni 5000 token)
-    let qBitsEarned = new Decimal(1).add(gameState.prestigePoints.div(5000).floor());
+    // Calcolo QBits da salvare
+    const tokenDiv = gameState.prestigePoints.div(10000);
+    let bonusQbits = new Decimal(0);
+    if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+    let qBitsEarned = new Decimal(1).add(bonusQbits);
 
-    // Salvataggio dati SUPER-persistenti
+    // Salvataggio Dati Super-Persistenti
     const superPersistentData = {
         achievements: JSON.parse(JSON.stringify(gameState.achievements)),
         skins: JSON.parse(JSON.stringify(gameState.skins)),
@@ -1475,34 +1507,66 @@ function executeFormattingSequence() {
         superUpgrades: gameState.superUpgrades ? JSON.parse(JSON.stringify(gameState.superUpgrades)) : {}
     };
 
-    // 5. Timer per avviare il Big Bang (3.5 secondi - aspetta la fine dell'urlo di Pucci)
+    // 5. TIMING FASE 2 (Dopo esattamente 2 secondi dall'urlo)
     setTimeout(() => {
-        prepOverlay.style.display = 'none';
+
+        // --- IL FIX È QUI ---
+        // Rendiamo lo sfondo dell'overlay trasparente. 
+        // In questo modo il video, che si trova al di sotto, sarà visibile, e la barra gli galleggerà sopra!
+        prepOverlay.style.background = 'transparent';
+
+        document.getElementById('format-text-phase').style.display = 'none';
+        const vidPhase = document.getElementById('format-video-phase');
+        vidPhase.style.display = 'block';
 
         const video = document.getElementById('video-bigbang');
         if (video) {
             video.classList.remove('video_display_none');
+            video.style.position = 'fixed';
+            video.style.top = '0';
+            video.style.left = '0';
+            video.style.width = '100vw';
+            video.style.height = '100vh';
+            video.style.objectFit = 'cover';
+            // Mettiamo il video a 99990, appena SOTTO all'overlay che è a 99999
+            video.style.zIndex = '99990';
+            video.style.display = 'block';
+
             video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
-            video.play().catch(e => console.warn("Video bloccato", e));
+            video.currentTime = 0;
+
+            let playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.warn("Video bloccato dal browser, forzo il mute.", e);
+                    video.muted = true;
+                    video.play();
+                });
+            }
         }
 
-        // === HARD RESET DEL GIOCO (Dietro le quinte mentre c'è il video) ===
+        // Avvia l'animazione della Progress Bar
+        setTimeout(() => {
+            const bar = document.getElementById('format-progress-bar');
+            if (bar) bar.style.width = '100%';
+        }, 50);
+
+        // === HARD RESET DEL GIOCO (Dietro le quinte) ===
         let newState = getInitialGameState();
         Object.assign(newState, superPersistentData);
-        
+
         newState.lifetimeScore = new Decimal(newState.lifetimeScore);
         newState.qBits = new Decimal(newState.qBits);
         newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
         newState.lastSaveTimestamp = Date.now();
 
-        // Bonus Eredità Formattazione (Fast Start & Keep Teams)
         let startBonusBugs = new Decimal(0);
         if (newState.superUpgrades && newState.superUpgrades.fastStart && newState.superUpgrades.fastStart.purchased) {
             startBonusBugs = startBonusBugs.add(10000);
             if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count += 5;
         }
         newState.score = startBonusBugs;
-        
+
         gameState = newState;
         bps = new Decimal(0);
         clickHistory = [];
@@ -1511,20 +1575,24 @@ function executeFormattingSequence() {
         if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
         calculatePrestigeBonus();
         if (typeof recalculateCPS === 'function') recalculateCPS();
-        
-        // 6. Fine Sequenza (Il video dura 22 secondi)
+
+        // 6. TIMING FASE 3 (Fine dopo 22 secondi esatti)
         setTimeout(() => {
+
             if (video) {
                 video.pause();
+                video.style.display = 'none';
                 video.classList.add('video_display_none');
+                video.muted = false;
             }
-            
+
+            prepOverlay.style.display = 'none';
+
             window.currentActiveEvent = null;
             if (typeof refreshAllStores === 'function') refreshAllStores();
             if (typeof updateUI === 'function') updateUI();
-            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience(); // Riavvia BGM
-            
-            // Vai alla tab Q-Lab in automatico per mostrare i Q-Bits appena presi
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
             const tabQuantum = document.getElementById('tab-quantum');
             if (tabQuantum) tabQuantum.click();
 
@@ -1532,9 +1600,9 @@ function executeFormattingSequence() {
                 window.EspooClicker.saveGame();
                 window.EspooClicker.showToast(`FORMATTAZIONE CONCLUSA! +${formatNumber(qBitsEarned)} Q-BITS`, 'achievement');
             }
-        }, 22000); 
-        
-    }, 3500); 
+        }, 22000);
+
+    }, 2000);
 }
 
 function checkAchievements() {

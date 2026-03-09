@@ -327,6 +327,49 @@
     </div>
 </div>
 
+<div id="format-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #9b59b6; box-shadow: 0 0 30px rgba(155,89,182,0.6);">
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background: #1a0f2e; color: #9b59b6; border-bottom: 1px solid rgba(155, 89, 182, 0.3); padding: 20px;">
+            <i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)
+		</h2>
+        <div class="settings-content" style="padding: 30px 25px;">    
+            <p style="
+                color: #fff; 
+                background: rgba(155, 89, 182, 0.2); 
+                border: 1px solid #9b59b6;
+                font-weight: 600; 
+                font-size: 0.9rem; 
+                margin-bottom: 25px; 
+                line-height: 1.5; 
+                padding: 12px; 
+                border-radius: 8px;">
+                <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> ATTENZIONE: Questa azione distruggerà l'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br><br>Conserverai Skin, Obiettivi e Statistiche globali.
+            </p>
+
+            <div style="background: #110a1f; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #4a235a;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
+					OTTERRAI SUBITO
+				</div>
+                <div style="font-size: 3rem; font-weight: 900; color: #9b59b6; text-shadow: 0 0 20px rgba(155, 89, 182, 0.4); line-height: 1;">
+                    <span id="format-gain-qbit">+0</span>
+                </div>
+                <div style="color: #9b59b6; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">
+					Quantum Bits
+				</div>
+            </div>
+
+            <button id="btn-confirm-format" class="buy-btn quantum-btn" style="
+                width: 100%; 
+                height: 55px; 
+                font-size: 1.2rem; 
+                border-radius: 8px;">
+                <i class="fa-solid fa-meteor"></i> MADE IN HEAVEN
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 850px; width: 95%;"> <button class="modal-close-btn">&times;</button>
         <h2>

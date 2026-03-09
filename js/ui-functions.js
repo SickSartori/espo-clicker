@@ -55,9 +55,9 @@ function formatNumber(num) {
 
     // 4. Gestione Suffissi (k, M, B, T...)
     /*const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
-					  "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
-					  "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
-					  "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];*/	// 1Utg -> 999Qag
+                      "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
+                      "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
+                      "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];*/	// 1Utg -> 999Qag
 
     // Recupero universale e sicuro per Break_infinity
     let exponent = decimal.exponent !== undefined ? decimal.exponent : decimal.e;
@@ -65,14 +65,12 @@ function formatNumber(num) {
     let suffixIndex = Math.floor(exponent / 3);
 
     // 5. Caso: Suffisso Disponibile
-    if (suffixIndex > 0 && suffixIndex < gameData.texts.format.suffixes.length)
-	{
+    if (suffixIndex > 0 && suffixIndex < gameData.texts.format.suffixes.length) {
         let power = exponent % 3;
         let scaled = mantissa * Math.pow(10, power);
 
         // Evita che 999.999 diventi "1000,00" forzando lo scatto al suffisso successivo
-        if (scaled >= 999.995)
-		{
+        if (scaled >= 999.995) {
             scaled /= 1000;
             suffixIndex++;
         }
@@ -86,8 +84,7 @@ function formatNumber(num) {
     return decimal.toExponential(2).replace('.', ',');
 }
 
-function formatFullNumber(num)
-{
+function formatFullNumber(num) {
     if (num === undefined || num === null) return "0";
     let decimal = new Decimal(num).floor();
 
@@ -102,13 +99,12 @@ function formatFullNumber(num)
 // --- LAZY LOAD CSS ---
 const loadedThemes = new Set();
 
-function loadThemeCSS(themeFile)
-{
+function loadThemeCSS(themeFile) {
     if (!themeFile || loadedThemes.has(themeFile)) return;
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-	
+
     // Recupera la versione della cache globale o usa un fallback
     const v = window.GAME_VERSION ? window.GAME_VERSION.major : Date.now();
     link.href = `css/${themeFile}?v=${v}`;
@@ -287,7 +283,7 @@ function renderStoreSection(config) {
 
         // Filtri Visibilità
         let isVisible = false;
-        
+
         // NUOVO CONTROLLO CUSTOM: Se l'oggetto ha condizioni speciali, sovrascrivi
         if (data.customVisible && !data.customVisible()) {
             isVisible = false;
@@ -593,7 +589,7 @@ function refreshAllStores() {
             stateSource: gameState.superUpgrades,
             cardClass: 'prestige-upgrade quantum-card', // Ricicliamo la struttura lab
             btnClass: 'quantum-btn',
-            onBuy: (key) => { if(typeof buySuperUpgrade === 'function') buySuperUpgrade(key); },
+            onBuy: (key) => { if (typeof buySuperUpgrade === 'function') buySuperUpgrade(key); },
             getStatus: (key, data, state) => {
                 return {
                     purchased: state.purchased,
@@ -1564,53 +1560,77 @@ function updateScoreBoard(totalBPS) {
 }
 
 function updateHUD() {
-    // Riferimenti ai nuovi pannelli nell'header
     const leftPanel = document.getElementById('header-left-panel');
     const rightPanel = document.getElementById('header-right-panel');
-
-    // Riferimenti ai valori di testo
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
+    const headerQbit = document.getElementById('header-qbit-container');
 
-    // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0)) {
-        // Mostra i pannelli laterali
+    const hasPrestige = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
+    const hasQuantum = gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+
+    // Mostra i pannelli se hai fatto almeno un Prestigio O una Formattazione
+    if (hasPrestige || hasQuantum) {
         if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
         if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
 
-        // Aggiorna i testi
-        if (displayCareer)
-            setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
 
-        if (displayTokens)
-            setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
+        // Gestione visibilità div specifico dei Q-Bits
+        if (headerQbit) headerQbit.style.display = hasQuantum ? 'flex' : 'none';
     }
     else {
-        // Nascondi se è la prima run
-        if (leftPanel)
-            leftPanel.classList.add("header_stat_box_display_none");
-
-        if (rightPanel)
-            rightPanel.classList.add("header_stat_box_display_none");
+        if (leftPanel) leftPanel.classList.add("header_stat_box_display_none");
+        if (rightPanel) rightPanel.classList.add("header_stat_box_display_none");
     }
 }
 
 function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
     setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score.floor()));
-    
+
     // Aggiorna Q-Bits anche nell'header in alto
     setTextIfChanged('qbit-wallet-amount', formatNumber(gameState.qBits));
     setTextIfChanged('header-qbit-display', formatNumber(gameState.qBits));
 
     // Aggiorna Q-Bits in attesa nel bottone di formattazione
-    const pendingQBits = new Decimal(1).add(gameState.prestigePoints.div(5000).floor());
-    setTextIfChanged('pending-qbits-display', `+${formatNumber(pendingQBits)} Q-Bit`);
-
-    // Mobile Wallets
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
         if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
     });
+
+    // Aggiorna Q-Bits in attesa nel bottone di formattazione (NUOVA FORMULA SQRT)
+    if (gameState.prestigePoints) {
+        const tokenDiv = gameState.prestigePoints.div(10000);
+        let bonusQbits = new Decimal(0);
+        if (tokenDiv.gte(1)) {
+            bonusQbits = tokenDiv.sqrt().floor();
+        }
+        const pendingQBits = new Decimal(1).add(bonusQbits);
+        setTextIfChanged('pending-qbits-display', `+${formatNumber(pendingQBits)} Q-Bit`);
+    }
+
+    // --- NUOVO: GESTIONE REQUISITO FORMATTAZIONE ---
+    const formatBtn = document.getElementById('btn-open-format-modal');
+    const formatWarning = document.getElementById('format-requirement-warning');
+    const currentResetsDisplay = document.getElementById('current-resets-display');
+
+    if (formatBtn && formatWarning && currentResetsDisplay) {
+        const currentResets = gameState.totalResets || 0;
+        currentResetsDisplay.textContent = currentResets;
+
+        if (currentResets < 20) {
+            formatBtn.disabled = true;
+            formatBtn.style.opacity = '0.4';
+            formatBtn.style.cursor = 'not-allowed';
+            formatWarning.style.display = 'block';
+        } else {
+            formatBtn.disabled = false;
+            formatBtn.style.opacity = '1';
+            formatBtn.style.cursor = 'pointer';
+            formatWarning.style.display = 'none';
+        }
+    }
 }
 
 function updateStoreButtons() {
@@ -1730,7 +1750,7 @@ function updateTabsVisibility() {
 
     const tabQuantum = getEl('tab-quantum');
     const headerQbit = getEl('header-qbit-container');
-    
+
     // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
     const isQuantumUnlocked = gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
 
@@ -2068,6 +2088,10 @@ function updateStatsUI() {
 
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
 
+    // DATI NG+ (End-Game)
+    const totalFormats = gameState.totalFormattazioni || 0;
+    const totalQBits = gameState.lifetimeQBits || new Decimal(0);
+
     // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
     statsList.innerHTML = `
         <div class="stats-container">
@@ -2148,6 +2172,22 @@ function updateStatsUI() {
                     </div>
                 </div>
             </div>
+
+            ${(totalFormats > 0 || totalQBits.gt(0)) ? `
+            <div class="stats-section" style="border-color: rgba(155, 89, 182, 0.4);">
+                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor"></i> Multiverso (NG+)</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Universi Distrutti</span>
+                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(totalFormats)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Energia Quantica Storica</span>
+                        <span class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);">${formatNumber(totalQBits)} Q-Bits</span>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
 
             <div class="stats-section">
                 <div class="stats-header"><i class="fa-solid fa-id-card"></i> Profilo & Visuals</div>
