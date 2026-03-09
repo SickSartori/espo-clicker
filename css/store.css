@@ -592,6 +592,24 @@
     text-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
 }
 
+/* --- STILI QUANTUM LAB --- */
+.prestige-upgrade .buy-btn.quantum-btn {
+    background: linear-gradient(to bottom, #9b59b6, #732d91);
+    color: #fff;
+    border: 1px solid #5b247a;
+}
+.prestige-upgrade .buy-btn.quantum-btn:hover:not(:disabled):not(.owned) {
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
+    filter: brightness(1.2);
+}
+.prestige-upgrade.quantum-card {
+    border-color: #8e44ad;
+}
+.prestige-upgrade.quantum-card .upgrade-name, 
+.prestige-upgrade.quantum-card .upgrade-cost {
+    color: #9b59b6;
+}
+
 @media screen and (max-width: 1360px) {
 
     #click-upgrade-list,

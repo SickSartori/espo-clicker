@@ -678,3 +678,35 @@
     from { transform: translateY(0px); }
     to { transform: translateY(-5px); }
 }
+@keyframes fireRise {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(1) translateX(0);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: translateY(-40vh) scale(1.2) translateX(var(--drift));
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-90vh) scale(0) translateX(calc(var(--drift) * 2));
+        background: rgba(50, 50, 50, 0);
+    }
+}
+@keyframes sparkFly {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(0.5);
+    }
+}
