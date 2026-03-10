@@ -179,6 +179,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- NAVIGAZIONE TASTIERA MENU ARCADE ---
+    document.addEventListener('keydown', (e) => {
+        const arcadeModal = document.getElementById('arcade-modal');
+        const selector = document.getElementById('arcade-game-selector');
+
+        // Controlliamo se il modale dell'Arcade è aperto E se siamo nella schermata di Selezione
+        if (arcadeModal && arcadeModal.style.display === 'flex' &&
+            selector && selector.style.display !== 'none') {
+
+            const items = Array.from(selector.querySelectorAll('.arcade-menu-item:not(.locked)'));
+            if (items.length === 0) return;
+
+            let currentIndex = items.findIndex(item => item.classList.contains('active'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    items[currentIndex].click(); // Avvia il gioco selezionato
+                }
+            }
+        }
+    });
 
     // Funzione per tentare il play
     function tryPlayMusic() {

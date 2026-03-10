@@ -13,16 +13,16 @@
             <div id="arcade-game-selector" class="arcade-split-layout">
                 
                 <div class="arcade-menu-list">
-                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-icon="fa-staff-snake" data-desc="Mangia i bug, evita i muri. Un classico intramontabile." onclick="if(window.initSnakeGame) window.initSnakeGame()">
-                        <i class="fa-solid fa-staff-snake"></i> Snake
+                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-icon="fa-worm" data-desc="Mangia i bug, evita i muri. Un classico intramontabile." onclick="if(window.initSnakeGame) window.initSnakeGame()">
+                        <i class="fa-solid fa-worm"></i> Snake
                     </div>
                     <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-icon="fa-shuttle-space" data-desc="Naviga nello spazio e distruggi gli sciami di bug alieni." onclick="if(window.initSpaceGame) window.initSpaceGame()">
                         <i class="fa-solid fa-shuttle-space"></i> Space Impact
                     </div>
                     
-                    <div class="arcade-menu-item locked">
-                        <i class="fa-solid fa-lock" style="color: #7f8c8d;"></i> Asteroids
-                        <span class="locked-badge">IN ARRIVO...</span>
+                    <div class="arcade-menu-item" data-game="asteroids" data-title="ESPÒ-ROIDS" data-color="#e67e22" data-icon="fa-meteor" data-desc="Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!" onclick="if(window.startAsteroidsGame) window.startAsteroidsGame()">
+                        <i class="fa-solid fa-meteor"></i>
+                        <span>Espò-roids</span>
                     </div>
                     <div class="arcade-menu-item locked">
                         <i class="fa-solid fa-lock" style="color: #7f8c8d;"></i> Altri giochi
@@ -32,7 +32,7 @@
 
                 <div class="arcade-preview-monitor crt-effect">
                     <div class="preview-content">
-                        <i id="preview-icon" class="fa-solid fa-staff-snake" style="color: #2ecc71;"></i>
+                        <i id="preview-icon" class="fa-solid fa-worm" style="color: #2ecc71;"></i>
                         <h3 id="preview-title" style="color: #2ecc71;">SNAKE PROTOCOL</h3>
                         <p id="preview-desc">Mangia i bug, evita i muri. Un classico intramontabile.</p>
                         
@@ -47,6 +47,19 @@
             </div>
 
             <div id="arcade-active-game-container"></div>
+
+            <div id="asteroids-container" class="arcade-game-container" style="display: none;">
+                <canvas id="asteroids-canvas"></canvas>
+                <div id="asteroids-overlay" class="arcade-overlay">
+                    <h2 style="color: #e67e22; font-size: 2.5rem; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 10px #e67e22;">ESPÒ-ROIDS</h2>
+                    <p style="color: #fff; margin-bottom: 20px; font-size: 1rem;">
+                        Tasti Direzionali: <span style="color:#e67e22">Ruota / Accelera</span><br>
+                        Spazio: <span style="color:#e67e22">Spara</span>
+                    </p>
+                    <button class="arcade-btn" onclick="window.startAsteroidsRun()">AVVIA MISSIONE</button>
+                    <button class="arcade-btn secondary" onclick="window.exitAsteroidsGame()" style="margin-top: 10px;">ESCI</button>
+                </div>
+            </div>
 
         </div>
     </div>

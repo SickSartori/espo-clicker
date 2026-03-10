@@ -26,7 +26,9 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/asteroids/css/asteroids.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>">
+
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
@@ -263,6 +265,7 @@ require_once("php/check_version.php");
 		<!-- Arcade -->
 		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="arcade/asteroids/js/asteroids.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
 // Uso la stessa variabile usata nella libreria check_version.php
