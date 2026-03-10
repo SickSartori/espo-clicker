@@ -51,15 +51,15 @@ require_once("php/check_version.php");
 
 		<div id="toast-container"></div>
 
-		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
-			<div class="transition-content">
-				<div class="transition-icon">🚀</div>
-				<h2>
-					<?php echo $labels["prestigio_titolo"]; ?>
-				</h2>
-				<p>
-					<?php echo $labels["prestigio_sottotitolo"]; ?>
-				</p>
+		<div id="prestige-transition-overlay" class="prestige_transition_overlay_display_none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background: radial-gradient(circle at center, #1a1400 0%, #050505 100%); display: none; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;">
+			<div style="text-align: center; transform: scale(0.8); transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);" id="prestige-anim-container">
+				<i class="fa-solid fa-certificate fa-flip" style="font-size: 5.5rem; color: #f1c40f; margin-bottom: 25px; text-shadow: 0 0 40px rgba(241,196,15,0.6); animation-duration: 1.5s;"></i>
+				<h1 style="color: #f1c40f; font-family: 'Rajdhani', sans-serif; letter-spacing: 6px; font-size: 2.8rem; text-transform: uppercase; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Promozione in Corso</h1>
+				<p style="color: #bdc3c7; font-family: monospace; font-size: 1.1rem; margin-top: 15px; letter-spacing: 1px;" class="fa-fade">Ristrutturazione Aziendale del Database...</p>
+				
+				<div style="width: 350px; height: 6px; background: rgba(255,255,255,0.05); margin: 40px auto 0 auto; border-radius: 4px; border: 1px solid rgba(241,196,15,0.2); overflow: hidden;">
+					<div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f39c12, #f1c40f); box-shadow: 0 0 15px #f1c40f; transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+				</div>
 			</div>
 		</div>
 		
@@ -104,6 +104,8 @@ require_once("php/check_version.php");
 		
 		<?php include 'includes/modals.php'; ?>
 		<?php include 'includes/modals_arcade.php'; ?>
+		<?php include 'includes/modals_help.php'; ?>
+		
 		<nav id="game-navbar">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">

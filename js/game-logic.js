@@ -1201,75 +1201,34 @@ function openPrestigeContract() {
 
     // Calcolo Bonus
     let baseBonus = estimatedLifetime.mul(0.01);
-
     let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
     let synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
 
     // synergy = count * 0.001 * lifetime
     let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
-
     let totalMultiplier = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
 
     if (bonusDisplay) {
-        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-size: 1.4rem;">x${formatNumber(totalMultiplier)}</span>`;
+        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
     }
 
     const modal = document.getElementById('prestige-modal');
-
-    // --- LOGICA FORMATTAZIONE (MADE IN HEAVEN) ---
-    const isFormattingReady = window.gameFlags && window.gameFlags.formattazioneUnlocked;
-    const modalTitle = modal.querySelector('h2');
-    const confirmBtn = document.getElementById('btn-confirm-prestige');
-    const warningText = modal.querySelector('p');
-
-    if (isFormattingReady) {
-        // Stile e testi apocalittici
-        modal.style.borderColor = '#9b59b6';
-        modalTitle.style.color = '#9b59b6';
-        modalTitle.style.borderBottomColor = 'rgba(155, 89, 182, 0.2)';
-        modalTitle.innerHTML = '<i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)';
-
-        warningText.innerHTML = '<i class="fa-solid fa-skull"></i> ATTENZIONE: Questa azione distruggerà l\'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br>Conserverai Skin, Obiettivi e Statistiche globali. Otterrai <b>Quantum Bits</b>.';
-        warningText.style.color = '#fff';
-        warningText.style.background = 'rgba(155, 89, 182, 0.3)';
-        warningText.style.borderColor = '#9b59b6';
-
-        // Modifica i box per mostrare i QBits invece dei Token
-        const tokenDiv = gameState.prestigePoints.div(10000);
-        let bonusQbits = new Decimal(0);
-        if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
-        let qBitsEarned = new Decimal(1).add(bonusQbits); // 1 QBit base + 1 ogni 5000 token avanzati
-        tokenDisplay.textContent = `+${formatNumber(qBitsEarned)} QBit`;
-        tokenDisplay.style.color = '#9b59b6';
-        tokenDisplay.style.textShadow = '0 0 20px rgba(155, 89, 182, 0.5)';
-        tokenDisplay.parentElement.previousElementSibling.textContent = "OTTERRAI SUBITO";
-        tokenDisplay.parentElement.nextElementSibling.textContent = "Quantum Bits";
-
-        bonusDisplay.innerHTML = `L\'Inizio di una nuova Era.`;
-
-        confirmBtn.innerHTML = '<i class="fa-solid fa-meteor"></i> MADE IN HEAVEN';
-        confirmBtn.style.background = 'linear-gradient(135deg, #8e44ad, #2c3e50)';
-        confirmBtn.style.boxShadow = '0 4px 15px rgba(155, 89, 182, 0.5)';
-        confirmBtn.style.color = '#fff';
-
-        // Attacchiamo un attributo per sapere cosa eseguire
-        confirmBtn.setAttribute('data-action', 'format');
-    } else {
-        // Ripristina lo stile normale se per qualche motivo torna indietro
-        modal.style.borderColor = '#f1c40f';
-        modalTitle.style.color = '#f1c40f';
-        modalTitle.style.borderBottomColor = 'rgba(241, 196, 15, 0.2)';
-        modalTitle.innerHTML = '<i class="fa-solid fa-certificate"></i> Promozione';
-        confirmBtn.setAttribute('data-action', 'prestige');
-        // ... (lascia che il CSS base si applichi)
-    }
     if (modal) {
         modal.style.display = 'flex';
         modal.style.opacity = '1';
+
+        // Animazione Fluida GSAP per l'entrata
         const content = modal.querySelector('.modal-content');
         if (content) {
-            content.style.opacity = '1';
-            content.style.transform = 'scale(1)';
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(content,
+                    { scale: 0.8, opacity: 0, y: 20 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+                );
+            } else {
+                content.style.opacity = '1';
+                content.style.transform = 'scale(1)';
+            }
         }
     }
 
@@ -1279,11 +1238,28 @@ function openPrestigeContract() {
 async function executePrestige() {
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
+    const bar = document.getElementById('prestige-progress-bar');
+    const animContainer = document.getElementById('prestige-anim-container');
+
     if (modal) modal.style.display = 'none';
+
     if (overlay) {
+        // Reset stato animazione
+        if (bar) bar.style.width = '0%';
+        if (animContainer) animContainer.style.transform = 'scale(0.8)';
+
+        overlay.style.display = 'flex'; // Forza il layout
         overlay.classList.remove("prestige_transition_overlay_display_none");
+
         if (typeof playSound === 'function') playSound('sound-prestige');
-        setTimeout(() => overlay.classList.add('active'), 10);
+
+        // Avvia l'animazione con un micro-ritardo per far recepire il reset al browser
+        setTimeout(() => {
+            overlay.classList.add('active');
+            overlay.style.opacity = '1';
+            if (bar) bar.style.width = '100%';
+            if (animContainer) animContainer.style.transform = 'scale(1)';
+        }, 50);
     }
 
     const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
@@ -1423,11 +1399,14 @@ async function executePrestige() {
     // Rimozione Overlay
     if (overlay) {
         overlay.classList.remove('active');
+        overlay.style.opacity = '0'; // Sfuma dolcemente in uscita
+
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
+            overlay.style.display = 'none'; // Nascondi del tutto
             if (window.EspooClicker && gameData.texts)
-                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
-        }, 500);
+                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess, 'achievement');
+        }, 500); // 500ms è il tempo della transition CSS
     }
 }
 

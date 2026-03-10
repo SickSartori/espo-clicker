@@ -958,9 +958,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 let bonusQbits = new Decimal(0);
                 if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
                 let qBitsEarned = new Decimal(1).add(bonusQbits);
+                const previewEl = document.getElementById('format-gain-qbit');
+                if (previewEl) previewEl.textContent = `+${formatNumber(qBitsEarned)}`;
 
                 formatModal.style.display = 'flex';
                 formatModal.style.opacity = '1';
+
+                const content = formatModal.querySelector('.modal-content');
+                if (content) {
+                    if (typeof gsap !== 'undefined') {
+                        gsap.fromTo(content,
+                            { scale: 0.8, opacity: 0, y: 20 },
+                            { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+                        );
+                    } else {
+                        content.style.opacity = '1';
+                        content.style.transform = 'scale(1) translateY(0px)';
+                    }
+                }
+                // ===================================================
+
                 document.body.classList.add('modal-open');
                 playSound('sound-click');
             }
