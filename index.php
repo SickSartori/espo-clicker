@@ -27,6 +27,7 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/asteroids/css/asteroids.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/super-espo/css/super-espo.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>">
 
 
@@ -105,7 +106,7 @@ require_once("php/check_version.php");
 		<?php include 'includes/modals.php'; ?>
 		<?php include 'includes/modals_arcade.php'; ?>
 		<?php include 'includes/modals_help.php'; ?>
-		
+
 		<nav id="game-navbar">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
@@ -268,6 +269,7 @@ require_once("php/check_version.php");
 		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="arcade/asteroids/js/asteroids.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="arcade/super-espo/js/super-espo.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
 // Uso la stessa variabile usata nella libreria check_version.php

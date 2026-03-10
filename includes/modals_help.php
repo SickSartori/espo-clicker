@@ -1,9 +1,9 @@
 <div id="help-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px; padding: 0; overflow: hidden; border: 1px solid #3498db; box-shadow: 0 0 30px rgba(52, 152, 219, 0.3); background: #0a0e14;">
         
-        <div style="background: #05080c; color: #3498db; border-bottom: 1px solid rgba(52, 152, 219, 0.3); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: #05080c; color: #3498db; border-bottom: 1px solid rgba(52, 152, 219, 0.3); padding: 20px; text-align: center; position: relative;">
+            <button class="modal-close-btn" style="z-index: 10;">&times;</button>
             <h2 style="margin: 0; font-size: 1.5rem;"><i class="fa-solid fa-book-journal-whills"></i> Manuale di Onboarding</h2>
-            <button class="modal-close-btn" style="position: relative; top: 0; right: 0;">&times;</button>
         </div>
 
         <div class="settings-content" style="padding: 0; max-height: 70vh; overflow-y: auto;">

@@ -14,16 +14,26 @@
                 
                 <div class="arcade-menu-list">
                     <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-icon="fa-worm" data-desc="Mangia i bug, evita i muri. Un classico intramontabile." onclick="if(window.initSnakeGame) window.initSnakeGame()">
-                        <i class="fa-solid fa-worm"></i> Snake
+                        <i class="fa-solid fa-worm"></i> 
+                        <span>Snake Protocol</span>
                     </div>
                     <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-icon="fa-shuttle-space" data-desc="Naviga nello spazio e distruggi gli sciami di bug alieni." onclick="if(window.initSpaceGame) window.initSpaceGame()">
-                        <i class="fa-solid fa-shuttle-space"></i> Space Impact
+                        <i class="fa-solid fa-shuttle-space"></i> 
+                        <span>Space Impact</span>
                     </div>
-                    
                     <div class="arcade-menu-item" data-game="asteroids" data-title="ESPÒ-ROIDS" data-color="#e67e22" data-icon="fa-meteor" data-desc="Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!" onclick="if(window.startAsteroidsGame) window.startAsteroidsGame()">
                         <i class="fa-solid fa-meteor"></i>
                         <span>Espò-roids</span>
                     </div>
+                    <div class="arcade-menu-item locked">
+                        <i class="fa-solid fa-lock" style="color: #7f8c8d;"></i> Super Espò
+                        <span class="locked-badge">IN ARRIVO...</span>
+                    </div>
+                    <!-- <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPÒ" data-color="#9b59b6" data-icon="fa-skull" data-desc="Un platformer apparentemente innocuo... ma il codice è pieno di bug, troll e trappole mortali. Buona fortuna." onclick="if(window.startSuperEspoGame) window.startSuperEspoGame()">
+                        <i class="fa-solid fa-skull"></i>
+                        <span>Super Espò</span>
+                    </div> -->
+
                     <div class="arcade-menu-item locked">
                         <i class="fa-solid fa-lock" style="color: #7f8c8d;"></i> Altri giochi
                         <span class="locked-badge">PRESTO</span>
