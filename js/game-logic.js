@@ -274,7 +274,7 @@ const AudioManager = {
         if (document.body.classList.contains('super-star-active')) {
             soundId = 'sound-click';
         }
-        // 2. Evento Espo Fury (Fuoco) -> FIX: Solo se c'è la skin Super Espo
+        // 2. Evento Espo Fury (Fuoco) ->  Solo se c'è la skin Super Espo
         else if (document.body.classList.contains('crunch-active')) {
             if (gameState.skins.current === 'superespo') {
                 soundId = 'sound-fireball';

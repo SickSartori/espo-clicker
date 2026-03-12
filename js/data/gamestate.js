@@ -27,7 +27,7 @@ var gameState;
 function getInitialGameState() {
     const state = {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
-        arcadeHighScores: { snake: 0, space: 0 },
+        arcadeHighScores: { snake: 0, space: 0, superespo: 0 },
         score: new Decimal(0),
         baseClickValue: new Decimal(1),
         totalClicks: 0,

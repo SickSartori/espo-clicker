@@ -178,7 +178,7 @@ input:checked+.modern-slider:before {
     perspective: 1200px;
     margin-bottom: 0px;
     z-index: 10;
-    /* FIX: Forza il carousel SEMPRE sopra al pannello */
+    /*  Forza il carousel SEMPRE sopra al pannello */
 }
 
 /* Frecce di navigazione */

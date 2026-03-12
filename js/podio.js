@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let level = entry.prestigeLevel || 0;
                     let prestigeBadge = `<span class="level-badge">LIV. ${level}</span>`;
 
-                    // --- FIX: GESTIONE FOTO PROFILO (SKIN) ---
+                    // ---  GESTIONE FOTO PROFILO (SKIN) ---
                     let skinId = entry.equippedSkin || 'default';
                     // Recuperiamo i dati della skin (se esiste, altrimenti default)
                     let skinData = window.gameData.skins[skinId] || window.gameData.skins['default'];

@@ -1,74 +1,9 @@
 // code/arcade/super-espo/js/super-espo.js
 
 (function () {
-    let canvas, ctx;
-    let gameInterval;
-    let isRunning = false;
+    let espoGame = null;
 
-    const FPS = 60;
-    const GRAVITY = 0.5;
-    const JUMP_FORCE = -10.5;
-    const BASE_SPEED = 3.2;
-    const MAX_SPEED = 6;
-    const TILE_SIZE = 40;
-
-    let speed = BASE_SPEED;
-    let cameraX = 0;
-    let score = 0;
-    let gameScore = 0;
-
-    let keys = { ArrowLeft: false, ArrowRight: false, Space: false };
-    let spaceReleased = true;
-
-    // FIX: Aggiunto "facing" per ribaltare lo sprite
-    let player = {
-        x: 100, y: 100, width: 32, height: 32,
-        vx: 0, vy: 0,
-        isGrounded: false,
-        scaleX: 1, scaleY: 1, rotation: 0, walkCycle: 0,
-        facing: 1
-    };
-
-    let platforms = [];
-    let enemies = [];
-    let rewardBlocks = [];
-    let particles = [];
-    let deadlyTraps = [];
-
-    // FIX: Caricamento dei nuovi sprite specifici
-    const imgStop = new Image(); imgStop.src = 'assets/super-espo-stop.png';
-    const imgRun = new Image(); imgRun.src = 'assets/super-espo-run.png';
-    const imgJump = new Image(); imgJump.src = 'assets/super-espo-jump.png';
-
-    const imgBlock = new Image(); imgBlock.src = 'assets/image/super-block.webp';
-    const imgBrick = new Image(); imgBrick.src = 'assets/image/super-brick.webp';
-
-    function handleKeyDown(e) {
-        if (!isRunning) return;
-        if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
-        if (e.code === 'ArrowRight') keys.ArrowRight = true;
-        if (e.code === 'Space') {
-            keys.Space = true;
-            if (player.isGrounded && spaceReleased) {
-                player.vy = JUMP_FORCE;
-                player.isGrounded = false;
-                spaceReleased = false;
-                player.scaleX = 0.7;
-                player.scaleY = 1.3;
-                if (window.EspooClicker) window.EspooClicker.playSound('sound-jump');
-            }
-        }
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
-    }
-
-    function handleKeyUp(e) {
-        if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
-        if (e.code === 'ArrowRight') keys.ArrowRight = false;
-        if (e.code === 'Space') {
-            keys.Space = false;
-            spaceReleased = true;
-        }
-    }
+    window.espoCustomKeys = { left: false, right: false, down: false, up: false }; 
 
     window.startSuperEspoGame = function () {
         const selector = document.getElementById('arcade-game-selector');
@@ -93,6 +28,7 @@
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
             <div class="arcade-stats-box" id="super-espo-score-ui">
+                <span class="stat">LOOP: <span class="val-level" style="color:#e74c3c; font-weight:bold;">1</span></span>
                 <span class="stat">SCORE: <span class="val-score">0</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
@@ -100,40 +36,42 @@
         gameContainer.appendChild(headerDiv);
 
         const canvasWrapper = document.createElement('div');
-        canvasWrapper.style.position = 'relative';
+        canvasWrapper.id = 'phaser-espo-container';
         canvasWrapper.className = 'crt-turn-on crt-effect';
+        canvasWrapper.style.position = 'relative';
+        canvasWrapper.style.width = '800px';
+        canvasWrapper.style.height = '400px';
 
-        canvas = document.createElement('canvas');
-        canvas.id = 'super-espo-canvas';
-        canvas.width = Math.min(800, window.innerWidth - 40);
-        canvas.height = 400;
-        canvas.style.imageRendering = 'pixelated';
-        ctx = canvas.getContext('2d');
-        canvasWrapper.appendChild(canvas);
+        const mobileControls = document.createElement('div');
+        mobileControls.id = 'super-espo-mobile-controls';
+        mobileControls.innerHTML = `
+            <div style="display:flex; gap:10px;">
+                <button onpointerdown="window.espoCustomKeys.left=true" onpointerup="window.espoCustomKeys.left=false" onpointerleave="window.espoCustomKeys.left=false">◀</button>
+                <button onpointerdown="window.espoCustomKeys.down=true" onpointerup="window.espoCustomKeys.down=false" onpointerleave="window.espoCustomKeys.down=false">▼</button>
+                <button onpointerdown="window.espoCustomKeys.right=true" onpointerup="window.espoCustomKeys.right=false" onpointerleave="window.espoCustomKeys.right=false">▶</button>
+            </div>
+            <button onpointerdown="window.espoCustomKeys.up=true" onpointerup="window.espoCustomKeys.up=false" onpointerleave="window.espoCustomKeys.up=false">▲</button>
+        `;
+        canvasWrapper.appendChild(mobileControls);
 
         const overlay = document.createElement('div');
         overlay.id = 'super-espo-overlay';
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
-            <div style="color:#9b59b6; font-family:'Rajdhani'; font-size:2.5rem; margin-bottom:10px; font-weight:900; text-shadow: 0 0 15px #9b59b6;">SUPER ESPÒ</div>
-            <div style="color:#fff; margin-bottom:20px; font-family:monospace;">Frecce per muoverti, SPAZIO per saltare.<br>Colpisci i blocchi gialli da sotto. Evita i Bug.</div>
+            <div class="super-espo-title">SUPER ESPÒ</div>
+            <div class="super-espo-instructions">
+                Frecce/WASD per muoverti, SU per saltare, GIÙ per abbassarti.<br>
+                Schiaccia i Bug, raccogli monete e non cadere!
+            </div>
             <button class="arcade-btn" onclick="window.startSuperEspoRun()" style="background:#9b59b6; color:#fff; border-color:#8e44ad;">AVVIA PARTITA</button>
         `;
+        
         canvasWrapper.appendChild(overlay);
         gameContainer.appendChild(canvasWrapper);
-
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('keyup', handleKeyUp);
-
-        drawStaticScreen();
     };
 
     window.exitSuperEspoGame = function () {
-        isRunning = false;
-        cancelAnimationFrame(gameInterval);
-        document.removeEventListener('keydown', handleKeyDown);
-        document.removeEventListener('keyup', handleKeyUp);
-
+        if (espoGame) { espoGame.destroy(true); espoGame = null; }
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
         if (gameContainer) { gameContainer.innerHTML = ''; gameContainer.style.display = 'none'; }
@@ -142,416 +80,431 @@
     };
 
     window.startSuperEspoRun = function () {
+        if (document.activeElement) document.activeElement.blur();
+        window.focus();
+
         document.getElementById('super-espo-overlay').style.display = 'none';
+        
+        if (espoGame) espoGame.destroy(true);
 
-        player = { x: 100, y: 100, width: 32, height: 32, vx: 0, vy: 0, isGrounded: false, scaleX: 1, scaleY: 1, rotation: 0, walkCycle: 0, facing: 1 };
-        cameraX = 0;
-        score = 0;
-        speed = BASE_SPEED;
-        spaceReleased = true;
+        window.espoCustomKeys = { left: false, right: false, down: false, up: false };
 
-        platforms = [{ x: 0, y: 300, w: 1000, h: 400 }];
-        enemies = [];
-        rewardBlocks = [];
-        particles = [];
-        deadlyTraps = [];
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 400,
+            backgroundColor: '#5c94fc', 
+            parent: 'phaser-espo-container',
+            pixelArt: true,
+            physics: {
+                default: 'arcade',
+                arcade: { gravity: { y: 900 }, debug: false }
+            },
+            scene: { preload: preload, create: create, update: update }
+        };
 
-        isRunning = true;
-        lastTime = performance.now();
-        gameInterval = requestAnimationFrame(gameLoop);
+        espoGame = new Phaser.Game(config);
     };
 
-    function spawnChunk() {
-        let lastP = platforms[platforms.length - 1];
+    let player, cursors, wasdKeys, platforms, blocks, enemies, enemyBlockers, coins;
+    let bgMountains, bgClouds;
+    let lastChunkX = 0;
+    
+    let currentScore = 0;
+    let maxDist = 0;
+    let bonusScore = 0;
+    let currentLevel = 1;
+    let upWasDown = false; 
 
-        let gap = Math.random() * 80 + 40;
-        let width = Math.random() * 250 + 150;
+    function preload() {
+        const basePath = 'arcade/super-espo/assets/';
 
-        let yChange = (Math.random() - 0.5) * 80;
-        let newY = lastP.y + yChange;
+        this.load.spritesheet('super-espo', basePath + 'espo-grown.png', { 
+            frameWidth: 250,
+            frameHeight: 424 
+        });
+        
+        this.load.image('floorbricks', basePath + 'floorbricks.png');
+        this.load.image('emptyBlock', basePath + 'emptyBlock.png');
+        this.load.spritesheet('misteryBlock', basePath + 'misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('goomba', basePath + 'goomba.png', { frameWidth: 16, frameHeight: 16 });
 
-        if (newY < 150) newY = 150;
-        if (newY > 360) newY = 360;
+        this.load.image('bush1', basePath + 'bush1.png');
+        this.load.image('bush2', basePath + 'bush2.png');
+        this.load.image('mountain1', basePath + 'mountain1.png');
+        this.load.image('mountain2', basePath + 'mountain2.png');
+        this.load.image('cloud1', basePath + 'cloud1.png');
+        this.load.image('cloud2', basePath + 'cloud2.png');
+        this.load.image('fence', basePath + 'fence.png');
+        this.load.spritesheet('coin', basePath + 'coin.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.image('pipe-small', basePath + 'vertical-small-tube.png');
+        this.load.image('pipe-medium', basePath + 'vertical-medium-tube.png');
 
-        let newX = lastP.x + lastP.w + gap;
-
-        platforms.push({ x: newX, y: newY, w: width, h: 400 });
-
-        if (Math.random() > 0.5) {
-            let blockX = newX + width / 2 - 20;
-            let blockY = newY - 100 - Math.random() * 20;
-            rewardBlocks.push({ x: blockX, y: blockY, w: 40, h: 40, used: false, popY: 0 });
-        }
-
-        if (Math.random() > 0.4) {
-            enemies.push({ x: newX + width / 2, y: newY - 24, w: 32, h: 24, vx: 1.5, startX: newX, range: width });
-        }
-
-        if (Math.random() > 0.85) {
-            enemies.push({ x: newX + 20, y: -50, w: 32, h: 24, vx: 0, vy: 3, isTroll: true });
-        }
-
-        if (Math.random() > 0.8) {
-            deadlyTraps.push({ x: newX + width - 40, y: newY, w: 30, h: 30, active: false });
-        }
+        this.load.audio('snd-jump', basePath + 'jump.wav');
+        this.load.audio('snd-gameover', basePath + 'gameover.mp3');
+        this.load.audio('snd-coin', basePath + 'coin.mp3');
+        this.load.audio('snd-stomp', basePath + 'goomba-stomp.wav');
     }
 
-    let lastTime = 0;
-    function gameLoop(time) {
-        if (!isRunning) return;
-        gameInterval = requestAnimationFrame(gameLoop);
+    function create() {
+        // Estensione del mondo per generazione infinita
+        this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1000);
+        this.physics.world.checkCollision.down = false; 
 
-        const delta = time - lastTime;
-        if (delta < 1000 / FPS) return;
-        lastTime = time - (delta % (1000 / FPS));
+        this.anims.create({ key: 'goomba-walk', frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'goomba-dead', frames: [{ key: 'goomba', frame: 2 }] });
+        this.anims.create({ key: 'block-flash', frames: this.anims.generateFrameNumbers('misteryBlock', { start: 0, end: 2 }), frameRate: 6, repeat: -1, yoyo: true });
+        this.anims.create({ key: 'coin-spin', frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'espo-stop', frames: this.anims.generateFrameNumbers('super-espo', { start: 0, end: 0 }), frameRate: 1 });
+        this.anims.create({ key: 'espo-run', frames: this.anims.generateFrameNumbers('super-espo', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
+        this.anims.create({ key: 'espo-crouch', frames: [{ key: 'super-espo', frame: 4 }], frameRate: 1 });
+        this.anims.create({ key: 'espo-jump', frames: this.anims.generateFrameNumbers('super-espo', { start: 5, end: 5 }), frameRate: 1 });
 
-        update();
-        draw();
-    }
+        bgMountains = this.add.group();
+        bgClouds = this.add.group();
 
-    function checkCollision(r1, r2) {
-        return r1.x < r2.x + r2.w &&
-            r1.x + r1.width > r2.x &&
-            r1.y < r2.y + r2.h &&
-            r1.y + r1.height > r2.y;
+        for (let i = 0; i < 4; i++) {
+            let mKey = i % 2 === 0 ? 'mountain1' : 'mountain2';
+            let mt = this.add.image(i * 350, 450, mKey).setScale(2).setOrigin(0.5, 1).setScrollFactor(0.2, 1);
+            bgMountains.add(mt);
+        }
+
+        for (let i = 0; i < 6; i++) {
+            let cKey = i % 2 === 0 ? 'cloud1' : 'cloud2';
+            let cloud = this.add.image(i * 200, Phaser.Math.Between(80, 180), cKey)
+                            .setScale(Phaser.Math.FloatBetween(0.15, 0.4)).setScrollFactor(0.4, 1);
+            bgClouds.add(cloud);
+        }
+
+        platforms = this.physics.add.staticGroup();
+        blocks = this.physics.add.staticGroup();
+        enemyBlockers = this.physics.add.staticGroup();
+        enemies = this.physics.add.group();
+        coins = this.physics.add.group({ allowGravity: false });
+
+        let groundWidth = 1500;
+        let startPlatformTop = 360; 
+        let groundHeight = 500 - startPlatformTop; 
+        
+        let ground = this.add.tileSprite(groundWidth / 2, startPlatformTop + (groundHeight / 2), groundWidth, groundHeight, 'floorbricks');
+        ground.tileScaleX = 2; ground.tileScaleY = 2;
+        this.physics.add.existing(ground, true);
+        platforms.add(ground);
+
+        lastChunkX = groundWidth;
+        currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
+
+        player = this.physics.add.sprite(100, 100, 'super-espo', 0);
+        player.setCollideWorldBounds(true);
+        player.setScale(64 / player.height); 
+        player.setDepth(20);
+        player.isDead = false;
+
+        this.cameras.main.setZoom(1.25);
+        const offsetX = -(this.sys.game.config.width * 0.3); 
+        this.cameras.main.setBounds(0, 80, Number.MAX_SAFE_INTEGER, 320);
+        this.cameras.main.startFollow(player, true, 1, 0, offsetX, 0); 
+
+        cursors = this.input.keyboard.createCursorKeys();
+        wasdKeys = this.input.keyboard.addKeys({
+            up: Phaser.Input.Keyboard.KeyCodes.W, left: Phaser.Input.Keyboard.KeyCodes.A,
+            down: Phaser.Input.Keyboard.KeyCodes.S, right: Phaser.Input.Keyboard.KeyCodes.D
+        });
+
+        this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,W,A,S,D');
+        this.physics.add.collider(player, platforms);
+        this.physics.add.collider(player, blocks, hitBlock, null, this);
+        this.physics.add.overlap(player, coins, collectCoin, null, this);
+        this.physics.add.collider(enemies, platforms);
+        this.physics.add.collider(player, enemies, hitEnemy, null, this);
+        this.physics.add.collider(enemies, enemyBlockers);
     }
 
     function update() {
-        cameraX += speed;
-        if (speed < MAX_SPEED) speed += 0.0002;
+        if (player.isDead) return;
 
-        gameScore = Math.floor(cameraX / 50) + score;
+        let distScore = Math.floor(Math.max(0, player.x - 100) / 10);
+        if (distScore > maxDist) maxDist = distScore;
+        currentScore = maxDist + bonusScore;
+
+        let newLevel = Math.floor(currentScore / 1000) + 1;
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            showLevelUp(this, currentLevel);
+        }
+
         updateUI();
 
-        player.scaleX += (1 - player.scaleX) * 0.1;
-        player.scaleY += (1 - player.scaleY) * 0.1;
-
-        player.vx = 0;
-        if (keys.ArrowLeft) {
-            player.vx = -4;
-            player.rotation = -0.1;
-            player.walkCycle += 0.2;
-            player.facing = -1; // FIX: Aggiorna direzione sx
-        } else if (keys.ArrowRight) {
-            player.vx = 4;
-            player.rotation = 0.1;
-            player.walkCycle += 0.2;
-            player.facing = 1; // FIX: Aggiorna direzione dx
-        } else {
-            player.rotation = 0;
-            player.walkCycle = 0;
+        // FIX: Impedisce di tornare troppo indietro spostando i limiti del mondo con la camera
+        this.physics.world.bounds.left = this.cameras.main.scrollX;
+        if (player.x < this.cameras.main.scrollX) {
+            player.x = this.cameras.main.scrollX;
         }
 
-        if (!player.isGrounded) player.rotation = 0;
+        let leftDown = cursors.left.isDown || wasdKeys.left.isDown || window.espoCustomKeys.left;
+        let rightDown = cursors.right.isDown || wasdKeys.right.isDown || window.espoCustomKeys.right;
+        let downDown = cursors.down.isDown || wasdKeys.down.isDown || window.espoCustomKeys.down;
 
-        player.x += player.vx;
+        let jumpPressed = cursors.up.isDown || wasdKeys.up.isDown || window.espoCustomKeys.up;
+        let jumpJustPressed = jumpPressed && !upWasDown;
+        upWasDown = jumpPressed; 
 
-        let allSolids = [...platforms, ...rewardBlocks.map(b => ({ ...b, width: b.w, height: b.h }))];
+        let isGrounded = player.body.blocked.down || player.body.touching.down || player.body.onFloor();
 
-        for (let p of allSolids) {
-            let px = p.x - cameraX;
-            let solidBox = { x: px, y: p.y, w: p.w || p.width, h: p.h || p.height };
+        // Difficoltà Esponenziale: la velocità aumenta più rapidamente con i loop
+        let moveSpeed = 220 + (Math.pow(currentLevel, 1.3) * 8); 
+        let currentVel = 0; 
 
-            if (checkCollision(player, solidBox)) {
-                if (player.vx > 0) player.x = solidBox.x - player.width;
-                else if (player.vx < 0) player.x = solidBox.x + solidBox.w;
-            }
+        if (downDown && isGrounded) {
+            currentVel = 0; 
+        } else if (leftDown) { 
+            currentVel = -moveSpeed; player.flipX = true; 
+        } else if (rightDown) { 
+            currentVel = moveSpeed; player.flipX = false; 
         }
 
-        if (player.x < -player.width) die();
-        if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+        player.setVelocityX(currentVel);
 
-        player.vy += GRAVITY;
-        if (player.vy > 12) player.vy = 12;
-        player.y += player.vy;
-        player.isGrounded = false;
-
-        for (let p of platforms) {
-            let px = p.x - cameraX;
-            let solidBox = { x: px, y: p.y, w: p.w, h: p.h };
-
-            if (checkCollision(player, solidBox)) {
-                if (player.vy > 0) {
-                    player.y = solidBox.y - player.height;
-                    player.vy = 0;
-                    player.isGrounded = true;
-                    if (player.scaleX < 1.1) {
-                        player.scaleX = 1.3;
-                        player.scaleY = 0.7;
-                    }
-                } else if (player.vy < 0) {
-                    player.y = solidBox.y + solidBox.h;
-                    player.vy = 0;
-                }
-            }
-        }
-
-        for (let b of rewardBlocks) {
-            let bx = b.x - cameraX;
-            let solidBox = { x: bx, y: b.y, w: b.w, h: b.h };
-
-            if (checkCollision(player, solidBox)) {
-                if (player.vy > 0) {
-                    player.y = solidBox.y - player.height;
-                    player.vy = 0;
-                    player.isGrounded = true;
-                } else if (player.vy < 0) {
-                    player.y = solidBox.y + solidBox.h;
-                    player.vy = 0;
-
-                    if (!b.used) {
-                        b.used = true;
-                        b.popY = -10;
-                        score += 100;
-                        particles.push({ x: bx + 20, y: b.y, vy: -5, life: 1, text: '+100' });
-                        if (window.EspooClicker) window.EspooClicker.playSound('sound-click');
-                    }
-                }
-            }
-            if (b.popY < 0) b.popY += 1;
-        }
-
-        for (let trap of deadlyTraps) {
-            let tx = trap.x - cameraX;
-            if (player.x < tx + 80 && player.x + player.width > tx - 80) trap.active = true;
-
-            if (trap.active) {
-                if (player.x < tx + trap.w - 5 && player.x + player.width > tx + 5 &&
-                    player.y + player.height > trap.y - trap.h) {
-                    die();
-                }
-            }
-        }
-
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            let e = enemies[i];
-
-            if (e.isTroll) {
-                e.y += e.vy;
+        if (isGrounded) {
+            if (downDown) {
+                player.anims.play('espo-crouch', true);
+            } else if (currentVel !== 0) {
+                player.anims.play('espo-run', true);
             } else {
-                e.x -= e.vx;
-                if (e.x < e.startX || e.x > e.startX + e.range - e.w) e.vx *= -1;
+                player.anims.play('espo-stop', true);
             }
+        } else {
+            player.anims.play('espo-jump', true);
+        }
 
-            let ex = e.x - cameraX;
-            if (ex + e.w < -100 || e.y > canvas.height + 100) { enemies.splice(i, 1); continue; }
+        if (jumpJustPressed && isGrounded && !downDown) {
+            player.setVelocityY(-500); 
+            playSoundEffect(this, 'snd-jump');
+        }
 
-            let enemyBox = { x: ex + 4, y: e.y + 4, w: e.w - 8, h: e.h - 8 };
+        if (player.x + 1200 > lastChunkX) {
+            spawnChunkImproved(this);
+        }
 
-            if (checkCollision(player, enemyBox)) {
-                if (player.vy > 0 && player.y + player.height - player.vy <= enemyBox.y + 10) {
-                    enemies.splice(i, 1);
-                    player.vy = JUMP_FORCE * 0.7;
-                    score += 50;
-                    particles.push({ x: ex + e.w / 2, y: e.y, vy: -3, life: 1, text: 'SQUASH!' });
-                    if (window.EspooClicker) window.EspooClicker.playSound('sound-space-boom');
-                } else {
-                    die();
+        // Morte per caduta basata sui limiti dinamici
+        if (player.y > 450) die.call(this);
+
+        bgMountains.getChildren().forEach(mt => {
+            let screenX = mt.x - (this.cameras.main.scrollX * mt.scrollFactorX);
+            if (screenX < -200) mt.x = (this.cameras.main.scrollX * mt.scrollFactorX) + 1000;
+        });
+
+        bgClouds.getChildren().forEach(c => {
+            let screenX = c.x - (this.cameras.main.scrollX * c.scrollFactorX);
+            if (screenX < -150) {
+                c.x = (this.cameras.main.scrollX * c.scrollFactorX) + 900 + Phaser.Math.Between(0, 150);
+                c.y = Phaser.Math.Between(80, 180);
+                c.setTexture(Math.random() > 0.5 ? 'cloud1' : 'cloud2');
+            }
+        });
+
+        const destroyLimitX = this.cameras.main.scrollX - 300;
+        [enemies, enemyBlockers, platforms, blocks, coins].forEach(group => {
+            group.getChildren().forEach(item => {
+                if ((item.x + (item.width || 0)) < destroyLimitX) {
+                    if (!item.isDecorative) item.destroy(); 
+                }
+            });
+        });
+    }
+
+    function spawnChunkImproved(scene) {
+        // Gap che aumenta col livello per aumentare la difficoltà dei salti
+        const gapMin = 40 + (currentLevel * 5);
+        const gapMax = Math.min(220, 80 + (currentLevel * 15));
+        const gap = Phaser.Math.Between(gapMin, gapMax);
+
+        const widthMin = Math.max(160, 320 - currentLevel * 12);
+        const widthMax = Math.max(220, 480 - currentLevel * 10);
+        const width = Phaser.Math.Between(widthMin, widthMax);
+
+        // FIX: Tiers abbassati per non uscire mai dal canvas
+        const tiers = [360, 330, 300]; 
+        const platformTop = Phaser.Utils.Array.GetRandom(tiers);
+        const newX = lastChunkX + gap + width / 2;
+
+        const platHeight = 500 - platformTop;
+        const platCenterY = platformTop + (platHeight / 2);
+
+        const plat = scene.add.tileSprite(newX, platCenterY, width, platHeight, 'floorbricks');
+        plat.tileScaleX = 2; plat.tileScaleY = 2;
+        scene.physics.add.existing(plat, true);
+        platforms.add(plat);
+
+        let leftB = scene.add.rectangle(newX - width/2, platformTop - 32, 2, 64, 0x000000, 0);
+        scene.physics.add.existing(leftB, true); enemyBlockers.add(leftB);
+        let rightB = scene.add.rectangle(newX + width/2, platformTop - 32, 2, 64, 0x000000, 0);
+        scene.physics.add.existing(rightB, true); enemyBlockers.add(rightB);
+
+        // LOGICA SCENARIO PULITO: impedisce sovrapposizioni
+        let hasObstacle = false;
+        let randObstacle = Math.random();
+        
+        // Ostacoli fisici (Tubi o blocchi vuoti)
+        if (width > 200 && randObstacle > 0.6) {
+            hasObstacle = true;
+            const obstacleKey = Math.random() > 0.5 ? 'pipe-small' : 'emptyBlock';
+            const obj = platforms.create(newX, platformTop, obstacleKey).setScale(1.5).setOrigin(0.5, 1);
+            obj.refreshBody();
+        }
+
+        // Se non c'è un ostacolo centrale, genera monete o blocchi misteriosi
+        if (!hasObstacle) {
+            if (Math.random() > 0.4) {
+                const numBlocks = Phaser.Math.Between(1, 3);
+                const blockHeight = platformTop - 120; 
+                for (let i = 0; i < numBlocks; i++) {
+                    const bx = newX - ((numBlocks-1)*16) + (i * 32);
+                    const b = blocks.create(bx, blockHeight, 'misteryBlock').setScale(2).refreshBody();
+                    b.anims.play('block-flash', true);
+                    b.used = false;
+                }
+            } else if (Math.random() > 0.4) {
+                const numCoins = Phaser.Math.Between(2, 4);
+                let coinBaseY = platformTop - 40;
+                for (let i=0; i < numCoins; i++) {
+                    const cx = newX - ((numCoins-1)*16) + (i * 32);
+                    let coin = coins.create(cx, coinBaseY, 'coin').setScale(1.5);
+                    coin.anims.play('coin-spin', true); 
+                    scene.tweens.add({ targets: coin, y: coin.y - 8, yoyo: true, repeat: -1, duration: 800 });
                 }
             }
         }
 
-        for (let i = particles.length - 1; i >= 0; i--) {
-            let p = particles[i];
-            p.y += p.vy;
-            p.life -= 0.02;
-            if (p.life <= 0) particles.splice(i, 1);
+        // Nemici con velocità scalabile
+        const enemyChance = Math.min(0.85, 0.3 + currentLevel * 0.06);
+        if (Math.random() < enemyChance) {
+            const ex = newX + (Math.random() > 0.5 ? width/4 : -width/4);
+            const enemy = enemies.create(ex, platformTop - 16, 'goomba').setScale(2);
+            enemy.setBounceX(1);
+            let eSpeed = Phaser.Math.Between(-60, -120) - (currentLevel * 5);
+            enemy.setVelocityX(eSpeed);
+            enemy.anims.play('goomba-walk', true);
         }
 
-        let lastP = platforms[platforms.length - 1];
-        if (lastP.x - cameraX < canvas.width + 300) {
-            spawnChunk();
-        }
+        lastChunkX += gap + width;
+    }
 
-        if (platforms[0].x + platforms[0].w - cameraX < -300) {
-            platforms.shift();
-        }
+    function showLevelUp(scene, level) {
+        let text = scene.add.text(scene.cameras.main.centerX, 100, `LOOP ${level}`, {
+            fontFamily: 'Rajdhani', fontSize: '48px', color: '#f1c40f', stroke: '#000', strokeThickness: 6
+        }).setOrigin(0.5).setScrollFactor(0); 
+        scene.tweens.add({ targets: text, y: 50, alpha: 0, duration: 2000, ease: 'Power2', onComplete: () => text.destroy() });
+    }
 
-        if (player.y > canvas.height) {
-            die();
+    function collectCoin(player, coin) {
+        coin.destroy();
+        bonusScore += 20; 
+        playSoundEffect(this, 'snd-coin');
+    }
+
+    function hitBlock(player, block) {
+        if (player.body.touching.up && block.body.touching.down && !block.used) {
+            block.used = true;
+            block.anims.stop(); 
+            block.setTexture('emptyBlock'); 
+            bonusScore += 150; 
+            
+            playSoundEffect(this, 'snd-coin');
+            this.tweens.add({ targets: block, y: block.y - 10, yoyo: true, duration: 100 });
         }
     }
 
-    // FIX: Render ottimizzato con gli sprite separati
-    function drawPlayer() {
-        ctx.save();
-        ctx.translate(player.x + player.width / 2, player.y + player.height);
+    function hitEnemy(player, enemy) {
+    if (player.body.velocity.y > 0 && player.body.touching.down) {
+        enemy.anims.play('goomba-dead');
+        enemy.body.enable = false; 
+        
+        player.setVelocityY(-400); 
+        bonusScore += (100 * currentLevel); 
+        
+        playSoundEffect(this, 'snd-stomp');
+        this.time.delayedCall(500, () => { enemy.destroy(); });
+    } else {
+        die.call(this);
+    }
+}
 
-        let bob = player.vx !== 0 && player.isGrounded ? Math.abs(Math.sin(player.walkCycle)) * 3 : 0;
-        ctx.translate(0, -player.height / 2 - bob);
-
-        ctx.rotate(player.rotation);
-        ctx.scale(player.scaleX * player.facing, player.scaleY);
-
-        let currentImg = imgStop;
-        if (!player.isGrounded) {
-            currentImg = imgJump;
-        } else if (player.vx !== 0) {
-            currentImg = imgRun;
-        }
-
-        if (currentImg.complete && currentImg.naturalWidth !== 0) {
-            ctx.drawImage(currentImg, -player.width / 2, -player.height / 2, player.width, player.height);
+    function playSoundEffect(scene, key) {
+        if (window.EspooClicker) {
+            const gs = window.EspooClicker.getGameState();
+            if (gs && gs.user) {
+                const vol = (gs.user.masterVolume !== undefined ? gs.user.masterVolume : 1) * (gs.user.sfxVolume !== undefined ? gs.user.sfxVolume : 1) * 0.5;
+                if (vol > 0.01) scene.sound.play(key, { volume: vol });
+            }
         } else {
-            ctx.fillStyle = '#3498db';
-            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-        }
-        ctx.restore();
-    }
-
-    function drawTiledBlock(img, x, y, w, h) {
-        if (img.complete && img.naturalWidth !== 0) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(x, y, w, h);
-            ctx.clip();
-            for (let i = 0; i < w; i += TILE_SIZE) {
-                for (let j = 0; j < h; j += TILE_SIZE) {
-                    ctx.drawImage(img, x + i, y + j, TILE_SIZE, TILE_SIZE);
-                }
-            }
-            ctx.restore();
-        } else {
-            ctx.fillStyle = '#d35400';
-            ctx.fillRect(x, y, w, h);
-            ctx.strokeStyle = '#000';
-            ctx.strokeRect(x, y, w, h);
-        }
-    }
-
-    function drawBug(ex, ey, w, h, isTroll) {
-        ctx.fillStyle = isTroll ? '#8e44ad' : '#2ecc71';
-        ctx.fillRect(ex, ey + 8, w, h - 8);
-
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(ex + 4, ey + 10, 6, 6);
-        ctx.fillRect(ex + w - 10, ey + 10, 6, 6);
-
-        ctx.strokeStyle = '#2c3e50';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(ex + 8, ey + 8); ctx.lineTo(ex, ey);
-        ctx.moveTo(ex + w - 8, ey + 8); ctx.lineTo(ex + w, ey);
-        ctx.stroke();
-
-        let legOffset = Math.sin(performance.now() / 100) * 3;
-        ctx.fillStyle = '#2c3e50';
-        ctx.fillRect(ex - 2, ey + 14 + legOffset, 4, 2);
-        ctx.fillRect(ex + w - 2, ey + 14 - legOffset, 4, 2);
-    }
-
-    function draw() {
-        ctx.fillStyle = '#5c94fc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        for (let p of platforms) {
-            let px = p.x - cameraX;
-            drawTiledBlock(imgBrick, px, p.y, p.w, p.h);
-        }
-
-        for (let trap of deadlyTraps) {
-            let tx = trap.x - cameraX;
-            if (trap.active) {
-                ctx.fillStyle = '#bdc3c7';
-                ctx.beginPath();
-                ctx.moveTo(tx, trap.y);
-                ctx.lineTo(tx + trap.w / 2, trap.y - trap.h);
-                ctx.lineTo(tx + trap.w, trap.y);
-                ctx.fill();
-            }
-        }
-
-        for (let b of rewardBlocks) {
-            let bx = b.x - cameraX;
-            let drawY = b.y + b.popY;
-
-            if (b.used) {
-                ctx.fillStyle = '#7f8c8d';
-                ctx.fillRect(bx, drawY, b.w, b.h);
-                ctx.strokeStyle = '#2c3e50';
-                ctx.strokeRect(bx, drawY, b.w, b.h);
-            } else {
-                drawTiledBlock(imgBlock, bx, drawY, b.w, b.h);
-            }
-        }
-
-        for (let e of enemies) {
-            let ex = e.x - cameraX;
-            drawBug(ex, e.y, e.w, e.h, e.isTroll);
-        }
-
-        drawPlayer();
-
-        for (let p of particles) {
-            ctx.fillStyle = `rgba(241, 196, 15, ${p.life})`;
-            ctx.font = "bold 16px 'Rajdhani', sans-serif";
-            ctx.fillText(p.text, p.x, p.y);
+            scene.sound.play(key, { volume: 0.5 });
         }
     }
 
     function updateUI() {
         const el = document.getElementById('super-espo-score-ui');
-        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
-        const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.superespo) ? gs.arcadeHighScores.superespo : 0;
-
         if (el) {
-            el.innerHTML = `
-                <span class="stat">SCORE: <span class="val-score">${gameScore}</span></span>
-                <span class="stat">RECORD: <span class="val-record">${Math.max(gameScore, highScore)}</span></span>
-            `;
+            const levelEl = el.querySelector('.val-level');
+            const scoreEl = el.querySelector('.val-score');
+            if (levelEl) levelEl.innerText = currentLevel;
+            if (scoreEl) scoreEl.innerText = currentScore;
         }
     }
 
     function die() {
-        if (!isRunning) return;
-        isRunning = false;
-        cancelAnimationFrame(gameInterval);
-        if (window.EspooClicker) window.EspooClicker.playSound('sound-error');
+        if (player.isDead) return;
+        player.isDead = true;
+        
+        player.setTint(0xff0000);
+        player.setVelocityX(0);
+        player.setVelocityY(-400); 
+        player.setCollideWorldBounds(false); 
+        player.body.checkCollision.none = true; 
+        
+        enemies.getChildren().forEach(e => e.setVelocityX(0)); 
 
-        let reward = new Decimal(0);
-        if (typeof bps !== 'undefined') {
-            const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-            reward = bpsVal.mul(gameScore).mul(0.02);
+        playSoundEffect(this, 'snd-gameover');
+
+        let reward = 0;
+        if (typeof window.Decimal !== 'undefined' && typeof window.bps !== 'undefined' && typeof window.bps.gt === 'function') {
+            const bpsVal = window.bps.gt(0) ? window.bps : new window.Decimal(1);
+            let multiplier = new window.Decimal(0.05).mul(currentLevel); 
+            reward = bpsVal.mul(currentScore).mul(multiplier).floor();
         }
 
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
-
-            if (gameScore > 0) {
+            let hasReward = typeof reward.gt === 'function' ? reward.gt(0) : reward > 0;
+            
+            if (currentScore > 0 && hasReward) {
                 gs.score = gs.score.add(reward);
-                window.EspooClicker.showToast(`💥 SCHIACCIATO! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
+                window.EspooClicker.showToast(`🔥 RUN COMPLETATA! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
             }
-
             if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
-            if (gameScore > (gs.arcadeHighScores.superespo || 0)) {
-                gs.arcadeHighScores.superespo = gameScore;
-                window.EspooClicker.showToast(`🏆 RECORD SUPER ESPÒ: ${gameScore}!`, 'achievement');
+            if (currentScore > (gs.arcadeHighScores.superespo || 0)) {
+                gs.arcadeHighScores.superespo = currentScore;
+                window.EspooClicker.showToast(`🏆 NUOVO RECORD: ${currentScore}!`, 'achievement');
             }
-
             window.EspooClicker.saveGame();
-            if (typeof updateUI === 'function') window.updateUI();
+            window.updateUI?.();
         }
 
-        const overlay = document.getElementById('super-espo-overlay');
-        overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div style="color:#e74c3c; font-size:2rem; font-weight:900; margin-bottom:10px; font-family:'Rajdhani';">SEI MORTO.</div>
-            <div style="color:#fff; margin-bottom:20px;">Score: <span style="color:#f1c40f">${gameScore}</span></div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button class="arcade-btn secondary" onclick="window.exitSuperEspoGame()">MENU</button>
-                <button class="arcade-btn" onclick="window.startSuperEspoRun()" style="background:#9b59b6; color:#fff; border-color:#8e44ad;">RIPROVA</button>
-            </div>
-        `;
-    }
-
-    function drawStaticScreen() {
-        ctx.fillStyle = '#5c94fc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawTiledBlock(imgBrick, 0, 300, 800, 100);
-
-        if (imgStop.complete && imgStop.naturalWidth !== 0) {
-            ctx.drawImage(imgStop, 100, 268, 32, 32);
-        }
+        setTimeout(() => {
+            const overlay = document.getElementById('super-espo-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div class="super-espo-dead-title">GAME OVER</div>
+                    <div style="color:#fff; margin-bottom:10px;">Score: <span style="color:#f1c40f">${currentScore}</span></div>
+                    <div style="color:#bdc3c7; font-size:1.2rem; margin-bottom:20px;">Loop: <span style="color:#e74c3c; font-weight:bold;">${currentLevel}</span></div>
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button class="arcade-btn secondary" onclick="window.exitSuperEspoGame()">MENU</button>
+                        <button class="arcade-btn" onclick="window.startSuperEspoRun()" style="background:#9b59b6; color:#fff; border-color:#8e44ad;">RIPROVA</button>
+                    </div>
+                `;
+            }
+        }, 1800); 
     }
 
 })();
