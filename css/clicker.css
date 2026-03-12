@@ -301,8 +301,25 @@ body #version-display {
     font-weight: bold;
     color: rgba(255, 255, 255, 0.25);
     text-shadow: 1px 1px 2px #000;
-    pointer-events: none;
     white-space: nowrap;
+}
+body #version-display {
+    transition: all 0.2s ease-in-out;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: auto; /* Sovrascrive il none di base */
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+body #version-display:hover {
+    background: rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.4);
+    color: #3498db;
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.2);
 }
 
 /* --- EFFETTO GLITCH 404 --- */

@@ -114,6 +114,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Aggiungi il riferimento
     const openArcadeBtn = document.getElementById('open-arcade-btn');
     const arcadeModal = document.getElementById('arcade-modal');
+    
+    const versionDisplayBtn = document.getElementById('version-display');
+
+    if (versionDisplayBtn) {
+    versionDisplayBtn.style.pointerEvents = 'auto'; // Abilita i click
+    versionDisplayBtn.style.cursor = 'pointer';
+    versionDisplayBtn.title = "Leggi le novità dell'aggiornamento";
+    
+    versionDisplayBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if (Game && Game.openReleaseNotes) Game.openReleaseNotes();
+    });
+}
 
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
@@ -1014,6 +1027,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.tryStartAudio();
 
                 Game.showToast(gameData.texts.toasts.welcome + " " + u);
+                if (window.shouldShowReleaseNotesOnLoad) {
+                    setTimeout(() => {
+                        if (Game.openReleaseNotes) Game.openReleaseNotes();
+                    }, 500); // Attende la chiusura del modale di login
+                }
             } else {
                 alert(data.message);
             }

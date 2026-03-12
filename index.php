@@ -244,6 +244,7 @@ require_once("php/check_version.php");
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
 
 		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>

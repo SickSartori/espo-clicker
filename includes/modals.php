@@ -403,3 +403,17 @@
             </div>
     </div>
 </div>
+
+<div id="release-notes-modal" class="modal-backdrop" style="display: none; z-index: 2500;">
+    <div class="modal-content" style="max-width: 700px; border-top: 4px solid #f1c40f;">
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background: #1a1a1a; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3);">
+            <i class="fa-solid fa-bullhorn"></i> Novità dell'Aggiornamento
+        </h2>
+        <div class="settings-content" id="release-notes-content" style="padding: 20px 30px; font-family: 'Inter', sans-serif;">
+            <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br>Caricamento novità...
+            </div>
+        </div>
+    </div>
+</div>

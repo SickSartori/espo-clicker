@@ -876,3 +876,75 @@
     padding: 15px;
     width: 100%;
 }
+
+/* --- STILI MARKDOWN PER RELEASE NOTES --- */
+#release-notes-content h1 {
+    color: #f1c40f;
+    font-size: 1.6rem;
+    border-bottom: 1px solid rgba(241, 196, 15, 0.3);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#release-notes-content h2 {
+    background: transparent;
+    padding: 0;
+    font-size: 1.3rem;
+    color: #3498db;
+    text-align: left;
+    border: none;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+#release-notes-content h3 {
+    color: #2ecc71;
+    font-size: 1.1rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#release-notes-content p {
+    color: #bdc3c7;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+}
+
+#release-notes-content ul {
+    color: #bdc3c7;
+    padding-left: 20px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+#release-notes-content li {
+    margin-bottom: 8px;
+}
+
+#release-notes-content strong {
+    color: #fff;
+}
+
+#release-notes-content hr {
+    border: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 25px 0;
+}
+
+/* Hover e transizione per il pulsante Versione in basso */
+#version-display {
+    transition: all 0.2s ease-in-out;
+    padding: 5px 15px;
+    border-radius: 20px;
+    background: transparent;
+}
+
+#version-display:hover {
+    color: #3498db !important;
+    opacity: 1 !important;
+    background: rgba(52, 152, 219, 0.1);
+    transform: translateX(-50%) scale(1.05);
+}

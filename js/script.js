@@ -355,6 +355,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error("Impossibile parsare il salvataggio.");
                     }
                 }
+                if (parsedState && parsedState.version && window.GAME_VERSION) {
+                    const oldMajor = parsedState.version.major || 0;
+                    const oldMinor = parsedState.version.minor || 0;
+                    const currMajor = window.GAME_VERSION.major;
+                    const currMinor = window.GAME_VERSION.minor;
+
+                    if (oldMajor < currMajor || (oldMajor === currMajor && oldMinor < currMinor)) {
+                        window.shouldShowReleaseNotesOnLoad = true;
+                    }
+                }
 
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
@@ -1036,6 +1046,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (hasSession) {
                         window.EspooClicker.tryStartAudio();
                         startGameRoutines();
+                        
+                        // Apri le patch notes se è un nuovo aggiornamento (ritardo per far sparire il loader)
+                        if (window.shouldShowReleaseNotesOnLoad) {
+                            setTimeout(() => {
+                                if (window.EspooClicker.openReleaseNotes) window.EspooClicker.openReleaseNotes();
+                            }, 800);
+                        }
                     }
 
                 }, 500);
@@ -1401,9 +1418,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const vDisplay = document.getElementById('version-display');
 
         if (vDisplay && window.GAME_VERSION) {
-            vDisplay.textContent = window.GAME_VERSION.toString();
+            vDisplay.innerHTML = `<i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i>Novità ${window.GAME_VERSION.toString()}`;
+            
             if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12';
             if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
+            
+            // Abilitiamo i click direttamente tramite stile inline
+            vDisplay.style.pointerEvents = 'auto';
+            vDisplay.style.cursor = 'pointer';
         }
     }
 
@@ -1420,6 +1442,48 @@ document.addEventListener('DOMContentLoaded', () => {
         getPassword: () => currentUserPassword,
         setSaveToken: (token) => { currentSaveToken = token; },
 
+        openReleaseNotes: async () => {
+        const modal = document.getElementById('release-notes-modal');
+        const content = document.getElementById('release-notes-content');
+        if (!modal || !content) return;
+
+        // 1. Mostra il modale e avvia l'animazione di entrata (ripristinando l'opacità)
+        modal.style.display = 'flex';
+        
+        const modalContent = modal.querySelector('.modal-content');
+        if (typeof gsap !== 'undefined' && modalContent) {
+            gsap.fromTo(modalContent,
+                { scale: 0.8, opacity: 0, y: 20 },
+                { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+            );
+            gsap.to(modal, { opacity: 1, duration: 0.3 });
+        } else {
+            modal.style.opacity = 1;
+            if (modalContent) {
+                modalContent.style.opacity = 1;
+                modalContent.style.transform = 'none';
+            }
+        }
+
+        document.body.classList.add('modal-open');
+
+        // 2. Carica e formatta il Markdown
+        try {
+            const response = await fetch('release-notes.md?v=' + Date.now());
+            if (!response.ok) throw new Error("File non trovato");
+            const mdText = await response.text();
+
+            if (typeof marked !== 'undefined') {
+                content.innerHTML = marked.parse(mdText);
+            } else {
+                content.innerHTML = `<pre style="white-space: pre-wrap;">${mdText}</pre>`;
+            }
+            
+            window.shouldShowReleaseNotesOnLoad = false; 
+        } catch (e) {
+            content.innerHTML = '<p style="color: #e74c3c; text-align: center;">Impossibile caricare le novità.</p>';
+        }
+    },
         tryStartAudio: () => {
             // 1. Controllo Sessione
             if (!sessionStorage.getItem('espooUser')) {
@@ -1433,6 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 AudioManager.updateAmbience();
             }
         },
+
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
             document.querySelectorAll('audio').forEach(audio => {
@@ -1601,7 +1666,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Errore parsing cloud", e);
                 }
             }
-        }
+        },
     };
 
     let originalTitle = document.title;
