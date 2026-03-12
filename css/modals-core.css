@@ -117,18 +117,19 @@ body > #login-modal #login-btn:hover {
     position: absolute;
     top: 15px;
     right: 20px;
-    font-size: 2rem;
+    font-size: 2.7rem;
     color: #7f8c8d;
     background: none;
     border: none;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, transform 0.2s;
     line-height: 1;
     z-index: 10;
 }
 
 .modal-close-btn:hover {
     color: #fff;
+    transform: scale(1.1);
 }
 
 .vol-value {

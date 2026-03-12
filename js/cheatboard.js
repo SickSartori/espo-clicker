@@ -89,7 +89,7 @@
         #cheatboard-close { 
             cursor: pointer; 
             color: #ff4757; 
-            font-size: 1.4rem; 
+            font-size: 1.8rem; 
             padding: 5px; 
             transition: transform 0.2s; 
         }
