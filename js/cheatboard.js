@@ -321,6 +321,7 @@
                      <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
+                    <button id="btn-force-v2" class="cheat-btn quantum" style="border: 1px solid #9b59b6; color: #9b59b6;" title="Simula la migrazione V1->V2 per testare il riallineamento"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2.0</button>
                     <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
                 </div>
             </div>
@@ -692,6 +693,33 @@
             localStorage.removeItem('espotoolClickerSaveV8');
             location.reload();
         }
+    });
+
+    // --- Test Migrazione V2 ---
+    document.getElementById('btn-force-v2').addEventListener('click', () => {
+        if (!confirm("⚠️ SIMULARE MIGRAZIONE V2? Creerà un falso salvataggio V1 e ricaricherà la pagina per testare il flusso di benvenuto.")) return;
+
+        // 1. Crea un falso stato V1 (molti punti, nessuna formattazione, versione vecchia)
+        const fakeV1State = {
+            version: { major: 1, minor: 4, stage: 'stable' },
+            user: { username: gameState.user.username },
+            skins: { unlocked: gameState.skins.unlocked, current: gameState.skins.current },
+            score: "1000000000000000",
+            totalScore: "1000000000000000",
+            lifetimeScore: "1000000000000000",
+            totalClicks: 50000,
+            // Mancano volutamente QBits e formattazioni
+        };
+
+        // 2. Comprime e sovrascrive il salvataggio locale
+        const compressed = LZString.compressToUTF16(JSON.stringify(fakeV1State));
+        localStorage.setItem('espotoolClickerSaveV8', compressed);
+        
+        // 3. Impedisce al gioco di salvare lo stato attuale sopra quello falso durante la chiusura
+        gameState.isDeleting = true; 
+        
+        // 4. Ricarica la pagina per innescare il flusso di caricamento
+        location.reload();
     });
 
 })();

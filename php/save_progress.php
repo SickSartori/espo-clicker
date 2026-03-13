@@ -42,13 +42,17 @@ if (!hash_equals($serverHash, $clientHash)) {
 }
 
 // --- CONTROLLO ANTI-ROLLBACK ---
-$stmtCheck = $conn->prepare("SELECT score FROM $table_leaderboard WHERE username = ?");
+$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni FROM $table_leaderboard WHERE username = ?");
 $stmtCheck->bind_param("s", $user['username']);
 $stmtCheck->execute();
 $resCheck = $stmtCheck->get_result();
+
 $currentDbScore = "0";
+$currentDbFormat = 0;
+
 if ($row = $resCheck->fetch_assoc()) {
     $currentDbScore = $row['score'];
+    $currentDbFormat = (int)$row['totalFormattazioni'];
 }
 $stmtCheck->close();
 
@@ -63,8 +67,14 @@ function isNewScoreHigher($new, $old) {
     return strcmp($new, $old) >= 0;
 }
 
-if (!isNewScoreHigher($rawScore, $currentDbScore)) {
-    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer. Please reload."]);
+// LOGICA V2: Se il client ha PIÙ formattazioni del DB, è un NG+ valido (ignora lo score)
+if ($rawFormattazioni < $currentDbFormat) {
+    // Il client sta provando a ricaricare un salvataggio vecchio pre-formattazione
+    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Format). Please reload."]);
+    exit;
+} else if ($rawFormattazioni == $currentDbFormat && !isNewScoreHigher($rawScore, $currentDbScore)) {
+    // Stessa run, ma score più basso (Rollback classico)
+    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Score). Please reload."]);
     exit;
 }
 

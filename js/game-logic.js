@@ -191,7 +191,6 @@ function reapplyAllEffects() {
     for (const key in gameState.clickUpgrades) {
         if (gameState.clickUpgrades[key].purchased) {
             const data = gameData.clickUpgrades[key];
-            // Controllo anti-crash
             if (data && data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
         }
     }
@@ -201,11 +200,23 @@ function reapplyAllEffects() {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
 
-        // CONTROLLO ANTI-CRASH (Ignora i vecchi salvataggi rimossi)
         if (!data) continue;
 
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
             if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
+        }
+    }
+
+    // Super Upgrades (Q-Lab)
+    if (gameState.superUpgrades) {
+        for (const key in gameState.superUpgrades) {
+            const state = gameState.superUpgrades[key];
+            const data = gameData.superUpgrades[key];
+            if (!data) continue;
+            
+            if (state.purchased && data.effects) {
+                data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+            }
         }
     }
 }
@@ -1190,14 +1201,20 @@ function openPrestigeContract() {
         return;
     }
 
+    // Applica visivamente il bonus del Replicatore di Token
+    let finalGained = gained;
+    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+        finalGained = finalGained.mul(1.20).floor(); // +20% Token
+    }
+
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
 
-    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
+    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(finalGained)}`;
 
     // Calcoli per la preview
     let currentLifetime = gameState.lifetimePrestigePoints || new Decimal(0);
-    let estimatedLifetime = currentLifetime.add(gained);
+    let estimatedLifetime = currentLifetime.add(finalGained);
 
     // Calcolo Bonus
     let baseBonus = estimatedLifetime.mul(0.01);
@@ -1270,6 +1287,11 @@ async function executePrestige() {
     let gained = new Decimal(0);
     if (typeof calculatePrestigeGained === 'function') {
         gained = calculatePrestigeGained();
+    }
+
+    // Applica realmente il bonus del Replicatore di Token
+    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+        gained = gained.mul(1.20).floor(); // +20% Token
     }
 
     let newPrestigePoints = gameState.prestigePoints.add(gained);

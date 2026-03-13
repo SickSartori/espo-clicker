@@ -345,16 +345,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Fallback: Se la decompressione fallisce, prova a leggere come JSON puro (Legacy)
+// Fallback: Se la decompressione fallisce, prova a leggere come JSON puro (Legacy)
                 if (!parsedState) {
                     try {
                         parsedState = JSON.parse(savedState);
-                        // console.log("💾 Salvataggio legacy (non compresso) caricato.");
                     }
                     catch (e) {
                         throw new Error("Impossibile parsare il salvataggio.");
                     }
                 }
+
+                // 1. PRIMA COSA: Salviamo il flag per le Release Notes
+                let showRN = false;
                 if (parsedState && parsedState.version && window.GAME_VERSION) {
                     const oldMajor = parsedState.version.major || 0;
                     const oldMinor = parsedState.version.minor || 0;
@@ -362,8 +364,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currMinor = window.GAME_VERSION.minor;
 
                     if (oldMajor < currMajor || (oldMajor === currMajor && oldMinor < currMinor)) {
-                        window.shouldShowReleaseNotesOnLoad = true;
+                        showRN = true;
                     }
+                }
+
+                // ========================================================
+                // 2. MIGRAZIONE V1 -> V2 (RIALLINEAMENTO GLOBALE)
+                // ========================================================
+                window.triggerV2MigrationModal = false; // Flag globale per il modale
+                const saveMajor = (parsedState.version && parsedState.version.major) ? parsedState.version.major : 1;
+                const gameMajor = window.GAME_VERSION.major;
+
+                // Identifica un veterano (versione vecchia E score elevato)
+                let isVeteran = false;
+                try { if (parsedState.totalScore && new Decimal(parsedState.totalScore).gt(10000)) isVeteran = true; } catch(e){}
+
+                if (saveMajor < 2 && gameMajor >= 2 && isVeteran) {
+                    console.log("Migrazione V1 -> V2 rilevata! Eseguo riallineamento...");
+
+                    // A. Salva le uniche cose che vogliamo mantenere
+                    const savedSkins = parsedState.skins ? parsedState.skins.unlocked : ['default'];
+                    const currentSkin = parsedState.skins ? parsedState.skins.current : 'default';
+                    const username = (parsedState.user && parsedState.user.username) ? parsedState.user.username : 'Giocatore';
+                    const masterVol = (parsedState.user && parsedState.user.masterVolume !== undefined) ? parsedState.user.masterVolume : 0.8;
+
+                    // B. Genera uno stato completamente pulito
+                    let newState = getInitialGameState();
+
+                    // C. Inietta i dati salvati
+                    newState.skins.unlocked = savedSkins;
+                    newState.skins.current = currentSkin;
+                    newState.user.username = username;
+                    newState.user.masterVolume = masterVol;
+
+                    // D. PREMIO VETERANO: 1 Formattazione e 1 Q-Bit
+                    newState.totalFormattazioni = 1;
+                    newState.qBits = new Decimal(1);
+                    newState.lifetimeQBits = new Decimal(1);
+
+                    // E. Aggiorna la versione
+                    if (window.GAME_VERSION) {
+                        newState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
+                    }
+
+                    // Sostituisci l'oggetto parsato
+                    parsedState = newState;
+                    window.triggerV2MigrationModal = true;
+                }
+                // ========================================================
+
+                // Imposta la variabile per le RN in modo coerente per tutto il gioco
+                if (showRN) {
+                    window.shouldShowReleaseNotesOnLoad = true;
                 }
 
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
@@ -589,6 +641,44 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
 
         if (bps.lt(0)) bps = new Decimal(0);
+        // --- POPUP DI MIGRAZIONE V2 ---
+        if (typeof triggerV2MigrationModal !== 'undefined' && triggerV2MigrationModal) {
+            setTimeout(() => {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '🌌 BENVENUTO NELLA V2.0 🌌',
+                        html: `
+                            <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
+                                Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
+                                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica per i veterani, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
+                                <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                                    <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
+                                    Il tuo guardaroba è intatto.
+                                </div>
+                                <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
+                                    <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
+                                    Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto per te!
+                                </div>
+                            </div>
+                        `,
+                        icon: 'info',
+                        background: '#151b22',
+                        color: '#fff',
+                        confirmButtonColor: '#9b59b6',
+                        confirmButtonText: '<i class="fa-solid fa-meteor"></i> INIZIA UNA NUOVA ERA',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+                } else {
+                    alert("Benvenuto nella V2.0! Abbiamo riallineato i server. Le tue skin sono salve e hai ottenuto 1 Formattazione bonus!");
+                }
+                
+                // Forza subito il salvataggio in Cloud con il nuovo punteggio riallineato
+                if (window.EspooClicker) window.EspooClicker.saveGame();
+                if (typeof updateUI === 'function') updateUI();
+                
+            }, 1000); // Piccolo ritardo per far chiudere il loader iniziale
+        }
     }
 
     function deepMerge(target, source) {
@@ -1047,8 +1137,46 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.EspooClicker.tryStartAudio();
                         startGameRoutines();
                         
-                        // Apri le patch notes se è un nuovo aggiornamento (ritardo per far sparire il loader)
-                        if (window.shouldShowReleaseNotesOnLoad) {
+                        // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
+                        if (window.triggerV2MigrationModal) {
+                            // 1. Mostra il benvenuto V2
+                            setTimeout(() => {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        title: '🌌 BENVENUTO NELLA V2.0 🌌',
+                                        html: `
+                                            <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
+                                                Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
+                                                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
+                                                <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                                                    <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
+                                                    Il tuo guardaroba è intatto.
+                                                </div>
+                                                <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
+                                                    <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
+                                                    Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
+                                                </div>
+                                            </div>
+                                        `,
+                                        icon: 'info',
+                                        background: '#151b22',
+                                        color: '#fff',
+                                        confirmButtonColor: '#9b59b6',
+                                        confirmButtonText: '<i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ',
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false
+                                    }).then(() => {
+                                        // 2. Quando chiude il benvenuto, apri le Release Notes
+                                        if (window.shouldShowReleaseNotesOnLoad && window.EspooClicker.openReleaseNotes) {
+                                            window.EspooClicker.openReleaseNotes();
+                                        }
+                                    });
+                                }
+                                // Salva il reset in Cloud
+                                if (window.EspooClicker) window.EspooClicker.saveGame();
+                            }, 800);
+                        } else if (window.shouldShowReleaseNotesOnLoad) {
+                            // Mostra solo le RN se non c'è stata la migrazione
                             setTimeout(() => {
                                 if (window.EspooClicker.openReleaseNotes) window.EspooClicker.openReleaseNotes();
                             }, 800);
