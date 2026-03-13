@@ -549,16 +549,36 @@ window.gameData.buildingEnhancements = {
     }
 };
 window.gameData.superUpgrades = {
+    risveglio: {
+        name: 'Risveglio Quantico',
+        desc: 'La consapevolezza del multiverso raddoppia (x2) la potenza base di tutti i tuoi click per sempre.',
+        cost: new Decimal(1),
+        isCounted: false,
+        effects: [{ trigger: 'passive', type: 'mult_global', stat: 'clickGlobalMult', val: new Decimal(2) }]
+    },
     fastStart: {
         name: 'Avvio Rapido',
         desc: 'Inizia ogni Universo con +1 Milione di Bug e 5 Assistenti QA.',
         cost: new Decimal(2),
         isCounted: false
     },
+    goldenAura: {
+        name: 'Aura Dorata',
+        desc: 'La risonanza quantica fa sì che i Ticket Critici (Golden Bug) contengano il triplo (x3) dei Bug.',
+        cost: new Decimal(3),
+        isCounted: false,
+        effects: [{ trigger: 'passive', type: 'mult_global', stat: 'goldenBugMult', val: new Decimal(3) }]
+    },
     qDiscount: {
         name: 'Compressione Dati',
         desc: 'Tutti gli upgrade del Laboratorio costano il 15% in meno.',
         cost: new Decimal(5),
+        isCounted: false
+    },
+    tokenDuplicator: {
+        name: 'Replicatore di Token',
+        desc: 'La macchina estrae un 20% extra di Token Lab ad ogni Promozione.',
+        cost: new Decimal(7),
         isCounted: false
     },
     keepTeams: {
