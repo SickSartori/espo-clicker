@@ -1156,20 +1156,18 @@ function resolveBug(event) {
     // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
     const btn = document.getElementById('clicker-btn');
     if (btn) {
-        // Rimuoviamo subito le classi per "spezzare" lo stato attuale
-        btn.classList.remove('click-shrink', 'clicked');
-
-        // Il trucco magico: forza il browser a ridisegnare l'elemento immediatamente
-        void btn.offsetWidth;
-
-        // Applichiamo le classi per lo schiacciamento e il cambio volto
+        // Aggiungiamo le classi per lo schiacciamento e il volto
         btn.classList.add('click-shrink', 'clicked');
 
-        // Timer abbassato a 50ms (allineato ai 0.05s del CSS) per consentire
-        // all'immagine di riprendersi anche durante un tapping frenetico
-        setTimeout(() => {
+        // Se l'utente clicca a raffica, cancelliamo il reset precedente per non farlo scattare
+        if (window.clickAnimTimer) {
+            clearTimeout(window.clickAnimTimer);
+        }
+
+        // Timer di 100ms: se l'utente smette di cliccare per 1/10 di secondo, il bottone si rialza
+        window.clickAnimTimer = setTimeout(() => {
             btn.classList.remove('click-shrink', 'clicked');
-        }, 50);
+        }, 100); 
     }
 
     if (typeof updateClickStore === 'function') updateClickStore();

@@ -118,36 +118,31 @@
 
     function preload() {
         const basePath = 'arcade/super-espo/assets/';
+        const v = '?v=' + Date.now();
 
-        this.load.spritesheet('super-espo', basePath + 'espo-grown.png', { 
-            frameWidth: 250,
-            frameHeight: 424 
-        });
-        
-        this.load.image('floorbricks', basePath + 'floorbricks.png');
-        this.load.image('emptyBlock', basePath + 'emptyBlock.png');
-        this.load.spritesheet('misteryBlock', basePath + 'misteryBlock.png', { frameWidth: 16, frameHeight: 16 });
-        this.load.spritesheet('goomba', basePath + 'goomba.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('super-espo', basePath + 'espo-grown.png' + v, { frameWidth: 250, frameHeight: 424 });
+        this.load.image('floorbricks', basePath + 'floorbricks.png' + v);
+        this.load.image('emptyBlock', basePath + 'emptyBlock.png' + v);
+        this.load.spritesheet('misteryBlock', basePath + 'misteryBlock.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('goomba', basePath + 'goomba.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('bush1', basePath + 'bush1.png' + v);
+        this.load.image('bush2', basePath + 'bush2.png' + v);
+        this.load.image('mountain1', basePath + 'mountain1.png' + v);
+        this.load.image('mountain2', basePath + 'mountain2.png' + v);
+        this.load.image('cloud1', basePath + 'cloud1.png' + v);
+        this.load.image('cloud2', basePath + 'cloud2.png' + v);
+        this.load.image('fence', basePath + 'fence.png' + v);
+        this.load.spritesheet('coin', basePath + 'coin.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('pipe-small', basePath + 'vertical-small-tube.png' + v);
+        this.load.image('pipe-medium', basePath + 'vertical-medium-tube.png' + v);
 
-        this.load.image('bush1', basePath + 'bush1.png');
-        this.load.image('bush2', basePath + 'bush2.png');
-        this.load.image('mountain1', basePath + 'mountain1.png');
-        this.load.image('mountain2', basePath + 'mountain2.png');
-        this.load.image('cloud1', basePath + 'cloud1.png');
-        this.load.image('cloud2', basePath + 'cloud2.png');
-        this.load.image('fence', basePath + 'fence.png');
-        this.load.spritesheet('coin', basePath + 'coin.png', { frameWidth: 16, frameHeight: 16 });
-        this.load.image('pipe-small', basePath + 'vertical-small-tube.png');
-        this.load.image('pipe-medium', basePath + 'vertical-medium-tube.png');
-
-        this.load.audio('snd-jump', basePath + 'jump.wav');
-        this.load.audio('snd-gameover', basePath + 'gameover.mp3');
-        this.load.audio('snd-coin', basePath + 'coin.mp3');
-        this.load.audio('snd-stomp', basePath + 'goomba-stomp.wav');
+        this.load.audio('snd-jump', basePath + 'jump.wav' + v);
+        this.load.audio('snd-gameover', basePath + 'gameover.mp3' + v);
+        this.load.audio('snd-coin', basePath + 'coin.mp3' + v);
+        this.load.audio('snd-stomp', basePath + 'goomba-stomp.wav' + v);
     }
 
     function create() {
-        // Estensione del mondo per generazione infinita
         this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1000);
         this.physics.world.checkCollision.down = false; 
 
@@ -235,7 +230,6 @@
 
         updateUI();
 
-        // FIX: Impedisce di tornare troppo indietro spostando i limiti del mondo con la camera
         this.physics.world.bounds.left = this.cameras.main.scrollX;
         if (player.x < this.cameras.main.scrollX) {
             player.x = this.cameras.main.scrollX;
@@ -251,7 +245,6 @@
 
         let isGrounded = player.body.blocked.down || player.body.touching.down || player.body.onFloor();
 
-        // Difficoltà Esponenziale: la velocità aumenta più rapidamente con i loop
         let moveSpeed = 220 + (Math.pow(currentLevel, 1.3) * 8); 
         let currentVel = 0; 
 
@@ -286,7 +279,6 @@
             spawnChunkImproved(this);
         }
 
-        // Morte per caduta basata sui limiti dinamici
         if (player.y > 450) die.call(this);
 
         bgMountains.getChildren().forEach(mt => {
@@ -314,20 +306,24 @@
     }
 
     function spawnChunkImproved(scene) {
-        // Gap che aumenta col livello per aumentare la difficoltà dei salti
         const gapMin = 40 + (currentLevel * 5);
-        const gapMax = Math.min(220, 80 + (currentLevel * 15));
+        const gapMax = Math.min(260, 100 + (currentLevel * 18));
         const gap = Phaser.Math.Between(gapMin, gapMax);
 
-        const widthMin = Math.max(160, 320 - currentLevel * 12);
-        const widthMax = Math.max(220, 480 - currentLevel * 10);
-        const width = Phaser.Math.Between(widthMin, widthMax);
+        const chunkType = Phaser.Math.Between(1, 10); 
+        
+        let widthMin = Math.max(160, 320 - currentLevel * 12);
+        let widthMax = Math.max(220, 480 - currentLevel * 10);
+        let width = Phaser.Math.Between(widthMin, widthMax);
+        
+        const tiers = [380, 350, 320, 290, 260]; 
+        let platformTop = Phaser.Utils.Array.GetRandom(tiers);
 
-        // FIX: Tiers abbassati per non uscire mai dal canvas
-        const tiers = [360, 330, 300]; 
-        const platformTop = Phaser.Utils.Array.GetRandom(tiers);
+        if (chunkType <= 2) {
+            width = Phaser.Math.Between(80, 150);
+        }
+
         const newX = lastChunkX + gap + width / 2;
-
         const platHeight = 500 - platformTop;
         const platCenterY = platformTop + (platHeight / 2);
 
@@ -341,20 +337,34 @@
         let rightB = scene.add.rectangle(newX + width/2, platformTop - 32, 2, 64, 0x000000, 0);
         scene.physics.add.existing(rightB, true); enemyBlockers.add(rightB);
 
-        // LOGICA SCENARIO PULITO: impedisce sovrapposizioni
+        // FIX: Aggiunta variabile per monitorare la presenza di una piattaforma sospesa
+        let isFloating = false;
+
+        if (chunkType >= 8 && width > 250) {
+            isFloating = true;
+            const floatWidth = Phaser.Math.Between(100, width - 60);
+            const floatTop = platformTop - Phaser.Math.Between(100, 140);
+            const floatPlat = scene.add.tileSprite(newX, floatTop + 16, floatWidth, 32, 'floorbricks');
+            floatPlat.tileScaleX = 2; floatPlat.tileScaleY = 2;
+            scene.physics.add.existing(floatPlat, true);
+            platforms.add(floatPlat);
+
+            if (Math.random() > 0.3) spawnCoinsList(scene, newX, floatTop - 40, Phaser.Math.Between(2, 4));
+        }
+
         let hasObstacle = false;
         let randObstacle = Math.random();
         
-        // Ostacoli fisici (Tubi o blocchi vuoti)
-        if (width > 200 && randObstacle > 0.6) {
+        if (width > 200 && randObstacle > 0.5 && chunkType < 8) {
             hasObstacle = true;
-            const obstacleKey = Math.random() > 0.5 ? 'pipe-small' : 'emptyBlock';
+            const obstacles = ['pipe-small', 'pipe-medium', 'emptyBlock'];
+            const obstacleKey = Phaser.Utils.Array.GetRandom(obstacles);
             const obj = platforms.create(newX, platformTop, obstacleKey).setScale(1.5).setOrigin(0.5, 1);
             obj.refreshBody();
         }
 
-        // Se non c'è un ostacolo centrale, genera monete o blocchi misteriosi
-        if (!hasObstacle) {
+        // FIX: Condizione `!isFloating` aggiunta per evitare il posizionamento di blocchi nei mattoni sospesi
+        if (!hasObstacle && !isFloating) {
             if (Math.random() > 0.4) {
                 const numBlocks = Phaser.Math.Between(1, 3);
                 const blockHeight = platformTop - 120; 
@@ -365,29 +375,36 @@
                     b.used = false;
                 }
             } else if (Math.random() > 0.4) {
-                const numCoins = Phaser.Math.Between(2, 4);
-                let coinBaseY = platformTop - 40;
-                for (let i=0; i < numCoins; i++) {
-                    const cx = newX - ((numCoins-1)*16) + (i * 32);
-                    let coin = coins.create(cx, coinBaseY, 'coin').setScale(1.5);
-                    coin.anims.play('coin-spin', true); 
-                    scene.tweens.add({ targets: coin, y: coin.y - 8, yoyo: true, repeat: -1, duration: 800 });
-                }
+                spawnCoinsList(scene, newX, platformTop - 40, Phaser.Math.Between(2, 4));
             }
         }
 
-        // Nemici con velocità scalabile
-        const enemyChance = Math.min(0.85, 0.3 + currentLevel * 0.06);
+        const enemyChance = Math.min(0.9, 0.4 + currentLevel * 0.08);
         if (Math.random() < enemyChance) {
-            const ex = newX + (Math.random() > 0.5 ? width/4 : -width/4);
-            const enemy = enemies.create(ex, platformTop - 16, 'goomba').setScale(2);
-            enemy.setBounceX(1);
-            let eSpeed = Phaser.Math.Between(-60, -120) - (currentLevel * 5);
-            enemy.setVelocityX(eSpeed);
-            enemy.anims.play('goomba-walk', true);
+            spawnEnemy(newX + (Math.random() > 0.5 ? width/4 : -width/4), platformTop - 16);
+            if (width > 350 && Math.random() > 0.5) {
+                spawnEnemy(newX - width/3, platformTop - 16);
+            }
         }
 
         lastChunkX += gap + width;
+    }
+
+    function spawnCoinsList(scene, centerX, yPos, numCoins) {
+        for (let i = 0; i < numCoins; i++) {
+            const cx = centerX - ((numCoins-1)*16) + (i * 32);
+            let coin = coins.create(cx, yPos, 'coin').setScale(1.5);
+            coin.anims.play('coin-spin', true); 
+            scene.tweens.add({ targets: coin, y: coin.y - 8, yoyo: true, repeat: -1, duration: 800 });
+        }
+    }
+
+    function spawnEnemy(x, y) {
+        const enemy = enemies.create(x, y, 'goomba').setScale(2);
+        enemy.setBounceX(1);
+        let eSpeed = Phaser.Math.Between(-60, -120) - (currentLevel * 6);
+        enemy.setVelocityX(eSpeed);
+        enemy.anims.play('goomba-walk', true);
     }
 
     function showLevelUp(scene, level) {
@@ -416,19 +433,22 @@
     }
 
     function hitEnemy(player, enemy) {
-    if (player.body.velocity.y > 0 && player.body.touching.down) {
-        enemy.anims.play('goomba-dead');
-        enemy.body.enable = false; 
-        
-        player.setVelocityY(-400); 
-        bonusScore += (100 * currentLevel); 
-        
-        playSoundEffect(this, 'snd-stomp');
-        this.time.delayedCall(500, () => { enemy.destroy(); });
-    } else {
-        die.call(this);
+        if (player.body.bottom <= enemy.body.y + 16) {
+            enemy.body.enable = false;
+            enemy.setVelocityX(0);
+            enemy.anims.play('goomba-dead');
+            this.time.delayedCall(500, () => {
+                enemy.destroy();
+            });
+            player.setVelocityY(-350); 
+            
+            if (window.EspooClicker && window.EspooClicker.playSound) {
+                window.EspooClicker.playSound('sound-click'); 
+            }
+        } else {
+            die.call(this); 
+        }
     }
-}
 
     function playSoundEffect(scene, key) {
         if (window.EspooClicker) {

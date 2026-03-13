@@ -44,7 +44,7 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.1s ease-out;
     z-index: var(--z-content);
     position: relative;
     /* DIMENSIONE REATTIVA:
@@ -63,6 +63,7 @@
     border-radius: 50%;
 }
 
+
 #clicker-btn:focus {
     outline: none;
 }
@@ -73,7 +74,7 @@
 
 #clicker-btn.click-shrink {
     transform: scale(0.90);
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.05s ease-in;
 }
 
 #clicker-btn::after {
