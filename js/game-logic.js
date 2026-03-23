@@ -366,14 +366,6 @@ const AudioManager = {
             }
         }
 
-        // Aggiungi musiche delle skin in modo dinamico
-        for (let key in gameData.skins) {
-            const conf = gameData.skins[key].themeConfig;
-            if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
-                allMusicTracks.push(conf.specialMusic);
-            }
-        }
-
         let targetTrackId = null;
 
         // Priorità Eventi
@@ -502,7 +494,7 @@ function buyTeamEnhancement(enhanceKey) {
 function buyPrestigeUpgrade(upgradeKey) {
     const state = gameState.prestigeUpgrades[upgradeKey];
     const data = gameData.prestigeUpgrades[upgradeKey];
-    const cost = data.baseCost;
+    const cost = data.isCounted ? calculatePrestigeUpgradeCost(upgradeKey) : data.baseCost;
 
     if (data.isCounted) {
         if (gameState.prestigePoints.lt(cost))

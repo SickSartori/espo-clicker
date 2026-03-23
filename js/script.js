@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawEarned = bps.mul(effectiveSeconds);
             const realEarned = rawEarned.mul(efficiency);
 
-            if (realEarned > 0) {
+            if (realEarned.gt(0)) {
                 showOfflineModal(realEarned, efficiency);
                 return;
             }
@@ -641,44 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
 
         if (bps.lt(0)) bps = new Decimal(0);
-        // --- POPUP DI MIGRAZIONE V2 ---
-        if (typeof triggerV2MigrationModal !== 'undefined' && triggerV2MigrationModal) {
-            setTimeout(() => {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: '🌌 BENVENUTO NELLA V2.0 🌌',
-                        html: `
-                            <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
-                                Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
-                                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica per i veterani, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
-                                <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
-                                    <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
-                                    Il tuo guardaroba è intatto.
-                                </div>
-                                <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
-                                    <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
-                                    Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto per te!
-                                </div>
-                            </div>
-                        `,
-                        icon: 'info',
-                        background: '#151b22',
-                        color: '#fff',
-                        confirmButtonColor: '#9b59b6',
-                        confirmButtonText: '<i class="fa-solid fa-meteor"></i> INIZIA UNA NUOVA ERA',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false
-                    });
-                } else {
-                    alert("Benvenuto nella V2.0! Abbiamo riallineato i server. Le tue skin sono salve e hai ottenuto 1 Formattazione bonus!");
-                }
-                
-                // Forza subito il salvataggio in Cloud con il nuovo punteggio riallineato
-                if (window.EspooClicker) window.EspooClicker.saveGame();
-                if (typeof updateUI === 'function') updateUI();
-                
-            }, 1000); // Piccolo ritardo per far chiudere il loader iniziale
-        }
     }
 
     function deepMerge(target, source) {
@@ -1188,9 +1150,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Setup Listener Vari
         const now = Date.now();
-
-        if (typeof AudioManager !== 'undefined')
-            AudioManager.init();
 
         const tryStart = () => {
             // 1. CONTROLLO CRITICO: Se non c'è una sessione utente, siamo al Login.
@@ -1767,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateUI === 'function') updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+                    localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in gameData.achievements) {

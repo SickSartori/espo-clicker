@@ -62,14 +62,6 @@ window.gameData.clickUpgrades = {
             val: true
         }]
     },
-    aiClick: {
-        name: 'Intelligenza Artificiale',
-        desc: 'Aggiunge +500 al valore di ogni click.',
-        cost: new Decimal(500000),
-        clickIncrease: new Decimal(500),
-        requiredClicks: 7500
-    },
-
     clickAutomatico: {
         name: 'Click Automatico',
         desc: 'Aggiunge BPS pari al numero di Assistenti QA.',

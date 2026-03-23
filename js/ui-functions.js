@@ -132,6 +132,7 @@ function formatTime(totalSeconds) {
 
 
 let matrixFrameId = null;
+let matrixResizeHandler = null;
 
 function startMatrixEffect() {
     const canvas = document.getElementById('matrix-canvas');
@@ -182,11 +183,13 @@ function startMatrixEffect() {
     if (matrixFrameId) cancelAnimationFrame(matrixFrameId);
     draw();
 
-    // Gestione Resize
-    window.addEventListener('resize', () => {
+    // Gestione Resize (Rimuovi il precedente per evitare accumuli)
+    if (matrixResizeHandler) window.removeEventListener('resize', matrixResizeHandler);
+    matrixResizeHandler = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-    });
+    };
+    window.addEventListener('resize', matrixResizeHandler);
 }
 
 function stopMatrixEffect() {
@@ -194,7 +197,12 @@ function stopMatrixEffect() {
         cancelAnimationFrame(matrixFrameId);
         matrixFrameId = null;
     }
-    // Pulisci il canvas (opzionale, ma pulito)
+    // Rimuovi resize listener
+    if (matrixResizeHandler) {
+        window.removeEventListener('resize', matrixResizeHandler);
+        matrixResizeHandler = null;
+    }
+    // Pulisci il canvas
     const canvas = document.getElementById('matrix-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -486,7 +494,7 @@ function refreshAllStores() {
             return {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
-                canAfford: gameState.prestigePoints.gte(data.baseCost),
+                canAfford: gameState.score.gte(data.cost),
                 label: gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
                 // Qui avveniva l'errore: ora usiamo la variabile sicura 'teamName'
@@ -1429,7 +1437,9 @@ function checkTabNotifications() {
             const state = gameState.prestigeUpgrades[key];
 
             if (data.isCounted) {
-                if (gameState.prestigePoints.gte(data.baseCost))
+                const scaledCost = (typeof calculatePrestigeUpgradeCost === 'function')
+                    ? calculatePrestigeUpgradeCost(key) : data.baseCost;
+                if (!(data.maxLevel && state.count >= data.maxLevel) && gameState.prestigePoints.gte(scaledCost))
                     prestigeNotify = true;
             }
             else {
@@ -1518,12 +1528,6 @@ function calculateVisualBPS() {
 }
 
 const scoreAnimState = { value: 0 };
-
-function formatFullNumber(num) {
-    if (num === undefined || num === null) return "0";
-    let str = new Decimal(num).floor().toFixed(0);
-    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
 
 function updateScoreBoard(totalBPS) {
     // Se è la prima volta (o reset/promozione), allinea subito senza animazione
