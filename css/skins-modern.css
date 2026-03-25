@@ -1,14 +1,34 @@
 /* css/skins-modern.css */
 
+/* --- OVERRIDE MODALE GUARDAROBA (più scuro, coerente col tema) --- */
+#skins-modal .modal-content {
+    background-color: #0d1117;
+    border: 1px solid rgba(52, 73, 94, 0.3);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
+}
+
+#skins-modal .modal-content h2 {
+    background-color: #141b23;
+    border-bottom: 1px solid #1e2d3d;
+    color: #ecf0f1;
+}
+
+#skins-modal .modal-close-btn {
+    color: #7f8c8d;
+}
+
+#skins-modal .modal-close-btn:hover {
+    color: #ecf0f1;
+}
+
 /* --- BARRA CONTROLLI E FILTRI (Corretta) --- */
 .skins-controls-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 25px;
-    background: #111820;
-    /* Sfondo più scuro per contrasto */
-    border-bottom: 2px solid #2c3e50;
+    background: #0d1117;
+    border-bottom: 1px solid #1e2d3d;
     flex-wrap: wrap;
     gap: 15px;
 }
@@ -21,32 +41,31 @@
 
 /* Stile bottoni filtro corretti */
 .skin-filter-btn {
-    background: #1a252f;
-    border: 1px solid #34495e;
-    color: #95a5a6;
-    /* Grigio chiaro per non attivi */
+    background: #141b23;
+    border: 1px solid #1e2d3d;
+    color: #7f8c8d;
     padding: 8px 16px;
     border-radius: 30px;
-    /* Più arrotondati */
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 700;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     font-family: var(--font-heading);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .skin-filter-btn:hover {
-    background: #2c3e50;
+    background: #1a252f;
     color: #ecf0f1;
+    border-color: #34495e;
 }
 
 .skin-filter-btn.active {
-    background: #3498db;
-    border-color: #2980b9;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+    background: #2ecc71;
+    border-color: #27ae60;
+    color: #000;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.3);
 }
 
 .skin-filter-btn:disabled {
@@ -59,9 +78,9 @@
 }
 
 .skin-select-filter {
-    background-color: #1a252f;
+    background-color: #141b23;
     color: #bdc3c7;
-    border: 1px solid #34495e;
+    border: 1px solid #1e2d3d;
     height: 34px;
     padding: 0 30px 0 15px;
     font-size: 0.8rem;
@@ -69,21 +88,22 @@
     cursor: pointer;
     font-family: var(--font-heading);
     font-weight: 600;
+    transition: border-color 0.2s ease;
 }
 
 .skin-select-filter:focus {
     color: #fff;
-    border-color: #3498db;
+    border-color: #2ecc71;
 }
 
 /* --- SWITCH TOGGLE UI --- */
 .skins-toggle-wrapper {
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     padding: 6px 12px;
     border-radius: 20px;
-    border: 1px solid #2c3e50;
+    border: 1px solid #1e2d3d;
 }
 
 .modern-switch {
@@ -107,8 +127,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #34495e;
-    transition: .4s;
+    background-color: #1e2d3d;
+    transition: .3s ease;
     border-radius: 20px;
 }
 
@@ -137,6 +157,7 @@ input:checked+.modern-slider:before {
     padding: 20px;
     overflow-y: auto;
     max-height: 60vh;
+    background: #0d1117;
 }
 
 /* =========================================
@@ -185,26 +206,26 @@ input:checked+.modern-slider:before {
 .carousel-nav-btn {
     position: absolute;
     top: 45%;
-    /* Leggermente alzate per centrarle con l'immagine a fuoco */
     transform: translateY(-50%);
-    background: rgba(26, 37, 47, 0.8);
-    border: 2px solid #34495e;
-    color: #fff;
+    background: rgba(13, 17, 23, 0.9);
+    border: 1px solid #1e2d3d;
+    color: #7f8c8d;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     font-size: 1.2rem;
     cursor: pointer;
     z-index: 100;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .carousel-nav-btn:hover {
-    background: #3498db;
-    border-color: #2980b9;
+    background: #141b23;
+    border-color: #2ecc71;
+    color: #fff;
     transform: translateY(-50%) scale(1.1);
 }
 
@@ -221,11 +242,11 @@ input:checked+.modern-slider:before {
     position: absolute;
     width: 140px;
     height: 140px;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: pointer;
     border-radius: 50%;
     transform-style: preserve-3d;
-	border: 4px solid var(--r-color, #bdc3c7);
+    border: 3px solid var(--r-color, #bdc3c7);
 }
 
 /* L'immagine dentro l'elemento */
@@ -234,9 +255,9 @@ input:checked+.modern-slider:before {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-    background: #111;
-    transition: all 0.4s;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+    background: #080b0f;
+    transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Badge Rarità ancorato all'immagine */
@@ -247,19 +268,18 @@ input:checked+.modern-slider:before {
     transform: translateX(-50%);
     background: var(--r-color, #bdc3c7);
     color: #000;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 900;
-    padding: 4px 16px;
-    border: 4px solid #1a252f;
-    /* Bordo più spesso per l'incastro */
+    padding: 4px 14px;
+    border: 3px solid #0d1117;
     border-radius: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.35s ease;
     z-index: 20;
-    /* Alzato lo z-index */
     font-family: var(--font-heading);
     letter-spacing: 1px;
+    white-space: nowrap;
 }
 
 /* Icona lucchetto per le bloccate */
@@ -335,17 +355,13 @@ input:checked+.modern-slider:before {
 .modern-info-panel {
     width: 100%;
     max-width: 480px;
-    background: linear-gradient(180deg, #1a252f 0%, #111820 100%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, #111820 0%, #0d1117 100%);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 16px;
-
     margin-top: -30px;
-    /* Entra meno sotto l'immagine rispetto a prima */
     padding-top: 60px;
-    /* Più spazio in alto per distanziare il titolo dal badge */
-
     text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
     min-height: 160px;
     display: flex;
     flex-direction: column;
@@ -354,7 +370,7 @@ input:checked+.modern-slider:before {
     z-index: 1;
     position: relative;
     overflow: visible;
-    /* Modificato da hidden per non tagliare le ombre esterne */
+    transition: border-color 0.3s ease, opacity 0.15s ease, transform 0.2s ease;
 }
 
 .modern-info-panel::before {
@@ -363,11 +379,11 @@ input:checked+.modern-slider:before {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: var(--r-color, #34495e);
-    box-shadow: 0 0 20px var(--r-color-glow, rgba(255, 255, 255, 0.1));
+    height: 3px;
+    background: var(--r-color, #1e2d3d);
+    box-shadow: 0 0 15px var(--r-color-glow, rgba(255, 255, 255, 0.08));
     border-radius: 16px 16px 0 0;
-    /* Aggiunto arrotondamento dato che overflow ora è visible */
+    transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .modern-info-title {
@@ -450,10 +466,11 @@ input:checked+.modern-slider:before {
 }
 
 .modern-btn-disabled {
-    background: #34495e;
-    color: #7f8c8d;
+    background: #1a252f;
+    color: #555;
     cursor: not-allowed;
     box-shadow: none;
+    border: 1px solid #1e2d3d;
 }
 
 /* =========================================

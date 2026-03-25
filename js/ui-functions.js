@@ -771,9 +771,15 @@ function updateSkinsUI() {
             if (isEquipped) footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
             else if (isUnlocked) footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
             else if (isBuyable) {
-                const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
-                footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
-                              <div class="skin-btn" style="${canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
+                const needsFormat = data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+                if (needsFormat) {
+                    footerHtml = `<div class="skin-price" style="color:#9b59b6"><i class="fa-solid fa-rotate"></i> Formattazione</div>
+                                  <div class="skin-btn" style="background:#333; color:#777; cursor:not-allowed;">FORMATTA PRIMA</div>`;
+                } else {
+                    const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
+                    footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
+                                  <div class="skin-btn" style="${canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
+                }
             } else footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
 
             const card = document.createElement('div');
@@ -788,6 +794,14 @@ function updateSkinsUI() {
             gridLegacy.appendChild(card);
         }
     }
+
+    // Ordinamento per rarità (common → rare → epic → legendary → divine → christmas)
+    const rarityOrder = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
+    modernSkinsArray.sort((a, b) => {
+        const ra = rarityOrder[a.data.rarity] || 0;
+        const rb = rarityOrder[b.data.rarity] || 0;
+        return ra - rb;
+    });
 
     // Gestone Messaggio Vuoto
     if (modernSkinsArray.length === 0) {
@@ -879,6 +893,75 @@ function updateSkinsUI() {
             }
         });
 
+        // Navigazione Tastiera (frecce SX/DX) quando il modale è aperto
+        if (!window._carouselKeyHandler) {
+            window._carouselKeyHandler = (e) => {
+                const modal = document.getElementById('skins-modal');
+                if (!modal || modal.style.display === 'none') return;
+                const toggle = document.getElementById('skins-ui-toggle');
+                if (!toggle || !toggle.checked) return;
+
+                if (e.key === 'ArrowLeft' && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight' && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                    e.preventDefault();
+                }
+            };
+            document.addEventListener('keydown', window._carouselKeyHandler);
+        }
+
+        // Touch/Swipe per mobile
+        const stage = document.getElementById('carousel-stage');
+        if (stage && !stage._swipeAttached) {
+            stage._swipeAttached = true;
+            let touchStartX = 0;
+            let touchDelta = 0;
+
+            stage.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchDelta = 0;
+            }, { passive: true });
+
+            stage.addEventListener('touchmove', (e) => {
+                touchDelta = e.touches[0].clientX - touchStartX;
+            }, { passive: true });
+
+            stage.addEventListener('touchend', () => {
+                const threshold = 40; // px minimo per registrare swipe
+                if (touchDelta > threshold && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                } else if (touchDelta < -threshold && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                }
+            }, { passive: true });
+        }
+
+        // Scroll ruota mouse nel carousel
+        if (stage && !stage._wheelAttached) {
+            stage._wheelAttached = true;
+            let wheelCooldown = false;
+            stage.addEventListener('wheel', (e) => {
+                if (wheelCooldown) return;
+                wheelCooldown = true;
+                setTimeout(() => { wheelCooldown = false; }, 250); // Cooldown 250ms anti-spam
+
+                if (e.deltaY > 0 && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                } else if (e.deltaY < 0 && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                }
+                e.preventDefault();
+            }, { passive: false });
+        }
+
         // Esegue il render iniziale
         renderModernCarousel();
     }
@@ -942,7 +1025,12 @@ function renderModernCarousel() {
     if (skin.isUnlocked) {
         descHtml = `<div class="modern-info-desc">"${skin.data.desc || '...'}"</div>`;
     } else if (skin.isBuyable) {
-        descHtml = `<div class="modern-info-desc">Disponibile nel Negozio del Laboratorio.</div>`;
+        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        if (needsFormat) {
+            descHtml = `<div class="modern-info-desc" style="color:#9b59b6;">Sbloccata dopo la prima Formattazione del sistema.</div>`;
+        } else {
+            descHtml = `<div class="modern-info-desc">Disponibile nel Negozio del Laboratorio.</div>`;
+        }
     } else {
         descHtml = `
             <div class="modern-info-desc" style="color:#7f8c8d; font-style:normal;">${skin.baseText}</div>
@@ -956,7 +1044,14 @@ function renderModernCarousel() {
     } else if (skin.isUnlocked) {
         actionHtml = `<button class="modern-btn-large modern-btn-equip" onclick="equipSkin('${skin.id}')">EQUIPAGGIA SKIN</button>`;
     } else if (skin.isBuyable) {
-        if (skin.canAfford) {
+        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        if (needsFormat) {
+            actionHtml = `
+                <div style="color: #9b59b6; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
+                <div style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> FORMATTA PRIMA</button>
+            `;
+        } else if (skin.canAfford) {
             actionHtml = `
                 <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
                 <button class="modern-btn-large modern-btn-buy" onclick="buySkin('${skin.id}')">COMPRA SKIN</button>
@@ -971,13 +1066,20 @@ function renderModernCarousel() {
         actionHtml = `<button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> BLOCCATA</button>`;
     }
 
-    panel.innerHTML = `
-        <div class="modern-info-title">${skin.data.name}</div>
-        ${descHtml}
-        <div class="modern-info-action">
-            ${actionHtml}
-        </div>
-    `;
+    // Transizione fluida: fade out → update → fade in
+    panel.style.opacity = '0';
+    panel.style.transform = 'translateY(6px)';
+    setTimeout(() => {
+        panel.innerHTML = `
+            <div class="modern-info-title">${skin.data.name}</div>
+            ${descHtml}
+            <div class="modern-info-action">
+                ${actionHtml}
+            </div>
+        `;
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+    }, 150);
 }
 
 
@@ -1319,6 +1421,20 @@ function showClickFeedback(event) {
         });
         setTimeout(() => feedback.remove(), 1000);
     }
+
+    // Sparkle particles (3-5 piccole scintille dal punto di click)
+    const sparkCount = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < sparkCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'click-spark';
+        const angle = (Math.PI * 2 / sparkCount) * i + (Math.random() * 0.5);
+        const dist = 20 + Math.random() * 35;
+        spark.style.cssText = `left:${startX + randomOffsetX}px;top:${startY + randomOffsetY}px;` +
+            `--spark-x:${Math.cos(angle) * dist}px;--spark-y:${Math.sin(angle) * dist}px;` +
+            `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random()*100)},${Math.floor(Math.random()*80)},0.9)`;
+        feedbackContainer.appendChild(spark);
+        setTimeout(() => spark.remove(), 800);
+    }
 }
 
 
@@ -1548,6 +1664,12 @@ function updateScoreBoard(totalBPS) {
     if (scoreEl) {
         scoreEl.setAttribute('data-tooltip', formatFullNumber(gameState.score));
         scoreEl.classList.add('simple-tooltip');
+        // Micro-bump visivo quando il punteggio aumenta
+        if (gameState.score > scoreAnimState.value * 1.001) {
+            scoreEl.classList.add('score-bump');
+            clearTimeout(scoreEl._bumpTimer);
+            scoreEl._bumpTimer = setTimeout(() => scoreEl.classList.remove('score-bump'), 150);
+        }
     }
 
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
