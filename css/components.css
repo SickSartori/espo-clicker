@@ -5,19 +5,37 @@
     background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 0 15px;
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--font-heading);
     cursor: pointer;
-    transition: all 0.1s;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
     letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Effetto shine al hover */
+.buy-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s ease;
+}
+
+.buy-btn:not(:disabled):hover::before {
+    left: 100%;
 }
 
 .buy-btn:hover:not(:disabled) {
@@ -50,14 +68,19 @@ body .buy-btn.owned {
 
 .buy-btn:not(:disabled) {
     border: 1px solid #2ecc71;
-    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
-    transition: all 0.2s ease;
+    box-shadow: 0 3px 0 rgba(39, 174, 96, 0.4), 0 0 8px rgba(46, 204, 113, 0.2);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .buy-btn:not(:disabled):hover {
     background-color: #27ae60;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    box-shadow: 0 4px 0 rgba(39, 174, 96, 0.4), 0 0 20px rgba(46, 204, 113, 0.4);
     transform: translateY(-2px);
+}
+
+.buy-btn:not(:disabled):active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(39, 174, 96, 0.4);
 }
 
 /*
