@@ -221,12 +221,10 @@
 <div id="advanced-audio-modal" class="modal-backdrop" style="display: none; z-index: 2200;">
     <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
         <div class="modal-header-custom" style="
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px 20px; 
-            background-color: #34495e; 
-            border-bottom: 1px solid #4a6582;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
             flex-shrink: 0;">
 
             <button id="header-back-btn" class="header-action-btn" title="<?php echo $labels["modals_opzioni_audio_avanzate_indietro_titolo"]; ?>">

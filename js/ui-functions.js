@@ -2221,46 +2221,19 @@ function updateStatsUI() {
     // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
     statsList.innerHTML = `
         <div class="stats-container">
-            
-            <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-wallet"></i> Economia Aziendale</div>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-label">Bug Attuali (Wallet)</span>
-                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
-                            ${formatNumber(Math.floor(gameState.score))}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Totale Run Attuale</span>
-                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(gameState.totalScore)}">
-                            ${formatNumber(gameState.totalScore)}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Totale Carriera</span>
-                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
-                            ${formatNumber(gameState.lifetimeScore)}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Guadagnati Offline</span>
-                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(totalOffline)}">
-                            ${formatNumber(totalOffline)} 
-                            <span style="font-size: 0.8rem; color: #bdc3c7; font-weight: normal;">(${offlinePercentText})</span>
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="stat-progress-wrapper">
+
+            <!-- HERO: Progresso Promozione -->
+            <div class="stats-section stats-hero">
+                <div class="stat-progress-wrapper" style="margin-top: 0; padding-top: 0; border-top: none;">
                     <div class="stat-progress-info">
                         <span>
-                            Progresso Promozione 
+                            <i class="fa-solid fa-rocket" style="color: #2ecc71; margin-right: 6px;"></i>
+                            Progresso Promozione
                             <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
                                 (Obiettivo: <span class="simple-tooltip" data-tooltip="${formatFullNumber(threshold)}">${formatNumber(threshold)}</span>)
                             </span>
                         </span>
-                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(2)}%</span>
+                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}; font-size: 1.1rem; font-weight: 800;">${progress.toFixed(2)}%</span>
                     </div>
                     <div class="stat-progress-bg">
                         <div class="stat-progress-fill" style="width: ${progress}%;"></div>
@@ -2268,72 +2241,105 @@ function updateStatsUI() {
                 </div>
             </div>
 
+            <!-- Economia -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-microchip"></i> Performance & Tech</div>     
+                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> Economia Aziendale</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label">Produzione (BPS)</span>
-                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(bps)}">
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> Bug Attuali</span>
+                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
+                            ${formatNumber(Math.floor(gameState.score))}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> Totale Run</span>
+                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(gameState.totalScore)}">
+                            ${formatNumber(gameState.totalScore)}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Totale Carriera</span>
+                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
+                            ${formatNumber(gameState.lifetimeScore)}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Offline</span>
+                        <span class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="${formatFullNumber(totalOffline)}">
+                            ${formatNumber(totalOffline)}
+                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">(${offlinePercentText})</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance -->
+            <div class="stats-section">
+                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> Performance & Tech</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-gauge-high" style="color: #e67e22; margin-right: 4px; font-size: 0.65rem;"></i> BPS</span>
+                        <span class="stat-value simple-tooltip" style="color: #e67e22;" data-tooltip="${formatFullNumber(bps)}">
                             ${formatNumber(bps)}
                         </span>
                     </div>
-                    
                     <div class="stat-box">
-                        <span class="stat-label">Valore Click (Base / Totale)</span>
+                        <span class="stat-label"><i class="fa-solid fa-hand-pointer" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click</span>
                         <span class="stat-value" style="color: #e74c3c;">
                             ${formatNumber(rawClick)}
-                            <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal;">
-                                (Tot: ${formatNumber(totalClick)})
+                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">
+                                (x${formatNumber(totalClick)})
                             </span>
                         </span>
                     </div>
-
                     <div class="stat-box">
-                        <span class="stat-label">Moltiplicatore Globale</span>
-                        <span class="stat-value">x${formatNumber(prestigeBonus)}</span>
+                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Moltiplicatore</span>
+                        <span class="stat-value" style="color: #f1c40f;">x${formatNumber(prestigeBonus)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Crit Chance</span>
-                        <span class="stat-value">${(goldenBugChance * 100).toFixed(2)}%</span>
+                        <span class="stat-label"><i class="fa-solid fa-dice" style="color: #1abc9c; margin-right: 4px; font-size: 0.65rem;"></i> Crit Chance</span>
+                        <span class="stat-value" style="color: #1abc9c;">${(goldenBugChance * 100).toFixed(2)}%</span>
                     </div>
                 </div>
             </div>
 
             ${(totalFormats > 0 || totalQBits.gt(0)) ? `
-            <div class="stats-section" style="border-color: rgba(155, 89, 182, 0.4);">
-                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor"></i> Multiverso (NG+)</div>
+            <!-- Multiverso -->
+            <div class="stats-section" style="border-color: rgba(155, 89, 182, 0.3);">
+                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> Multiverso (NG+)</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label">Universi Distrutti</span>
+                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Universi Distrutti</span>
                         <span class="stat-value" style="color: #e74c3c;">${formatNumber(totalFormats)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Energia Quantica Storica</span>
+                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Energia Quantica</span>
                         <span class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);">${formatNumber(totalQBits)} Q-Bits</span>
                     </div>
                 </div>
             </div>
             ` : ''}
 
+            <!-- Profilo -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-id-card"></i> Profilo & Visuals</div>
+                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> Profilo & Visuals</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label">Skin Equipaggiata</span>
+                        <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
                         <span class="stat-value" style="text-transform: capitalize; color: #9b59b6;">
                             ${(gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default')}
                         </span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Tempo di Gioco</span>
+                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> Tempo di Gioco</span>
                         <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Click Totali</span>
+                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click Totali</span>
                         <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Promozioni (Reset)</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> Promozioni</span>
                         <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
                     </div>
                 </div>

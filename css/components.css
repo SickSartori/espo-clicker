@@ -88,7 +88,7 @@ body .buy-btn.owned {
  */
 .ghost-btn {
     background: transparent;
-    border: 1px solid #5d7c9a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     width: auto;
     padding: 6px 12px;
     height: auto;
@@ -97,7 +97,8 @@ body .buy-btn.owned {
 }
 
 .ghost-btn:hover {
-    background: #34495e;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /*
@@ -142,7 +143,7 @@ input[type=range] {
     flex-grow: 1;
     height: 6px;
     border-radius: 3px;
-    background: #34495e;
+    background: #0d1117;
     outline: none;
     -webkit-appearance: none;
 }
@@ -151,10 +152,16 @@ input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 18px;
     height: 18px;
-    background: #3498db;
+    background: #ecf0f1;
     border-radius: 50%;
     cursor: pointer;
-    border: 2px solid #2c3e50;
+    border: 2px solid #3498db;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
 }
 
 /*
@@ -322,7 +329,7 @@ input:focus {
     -webkit-appearance: none;
     width: 100%;
     height: 4px;
-    background: #34495e;
+    background: #0d1117;
     border-radius: 2px;
 }
 
@@ -350,7 +357,7 @@ input:focus {
     align-items: center;
     gap: 15px;
     margin-bottom: 15px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(0, 0, 0, 0.2);
     padding: 8px 10px;
     border-radius: 8px;
 }
