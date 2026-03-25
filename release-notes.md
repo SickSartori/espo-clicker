@@ -23,6 +23,7 @@ Questo non è un semplice aggiornamento, è un vero e proprio salto generazional
 
 * **👾 Nuovi Minigiochi:** * **Asteroids:** Un grande classico entra nella famiglia Arcade. Distruggi i meteoriti e sopravvivi!
     * **Super Espò Run:** Preparati a correre e saltare in questa nuova avventura.
+* **🎮 Super Espò Runner Ribilanciato:** Gameplay completamente rivisto con fisica più precisa, generazione livelli migliorata e nuovi elementi di scenario. Ora ogni run è una sfida giusta!
 * **🎨 Restyling Totale Arcade:** Nuova UI dedicata, nuovi suoni esclusivi per la sala giochi e chiusura sicura dei minigiochi migliorata.
 * **🚀 Space Impacts:** Effettuata una pulizia del codice e un ribilanciamento generale delle difficoltà del minigioco.
 
@@ -30,11 +31,32 @@ Questo non è un semplice aggiornamento, è un vero e proprio salto generazional
 
 ### 🎭 Estetica & Personalizzazione
 
+* **🆕 Nuove Skin Esclusive:** La Formattazione sblocca l'accesso a **nuove skin** di rarità Epica e Leggendaria, alcune con sorprese nascoste... 👀
+* **🎤 Nuovo Evento Misterioso:** Un nuovo evento video si aggiunge alla famiglia. Sapresti riconoscerlo?
 * **🖼️ Classifica con Stile:** Ora la classifica globale mostrerà la tua **foto profilo** basata sull'ultima skin che hai equipaggiato. Fai vedere a tutti il tuo stile!
-* **👗 Nuova Vetrina Skin:** Il menu delle skin è stato totalmente riprogettato per una visualizzazione più moderna e centrata.
+* **👗 Guardaroba Rinnovato:** Il menu skin è stato ridisegnato con un look più scuro e moderno, navigazione più fluida e ordinamento migliorato.
 * **🌈 Gestione Temi Dinamici:** Il motore grafico ora carica e gestisce dinamicamente i temi estetici legati alle skin, cambiando volto al gioco in modo fluido (Miglioramento Fase 2).
 * **🏆 UI & Dettagli:** Gli achievements legati ad eventi passati verranno nascosti "fuori stagione", mantenendo la bacheca ordinata. Aggiunta anche una nuova UI dedicata per il menu Promozione.
 * **🎵 Nuova Traccia Audio:** Aggiunta la "Musica Divina" al Jukebox e sistemato un bug sonoro legato alla *fireball* durante la Fury.
+
+---
+
+### ✨ Restyling Visivo (UI 2.0)
+
+*L'intera interfaccia è stata raffinata per un look più moderno, scuro e coerente.*
+
+* **🎬 Animazioni Fluide:** Nuove animazioni d'ingresso per l'interfaccia principale con effetti a cascata.
+* **💫 Feedback Click Potenziato:** Nuove particelle scintillanti accompagnano ogni click per un feedback più soddisfacente.
+* **📊 Punteggio Dinamico:** Il display dello score ora reagisce visivamente agli incrementi con effetti di scala.
+* **🔘 Bottoni Rinnovati:** Nuovi effetti di profondità, luce e transizioni elastiche su tutta l'interfaccia.
+* **🎯 Dettagli Visivi:** Glow pulsante sul bottone principale, scrollbar minimaliste, sfondo ambient arricchito e griglia cyber meno intrusiva.
+
+---
+
+### 🔊 Fix Audio
+
+* **🔇 Fix Volume su Refresh:** Risolto il bug che causava l'audio a volume massimo dopo un refresh della pagina.
+* **🎚️ Fix Controllo Volume:** Lo slider del volume master ora applica correttamente tutti i livelli di volume.
 
 ---
 
