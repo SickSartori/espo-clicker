@@ -801,9 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saveInterval) clearInterval(saveInterval);
         if (leaderboardInterval) clearInterval(leaderboardInterval);
 
-        // Volume audio iniziale
+        // Volume audio iniziale: muto tutto, sarà AudioManager a settare i volumi corretti
+        const initVol = gameState.user.masterVolume * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
         document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = gameState.user.masterVolume;
+            audio.volume = Math.max(0, Math.min(1, initVol));
         });
 
         // LOGICA (30 FPS)
@@ -980,6 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'ricardo-video', class: 'ricardo_video', src: 'assets/video/ricardo-milespo-video.mp4' },
             { id: 'ricardo-metal-video', class: 'ricardo_metal_video', src: 'assets/video/ricardo-milespo-metal-video.mp4' },
             { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' },
+            { id: 'britney-espoars-video', class: 'britney_espoars_video', src: 'assets/video/britney-espoars-video.mp4' },
             { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
         ];
 
@@ -1172,8 +1174,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof refreshAllStores === 'function') refreshAllStores();
 
         // --- SETUP STANDARD ---
+        // Volume: applica master * music a tutti gli audio, poi AudioManager correggerà i singoli
+        const setupVol = gameState.user.masterVolume * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
         document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = gameState.user.masterVolume;
+            audio.volume = Math.max(0, Math.min(1, setupVol));
         });
 
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -1587,12 +1591,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => {
-                if (audio.id === 'sound-snowball')
-                    audio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 1.5;
-                else
-                    audio.volume = gameState.user.masterVolume;
-            });
+            // Aggiorna tutto via AudioManager per applicare masterVolume * musicVolume * customVol
+            if (typeof AudioManager !== 'undefined') {
+                AudioManager.updateAmbience();
+            }
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,

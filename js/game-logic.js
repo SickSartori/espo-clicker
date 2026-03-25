@@ -240,6 +240,9 @@ const AudioManager = {
 
                 audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
                 if (sound.loop) audio.loop = true;
+                // Imposta volume sicuro prima che il browser tenti autoplay
+                const safeVol = (gameState.user.masterVolume || 0) * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
+                audio.volume = Math.max(0, Math.min(1, safeVol));
                 container.appendChild(audio);
             }
         }
@@ -445,6 +448,13 @@ function buySkin(skinId) {
     const data = gameData.skins[skinId];
     if (!data || !data.cost) return;
     if (gameState.skins.unlocked.includes(skinId)) return;
+
+    // Skin post-formattazione: richiede almeno 1 formattazione
+    if (data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1) {
+        playSound('sound-error');
+        window.EspooClicker.showToast('⚠️ Devi eseguire almeno 1 Formattazione per sbloccare questa skin!', 'error');
+        return;
+    }
 
     if (gameState.prestigePoints.gte(data.cost)) {
         gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
@@ -1049,7 +1059,11 @@ function triggerBluescreen(multiplier) {
     if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
         return triggerGameEvent('ricardo');
     }
-    // 2. Priorità Skin Super Espò
+    // 2. Priorità Skin Britney Espears
+    if (gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
+        return triggerGameEvent('britneyEspears');
+    }
+    // 3. Priorità Skin Super Espò
     if (gameState.skins.current === 'superespo') {
         return triggerGameEvent('superStarMode', multiplier);
     }
