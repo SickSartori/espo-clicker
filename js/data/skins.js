@@ -154,4 +154,36 @@ window.gameData.skins = {
             goldenBugColor: '#f1c40f'
         }
     },
+
+    // --- SKIN POST-FORMATTAZIONE ---
+    initialE: {
+        name: "Initial E",
+        desc: "Tofu delivery, ma col codice.",
+        img: "initiale.webp",
+        imgClick: "initiale-click.webp",
+        rarity: "epic",
+        cost: new Decimal(30),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 30 Token."
+    },
+    britneyEspears: {
+        name: "Britney Espears",
+        desc: "Oops!... I debugged again.",
+        img: "britney-espoars.webp",
+        imgClick: "britney-espoars-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(75),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
+    },
+    espoKiss: {
+        name: "Espo Kiss",
+        desc: "Rock 'n' roll all night, debug every day.",
+        img: "espokiss.webp",
+        imgClick: "espokiss-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(75),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
+    },
 };
