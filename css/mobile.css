@@ -52,6 +52,52 @@
         overflow: hidden;
         overscroll-behavior: none;
         touch-action: none;
+        background: transparent;
+    }
+
+    .column-header-center {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        height: 55px;
+        min-height: 55px;
+        padding: 0 10px;
+    }
+
+    /* Score resta centrato absolute, pannelli laterali si adattano */
+    .column-header-center .header-main-score {
+        padding: 0 5px;
+    }
+
+    .column-header-center .header-stat-box {
+        min-width: 45px;
+        z-index: 1;
+    }
+
+    .column-header-center .header-label {
+        font-size: 0.55rem;
+        letter-spacing: 0.5px;
+    }
+
+    .column-header-center .header-value {
+        font-size: 0.85rem;
+    }
+
+    .column-header-center .header-label-main {
+        font-size: 0.55rem;
+        letter-spacing: 1px;
+    }
+
+    /* Riduce gap tra token e qbits */
+    #header-right-panel > div {
+        gap: 8px;
+    }
+
+    #header-right-panel .header-label {
+        font-size: 0.5rem;
+    }
+
+    #header-right-panel .header-value {
+        font-size: 0.8rem;
     }
 
     #center-column.mobile-active {
@@ -252,8 +298,8 @@
 
     .contract-footer {
         padding: 15px;
-        background: #233040;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0d1117;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
         flex-shrink: 0;
         flex-direction: column-reverse;
         gap: 10px;
@@ -327,14 +373,23 @@
         display: none;
     }
 
-    /* Versione in basso a destra sopra navbar */
-    #version-display {
-        padding-bottom: 50px;
+    /* Versione - specificità aumentata per override clicker.css */
+    body #version-display {
         position: relative;
         z-index: 1500;
         font-size: 0.65rem;
-        opacity: 0.4;
+        opacity: 0.5;
         pointer-events: none;
+        padding: 5px 12px;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        transform: none;
+        transition: none;
+        animation: none;
+        box-shadow: none;
+        white-space: nowrap;
+        overflow: visible;
     }
 
     #skill-crunchTime {
@@ -621,6 +676,13 @@
         font-size: 0.85rem;
         padding: 0 10px;
         margin: 0;
+    }
+
+    /* Sticky headers su mobile più scuri */
+    .tabs-header,
+    .column-header-aligned {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     #toast-container {

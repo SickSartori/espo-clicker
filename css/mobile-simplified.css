@@ -40,6 +40,7 @@
     html body .settings-content,
     html body #achievement-list,
     html body #leaderboard-list,
+    html body #stats-list,
     html body .skins-grid-container,
     html body .profile-body {
         flex: 1;
@@ -56,8 +57,8 @@
         position: sticky;
         bottom: 0;
         width: 100%;
-        height: 70px;
-        background: #e74c3c;
+        height: 60px;
+        background: rgba(231, 76, 60, 0.9);
         color: #fff;
         font-size: 0;
         display: flex;
@@ -65,7 +66,7 @@
         align-items: center;
         margin-top: auto;
         border-radius: 0;
-        border-top: 2px solid #c0392b;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
         flex-shrink: 0;
         z-index: 1000;
@@ -130,9 +131,33 @@
     html body #version-display {
         position: static;
         transform: none;
-        margin-bottom: 20px;
+        transition: none;
+        animation: none;
+        margin: 0 auto 10px auto;
         text-align: center;
-        width: 100%;
+        width: auto;
+        max-width: 90%;
+        display: block;
+        font-size: 0.7rem;
+        padding: 5px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+        pointer-events: auto;
+        cursor: pointer;
+        opacity: 0.7;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        bottom: auto;
+        left: auto;
+        right: auto;
+    }
+
+    html body #version-display:hover {
+        transform: none;
+        box-shadow: none;
     }
 
     /* ---------------------------------------------------
@@ -285,7 +310,6 @@
 
     html body nav#game-navbar button#open-help-btn,
     html body div#settings-modal button#open-advanced-audio-btn,
-    html body div#stats-modal div#stats-list div.stats-section:not(:first-child),
     html body div#achievements-modal div#achievement-list div.trophy-desc,
     html body div#achievements-modal div#achievement-list div.trophy-flavor,
     html body div#skins-modal div.skins-toggle-wrapper,
@@ -293,9 +317,26 @@
         display: none;
     }
 
+    /* Stats: nascondi solo la sezione Profilo su mobile */
+    html body div#stats-modal div#stats-list div.stats-section:last-child {
+        display: none;
+    }
+
     html body #stats-list .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    html body #stats-list .stat-box {
+        padding: 8px 10px;
+    }
+
+    html body #stats-list .stat-box .stat-value {
+        font-size: 0.95rem;
+    }
+
+    html body #stats-list .stat-box .stat-label {
+        font-size: 0.65rem;
     }
 
     html body #achievement-list .trophy-row {
