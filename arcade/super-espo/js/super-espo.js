@@ -98,7 +98,7 @@
             pixelArt: true,
             physics: {
                 default: 'arcade',
-                arcade: { gravity: { y: 900 }, debug: false }
+                arcade: { gravity: { y: 720 }, debug: false }
             },
             scene: { preload: preload, create: create, update: update }
         };
@@ -107,8 +107,9 @@
     };
 
     let player, cursors, wasdKeys, platforms, blocks, enemies, enemyBlockers, coins;
-    let bgMountains, bgClouds;
+    let bgMountains, bgClouds, decorations;
     let lastChunkX = 0;
+    let lastTierIndex = 0; // Traccia il tier precedente per transizioni graduali
     
     let currentScore = 0;
     let maxDist = 0;
@@ -176,6 +177,7 @@
         enemyBlockers = this.physics.add.staticGroup();
         enemies = this.physics.add.group();
         coins = this.physics.add.group({ allowGravity: false });
+        decorations = this.add.group();
 
         let groundWidth = 1500;
         let startPlatformTop = 360; 
@@ -186,12 +188,25 @@
         this.physics.add.existing(ground, true);
         platforms.add(ground);
 
+        // Decorazioni iniziali sulla piattaforma di partenza
+        const startDecos = [
+            { key: 'bush2', x: 350, scale: 0.7 },
+            { key: 'fence', x: 700, scale: 0.55 },
+            { key: 'bush1', x: 1100, scale: 0.5 }
+        ];
+        startDecos.forEach(d => {
+            const deco = this.add.image(d.x, startPlatformTop, d.key)
+                .setScale(d.scale).setOrigin(0.5, 1).setDepth(1).setAlpha(0.9);
+            decorations.add(deco);
+        });
+
         lastChunkX = groundWidth;
+        lastTierIndex = 0;
         currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
 
         player = this.physics.add.sprite(100, 100, 'super-espo', 0);
         player.setCollideWorldBounds(true);
-        player.setScale(64 / player.height); 
+        player.setScale(42 / player.height); // ~13% dello schermo visibile (stile Mario NES)
         player.setDepth(20);
         player.isDead = false;
 
@@ -245,7 +260,7 @@
 
         let isGrounded = player.body.blocked.down || player.body.touching.down || player.body.onFloor();
 
-        let moveSpeed = 220 + (Math.pow(currentLevel, 1.3) * 8); 
+        let moveSpeed = 180 + (Math.pow(currentLevel, 1.2) * 6);
         let currentVel = 0; 
 
         if (downDown && isGrounded) {
@@ -271,7 +286,7 @@
         }
 
         if (jumpJustPressed && isGrounded && !downDown) {
-            player.setVelocityY(-500); 
+            player.setVelocityY(-420);
             playSoundEffect(this, 'snd-jump');
         }
 
@@ -299,28 +314,42 @@
         [enemies, enemyBlockers, platforms, blocks, coins].forEach(group => {
             group.getChildren().forEach(item => {
                 if ((item.x + (item.width || 0)) < destroyLimitX) {
-                    if (!item.isDecorative) item.destroy(); 
+                    item.destroy();
                 }
             });
+        });
+        // Pulizia decorazioni (non-physics, gruppo separato)
+        decorations.getChildren().forEach(deco => {
+            if ((deco.x + (deco.width || 0)) < destroyLimitX) deco.destroy();
         });
     }
 
     function spawnChunkImproved(scene) {
-        const gapMin = 40 + (currentLevel * 5);
-        const gapMax = Math.min(260, 100 + (currentLevel * 18));
+        // Gap: cresce col livello ma con cap ragionevole per salti sempre fattibili
+        const gapMin = 30 + (currentLevel * 3);
+        const gapMax = Math.min(180, 70 + (currentLevel * 12));
         const gap = Phaser.Math.Between(gapMin, gapMax);
 
-        const chunkType = Phaser.Math.Between(1, 10); 
-        
-        let widthMin = Math.max(160, 320 - currentLevel * 12);
-        let widthMax = Math.max(220, 480 - currentLevel * 10);
+        const chunkType = Phaser.Math.Between(1, 10);
+
+        let widthMin = Math.max(180, 320 - currentLevel * 10);
+        let widthMax = Math.max(260, 480 - currentLevel * 8);
         let width = Phaser.Math.Between(widthMin, widthMax);
-        
-        const tiers = [380, 350, 320, 290, 260]; 
-        let platformTop = Phaser.Utils.Array.GetRandom(tiers);
+
+        const tiers = [380, 365, 345, 320, 300];
+        // Transizione graduale: max ±1 tier per volta
+        let tierStep = Phaser.Math.Between(-1, 1);
+        let newTierIndex = Phaser.Math.Clamp(lastTierIndex + tierStep, 0, tiers.length - 1);
+        // Forte bias verso il basso: piattaforme alte sono rare e tornano giù
+        if (newTierIndex >= 3 && Math.random() > 0.3) newTierIndex--;
+        if (newTierIndex >= 2 && Math.random() > 0.5) newTierIndex--;
+        // Gap grandi forzano piattaforme allo stesso livello o più basse (raggiungibili)
+        if (gap > 120) newTierIndex = Math.min(newTierIndex, Math.max(0, lastTierIndex));
+        lastTierIndex = newTierIndex;
+        let platformTop = tiers[newTierIndex];
 
         if (chunkType <= 2) {
-            width = Phaser.Math.Between(80, 150);
+            width = Phaser.Math.Between(120, 180); // Piattaforme piccole ma non impossibili
         }
 
         const newX = lastChunkX + gap + width / 2;
@@ -359,7 +388,7 @@
             hasObstacle = true;
             const obstacles = ['pipe-small', 'pipe-medium', 'emptyBlock'];
             const obstacleKey = Phaser.Utils.Array.GetRandom(obstacles);
-            const obj = platforms.create(newX, platformTop, obstacleKey).setScale(1.5).setOrigin(0.5, 1);
+            const obj = platforms.create(newX, platformTop, obstacleKey).setScale(1.2).setOrigin(0.5, 1);
             obj.refreshBody();
         }
 
@@ -377,6 +406,26 @@
             } else if (Math.random() > 0.4) {
                 spawnCoinsList(scene, newX, platformTop - 40, Phaser.Math.Between(2, 4));
             }
+        }
+
+        // Decorazioni: bush e fence (solo su piattaforme larghe, senza ostacoli)
+        if (!hasObstacle && width > 180 && Math.random() > 0.5) {
+            // Fence solo su piattaforme a livello terra (tier alto), bush ovunque
+            const isGroundLevel = platformTop >= 350;
+            let decoKey, decoScale;
+            if (isGroundLevel && Math.random() > 0.6) {
+                decoKey = 'fence';
+                decoScale = 0.55;
+            } else {
+                decoKey = Math.random() > 0.5 ? 'bush1' : 'bush2';
+                decoScale = decoKey === 'bush1' ? 0.5 : 0.7;
+            }
+            // Piazza vicino al bordo della piattaforma, non al centro (stile Mario)
+            const side = Math.random() > 0.5 ? 1 : -1;
+            const decoX = newX + side * Phaser.Math.Between(width / 6, width / 3);
+            const deco = scene.add.image(decoX, platformTop, decoKey)
+                .setScale(decoScale).setOrigin(0.5, 1).setDepth(1).setAlpha(0.9);
+            decorations.add(deco);
         }
 
         const enemyChance = Math.min(0.9, 0.4 + currentLevel * 0.08);
@@ -400,9 +449,10 @@
     }
 
     function spawnEnemy(x, y) {
-        const enemy = enemies.create(x, y, 'goomba').setScale(2);
+        const enemy = enemies.create(x, y, 'goomba').setScale(1.5);
         enemy.setBounceX(1);
-        let eSpeed = Phaser.Math.Between(-60, -120) - (currentLevel * 6);
+        let eSpeed = Phaser.Math.Between(50, 100) + (currentLevel * 5);
+        if (Math.random() > 0.5) eSpeed = -eSpeed;
         enemy.setVelocityX(eSpeed);
         enemy.anims.play('goomba-walk', true);
     }
@@ -423,28 +473,34 @@
     function hitBlock(player, block) {
         if (player.body.touching.up && block.body.touching.down && !block.used) {
             block.used = true;
-            block.anims.stop(); 
-            block.setTexture('emptyBlock'); 
-            bonusScore += 150; 
-            
+            block.anims.stop();
+            block.setTexture('emptyBlock');
+            bonusScore += 150;
+
             playSoundEffect(this, 'snd-coin');
             this.tweens.add({ targets: block, y: block.y - 10, yoyo: true, duration: 100 });
+
+            // Moneta visiva che esce dal blocco (stile Mario)
+            const popCoin = this.add.sprite(block.x, block.y - 20, 'coin').setScale(1.5).setDepth(30);
+            popCoin.anims.play('coin-spin', true);
+            this.tweens.add({
+                targets: popCoin, y: block.y - 80, alpha: 0, duration: 600, ease: 'Power2',
+                onComplete: () => popCoin.destroy()
+            });
         }
     }
 
     function hitEnemy(player, enemy) {
-        if (player.body.bottom <= enemy.body.y + 16) {
+        if (player.body.bottom <= enemy.body.y + 10) {
             enemy.body.enable = false;
             enemy.setVelocityX(0);
             enemy.anims.play('goomba-dead');
             this.time.delayedCall(500, () => {
                 enemy.destroy();
             });
-            player.setVelocityY(-350); 
-            
-            if (window.EspooClicker && window.EspooClicker.playSound) {
-                window.EspooClicker.playSound('sound-click'); 
-            }
+            player.setVelocityY(-300);
+
+            playSoundEffect(this, 'snd-stomp');
         } else {
             die.call(this); 
         }
@@ -467,8 +523,14 @@
         if (el) {
             const levelEl = el.querySelector('.val-level');
             const scoreEl = el.querySelector('.val-score');
+            const recordEl = el.querySelector('.val-record');
             if (levelEl) levelEl.innerText = currentLevel;
             if (scoreEl) scoreEl.innerText = currentScore;
+            if (recordEl) {
+                const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+                const saved = (gs && gs.arcadeHighScores) ? (gs.arcadeHighScores.superespo || 0) : 0;
+                recordEl.innerText = Math.max(saved, currentScore);
+            }
         }
     }
 
@@ -478,7 +540,7 @@
         
         player.setTint(0xff0000);
         player.setVelocityX(0);
-        player.setVelocityY(-400); 
+        player.setVelocityY(-350);
         player.setCollideWorldBounds(false); 
         player.body.checkCollision.none = true; 
         
