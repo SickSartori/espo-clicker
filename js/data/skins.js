@@ -38,6 +38,8 @@ window.gameData.skins = {
             goldenBugColor: '#e74c3c'
         }
     },
+
+    // --- RARE ---
     gladiator: {
         name: "Esporator",
         desc: "Al mio segnale, scatenate i click.",
@@ -70,6 +72,8 @@ window.gameData.skins = {
         rarity: "rare",
         cost: new Decimal(10)
     },
+
+    // --- EPIC ---
     king: {
         name: "Espo of Empires",
         desc: "Il Re dei Bug.",
@@ -94,6 +98,18 @@ window.gameData.skins = {
         rarity: "epic",
         cost: new Decimal(25)
     },
+    initialE: {
+        name: "Initial E",
+        desc: "Tofu delivery, ma col codice.",
+        img: "initiale.webp",
+        imgClick: "initiale-click.webp",
+        rarity: "epic",
+        cost: new Decimal(30),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 30 Token."
+    },
+
+    // --- LEGENDARY ---
     rick: {
         name: "Rick Espley",
         desc: "Never gonna give you up!",
@@ -126,46 +142,6 @@ window.gameData.skins = {
         rarity: "legendary",
         cost: new Decimal(50)
     },
-    superespo: {
-        name: "Super Espò",
-        desc: "It’s-a Me, Espò!",
-        img: "super-espo.webp",
-        imgClick: "super-espo-click.webp",
-        rarity: "legendary",
-        cost: new Decimal(100),
-        themeConfig: {
-            cssFile: 'super-theme.css',
-            bodyClass: 'theme-super',
-            specialMusic: 'sound-bg-music-super',
-            goldenBugIcon: 'fa-question',
-            goldenBugColor: '#ffffff'
-        }
-    },
-    jesus: {
-        name: "Gespo",
-        desc: "Il salvatore del database.",
-        img: "gespo.webp",
-        imgClick: "gespo-click.webp",
-        rarity: "divine",
-        unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
-        themeConfig: {
-            specialMusic: 'bg-music-divine',
-            goldenBugIcon: 'fa-sun',
-            goldenBugColor: '#f1c40f'
-        }
-    },
-
-    // --- SKIN POST-FORMATTAZIONE ---
-    initialE: {
-        name: "Initial E",
-        desc: "Tofu delivery, ma col codice.",
-        img: "initiale.webp",
-        imgClick: "initiale-click.webp",
-        rarity: "epic",
-        cost: new Decimal(30),
-        requiresFormatting: true,
-        unlockHint: "Esegui almeno 1 Formattazione e acquista con 30 Token."
-    },
     britneyEspears: {
         name: "Britney Espears",
         desc: "Oops!... I debugged again.",
@@ -186,4 +162,34 @@ window.gameData.skins = {
         requiresFormatting: true,
         unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
     },
+    superespo: {
+        name: "Super Espò",
+        desc: "It's-a Me, Espò!",
+        img: "super-espo.webp",
+        imgClick: "super-espo-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(100),
+        themeConfig: {
+            cssFile: 'super-theme.css',
+            bodyClass: 'theme-super',
+            specialMusic: 'sound-bg-music-super',
+            goldenBugIcon: 'fa-question',
+            goldenBugColor: '#ffffff'
+        }
+    },
+
+    // --- DIVINE ---
+    jesus: {
+        name: "Gespo",
+        desc: "Il salvatore del database.",
+        img: "gespo.webp",
+        imgClick: "gespo-click.webp",
+        rarity: "divine",
+        unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
+        themeConfig: {
+            specialMusic: 'bg-music-divine',
+            goldenBugIcon: 'fa-sun',
+            goldenBugColor: '#f1c40f'
+        }
+    }
 };

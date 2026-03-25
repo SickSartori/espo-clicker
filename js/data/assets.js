@@ -260,6 +260,13 @@ window.gameData.assets = {
             name: 'Video: Big Bang Formattazione',
             category: 'eventi',
             defaultVol: 1.0
+        },
+        'britney-espoars-video': {
+            id: 'britney-espoars-video',
+            file: 'britney-espoars-video.mp4',
+            name: 'Video: Britney Espears',
+            category: 'eventi',
+            defaultVol: 0.5
         }
     }
 };

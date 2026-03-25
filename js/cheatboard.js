@@ -289,6 +289,7 @@
                 <div class="control-row">
                     <button id="btn-event-rick" class="cheat-btn danger" title="Never gonna give you up...">Rick</button>
                     <button id="btn-event-ricardo" class="cheat-btn danger" title="Attiva il video Ricardo Milos">Ricardo</button>
+                    <button id="btn-event-britney" class="cheat-btn danger" title="Oops!... I debugged again">Britney</button>
                 </div>
 
                 <div class="control-row">
@@ -587,6 +588,13 @@
 
     document.getElementById('btn-event-ricardo').addEventListener('click', () => {
         if (typeof triggerGameEvent === 'function') triggerGameEvent('ricardo');
+    });
+
+    document.getElementById('btn-event-britney').addEventListener('click', () => {
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('britneyEspears');
+            toast('🎤 Britney Espears attivata');
+        }
     });
 
     document.getElementById('btn-event-golden').addEventListener('click', () => {
