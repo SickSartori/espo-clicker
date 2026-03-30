@@ -737,6 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
                 'sound-bg-music-super': 'superespo',
+                'bg-music-espory': 'freddy-espory',
                 'bg-music-divine': 'jesus'
             };
 

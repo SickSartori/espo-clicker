@@ -140,7 +140,10 @@ window.gameData.skins = {
         img: "freddy-espory.webp",
         imgClick: "freddy-espory-click.webp",
         rarity: "legendary",
-        cost: new Decimal(50)
+        cost: new Decimal(50),
+        themeConfig: {
+            specialMusic: 'bg-music-espory'
+        }
     },
     britneyEspears: {
         name: "Britney Espears",

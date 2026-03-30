@@ -37,9 +37,18 @@ window.gameData.assets = {
             defaultVol: 0.1
         },
         'bg-music-divine': {
-            id: 'bg-music-divine',
+            id: 'sound-bg-music-divine',
             file: 'bg-music-divine.mp3',
             name: 'Espò Divino',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.3
+        },
+        'bg-music-espory': {
+            id: 'sound-bg-music-espory',
+            file: 'bg-music-espory.mp3',
+            name: 'Freddy Espory',
             type: 'music',
             category: 'ambiente',
             loop: true,
