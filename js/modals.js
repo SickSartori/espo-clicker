@@ -1028,10 +1028,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.tryStartAudio();
 
                 Game.showToast(gameData.texts.toasts.welcome + " " + u);
-                if (window.shouldShowReleaseNotesOnLoad) {
+
+                // --- CONTROLLO MODALI POST-LOGIN (Migrazione V2 o Release Notes) ---
+                if (window.triggerV2MigrationModal) {
+                    setTimeout(() => {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: '🌌 BENVENUTO NELLA V2.0 🌌',
+                                html: `
+                                    <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
+                                        Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
+                                        Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
+                                        <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                                            <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
+                                            Il tuo guardaroba è intatto.
+                                        </div>
+                                        <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
+                                            <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
+                                            Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
+                                        </div>
+                                    </div>
+                                `,
+                                icon: 'info',
+                                background: '#151b22',
+                                color: '#fff',
+                                confirmButtonColor: '#9b59b6',
+                                confirmButtonText: '<i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(() => {
+                                window.triggerV2MigrationModal = false;
+                                if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
+                                    Game.openReleaseNotes();
+                                }
+                            });
+                        }
+                    }, 500);
+                } else if (window.shouldShowReleaseNotesOnLoad) {
                     setTimeout(() => {
                         if (Game.openReleaseNotes) Game.openReleaseNotes();
-                    }, 500); // Attende la chiusura del modale di login
+                    }, 500);
                 }
             } else {
                 alert(data.message);

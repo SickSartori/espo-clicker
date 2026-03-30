@@ -332,8 +332,8 @@
 
         const chunkType = Phaser.Math.Between(1, 10);
 
-        let widthMin = Math.max(180, 320 - currentLevel * 10);
-        let widthMax = Math.max(260, 480 - currentLevel * 8);
+        let widthMin = Math.max(140, 240 - currentLevel * 10);
+        let widthMax = Math.max(220, 380 - currentLevel * 8);
         let width = Phaser.Math.Between(widthMin, widthMax);
 
         const tiers = [380, 365, 345, 320, 300];
@@ -349,7 +349,7 @@
         let platformTop = tiers[newTierIndex];
 
         if (chunkType <= 2) {
-            width = Phaser.Math.Between(120, 180); // Piattaforme piccole ma non impossibili
+            width = Phaser.Math.Between(100, 160); // Piattaforme piccole ma non impossibili
         }
 
         const newX = lastChunkX + gap + width / 2;
@@ -372,7 +372,7 @@
         if (chunkType >= 8 && width > 250) {
             isFloating = true;
             const floatWidth = Phaser.Math.Between(100, width - 60);
-            const floatTop = platformTop - Phaser.Math.Between(100, 140);
+            const floatTop = platformTop - Phaser.Math.Between(80, 110);
             const floatPlat = scene.add.tileSprite(newX, floatTop + 16, floatWidth, 32, 'floorbricks');
             floatPlat.tileScaleX = 2; floatPlat.tileScaleY = 2;
             scene.physics.add.existing(floatPlat, true);
