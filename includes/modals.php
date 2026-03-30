@@ -386,7 +386,7 @@
             </div>
             
             <div class="skins-toggle-wrapper">
-                <span style="font-size: 0.8rem; color: #bdc3c7; margin-right: 8px;">Nuovo UI</span>
+                <span id="skins-ui-label" style="font-size: 0.8rem; color: #bdc3c7; margin-right: 8px;">Vista: Card</span>
                 <label class="modern-switch">
                     <input type="checkbox" id="skins-ui-toggle" checked>
                     <span class="modern-slider"></span>

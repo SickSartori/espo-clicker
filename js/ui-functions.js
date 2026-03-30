@@ -625,14 +625,26 @@ let lastViewedSkinId = null;
 
 // Listener per i filtri e lo switch (eseguiti una sola volta all'avvio)
 document.addEventListener('DOMContentLoaded', () => {
-    // Setup Switch Legacy/Modern
     const toggleUI = document.getElementById('skins-ui-toggle');
+    const toggleLabel = document.getElementById('skins-ui-label'); // FIX: Recupero elemento testo
+
     if (toggleUI) {
         const pref = localStorage.getItem('useModernSkinsUI');
         toggleUI.checked = pref !== 'false'; // Default a true
+        
+        // FIX: Imposta il testo iniziale al caricamento
+        if (toggleLabel) {
+            toggleLabel.textContent = toggleUI.checked ? 'Card' : 'Griglia';
+        }
 
         toggleUI.addEventListener('change', (e) => {
             localStorage.setItem('useModernSkinsUI', e.target.checked);
+            
+            // FIX: Aggiorna dinamicamente il testo al cambio di visualizzazione
+            if (toggleLabel) {
+                toggleLabel.textContent = e.target.checked ? 'Card' : 'Griglia';
+            }
+            
             updateSkinsUI();
         });
     }
