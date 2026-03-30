@@ -33,32 +33,20 @@ function setTextIfChanged(elementId, newText) {
 // ---------  FUNZIONI DI FORMATTORE ---------
 
 function formatNumber(num) {
-    // 1. Gestione sicurezza: se è null/undefined restituisce "0"
     if (num === undefined || num === null) return "0";
 
-    // 2. Conversione Universale Protetta
     let decimal;
-
-    // Se è già un'istanza valida di Decimal, usala direttamente
     if (num instanceof Decimal) {
         decimal = num;
     } else {
-        // Se è un numero puro, una stringa o un oggetto "sporco" dal JSON
-        try {
-            // Tentativo di creazione standard
-            decimal = new Decimal(num);
-        } catch (e) {
-            // Se fallisce (es. errore t.indexOf), prova a forzare la stringa o restituisci 0
-            try {
-                decimal = new Decimal(String(num));
-            } catch (e2) {
-                console.warn("Errore formattazione numero:", num);
-                return "0";
-            }
+        try { decimal = new Decimal(num); }
+        catch (e) {
+            try { decimal = new Decimal(String(num)); }
+            catch (e2) { return "0"; }
         }
     }
 
-    // 3. Gestione Numeri Piccoli (< 1000)
+    // Per i numeri piccoli standard
     if (decimal.abs().lt(1000)) {
         let val = decimal.toNumber();
         if (Number.isInteger(val)) return val.toLocaleString('it-IT');
@@ -66,23 +54,64 @@ function formatNumber(num) {
     }
 
     // 4. Gestione Suffissi (k, M, B, T...)
-    const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    /*const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
+                      "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
+                      "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
+                      "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];*/	// 1Utg -> 999Qag
 
-    // L'esponente ci dice quanto è grande il numero (es. 1e6 ha esponente 6)
-    let exponent = decimal.e;
-
-    // L'indice del suffisso è l'esponente diviso 3 (es. 6/3 = indice 2 -> "M")
+    // Recupero universale e sicuro per Break_infinity
+    let exponent = decimal.exponent !== undefined ? decimal.exponent : decimal.e;
+    let mantissa = decimal.mantissa !== undefined ? decimal.mantissa : decimal.m;
     let suffixIndex = Math.floor(exponent / 3);
 
     // 5. Caso: Suffisso Disponibile
-    if (suffixIndex < suffixes.length) {
-        // Dividiamo per 1000^indice per ottenere il numero "base" (es. 1.500.000 / 1e6 = 1.5)
-        let scaled = decimal.div(new Decimal("1e" + (suffixIndex * 3)));
-        return scaled.toFixed(2).replace('.', ',') + " " + suffixes[suffixIndex];
+    if (suffixIndex > 0 && suffixIndex < gameData.texts.format.suffixes.length) {
+        let power = exponent % 3;
+        let scaled = mantissa * Math.pow(10, power);
+
+        // Evita che 999.999 diventi "1000,00" forzando lo scatto al suffisso successivo
+        if (scaled >= 999.995) {
+            scaled /= 1000;
+            suffixIndex++;
+        }
+
+        // Ulteriore controllo nel caso il "salto" sondi oltre la lunghezza dell'array
+        if (suffixIndex < gameData.texts.format.suffixes.length)
+            return scaled.toFixed(2).replace('.', ',') + " " + gameData.texts.format.suffixes[suffixIndex];
     }
 
-    // 6. Caso: Numero Enorme (Notazione Scientifica Pulita)
+    // Se andiamo oltre il Qag, usa la notazione scientifica pulita
     return decimal.toExponential(2).replace('.', ',');
+}
+
+function formatFullNumber(num) {
+    if (num === undefined || num === null) return "0";
+    let decimal = new Decimal(num).floor();
+
+    // Evita che la RegExp distrugga la stringa se il numero è in notazione scientifica
+    if (decimal.gte(1e21))
+        return formatNumber(decimal);
+
+    let str = decimal.toFixed(0);
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// --- LAZY LOAD CSS ---
+const loadedThemes = new Set();
+
+function loadThemeCSS(themeFile) {
+    if (!themeFile || loadedThemes.has(themeFile)) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+
+    // Recupera la versione della cache globale o usa un fallback
+    const v = window.GAME_VERSION ? window.GAME_VERSION.major : Date.now();
+    link.href = `css/${themeFile}?v=${v}`;
+
+    document.head.appendChild(link);
+    loadedThemes.add(themeFile);
+    console.log(`[Tema] Caricato dinamicamente: ${themeFile}`);
 }
 
 function formatTime(totalSeconds) {
@@ -103,6 +132,7 @@ function formatTime(totalSeconds) {
 
 
 let matrixFrameId = null;
+let matrixResizeHandler = null;
 
 function startMatrixEffect() {
     const canvas = document.getElementById('matrix-canvas');
@@ -153,11 +183,13 @@ function startMatrixEffect() {
     if (matrixFrameId) cancelAnimationFrame(matrixFrameId);
     draw();
 
-    // Gestione Resize
-    window.addEventListener('resize', () => {
+    // Gestione Resize (Rimuovi il precedente per evitare accumuli)
+    if (matrixResizeHandler) window.removeEventListener('resize', matrixResizeHandler);
+    matrixResizeHandler = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-    });
+    };
+    window.addEventListener('resize', matrixResizeHandler);
 }
 
 function stopMatrixEffect() {
@@ -165,7 +197,12 @@ function stopMatrixEffect() {
         cancelAnimationFrame(matrixFrameId);
         matrixFrameId = null;
     }
-    // Pulisci il canvas (opzionale, ma pulito)
+    // Rimuovi resize listener
+    if (matrixResizeHandler) {
+        window.removeEventListener('resize', matrixResizeHandler);
+        matrixResizeHandler = null;
+    }
+    // Pulisci il canvas
     const canvas = document.getElementById('matrix-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -227,13 +264,22 @@ function renderStoreSection(config) {
     } else {
         // --- ORDINAMENTO DINAMICO (Per Upgrade, Skin, Lab) ---
         items.sort((a, b) => {
-            // Prima per Priorità (Acquistabili -> Bloccati -> Posseduti)
+            // 1. Prima per Priorità (Acquistabili -> Bloccati -> Posseduti/MAX)
+            // Questo fa in modo che le cose esaurite vadano in fondo, come hai chiesto.
             if (a.sortPriority !== b.sortPriority) return a.sortPriority - b.sortPriority;
 
-            // Poi per Costo (dal più economico)
-            const costA = a.status.currentCost || a.data.baseCost || a.data.cost || 0;
-            const costB = b.status.currentCost || b.data.baseCost || b.data.cost || 0;
-            return costA - costB;
+            // 2. Poi per Costo BASE (Fisso) invece del Costo Attuale
+            // Così le card non saltano quando il prezzo aumenta dopo un acquisto
+            const baseCostA = a.data.baseCost !== undefined ? a.data.baseCost : (a.data.cost || 0);
+            const baseCostB = b.data.baseCost !== undefined ? b.data.baseCost : (b.data.cost || 0);
+
+            if (baseCostA !== baseCostB) {
+                return baseCostA - baseCostB;
+            }
+
+            // 3. Sicurezza extra: se due oggetti hanno lo stesso costo base,
+            // li teniamo fermi usando l'ordine alfabetico del loro ID (key)
+            return a.key.localeCompare(b.key);
         });
     }
 
@@ -245,12 +291,18 @@ function renderStoreSection(config) {
 
         // Filtri Visibilità
         let isVisible = false;
-        if (config.type === 'building') isVisible = true;
-        else if (data.alwaysVisible) isVisible = true;
-        else if (mode === 'all') isVisible = true;
-        else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
-        else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
-        else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
+
+        // NUOVO CONTROLLO CUSTOM: Se l'oggetto ha condizioni speciali, sovrascrivi
+        if (data.customVisible && !data.customVisible()) {
+            isVisible = false;
+        } else {
+            if (config.type === 'building') isVisible = true;
+            else if (data.alwaysVisible) isVisible = true;
+            else if (mode === 'all') isVisible = true;
+            else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
+            else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
+            else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
+        }
 
         if (!isVisible) { if (el) el.style.display = 'none'; return; }
         visibleCount++;
@@ -391,8 +443,7 @@ function renderStoreSection(config) {
     }
 }
 
-function updateClickStore()
-{
+function updateClickStore() {
     renderStoreSection({
         type: 'click',
         containerId: 'click-upgrade-list',
@@ -419,8 +470,7 @@ function updateClickStore()
 }
 
 // --- FUNZIONE PRINCIPALE UNICA DI AGGIORNAMENTO NEGOZI ---
-function refreshAllStores()
-{
+function refreshAllStores() {
     // NEGOZIO CLICK (Richiama la funzione ottimizzata sopra)
     updateClickStore();
 
@@ -437,14 +487,14 @@ function refreshAllStores()
         getStatus: (key, data, state) => {
             const targetTeamState = gameState.teams[data.targetTeam];
             const targetTeamData = gameData.teams[data.targetTeam];
-            
+
             const current = targetTeamState ? targetTeamState.count : 0;
-            const teamName = targetTeamData ? targetTeamData.name : "???"; 
+            const teamName = targetTeamData ? targetTeamData.name : "???";
 
             return {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
-                canAfford: gameState.prestigePoints.gte(data.baseCost),
+                canAfford: gameState.score.gte(data.cost),
                 label: gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
                 // Qui avveniva l'errore: ora usiamo la variabile sicura 'teamName'
@@ -467,14 +517,16 @@ function refreshAllStores()
         getStatus: (key, data, state) => {
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
             const singlePurchased = !data.isCounted && state.purchased;
+            const actualCost = data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost;
+
             return {
                 purchased: singlePurchased,
                 unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
-                canAfford: gameState.prestigePoints.gte(data.baseCost),
+                canAfford: gameState.prestigePoints.gte(actualCost), // Usa actualCost
                 label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
-                costText: `Costo: ${formatNumber(data.baseCost)} Token`,
-                currentCost: data.baseCost,
+                costText: `Costo: ${formatNumber(actualCost)} Token`, // Usa actualCost
+                currentCost: actualCost, // Usa actualCost
                 progress: 100
             };
         },
@@ -510,8 +562,8 @@ function refreshAllStores()
             for (const enhanceKey in gameState.buildingEnhancements) {
                 const eData = gameData.buildingEnhancements[enhanceKey];
                 const eState = gameState.buildingEnhancements[enhanceKey];
-                
-                if (!eData) continue; 
+
+                if (!eData) continue;
 
                 if (eData.targetTeam === key && eState.purchased) {
                     teamBPS *= eData.multiplier;
@@ -535,15 +587,94 @@ function refreshAllStores()
         }
     });
 
+    // NEGOZIO QUANTICO (Q-Lab)
+    if (gameState.totalFormattazioni > 0 || gameState.qBits.gt(0)) {
+        renderStoreSection({
+            type: 'quantum',
+            containerId: 'quantum-list-container',
+            emptyId: 'quantum-empty',
+            dataSource: gameData.superUpgrades,
+            stateSource: gameState.superUpgrades,
+            cardClass: 'prestige-upgrade quantum-card', // Ricicliamo la struttura lab
+            btnClass: 'quantum-btn',
+            onBuy: (key) => { if (typeof buySuperUpgrade === 'function') buySuperUpgrade(key); },
+            getStatus: (key, data, state) => {
+                return {
+                    purchased: state.purchased,
+                    unlocked: !state.purchased,
+                    isMaxed: false,
+                    canAfford: gameState.qBits.gte(data.cost),
+                    label: state.purchased ? gameData.texts.ui.owned : gameData.texts.ui.buy.toUpperCase(),
+                    costText: `Costo: ${formatNumber(data.cost)} qBit`,
+                    currentCost: data.cost,
+                    progress: 100
+                };
+            },
+            setEmptyMsg: (el, mode) => { el.textContent = "Tecnologia massima raggiunta."; }
+        });
+    }
+
     if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 }
 
+let currentSkinFilter = 'all';
+let currentRarityFilter = 'all';
+let modernSkinsArray = [];
+let modernCurrentIndex = 0;
+let lastViewedSkinId = null;
+
+// Listener per i filtri e lo switch (eseguiti una sola volta all'avvio)
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup Switch Legacy/Modern
+    const toggleUI = document.getElementById('skins-ui-toggle');
+    if (toggleUI) {
+        const pref = localStorage.getItem('useModernSkinsUI');
+        toggleUI.checked = pref !== 'false'; // Default a true
+
+        toggleUI.addEventListener('change', (e) => {
+            localStorage.setItem('useModernSkinsUI', e.target.checked);
+            updateSkinsUI();
+        });
+    }
+
+    // Setup Filtri Stato
+    document.querySelectorAll('.skin-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentSkinFilter = e.target.getAttribute('data-filter');
+            updateSkinsUI();
+        });
+    });
+
+    // Setup Filtro Rarità
+    const raritySelect = document.getElementById('skin-rarity-filter');
+    if (raritySelect) {
+        raritySelect.addEventListener('change', (e) => {
+            currentRarityFilter = e.target.value;
+            updateSkinsUI();
+        });
+    }
+});
+
+// Funzione principale per aggiornare la modale delle skin
 function updateSkinsUI() {
-    const grid = document.getElementById('skins-grid');
-    if (!grid) return;
+    const gridLegacy = document.getElementById('skins-grid-legacy');
+    const gridModern = document.getElementById('skins-grid-modern');
+    const toggleUI = document.getElementById('skins-ui-toggle');
 
-    grid.innerHTML = '';
+    if (!gridLegacy || !gridModern) return;
 
+    const useModern = toggleUI ? toggleUI.checked : true;
+
+    gridLegacy.style.display = useModern ? 'none' : 'grid';
+    gridModern.style.display = useModern ? 'flex' : 'none';
+
+    gridLegacy.innerHTML = '';
+    gridModern.innerHTML = '';
+    modernSkinsArray = []; // Svuota l'array per il carousel
+
+    // Sicurezza salvataggi
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
 
@@ -552,10 +683,9 @@ function updateSkinsUI() {
 
     const rarityMap = {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'NATALE'
+        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
     };
 
-    // Mappatura Skin ID -> Obiettivo
     const skinToAchievement = {};
     for (const achKey in gameData.achievements) {
         const ach = gameData.achievements[achKey];
@@ -565,6 +695,32 @@ function updateSkinsUI() {
         }
     }
 
+    // CONTROLLO E DISABILITAZIONE FILTRO "BLOCCATE"
+    let lockedCount = 0;
+    for (const key in gameData.skins) {
+        if (!unlockedList.includes(key)) lockedCount++;
+    }
+
+    const lockedFilterBtn = document.querySelector('.skin-filter-btn[data-filter="locked"]');
+    if (lockedFilterBtn) {
+        if (lockedCount === 0) {
+            lockedFilterBtn.disabled = true;
+            lockedFilterBtn.style.pointerEvents = 'none'; // Previene hover e click
+
+            // Se eravamo proprio nella tab "Bloccate" quando è stata comprata l'ultima skin, torniamo a "Tutte"
+            if (currentSkinFilter === 'locked') {
+                currentSkinFilter = 'all';
+                document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
+                const allBtn = document.querySelector('.skin-filter-btn[data-filter="all"]');
+                if (allBtn) allBtn.classList.add('active');
+            }
+        } else {
+            lockedFilterBtn.disabled = false;
+            lockedFilterBtn.style.pointerEvents = 'auto';
+        }
+    }
+
+    // 1. ELABORAZIONE DATI E FILTRI
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
@@ -573,22 +729,16 @@ function updateSkinsUI() {
         const canAfford = isBuyable && gameState.prestigePoints.gte(data.cost);
         const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
-        // --- LOGICA DESCRIZIONE CON TRANSIZIONE ---
-        let displayDescHTML = "";
+        // Filtri
+        if (currentSkinFilter === 'unlocked' && !isUnlocked) continue;
+        if (currentSkinFilter === 'locked' && isUnlocked) continue;
+        if (currentRarityFilter !== 'all' && data.rarity !== currentRarityFilter) continue;
 
-        if (isUnlocked) {
-            // Skin sbloccata: Lore fissa
-            displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
-        } else if (isBuyable) {
-            // Skin acquistabile: Rimuoviamo scritte descrittive per non tagliare il layout
-            // Il prezzo e il tasto COMPRA sono già presenti nel footer della card
-            displayDescHTML = `<div class="skin-lore"></div>`;
-        } else {
-            // Skin BLOCCATA da obiettivo: Struttura per dissolvenza
+        let requirement = "";
+        let baseText = gameData.texts.ui.unknown;
+
+        if (!isUnlocked && !isBuyable) {
             const linkedAch = skinToAchievement[key];
-            let requirement = "";
-            let baseText = gameData.texts.ui.unknown;
-
             if (linkedAch) {
                 const isSecretLocked = linkedAch.isSecret && !gameState.achievements[linkedAch.id || key]?.unlocked;
                 requirement = isSecretLocked ? gameData.texts.ui.secretGoal : (linkedAch.realDesc || linkedAch.desc);
@@ -597,56 +747,339 @@ function updateSkinsUI() {
                 requirement = data.unlockHint;
                 baseText = gameData.texts.ui.skinLocked;
             }
-
-            displayDescHTML = `
-        <div class="skin-fade-wrapper">
-            <div class="desc-base">${baseText}</div>
-            <div class="desc-hover">${requirement}</div>
-        </div>
-    `;
         }
-
-        // Elemento Footer (Bottone)
-        let footerHtml = '';
-        if (isEquipped) {
-            footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
-        } else if (isUnlocked) {
-            footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
-        } else if (isBuyable) {
-            const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
-            const btnText = canAfford ? gameData.texts.ui.buy.toUpperCase() : gameData.texts.ui.noToken;
-            const btnStyle = canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;';
-            const clickAction = canAfford ? `onclick="buySkin('${key}')"` : '';
-
-            footerHtml = `
-                <div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
-                <div class="skin-btn" style="${btnStyle}" ${clickAction}>${btnText}</div>
-            `;
-        } else {
-            footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> ${gameData.texts.ui.skinLocked}</div>`;
-        }
-
-        const card = document.createElement('div');
-        let classes = `skin-card rarity-${data.rarity || 'common'}`;
-        if (isUnlocked) classes += ' unlocked'; else classes += ' locked';
-        if (isEquipped) classes += ' equipped';
-        card.className = classes;
 
         const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/espo.webp') : 'assets/image/hidden.webp';
 
-        card.innerHTML = `
-            <div class="skin-badge">${rarityLabel}</div>
-            <div class="skin-img-container">
-                <img src="${imgSource}" class="skin-img">
+        // Creazione Oggetto per il Carousel Moderno
+        const skinObj = {
+            id: key, data, isUnlocked, isEquipped, isBuyable, canAfford,
+            rarityLabel, requirement, baseText, imgSource
+        };
+        modernSkinsArray.push(skinObj);
+
+        // ==========================================
+        // RENDERING LEGACY (Il vecchio design a griglia)
+        // ==========================================
+        if (!useModern) {
+            let displayDescHTML = "";
+            if (isUnlocked) displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
+            else if (isBuyable) displayDescHTML = `<div class="skin-lore"></div>`;
+            else displayDescHTML = `<div class="skin-fade-wrapper"><div class="desc-base">${baseText}</div><div class="desc-hover">${requirement}</div></div>`;
+
+            let footerHtml = '';
+            if (isEquipped) footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
+            else if (isUnlocked) footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
+            else if (isBuyable) {
+                const needsFormat = data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+                if (needsFormat) {
+                    footerHtml = `<div class="skin-price" style="color:#9b59b6"><i class="fa-solid fa-rotate"></i> Formattazione</div>
+                                  <div class="skin-btn" style="background:#333; color:#777; cursor:not-allowed;">FORMATTA PRIMA</div>`;
+                } else {
+                    const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
+                    footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
+                                  <div class="skin-btn" style="${canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
+                }
+            } else footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
+
+            const card = document.createElement('div');
+            card.className = `skin-card rarity-${data.rarity || 'common'} ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+            card.innerHTML = `
+                <div class="skin-badge">${rarityLabel}</div>
+                <div class="skin-img-container"><img src="${imgSource}" class="skin-img"></div>
+                <div class="skin-name-display" title="${data.name}">${data.name}</div>
+                <div class="skin-desc">${displayDescHTML}</div>
+                <div class="skin-card-spacer"></div>
+                <div class="skin-footer">${footerHtml}</div>`;
+            gridLegacy.appendChild(card);
+        }
+    }
+
+    // Ordinamento per rarità (common → rare → epic → legendary → divine → christmas)
+    const rarityOrder = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
+    modernSkinsArray.sort((a, b) => {
+        const ra = rarityOrder[a.data.rarity] || 0;
+        const rb = rarityOrder[b.data.rarity] || 0;
+        return ra - rb;
+    });
+
+    // Gestone Messaggio Vuoto
+    if (modernSkinsArray.length === 0) {
+        const msg = `<div style="text-align: center; color: #7f8c8d; padding: 40px; font-style: italic; width: 100%;">Nessuna skin corrisponde ai filtri.</div>`;
+        if (useModern) gridModern.innerHTML = msg; else gridLegacy.innerHTML = msg;
+        return;
+    }
+
+    // ==========================================
+    // RENDERING MODERNO (Carousel Cover Flow)
+    // ==========================================
+    if (useModern) {
+        modernCurrentIndex = 0;
+        let foundIndex = -1;
+
+        if (lastViewedSkinId) {
+            foundIndex = modernSkinsArray.findIndex(s => s.id === lastViewedSkinId);
+        }
+
+        if (foundIndex !== -1) {
+            modernCurrentIndex = foundIndex;
+        } else {
+            modernCurrentIndex = Math.max(0, modernSkinsArray.findIndex(s => s.isEquipped));
+        }
+
+        // Crea la struttura base del Carousel e del Pannello
+        gridModern.innerHTML = `
+            <div class="carousel-stage" id="carousel-stage">
+                <button class="carousel-nav-btn" id="carousel-prev"><i class="fa-solid fa-chevron-left"></i></button>
+                <div id="carousel-track" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
+                <button class="carousel-nav-btn" id="carousel-next"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-            <div class="skin-name-display" title="${data.name}">${data.name}</div>
-            <div class="skin-desc">${displayDescHTML}</div>
-            <div class="skin-card-spacer"></div>
-            <div class="skin-footer">${footerHtml}</div>
+            <div class="modern-info-panel" id="modern-info-panel"></div>
         `;
 
-        grid.appendChild(card);
+        const track = document.getElementById('carousel-track');
+
+        // Genera gli elementi (immagini) nel track
+        modernSkinsArray.forEach((skin, index) => {
+            const item = document.createElement('div');
+            item.className = `carousel-item ${!skin.isUnlocked ? 'locked' : ''}`;
+            item.setAttribute('data-index', index);
+
+            // Variabili CSS per i colori della rarità (glow del bordo)
+            const rColors = {
+                'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+                'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+            };
+            const rGlows = {
+                'common': 'rgba(189,195,199,0.4)', 'rare': 'rgba(52,152,219,0.4)', 'epic': 'rgba(155,89,182,0.4)',
+                'legendary': 'rgba(241,196,15,0.4)', 'divine': 'rgba(255,238,144,0.6)', 'christmas': 'rgba(231,76,60,0.4)'
+            };
+
+            const color = rColors[skin.data.rarity] || rColors['common'];
+            const glow = rGlows[skin.data.rarity] || rGlows['common'];
+
+            item.style.setProperty('--r-color', color);
+            item.style.setProperty('--r-color-glow', glow);
+
+            item.innerHTML = `
+                <img src="${skin.imgSource}">
+                <div class="carousel-badge">${skin.rarityLabel}</div>
+                ${!skin.isUnlocked ? '<i class="fa-solid fa-lock carousel-lock"></i>' : ''}
+            `;
+
+            // Cliccare su un elemento laterale lo porta al centro
+            item.addEventListener('click', () => {
+                if (modernCurrentIndex !== index) {
+                    modernCurrentIndex = index;
+                    renderModernCarousel();
+                }
+            });
+
+            track.appendChild(item);
+        });
+
+        // Eventi Frecce Navigazione
+        document.getElementById('carousel-prev').addEventListener('click', () => {
+            if (modernCurrentIndex > 0) {
+                modernCurrentIndex--;
+                renderModernCarousel();
+            }
+        });
+
+        document.getElementById('carousel-next').addEventListener('click', () => {
+            if (modernCurrentIndex < modernSkinsArray.length - 1) {
+                modernCurrentIndex++;
+                renderModernCarousel();
+            }
+        });
+
+        // Navigazione Tastiera (frecce SX/DX) quando il modale è aperto
+        if (!window._carouselKeyHandler) {
+            window._carouselKeyHandler = (e) => {
+                const modal = document.getElementById('skins-modal');
+                if (!modal || modal.style.display === 'none') return;
+                const toggle = document.getElementById('skins-ui-toggle');
+                if (!toggle || !toggle.checked) return;
+
+                if (e.key === 'ArrowLeft' && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight' && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                    e.preventDefault();
+                }
+            };
+            document.addEventListener('keydown', window._carouselKeyHandler);
+        }
+
+        // Touch/Swipe per mobile
+        const stage = document.getElementById('carousel-stage');
+        if (stage && !stage._swipeAttached) {
+            stage._swipeAttached = true;
+            let touchStartX = 0;
+            let touchDelta = 0;
+
+            stage.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchDelta = 0;
+            }, { passive: true });
+
+            stage.addEventListener('touchmove', (e) => {
+                touchDelta = e.touches[0].clientX - touchStartX;
+            }, { passive: true });
+
+            stage.addEventListener('touchend', () => {
+                const threshold = 40; // px minimo per registrare swipe
+                if (touchDelta > threshold && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                } else if (touchDelta < -threshold && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                }
+            }, { passive: true });
+        }
+
+        // Scroll ruota mouse nel carousel
+        if (stage && !stage._wheelAttached) {
+            stage._wheelAttached = true;
+            let wheelCooldown = false;
+            stage.addEventListener('wheel', (e) => {
+                if (wheelCooldown) return;
+                wheelCooldown = true;
+                setTimeout(() => { wheelCooldown = false; }, 250); // Cooldown 250ms anti-spam
+
+                if (e.deltaY > 0 && modernCurrentIndex < modernSkinsArray.length - 1) {
+                    modernCurrentIndex++;
+                    renderModernCarousel();
+                } else if (e.deltaY < 0 && modernCurrentIndex > 0) {
+                    modernCurrentIndex--;
+                    renderModernCarousel();
+                }
+                e.preventDefault();
+            }, { passive: false });
+        }
+
+        // Esegue il render iniziale
+        renderModernCarousel();
     }
+}
+
+// Funzione helper per aggiornare posizioni 3D e Pannello Info
+function renderModernCarousel() {
+    const items = document.querySelectorAll('.carousel-item');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+
+    // Abilita/Disabilita frecce
+    if (prevBtn) prevBtn.style.opacity = modernCurrentIndex === 0 ? '0.3' : '1';
+    if (nextBtn) nextBtn.style.opacity = modernCurrentIndex === modernSkinsArray.length - 1 ? '0.3' : '1';
+
+    // Assegna le classi CSS per le posizioni 3D
+    items.forEach((item, index) => {
+        item.className = 'carousel-item ' + (!modernSkinsArray[index].isUnlocked ? 'locked' : '');
+
+        const diff = index - modernCurrentIndex;
+
+        if (diff === 0) item.classList.add('active');
+        else if (diff === -1) item.classList.add('prev-1');
+        else if (diff === -2) item.classList.add('prev-2');
+        else if (diff === 1) item.classList.add('next-1');
+        else if (diff === 2) item.classList.add('next-2');
+        else item.classList.add('hidden'); // Troppo lontani
+    });
+
+    // Aggiorna il Pannello Informazioni in basso
+    const panel = document.getElementById('modern-info-panel');
+    if (!panel) return;
+
+    const skin = modernSkinsArray[modernCurrentIndex];
+    if (!skin) return;
+    lastViewedSkinId = skin.id;
+
+    // --- AGGIUNTA: Passa i colori della rarità ai contenitori padre ---
+    const gridModern = document.getElementById('skins-grid-modern');
+
+    const rColors = {
+        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+    };
+    const rGlows = {
+        'common': 'rgba(189,195,199,0.1)', 'rare': 'rgba(52,152,219,0.2)', 'epic': 'rgba(155,89,182,0.2)',
+        'legendary': 'rgba(241,196,15,0.2)', 'divine': 'rgba(255,238,144,0.3)', 'christmas': 'rgba(231,76,60,0.2)'
+    };
+
+    const color = rColors[skin.data.rarity] || rColors['common'];
+    const glow = rGlows[skin.data.rarity] || rGlows['common'];
+
+    if (gridModern) gridModern.style.setProperty('--bg-glow-color', glow);
+    if (panel) {
+        panel.style.setProperty('--r-color', color);
+        panel.style.setProperty('--r-color-glow', glow);
+    }
+    // ------------------------------------------------------------------
+
+    let descHtml = '';
+    if (skin.isUnlocked) {
+        descHtml = `<div class="modern-info-desc">"${skin.data.desc || '...'}"</div>`;
+    } else if (skin.isBuyable) {
+        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        if (needsFormat) {
+            descHtml = `<div class="modern-info-desc" style="color:#9b59b6;">Sbloccata dopo la prima Formattazione del sistema.</div>`;
+        } else {
+            descHtml = `<div class="modern-info-desc">Disponibile nel Negozio del Laboratorio.</div>`;
+        }
+    } else {
+        descHtml = `
+            <div class="modern-info-desc" style="color:#7f8c8d; font-style:normal;">${skin.baseText}</div>
+            <div class="modern-info-requirement"><i class="fa-solid fa-circle-exclamation"></i> ${skin.requirement}</div>
+        `;
+    }
+
+    let actionHtml = '';
+    if (skin.isEquipped) {
+        actionHtml = `<button class="modern-btn-large modern-btn-equipped"><i class="fa-solid fa-check"></i> IN USO</button>`;
+    } else if (skin.isUnlocked) {
+        actionHtml = `<button class="modern-btn-large modern-btn-equip" onclick="equipSkin('${skin.id}')">EQUIPAGGIA SKIN</button>`;
+    } else if (skin.isBuyable) {
+        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        if (needsFormat) {
+            actionHtml = `
+                <div style="color: #9b59b6; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
+                <div style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> FORMATTA PRIMA</button>
+            `;
+        } else if (skin.canAfford) {
+            actionHtml = `
+                <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-buy" onclick="buySkin('${skin.id}')">COMPRA SKIN</button>
+            `;
+        } else {
+            actionHtml = `
+                <div style="color: #e74c3c; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="modern-btn-large modern-btn-disabled" disabled>TOKEN INSUFFICIENTI</button>
+            `;
+        }
+    } else {
+        actionHtml = `<button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> BLOCCATA</button>`;
+    }
+
+    // Transizione fluida: fade out → update → fade in
+    panel.style.opacity = '0';
+    panel.style.transform = 'translateY(6px)';
+    setTimeout(() => {
+        panel.innerHTML = `
+            <div class="modern-info-title">${skin.data.name}</div>
+            ${descHtml}
+            <div class="modern-info-action">
+                ${actionHtml}
+            </div>
+        `;
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+    }, 150);
 }
 
 
@@ -665,7 +1098,7 @@ function updateAchievementsUI() {
         'custom': 'fa-star'
     };
 
-Object.keys(gameData.achievements).forEach(key => {
+    Object.keys(gameData.achievements).forEach(key => {
         const data = gameData.achievements[key];
         const state = gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
@@ -803,64 +1236,64 @@ function showClickFeedback(event) {
     if (!feedbackContainer) return;
 
     // --- SUPER STAR MODE ---
-if (document.body.classList.contains('super-star-active')) {
-    const feedbackContainer = document.getElementById('click-feedback-container');
-    if (!feedbackContainer) return;
+    if (document.body.classList.contains('super-star-active')) {
+        const feedbackContainer = document.getElementById('click-feedback-container');
+        if (!feedbackContainer) return;
 
-    const container = document.createElement('div');
-    container.className = 'click-feedback-star';
-    container.style.pointerEvents = 'none';
-    container.style.position = 'absolute'; // Cambiato da fixed a absolute per seguire i valori
-    container.style.zIndex = '10005';
+        const container = document.createElement('div');
+        container.className = 'click-feedback-star';
+        container.style.pointerEvents = 'none';
+        container.style.position = 'absolute'; // Cambiato da fixed a absolute per seguire i valori
+        container.style.zIndex = '10005';
 
-    const img = document.createElement('img');
-    img.src = 'assets/image/star.png';
-    img.onerror = () => {
-        img.remove();
-        container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
-    };
-    container.appendChild(img);
+        const img = document.createElement('img');
+        img.src = 'assets/image/star.png';
+        img.onerror = () => {
+            img.remove();
+            container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
+        };
+        container.appendChild(img);
 
-    // Coordinate identiche ai valori numerici
-    const rect = feedbackContainer.getBoundingClientRect();
-    let startX, startY;
-    const size = 18; // Stella piccola come richiesto
+        // Coordinate identiche ai valori numerici
+        const rect = feedbackContainer.getBoundingClientRect();
+        let startX, startY;
+        const size = 18; // Stella piccola come richiesto
 
-    if (event && event.clientX && event.clientY) {
-        startX = event.clientX - rect.left - (size / 2);
-        startY = event.clientY - rect.top - (size / 2);
-    } else {
-        const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
-        startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
-        startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
+        if (event && event.clientX && event.clientY) {
+            startX = event.clientX - rect.left - (size / 2);
+            startY = event.clientY - rect.top - (size / 2);
+        } else {
+            const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+            startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
+            startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
+        }
+
+        container.style.left = `${startX}px`;
+        container.style.top = `${startY}px`;
+        container.style.width = `${size}px`;
+        container.style.height = `${size}px`;
+
+        feedbackContainer.appendChild(container);
+
+        if (typeof gsap !== 'undefined') {
+            gsap.fromTo(container,
+                { scale: 0.5, opacity: 1, y: 0 },
+                {
+                    duration: 0.7,
+                    y: -150, // Sale verso l'alto come i +1
+                    x: (Math.random() - 0.5) * 60,
+                    scale: 1.2,
+                    rotation: Math.random() * 360,
+                    opacity: 0,
+                    ease: "power1.out",
+                    onComplete: () => container.remove()
+                }
+            );
+        } else {
+            container.remove(); // Fallback rapido
+        }
+        return; // Impedisce la generazione del +1 standard durante l'evento
     }
-
-    container.style.left = `${startX}px`;
-    container.style.top = `${startY}px`;
-    container.style.width = `${size}px`;
-    container.style.height = `${size}px`;
-
-    feedbackContainer.appendChild(container);
-
-    if (typeof gsap !== 'undefined') {
-        gsap.fromTo(container,
-            { scale: 0.5, opacity: 1, y: 0 },
-            {
-                duration: 0.7,
-                y: -150, // Sale verso l'alto come i +1
-                x: (Math.random() - 0.5) * 60,
-                scale: 1.2,
-                rotation: Math.random() * 360,
-                opacity: 0,
-                ease: "power1.out",
-                onComplete: () => container.remove()
-            }
-        );
-    } else {
-        container.remove(); // Fallback rapido
-    }
-    return; // Impedisce la generazione del +1 standard durante l'evento
-}
     const feedback = document.createElement('span');
     feedback.className = 'click-feedback';
 
@@ -988,6 +1421,20 @@ if (document.body.classList.contains('super-star-active')) {
         });
         setTimeout(() => feedback.remove(), 1000);
     }
+
+    // Sparkle particles (3-5 piccole scintille dal punto di click)
+    const sparkCount = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < sparkCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'click-spark';
+        const angle = (Math.PI * 2 / sparkCount) * i + (Math.random() * 0.5);
+        const dist = 20 + Math.random() * 35;
+        spark.style.cssText = `left:${startX + randomOffsetX}px;top:${startY + randomOffsetY}px;` +
+            `--spark-x:${Math.cos(angle) * dist}px;--spark-y:${Math.sin(angle) * dist}px;` +
+            `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random()*100)},${Math.floor(Math.random()*80)},0.9)`;
+        feedbackContainer.appendChild(spark);
+        setTimeout(() => spark.remove(), 800);
+    }
 }
 
 
@@ -1079,8 +1526,7 @@ function checkTabNotifications() {
 
     // Auto Tab
     let autoNotify = false;
-    for (const key in gameData.buildingEnhancements)
-    {
+    for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
 
@@ -1089,8 +1535,7 @@ function checkTabNotifications() {
 
         const targetTeam = gameState.teams[data.targetTeam];
 
-        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost))
-        {
+        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost)) {
             autoNotify = true;
             break;
         }
@@ -1098,30 +1543,28 @@ function checkTabNotifications() {
 
     const tabAuto = document.getElementById('tab-auto');
     if (tabAuto)
-		autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
+        autoNotify && !tabAuto.classList.contains('active') ? tabAuto.classList.add('notify') : tabAuto.classList.remove('notify');
 
     // Prestige Tab
     let prestigeNotify = false;
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0))
-	{
-        for (const key in gameData.prestigeUpgrades)
-		{
+    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0)) {
+        for (const key in gameData.prestigeUpgrades) {
             const data = gameData.prestigeUpgrades[key];
             const state = gameState.prestigeUpgrades[key];
 
-            if (data.isCounted)
-			{
-                if (gameState.prestigePoints.gte(data.baseCost))
-					prestigeNotify = true;
+            if (data.isCounted) {
+                const scaledCost = (typeof calculatePrestigeUpgradeCost === 'function')
+                    ? calculatePrestigeUpgradeCost(key) : data.baseCost;
+                if (!(data.maxLevel && state.count >= data.maxLevel) && gameState.prestigePoints.gte(scaledCost))
+                    prestigeNotify = true;
             }
-			else
-			{
+            else {
                 if (!state.purchased && gameState.prestigePoints.gte(data.baseCost))
-					prestigeNotify = true;
+                    prestigeNotify = true;
             }
 
             if (prestigeNotify)
-				break;
+                break;
         }
     }
 
@@ -1133,7 +1576,7 @@ function checkTabNotifications() {
     let title = "Espòòò Clicker";
 
     // Controlliamo se abbiamo raggiunto il PRESTIGE_THRESHOLD
-    const canPrestige = gameState.totalScore.gte(gameData.PRESTIGE_THRESHOLD);
+    const canPrestige = gameState.totalScore.gte(getPrestigeThreshold());
 
     if (canPrestige)
         title = gameData.texts.ui.promotionReadyTitle + " - " + title;
@@ -1145,8 +1588,7 @@ function checkTabNotifications() {
         document.title = title;
 }
 
-function updateBonusCounter()
-{
+function updateBonusCounter() {
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
 
@@ -1156,8 +1598,7 @@ function updateBonusCounter()
         if (counter)
             counter.style.display = 'block';
 
-        if (valueSpan)
-        {
+        if (valueSpan) {
             // Mostra il moltiplicatore totale con 2 decimali
             valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
 
@@ -1165,8 +1606,7 @@ function updateBonusCounter()
             valueSpan.style.color = '#f1c40f';
         }
     }
-    else
-    {
+    else {
         if (counter)
             counter.style.display = 'none';
     }
@@ -1205,12 +1645,6 @@ function calculateVisualBPS() {
 
 const scoreAnimState = { value: 0 };
 
-function formatFullNumber(num) {
-    if (num === undefined || num === null) return "0";
-    let str = new Decimal(num).floor().toFixed(0);
-    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
 function updateScoreBoard(totalBPS) {
     // Se è la prima volta (o reset/promozione), allinea subito senza animazione
     if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5)
@@ -1230,6 +1664,12 @@ function updateScoreBoard(totalBPS) {
     if (scoreEl) {
         scoreEl.setAttribute('data-tooltip', formatFullNumber(gameState.score));
         scoreEl.classList.add('simple-tooltip');
+        // Micro-bump visivo quando il punteggio aumenta
+        if (gameState.score > scoreAnimState.value * 1.001) {
+            scoreEl.classList.add('score-bump');
+            clearTimeout(scoreEl._bumpTimer);
+            scoreEl._bumpTimer = setTimeout(() => scoreEl.classList.remove('score-bump'), 150);
+        }
     }
 
     setTextIfChanged('cps-display', `BPS: ${formatNumber(totalBPS)}`);
@@ -1245,38 +1685,30 @@ function updateScoreBoard(totalBPS) {
     }
 }
 
-function updateHUD()
-{
-    // Riferimenti ai nuovi pannelli nell'header
+function updateHUD() {
     const leftPanel = document.getElementById('header-left-panel');
     const rightPanel = document.getElementById('header-right-panel');
-
-    // Riferimenti ai valori di testo
     const displayCareer = document.getElementById('display-career-bonus');
     const displayTokens = document.getElementById('prestige-points-display');
+    const headerQbit = document.getElementById('header-qbit-container');
 
-    // Condizione: Mostra solo se il giocatore ha fatto almeno un prestigio
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0))
-    {
-        // Mostra i pannelli laterali
+    const hasPrestige = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
+    const hasQuantum = gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+
+    // Mostra i pannelli se hai fatto almeno un Prestigio O una Formattazione
+    if (hasPrestige || hasQuantum) {
         if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
         if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
 
-        // Aggiorna i testi
-        if (displayCareer)
-            setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
+        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
 
-        if (displayTokens)
-            setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
+        // Gestione visibilità div specifico dei Q-Bits
+        if (headerQbit) headerQbit.style.display = hasQuantum ? 'flex' : 'none';
     }
-    else
-    {
-        // Nascondi se è la prima run
-        if (leftPanel)
-            leftPanel.classList.add("header_stat_box_display_none");
-
-        if (rightPanel)
-            rightPanel.classList.add("header_stat_box_display_none");
+    else {
+        if (leftPanel) leftPanel.classList.add("header_stat_box_display_none");
+        if (rightPanel) rightPanel.classList.add("header_stat_box_display_none");
     }
 }
 
@@ -1284,10 +1716,47 @@ function updateWallets() {
     setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
     setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score.floor()));
 
-    // Mobile Wallets (Aggiornamento di gruppo)
+    // Aggiorna Q-Bits anche nell'header in alto
+    setTextIfChanged('qbit-wallet-amount', formatNumber(gameState.qBits));
+    setTextIfChanged('header-qbit-display', formatNumber(gameState.qBits));
+
+    // Aggiorna Q-Bits in attesa nel bottone di formattazione
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
         if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
     });
+
+    // Aggiorna Q-Bits in attesa nel bottone di formattazione (NUOVA FORMULA SQRT)
+    if (gameState.prestigePoints) {
+        const tokenDiv = gameState.prestigePoints.div(10000);
+        let bonusQbits = new Decimal(0);
+        if (tokenDiv.gte(1)) {
+            bonusQbits = tokenDiv.sqrt().floor();
+        }
+        const pendingQBits = new Decimal(1).add(bonusQbits);
+        setTextIfChanged('pending-qbits-display', `+${formatNumber(pendingQBits)} Q-Bit`);
+    }
+
+    // --- NUOVO: GESTIONE REQUISITO FORMATTAZIONE ---
+    const formatBtn = document.getElementById('btn-open-format-modal');
+    const formatWarning = document.getElementById('format-requirement-warning');
+    const currentResetsDisplay = document.getElementById('current-resets-display');
+
+    if (formatBtn && formatWarning && currentResetsDisplay) {
+        const currentResets = gameState.totalResets || 0;
+        currentResetsDisplay.textContent = currentResets;
+
+        if (currentResets < 20) {
+            formatBtn.disabled = true;
+            formatBtn.style.opacity = '0.4';
+            formatBtn.style.cursor = 'not-allowed';
+            formatWarning.style.display = 'block';
+        } else {
+            formatBtn.disabled = false;
+            formatBtn.style.opacity = '1';
+            formatBtn.style.cursor = 'pointer';
+            formatWarning.style.display = 'none';
+        }
+    }
 }
 
 function updateStoreButtons() {
@@ -1343,6 +1812,9 @@ function updateStoreButtons() {
         const data = gameData.prestigeUpgrades[key];
         const state = gameState.prestigeUpgrades[key];
 
+        // CONTROLLO ANTI-CRASH
+        if (!data) continue;
+
         // Se è già maxato o posseduto (non contato), il bottone è gestito come 'owned' dal render, lo ignoriamo
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) continue;
         if (!data.isCounted && state.purchased) continue;
@@ -1350,7 +1822,7 @@ function updateStoreButtons() {
         const btn = getEl(`buy-${key}`);
         if (btn && !btn.classList.contains('owned')) {
             // Controlla Token invece di Score
-            btn.disabled = (gameState.prestigePoints.lt(data.baseCost));
+            btn.disabled = (gameState.prestigePoints.lt(data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost));
         }
     }
 }
@@ -1395,16 +1867,24 @@ function updateSkillButton() {
     }
 }
 
-function updateTabsVisibility()
-{
+function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
-
-    if (tabPrestige)
-    {
+    if (tabPrestige) {
         const show = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
+        if (show) tabPrestige.classList.remove("tab_promozione");
+    }
 
-        if (show)
-            tabPrestige.classList.remove("tab_promozione");
+    const tabQuantum = getEl('tab-quantum');
+    const headerQbit = getEl('header-qbit-container');
+
+    // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
+    const isQuantumUnlocked = gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+
+    if (tabQuantum) {
+        tabQuantum.style.display = isQuantumUnlocked ? 'flex' : 'none';
+    }
+    if (headerQbit) {
+        headerQbit.style.display = isQuantumUnlocked ? 'flex' : 'none';
     }
 }
 
@@ -1414,7 +1894,7 @@ function updatePrestigeVisuals() {
 
     // Recupera i valori in modo sicuro (gestisce null/undefined)
     const currentScore = gameState.totalScore || new Decimal(0);
-    const threshold = gameData.PRESTIGE_THRESHOLD || new Decimal("50000000");
+    const threshold = getPrestigeThreshold();
     const resets = gameState.totalResets || 0;
     const prestigePoints = gameState.prestigePoints || new Decimal(0);
     const lifetimePoints = gameState.lifetimePrestigePoints || new Decimal(0);
@@ -1479,16 +1959,13 @@ function updatePrestigeVisuals() {
 }
 
 
-function updatePrestigeUI()
-{
+function updatePrestigeUI() {
     updatePrestigeVisuals();
 }
 
 
-function shouldItemBeVisible(mode, isPurchased, isUnlocked)
-{
-    switch (mode)
-    {
+function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
+    switch (mode) {
         case 'available': return isUnlocked && !isPurchased;
         case 'locked': return !isUnlocked && !isPurchased;
         case 'purchased': return isPurchased;
@@ -1545,79 +2022,140 @@ function triggerChristmasOverlay() {
 
 let christmasAudioInitialized = false;
 
+// --- GESTORE UNIFICATO EFFETTI VISIVI (VFX) ---
+const VFXManager = {
+    intervals: {},
+    frames: {},
+
+    stopAll() {
+        // Ferma i loop
+        for (let key in this.intervals) clearInterval(this.intervals[key]);
+        for (let key in this.frames) cancelAnimationFrame(this.frames[key]);
+        this.intervals = {};
+        this.frames = {};
+
+        // Pulisce il DOM
+        const snow = document.getElementById('snow-container');
+        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block"); }
+
+        const fire = document.getElementById('fire-particles-container');
+        if (fire) { fire.innerHTML = ''; fire.style.display = 'none'; }
+
+        const matrix = document.getElementById('matrix-canvas');
+        if (matrix) {
+            const ctx = matrix.getContext('2d');
+            ctx.clearRect(0, 0, matrix.width, matrix.height);
+        }
+    },
+
+    start(effectType) {
+        // Non stoppiamo tutto se stiamo per attivare qualcosa, 
+        // lo farà applySkinVisuals per gestire layer combinati.
+
+        if (effectType === 'snow') this.spawnSnow();
+        if (effectType === 'fire') this.spawnFire();
+        if (effectType === 'matrix') this.spawnMatrix();
+    },
+
+    spawnSnow() {
+        const container = document.getElementById('snow-container');
+        if (!container) return;
+        container.classList.add("snow_container_block");
+        if (container.children.length > 0) return; // Già generata
+
+        for (let i = 0; i < 60; i++) {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            const size = Math.random() * 5 + 3 + 'px';
+            flake.style.width = size; flake.style.height = size;
+            flake.style.left = Math.random() * 100 + 'vw';
+            flake.style.animationDuration = (Math.random() * 7 + 5) + 's';
+            flake.style.animationDelay = (Math.random() * -20) + 's';
+            flake.style.opacity = Math.random() * 0.7 + 0.3;
+            container.appendChild(flake);
+        }
+    },
+
+    spawnFire() {
+        const container = document.getElementById('fire-particles-container');
+        if (!container) return;
+        container.style.display = 'block';
+
+        if (this.intervals.fire) clearInterval(this.intervals.fire);
+
+        // La funzione spawnFireParticle è quella esistente in game-logic.js
+        this.intervals.fire = setInterval(() => {
+            if (typeof spawnFireParticle === 'function') spawnFireParticle(container);
+        }, 100);
+    },
+
+    spawnMatrix() {
+        // La logica esistente di startMatrixEffect in ui-functions.js
+        if (typeof startMatrixEffect === 'function') startMatrixEffect();
+    }
+};
 
 function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
+    const theme = skinData.themeConfig || {};
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
-    const snowContainer = document.getElementById('snow-container');
 
-    // Lista classi di sfondo (rarità) da rimuovere per pulizia
-    const bgClasses = ['bg-common', 'bg-rare', 'bg-epic', 'bg-legendary', 'bg-divine', 'bg-christmas'];
-    const bodyThemes = ['theme-christmas', 'theme-8bit', 'theme-super']; 
+    // 1. PULIZIA TOTALE (Temi vecchi, Variabili Inline, VFX)
+    Array.from(document.body.classList).forEach(cls => {
+        if (cls.startsWith('theme-')) document.body.classList.remove(cls);
+    });
+    document.body.style = ''; // Pulisce le var CSS custom
+    VFXManager.stopAll();
 
-    const theme = skinData.themeConfig || {};
+    // 2. LAZY LOAD CSS ESTERNI (Per temi strutturali complessi come 8bit o Super)
+    if (theme.cssFile) {
+        loadThemeCSS(theme.cssFile);
+    }
 
+    // 3. APPLICAZIONE VARIABILI CSS CUSTOM (Per varianti di colore leggere)
+    if (theme.cssVars) {
+        for (const [property, value] of Object.entries(theme.cssVars)) {
+            document.body.style.setProperty(property, value);
+        }
+    }
 
-    document.body.classList.remove(...bodyThemes);
-
-    // Applica il nuovo tema se previsto dalla skin
+    // 4. APPLICAZIONE CLASSE BODY
     if (theme.bodyClass) {
         document.body.classList.add(theme.bodyClass);
     }
 
-    // GESTIONE NEVE
-    if (snowContainer) {
-        if (theme.hasSnow) {
-            snowContainer.classList.add("snow_container_block");
-
-            if (snowContainer.innerHTML === '')
-                createSnowflakes(snowContainer);
-        }
-        else {
-            snowContainer.classList.remove("snow_container_block");
-        }
+    // 5. APPLICAZIONE EFFETTI VISIVI (Neve, Fuoco, ecc.)
+    if (theme.vfx) {
+        VFXManager.start(theme.vfx);
     }
 
-    // GOLDEN BUG ICONA (Personalizzazione Tematica)
+    // (Gestione Golden Bug e Audio invariata...)
     const goldenBugIcon = document.querySelector('#golden-bug i');
     if (goldenBugIcon) {
-        goldenBugIcon.className = 'fa-solid'; // Reset base FontAwesome
-        goldenBugIcon.style.color = '';       // Reset colore inline
-
+        goldenBugIcon.className = 'fa-solid';
+        goldenBugIcon.style.color = '';
         if (theme.goldenBugIcon) {
             goldenBugIcon.classList.add(theme.goldenBugIcon);
             if (theme.goldenBugColor) goldenBugIcon.style.color = theme.goldenBugColor;
         } else {
-            // Default icon
             goldenBugIcon.classList.add('fa-bug');
         }
     }
 
-    // AUDIO MANAGER (Logica Centralizzata)
-    // Invece di gestire play/pause qui, diciamo al Manager di aggiornare l'ambiente.
-    // Lui guarderà la skin corrente e deciderà quale traccia suonare e quali spegnere.
     if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
         AudioManager.updateAmbience();
 
-    // APPLICAZIONE IMMAGINI MANAGER E CLASSI RARITÀ
-    const applyClasses = (element, imgSrc) =>
-    {
+    // Applica le immagini centrali
+    const applyClasses = (element, imgSrc) => {
         if (!element) return;
-
-        // Aggiorna immagine
         element.src = `assets/image/${imgSrc}`;
-
-        // Rimuovi vecchie classi di sfondo rarità
-        element.classList.remove(...bgClasses);
-
-        // Applica nuova classe sfondo in base alla rarità
-        if (skinData.rarity)
-            element.classList.add(`bg-${skinData.rarity}`);
-        else
-            element.classList.add('bg-common');
+        Array.from(element.classList).forEach(cls => {
+            if (cls.startsWith('bg-')) element.classList.remove(cls);
+        });
+        element.classList.add(`bg-${skinData.rarity || 'common'}`);
     };
 
     applyClasses(photoNormal, skinData.img);
@@ -1625,53 +2163,23 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 }
 
 
-// Nuova funzione helper per creare i fiocchi
-function createSnowflakes(snowContainer)
-{
-    if (!snowContainer)
-        return;
 
-    const numberOfSnowflakes = 60;
-
-    for (let index = 0; index < numberOfSnowflakes; index++)
-    {
-        const snowflake = document.createElement('div');
-        snowflake.className = 'snowflake';
-
-        const size = Math.random() * 5 + 3 + 'px';
-        snowflake.style.width = size;
-        snowflake.style.height = size;
-
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        const duration = Math.random() * 7 + 5;
-        snowflake.style.animationDuration = duration + 's';
-        snowflake.style.animationDelay = (Math.random() * -20) + 's';
-        snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-
-        snowContainer.appendChild(snowflake);
-    }
-}
-
-function checkOverlayNotifications()
-{
+function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
     let hasClaimable = false;
-    for (const key in gameData.achievements)
-    {
+    for (const key in gameData.achievements) {
         const state = gameState.achievements[key];
         const data = gameData.achievements[key];
 
         // Se è sbloccato, non ancora reclamato, e ha un premio definito
-        if (state && state.unlocked && !state.claimed && data.reward)
-        {
+        if (state && state.unlocked && !state.claimed && data.reward) {
             hasClaimable = true;
             break;
         }
     }
 
     const achBtn = document.getElementById('open-achievements-btn');
-    if (achBtn)
-    {
+    if (achBtn) {
         if (hasClaimable)
             achBtn.classList.add('notify-overlay');
         else
@@ -1679,13 +2187,15 @@ function checkOverlayNotifications()
     }
 }
 
-function updateStatsUI()
-{
+function updateStatsUI() {
     const statsList = document.getElementById('stats-list');
     if (!statsList) return;
 
-    // --- CALCOLI PRELIMINARI ---
-    const progress = gameState.totalScore.div(gameData.PRESTIGE_THRESHOLD).mul(100).min(100).toNumber();
+    // 1. Recupera la soglia dinamica attuale
+    const threshold = getPrestigeThreshold();
+
+    // 2. Calcola il progresso basandosi sulla soglia
+    const progress = gameState.totalScore.div(threshold).mul(100).min(100).toNumber();
 
     // Recupera ENTRAMBI i valori
     const rawClick = (typeof calculateRawClickValue === 'function') ? calculateRawClickValue() : gameState.baseClickValue;
@@ -1704,44 +2214,26 @@ function updateStatsUI()
 
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
 
+    // DATI NG+ (End-Game)
+    const totalFormats = gameState.totalFormattazioni || 0;
+    const totalQBits = gameState.lifetimeQBits || new Decimal(0);
+
     // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
     statsList.innerHTML = `
         <div class="stats-container">
-            
-            <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-wallet"></i> Economia Aziendale</div>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-label">Bug Attuali (Wallet)</span>
-                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
-                            ${formatNumber(Math.floor(gameState.score))}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Totale Run Attuale</span>
-                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(gameState.totalScore)}">
-                            ${formatNumber(gameState.totalScore)}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Totale Carriera</span>
-                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
-                            ${formatNumber(gameState.lifetimeScore)}
-                        </span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Guadagnati Offline</span>
-                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(totalOffline)}">
-                            ${formatNumber(totalOffline)} 
-                            <span style="font-size: 0.8rem; color: #bdc3c7; font-weight: normal;">(${offlinePercentText})</span>
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="stat-progress-wrapper">
+
+            <!-- HERO: Progresso Promozione -->
+            <div class="stats-section stats-hero">
+                <div class="stat-progress-wrapper" style="margin-top: 0; padding-top: 0; border-top: none;">
                     <div class="stat-progress-info">
-                        <span>Progresso Promozione</span>
-                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}">${progress.toFixed(2)}%</span>
+                        <span>
+                            <i class="fa-solid fa-rocket" style="color: #2ecc71; margin-right: 6px;"></i>
+                            Progresso Promozione
+                            <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
+                                (Obiettivo: <span class="simple-tooltip" data-tooltip="${formatFullNumber(threshold)}">${formatNumber(threshold)}</span>)
+                            </span>
+                        </span>
+                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}; font-size: 1.1rem; font-weight: 800;">${progress.toFixed(2)}%</span>
                     </div>
                     <div class="stat-progress-bg">
                         <div class="stat-progress-fill" style="width: ${progress}%;"></div>
@@ -1749,56 +2241,105 @@ function updateStatsUI()
                 </div>
             </div>
 
+            <!-- Economia -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-microchip"></i> Performance & Tech</div>     
+                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> Economia Aziendale</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label">Produzione (BPS)</span>
-                        <span class="stat-value simple-tooltip" data-tooltip="${formatFullNumber(bps)}">
-                            ${formatNumber(bps)}
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> Bug Attuali</span>
+                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
+                            ${formatNumber(Math.floor(gameState.score))}
                         </span>
                     </div>
-                    
                     <div class="stat-box">
-                        <span class="stat-label">Valore Click (Base / Totale)</span>
-                        <span class="stat-value" style="color: #e74c3c;">
-                            ${formatNumber(rawClick)}
-                            <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal;">
-                                (Tot: ${formatNumber(totalClick)})
-                            </span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> Totale Run</span>
+                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(gameState.totalScore)}">
+                            ${formatNumber(gameState.totalScore)}
                         </span>
                     </div>
-
                     <div class="stat-box">
-                        <span class="stat-label">Moltiplicatore Globale</span>
-                        <span class="stat-value">x${formatNumber(prestigeBonus)}</span>
+                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Totale Carriera</span>
+                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
+                            ${formatNumber(gameState.lifetimeScore)}
+                        </span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Crit Chance</span>
-                        <span class="stat-value">${(goldenBugChance * 100).toFixed(2)}%</span>
+                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Offline</span>
+                        <span class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="${formatFullNumber(totalOffline)}">
+                            ${formatNumber(totalOffline)}
+                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">(${offlinePercentText})</span>
+                        </span>
                     </div>
                 </div>
             </div>
 
+            <!-- Performance -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-id-card"></i> Profilo & Visuals</div>
+                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> Performance & Tech</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label">Skin Equipaggiata</span>
+                        <span class="stat-label"><i class="fa-solid fa-gauge-high" style="color: #e67e22; margin-right: 4px; font-size: 0.65rem;"></i> BPS</span>
+                        <span class="stat-value simple-tooltip" style="color: #e67e22;" data-tooltip="${formatFullNumber(bps)}">
+                            ${formatNumber(bps)}
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-hand-pointer" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click</span>
+                        <span class="stat-value" style="color: #e74c3c;">
+                            ${formatNumber(rawClick)}
+                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">
+                                (x${formatNumber(totalClick)})
+                            </span>
+                        </span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Moltiplicatore</span>
+                        <span class="stat-value" style="color: #f1c40f;">x${formatNumber(prestigeBonus)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-dice" style="color: #1abc9c; margin-right: 4px; font-size: 0.65rem;"></i> Crit Chance</span>
+                        <span class="stat-value" style="color: #1abc9c;">${(goldenBugChance * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            ${(totalFormats > 0 || totalQBits.gt(0)) ? `
+            <!-- Multiverso -->
+            <div class="stats-section" style="border-color: rgba(155, 89, 182, 0.3);">
+                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> Multiverso (NG+)</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Universi Distrutti</span>
+                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(totalFormats)}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Energia Quantica</span>
+                        <span class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);">${formatNumber(totalQBits)} Q-Bits</span>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Profilo -->
+            <div class="stats-section">
+                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> Profilo & Visuals</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
                         <span class="stat-value" style="text-transform: capitalize; color: #9b59b6;">
                             ${(gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default')}
                         </span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Tempo di Gioco</span>
+                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> Tempo di Gioco</span>
                         <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Click Totali</span>
+                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click Totali</span>
                         <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Promozioni (Reset)</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> Promozioni</span>
                         <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
                     </div>
                 </div>

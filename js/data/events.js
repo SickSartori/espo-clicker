@@ -53,5 +53,16 @@ window.gameData.events = {
         maxMult: 10,
         toast: "⭐ SUPER STAR! x{mult}! ⭐",
         toastType: "achievement"
+    },
+    britneyEspears: {
+        name: 'Britney Espears',
+        type: 'video',
+        videos: ['britney-espoars-video'],
+        duration: 60000,
+        minMult: 5,
+        maxMult: 13,
+        audioId: 'britney-espoars-video',
+        toast: "🎤 OOPS I DEBUGGED AGAIN! (x{mult}) 🎤",
+        toastType: "achievement"
     }
 }

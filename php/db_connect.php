@@ -16,7 +16,8 @@
 		$conn = new mysqli($config['servername'], $config['username'], $config['password'], $config['dbname'], $config['port']);
 		$conn->set_charset("utf8mb4");
 	} catch (Exception $e) {
-		echo json_encode(["status" => "error", "message" => "Connessione DB fallita: " . $e->getMessage()]);
+		error_log("DB Connection Error: " . $e->getMessage());
+		echo json_encode(["status" => "error", "message" => "Errore interno del server."]);
 		exit;
 	}
 

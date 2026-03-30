@@ -10,10 +10,10 @@ body > #login-modal.modal-backdrop {
 /* 2. Contenitore Modale */
 body > #login-modal .modal-content {
     font-family: 'Inter', sans-serif;
-    background-color: #2c3e50;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #151b22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-top: 4px solid #3498db;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     border-radius: 16px;
 }
 
@@ -89,26 +89,39 @@ body > #login-modal #login-btn:hover {
 }
 
 .modal-content {
-    background-color: #2c3e50;
+    background-color: #111820;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
     border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
     position: relative;
     padding: 0;
     color: #ecf0f1;
+    animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .modal-content h2 {
     text-align: center;
     margin: 0;
     padding: 25px 40px;
-    background-color: #34495e;
+    background-color: #0d1117;
     border-radius: 16px 16px 0 0;
-    border-bottom: 1px solid #4a6582;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     font-size: 1.5rem;
     color: #fff;
 }
@@ -117,18 +130,19 @@ body > #login-modal #login-btn:hover {
     position: absolute;
     top: 15px;
     right: 20px;
-    font-size: 2rem;
+    font-size: 2.7rem;
     color: #7f8c8d;
     background: none;
     border: none;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, transform 0.2s;
     line-height: 1;
     z-index: 10;
 }
 
 .modal-close-btn:hover {
     color: #fff;
+    transform: scale(1.1);
 }
 
 .vol-value {
@@ -216,26 +230,31 @@ body > #login-modal #login-btn:hover {
 .stats-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+}
+
+.stats-hero {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.08), rgba(0, 0, 0, 0.3));
+    border-color: rgba(46, 204, 113, 0.2);
 }
 
 .stats-section {
-    background-color: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .stats-header {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    color: #f1c40f;
+    color: #bdc3c7;
     font-weight: 800;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: 10px;
-    margin-bottom: 15px;
-    letter-spacing: 1px;
+    margin-bottom: 12px;
+    letter-spacing: 1.5px;
     display: flex;
     align-items: center;
 }
@@ -243,13 +262,22 @@ body > #login-modal #login-btn:hover {
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px 20px;
+    gap: 8px;
 }
 
 .stat-box {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.2s ease;
+}
+
+.stat-box:hover {
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .stat-box .stat-label {
@@ -283,24 +311,25 @@ body > #login-modal #login-btn:hover {
 }
 
 .stat-progress-bg {
-    height: 10px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 5px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .stat-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    background: linear-gradient(90deg, #27ae60, #2ecc71);
     transition: width 0.5s ease-out;
     box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+    border-radius: 6px;
 }
 
 /* --- MODALE CONTRATTO PRESTIGIO --- */
 .contract-modal {
     max-width: 750px;
-    background: linear-gradient(145deg, #2c3e50, #233040);
+    background: linear-gradient(145deg, #111820, #0d1117);
     border: 2px solid #f1c40f;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
     padding-bottom: 25px;
@@ -344,7 +373,7 @@ body > #login-modal #login-btn:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #2c3e50;
+    background-color: #0d1117;
     z-index: var(--z-loader);
     display: flex;
     justify-content: center;

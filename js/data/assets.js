@@ -37,13 +37,56 @@ window.gameData.assets = {
             defaultVol: 0.1
         },
         'bg-music-divine': {
-            id: 'bg-music-divine',
+            id: 'sound-bg-music-divine',
             file: 'bg-music-divine.mp3',
             name: 'Espò Divino',
             type: 'music',
             category: 'ambiente',
             loop: true,
             defaultVol: 0.3
+        },
+        'bg-music-espory': {
+            id: 'sound-bg-music-espory',
+            file: 'bg-music-espory.mp3',
+            name: 'Freddy Espory',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.3
+        },
+        // --- SUONI ARCADE ---
+        'arcade-theme': {
+            id: 'sound-arcade-theme',
+            file: 'arcade/assets/arcade-theme.mp3',
+            name: 'Espò Arcade',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.25
+        },
+        'arcade-hover': {
+            id: 'sound-arcade-hover',
+            file: 'arcade/assets/arcade-hover.wav',
+            name: 'Arcade Hover',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.2
+        },
+        'arcade-start': {
+            id: 'sound-arcade-start',
+            file: 'arcade/assets/arcade-start.wav',
+            name: 'Arcade Start',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.6
+        },
+        'snake-eat': {
+            id: 'sound-snake-eat',
+            file: 'arcade/assets/snake-eat.wav',
+            name: 'Snake Mangia',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.4
         },
         'snowball': {
             id: 'sound-snowball',
@@ -195,6 +238,14 @@ window.gameData.assets = {
             category: 'effetti',
             defaultVol: 0.3
         },
+        'pucci': {
+            id: 'sound-pucci',
+            file: 'pucci-made-in-heaven.mp3',
+            name: 'Made in Heaven',
+            type: 'sfx',
+            category: 'eventi',
+            defaultVol: 0.8
+        },
     },
 
     videos: {
@@ -209,6 +260,20 @@ window.gameData.assets = {
             id: 'ricardo-video',
             file: 'ricardo-milespo-video.mp4',
             name: 'Video: Ricardo',
+            category: 'eventi',
+            defaultVol: 0.5
+        },
+        'bigbang-video': {
+            id: 'video-bigbang',
+            file: 'bigbang-espoclicker.mp4',
+            name: 'Video: Big Bang Formattazione',
+            category: 'eventi',
+            defaultVol: 1.0
+        },
+        'britney-espoars-video': {
+            id: 'britney-espoars-video',
+            file: 'britney-espoars-video.mp4',
+            name: 'Video: Britney Espears',
             category: 'eventi',
             defaultVol: 0.5
         }

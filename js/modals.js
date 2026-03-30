@@ -114,26 +114,116 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Aggiungi il riferimento
     const openArcadeBtn = document.getElementById('open-arcade-btn');
     const arcadeModal = document.getElementById('arcade-modal');
+    
+    const versionDisplayBtn = document.getElementById('version-display');
+
+    if (versionDisplayBtn) {
+    versionDisplayBtn.style.pointerEvents = 'auto'; // Abilita i click
+    versionDisplayBtn.style.cursor = 'pointer';
+    versionDisplayBtn.title = "Leggi le novità dell'aggiornamento";
+    
+    versionDisplayBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if (Game && Game.openReleaseNotes) Game.openReleaseNotes();
+    });
+}
 
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            // Recupera il record salvato
-            const Game = window.EspooClicker;
-            if (Game) {
-                const state = Game.getGameState();
-                // Se non esiste ancora l'oggetto, mostra 0
-                const highScore = (state.arcadeHighScores && state.arcadeHighScores.snake) ? state.arcadeHighScores.snake : 0;
-
-                // Aggiorna l'HTML
-                const scoreDisplay = document.getElementById('arcade-high-score');
-                if (scoreDisplay) scoreDisplay.textContent = highScore;
-            }
+            window.currentActiveEvent = 'Arcade Mode';
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
             openModal(arcadeModal);
+
+            // Inizializza l'anteprima col primo gioco
+            const firstGame = document.querySelector('.arcade-menu-item:not(.locked)');
+            if (firstGame) firstGame.dispatchEvent(new Event('mouseenter'));
         });
     }
 
+    // Logica Hover/Click sul menu Arcade
+    document.querySelectorAll('.arcade-menu-item:not(.locked)').forEach(item => {
+        const updatePreview = () => {
+            // Aggiorna stato attivo menu
+            document.querySelectorAll('.arcade-menu-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            // Preleva dati
+            const gameKey = item.getAttribute('data-game');
+            const title = item.getAttribute('data-title');
+            const color = item.getAttribute('data-color');
+            const iconClass = item.getAttribute('data-icon');
+            const desc = item.getAttribute('data-desc');
+
+            // Aggiorna DOM
+            const iconEl = document.getElementById('preview-icon');
+            const titleEl = document.getElementById('preview-title');
+            const descEl = document.getElementById('preview-desc');
+            const scoreEl = document.getElementById('preview-highscore');
+
+            if (iconEl) { iconEl.className = `fa-solid ${iconClass}`; iconEl.style.color = color; }
+            if (titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
+            if (descEl) descEl.textContent = desc;
+
+            // Recupera High Score
+            const Game = window.EspooClicker;
+            if (Game && scoreEl) {
+                const state = Game.getGameState();
+                const score = (state.arcadeHighScores && state.arcadeHighScores[gameKey]) ? state.arcadeHighScores[gameKey] : 0;
+                scoreEl.textContent = score;
+            }
+        };
+
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('active')) {
+                if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                    window.EspooClicker.playSound('sound-arcade-hover');
+                }
+            }
+            updatePreview();
+        });
+
+        item.addEventListener('click', () => {
+            updatePreview();
+            if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                window.EspooClicker.playSound('sound-click'); // Suono click normale per la selezione
+            }
+        });
+    });
+
+    // --- NAVIGAZIONE TASTIERA MENU ARCADE ---
+    document.addEventListener('keydown', (e) => {
+        const arcadeModal = document.getElementById('arcade-modal');
+        const selector = document.getElementById('arcade-game-selector');
+
+        // Controlliamo se il modale dell'Arcade è aperto E se siamo nella schermata di Selezione
+        if (arcadeModal && arcadeModal.style.display === 'flex' &&
+            selector && selector.style.display !== 'none') {
+
+            const items = Array.from(selector.querySelectorAll('.arcade-menu-item:not(.locked)'));
+            if (items.length === 0) return;
+
+            let currentIndex = items.findIndex(item => item.classList.contains('active'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    items[currentIndex].click(); // Avvia il gioco selezionato
+                }
+            }
+        }
+    });
 
     // Funzione per tentare il play
     function tryPlayMusic() {
@@ -174,8 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnConfirmPrestige) {
         btnConfirmPrestige.addEventListener('click', () => {
-            if (typeof executePrestige === 'function') {
-                executePrestige();
+            const action = btnConfirmPrestige.getAttribute('data-action');
+            if (action === 'format') {
+                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+            } else {
+                if (typeof executePrestige === 'function') executePrestige();
             }
         });
     }
@@ -590,7 +683,15 @@ document.addEventListener('DOMContentLoaded', () => {
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-close-btn')) {
-                modal.style.display = 'none';
+                closeModal(modal);
+
+                if (modal.id === 'arcade-modal' && window.currentActiveEvent === 'Arcade Mode') {
+                    window.currentActiveEvent = null;
+                    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                    if (typeof window.exitSnakeGame === 'function') window.exitSnakeGame();
+                    if (typeof window.exitSpaceGame === 'function') window.exitSpaceGame();
+                }
+
             }
         });
     });
@@ -636,6 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
                 'sound-bg-music-super': 'superespo',
+                'bg-music-espory': 'freddy-espory',
                 'bg-music-divine': 'jesus'
             };
 
@@ -730,16 +832,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const sessUser = sessionStorage.getItem('espooUser');
         const sessPass = sessionStorage.getItem('espooPass');
 
-        if (sessUser && sessPass)
-		{			
-			Game.getGameState().user.username = sessUser;
+        if (sessUser && sessPass) {
+            Game.getGameState().user.username = sessUser;
             loginInput.value = sessUser;
             loginPasswordInput.value = sessPass;
             loginButton.click();
         }
-		else
+        else
             openModal(loginModal);
-        
+
         console.log("✅ Modals.js inizializzato via Evento.");
     }
 
@@ -890,6 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
+                Game.setSaveToken(data.save_token);
 
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
@@ -926,6 +1028,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.tryStartAudio();
 
                 Game.showToast(gameData.texts.toasts.welcome + " " + u);
+                if (window.shouldShowReleaseNotesOnLoad) {
+                    setTimeout(() => {
+                        if (Game.openReleaseNotes) Game.openReleaseNotes();
+                    }, 500); // Attende la chiusura del modale di login
+                }
             } else {
                 alert(data.message);
             }

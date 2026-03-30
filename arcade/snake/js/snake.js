@@ -65,34 +65,31 @@
         const maxWidth = Math.min(800, window.innerWidth - 40);
         const canvasWidth = Math.floor(maxWidth / CONFIG.gridSize) * CONFIG.gridSize;
 
-        // 2. Header (Pulsante Menu + Punteggio)
+        // 2. Header Standardizzato
+        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.snake) ? gs.arcadeHighScores.snake : 0;
+
         const headerDiv = document.createElement('div');
-        headerDiv.style.width = '100%';
+        headerDiv.className = 'arcade-game-topbar';
         headerDiv.style.maxWidth = canvasWidth + 'px';
-        headerDiv.style.display = 'flex';
-        headerDiv.style.justifyContent = 'space-between';
-        headerDiv.style.alignItems = 'center';
-        headerDiv.style.marginBottom = '10px';
 
-        const exitBtn = document.createElement('button');
-        exitBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> MENU';
-        exitBtn.className = 'arcade-btn secondary';
-        exitBtn.onclick = window.exitSnakeGame;
-        headerDiv.appendChild(exitBtn);
-
-        const scoreDiv = document.createElement('div');
-        scoreDiv.id = 'snake-score';
-        scoreDiv.className = 'arcade-score-display';
-        scoreDiv.innerHTML = 'BUG RISOLTI: 0';
-        headerDiv.appendChild(scoreDiv);
-
+        headerDiv.innerHTML = `
+            <button class="arcade-btn secondary" onclick="window.exitSnakeGame()">
+                <i class="fa-solid fa-arrow-left"></i> MENU
+            </button>
+            <div class="arcade-stats-box" id="snake-score">
+                <span class="stat">PUNTI: <span class="val-score">0</span></span>
+                <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
+            </div>
+        `;
         gameContainer.appendChild(headerDiv);
 
-        // 3. Canvas Wrapper (per Overlay)
+        // 3. Canvas Wrapper (con effetto CRT accensione)
         const canvasWrapper = document.createElement('div');
         canvasWrapper.style.position = 'relative';
         canvasWrapper.style.width = canvasWidth + 'px';
         canvasWrapper.style.height = '400px';
+        canvasWrapper.className = 'crt-turn-on crt-effect'; // Aggiunta animazione ed effetto TV
 
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
@@ -101,18 +98,17 @@
         ctx = canvas.getContext('2d');
         canvasWrapper.appendChild(canvas);
 
-        // 4. Overlay Start (Nuovo Stile Pulito)
+        // 4. Overlay Start
         const overlay = document.createElement('div');
         overlay.id = 'snake-overlay';
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
-            <div style="color:#fff; font-family:'Rajdhani'; font-size:1.5rem; margin-bottom:15px; text-transform:uppercase; letter-spacing:2px;">
-                Snake Protocol
+            <div style="color:#fff; font-family:'Rajdhani'; font-size:2rem; margin-bottom:15px; text-transform:uppercase; letter-spacing:2px; text-shadow: 0 0 10px #2ecc71;">
+                SNAKE PROTOCOL
             </div>
-            <button class="arcade-btn" onclick="window.startSnakeRun()">GIOCA</button>
+            <button class="arcade-btn" onclick="window.startSnakeRun()">INIZIA PARTITA</button>
         `;
         canvasWrapper.appendChild(overlay);
-
         gameContainer.appendChild(canvasWrapper);
 
         drawStaticScreen();
@@ -133,12 +129,14 @@
             gameContainer.innerHTML = '';
             gameContainer.style.display = 'none';
         }
-        if (selector) selector.style.display = 'block';
+        if (selector) selector.style.display = 'flex';
 
         document.removeEventListener('keydown', handleInput);
     };
 
     window.startSnakeRun = function () {
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-start');
+
         const startY = Math.floor((canvas.height / CONFIG.gridSize) / 2);
         const startX = Math.floor((canvas.width / CONFIG.gridSize) / 2) - 2;
         snake = [{ x: startX, y: startY }, { x: startX - 1, y: startY }, { x: startX - 2, y: startY }];
@@ -183,7 +181,7 @@
         if (head.x === food.x && head.y === food.y) {
             score++;
             updateScoreUI(score);
-            if (window.EspooClicker) window.EspooClicker.playSound('sound-buy');
+            if (window.EspooClicker) window.EspooClicker.playSound('sound-snake-eat');
             spawnFood();
         } else {
             snake.pop();
@@ -292,7 +290,7 @@
         let reward = 0;
         if (typeof bps !== 'undefined') {
             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-            const safeReward = bpsVal.mul(score).mul(0.5);
+            const safeReward = bpsVal.mul(score).mul(0.05);
             reward = safeReward;
         }
 
@@ -332,7 +330,15 @@
 
     function updateScoreUI(val) {
         const el = document.getElementById('snake-score');
-        if (el) el.textContent = `BUG RISOLTI: ${val}`;
+        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.snake) ? gs.arcadeHighScores.snake : 0;
+
+        if (el) {
+            el.innerHTML = `
+                <span class="stat">PUNTI: <span class="val-score">${val}</span></span>
+                <span class="stat">RECORD: <span class="val-record">${Math.max(val, highScore)}</span></span>
+            `;
+        }
     }
 
     function handleInput(e) {

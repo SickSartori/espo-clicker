@@ -10,6 +10,10 @@ if (empty($username) || empty($password)) {
     exit;
 }
 
+// Genera un token dinamico unico per questa sessione di gioco
+$sessionToken = bin2hex(random_bytes(16));
+$_SESSION['save_token'] = $sessionToken;
+
 // 1. Cerca utente
 $stmt = $conn->prepare("SELECT id, password_hash, save_data FROM $table_users WHERE username = ?");
 $stmt->bind_param("s", $username);
@@ -19,19 +23,24 @@ $res = $stmt->get_result();
 if ($row = $res->fetch_assoc()) {
     // LOGIN
     if (password_verify($password, $row['password_hash'])) {
-        echo json_encode(["status" => "success", "action" => "login", "save_data" => $row['save_data']]);
-    } else {
+        // Aggiunto "save_token" alla risposta
+        echo json_encode(["status" => "success", "action" => "login", "save_data" => $row['save_data'], "save_token" => $sessionToken]);
+    }
+    else {
         echo json_encode(["status" => "error", "message" => "Password errata."]);
     }
-} else {
+}
+else {
     // REGISTRAZIONE
     $hashed = password_hash($password, PASSWORD_DEFAULT);
     $ins = $conn->prepare("INSERT INTO $table_users (username, password_hash) VALUES (?, ?)");
     $ins->bind_param("ss", $username, $hashed);
-    
+
     if ($ins->execute()) {
-        echo json_encode(["status" => "success", "action" => "register", "save_data" => null]);
-    } else {
+        // Aggiunto "save_token" alla risposta
+        echo json_encode(["status" => "success", "action" => "register", "save_data" => null, "save_token" => $sessionToken]);
+    }
+    else {
         echo json_encode(["status" => "error", "message" => "Username occupato o errore."]);
     }
 }

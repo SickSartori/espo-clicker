@@ -55,7 +55,53 @@ function grantReward(reward) {
     }
 }
 
-// Funzione per inviare il punteggio al leaderboard
+/**
+ * Calcola il costo scalato per i potenziamenti del Laboratorio (Prestigio)
+ * Formula: CostoBase * (Moltiplicatore ^ Livello)
+ */
+function calculatePrestigeUpgradeCost(upgradeKey) {
+    const data = gameData.prestigeUpgrades[upgradeKey];
+    const state = gameState.prestigeUpgrades[upgradeKey];
+
+    if (!data.isCounted) {
+        return data.baseCost;
+    }
+
+    const growthFactor = new Decimal(1.5);
+    const currentLevel = state.count || 0;
+
+    let rawCost = data.baseCost.mul(growthFactor.pow(currentLevel));
+
+    // --- NUOVO: SCONTO QUANTICO (15%) ---
+    if (gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased) {
+        rawCost = rawCost.mul(0.85);
+    }
+
+    if (rawCost.gte(100)) {
+        return new Decimal(rawCost.toPrecision(3));
+    }
+    return rawCost.floor();
+}
+
+/**
+ * Calcola la nuova soglia per ottenere la Promozione.
+ * Formula: SogliaBase * (Moltiplicatore ^ Resets)
+ */
+function getPrestigeThreshold() {
+    const baseThreshold = new Decimal("50000000"); // 50 Milioni
+    const resets = gameState.totalResets || 0;
+
+    // Fattore di crescita (sostituisci il 5 con il valore che hai scelto per ottenere 110M)
+    const growthFactor = new Decimal(2.5);
+
+    // Calcolo grezzo
+    let rawThreshold = baseThreshold.mul(growthFactor.pow(resets));
+
+    // Trasforma in notazione a 3 cifre (es. "1.11e8") e lo riconverte in Decimal
+    let cleanThreshold = new Decimal(rawThreshold.toPrecision(3));
+
+    return cleanThreshold;
+}
 
 function checkEventConflict(newEventName) {
     if (window.currentActiveEvent) {
@@ -145,7 +191,7 @@ function reapplyAllEffects() {
     for (const key in gameState.clickUpgrades) {
         if (gameState.clickUpgrades[key].purchased) {
             const data = gameData.clickUpgrades[key];
-            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+            if (data && data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
         }
     }
 
@@ -153,8 +199,24 @@ function reapplyAllEffects() {
     for (const key in gameState.prestigeUpgrades) {
         const state = gameState.prestigeUpgrades[key];
         const data = gameData.prestigeUpgrades[key];
+
+        if (!data) continue;
+
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
             if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
+        }
+    }
+
+    // Super Upgrades (Q-Lab)
+    if (gameState.superUpgrades) {
+        for (const key in gameState.superUpgrades) {
+            const state = gameState.superUpgrades[key];
+            const data = gameData.superUpgrades[key];
+            if (!data) continue;
+            
+            if (state.purchased && data.effects) {
+                data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+            }
         }
     }
 }
@@ -178,6 +240,9 @@ const AudioManager = {
 
                 audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
                 if (sound.loop) audio.loop = true;
+                // Imposta volume sicuro prima che il browser tenti autoplay
+                const safeVol = (gameState.user.masterVolume || 0) * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
+                audio.volume = Math.max(0, Math.min(1, safeVol));
                 container.appendChild(audio);
             }
         }
@@ -223,7 +288,7 @@ const AudioManager = {
         if (document.body.classList.contains('super-star-active')) {
             soundId = 'sound-click';
         }
-        // 2. Evento Espo Fury (Fuoco) -> FIX: Solo se c'è la skin Super Espo
+        // 2. Evento Espo Fury (Fuoco) ->  Solo se c'è la skin Super Espo
         else if (document.body.classList.contains('crunch-active')) {
             if (gameState.skins.current === 'superespo') {
                 soundId = 'sound-fireball';
@@ -285,20 +350,18 @@ const AudioManager = {
         }
 
         // --- LOGICA NORMALE DI GIOCO ---
-        const allMusicTracks = [
-            'sound-bg-music',
-            'sound-bg-music-v2',
-            'sound-bg-music-v3',
-            'sound-snowball',
-            'sound-fury-music',
-            'sound-bluescreen',
-            'sound-matrix',
-            'sound-bg-bit',
-            'sound-star',
-			'bg-music-divine'
-        ];
+        const allMusicTracks = [];
 
-        // Aggiungi musiche delle skin in modo dinamico
+        // 1. Pesca TUTTE le tracce musicali (type: 'music') dinamicamente dal file assets.js
+        if (gameData.assets && gameData.assets.sounds) {
+            for (let key in gameData.assets.sounds) {
+                if (gameData.assets.sounds[key].type === 'music') {
+                    allMusicTracks.push(gameData.assets.sounds[key].id);
+                }
+            }
+        }
+
+        // 2. Sicurezza aggiuntiva: Aggiungi musiche dichiarate direttamente nelle skin
         for (let key in gameData.skins) {
             const conf = gameData.skins[key].themeConfig;
             if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
@@ -311,6 +374,9 @@ const AudioManager = {
         // Priorità Eventi
         if (window.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
+        }
+        else if (window.currentActiveEvent === 'Arcade Mode') {
+            targetTrackId = 'sound-arcade-theme';
         }
         else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
@@ -383,6 +449,13 @@ function buySkin(skinId) {
     if (!data || !data.cost) return;
     if (gameState.skins.unlocked.includes(skinId)) return;
 
+    // Skin post-formattazione: richiede almeno 1 formattazione
+    if (data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1) {
+        playSound('sound-error');
+        window.EspooClicker.showToast('⚠️ Devi eseguire almeno 1 Formattazione per sbloccare questa skin!', 'error');
+        return;
+    }
+
     if (gameState.prestigePoints.gte(data.cost)) {
         gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
         gameState.skins.unlocked.push(skinId);
@@ -431,7 +504,7 @@ function buyTeamEnhancement(enhanceKey) {
 function buyPrestigeUpgrade(upgradeKey) {
     const state = gameState.prestigeUpgrades[upgradeKey];
     const data = gameData.prestigeUpgrades[upgradeKey];
-    const cost = data.baseCost;
+    const cost = data.isCounted ? calculatePrestigeUpgradeCost(upgradeKey) : data.baseCost;
 
     if (data.isCounted) {
         if (gameState.prestigePoints.lt(cost))
@@ -458,6 +531,23 @@ function buyPrestigeUpgrade(upgradeKey) {
     calculatePrestigeBonus();
     recalculateCPS();
     finalizePurchase();
+}
+
+function buySuperUpgrade(upgradeKey) {
+    const state = gameState.superUpgrades[upgradeKey];
+    const data = gameData.superUpgrades[upgradeKey];
+
+    if (gameState.qBits.lt(data.cost) || state.purchased) return;
+
+    gameState.qBits = gameState.qBits.minus(data.cost);
+    state.purchased = true;
+
+    playSound('sound-buy');
+    if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+    recalculateCPS();
+    if (typeof refreshAllStores === 'function') refreshAllStores();
+    if (window.EspooClicker) window.EspooClicker.saveGame();
+    if (typeof updateUI === 'function') updateUI();
 }
 
 
@@ -969,7 +1059,11 @@ function triggerBluescreen(multiplier) {
     if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
         return triggerGameEvent('ricardo');
     }
-    // 2. Priorità Skin Super Espò
+    // 2. Priorità Skin Britney Espears
+    if (gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
+        return triggerGameEvent('britneyEspears');
+    }
+    // 3. Priorità Skin Super Espò
     if (gameState.skins.current === 'superespo') {
         return triggerGameEvent('superStarMode', multiplier);
     }
@@ -1027,13 +1121,13 @@ function calculateClickValue() {
 }
 function calculateRawClickValue() {
     // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
-    let val = gameState.baseClickValue * (window.clickGlobalMult || 1);
+    let val = gameState.baseClickValue.mul(window.clickGlobalMult || 1);
 
     // Aggiungi Mano Bionica (Se attiva)
     if (window.gameFlags.bionicHand) {
         let percent = 0.01;
         if (window.gameFlags.divineClick) percent = 0.02;
-        val += (bps * percent);
+        val = val.add(bps.mul(percent));
     }
 
     return val;
@@ -1064,14 +1158,22 @@ function resolveBug(event) {
 
     if (typeof showClickFeedback === 'function') showClickFeedback(event);
 
+    // --- NUOVA LOGICA ANIMAZIONE CLICK ---
+    // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
     const btn = document.getElementById('clicker-btn');
     if (btn) {
-        btn.classList.remove('click-shrink', 'clicked');
-        void btn.offsetWidth;
+        // Aggiungiamo le classi per lo schiacciamento e il volto
         btn.classList.add('click-shrink', 'clicked');
-        setTimeout(() => {
+
+        // Se l'utente clicca a raffica, cancelliamo il reset precedente per non farlo scattare
+        if (window.clickAnimTimer) {
+            clearTimeout(window.clickAnimTimer);
+        }
+
+        // Timer di 100ms: se l'utente smette di cliccare per 1/10 di secondo, il bottone si rialza
+        window.clickAnimTimer = setTimeout(() => {
             btn.classList.remove('click-shrink', 'clicked');
-        }, 100);
+        }, 100); 
     }
 
     if (typeof updateClickStore === 'function') updateClickStore();
@@ -1082,13 +1184,13 @@ function resolveBug(event) {
 
 
 function calculatePrestigeGained() {
-    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) return new Decimal(0);
+    if (gameState.totalScore.lt(getPrestigeThreshold())) return new Decimal(0);
     let base = new Decimal(2000000);
     return gameState.totalScore.div(base).sqrt().floor();
 }
 
 function openPrestigeContract() {
-    if (gameState.totalScore.lt(gameData.PRESTIGE_THRESHOLD)) {
+    if (gameState.totalScore.lt(getPrestigeThreshold())) {
         if (window.EspooClicker && window.EspooClicker.showToast) {
             window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
         }
@@ -1103,48 +1205,84 @@ function openPrestigeContract() {
         return;
     }
 
+    // Applica visivamente il bonus del Replicatore di Token
+    let finalGained = gained;
+    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+        finalGained = finalGained.mul(1.20).floor(); // +20% Token
+    }
+
     const tokenDisplay = document.getElementById('contract-gain-token');
     const bonusDisplay = document.getElementById('contract-gain-bonus');
 
-    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(gained)}`;
+    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(finalGained)}`;
 
     // Calcoli per la preview
     let currentLifetime = gameState.lifetimePrestigePoints || new Decimal(0);
-    let estimatedLifetime = currentLifetime.add(gained);
+    let estimatedLifetime = currentLifetime.add(finalGained);
 
     // Calcolo Bonus
     let baseBonus = estimatedLifetime.mul(0.01);
-
     let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
     let synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
 
     // synergy = count * 0.001 * lifetime
     let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
-
     let totalMultiplier = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
 
     if (bonusDisplay) {
-        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-size: 1.4rem;">x${formatNumber(totalMultiplier)}</span>`;
+        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
     }
 
     const modal = document.getElementById('prestige-modal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
 
-    // Aggiungi classe al body per gestire i toast
+        // Animazione Fluida GSAP per l'entrata
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(content,
+                    { scale: 0.8, opacity: 0, y: 20 },
+                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+                );
+            } else {
+                content.style.opacity = '1';
+                content.style.transform = 'scale(1)';
+            }
+        }
+    }
+
     document.body.classList.add('modal-open');
 }
 
 async function executePrestige() {
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-modal');
+    const bar = document.getElementById('prestige-progress-bar');
+    const animContainer = document.getElementById('prestige-anim-container');
+
     if (modal) modal.style.display = 'none';
+
     if (overlay) {
+        // Reset stato animazione
+        if (bar) bar.style.width = '0%';
+        if (animContainer) animContainer.style.transform = 'scale(0.8)';
+
+        overlay.style.display = 'flex'; // Forza il layout
         overlay.classList.remove("prestige_transition_overlay_display_none");
+
         if (typeof playSound === 'function') playSound('sound-prestige');
-        setTimeout(() => overlay.classList.add('active'), 10);
+
+        // Avvia l'animazione con un micro-ritardo per far recepire il reset al browser
+        setTimeout(() => {
+            overlay.classList.add('active');
+            overlay.style.opacity = '1';
+            if (bar) bar.style.width = '100%';
+            if (animContainer) animContainer.style.transform = 'scale(1)';
+        }, 50);
     }
 
-    // Salviamo il filtro corrente PRIMA di toccare qualsiasi cosa
     const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
         ? gameState.filterSettings.globalFilter
         : 'available';
@@ -1155,17 +1293,21 @@ async function executePrestige() {
         gained = calculatePrestigeGained();
     }
 
+    // Applica realmente il bonus del Replicatore di Token
+    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+        gained = gained.mul(1.20).floor(); // +20% Token
+    }
+
     let newPrestigePoints = gameState.prestigePoints.add(gained);
     let newLifetime = gameState.lifetimePrestigePoints.add(gained);
 
-    // Bonus Paracadute (Bug iniziali)
-    let startBonusBugs = new Decimal(0);
-    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
-        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
-    }
+    // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game)
+    const persistentKeys = [
+        'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks',
+        'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
+        'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni'
+    ];
 
-    // Salvataggio Dati Persistenti
-    const persistentKeys = ['achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks', 'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore'];
     const preservedData = {};
     persistentKeys.forEach(key => {
         if (gameState[key] !== undefined) {
@@ -1196,24 +1338,53 @@ async function executePrestige() {
     if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
     if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
     if (typeof newState.score === 'string') newState.score = new Decimal(newState.score);
+    if (newState.qBits !== undefined && typeof newState.qBits === 'string') newState.qBits = new Decimal(newState.qBits);
+    if (newState.lifetimeQBits !== undefined && typeof newState.lifetimeQBits === 'string') newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
 
     newState.prestigePoints = newPrestigePoints;
     newState.lifetimePrestigePoints = newLifetime;
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
-    newState.score = startBonusBugs; // Applica il bonus paracadute
 
-    // Logica Eredità Assistenti (Team QA)
-    if (newState.teams && newState.teams.assistenteQa) {
-        newState.teams.assistenteQa.count = 0; // Reset base
+    // --- PARACADUTE & FAST START (Bonus Bug Iniziali) ---
+    let startBonusBugs = new Decimal(0);
+    if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
+        startBonusBugs = new Decimal(gameState.prestigeUpgrades.paracadute.count).mul(2000);
+    }
+    if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
+        startBonusBugs = startBonusBugs.add(1000000);
+    }
+    newState.score = startBonusBugs;
 
-        // Eredità
-        if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
-            newState.teams.assistenteQa.count = gameState.prestigeUpgrades.eredita.count;
+    // --- LOGICA EREDITÀ & KEEP TEAMS ---
+    // --- LOGICA EREDITÀ & KEEP TEAMS ---
+    if (newState.teams) {
+        // 1. Keep Teams (Mantieni 5 livelli SOLO dei team base)
+        const baseTeamsAllowed = ['assistenteQa', 'jiraTicket', 'teamQa']; // Limitato ai primi 3
+
+        if (gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased) {
+            for (const key in gameState.teams) {
+                if (gameState.teams[key].count > 0 && baseTeamsAllowed.includes(key)) {
+                    newState.teams[key].count = Math.min(5, gameState.teams[key].count);
+                }
+            }
+        } else {
+            // Se non hai Keep Teams, azzera almeno l'Assistente QA prima di applicare i bonus vecchi
+            if (newState.teams.assistenteQa) newState.teams.assistenteQa.count = 0;
         }
-        // Accelerazione
-        if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
-            newState.teams.assistenteQa.count++;
+
+        // 2. Eredità Classica (Bonus Assistente QA)
+        if (newState.teams.assistenteQa) {
+            if (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count > 0) {
+                newState.teams.assistenteQa.count = Math.max(newState.teams.assistenteQa.count, gameState.prestigeUpgrades.eredita.count);
+            }
+            if (newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased) {
+                newState.teams.assistenteQa.count++;
+            }
+            // Fast Start buffato: +5 Assistenti QA e +1M Bug
+            if (gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased) {
+                newState.teams.assistenteQa.count += 5;
+            }
         }
     }
 
@@ -1254,12 +1425,189 @@ async function executePrestige() {
     // Rimozione Overlay
     if (overlay) {
         overlay.classList.remove('active');
+        overlay.style.opacity = '0'; // Sfuma dolcemente in uscita
+
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
+            overlay.style.display = 'none'; // Nascondi del tutto
             if (window.EspooClicker && gameData.texts)
-                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess);
-        }, 500);
+                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess, 'achievement');
+        }, 500); // 500ms è il tempo della transition CSS
     }
+}
+
+function executeFormattingSequence() {
+    // 1. Chiusura Interfaccia
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    document.body.classList.remove('modal-open');
+
+    // 2. Ferma la musica di sottofondo
+    const bgmId = gameState.user.bgMusicSelection || 'sound-bg-music';
+    const bgm = document.getElementById(bgmId);
+    if (bgm) bgm.pause();
+
+    window.currentActiveEvent = 'Formatting';
+
+    // 3. Creazione Schermata Cinematografica (Testo Estetico + Contenitore Progress Bar)
+    let prepOverlay = document.getElementById('format-prep-overlay');
+    if (!prepOverlay) {
+        prepOverlay = document.createElement('div');
+        prepOverlay.id = 'format-prep-overlay';
+        prepOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 99999; display: block; pointer-events: none;
+        `;
+
+        prepOverlay.innerHTML = `
+            <div id="format-text-phase" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
+                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">PREPARAZIONE FORMATTAZIONE</h1>
+                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">Caricamento dati in corso...</p>
+            </div>
+            
+            <div id="format-video-phase" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:transparent;">
+                <div style="position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:70%; z-index:100001;">
+                    <div style="color:#fff; font-family:'Courier New', monospace; font-size:1.2rem; font-weight:bold; margin-bottom:10px; text-align:center; text-shadow:2px 2px 4px #000;">
+                        RIPRISTINO UNIVERSO IN CORSO...
+                    </div>
+                    <div style="width:100%; height:20px; background:rgba(0,0,0,0.7); border:2px solid #9b59b6; border-radius:10px; overflow:hidden;">
+                        <div id="format-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #8e44ad, #d2b4de); box-shadow:0 0 10px #9b59b6; transition: width 22s linear;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(prepOverlay);
+    } else {
+        document.getElementById('format-text-phase').style.display = 'flex';
+        document.getElementById('format-video-phase').style.display = 'none';
+        document.getElementById('format-progress-bar').style.width = '0%';
+        prepOverlay.style.display = 'block';
+    }
+
+    // Assicurati che all'inizio lo sfondo sia nero puro
+    prepOverlay.style.background = '#000';
+
+    // 4. Avvia Audio di Pucci
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.play('sound-pucci', 'eventi');
+    }
+
+    // Calcolo QBits da salvare
+    const tokenDiv = gameState.prestigePoints.div(10000);
+    let bonusQbits = new Decimal(0);
+    if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+    let qBitsEarned = new Decimal(1).add(bonusQbits);
+
+    // Salvataggio Dati Super-Persistenti
+    const superPersistentData = {
+        achievements: JSON.parse(JSON.stringify(gameState.achievements)),
+        skins: JSON.parse(JSON.stringify(gameState.skins)),
+        user: JSON.parse(JSON.stringify(gameState.user)),
+        lifetimeScore: gameState.lifetimeScore,
+        totalClicks: gameState.totalClicks,
+        totalPlayTime: gameState.totalPlayTime,
+        totalGoldenBugsClicked: gameState.totalGoldenBugsClicked,
+        totalFormattazioni: (gameState.totalFormattazioni || 0) + 1,
+        qBits: (gameState.qBits || new Decimal(0)).add(qBitsEarned),
+        lifetimeQBits: (gameState.lifetimeQBits || new Decimal(0)).add(qBitsEarned),
+        superUpgrades: gameState.superUpgrades ? JSON.parse(JSON.stringify(gameState.superUpgrades)) : {}
+    };
+
+    // 5. TIMING FASE 2 (Dopo esattamente 2 secondi dall'urlo)
+    setTimeout(() => {
+
+        // --- IL FIX È QUI ---
+        // Rendiamo lo sfondo dell'overlay trasparente. 
+        // In questo modo il video, che si trova al di sotto, sarà visibile, e la barra gli galleggerà sopra!
+        prepOverlay.style.background = 'transparent';
+
+        document.getElementById('format-text-phase').style.display = 'none';
+        const vidPhase = document.getElementById('format-video-phase');
+        vidPhase.style.display = 'block';
+
+        const video = document.getElementById('video-bigbang');
+        if (video) {
+            video.classList.remove('video_display_none');
+            video.style.position = 'fixed';
+            video.style.top = '0';
+            video.style.left = '0';
+            video.style.width = '100vw';
+            video.style.height = '100vh';
+            video.style.objectFit = 'cover';
+            // Mettiamo il video a 99990, appena SOTTO all'overlay che è a 99999
+            video.style.zIndex = '99990';
+            video.style.display = 'block';
+
+            video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+            video.currentTime = 0;
+
+            let playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.warn("Video bloccato dal browser, forzo il mute.", e);
+                    video.muted = true;
+                    video.play();
+                });
+            }
+        }
+
+        // Avvia l'animazione della Progress Bar
+        setTimeout(() => {
+            const bar = document.getElementById('format-progress-bar');
+            if (bar) bar.style.width = '100%';
+        }, 50);
+
+        // === HARD RESET DEL GIOCO (Dietro le quinte) ===
+        let newState = getInitialGameState();
+        Object.assign(newState, superPersistentData);
+
+        newState.lifetimeScore = new Decimal(newState.lifetimeScore);
+        newState.qBits = new Decimal(newState.qBits);
+        newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
+        newState.lastSaveTimestamp = Date.now();
+
+        let startBonusBugs = new Decimal(0);
+        if (newState.superUpgrades && newState.superUpgrades.fastStart && newState.superUpgrades.fastStart.purchased) {
+            startBonusBugs = startBonusBugs.add(10000);
+            if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count += 5;
+        }
+        newState.score = startBonusBugs;
+
+        gameState = newState;
+        bps = new Decimal(0);
+        clickHistory = [];
+        window.gameFlags = {};
+
+        if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+        calculatePrestigeBonus();
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+
+        // 6. TIMING FASE 3 (Fine dopo 22 secondi esatti)
+        setTimeout(() => {
+
+            if (video) {
+                video.pause();
+                video.style.display = 'none';
+                video.classList.add('video_display_none');
+                video.muted = false;
+            }
+
+            prepOverlay.style.display = 'none';
+
+            window.currentActiveEvent = null;
+            if (typeof refreshAllStores === 'function') refreshAllStores();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+
+            const tabQuantum = document.getElementById('tab-quantum');
+            if (tabQuantum) tabQuantum.click();
+
+            if (window.EspooClicker) {
+                window.EspooClicker.saveGame();
+                window.EspooClicker.showToast(`FORMATTAZIONE CONCLUSA! +${formatNumber(qBitsEarned)} Q-BITS`, 'achievement');
+            }
+        }, 22000);
+
+    }, 2000);
 }
 
 function checkAchievements() {
@@ -1411,9 +1759,3 @@ function clickGoldenBug() {
     if (goldenBug) goldenBug.classList.remove('visible');
     updateUI();
 }
-
-let originalTitle = document.title;
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) document.title = '🐞 I bug si accumulano...';
-    else document.title = originalTitle;
-});

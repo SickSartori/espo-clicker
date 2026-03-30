@@ -1,0 +1,375 @@
+/* ==========================================================================
+   MOBILE SIMPLIFIED UI - CLEAN VERSION (NO !IMPORTANT)
+   Override tramite Specificità (High Specificity Selectors)
+   ========================================================================== */
+
+@media only screen and (max-width: 1024px) {
+
+    /* ---------------------------------------------------
+       1. PERFORMANCE & ANTI-LAG (SCATTI)
+    --------------------------------------------------- */
+    html body::before {
+        animation: none;
+    }
+
+    #clicker-btn,
+    .click-feedback {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+
+    /* ---------------------------------------------------
+       2. MODALI "APP-LIKE" (100% Schermo reale)
+    --------------------------------------------------- */
+    html body .modal-backdrop {
+        align-items: flex-end;
+    }
+
+    html body .modal-content {
+        width: 100%;
+        max-width: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 0;
+    }
+
+    html body .settings-content,
+    html body #achievement-list,
+    html body #leaderboard-list,
+    html body #stats-list,
+    html body .skins-grid-container,
+    html body .profile-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px;
+    }
+
+    /* ---------------------------------------------------
+       3. BOTTONE CHIUSURA GIGANTE (SEMPRE IN FONDO)
+    --------------------------------------------------- */
+    html body .modal-close-btn {
+        order: 99;
+        position: sticky;
+        bottom: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(231, 76, 60, 0.9);
+        color: #fff;
+        font-size: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: auto;
+        border-radius: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
+        z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    html body .modal-close-btn::after {
+        content: 'CHIUDI';
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+    }
+
+    html body div#settings-modal button.modal-close-btn {
+        display: none;
+    }
+
+    /* ---------------------------------------------------
+       4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
+    --------------------------------------------------- */
+    html body #game-container {
+        height: calc(100dvh - 130px);
+    }
+
+    html body #center-column.mobile-active {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    html body #clicker-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+    }
+
+    html body #clicker-btn {
+        margin: 0 auto;
+        width: min(60vw, 35dvh);
+        height: min(60vw, 35dvh);
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html body #game-container #clicker-section #clicker-btn.clicked #manager-photo-normal,
+    html body #game-container #clicker-section #clicker-btn.click-shrink #manager-photo-normal {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    html body #game-container #clicker-section #clicker-btn.clicked #manager-photo-clicked,
+    html body #game-container #clicker-section #clicker-btn.click-shrink #manager-photo-clicked {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    html body #version-display {
+        position: static;
+        transform: none;
+        transition: none;
+        animation: none;
+        margin: 0 auto 10px auto;
+        text-align: center;
+        width: auto;
+        max-width: 90%;
+        display: block;
+        font-size: 0.7rem;
+        padding: 5px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+        pointer-events: auto;
+        cursor: pointer;
+        opacity: 0.7;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        bottom: auto;
+        left: auto;
+        right: auto;
+    }
+
+    html body #version-display:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* ---------------------------------------------------
+       5. SCHERMATA SKIN: LAYOUT MASSIMIZZATO
+    --------------------------------------------------- */
+    html body div#skins-modal div#skins-grid-modern {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-bottom: 90px;
+        /* Spazio per le frecce in fondo */
+        min-height: 100%;
+    }
+
+    /* Rendiamo il carosello più alto per ospitare un'immagine più grande */
+    html body div#skins-modal div#skins-grid-modern div.carousel-stage {
+        height: 280px;
+        /* Aumentato */
+        width: 100%;
+        margin: 0;
+        position: static;
+        overflow: visible;
+    }
+
+    /* Zoom maggiore sulla skin attiva */
+    html body .carousel-item.active {
+        transform: scale(1.6) translateZ(100px);
+        /* Aumentato da 1.3 */
+        z-index: 50;
+    }
+
+    /* Rimpiccioliamo drasticamente le skin laterali per dare spazio alla centrale */
+    html body #skins-grid-modern .carousel-item.prev-1,
+    html body #skins-grid-modern .carousel-item.next-1 {
+        transform: translateX(110px) scale(0.6) rotateY(-30deg);
+        opacity: 0.4;
+    }
+
+    html body #skins-grid-modern .carousel-item.prev-1 {
+        transform: translateX(-110px) scale(0.6) rotateY(30deg);
+    }
+
+    /* Pannello Info compatto */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel {
+        padding-top: 10px;
+        margin-top: 5px;
+        width: 95%;
+        background: transparent;
+        border: none;
+    }
+
+    /* Barra Filtri Rarità Mobile */
+    html body div#skins-modal .skins-controls-bar {
+        padding: 5px;
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    html body .skins-filters {
+        display: flex;
+        overflow-x: auto;
+        /* Permette lo swipe dei filtri se troppi */
+        width: 100%;
+        gap: 5px;
+        padding: 5px 0;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Frecce Navigazione in fondo */
+    html body div#skins-modal div#skins-grid-modern button.carousel-nav-btn {
+        position: absolute;
+        bottom: 5px;
+        width: 15%;
+        height: 50px;
+        top: auto;
+        transform: none;
+        background: rgba(52, 152, 219, 0.9);
+        border: 2px solid #fff;
+    }
+
+    html body #carousel-prev {
+        left: 4%;
+    }
+
+    html body #carousel-next {
+        right: 4%;
+    }
+
+    html body #skin-rarity-filter {
+        display: block;
+        width: 100%;
+        height: 40px;
+        background: #1a252f;
+        border: 1px solid #3498db;
+        color: white;
+        border-radius: 8px;
+    }
+
+    /* ---------------------------------------------------
+       6. IMPOSTAZIONI CENTRATE
+    --------------------------------------------------- */
+    html body .slider-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px 10px;
+        gap: 12px;
+    }
+
+    html body .slider-wrapper {
+        width: 100%;
+        align-items: center;
+    }
+
+    html body .slider-icon {
+        display: none;
+    }
+
+    html body .slider-wrapper label {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    html body .slider-value {
+        width: 100%;
+        text-align: center;
+        font-size: 1.2rem;
+        margin-top: 5px;
+    }
+
+    html body .custom-slider {
+        width: 85%;
+        height: 10px;
+    }
+
+    html body .custom-slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    html body div#login-modal div.modal-content {
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    /* ---------------------------------------------------
+       7. NASCONDIAMO IL SUPERFLUO
+    --------------------------------------------------- */
+
+    html body nav#game-navbar button#open-help-btn,
+    html body div#settings-modal button#open-advanced-audio-btn,
+    html body div#achievements-modal div#achievement-list div.trophy-desc,
+    html body div#achievements-modal div#achievement-list div.trophy-flavor,
+    html body div#skins-modal div.skins-toggle-wrapper,
+    html body div#skins-modal div.modern-info-desc {
+        display: none;
+    }
+
+    /* Stats: nascondi solo la sezione Profilo su mobile */
+    html body div#stats-modal div#stats-list div.stats-section:last-child {
+        display: none;
+    }
+
+    html body #stats-list .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    html body #stats-list .stat-box {
+        padding: 8px 10px;
+    }
+
+    html body #stats-list .stat-box .stat-value {
+        font-size: 0.95rem;
+    }
+
+    html body #stats-list .stat-box .stat-label {
+        font-size: 0.65rem;
+    }
+
+    html body #achievement-list .trophy-row {
+        min-height: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    html body #achievement-list .trophy-icon-wrapper {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+        font-size: 1rem;
+        margin-right: 0;
+    }
+
+    html body #achievement-list .trophy-title {
+        font-size: 0.9rem;
+        white-space: normal;
+    }
+
+    html body #skins-modal .skins-controls-bar {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    html body #skins-modal .modern-info-title {
+        font-size: 1.2rem;
+    }
+
+    html body #skins-modal .modern-btn-large {
+        padding: 15px 0;
+        font-size: 1rem;
+        width: 90%;
+    }
+}

@@ -1,0 +1,86 @@
+#super-espo-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #5c94fc;
+    z-index: 10;
+    overflow: hidden;
+}
+
+#super-espo-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+#super-espo-overlay {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+}
+
+/*  Classi CSS per evitare inline styles */
+.super-espo-title {
+    color: #9b59b6;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 900;
+    text-shadow: 0 0 15px #9b59b6;
+}
+
+.super-espo-instructions {
+    color: #fff;
+    margin-bottom: 20px;
+    font-family: monospace;
+}
+
+.super-espo-dead-title {
+    color: #e74c3c;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+/*  Stili per i controlli mobile */
+#super-espo-mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: 30;
+}
+
+#super-espo-mobile-controls button {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #fff;
+    color: white;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    user-select: none;
+}
+
+@media (max-width: 768px) {
+    #super-espo-mobile-controls {
+        display: flex;
+    }
+}

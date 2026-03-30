@@ -221,12 +221,10 @@
 <div id="advanced-audio-modal" class="modal-backdrop" style="display: none; z-index: 2200;">
     <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
         <div class="modal-header-custom" style="
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px 20px; 
-            background-color: #34495e; 
-            border-bottom: 1px solid #4a6582;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
             flex-shrink: 0;">
 
             <button id="header-back-btn" class="header-action-btn" title="<?php echo $labels["modals_opzioni_audio_avanzate_indietro_titolo"]; ?>">
@@ -265,211 +263,154 @@
     </div>
 </div>
 <div id="prestige-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #f1c40f; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-        <button class="modal-close-btn">&times;</button>
-        <h2 style="background: #233040; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.2); padding: 20px;">
-            <i class="fa-solid fa-certificate"></i>
-			<?php echo $labels["modals_promozione_titolo"]; ?>
-		</h2>
-        <div class="settings-content" style="padding: 30px 25px;">    
+    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #f1c40f; box-shadow: 0 0 30px rgba(241,196,15,0.3); padding: 0; overflow: hidden; background: #0a0a0a;">
+        <button class="modal-close-btn" id="cancel-prestige-btn" style="z-index: 10;">&times;</button>
+        
+        <h2 style="background: #1f1905; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3); padding: 20px; margin: 0;">
+            <i class="fa-solid fa-certificate"></i> Promozione Aziendale
+        </h2>
+        
+        <div class="settings-content" style="padding: 30px 25px;">
             <p style="
-                color: #ff6b6b; 
-                font-weight: 800; 
-                font-size: 0.95rem; 
+                color: #fff; 
+                background: rgba(241, 196, 15, 0.1); 
+                border: 1px solid #f1c40f;
+                font-weight: 600; 
+                font-size: 0.9rem; 
                 margin-bottom: 25px; 
                 line-height: 1.5; 
-                background: rgba(255, 0, 0, 0.1); 
-                padding: 10px; 
-                border-radius: 8px; 
-                border: 1px solid rgba(255, 107, 107, 0.3);">
-
-                <i class="fa-solid fa-triangle-exclamation"></i>
-				<?php echo $labels["modals_promozione_label"]; ?>
+                padding: 12px; 
+                border-radius: 8px;">
+                <i class="fa-solid fa-file-signature" style="color: #f1c40f;"></i> Firma il contratto per diventare <b>Senior</b>.<br><br>
+                <span style="color:#bdc3c7; font-weight:normal; font-size: 0.85rem;">Perderai Bug, Teams e Upgrades, ma sbloccherai il Laboratorio per la ricerca avanzata.</span>
             </p>
 
-            <div style="background: #1e272e; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #34495e;">
+            <div style="background: #110f08; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #4a3e12;">
                 <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
-					<?php echo $labels["modals_promozione_token_lab_label1"]; ?>
-				</div>
-                <div style="font-size: 3rem; font-weight: 900; color: #2ecc71; text-shadow: 0 0 20px rgba(46, 204, 113, 0.2); line-height: 1;">
-                    <span id="contract-gain-token">+0</span>
+                    OTTERRAI SUBITO
                 </div>
-                <div style="color: #2ecc71; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px;">
-					<?php echo $labels["modals_promozione_token_lab_label2"]; ?>
-				</div>
-                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                    <div style="font-size: 0.8rem; color: #bdc3c7;">
-						<?php echo $labels["modals_promozione_carriera_label"]; ?>
-					</div>
-                    <div id="contract-gain-bonus" style="font-size: 1.2rem; color: #f1c40f; font-weight: 800;">
-						Nuovo Totale: +0%
-					</div>
+                <div style="font-size: 3.5rem; font-weight: 900; color: #3498db; text-shadow: 0 0 20px rgba(52, 152, 219, 0.5); line-height: 1;" id="contract-gain-token">
+                    +0
+                </div>
+                <div style="color: #3498db; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; margin-top: 5px;">
+                    Token Laboratorio
+                </div>
+                <div id="contract-gain-bonus" style="font-size: 0.9rem; color: #95a5a6; margin-top: 15px; border-top: 1px solid #2a2305; padding-top: 15px;">
+                    Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x1.00</span>
                 </div>
             </div>
 
-            <button id="btn-confirm-prestige" class="buy-btn" style="
-                background: linear-gradient(135deg, #f1c40f, #e67e22); 
-                color: #2c3e50; 
-                font-weight: 800; 
+            <button id="btn-confirm-prestige" class="buy-btn" data-action="prestige" style="
+                background: linear-gradient(135deg, #f1c40f, #d35400); 
+                color: #000; 
+                font-weight: 900; 
                 width: 100%; 
                 height: 55px; 
                 font-size: 1.2rem; 
-                box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
-                border-radius: 8px;">
-                <i class="fa-solid fa-signature"></i>
-				<?php echo $labels["modals_promozione_firma_accetta"]; ?>
+                box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+                border-radius: 8px;
+                border: none;
+                text-transform: uppercase;
+                letter-spacing: 1px;">
+                <i class="fa-solid fa-pen-nib"></i> Firma Contratto
             </button>
-            
-            <p style="font-size: 0.8rem; color: #5d7c9a; margin-top: 20px;">
-				<?php echo $labels["modals_promozione_label2"]; ?>
+        </div>
+    </div>
+</div>
+
+<div id="format-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #9b59b6; box-shadow: 0 0 30px rgba(155,89,182,0.6);">
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background: #1a0f2e; color: #9b59b6; border-bottom: 1px solid rgba(155, 89, 182, 0.3); padding: 20px;">
+            <i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)
+		</h2>
+        <div class="settings-content" style="padding: 30px 25px;">    
+            <p style="
+                color: #fff; 
+                background: rgba(155, 89, 182, 0.2); 
+                border: 1px solid #9b59b6;
+                font-weight: 600; 
+                font-size: 0.9rem; 
+                margin-bottom: 25px; 
+                line-height: 1.5; 
+                padding: 12px; 
+                border-radius: 8px;">
+                <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> ATTENZIONE: Questa azione distruggerà l'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br><br>Conserverai Skin, Obiettivi e Statistiche globali.
             </p>
+
+            <div style="background: #110a1f; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #4a235a;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
+					OTTERRAI SUBITO
+				</div>
+                <div style="font-size: 3rem; font-weight: 900; color: #9b59b6; text-shadow: 0 0 20px rgba(155, 89, 182, 0.4); line-height: 1;">
+                    <span id="format-gain-qbit">+0</span>
+                </div>
+                <div style="color: #9b59b6; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">
+					Quantum Bits
+				</div>
+            </div>
+
+            <button id="btn-confirm-format" class="buy-btn quantum-btn" style="
+                width: 100%; 
+                height: 55px; 
+                font-size: 1.2rem; 
+                border-radius: 8px;">
+                <i class="fa-solid fa-meteor"></i> MADE IN HEAVEN
+            </button>
         </div>
     </div>
 </div>
 
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content">
-        <button class="modal-close-btn">&times;</button>
+    <div class="modal-content" style="max-width: 850px; width: 95%;"> <button class="modal-close-btn">&times;</button>
         <h2>
 			<i class="fa-solid fa-shirt"></i>
 			<?php echo $labels["modals_guardaroba_titolo"]; ?>
 		</h2>
-        <p class="modal-desc" style="text-align: center; margin-bottom: 15px;">
-			<?php echo $labels["modals_guardaroba_label1"]; ?>
-            <br>
-			<?php echo $labels["modals_guardaroba_label2"]; ?>
-        </p>
-        <div id="skins-grid" style="
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-            gap: 15px; 
-            padding: 20px; 
-            overflow-y: auto; 
-            max-height: 60vh;">
-		</div>
+        
+        <div class="skins-controls-bar">
+            <div class="skins-filters">
+                <button class="skin-filter-btn active" data-filter="all">Tutte</button>
+                <button class="skin-filter-btn" data-filter="unlocked">Sbloccate</button>
+                <button class="skin-filter-btn" data-filter="locked">Bloccate</button>
+                
+                <select id="skin-rarity-filter" class="clean-input skin-select-filter">
+                    <option value="all">Tutte le Rarità</option>
+                    <option value="common">Comune</option>
+                    <option value="rare">Rara</option>
+                    <option value="epic">Epica</option>
+                    <option value="legendary">Leggendaria</option>
+                    <option value="divine">Divina</option>
+                    <option value="christmas">Festiva</option>
+                </select>
+            </div>
+            
+            <div class="skins-toggle-wrapper">
+                <span style="font-size: 0.8rem; color: #bdc3c7; margin-right: 8px;">Nuovo UI</span>
+                <label class="modern-switch">
+                    <input type="checkbox" id="skins-ui-toggle" checked>
+                    <span class="modern-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="skins-grid-legacy" class="skins-grid-container" style="display: none;">
+            </div>
+        
+        <div id="skins-grid-modern" class="skins-grid-container">
+            </div>
     </div>
 </div>
 
-<div id="help-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+<div id="release-notes-modal" class="modal-backdrop" style="display: none; z-index: 2500;">
+    <div class="modal-content" style="max-width: 700px; border-top: 4px solid #f1c40f;">
         <button class="modal-close-btn">&times;</button>
-        <h2>
-			<i class="fa-solid fa-book-open"></i>
-			<?php echo $labels["modals_manuale_titolo"]; ?>
-		</h2>
-        <div class="settings-content" style="text-align: left; line-height: 1.6;">
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #3498db; margin-bottom: 5px;">
-					<i class="fa-solid fa-bullseye"></i>
-					<?php echo $labels["modals_manuale_punto_1_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_1_label"]; ?>
-                </p>
-            </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #2ecc71; margin-bottom: 5px;">
-					<i class="fa-solid fa-robot"></i>
-					<?php echo $labels["modals_manuale_punto_2_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_2_label1"]; ?>
-                    <br>
-					<?php echo $labels["modals_manuale_punto_2_label2"]; ?>
-                </p>
-            </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #f1c40f; margin-bottom: 5px;">
-					<i class="fa-solid fa-bolt"></i>
-					<?php echo $labels["modals_manuale_punto_3_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_3_label1"]; ?>
-                </p>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px; list-style: none;">
-                    <li style="margin-bottom: 5px;">
-						<i class="fa-solid fa-bug" style="color:#f1c40f; width: 20px;"></i>
-						<?php echo $labels["modals_manuale_punto_3_label2"]; ?>
-					</li>
-                    <li style="margin-bottom: 5px;">
-						<i class="fa-solid fa-display" style="color:#3498db; width: 20px;"></i>
-						<?php echo $labels["modals_manuale_punto_3_label3"]; ?>
-					</li>
-                    <li style="margin-bottom: 5px;">
-						<i class="fa-solid fa-music" style="color:#e74c3c; width: 20px;"></i>
-						<?php echo $labels["modals_manuale_punto_3_label4"]; ?>
-					</li>
-                </ul>
-            </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #9b59b6; margin-bottom: 5px;">
-					<i class="fa-solid fa-flask"></i>
-					<?php echo $labels["modals_manuale_punto_4_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_4_label1"]; ?>
-                    <br>
-					<?php echo $labels["modals_manuale_punto_4_label2"]; ?>
-				</p>
-            </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #e67e22; margin-bottom: 5px;">
-					<i class="fa-solid fa-calculator"></i>
-					<?php echo $labels["modals_manuale_punto_5_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_5_label1"]; ?>
-                </p>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
-                    <li>
-						<?php echo $labels["modals_manuale_punto_5_label2"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_5_label3"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_5_label4"]; ?>
-						<br>
-						<?php echo $labels["modals_manuale_punto_5_label5"]; ?>
-					</li>
-                </ul>
-            </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: #1abc9c; margin-bottom: 5px;">
-					<i class="fa-solid fa-user"></i>
-					<?php echo $labels["modals_manuale_punto_6_titolo"]; ?>
-				</h3>
-                <p style="color: #bdc3c7; font-size: 0.95rem; margin: 0;">
-					<?php echo $labels["modals_manuale_punto_6_label1"]; ?>
-                </p>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
-                    <li>
-						<?php echo $labels["modals_manuale_punto_6_label2"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_6_label3"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_6_label4"]; ?>
-					</li>
-                </ul>
-            </div>
-            <div>
-                <h3 style="color: #e74c3c; margin-bottom: 5px;">
-					<i class="fa-solid fa-lightbulb"></i>
-					<?php echo $labels["modals_manuale_punto_7_titolo"]; ?>
-				</h3>
-                <ul style="color: #ecf0f1; font-size: 0.9rem; margin-top: 5px; padding-left: 20px;">
-                    <li>
-						<?php echo $labels["modals_manuale_punto_7_label1"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_7_label2"]; ?>
-					</li>
-                    <li>
-						<?php echo $labels["modals_manuale_punto_7_label3"]; ?>
-					</li>
-                </ul>
+        <h2 style="background: #1a1a1a; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3);">
+            <i class="fa-solid fa-bullhorn"></i> Novità dell'Aggiornamento
+        </h2>
+        <div class="settings-content" id="release-notes-content" style="padding: 20px 30px; font-family: 'Inter', sans-serif;">
+            <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br>Caricamento novità...
             </div>
         </div>
     </div>

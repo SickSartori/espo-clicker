@@ -35,7 +35,30 @@
     z-index: calc(var(--z-content) + 1);
     white-space: nowrap;
     width: auto;
+}
 
+/* Micro-particella sparkle al click */
+.click-spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--spark-color, rgba(255, 255, 255, 0.8));
+    pointer-events: none;
+    z-index: calc(var(--z-content) + 2);
+    animation: sparkBurst var(--spark-dur, 0.6s) ease-out forwards;
+    box-shadow: 0 0 6px var(--spark-color, rgba(255, 255, 255, 0.6));
+}
+
+@keyframes sparkBurst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--spark-x, 30px), var(--spark-y, -30px)) scale(0);
+    }
 }
 
 /* Bottone Clicker */
@@ -44,7 +67,7 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.1s ease-out;
     z-index: var(--z-content);
     position: relative;
     /* DIMENSIONE REATTIVA:
@@ -63,6 +86,7 @@
     border-radius: 50%;
 }
 
+
 #clicker-btn:focus {
     outline: none;
 }
@@ -73,7 +97,7 @@
 
 #clicker-btn.click-shrink {
     transform: scale(0.90);
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.05s ease-in;
 }
 
 #clicker-btn::after {
@@ -82,12 +106,19 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 120%;
-    height: 120%;
-    background: radial-gradient(circle, rgba(52, 152, 219, 0.2) 0%, transparent 70%);
+    width: 130%;
+    height: 130%;
+    background: radial-gradient(circle, rgba(52, 152, 219, 0.15) 0%, rgba(155, 89, 182, 0.05) 50%, transparent 70%);
     z-index: -1;
     pointer-events: none;
     border-radius: 50%;
+    transition: opacity 0.3s ease;
+    animation: clickerGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes clickerGlow {
+    0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
 }
 
 #manager-photo-normal,
@@ -123,12 +154,20 @@
     font-size: clamp(1.5rem, 4vh, 2.5rem);
     color: #ff4757;
     margin: 0;
-    padding: 0;
+    padding: 4px 16px;
     text-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
     line-height: 1;
-    transition: transform 0.1s;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
     position: relative;
     cursor: help;
+    background: rgba(255, 71, 87, 0.06);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 71, 87, 0.08);
+}
+
+#score-display.score-bump {
+    transform: scale(1.08);
+    text-shadow: 0 0 25px rgba(255, 71, 87, 0.7);
 }
 
 #score-display[data-tooltip]:hover::after {
@@ -170,11 +209,18 @@
     font-family: var(--font-heading);
     font-size: 1.2rem;
     font-weight: 600;
-    color: #bdc3c7;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px 12px;
+    color: #95a5a6;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px 16px;
     border-radius: 20px;
     margin-top: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: color 0.3s ease, background 0.3s ease;
+}
+
+#cps-display:hover {
+    color: #bdc3c7;
+    background: rgba(255, 255, 255, 0.06);
 }
 
 /* Skill Button (Crunch Time) */
@@ -301,8 +347,25 @@ body #version-display {
     font-weight: bold;
     color: rgba(255, 255, 255, 0.25);
     text-shadow: 1px 1px 2px #000;
-    pointer-events: none;
     white-space: nowrap;
+}
+body #version-display {
+    transition: all 0.2s ease-in-out;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: auto; /* Sovrascrive il none di base */
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+body #version-display:hover {
+    background: rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.4);
+    color: #3498db;
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.2);
 }
 
 /* --- EFFETTO GLITCH 404 --- */
@@ -328,7 +391,8 @@ body.bluescreen-active #clicker-btn {
 .rick_roll_video,
 .ricardo_video,
 .ricardo_metal_video,
-.ricardo_dota_video {
+.ricardo_dota_video,
+.britney_espoars_video {
     position: fixed;
     top: 0;
     left: 0;

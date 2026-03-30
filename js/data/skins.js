@@ -14,6 +14,7 @@ window.gameData.skins = {
         rarity: "common",
         cost: new Decimal(5),
         themeConfig: {
+            cssFile: '8bit-theme.css',
             bodyClass: 'theme-8bit',
             specialMusic: 'sound-bg-bit',
             goldenBugIcon: 'fa-gamepad',
@@ -29,13 +30,16 @@ window.gameData.skins = {
         unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
         cost: IS_XMAS_TIME ? undefined : new Decimal(20),
         themeConfig: {
-            hasSnow: true,
+            cssFile: 'christmas-theme.css',
+            vfx: 'snow',
             specialMusic: 'sound-snowball',
             bodyClass: 'theme-christmas',
             goldenBugIcon: 'fa-gift',
             goldenBugColor: '#e74c3c'
         }
     },
+
+    // --- RARE ---
     gladiator: {
         name: "Esporator",
         desc: "Al mio segnale, scatenate i click.",
@@ -68,6 +72,8 @@ window.gameData.skins = {
         rarity: "rare",
         cost: new Decimal(10)
     },
+
+    // --- EPIC ---
     king: {
         name: "Espo of Empires",
         desc: "Il Re dei Bug.",
@@ -92,6 +98,18 @@ window.gameData.skins = {
         rarity: "epic",
         cost: new Decimal(25)
     },
+    initialE: {
+        name: "Initial E",
+        desc: "Tofu delivery, ma col codice.",
+        img: "initiale.webp",
+        imgClick: "initiale-click.webp",
+        rarity: "epic",
+        cost: new Decimal(30),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 30 Token."
+    },
+
+    // --- LEGENDARY ---
     rick: {
         name: "Rick Espley",
         desc: "Never gonna give you up!",
@@ -122,22 +140,48 @@ window.gameData.skins = {
         img: "freddy-espory.webp",
         imgClick: "freddy-espory-click.webp",
         rarity: "legendary",
-        cost: new Decimal(50)
+        cost: new Decimal(50),
+        themeConfig: {
+            specialMusic: 'bg-music-espory'
+        }
+    },
+    britneyEspears: {
+        name: "Britney Espears",
+        desc: "Oops!... I debugged again.",
+        img: "britney-espoars.webp",
+        imgClick: "britney-espoars-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(75),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
+    },
+    espoKiss: {
+        name: "Espo Kiss",
+        desc: "Rock 'n' roll all night, debug every day.",
+        img: "espokiss.webp",
+        imgClick: "espokiss-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(75),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
     },
     superespo: {
         name: "Super Espò",
-        desc: "It’s-a Me, Espò!",
+        desc: "It's-a Me, Espò!",
         img: "super-espo.webp",
         imgClick: "super-espo-click.webp",
         rarity: "legendary",
         cost: new Decimal(100),
         themeConfig: {
+            cssFile: 'super-theme.css',
             bodyClass: 'theme-super',
             specialMusic: 'sound-bg-music-super',
             goldenBugIcon: 'fa-question',
             goldenBugColor: '#ffffff'
         }
     },
+
+    // --- DIVINE ---
     jesus: {
         name: "Gespo",
         desc: "Il salvatore del database.",

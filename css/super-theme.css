@@ -4,8 +4,8 @@
 
 /* --- SFONDO MONDO SUPER --- */
 body.theme-super {
-    background-color: #6b8cff; 
-    background-image: 
+    background-color: #6b8cff;
+    background-image:
         linear-gradient(to top, #c04800 0%, #c04800 40px, #000 40px, #000 44px, transparent 44px);
     background-attachment: fixed;
 }
@@ -19,20 +19,20 @@ body.theme-super #golden-bug {
 /* --- GAME CONTAINER (Stile Castello/Mattoni) --- */
 body.theme-super #game-container {
     background-color: #000;
-    border: 4px solid #fff;
-    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+    border: 2px solid #fff;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
     border-radius: 4px;
 }
 
 /* --- NAVBAR --- */
 body.theme-super #game-navbar {
-    background-color: #c04800; 
+    background-color: #c04800;
     border-bottom: 4px solid #000;
 }
 
 /* --- COLONNE --- */
 body.theme-super .game-column {
-    background-color: #222; 
+    background-color: #222;
     border-right: 4px solid #000;
 }
 
@@ -46,33 +46,33 @@ body.theme-super .tab-btn {
     color: #000;
     border: 2px solid #000;
     margin-right: 5px;
-    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3);
+    box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.3);
 }
 
 body.theme-super .tab-btn.active {
-    background: #e70010; 
+    background: #e70010;
     color: #fff;
     transform: translateY(-2px);
     box-shadow: 2px 2px 0 #000;
 }
 body.theme-super .tab-btn.notify {
-    border: 2px solid #f8b800;    
+    border: 2px solid #f8b800;
     color: #f8b800;
-    background-color: #000;       
+    background-color: #000;
     animation: superTabPulse 0.8s infinite alternate ease-in-out;
-    border-bottom-color: #f8b800; 
+    border-bottom-color: #f8b800;
 }
 
 
 
 /* --- CARD UPGRADE (Stile Blocchi Blu Sotterranei) --- */
-body.theme-super .upgrade, 
+body.theme-super .upgrade,
 body.theme-super .click-upgrade,
 body.theme-super .prestige-upgrade,
 body.theme-super .enhancement-upgrade {
     background-color: #004080;
     border: 4px solid #000;
-    box-shadow: inset 4px 4px 0 rgba(255,255,255,0.2);
+    box-shadow: inset 4px 4px 0 rgba(255, 255, 255, 0.2);
     color: #fff;
     margin-bottom: 10px;
     border-radius: 0;
@@ -88,13 +88,13 @@ body.theme-super #game-container .upgrade.locked-item,
 body.theme-super #game-container .click-upgrade.locked-item,
 body.theme-super #game-container .enhancement-upgrade.locked-item,
 body.theme-super #game-container .prestige-upgrade.locked-item {
-    background-color: #050505;       
-    border: 4px dashed #444;         
-    box-shadow: none;                
-    opacity: 0.6;                    
-    filter: grayscale(100%);         
-    transform: scale(0.98);          
-    pointer-events: none;         
+    background-color: #050505;
+    border: 4px dashed #444;
+    box-shadow: none;
+    opacity: 0.6;
+    filter: grayscale(100%);
+    transform: scale(0.98);
+    pointer-events: none;
 }
 
 /* Spegni i testi colorati (Titoli) */
@@ -113,7 +113,7 @@ body.theme-super #game-container .locked-item .progress-bar-container {
 }
 
 body.theme-super #game-container .locked-item .progress-bar-fill {
-    background: #666; 
+    background: #666;
 }
 
 body.theme-super #game-container .locked-item .progress-text {
@@ -122,13 +122,13 @@ body.theme-super #game-container .locked-item .progress-text {
     text-shadow: none;
 }
 body.theme-super #game-container .buy-btn:disabled {
-    background: #575757;          
-    border: 2px solid #222;       
-    color: #999;                  
-    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5); 
-    cursor: not-allowed;          
-    transform: none;              
-    filter: grayscale(100%);      
+    background: #575757;
+    border: 2px solid #222;
+    color: #999;
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    filter: grayscale(100%);
 }
 
 body.theme-super #game-container .buy-btn:disabled:hover {
@@ -159,13 +159,13 @@ body.theme-super #golden-bug {
     border: none;
     box-shadow: none;
     border-radius: 0;
-    background-image: url('../assets/image/super-block.webp'); 
+    background-image: url('../assets/image/super-block.webp');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    
+
     animation: blockFloat 0.8s infinite alternate ease-in-out;
-    
+
     /* --- PER RENDERLO SEMPRE VISIBILE (DEBUG) --- */
     /* Decommenta le due righe sotto per tenerlo fisso a schermo mentre lavori */
     /* display: flex; */
@@ -177,7 +177,7 @@ body.theme-super #golden-bug i {
 }
 body.theme-super #golden-bug:active {
     transform: translateY(-15px) scale(1.1);
-    filter: brightness(1.2); 
+    filter: brightness(1.2);
 }
 
 /* --- IMMAGINE MANAGER --- */
@@ -195,7 +195,7 @@ body.theme-super.crunch-active #clicker-btn {
     border: 4px solid #f8b800; /* Giallo fuoco */
     animation: superFuryPulse 0.1s infinite alternate step-end;
     background-color: #b00000;
-    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Rimuove i bordi interni dell'immagine per pulizia */
@@ -236,7 +236,7 @@ body.super-star-active::after {
     left: 0;
     width: 100%;
     height: 100%;
-    box-shadow: inset 0 0 120px rgba(255, 255, 255, 0.15); 
+    box-shadow: inset 0 0 120px rgba(255, 255, 255, 0.15);
     animation: rgb-cycle 4s linear infinite;
     pointer-events: none;
     z-index: 9999;
@@ -268,9 +268,9 @@ body.super-star-active #clicker-btn {
         background-color: #c04800;
         border-top: 4px solid #000;
     }
-    
+
     body.theme-super .mobile-nav-btn.active {
         color: #ffce15;
-        background: rgba(0,0,0,0.2);
+        background: rgba(0, 0, 0, 0.2);
     }
 }

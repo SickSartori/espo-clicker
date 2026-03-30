@@ -20,14 +20,16 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
 		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
 		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">    
+		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/skins-modern.css?v=<?php echo $cacheVer; ?>">    
 		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">  
 		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/8bit-theme.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/christmas-theme.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/super-theme.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/asteroids/css/asteroids.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="arcade/super-espo/css/super-espo.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>">
+
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
@@ -50,15 +52,15 @@ require_once("php/check_version.php");
 
 		<div id="toast-container"></div>
 
-		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
-			<div class="transition-content">
-				<div class="transition-icon">🚀</div>
-				<h2>
-					<?php echo $labels["prestigio_titolo"]; ?>
-				</h2>
-				<p>
-					<?php echo $labels["prestigio_sottotitolo"]; ?>
-				</p>
+		<div id="prestige-transition-overlay" class="prestige_transition_overlay_display_none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background: radial-gradient(circle at center, #1a1400 0%, #050505 100%); display: none; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;">
+			<div style="text-align: center; transform: scale(0.8); transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);" id="prestige-anim-container">
+				<i class="fa-solid fa-certificate fa-flip" style="font-size: 5.5rem; color: #f1c40f; margin-bottom: 25px; text-shadow: 0 0 40px rgba(241,196,15,0.6); animation-duration: 1.5s;"></i>
+				<h1 style="color: #f1c40f; font-family: 'Rajdhani', sans-serif; letter-spacing: 6px; font-size: 2.8rem; text-transform: uppercase; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Promozione in Corso</h1>
+				<p style="color: #bdc3c7; font-family: monospace; font-size: 1.1rem; margin-top: 15px; letter-spacing: 1px;" class="fa-fade">Ristrutturazione Aziendale del Database...</p>
+				
+				<div style="width: 350px; height: 6px; background: rgba(255,255,255,0.05); margin: 40px auto 0 auto; border-radius: 4px; border: 1px solid rgba(241,196,15,0.2); overflow: hidden;">
+					<div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f39c12, #f1c40f); box-shadow: 0 0 15px #f1c40f; transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+				</div>
 			</div>
 		</div>
 		
@@ -103,6 +105,8 @@ require_once("php/check_version.php");
 		
 		<?php include 'includes/modals.php'; ?>
 		<?php include 'includes/modals_arcade.php'; ?>
+		<?php include 'includes/modals_help.php'; ?>
+
 		<nav id="game-navbar">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
@@ -181,6 +185,9 @@ require_once("php/check_version.php");
 						<i class="fa-solid fa-flask"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
+					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" style="display:none; color: #9b59b6;">
+						<i class="fa-solid fa-atom"></i> Q-Lab
+					</button>
 				</div>
 				
 				<div id="global-filter-section">
@@ -195,6 +202,7 @@ require_once("php/check_version.php");
 				<?php include 'includes/tab_click.php'; ?>
 				<?php include 'includes/tab_auto.php'; ?>
 				<?php include 'includes/tab_prestige.php'; ?>
+				<?php include 'includes/tab_quantum.php'; ?>
 			</div>
 
 			<?php include 'includes/col_center.php'; ?>
@@ -229,17 +237,14 @@ require_once("php/check_version.php");
 			</button>
 		</div>
 
-		<video id="rick-roll-video" class="rick_roll_video video_display_none" playsinline preload="metadata" data-src="assets/video/rick-espley-video.mp4"></video>
-		<video id="ricardo-video" class="ricardo_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-video.mp4"></video>
-		<video id="ricardo-metal-video" class="ricardo_metal_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-metal-video.mp4"></video>
-		<video id="ricardo-dota-video" class="ricardo_dota_video video_display_none" playsinline preload="metadata" data-src="assets/video/ricardo-milespo-dota-video.mp4"></video>
-
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
 
 		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
@@ -265,13 +270,15 @@ require_once("php/check_version.php");
 		<!-- Arcade -->
 		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="arcade/asteroids/js/asteroids.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="arcade/super-espo/js/super-espo.js?v=<?php echo $cacheVer; ?>" defer></script>
 	
 		<?php
-			// Uso la stessa variabile usata nella libreria check_version.php
-			if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
-				echo '<script src="js/cheatboard.js" defer></script>';
-				echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-			}
-		?>
+// Uso la stessa variabile usata nella libreria check_version.php
+if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
+	echo '<script src="js/cheatboard.js" defer></script>';
+	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
+}
+?>
 	</body>
 </html>
