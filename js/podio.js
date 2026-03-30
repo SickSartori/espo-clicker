@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Costruisci la lista HTML
                 leaderboardList.innerHTML = ''; // Pulisci
+                const currentUsername = sessionStorage.getItem('espooUser');
                 scores.forEach((entry, index) => {
                     const item = document.createElement('div');
                     let rankClass = '';
@@ -58,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // ---  GESTIONE FOTO PROFILO (SKIN) ---
                     let skinId = entry.equippedSkin || 'default';
+
+                    // Per l'utente corrente, usa la skin locale (potrebbe non essere ancora salvata nel DB)
+                    if (entry.username === currentUsername && Game.getGameState) {
+                        const localState = Game.getGameState();
+                        if (localState && localState.skins && localState.skins.current) {
+                            skinId = localState.skins.current;
+                        }
+                    }
+
                     // Recuperiamo i dati della skin (se esiste, altrimenti default)
                     let skinData = window.gameData.skins[skinId] || window.gameData.skins['default'];
                     let avatarImg = skinData.img ? `assets/image/${skinData.img}` : 'assets/image/espo.webp';
@@ -79,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="Formattazioni (NG+)"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
                     }
 
-                    const currentUsername = sessionStorage.getItem('espooUser');
                     if (entry.username === currentUsername) {
                         item.classList.add('is-me');
                     }

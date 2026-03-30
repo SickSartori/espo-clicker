@@ -65,7 +65,7 @@
 
     /* Score resta centrato absolute, pannelli laterali si adattano */
     .column-header-center .header-main-score {
-        padding: 0 5px;
+        padding: 4px 5px 0;
     }
 
     .column-header-center .header-stat-box {
@@ -397,8 +397,9 @@
         width: auto;
         padding: 8px 25px;
         font-size: 0.9rem;
-        margin-top: 10px;
-        margin-bottom: 5px;
+        margin-top: 5px;
+        margin-bottom: 0;
+        flex-shrink: 0;
     }
 
     #skill-crunchTime .skill-timer {

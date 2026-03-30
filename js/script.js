@@ -1094,7 +1094,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // LOGICA F5 / REFRESH:
                     // Controlliamo se c'è una sessione utente attiva (quindi niente login richiesto)
-                    const hasSession = sessionStorage.getItem('espooUser') || (gameState.user.username && gameState.user.username !== 'Giocatore');
+                    // NOTA: Usiamo SOLO sessionStorage per evitare che i modali appaiano prima del login
+                    const hasSession = sessionStorage.getItem('espooUser');
 
                     // Se abbiamo una sessione E il loader è finito, proviamo a suonare.
                     if (hasSession) {
@@ -1639,14 +1640,73 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // 3. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
+                    // ========================================================
+                    // 3. MIGRAZIONE V1 -> V2 (CLOUD)
+                    // ========================================================
+                    const cloudMajor = (cloudState.version && cloudState.version.major) ? cloudState.version.major : 1;
+                    const currentMajor = window.GAME_VERSION ? window.GAME_VERSION.major : 2;
+
+                    let cloudIsVeteran = false;
+                    try { if (cloudState.totalScore && new Decimal(cloudState.totalScore).gt(10000)) cloudIsVeteran = true; } catch(e){}
+
+                    if (cloudMajor < 2 && currentMajor >= 2) {
+                        console.log("☁️ Migrazione Cloud V1 -> V2 rilevata!");
+
+                        // A. Salva le uniche cose che vogliamo mantenere dal cloud
+                        const savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
+                        const currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
+                        const masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
+
+                        // B. Reset e genera stato pulito
+                        if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                        // C. Inietta i dati salvati
+                        gameState.skins.unlocked = savedSkins;
+                        gameState.skins.current = currentSkin;
+                        gameState.user.masterVolume = masterVol;
+
+                        // D. PREMIO VETERANO (solo se aveva un punteggio significativo)
+                        if (cloudIsVeteran) {
+                            gameState.totalFormattazioni = 1;
+                            gameState.qBits = new Decimal(1);
+                            gameState.lifetimeQBits = new Decimal(1);
+                            window.triggerV2MigrationModal = true;
+                        }
+
+                        // E. Aggiorna versione e username
+                        if (window.GAME_VERSION) {
+                            gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
+                        }
+                        const currentSessionUser = sessionStorage.getItem('espooUser');
+                        if (currentSessionUser) gameState.user.username = currentSessionUser;
+
+                        // F. Flag Release Notes
+                        window.shouldShowReleaseNotesOnLoad = true;
+
+                        // G. Salva subito in cloud per allineare il DB
+                        saveGame();
+                        localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
+
+                        if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+                        calculatePrestigeBonus();
+                        recalculateCPS();
+                        if (typeof refreshAllStores === 'function') refreshAllStores();
+                        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+                        if (typeof updateUI === 'function') updateUI();
+
+                        showToast("Migrazione V2 completata! Benvenuto nella nuova era.", 'success');
+                        return;
+                    }
+                    // ========================================================
+
+                    // 4. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
                     // Pulizia grafica liste
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // --- 4. CONTROLLO COMPATIBILITÀ CLOUD ---
+                    // --- 5. CONTROLLO COMPATIBILITÀ CLOUD ---
                     if (!checkSaveCompatibility(cloudState)) {
                         console.warn("⚠️ Cloud Save incompatibile: Eseguo migrazione e sovrascrittura.");
 
@@ -1664,8 +1724,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         // Username Sessione (lo manteniamo)
-                        const currentSessionUser = sessionStorage.getItem('espooUser');
-                        if (currentSessionUser) gameState.user.username = currentSessionUser;
+                        const currentSessionUser2 = sessionStorage.getItem('espooUser');
+                        if (currentSessionUser2) gameState.user.username = currentSessionUser2;
 
                         // SALVIAMO SUBITO per aggiornare il Database con la versione corretta
                         saveGame();
@@ -1680,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         delete cloudState.buildings;
                     }
 
-                    // 5. Uniamo i dati (Merge)
+                    // 6. Uniamo i dati (Merge)
                     deepMerge(gameState, cloudState);
 
                     // 6. Ripristino oggetti Decimali

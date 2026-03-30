@@ -146,8 +146,8 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
-    padding: 0 20px;
-    height: 70%;
+    padding: 4px 20px 0;
+    height: 80%;
 }
 
 .header-label {
