@@ -21,7 +21,8 @@ Questo non è un semplice aggiornamento, è un vero e proprio salto generazional
 
 *La sala giochi si espande e riceve un restyling completo, sia visivo che sonoro.*
 
-* **👾 Nuovi Minigiochi:** * **Asteroids:** Un grande classico entra nella famiglia Arcade. Distruggi i meteoriti e sopravvivi!
+* **👾 Nuovi Minigiochi:**
+	* **Asteroids:** Un grande classico entra nella famiglia Arcade. Distruggi i meteoriti e sopravvivi!
     * **Super Espò Run:** Preparati a correre e saltare in questa nuova avventura.
 * **🎮 Super Espò Runner Ribilanciato:** Gameplay completamente rivisto con fisica più precisa, generazione livelli migliorata e nuovi elementi di scenario. Ora ogni run è una sfida giusta!
 * **🎨 Restyling Totale Arcade:** Nuova UI dedicata, nuovi suoni esclusivi per la sala giochi e chiusura sicura dei minigiochi migliorata.
