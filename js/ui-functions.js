@@ -157,7 +157,16 @@ function startMatrixEffect() {
         drops[index] = 1;
     }
 
-    const draw = () => {
+    let lastMatrixFrame = 0;
+    const MATRIX_FRAME_INTERVAL = 1000 / 30; // 30 FPS reali
+
+    const draw = (timestamp) => {
+        matrixFrameId = requestAnimationFrame(draw);
+
+        // Throttle a 30fps reali per risparmiare CPU/batteria
+        if (timestamp - lastMatrixFrame < MATRIX_FRAME_INTERVAL) return;
+        lastMatrixFrame = timestamp;
+
         // Sfondo nero semitrasparente per creare l'effetto scia
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -176,12 +185,11 @@ function startMatrixEffect() {
             // Incrementa Y
             drops[i]++;
         }
-        matrixFrameId = requestAnimationFrame(draw);
     };
 
-    // Loop a 30 FPS
+    // Loop a 30 FPS reali (throttled)
     if (matrixFrameId) cancelAnimationFrame(matrixFrameId);
-    draw();
+    matrixFrameId = requestAnimationFrame(draw);
 
     // Gestione Resize (Rimuovi il precedente per evitare accumuli)
     if (matrixResizeHandler) window.removeEventListener('resize', matrixResizeHandler);
@@ -1451,6 +1459,57 @@ function showClickFeedback(event) {
 
 
 
+// --- MINI MARKDOWN PARSER (Sostituisce Marked.js ~20KB) ---
+function simpleMarkdown(md) {
+    return md
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/<\/ul>\s*<ul>/g, '')
+        .replace(/\n{2,}/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+}
+
+// --- MODALE V2 MIGRATION (Sostituisce SweetAlert2) ---
+function showV2MigrationModal(onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-backdrop';
+    overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width:480px; text-align:center; animation: popIn 0.3s ease-out;">
+            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">BENVENUTO NELLA V2.0</h2>
+            <div style="text-align:left; font-size:0.95rem; color:#bdc3c7; margin-bottom:20px;">
+                Grazie per aver giocato alla prima versione di <b>Espo Clicker</b>!<br><br>
+                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
+                <div style="background:rgba(46,204,113,0.1); border-left:4px solid #2ecc71; padding:10px; margin-bottom:10px; border-radius:4px;">
+                    <b style="color:#2ecc71;">&#10003; LE TUE SKIN SONO SALVE</b><br>Il tuo guardaroba è intatto.
+                </div>
+                <div style="background:rgba(155,89,182,0.1); border-left:4px solid #9b59b6; padding:10px; border-radius:4px;">
+                    <b style="color:#9b59b6;">&#10003; BONUS VETERANO</b><br>Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
+                </div>
+            </div>
+            <button class="buy-btn" style="width:100%; padding:12px; font-size:1.1rem;" id="v2-migration-confirm">
+                <i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ
+            </button>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('v2-migration-confirm').addEventListener('click', () => {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.2s ease';
+        setTimeout(() => {
+            overlay.remove();
+            if (onConfirm) onConfirm();
+        }, 200);
+    });
+}
+
 const toastQueue = [];          // Coda dei messaggi in attesa
 let visibleToasts = 0;          // Contatore messaggi attualmente a schermo
 const MAX_VISIBLE_TOASTS = 3;   // Limite massimo richiesto
@@ -1642,33 +1701,50 @@ function updateUI() {
 }
 
 // --- SOTTO-FUNZIONI (Copia queste sotto updateUI) ---
-function calculateVisualBPS() {
-    let active = new Decimal(0);
-    const now = Date.now();
+// Cache per calculateVisualBPS: evita di ricalcolare 10x/sec se nulla è cambiato
+let _cachedVisualBPS = null;
+let _lastVisualBPSCalc = 0;
+const VISUAL_BPS_CACHE_MS = 150; // Ricalcola max ogni 150ms
 
-    for (let i = 0; i < clickHistory.length; i++) {
-        if (now - clickHistory[i].time < 1000)
-            active = active.add(clickHistory[i].value);
+function calculateVisualBPS() {
+    const now = Date.now();
+    if (_cachedVisualBPS && (now - _lastVisualBPSCalc) < VISUAL_BPS_CACHE_MS) {
+        return _cachedVisualBPS;
     }
 
-    // Somma BPS base (Decimal) + Click attivi (Decimal)
-    return bps.add(active);
+    let active = new Decimal(0);
+    // Itera dalla fine (i click recenti sono in fondo) e esci appena trovi uno vecchio
+    for (let i = clickHistory.length - 1; i >= 0; i--) {
+        if (now - clickHistory[i].time < 1000) {
+            active = active.add(clickHistory[i].value);
+        } else {
+            break; // I precedenti sono ancora più vecchi, esci
+        }
+    }
+
+    _cachedVisualBPS = bps.add(active);
+    _lastVisualBPSCalc = now;
+    return _cachedVisualBPS;
 }
 
 const scoreAnimState = { value: 0 };
+let _scoreTween = null;
 
 function updateScoreBoard(totalBPS) {
     // Se è la prima volta (o reset/promozione), allinea subito senza animazione
     if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5)
         scoreAnimState.value = gameState.score;
 
+    // Kill tween precedente per evitare stacking durante rapid clicks
+    if (_scoreTween) _scoreTween.kill();
+
     // GSAP anima il valore "visuale" verso il valore reale
-    gsap.to(scoreAnimState, {
+    _scoreTween = gsap.to(scoreAnimState, {
         duration: 0.2,
         value: gameState.score,
         ease: "power1.out",
         onUpdate: () => {
-            setTextIfChanged('score-display', formatNumber(Math.floor(scoreAnimState.value + Number.EPSILON)));
+            setTextIfChanged('score-display', formatNumber(Math.trunc(scoreAnimState.value)));
         }
     });
 
@@ -1771,11 +1847,13 @@ function updateWallets() {
     }
 }
 
+// Cache per updateStoreButtons: evita di settare disabled su ogni frame
+const _btnDisabledCache = {};
+
 function updateStoreButtons() {
     // Teams
     for (const key in gameState.teams) {
         if (!gameData.teams[key]) continue;
-        // Logica Costi
         let amountToBuy = window.buyMultiplier;
         let isMax = false;
         if (amountToBuy === 'MAX') {
@@ -1784,9 +1862,16 @@ function updateStoreButtons() {
             isMax = true;
         }
         const currentCost = calculateBulkCost(key, amountToBuy);
-        const btn = getEl(`buy-${key}`);
+        const btnId = `buy-${key}`;
+        const shouldDisable = gameState.score.lt(currentCost);
 
-        if (btn) btn.disabled = (gameState.score.lt(currentCost));
+        // Solo se lo stato disabled è cambiato
+        if (_btnDisabledCache[btnId] !== shouldDisable) {
+            const btn = getEl(btnId);
+            if (btn) btn.disabled = shouldDisable;
+            _btnDisabledCache[btnId] = shouldDisable;
+        }
+
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
             let prefix = isMax && amountToBuy > 1 ? `Costo (+${formatNumber(amountToBuy)})` :
@@ -1800,11 +1885,14 @@ function updateStoreButtons() {
     for (const key in gameState.clickUpgrades) {
         if (!gameData.clickUpgrades[key]) continue;
         if (!gameState.clickUpgrades[key].purchased) {
-            const container = getEl(`click-upgrade-${key}`); // Usa ID contenitore se btn ID è ambiguo
-            // Fallback diretto al bottone se l'ID è univoco
-            const btn = getEl(`buy-${key}`);
-            if (btn && !btn.classList.contains('owned')) {
-                btn.disabled = (gameState.score.lt(gameData.clickUpgrades[key].cost));
+            const btnId = `buy-${key}`;
+            const shouldDisable = gameState.score.lt(gameData.clickUpgrades[key].cost);
+            if (_btnDisabledCache[btnId] !== shouldDisable) {
+                const btn = getEl(btnId);
+                if (btn && !btn.classList.contains('owned')) {
+                    btn.disabled = shouldDisable;
+                    _btnDisabledCache[btnId] = shouldDisable;
+                }
             }
         }
     }
@@ -1813,28 +1901,34 @@ function updateStoreButtons() {
     for (const key in gameState.buildingEnhancements) {
         if (!gameData.buildingEnhancements[key]) continue;
         if (!gameState.buildingEnhancements[key].purchased) {
-            const btn = getEl(`buy-${key}`);
-            if (btn && !btn.classList.contains('owned')) {
-                btn.disabled = (gameState.score.lt(gameData.buildingEnhancements[key].cost));
+            const btnId = `buy-${key}`;
+            const shouldDisable = gameState.score.lt(gameData.buildingEnhancements[key].cost);
+            if (_btnDisabledCache[btnId] !== shouldDisable) {
+                const btn = getEl(btnId);
+                if (btn && !btn.classList.contains('owned')) {
+                    btn.disabled = shouldDisable;
+                    _btnDisabledCache[btnId] = shouldDisable;
+                }
             }
         }
     }
+
     // Prestige / Lab
     for (const key in gameState.prestigeUpgrades) {
         const data = gameData.prestigeUpgrades[key];
         const state = gameState.prestigeUpgrades[key];
-
-        // CONTROLLO ANTI-CRASH
         if (!data) continue;
-
-        // Se è già maxato o posseduto (non contato), il bottone è gestito come 'owned' dal render, lo ignoriamo
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) continue;
         if (!data.isCounted && state.purchased) continue;
 
-        const btn = getEl(`buy-${key}`);
-        if (btn && !btn.classList.contains('owned')) {
-            // Controlla Token invece di Score
-            btn.disabled = (gameState.prestigePoints.lt(data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost));
+        const btnId = `buy-${key}`;
+        const shouldDisable = gameState.prestigePoints.lt(data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost);
+        if (_btnDisabledCache[btnId] !== shouldDisable) {
+            const btn = getEl(btnId);
+            if (btn && !btn.classList.contains('owned')) {
+                btn.disabled = shouldDisable;
+                _btnDisabledCache[btnId] = shouldDisable;
+            }
         }
     }
 }
@@ -2013,7 +2107,6 @@ function equipSkin(skinId) {
 
 function triggerChristmasOverlay() {
     const overlay = document.getElementById('christmas-overlay');
-    const soundMerry = document.getElementById('sound-merry');
 
     const skinsModal = document.getElementById('skins-modal');
     if (skinsModal) {
@@ -2022,10 +2115,8 @@ function triggerChristmasOverlay() {
     if (overlay) {
         overlay.classList.add("christmas_overlay_flex");
     }
-    if (soundMerry) {
-        soundMerry.volume = gameState.user.masterVolume * gameState.user.sfxVolume;
-        soundMerry.currentTime = 0;
-        soundMerry.play().catch(e => { });
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.play('sound-merry', 'sfx');
     }
     setTimeout(() => {
         if (overlay) overlay.classList.remove("christmas_overlay_flex");

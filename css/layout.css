@@ -290,9 +290,15 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Mobile */
+/* Mobile: fade-in quando si cambia colonna */
 #game-container .game-column.mobile-active {
     display: flex;
+    animation: mobileColumnFade 0.2s ease-out;
+}
+
+@keyframes mobileColumnFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* RIMOZIONE LINEA SOTTO I TAB - Specificità aumentata */

@@ -221,31 +221,41 @@ function reapplyAllEffects() {
     }
 }
 
-// --------- 3. AUDIO MANAGER CENTRALIZZATO ---------
+// --------- 3. AUDIO MANAGER CENTRALIZZATO (Howler.js) ---------
 const AudioManager = {
+    _sounds: {},        // Cache Howl instances: { 'sound-click': Howl, ... }
+    _currentMusic: null, // ID della traccia musicale attualmente in play
+    _audioUnlocked: false,
+
     init() {
-        const container = document.body;
+        // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
         for (const key in gameData.assets.sounds) {
             const sound = gameData.assets.sounds[key];
-            if (!document.getElementById(sound.id)) {
-                const audio = document.createElement('audio');
-                audio.id = sound.id;
+            const src = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
 
-                // Se il file contiene una barra, usa il percorso completo (es. arcade/assets/...)
-                if (sound.file.includes('/')) {
-                    audio.src = sound.file;
-                } else {
-                    audio.src = `assets/sounds/${sound.file}`;
+            this._sounds[sound.id] = new Howl({
+                src: [src],
+                volume: 0, // Impostato dinamicamente al play
+                loop: !!sound.loop,
+                preload: sound.category === 'effetti', // Preload solo SFX
+                html5: sound.type === 'music',  // Music via HTML5 (streaming, no decode)
+                pool: sound.type === 'sfx' ? 5 : 1, // Pool per SFX (max 5 copie simultanee)
+                onplayerror: (id) => {
+                    // Autoplay policy: riprova dopo unlock
+                    if (!this._audioUnlocked) {
+                        Howler.once('unlock', () => {
+                            this._audioUnlocked = true;
+                            this._sounds[sound.id].play();
+                        });
+                    }
+                },
+                onloaderror: (id, err) => {
+                    console.warn(`[Audio] Errore caricamento ${sound.id}:`, err);
                 }
-
-                audio.preload = sound.category === 'effetti' ? 'auto' : 'none';
-                if (sound.loop) audio.loop = true;
-                // Imposta volume sicuro prima che il browser tenti autoplay
-                const safeVol = (gameState.user.masterVolume || 0) * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
-                audio.volume = Math.max(0, Math.min(1, safeVol));
-                container.appendChild(audio);
-            }
+            });
         }
+
+        this._audioUnlocked = Howler.ctx && Howler.ctx.state === 'running';
         this.updateAmbience();
     },
 
@@ -257,50 +267,52 @@ const AudioManager = {
         return 1.0;
     },
 
-    play(id, type = 'sfx') {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const master = gameState.user.masterVolume;
-        if (master <= 0) return;
+    _calcVolume(id, type, mult) {
+        const master = gameState.user.masterVolume || 0;
+        if (master <= 0) return 0;
         const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
         const custom = this.getCustomVolume(id);
-        const finalVol = Math.max(0, Math.min(1, master * channel * custom));
-        if (finalVol < 0.01) return;
+        return Math.max(0, Math.min(1, master * channel * custom * (mult || 1)));
+    },
 
-        try {
-            if (type === 'sfx') {
-                const clone = el.cloneNode();
-                clone.volume = finalVol;
-                clone.play().then(() => {
-                    clone.addEventListener('ended', () => clone.remove());
-                }).catch(e => { });
-            } else {
-                el.volume = finalVol;
-                if (el.paused) el.play().catch(e => { });
-            }
-        } catch (e) { console.warn("Audio error:", e); }
+    play(id, type = 'sfx') {
+        const howl = this._sounds[id];
+        if (!howl) return;
+        const vol = this._calcVolume(id, type);
+        if (vol < 0.01) return;
+
+        if (type === 'sfx') {
+            howl.volume(vol);
+            howl.play();
+        } else {
+            howl.volume(vol);
+            if (!howl.playing()) howl.play();
+        }
+    },
+
+    // Ferma un suono specifico con fade-out opzionale
+    stop(id, fadeMs) {
+        const howl = this._sounds[id];
+        if (!howl) return;
+        if (fadeMs && fadeMs > 0 && howl.playing()) {
+            howl.fade(howl.volume(), 0, fadeMs);
+            setTimeout(() => howl.stop(), fadeMs);
+        } else {
+            howl.stop();
+        }
     },
 
     playClickEffect() {
         let soundId = 'sound-click';
 
-        // 1. Priorità Assoluta: Super Star Mode
         if (document.body.classList.contains('super-star-active')) {
             soundId = 'sound-click';
-        }
-        // 2. Evento Espo Fury (Fuoco) ->  Solo se c'è la skin Super Espo
-        else if (document.body.classList.contains('crunch-active')) {
-            if (gameState.skins.current === 'superespo') {
-                soundId = 'sound-fireball';
-            }
-        }
-        // 3. Evento 404/Matrix/Rick (Glitch)
-        else if (isBluescreenActive) {
-            soundId = 'sound-click';
+        } else if (document.body.classList.contains('crunch-active')) {
+            if (gameState.skins.current === 'superespo') soundId = 'sound-fireball';
         }
 
-        const sound = document.getElementById(soundId);
-        if (!sound) return;
+        const howl = this._sounds[soundId];
+        if (!howl) return;
 
         let rate = 1.0;
         let volumeMult = 1.0;
@@ -312,79 +324,56 @@ const AudioManager = {
                 rate = 0.2 + Math.random() * 1.6;
                 volumeMult = 0.5 + Math.random();
             }
-        }
-        else if (soundId === 'sound-fireball') {
+        } else if (soundId === 'sound-fireball') {
             rate = 0.9 + Math.random() * 0.2;
-        }
-        else if (document.body.classList.contains('super-star-active')) {
+        } else if (document.body.classList.contains('super-star-active')) {
             rate = 1.1 + Math.random() * 0.1;
             volumeMult = 0.7;
         }
 
-        const master = gameState.user.masterVolume * gameState.user.sfxVolume;
-        const customVol = AudioManager.getCustomVolume(soundId);
-
-        sound.volume = Math.max(0, Math.min(1, master * volumeMult * customVol));
-        sound.playbackRate = rate;
-        sound.currentTime = 0;
-        sound.play().catch(e => { });
+        const vol = this._calcVolume(soundId, 'sfx', volumeMult);
+        howl.volume(vol);
+        howl.rate(rate);
+        howl.play();
     },
-
 
     updateAmbience() {
         if (!sessionStorage.getItem('espooUser')) {
-            const tracksToStop = [
-                'sound-bg-music', 'sound-bg-music-v2', 'sound-bg-music-v3',
-                'sound-snowball', 'sound-fury-music', 'sound-bluescreen',
-                'sound-matrix', 'sound-bg-bit'
-            ];
-
-            tracksToStop.forEach(id => {
-                const el = document.getElementById(id);
-                if (el && !el.paused) {
-                    el.pause();
-                    el.currentTime = 0;
-                }
-            });
-            return; // Interrompe qui la funzione
+            // Ferma tutta la musica se non loggato
+            for (const id in this._sounds) {
+                const def = this._getSoundDef(id);
+                if (def && def.type === 'music') this.stop(id, 300);
+            }
+            this._currentMusic = null;
+            return;
         }
 
-        // --- LOGICA NORMALE DI GIOCO ---
-        const allMusicTracks = [];
-
-        // 1. Pesca TUTTE le tracce musicali (type: 'music') dinamicamente dal file assets.js
-        if (gameData.assets && gameData.assets.sounds) {
-            for (let key in gameData.assets.sounds) {
-                if (gameData.assets.sounds[key].type === 'music') {
-                    allMusicTracks.push(gameData.assets.sounds[key].id);
-                }
+        // Raccogli tutte le tracce musicali
+        const allMusicIds = [];
+        for (const key in gameData.assets.sounds) {
+            if (gameData.assets.sounds[key].type === 'music') {
+                allMusicIds.push(gameData.assets.sounds[key].id);
             }
         }
-
-        // 2. Sicurezza aggiuntiva: Aggiungi musiche dichiarate direttamente nelle skin
-        for (let key in gameData.skins) {
+        for (const key in gameData.skins) {
             const conf = gameData.skins[key].themeConfig;
-            if (conf && conf.specialMusic && !allMusicTracks.includes(conf.specialMusic)) {
-                allMusicTracks.push(conf.specialMusic);
+            if (conf && conf.specialMusic && !allMusicIds.includes(conf.specialMusic)) {
+                allMusicIds.push(conf.specialMusic);
             }
         }
 
+        // Risolvi quale traccia suonare (sistema priorità)
         let targetTrackId = null;
 
-        // Priorità Eventi
         if (window.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
-        }
-        else if (window.currentActiveEvent === 'Arcade Mode') {
+        } else if (window.currentActiveEvent === 'Arcade Mode') {
             targetTrackId = 'sound-arcade-theme';
-        }
-        else if (document.body.classList.contains('rick-rolling')) {
+        } else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
-        }
-        else if (gameState.crunchTimeEndTime > Date.now()) {
+        } else if (gameState.crunchTimeEndTime > Date.now()) {
             targetTrackId = 'sound-fury-music';
-        }
-        else if (isBluescreenActive) {
+        } else if (isBluescreenActive) {
             if (document.body.classList.contains('matrix-active')) {
                 targetTrackId = 'sound-matrix';
             } else if (document.body.classList.contains('super-star-active')) {
@@ -392,9 +381,7 @@ const AudioManager = {
             } else {
                 targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
-        }
-        else {
-            // Priorità Skin vs Selezione Utente
+        } else {
             const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
             if (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic) {
                 targetTrackId = currentSkin.themeConfig.specialMusic;
@@ -403,29 +390,64 @@ const AudioManager = {
             }
         }
 
-        // Applica Play/Pause
-        allMusicTracks.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
+        // Applica: crossfade tra tracce
+        allMusicIds.forEach(id => {
+            const howl = this._sounds[id];
+            if (!howl) return;
 
             if (id === targetTrackId) {
-                const volume = gameState.user.masterVolume * gameState.user.musicVolume * this.getCustomVolume(id);
-                // Eccezione per glitch natalizio gestito altrove
+                const vol = this._calcVolume(id, 'music');
+
+                // Eccezione glitch natalizio
                 if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
-                    // managed by audioGlitchInterval
-                } else {
-                    el.volume = Math.max(0, Math.min(1, volume));
-                    if (el.paused && volume > 0) {
-                        el.play().catch(e => { });
+                    return; // Gestito da audioGlitchInterval
+                }
+
+                if (vol > 0) {
+                    if (!howl.playing()) {
+                        howl.volume(0);
+                        howl.play();
+                        howl.fade(0, vol, 800); // Fade-in 800ms
+                    } else {
+                        howl.volume(vol); // Aggiorna volume se già in play
                     }
                 }
             } else {
-                if (!el.paused) {
-                    el.pause();
-                    el.currentTime = 0;
+                if (howl.playing()) {
+                    // Fade-out 500ms prima di fermare
+                    howl.fade(howl.volume(), 0, 500);
+                    setTimeout(() => {
+                        if (!howl.playing()) return;
+                        // Ricontrolla che non sia stato riavviato nel frattempo
+                        const stillTarget = this._currentMusic === id;
+                        if (!stillTarget) howl.stop();
+                    }, 550);
                 }
             }
         });
+
+        this._currentMusic = targetTrackId;
+    },
+
+    // Helper: trova la definizione di un suono dal suo ID
+    _getSoundDef(id) {
+        for (const key in gameData.assets.sounds) {
+            if (gameData.assets.sounds[key].id === id) return gameData.assets.sounds[key];
+        }
+        return null;
+    },
+
+    // Aggiorna il volume di un suono specifico (usato dal mixer)
+    setVolume(id, volume) {
+        const howl = this._sounds[id];
+        if (howl && howl.playing()) {
+            howl.volume(Math.max(0, Math.min(1, volume)));
+        }
+    },
+
+    // Ritorna l'istanza Howl per uso diretto (es. glitch interval)
+    getHowl(id) {
+        return this._sounds[id] || null;
     }
 };
 
@@ -764,7 +786,16 @@ function activateCrunchTime() {
     return true;
 }
 
+const MAX_FIRE_PARTICLES = 30;  // Cap massimo di particelle fuoco nel DOM
+const MAX_FIRE_SPARKS = 10;     // Cap massimo scintille
+
 function spawnFireParticle(container) {
+    // Cap: se ci sono troppe particelle, rimuovi le più vecchie
+    const existingParticles = container.querySelectorAll('.fire-particle');
+    if (existingParticles.length >= MAX_FIRE_PARTICLES) {
+        existingParticles[0].remove();
+    }
+
     // 1. Particella Fiamma (Grande e Lenta)
     const p = document.createElement('div');
     p.classList.add('fire-particle');
@@ -774,7 +805,6 @@ function spawnFireParticle(container) {
     p.style.left = `${left}%`;
 
     // Dimensioni variabili (più grandi al centro per effetto "falò")
-    // Usiamo dimensioni maggiori per coprire più area con meno elementi
     const sizeBase = 60 + Math.random() * 120;
     p.style.width = `${sizeBase}px`;
     p.style.height = `${sizeBase * 1.2}px`;
@@ -794,6 +824,11 @@ function spawnFireParticle(container) {
 
     // 2. Scintille (Veloci e luminose) - Solo il 30% delle volte per non intasare
     if (Math.random() < 0.3) {
+        const existingSparks = container.querySelectorAll('.fire-spark');
+        if (existingSparks.length >= MAX_FIRE_SPARKS) {
+            existingSparks[0].remove();
+        }
+
         const s = document.createElement('div');
         s.classList.add('fire-spark');
         s.style.left = `${left + (Math.random() * 20 - 10)}%`;
@@ -990,15 +1025,14 @@ const EventHandlers = {
         // GESTIONE AUDIO EVENTI (Delega al Manager Centrale)
         // Se è l'evento di Natale (Bluescreen), gestisci il glitch audio specifico
         if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
-            const snowAudio = document.getElementById('sound-snowball');
-            if (snowAudio) {
-                snowAudio.play();
-                // Avvia il glitch casuale
+            const snowHowl = AudioManager.getHowl('sound-snowball');
+            if (snowHowl) {
+                snowHowl.play();
                 if (audioGlitchInterval) clearInterval(audioGlitchInterval);
                 audioGlitchInterval = setInterval(() => {
-                    snowAudio.playbackRate = 0.2 + Math.random() * 1.6;
+                    snowHowl.rate(0.2 + Math.random() * 1.6);
                     const baseVol = gameState.user.masterVolume * gameState.user.musicVolume;
-                    snowAudio.volume = (Math.random() < 0.3) ? 0 : Math.max(0, Math.min(1, baseVol * 0.2));
+                    snowHowl.volume((Math.random() < 0.3) ? 0 : Math.max(0, Math.min(1, baseVol * 0.2)));
                 }, 100);
             }
         } else {
@@ -1017,10 +1051,11 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     if (!config) return false;
     if (checkEventConflict(config.name)) return false;
 
-    const snowAudio = document.getElementById('sound-snowball');
-    if (snowAudio) snowAudio.pause();
-    const bgMusic = document.getElementById('sound-bg-music');
-    if (bgMusic) bgMusic.pause();
+    // Ferma musica corrente prima di avviare l'evento
+    if (typeof AudioManager !== 'undefined') {
+        AudioManager.stop('sound-snowball', 200);
+        AudioManager.stop('sound-bg-music', 200);
+    }
 
     let bonusMult = overrideMult;
     if (!bonusMult) {
@@ -1089,11 +1124,11 @@ function stopBluescreenEffect() {
 
     // ... (Codice audio stop esistente invariato) ...
     try {
-        const soundBlue = document.getElementById('sound-bluescreen');
-        const soundMatrix = document.getElementById('sound-matrix');
+        if (typeof AudioManager !== 'undefined') {
+            AudioManager.stop('sound-bluescreen', 200);
+            AudioManager.stop('sound-matrix', 200);
+        }
         const rickVideo = document.getElementById('rick-roll-video');
-        if (soundBlue) { soundBlue.pause(); soundBlue.currentTime = 0; }
-        if (soundMatrix) { soundMatrix.pause(); soundMatrix.currentTime = 0; }
         if (rickVideo) { rickVideo.pause(); rickVideo.classList.add("video_display_none"); }
     } catch (e) { }
 
@@ -1170,14 +1205,16 @@ function resolveBug(event) {
             clearTimeout(window.clickAnimTimer);
         }
 
-        // Timer di 100ms: se l'utente smette di cliccare per 1/10 di secondo, il bottone si rialza
+        // Timer: se l'utente smette di cliccare, il bottone si rialza.
+        // 120ms > durata transizione CSS (80ms + 40ms delay) per evitare il flash vuoto
         window.clickAnimTimer = setTimeout(() => {
             btn.classList.remove('click-shrink', 'clicked');
-        }, 100); 
+        }, 120);
     }
 
     if (typeof updateClickStore === 'function') updateClickStore();
-    if (typeof updateUI === 'function') updateUI();
+    // updateUI() non viene più chiamata ad ogni click: il loop UI a 100ms la gestisce già.
+    // Questo evita 50-100 update DOM/sec durante lo spam click.
 }
 
 
@@ -1399,10 +1436,7 @@ async function executePrestige() {
     document.body.classList.remove('bluescreen-active');
 
     // Ferma suoni evento
-    try {
-        const soundBluescreen = document.getElementById('sound-bluescreen');
-        if (soundBluescreen) { soundBluescreen.pause(); soundBluescreen.currentTime = 0; }
-    } catch (e) { }
+    if (typeof AudioManager !== 'undefined') AudioManager.stop('sound-bluescreen', 200);
 
     // Sincronizza visivamente il menu a tendina
     const filterSelect = document.getElementById('global-filter-select');

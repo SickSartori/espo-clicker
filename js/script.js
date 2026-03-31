@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     achievementList = document.getElementById('achievement-list');
     toastContainer = document.getElementById('toast-container');
     goldenBug = document.getElementById('golden-bug');
-    soundBluescreen = document.getElementById('sound-bluescreen');
+    // soundBluescreen ora gestito da AudioManager (Howler.js)
 
     prestigeSection = document.getElementById('prestige-section');
     prestigePointsDisplay = document.getElementById('prestige-points-display');
@@ -733,13 +733,15 @@ document.addEventListener('DOMContentLoaded', () => {
             checkAchievements();         // Controlla obiettivi
             checkTabNotifications();     // Controlla i pallini rossi sui tab
 
+            // Pulizia clickHistory spostata qui (1x/sec invece che 60x/sec)
+            const clickNow = Date.now();
+            clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
+
             lastSlowTick = now;
         }
 
-        // Gestione Click History (Veloce)
-        const clickNow = Date.now();
-        // click.value è un Decimal, ma qui non facciamo calcoli, solo filtraggio temporale
-        clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
+        // Gestione Click History (Ottimizzato: pulisce solo nella Slow Loop)
+        // Il filtraggio viene fatto 1x/sec invece che 60x/sec
 
         // --- CONTROLLO FINE CRUNCH TIME ---
         if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
@@ -748,11 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const overlay = document.getElementById('crunch-overlay');
                 if (overlay) overlay.style.display = 'none';
 
-                const furyMusic = document.getElementById('sound-fury-music');
-                if (furyMusic) {
-                    furyMusic.pause();
-                    furyMusic.currentTime = 0;
-                }
+                if (typeof AudioManager !== 'undefined') AudioManager.stop('sound-fury-music', 300);
 
                 if (typeof AudioManager !== 'undefined')
                     AudioManager.updateAmbience();
@@ -800,12 +798,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (uiLoopInterval) clearInterval(uiLoopInterval);
         if (saveInterval) clearInterval(saveInterval);
         if (leaderboardInterval) clearInterval(leaderboardInterval);
-
-        // Volume audio iniziale: muto tutto, sarà AudioManager a settare i volumi corretti
-        const initVol = gameState.user.masterVolume * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
-        document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = Math.max(0, Math.min(1, initVol));
-        });
 
         // LOGICA (30 FPS)
         function startGameLoop() {
@@ -1104,40 +1096,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (window.triggerV2MigrationModal) {
-                            // 1. Mostra il benvenuto V2
                             setTimeout(() => {
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({
-                                        title: '🌌 BENVENUTO NELLA V2.0 🌌',
-                                        html: `
-                                            <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
-                                                Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
-                                                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
-                                                <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
-                                                    <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
-                                                    Il tuo guardaroba è intatto.
-                                                </div>
-                                                <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
-                                                    <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
-                                                    Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
-                                                </div>
-                                            </div>
-                                        `,
-                                        icon: 'info',
-                                        background: '#151b22',
-                                        color: '#fff',
-                                        confirmButtonColor: '#9b59b6',
-                                        confirmButtonText: '<i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ',
-                                        allowOutsideClick: false,
-                                        allowEscapeKey: false
-                                    }).then(() => {
-                                        // 2. Quando chiude il benvenuto, apri le Release Notes
-                                        if (window.shouldShowReleaseNotesOnLoad && window.EspooClicker.openReleaseNotes) {
-                                            window.EspooClicker.openReleaseNotes();
-                                        }
-                                    });
-                                }
-                                // Salva il reset in Cloud
+                                showV2MigrationModal(() => {
+                                    if (window.shouldShowReleaseNotesOnLoad && window.EspooClicker.openReleaseNotes) {
+                                        window.EspooClicker.openReleaseNotes();
+                                    }
+                                });
                                 if (window.EspooClicker) window.EspooClicker.saveGame();
                             }, 800);
                         } else if (window.shouldShowReleaseNotesOnLoad) {
@@ -1174,13 +1138,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Genera l'interfaccia iniziale
         if (typeof refreshAllStores === 'function') refreshAllStores();
 
-        // --- SETUP STANDARD ---
-        // Volume: applica master * music a tutti gli audio, poi AudioManager correggerà i singoli
-        const setupVol = gameState.user.masterVolume * (gameState.user.musicVolume !== undefined ? gameState.user.musicVolume : 1);
-        document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = Math.max(0, Math.min(1, setupVol));
-        });
-
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
 
@@ -1210,8 +1167,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const soundClick = document.getElementById('sound-click');
-        if (soundClick) soundClick.playbackRate = 1;
+        // Reset playback rate del click sound
+        const clickHowl = (typeof AudioManager !== 'undefined') ? AudioManager.getHowl('sound-click') : null;
+        if (clickHowl) clickHowl.rate(1);
 
         let isFuryResumed = false;
 
@@ -1565,11 +1523,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error("File non trovato");
             const mdText = await response.text();
 
-            if (typeof marked !== 'undefined') {
-                content.innerHTML = marked.parse(mdText);
-            } else {
-                content.innerHTML = `<pre style="white-space: pre-wrap;">${mdText}</pre>`;
-            }
+            content.innerHTML = simpleMarkdown(mdText);
             
             window.shouldShowReleaseNotesOnLoad = false; 
         } catch (e) {

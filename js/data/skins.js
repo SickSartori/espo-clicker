@@ -142,7 +142,7 @@ window.gameData.skins = {
         rarity: "legendary",
         cost: new Decimal(50),
         themeConfig: {
-            specialMusic: 'bg-music-espory'
+            specialMusic: 'sound-bg-music-espory'
         }
     },
     britneyEspears: {
