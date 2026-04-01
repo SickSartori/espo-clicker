@@ -202,6 +202,11 @@ input:checked+.modern-slider:before {
     /*  Forza il carousel SEMPRE sopra al pannello */
 }
 
+/* Dot indicator (nascosto su desktop, visibile su mobile via mobile-simplified.css) */
+.carousel-dots {
+    display: none;
+}
+
 /* Frecce di navigazione */
 .carousel-nav-btn {
     position: absolute;

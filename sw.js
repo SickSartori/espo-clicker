@@ -1,9 +1,9 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v2.0
-// Strategy: Cache-First per assets statici, Network-First per API
+// ESPO CLICKER - Service Worker v3.0
+// Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.1';
+const CACHE_VERSION = 'espo-v3.0.1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -47,9 +47,9 @@ const PRECACHE_ASSETS = [
     './manifest.json'
 ];
 
-// Pattern per richieste che NON devono essere cachate
+// Pattern per richieste che NON devono essere cachate (API PHP)
 const NO_CACHE_PATTERNS = [
-    /\/php\//,           // API PHP (login, save, leaderboard)
+    /\/php\//,
     /save_progress/,
     /login_register/,
     /get_leaderboard/,
@@ -79,80 +79,112 @@ const STATIC_PATTERNS = [
 ];
 
 // ============================================================
-// INSTALL - Pre-cache degli asset critici
+// INSTALL - Pre-cache + forza attivazione immediata
 // ============================================================
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installazione in corso...');
+    console.log(`[SW] Installazione ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
-                console.log('[SW] Pre-caching assets critici');
-                // Usa addAll con catch individuale per non bloccare tutto se un asset fallisce
                 return Promise.allSettled(
                     PRECACHE_ASSETS.map(url =>
                         cache.add(url).catch(err => {
-                            console.warn(`[SW] Pre-cache fallito per: ${url}`, err.message);
+                            console.warn(`[SW] Pre-cache fallito: ${url}`, err.message);
                         })
                     )
                 );
             })
-            .then(() => self.skipWaiting())
+            .then(() => self.skipWaiting()) // Attiva subito, non aspettare tab chiuse
     );
 });
 
 // ============================================================
-// ACTIVATE - Pulizia cache vecchie
+// ACTIVATE - Pulisci TUTTE le cache vecchie + notifica client
 // ============================================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Attivazione...');
+    console.log(`[SW] Attivazione ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
                 keys
                     .filter(key => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
                     .map(key => {
-                        console.log(`[SW] Rimossa cache vecchia: ${key}`);
+                        console.log(`[SW] Cache rimossa: ${key}`);
                         return caches.delete(key);
                     })
             );
-        }).then(() => self.clients.claim())
+        })
+        .then(() => self.clients.claim()) // Prendi controllo di tutti i tab aperti
+        .then(() => {
+            // Notifica tutti i client: "nuova versione attiva, ricarica"
+            return self.clients.matchAll({ type: 'window' }).then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({
+                        type: 'SW_UPDATED',
+                        version: CACHE_VERSION
+                    });
+                });
+            });
+        })
     );
 });
 
 // ============================================================
-// FETCH - Strategia di caching intelligente
+// FETCH - Strategia intelligente con cache-bust sui file versionati
 // ============================================================
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = request.url;
 
-    // Skip: richieste non-GET (POST per save/login)
     if (request.method !== 'GET') return;
-
-    // Skip: richieste API PHP (sempre network)
     if (NO_CACHE_PATTERNS.some(pattern => pattern.test(url))) return;
 
-    // Strategy: Cache-First per assets statici
+    // Cache-First per assets statici
     if (STATIC_PATTERNS.some(pattern => pattern.test(url))) {
         event.respondWith(cacheFirst(request));
         return;
     }
 
-    // Strategy: Network-First per navigazione (index.php)
+    // Network-First per navigazione
     if (request.mode === 'navigate') {
         event.respondWith(networkFirst(request));
         return;
     }
 
-    // Default: Stale-While-Revalidate per tutto il resto
+    // Default: Stale-While-Revalidate
     event.respondWith(staleWhileRevalidate(request));
+});
+
+// ============================================================
+// MESSAGE - Gestione comandi dal client
+// ============================================================
+self.addEventListener('message', (event) => {
+    if (event.data === 'trimCache') {
+        trimCache(DYNAMIC_CACHE, 80);
+    }
+    // Il client può chiedere la versione corrente
+    if (event.data === 'GET_VERSION') {
+        event.source.postMessage({
+            type: 'SW_VERSION',
+            version: CACHE_VERSION
+        });
+    }
+    // Force update: pulisci tutto e ricarica
+    if (event.data === 'FORCE_UPDATE') {
+        caches.keys().then(keys => {
+            return Promise.all(keys.map(k => caches.delete(k)));
+        }).then(() => {
+            self.clients.matchAll({ type: 'window' }).then(clients => {
+                clients.forEach(c => c.postMessage({ type: 'SW_FORCE_RELOAD' }));
+            });
+        });
+    }
 });
 
 // ============================================================
 // STRATEGIE DI CACHE
 // ============================================================
 
-// Cache-First: Prende dalla cache, fallback su network
 async function cacheFirst(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
@@ -165,14 +197,12 @@ async function cacheFirst(request) {
         }
         return response;
     } catch (err) {
-        // Offline fallback: cerca qualsiasi versione cached
         const fallback = await caches.match(request, { ignoreSearch: true });
         if (fallback) return fallback;
         return new Response('Offline', { status: 503 });
     }
 }
 
-// Network-First: Prova network, fallback su cache
 async function networkFirst(request) {
     try {
         const response = await fetch(request);
@@ -184,12 +214,10 @@ async function networkFirst(request) {
     } catch (err) {
         const cached = await caches.match(request);
         if (cached) return cached;
-        // Offline: mostra la pagina cachata
         return caches.match('./index.php');
     }
 }
 
-// Stale-While-Revalidate: Serve dalla cache, aggiorna in background
 async function staleWhileRevalidate(request) {
     const cached = await caches.match(request);
     const fetchPromise = fetch(request).then(response => {
@@ -204,9 +232,6 @@ async function staleWhileRevalidate(request) {
     return cached || fetchPromise;
 }
 
-// ============================================================
-// GESTIONE DIMENSIONE CACHE
-// ============================================================
 async function trimCache(cacheName, maxItems) {
     const cache = await caches.open(cacheName);
     const keys = await cache.keys();
@@ -215,10 +240,3 @@ async function trimCache(cacheName, maxItems) {
         return trimCache(cacheName, maxItems);
     }
 }
-
-// Pulizia periodica della cache dinamica
-self.addEventListener('message', (event) => {
-    if (event.data === 'trimCache') {
-        trimCache(DYNAMIC_CACHE, 100);
-    }
-});

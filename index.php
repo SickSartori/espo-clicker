@@ -269,6 +269,7 @@ require_once("php/check_version.php");
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js" defer></script>
 
 		<!-- Game Version -->
@@ -305,13 +306,46 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 }
 ?>
-		<!-- PWA Service Worker Registration -->
+		<!-- PWA Service Worker: auto-update + auto-reload -->
 		<script>
 		if ('serviceWorker' in navigator) {
 			window.addEventListener('load', () => {
-				navigator.serviceWorker.register('./sw.js')
-					.then(reg => console.log('[PWA] Service Worker registrato:', reg.scope))
-					.catch(err => console.warn('[PWA] Registrazione SW fallita:', err));
+				navigator.serviceWorker.register('./sw.js').then(reg => {
+					console.log('[PWA] SW registrato:', reg.scope);
+
+					// Polling: controlla aggiornamenti ogni 60 minuti
+					setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+
+					// Se c'è un SW in attesa (aggiornamento trovato), attivalo
+					if (reg.waiting) {
+						reg.waiting.postMessage('FORCE_UPDATE');
+					}
+
+					// Rileva nuovo SW installato → forza attivazione
+					reg.addEventListener('updatefound', () => {
+						const newSW = reg.installing;
+						if (!newSW) return;
+						newSW.addEventListener('statechange', () => {
+							if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+								console.log('[PWA] Nuova versione disponibile, ricarico...');
+								newSW.postMessage('FORCE_UPDATE');
+							}
+						});
+					});
+				}).catch(err => console.warn('[PWA] Registrazione fallita:', err));
+
+				// Ascolta messaggi dal SW
+				navigator.serviceWorker.addEventListener('message', (e) => {
+					if (e.data.type === 'SW_UPDATED' || e.data.type === 'SW_FORCE_RELOAD') {
+						console.log('[PWA] Aggiornamento ricevuto, ricarico pagina...');
+						window.location.reload();
+					}
+				});
+
+				// Rileva cambio controller (nuovo SW ha preso il controllo)
+				navigator.serviceWorker.addEventListener('controllerchange', () => {
+					window.location.reload();
+				});
 			});
 		}
 		</script>

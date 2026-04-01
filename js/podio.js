@@ -96,11 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.innerHTML = `
                         <div class="lb-left">
                             <span class="leaderboard-rank">${rankDisplay}</span>
+                            ${avatarHTML}
                             <div class="lb-user-info">
-                                ${avatarHTML}
                                 <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
-                                ${prestigeBadge}
-                                ${formatBadge}
+                                <div class="lb-badges">
+                                    ${prestigeBadge}
+                                    ${formatBadge}
+                                </div>
                             </div>
                         </div>
                         <span class="leaderboard-score">${Game.formatNumber(entry.score)} <i class="fa-solid fa-bug"></i></span>

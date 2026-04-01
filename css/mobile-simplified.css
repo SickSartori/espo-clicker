@@ -25,6 +25,11 @@
         align-items: flex-end;
     }
 
+    /* Login: mantieni centrato, non bottom-sheet */
+    html body div#login-modal.modal-backdrop {
+        align-items: center;
+    }
+
     html body .modal-content {
         width: 100%;
         max-width: 100%;
@@ -35,6 +40,16 @@
         display: flex;
         flex-direction: column;
         padding-bottom: 0;
+        overflow: hidden; /* Impedisce scrollbar sul contenitore, scrollano solo le aree interne */
+    }
+
+    /* Login: altezza automatica, non full-screen */
+    html body div#login-modal div.modal-content {
+        height: auto;
+        max-height: 90dvh;
+        border-radius: 16px;
+        width: 92%;
+        overflow: hidden;
     }
 
     html body .settings-content,
@@ -57,7 +72,7 @@
         position: sticky;
         bottom: 0;
         width: 100%;
-        height: 60px;
+        height: 50px;
         background: rgba(231, 76, 60, 0.9);
         color: #fff;
         font-size: 0;
@@ -89,7 +104,7 @@
        4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
     --------------------------------------------------- */
     html body #game-container {
-        height: calc(100dvh - 130px);
+        height: calc(100dvh - 111px); /* 55px navbar + 56px bottom nav */
     }
 
     html body #center-column.mobile-active {
@@ -112,8 +127,8 @@
 
     html body #clicker-btn {
         margin: 0 auto;
-        width: min(60vw, 35dvh);
-        height: min(60vw, 35dvh);
+        width: min(60vw, 40dvh);
+        height: min(60vw, 40dvh);
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
     }
@@ -135,13 +150,13 @@
         transform: none;
         transition: none;
         animation: none;
-        margin: 0 auto 10px auto;
+        margin: 0 auto 4px auto;
         text-align: center;
         width: auto;
         max-width: 90%;
         display: block;
-        font-size: 0.7rem;
-        padding: 5px 14px;
+        font-size: 0.65rem;
+        padding: 3px 12px;
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -163,99 +178,146 @@
     }
 
     /* ---------------------------------------------------
-       5. SCHERMATA SKIN: LAYOUT MASSIMIZZATO
+       5. SCHERMATA SKIN: LAYOUT APP-LIKE v3.0
     --------------------------------------------------- */
+
+    /* Container principale: riempie tutto lo spazio tra header e CHIUDI */
     html body div#skins-modal div#skins-grid-modern {
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding-bottom: 90px;
-        /* Spazio per le frecce in fondo */
-        min-height: 100%;
+        flex: 1;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
     }
 
-    /* Rendiamo il carosello più alto per ospitare un'immagine più grande */
+    /* Carousel stage: occupa il giusto spazio, centrato */
     html body div#skins-modal div#skins-grid-modern div.carousel-stage {
-        height: 280px;
-        /* Aumentato */
+        height: 36dvh;
         width: 100%;
         margin: 0;
-        position: static;
+        position: relative;
         overflow: visible;
+        flex-shrink: 0;
     }
 
-    /* Zoom maggiore sulla skin attiva */
+    /* Skin attiva: grande e centrata */
     html body .carousel-item.active {
-        transform: scale(1.6) translateZ(100px);
-        /* Aumentato da 1.3 */
+        transform: scale(1.5) translateZ(80px);
         z-index: 50;
     }
 
-    /* Rimpiccioliamo drasticamente le skin laterali per dare spazio alla centrale */
+    /* Skin laterali: piccole e sfumate */
     html body #skins-grid-modern .carousel-item.prev-1,
     html body #skins-grid-modern .carousel-item.next-1 {
-        transform: translateX(110px) scale(0.6) rotateY(-30deg);
-        opacity: 0.4;
+        transform: translateX(105px) scale(0.55) rotateY(-25deg);
+        opacity: 0.35;
     }
 
     html body #skins-grid-modern .carousel-item.prev-1 {
-        transform: translateX(-110px) scale(0.6) rotateY(30deg);
+        transform: translateX(-105px) scale(0.55) rotateY(25deg);
     }
 
-    /* Pannello Info compatto */
+    /* Nascondi prev-2/next-2 su mobile */
+    html body #skins-grid-modern .carousel-item.prev-2,
+    html body #skins-grid-modern .carousel-item.next-2 {
+        display: none;
+    }
+
+    /* Nascondi frecce — si naviga con swipe */
+    html body div#skins-modal div#skins-grid-modern button.carousel-nav-btn {
+        display: none;
+    }
+
+    /* Dot indicator (generati da JS) */
+    html body .carousel-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 0;
+        flex-shrink: 0;
+    }
+
+    html body .carousel-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    html body .carousel-dot.active {
+        width: 20px;
+        border-radius: 10px;
+        background: var(--r-color, #3498db);
+        box-shadow: 0 0 8px var(--r-color-glow, rgba(52, 152, 219, 0.4));
+    }
+
+    /* Pannello Info: compatto, trasparente, respira */
     html body div#skins-modal div#skins-grid-modern div.modern-info-panel {
-        padding-top: 10px;
-        margin-top: 5px;
-        width: 95%;
+        padding: 8px 16px 10px;
+        margin-top: 0;
+        width: 100%;
+        max-width: 100%;
         background: transparent;
         border: none;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: auto;
+        flex-shrink: 0;
     }
 
-    /* Barra Filtri Rarità Mobile */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel::before {
+        display: none;
+    }
+
+    /* Barra Filtri Rarità compatta */
     html body div#skins-modal .skins-controls-bar {
-        padding: 5px;
-        background: rgba(0, 0, 0, 0.2);
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.3);
+        flex-shrink: 0;
     }
 
     html body .skins-filters {
         display: flex;
         overflow-x: auto;
-        /* Permette lo swipe dei filtri se troppi */
         width: 100%;
         gap: 5px;
-        padding: 5px 0;
+        padding: 4px 0;
         -webkit-overflow-scrolling: touch;
-    }
-
-    /* Frecce Navigazione in fondo */
-    html body div#skins-modal div#skins-grid-modern button.carousel-nav-btn {
-        position: absolute;
-        bottom: 5px;
-        width: 15%;
-        height: 50px;
-        top: auto;
-        transform: none;
-        background: rgba(52, 152, 219, 0.9);
-        border: 2px solid #fff;
-    }
-
-    html body #carousel-prev {
-        left: 4%;
-    }
-
-    html body #carousel-next {
-        right: 4%;
     }
 
     html body #skin-rarity-filter {
         display: block;
         width: 100%;
-        height: 40px;
+        height: 38px;
         background: #1a252f;
         border: 1px solid #3498db;
         color: white;
         border-radius: 8px;
+    }
+
+    /* Swipe hint (animazione iniziale) */
+    html body .carousel-swipe-hint {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.7rem;
+        font-family: var(--font-heading);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        pointer-events: none;
+        animation: swipeHintFade 3s ease forwards;
+    }
+
+    @keyframes swipeHintFade {
+        0%, 70% { opacity: 1; }
+        100% { opacity: 0; }
     }
 
     /* ---------------------------------------------------
@@ -265,8 +327,8 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        padding: 20px 10px;
-        gap: 12px;
+        padding: 14px 10px;
+        gap: 10px;
     }
 
     html body .slider-wrapper {
@@ -291,7 +353,7 @@
     }
 
     html body .custom-slider {
-        width: 85%;
+        width: 92%;
         height: 10px;
     }
 
@@ -303,7 +365,7 @@
     html body div#login-modal div.modal-content {
         justify-content: center;
         align-items: center;
-        padding: 20px;
+        padding: 24px 20px;
     }
 
     /* ---------------------------------------------------
@@ -314,9 +376,18 @@
     html body div#settings-modal button#open-advanced-audio-btn,
     html body div#achievements-modal div#achievement-list div.trophy-desc,
     html body div#achievements-modal div#achievement-list div.trophy-flavor,
-    html body div#skins-modal div.skins-toggle-wrapper,
-    html body div#skins-modal div.modern-info-desc {
+    html body div#skins-modal div.skins-toggle-wrapper {
         display: none;
+    }
+
+    /* Descrizione skin visibile su mobile (v3.0) */
+    html body div#skins-modal div.modern-info-desc {
+        display: block;
+        font-size: 0.8rem;
+        padding: 0 10px;
+        margin-bottom: 10px;
+        color: #95a5a6;
+        text-align: center;
     }
 
     /* Stats: nascondi solo la sezione Profilo su mobile */
@@ -362,16 +433,23 @@
 
     html body #skins-modal .skins-controls-bar {
         justify-content: center;
-        padding: 10px;
+        padding: 6px 10px;
     }
 
     html body #skins-modal .modern-info-title {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        margin-bottom: 4px;
     }
 
     html body #skins-modal .modern-btn-large {
-        padding: 15px 0;
+        padding: 14px 0;
         font-size: 1rem;
-        width: 90%;
+        width: 85%;
+        max-width: 280px;
+        border-radius: 12px;
+    }
+
+    html body #skins-modal .modern-info-action {
+        padding-bottom: 8px;
     }
 }

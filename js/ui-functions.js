@@ -854,6 +854,7 @@ function updateSkinsUI() {
                 <div id="carousel-track" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
                 <button class="carousel-nav-btn" id="carousel-next"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
+            <div class="carousel-dots" id="carousel-dots"></div>
             <div class="modern-info-panel" id="modern-info-panel"></div>
         `;
 
@@ -934,42 +935,65 @@ function updateSkinsUI() {
             document.addEventListener('keydown', window._carouselKeyHandler);
         }
 
-        // Touch/Swipe per mobile
+        // Touch/Swipe — Hammer.js (nativo) con fallback manuale
         const stage = document.getElementById('carousel-stage');
         if (stage && !stage._swipeAttached) {
             stage._swipeAttached = true;
-            let touchStartX = 0;
-            let touchDelta = 0;
 
-            stage.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchDelta = 0;
-            }, { passive: true });
+            if (typeof Hammer !== 'undefined') {
+                const hammer = new Hammer(stage, { recognizers: [
+                    [Hammer.Swipe, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 30, velocity: 0.3 }],
+                    [Hammer.Pan, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 10 }]
+                ]});
 
-            stage.addEventListener('touchmove', (e) => {
-                touchDelta = e.touches[0].clientX - touchStartX;
-            }, { passive: true });
+                hammer.on('swipeleft', () => {
+                    if (modernCurrentIndex < modernSkinsArray.length - 1) {
+                        modernCurrentIndex++;
+                        renderModernCarousel();
+                    }
+                });
 
-            stage.addEventListener('touchend', () => {
-                const threshold = 40; // px minimo per registrare swipe
-                if (touchDelta > threshold && modernCurrentIndex > 0) {
-                    modernCurrentIndex--;
-                    renderModernCarousel();
-                } else if (touchDelta < -threshold && modernCurrentIndex < modernSkinsArray.length - 1) {
-                    modernCurrentIndex++;
-                    renderModernCarousel();
-                }
-            }, { passive: true });
+                hammer.on('swiperight', () => {
+                    if (modernCurrentIndex > 0) {
+                        modernCurrentIndex--;
+                        renderModernCarousel();
+                    }
+                });
+
+                // Feedback visivo durante il pan (drag)
+                let panStartIndex = modernCurrentIndex;
+                hammer.on('panstart', () => { panStartIndex = modernCurrentIndex; });
+                hammer.on('panend', (e) => {
+                    // Se non è stato un swipe, controlla lo spostamento
+                    if (Math.abs(e.deltaX) > 60) {
+                        const dir = e.deltaX > 0 ? -1 : 1;
+                        const target = panStartIndex + dir;
+                        if (target >= 0 && target < modernSkinsArray.length) {
+                            modernCurrentIndex = target;
+                            renderModernCarousel();
+                        }
+                    }
+                });
+            } else {
+                // Fallback: swipe manuale senza Hammer.js
+                let touchStartX = 0, touchDelta = 0;
+                stage.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchDelta = 0; }, { passive: true });
+                stage.addEventListener('touchmove', (e) => { touchDelta = e.touches[0].clientX - touchStartX; }, { passive: true });
+                stage.addEventListener('touchend', () => {
+                    if (touchDelta > 40 && modernCurrentIndex > 0) { modernCurrentIndex--; renderModernCarousel(); }
+                    else if (touchDelta < -40 && modernCurrentIndex < modernSkinsArray.length - 1) { modernCurrentIndex++; renderModernCarousel(); }
+                }, { passive: true });
+            }
         }
 
-        // Scroll ruota mouse nel carousel
+        // Scroll ruota mouse nel carousel (desktop)
         if (stage && !stage._wheelAttached) {
             stage._wheelAttached = true;
             let wheelCooldown = false;
             stage.addEventListener('wheel', (e) => {
                 if (wheelCooldown) return;
                 wheelCooldown = true;
-                setTimeout(() => { wheelCooldown = false; }, 250); // Cooldown 250ms anti-spam
+                setTimeout(() => { wheelCooldown = false; }, 250);
 
                 if (e.deltaY > 0 && modernCurrentIndex < modernSkinsArray.length - 1) {
                     modernCurrentIndex++;
@@ -1010,6 +1034,41 @@ function renderModernCarousel() {
         else if (diff === 2) item.classList.add('next-2');
         else item.classList.add('hidden'); // Troppo lontani
     });
+
+    // Aggiorna dot indicator
+    const dotsContainer = document.getElementById('carousel-dots');
+    if (dotsContainer) {
+        const total = modernSkinsArray.length;
+        // Mostra max 9 dots, comprime quelli lontani
+        const maxDots = Math.min(total, 9);
+        let dotsHTML = '';
+        if (total <= maxDots) {
+            for (let i = 0; i < total; i++) {
+                dotsHTML += `<span class="carousel-dot${i === modernCurrentIndex ? ' active' : ''}"></span>`;
+            }
+        } else {
+            // Finestra scorrevole di dots centrata sull'indice corrente
+            let start = Math.max(0, modernCurrentIndex - 4);
+            let end = Math.min(total, start + maxDots);
+            if (end - start < maxDots) start = Math.max(0, end - maxDots);
+            for (let i = start; i < end; i++) {
+                const dist = Math.abs(i - modernCurrentIndex);
+                const cls = i === modernCurrentIndex ? ' active' : '';
+                const scale = dist >= 4 ? ' style="transform:scale(0.5);opacity:0.3"' : dist >= 3 ? ' style="transform:scale(0.7);opacity:0.5"' : '';
+                dotsHTML += `<span class="carousel-dot${cls}"${scale}></span>`;
+            }
+        }
+        dotsContainer.innerHTML = dotsHTML;
+
+        // Passa il colore rarità ai dots
+        const currentSkin = modernSkinsArray[modernCurrentIndex];
+        if (currentSkin) {
+            const rColors = { 'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6', 'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c' };
+            const rGlows = { 'common': 'rgba(189,195,199,0.4)', 'rare': 'rgba(52,152,219,0.4)', 'epic': 'rgba(155,89,182,0.4)', 'legendary': 'rgba(241,196,15,0.4)', 'divine': 'rgba(255,238,144,0.6)', 'christmas': 'rgba(231,76,60,0.4)' };
+            dotsContainer.style.setProperty('--r-color', rColors[currentSkin.data.rarity] || '#3498db');
+            dotsContainer.style.setProperty('--r-color-glow', rGlows[currentSkin.data.rarity] || 'rgba(52,152,219,0.4)');
+        }
+    }
 
     // Aggiorna il Pannello Informazioni in basso
     const panel = document.getElementById('modern-info-panel');
@@ -1442,18 +1501,26 @@ function showClickFeedback(event) {
         setTimeout(() => feedback.remove(), 1000);
     }
 
-    // Sparkle particles (3-5 piccole scintille dal punto di click)
-    const sparkCount = 3 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < sparkCount; i++) {
-        const spark = document.createElement('div');
-        spark.className = 'click-spark';
-        const angle = (Math.PI * 2 / sparkCount) * i + (Math.random() * 0.5);
-        const dist = 20 + Math.random() * 35;
-        spark.style.cssText = `left:${startX + randomOffsetX}px;top:${startY + randomOffsetY}px;` +
-            `--spark-x:${Math.cos(angle) * dist}px;--spark-y:${Math.sin(angle) * dist}px;` +
-            `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random()*100)},${Math.floor(Math.random()*80)},0.9)`;
-        feedbackContainer.appendChild(spark);
-        setTimeout(() => spark.remove(), 800);
+    // Sparkle particles — usa FX.particleBurst (GSAP) se disponibile, altrimenti fallback CSS
+    const px = startX + randomOffsetX;
+    const py = startY + randomOffsetY;
+    if (typeof FX !== 'undefined' && typeof gsap !== 'undefined') {
+        const combo = FX._comboCount || 0;
+        const count = combo >= 20 ? 12 : combo >= 10 ? 10 : 6;
+        FX.particleBurst(px, py, count);
+    } else {
+        const sparkCount = 3 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < sparkCount; i++) {
+            const spark = document.createElement('div');
+            spark.className = 'click-spark';
+            const angle = (Math.PI * 2 / sparkCount) * i + (Math.random() * 0.5);
+            const dist = 20 + Math.random() * 35;
+            spark.style.cssText = `left:${px}px;top:${py}px;` +
+                `--spark-x:${Math.cos(angle) * dist}px;--spark-y:${Math.sin(angle) * dist}px;` +
+                `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random()*100)},${Math.floor(Math.random()*80)},0.9)`;
+            feedbackContainer.appendChild(spark);
+            setTimeout(() => spark.remove(), 800);
+        }
     }
 }
 

@@ -451,6 +451,188 @@ const AudioManager = {
     }
 };
 
+// ============================================================
+// FX — Effetti visivi e tattili (GSAP-powered, v3.0)
+// ============================================================
+const FX = {
+    // Screen shake — scuote il game-container
+    shake(intensity = 4, duration = 0.25) {
+        const el = document.getElementById('game-container');
+        if (!el || typeof gsap === 'undefined') return;
+        gsap.killTweensOf(el, 'x,y');
+        gsap.to(el, {
+            x: () => (Math.random() - 0.5) * intensity,
+            y: () => (Math.random() - 0.5) * intensity,
+            duration: 0.04,
+            repeat: Math.floor(duration / 0.04),
+            yoyo: true,
+            ease: 'power1.inOut',
+            onComplete: () => gsap.set(el, { x: 0, y: 0 })
+        });
+    },
+
+    // Haptic vibration (mobile)
+    vibrate(pattern) {
+        if (navigator.vibrate) {
+            navigator.vibrate(pattern || 15);
+        }
+    },
+
+    // Impact flash — breve lampo bianco/colorato sullo schermo
+    flash(color = 'rgba(255,255,255,0.15)', duration = 0.12) {
+        if (typeof gsap === 'undefined') return;
+        let overlay = document.getElementById('fx-flash-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'fx-flash-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9500;opacity:0';
+            document.body.appendChild(overlay);
+        }
+        overlay.style.background = color;
+        gsap.killTweensOf(overlay);
+        gsap.fromTo(overlay,
+            { opacity: 1 },
+            { opacity: 0, duration: duration, ease: 'power2.out' }
+        );
+    },
+
+    // Glow ring — anello espansivo dal clicker button
+    glowRing(color = '#ff4757') {
+        const btn = document.getElementById('clicker-btn');
+        if (!btn || typeof gsap === 'undefined') return;
+        const ring = document.createElement('div');
+        ring.style.cssText = `position:absolute;top:50%;left:50%;width:100%;height:100%;
+            border-radius:50%;border:2px solid ${color};pointer-events:none;
+            transform:translate(-50%,-50%) scale(1);opacity:0.8;z-index:5`;
+        btn.appendChild(ring);
+        gsap.to(ring, {
+            scale: 1.8,
+            opacity: 0,
+            duration: 0.5,
+            ease: 'power2.out',
+            onComplete: () => ring.remove()
+        });
+    },
+
+    // Combo tracker
+    _comboCount: 0,
+    _comboTimer: null,
+    _comboThreshold: 250, // ms tra click per mantenere combo
+
+    registerClick() {
+        this._comboCount++;
+        clearTimeout(this._comboTimer);
+        this._comboTimer = setTimeout(() => {
+            this._comboCount = 0;
+            this._hideComboDisplay();
+        }, this._comboThreshold);
+
+        // Haptic su ogni click
+        this.vibrate(10);
+
+        // Effetti progressivi in base al combo
+        if (this._comboCount >= 20) {
+            this.shake(6, 0.15);
+            this.flash('rgba(255,71,87,0.12)', 0.1);
+            this.vibrate([15, 10, 15]);
+        } else if (this._comboCount >= 10) {
+            this.shake(3, 0.1);
+            this.vibrate(12);
+        }
+
+        // Glow ring ogni 10 combo
+        if (this._comboCount > 0 && this._comboCount % 10 === 0) {
+            this.glowRing('#ff4757');
+        }
+
+        // Mostra combo counter visivo da 5+
+        if (this._comboCount >= 5) {
+            this._showComboDisplay(this._comboCount);
+        }
+
+        return this._comboCount;
+    },
+
+    // Combo counter visuale
+    _showComboDisplay(count) {
+        let el = document.getElementById('fx-combo-display');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'fx-combo-display';
+            el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9000;pointer-events:none;' +
+                'font-family:var(--font-heading);font-weight:900;text-align:center;text-shadow:0 0 15px rgba(255,71,87,0.6);' +
+                'color:#ff4757;transition:opacity 0.15s ease;';
+            document.body.appendChild(el);
+        }
+        // Scala e colore in base al combo
+        let size = count >= 30 ? '2.2rem' : count >= 20 ? '1.8rem' : count >= 10 ? '1.5rem' : '1.2rem';
+        let color = count >= 30 ? '#f1c40f' : count >= 20 ? '#ff4757' : count >= 10 ? '#e67e22' : '#3498db';
+        el.style.fontSize = size;
+        el.style.color = color;
+        el.style.textShadow = `0 0 15px ${color}80`;
+        el.style.opacity = '1';
+        el.textContent = `x${count} COMBO`;
+
+        // Pulse con GSAP se disponibile
+        if (typeof gsap !== 'undefined') {
+            gsap.killTweensOf(el, 'scale');
+            gsap.fromTo(el, { scale: 1.3 }, { scale: 1, duration: 0.15, ease: 'back.out(2)' });
+        }
+    },
+
+    _hideComboDisplay() {
+        const el = document.getElementById('fx-combo-display');
+        if (el) {
+            el.style.opacity = '0';
+        }
+    },
+
+    // Burst particellare avanzato (usa GSAP per animare)
+    particleBurst(x, y, count = 8, colors = ['#ff4757', '#f1c40f', '#3498db', '#2ecc71']) {
+        if (typeof gsap === 'undefined') return;
+        const container = document.getElementById('click-feedback-container');
+        if (!container) return;
+
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            const size = 3 + Math.random() * 4;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
+            const dist = 40 + Math.random() * 60;
+
+            p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${size}px;height:${size}px;
+                border-radius:50%;background:${color};pointer-events:none;z-index:15;
+                box-shadow:0 0 ${size * 2}px ${color}`;
+            container.appendChild(p);
+
+            gsap.to(p, {
+                x: Math.cos(angle) * dist,
+                y: Math.sin(angle) * dist - 20,
+                opacity: 0,
+                scale: 0,
+                duration: 0.4 + Math.random() * 0.3,
+                ease: 'power2.out',
+                onComplete: () => p.remove()
+            });
+        }
+    },
+
+    // Prestige sequence — timeline orchestrata
+    prestigeSequence(callback) {
+        if (typeof gsap === 'undefined') { if (callback) callback(); return; }
+
+        const tl = gsap.timeline();
+        // 1. Flash bianco
+        this.flash('rgba(255,255,255,0.3)', 0.3);
+        // 2. Shake forte
+        this.shake(10, 0.4);
+        // 3. Vibrazione lunga
+        this.vibrate([50, 30, 80, 30, 50]);
+
+        if (callback) setTimeout(callback, 400);
+    }
+};
+
 // --- WRAPPERS PER COMPATIBILITÀ (Non rompere il codice esistente) ---
 function playSound(id, type) { AudioManager.play(id, type); }
 function setBgMusicVolume() { AudioManager.updateAmbience(); }
@@ -1193,6 +1375,9 @@ function resolveBug(event) {
 
     if (typeof showClickFeedback === 'function') showClickFeedback(event);
 
+    // FX v3.0: registra click per combo, haptic, shake progressivo
+    if (typeof FX !== 'undefined') FX.registerClick();
+
     // --- NUOVA LOGICA ANIMAZIONE CLICK ---
     // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
     const btn = document.getElementById('clicker-btn');
@@ -1318,6 +1503,9 @@ async function executePrestige() {
             if (bar) bar.style.width = '100%';
             if (animContainer) animContainer.style.transform = 'scale(1)';
         }, 50);
+
+        // FX: Flash + Shake + Vibrazione orchestrata per il prestige
+        if (typeof FX !== 'undefined') FX.prestigeSequence();
     }
 
     const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
