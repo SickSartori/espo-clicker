@@ -6,33 +6,61 @@ require_once("php/check_version.php");
 <html lang="it">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+		<!-- PWA Meta Tags -->
+		<meta name="theme-color" content="#3498db">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="Espo Clicker">
+		<meta name="application-name" content="Espo Clicker">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="msapplication-TileColor" content="#050505">
+		<meta name="msapplication-TileImage" content="assets/image/icons/icon-144.png">
+		<link rel="manifest" href="manifest.json">
+		<link rel="apple-touch-icon" href="assets/image/icons/icon-192.png">
+		<link rel="apple-touch-icon" sizes="192x192" href="assets/image/icons/icon-192.png">
+		<link rel="apple-touch-icon" sizes="152x152" href="assets/image/icons/icon-152.png">
+		<link rel="apple-touch-icon" sizes="144x144" href="assets/image/icons/icon-144.png">
+
 		<title>
 			<?php echo $labels["head_titolo"]; ?>
 		</title>
+
+		<!-- Preload font critici -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+		<link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+		<!-- CSS Core (render-blocking intenzionale) -->
 		<link rel="stylesheet" href="css/keyframes.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/base.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/layout.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/components.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="css/navbar.css?v=<?php echo $cacheVer; ?>"> 
+		<link rel="stylesheet" href="css/components.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/navbar.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/clicker.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="css/store.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>"> 
-		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>">
+
+		<!-- CSS Modali e Skins (non bloccanti) -->
+		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>" media="all">
+		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>" media="all">
+		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>" media="all">
 		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/skins-modern.css?v=<?php echo $cacheVer; ?>">    
-		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">  
-		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/skins-modern.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">
+
+		<!-- CSS Mobile (caricato solo su mobile) -->
+		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+
+		<!-- CSS Arcade (caricato solo su schermi non-mobile) -->
 		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/asteroids/css/asteroids.css?v=<?php echo $cacheVer; ?>">
 		<link rel="stylesheet" href="arcade/super-espo/css/super-espo.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>">
-
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css">
 		<link rel="icon" type="image/png" href="assets/image/favicon.webp">
 	</head>
 	<body>
@@ -52,14 +80,14 @@ require_once("php/check_version.php");
 
 		<div id="toast-container"></div>
 
-		<div id="prestige-transition-overlay" class="prestige_transition_overlay_display_none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background: radial-gradient(circle at center, #1a1400 0%, #050505 100%); display: none; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;">
-			<div style="text-align: center; transform: scale(0.8); transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);" id="prestige-anim-container">
-				<i class="fa-solid fa-certificate fa-flip" style="font-size: 5.5rem; color: #f1c40f; margin-bottom: 25px; text-shadow: 0 0 40px rgba(241,196,15,0.6); animation-duration: 1.5s;"></i>
-				<h1 style="color: #f1c40f; font-family: 'Rajdhani', sans-serif; letter-spacing: 6px; font-size: 2.8rem; text-transform: uppercase; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Promozione in Corso</h1>
-				<p style="color: #bdc3c7; font-family: monospace; font-size: 1.1rem; margin-top: 15px; letter-spacing: 1px;" class="fa-fade">Ristrutturazione Aziendale del Database...</p>
-				
-				<div style="width: 350px; height: 6px; background: rgba(255,255,255,0.05); margin: 40px auto 0 auto; border-radius: 4px; border: 1px solid rgba(241,196,15,0.2); overflow: hidden;">
-					<div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f39c12, #f1c40f); box-shadow: 0 0 15px #f1c40f; transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
+			<div class="prestige-anim-container" id="prestige-anim-container">
+				<i class="fa-solid fa-certificate fa-flip prestige-anim-icon"></i>
+				<h1 class="prestige-anim-title">Promozione in Corso</h1>
+				<p class="prestige-anim-subtitle fa-fade">Ristrutturazione Aziendale del Database...</p>
+
+				<div class="prestige-progress-track">
+					<div id="prestige-progress-bar" class="prestige-progress-fill"></div>
 				</div>
 			</div>
 		</div>
@@ -237,14 +265,12 @@ require_once("php/check_version.php");
 			</button>
 		</div>
 
-		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js" defer></script>
 
 		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
@@ -280,5 +306,48 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 }
 ?>
+		<!-- PWA Service Worker: auto-update + auto-reload -->
+		<script>
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./sw.js').then(reg => {
+					console.log('[PWA] SW registrato:', reg.scope);
+
+					// Polling: controlla aggiornamenti ogni 60 minuti
+					setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+
+					// Se c'è un SW in attesa (aggiornamento trovato), attivalo
+					if (reg.waiting) {
+						reg.waiting.postMessage('FORCE_UPDATE');
+					}
+
+					// Rileva nuovo SW installato → forza attivazione
+					reg.addEventListener('updatefound', () => {
+						const newSW = reg.installing;
+						if (!newSW) return;
+						newSW.addEventListener('statechange', () => {
+							if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+								console.log('[PWA] Nuova versione disponibile, ricarico...');
+								newSW.postMessage('FORCE_UPDATE');
+							}
+						});
+					});
+				}).catch(err => console.warn('[PWA] Registrazione fallita:', err));
+
+				// Ascolta messaggi dal SW
+				navigator.serviceWorker.addEventListener('message', (e) => {
+					if (e.data.type === 'SW_UPDATED' || e.data.type === 'SW_FORCE_RELOAD') {
+						console.log('[PWA] Aggiornamento ricevuto, ricarico pagina...');
+						window.location.reload();
+					}
+				});
+
+				// Rileva cambio controller (nuovo SW ha preso il controllo)
+				navigator.serviceWorker.addEventListener('controllerchange', () => {
+					window.location.reload();
+				});
+			});
+		}
+		</script>
 	</body>
 </html>

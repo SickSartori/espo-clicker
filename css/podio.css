@@ -39,11 +39,13 @@
     flex-shrink: 0;
 }
 
-/* Sezione Sinistra (Rank + Info) */
+/* Sezione Sinistra (Rank + Avatar + Info) */
 .lb-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
 }
 
 /* Rank (Numero o Trofeo) */
@@ -51,22 +53,34 @@
     font-family: var(--font-heading);
     font-weight: 800;
     font-size: 1.2rem;
-    min-width: 30px;
+    min-width: 28px;
     text-align: center;
     color: #7f8c8d;
+    flex-shrink: 0;
 }
 
-/* Info Utente (Nome e Badge impilati o affiancati) */
+/* Info Utente (Nome + Badges impilati) */
 .lb-user-info {
     display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.lb-badges {
+    display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
 .leaderboard-name {
     font-weight: 700;
     color: #fff;
     font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Badge Livello */
@@ -119,4 +133,41 @@
     border: 1px solid #3498db;
     box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
     background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media only screen and (max-width: 1024px) {
+    .leaderboard-item {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .lb-left {
+        gap: 8px;
+    }
+
+    .leaderboard-rank {
+        font-size: 1rem;
+        min-width: 24px;
+    }
+
+    .leaderboard-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .leaderboard-name {
+        font-size: 0.9rem;
+    }
+
+    .leaderboard-score {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .level-badge {
+        font-size: 0.6rem;
+        padding: 1px 5px;
+    }
 }

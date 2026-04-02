@@ -2,11 +2,8 @@
     <div class="modal-content" style="max-width: 380px; border-top: 4px solid #3498db;">
         <div style="text-align: center; padding: 30px 20px 10px 20px;">
             <div style="font-size: 3.5rem; color: #3498db; margin-bottom: 15px; text-shadow: 0 0 20px rgba(52, 152, 219, 0.4);">
-                <i class="fa-solid fa-gamepad"></i>
+                <img src="assets/image/logo.svg" class="login-logo" alt="Espòòò Clicker Logo">
             </div>
-            <h2 style="background: none; border: none; padding: 0; font-size: 1.8rem; margin-bottom: 5px;">
-				<?php echo $labels["modals_login_titolo"]; ?>
-			</h2>
             <p style="color: #95a5a6; font-size: 0.9rem; margin: 0;">
 				<?php echo $labels["modals_login_label"]; ?>
             </p>
@@ -29,7 +26,7 @@
                     </button>
                 </div>
             </div>
-            <button id="login-btn" class="buy-btn save-btn" style="margin-top: 25px; height: 50px; font-size: 1rem; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); gap: 10px;">
+            <button id="login-btn" class="buy-btn save-btn" style="margin-top: 25px; height: 50px; font-size: 1rem; gap: 10px;">
                 <i class="fa-solid fa-rocket"></i>
 				<?php echo $labels["modals_login_submit"]; ?>
             </button>    

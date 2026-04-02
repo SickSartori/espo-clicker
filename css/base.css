@@ -89,7 +89,7 @@ body {
     position: relative;
 }
 
-/* Overlay a griglia Cyber */
+/* Overlay a griglia Cyber (GPU-accelerated via transform) */
 body::before {
     content: "";
     position: fixed;
@@ -107,6 +107,13 @@ body::before {
     z-index: -2;
 }
 
+/* Disattiva animazione griglia su mobile e reduced-motion */
+@media (prefers-reduced-motion: reduce), (max-width: 768px) {
+    body::before {
+        animation: none;
+    }
+}
+
 body::after {
     content: "";
     position: fixed;
@@ -122,6 +129,14 @@ body::after {
     animation: ambientPulse 10s ease-in-out infinite alternate;
     pointer-events: none;
     z-index: var(--z-back);
+}
+
+/* Disattiva ambient pulse su mobile per risparmiare batteria */
+@media (prefers-reduced-motion: reduce), (max-width: 768px) {
+    body::after {
+        animation: none;
+        opacity: 0.65;
+    }
 }
 
 /* Stile per la schermata blu (override sfondo) */
@@ -492,6 +507,8 @@ body.crunch-active .upgrade-name {
     filter: blur(15px);
     mix-blend-mode: screen;
     animation: fireRise linear forwards;
+    will-change: transform, opacity;
+    contain: layout style;
 }
 
 /* Particella Scintilla (Dettagli veloci) */
@@ -506,6 +523,7 @@ body.crunch-active .upgrade-name {
     opacity: 0;
     z-index: calc(var(--z-overlay) + 2);
     animation: sparkFly linear forwards;
+    will-change: transform, opacity;
 }
 
 .christmas_overlay {

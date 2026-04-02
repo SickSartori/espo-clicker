@@ -6,16 +6,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Funzione mancante: Ferma tutti i test audio
     window.stopAllTestAudio = function () {
-        document.querySelectorAll('audio, video').forEach(media => {
-            // Non fermare la musica di background se non siamo nel mixer
-            // Ma per sicurezza nel test, mettiamo in pausa se sta suonando
-            if (!media.paused && media.id !== 'sound-bg-music') {
-                media.pause();
-                media.currentTime = 0;
+        // Ferma tutti i suoni SFX gestiti da Howler (non la musica di background)
+        if (typeof AudioManager !== 'undefined') {
+            for (const id in AudioManager._sounds) {
+                const def = AudioManager._getSoundDef(id);
+                if (def && def.type !== 'music') {
+                    const howl = AudioManager._sounds[id];
+                    if (howl && howl.playing()) howl.stop();
+                }
             }
-            // Se è un video di test, nascondilo
-            if (media.tagName === 'VIDEO' && media.id.startsWith('video-')) {
-                media.style.display = 'none';
+        }
+        // Ferma video di test creati dinamicamente
+        document.querySelectorAll('video').forEach(v => {
+            if (!v.paused) {
+                v.pause();
+                v.currentTime = 0;
             }
         });
     };
@@ -392,19 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 valSpan.textContent = Math.round(newVal * 100) + '%';
                 valSpan.style.color = newVal === 0 ? '#7f8c8d' : '#3498db';
 
-                // Applica volume in tempo reale se sta suonando
-                const activeEl = document.getElementById(targetId);
-                if (activeEl && !activeEl.paused) {
-                    const userVol = Game.getGameState().user;
-                    // Determina canale
-                    const isMusic = activeEl.classList.contains('music') || targetId.includes('music') || targetId.includes('bluescreen'); // Logica base
-                    // Migliore: guarda gameData.assets se possibile, o usa convenzione
-                    let channelVol = userVol.sfxVolume;
-                    if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen') {
-                        channelVol = userVol.musicVolume;
-                    }
-
-                    activeEl.volume = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * newVal));
+                // Applica volume in tempo reale via AudioManager
+                if (typeof AudioManager !== 'undefined') {
+                    const def = AudioManager._getSoundDef(targetId);
+                    const type = (def && def.type === 'music') ? 'music' : 'sfx';
+                    AudioManager.setVolume(targetId, AudioManager._calcVolume(targetId, type));
                 }
             });
         });
@@ -418,64 +415,74 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTestAudioClick(btn) {
         const targetId = btn.getAttribute('data-target');
         const icon = btn.querySelector('i');
-        const el = document.getElementById(targetId);
 
-        if (!el) return;
+        // Video: gestione diretta sull'elemento DOM
+        const videoEl = document.getElementById(targetId);
+        if (videoEl && videoEl.tagName === 'VIDEO') {
+            if (!videoEl.paused && !videoEl.ended) {
+                videoEl.pause();
+                videoEl.currentTime = 0;
+                btn.classList.remove('playing');
+                icon.className = 'fa-solid fa-play';
+                icon.style.marginLeft = '2px';
+                return;
+            }
+            window.stopAllTestAudio();
+            window.resetTestButtons();
+            const Game = getGameAPI();
+            const userVol = Game.getGameState().user;
+            const customVal = (Game.getGameState().user.audioCustom[targetId] ?? 1);
+            const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * userVol.musicVolume * customVal));
+            videoEl.volume = finalVol;
+            videoEl.currentTime = 0;
+            videoEl.style.display = 'none'; // Solo audio nel mixer
+            videoEl.play().then(() => {
+                btn.classList.add('playing');
+                icon.className = 'fa-solid fa-stop';
+                icon.style.marginLeft = '0';
+                videoEl.onended = () => {
+                    btn.classList.remove('playing');
+                    icon.className = 'fa-solid fa-play';
+                    icon.style.marginLeft = '2px';
+                };
+            }).catch(e => {
+                if (e.name !== 'AbortError') console.error("Errore playback video test:", e);
+            });
+            return;
+        }
+
+        // Audio: gestione via AudioManager (Howler)
+        if (typeof AudioManager === 'undefined') return;
+        const howl = AudioManager.getHowl(targetId);
+        if (!howl) return;
 
         // Se sta già suonando, ferma
-        if (!el.paused && !el.ended) {
-            el.pause();
-            el.currentTime = 0;
+        if (howl.playing()) {
+            howl.stop();
             btn.classList.remove('playing');
             icon.className = 'fa-solid fa-play';
             icon.style.marginLeft = '2px';
             return;
         }
 
-        // Ferma altri test
         window.stopAllTestAudio();
         window.resetTestButtons();
 
-        const Game = getGameAPI();
-        const userVol = Game.getGameState().user;
+        const def = AudioManager._getSoundDef(targetId);
+        const type = (def && def.type === 'music') ? 'music' : 'sfx';
+        const vol = AudioManager._calcVolume(targetId, type);
 
-        // Calcola Volume Reale
-        let channelVol = userVol.sfxVolume;
-        if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen' || targetId.includes('video')) {
-            channelVol = userVol.musicVolume;
-        }
+        howl.volume(vol > 0 ? vol : 0.1);
+        howl.play();
+        btn.classList.add('playing');
+        icon.className = 'fa-solid fa-stop';
+        icon.style.marginLeft = '0';
 
-        const customVal = Game.getGameState().user.audioCustom[targetId];
-        const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * customVal));
-
-        // Setup Video (se necessario)
-        if (el.tagName === 'VIDEO') {
-            el.style.display = 'block';
-            el.style.zIndex = '99999'; // Sopra al modale per vederlo, o nascondilo e senti solo audio
-            // Per il test mixer, forse meglio sentire solo l'audio o mostrare una preview?
-            // Per ora lo lasciamo hidden nel CSS base o lo mostriamo
-            el.style.display = 'none'; // Sentiamo solo l'audio per il test
-        }
-
-        el.volume = finalVol;
-        el.currentTime = 0;
-
-        el.play().then(() => {
-            btn.classList.add('playing');
-            icon.className = 'fa-solid fa-stop';
-            icon.style.marginLeft = '0';
-
-            // Auto-reset a fine traccia
-            el.onended = () => {
-                btn.classList.remove('playing');
-                icon.className = 'fa-solid fa-play';
-                icon.style.marginLeft = '2px';
-            };
-        }).catch(e => {
-            // Ignora l'errore se è stato causato da una pausa improvvisa (AbortError)
-            if (e.name !== 'AbortError') {
-                console.error("Errore playback test:", e);
-            }
+        // Auto-reset a fine traccia (per suoni non-loop)
+        howl.once('end', () => {
+            btn.classList.remove('playing');
+            icon.className = 'fa-solid fa-play';
+            icon.style.marginLeft = '2px';
         });
     }
 
@@ -491,16 +498,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (settingsModal) settingsModal.style.display = 'none';
             if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
 
-            // STOP TOTALE: Silenzia tutto per il test
-            document.querySelectorAll('audio, video').forEach(el => {
-                if (!el.paused) {
-                    el.pause();
-                    // Resetta solo se non è la bg-music (per riprenderla dopo se serve)
-                    // ma per sicurezza nel mixer vogliamo silenzio, quindi ok pausa.
-                    if (el.id !== 'sound-bg-music' && el.id !== 'sound-snowball') {
-                        el.currentTime = 0;
-                    }
+            // STOP TOTALE: Silenzia tutto (Howler + video DOM)
+            if (typeof AudioManager !== 'undefined') {
+                for (const id in AudioManager._sounds) {
+                    AudioManager.stop(id, 0);
                 }
+            }
+            document.querySelectorAll('video').forEach(el => {
+                if (!el.paused) { el.pause(); el.currentTime = 0; }
             });
 
             // Genera interfaccia
@@ -737,8 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
                 'sound-bg-music-super': 'superespo',
-                'bg-music-espory': 'freddy-espory',
-                'bg-music-divine': 'jesus'
+                'sound-bg-music-espory': 'espory',
+                'sound-bg-music-divine': 'jesus'
             };
 
             const sounds = gameData.assets.sounds;
@@ -997,7 +1002,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 else {
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV8');
+                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
                     Game.getGameState().user.username = u;
+                    if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
                     Game.saveGame();
                 }
 
@@ -1032,37 +1039,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // --- CONTROLLO MODALI POST-LOGIN (Migrazione V2 o Release Notes) ---
                 if (window.triggerV2MigrationModal) {
                     setTimeout(() => {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                title: '🌌 BENVENUTO NELLA V2.0 🌌',
-                                html: `
-                                    <div style="text-align: left; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #bdc3c7;">
-                                        Grazie per aver giocato alla prima versione di <b>Espòòò Clicker</b>!<br><br>
-                                        Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
-                                        <div style="background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
-                                            <b style="color:#2ecc71;">✓ LE TUE SKIN SONO SALVE</b><br>
-                                            Il tuo guardaroba è intatto.
-                                        </div>
-                                        <div style="background: rgba(155, 89, 182, 0.1); border-left: 4px solid #9b59b6; padding: 10px; border-radius: 4px;">
-                                            <b style="color:#9b59b6;">✓ BONUS VETERANO</b><br>
-                                            Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
-                                        </div>
-                                    </div>
-                                `,
-                                icon: 'info',
-                                background: '#151b22',
-                                color: '#fff',
-                                confirmButtonColor: '#9b59b6',
-                                confirmButtonText: '<i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ',
-                                allowOutsideClick: false,
-                                allowEscapeKey: false
-                            }).then(() => {
-                                window.triggerV2MigrationModal = false;
-                                if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
-                                    Game.openReleaseNotes();
-                                }
-                            });
-                        }
+                        showV2MigrationModal(() => {
+                            window.triggerV2MigrationModal = false;
+                            if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
+                                Game.openReleaseNotes();
+                            }
+                        });
                     }, 500);
                 } else if (window.shouldShowReleaseNotesOnLoad) {
                     setTimeout(() => {

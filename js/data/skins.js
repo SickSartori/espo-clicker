@@ -142,7 +142,7 @@ window.gameData.skins = {
         rarity: "legendary",
         cost: new Decimal(50),
         themeConfig: {
-            specialMusic: 'bg-music-espory'
+            specialMusic: 'sound-bg-music-espory'
         }
     },
     britneyEspears: {
@@ -190,7 +190,7 @@ window.gameData.skins = {
         rarity: "divine",
         unlockHint: "Sblocca l'obiettivo 'Divinità del Mouse'",
         themeConfig: {
-            specialMusic: 'bg-music-divine',
+            specialMusic: 'sound-bg-music-divine',
             goldenBugIcon: 'fa-sun',
             goldenBugColor: '#f1c40f'
         }

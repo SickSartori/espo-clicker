@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
 
             try {
+                // Forza salvataggio e ATTENDI la risposta del server prima di caricare
+                if (Game.saveGame) {
+                    try { await Game.saveGame(); } catch(e) {}
+                    // Attendi che il DB processi il write prima del read
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
                 const response = await fetch('php/get_leaderboard.php?nocache=' + Date.now());
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
@@ -96,11 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.innerHTML = `
                         <div class="lb-left">
                             <span class="leaderboard-rank">${rankDisplay}</span>
+                            ${avatarHTML}
                             <div class="lb-user-info">
-                                ${avatarHTML}
                                 <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
-                                ${prestigeBadge}
-                                ${formatBadge}
+                                <div class="lb-badges">
+                                    ${prestigeBadge}
+                                    ${formatBadge}
+                                </div>
                             </div>
                         </div>
                         <span class="leaderboard-score">${Game.formatNumber(entry.score)} <i class="fa-solid fa-bug"></i></span>

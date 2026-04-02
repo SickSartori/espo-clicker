@@ -35,6 +35,7 @@
     z-index: calc(var(--z-content) + 1);
     white-space: nowrap;
     width: auto;
+    will-change: transform, opacity;
 }
 
 /* Micro-particella sparkle al click */
@@ -48,6 +49,7 @@
     z-index: calc(var(--z-content) + 2);
     animation: sparkBurst var(--spark-dur, 0.6s) ease-out forwards;
     box-shadow: 0 0 6px var(--spark-color, rgba(255, 255, 255, 0.6));
+    will-change: transform, opacity;
 }
 
 @keyframes sparkBurst {
@@ -96,7 +98,12 @@
 
 #clicker-btn.click-shrink {
     transform: scale(0.90);
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ritorno elastico quando il click finisce */
+#clicker-btn:not(.click-shrink) {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 #clicker-btn::after {
@@ -122,15 +129,15 @@
     position: absolute;
     top: 0;
     left: 0;
-    transition: none;
     filter: none;
+    transition: none;
 }
 
 #manager-photo-clicked {
     opacity: 0;
 }
 
-/* Scambio Immagine */
+/* Scambio Immagine: swap istantaneo senza transizione */
 #clicker-btn.clicked #manager-photo-normal {
     opacity: 0;
 }
@@ -233,6 +240,8 @@
     min-width: 220px;
     letter-spacing: 1px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease, box-shadow 0.3s ease, border 0.3s ease,
+                color 0.3s ease, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .skill-btn:active {
@@ -303,6 +312,7 @@
     justify-content: center;
     transition: transform 0.2s;
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
+    will-change: transform;
 }
 
 #golden-bug.visible {
