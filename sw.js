@@ -133,6 +133,12 @@ self.addEventListener('activate', (event) => {
 // FETCH - Strategia intelligente con cache-bust sui file versionati
 // ============================================================
 self.addEventListener('fetch', (event) => {
+
+    if (event.request.headers.has('range') || event.request.url.match(/\.(mp3|wav|ogg)$/i)) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     const { request } = event;
     const url = request.url;
 
@@ -186,21 +192,21 @@ self.addEventListener('message', (event) => {
 // ============================================================
 
 async function cacheFirst(request) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, response.clone());
-        }
-        return response;
-    } catch (err) {
-        const fallback = await caches.match(request, { ignoreSearch: true });
-        if (fallback) return fallback;
-        return new Response('Offline', { status: 503 });
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+        return cachedResponse;
     }
+
+    const networkResponse = await fetch(request);
+    
+    // FIX: Salva in cache solo se NON è una risposta parziale (206) per i media
+    if (networkResponse.status !== 206) {
+        // Assicurati che CACHE_NAME corrisponda al nome della tua variabile cache
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
 }
 
 async function networkFirst(request) {
