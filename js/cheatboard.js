@@ -304,10 +304,16 @@
             <div class="cheat-group">
                 <div class="cheat-group-title">Dev Tools</div>
                 <div class="control-row">
-                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Prestige Ready</button>
+                    <button id="btn-debug-mode" class="cheat-btn" title="Abilita/disabilita i log in console (console.log/warn/info)"><i class="fa-solid fa-bug"></i> Debug: <span id="debug-mode-label">OFF</span></button>
+                    <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
+                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Prestige Ready</button>
+                    <button id="btn-force-save" class="cheat-btn info" title="Forza un salvataggio cloud immediato"><i class="fa-solid fa-cloud-arrow-up"></i> Force Save</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-stop-event" class="cheat-btn danger" title="Ferma forzatamente l'evento in corso"><i class="fa-solid fa-stop"></i> Stop Evento</button>
+                    <button id="btn-trigger-fury" class="cheat-btn chaos" title="Attiva Espo Fury (ignora cooldown)"><i class="fa-solid fa-fire"></i> Espo Fury</button>
                 </div>
             </div>
 
@@ -621,20 +627,92 @@
     // --- Dev Tools ---
 
     document.getElementById('btn-prestige-ready').addEventListener('click', () => {
-        if (gameData.PRESTIGE_THRESHOLD) {
-            const readyScore = gameData.PRESTIGE_THRESHOLD.add(1);
+        if (typeof getPrestigeThreshold === 'function') {
+            const threshold = getPrestigeThreshold();
+            const readyScore = threshold.add(1);
             gameState.totalScore = readyScore;
             gameState.score = readyScore;
             if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
             refreshUI();
-            toast("Prestigio Pronto!");
+            toast(`Prestigio Pronto! (Soglia: ${window.EspooClicker.formatNumber(threshold)})`);
         }
     });
 
+    // --- Debug Mode Toggle ---
+    const debugLabel = document.getElementById('debug-mode-label');
+    const debugBtn = document.getElementById('btn-debug-mode');
+
+    const updateDebugUI = () => {
+        debugLabel.textContent = window.DEBUG_MODE ? 'ON' : 'OFF';
+        debugBtn.classList.toggle('matrix', window.DEBUG_MODE);
+        debugBtn.classList.toggle('danger', !window.DEBUG_MODE);
+    };
+    updateDebugUI();
+
+    debugBtn.addEventListener('click', () => {
+        window.DEBUG_MODE = !window.DEBUG_MODE;
+        updateDebugUI();
+        toast(`Debug Mode: ${window.DEBUG_MODE ? 'ON — Log attivi in console' : 'OFF — Console silenziata'}`);
+    });
+
     document.getElementById('btn-log-state').addEventListener('click', () => {
-        console.log("--- GAME STATE ---", gameState);
-        console.log("--- GAME DATA ---", gameData);
+        // Usa _originalConsole per bypassare il filtro DEBUG_MODE
+        const c = window._console || console;
+        c.log("--- GAME STATE ---", JSON.parse(JSON.stringify(gameState)));
+        c.log("--- GAME DATA ---", gameData);
+        c.log("--- AUDIO ---", typeof AudioManager !== 'undefined' ? AudioManager._sounds : 'N/A');
         toast("Stato stampato in console (F12)");
+    });
+
+    // --- Force Save ---
+    document.getElementById('btn-force-save').addEventListener('click', async () => {
+        if (window.EspooClicker && window.EspooClicker.saveGame) {
+            await window.EspooClicker.saveGame();
+            toast("Salvataggio cloud forzato!");
+        } else {
+            toast("saveGame non disponibile");
+        }
+    });
+
+    // --- Stop Evento in corso ---
+    document.getElementById('btn-stop-event').addEventListener('click', () => {
+        if (!window.currentActiveEvent) {
+            toast("Nessun evento attivo.");
+            return;
+        }
+        const evtName = window.currentActiveEvent;
+
+        // Ferma bluescreen/matrix/star
+        if (typeof stopBluescreenEffect === 'function') stopBluescreenEffect();
+
+        // Ferma video se in corso
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video',
+         'britney-espoars-video', 'video-bigbang'].forEach(id => {
+            const v = document.getElementById(id);
+            if (v) { v.pause(); v.classList.add('video_display_none'); }
+        });
+
+        // Pulisci classi CSS residue
+        document.body.classList.remove('rick-rolling', 'bluescreen-active', 'matrix-active', 'super-star-active');
+
+        // Forza clearActiveEvent
+        if (typeof clearActiveEvent === 'function') clearActiveEvent();
+        window.currentActiveEvent = null;
+
+        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+        refreshUI();
+        toast(`Evento "${evtName}" fermato forzatamente`);
+    });
+
+    // --- Trigger Espo Fury (ignora cooldown) ---
+    document.getElementById('btn-trigger-fury').addEventListener('click', () => {
+        if (typeof crunchTimeCooldownEnd !== 'undefined') crunchTimeCooldownEnd = 0;
+        if (typeof activateCrunchTime === 'function') {
+            activateCrunchTime();
+            toast("Espo Fury attivata!");
+        } else {
+            toast("activateCrunchTime non disponibile");
+        }
     });
 
     // --- Sblocchi & Reset ---
