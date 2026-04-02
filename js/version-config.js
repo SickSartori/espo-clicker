@@ -1,5 +1,5 @@
 const GAME_VERSION = {
-    major: 3,       // Cambia questo per rompere la compatibilità in Beta
+    major: 2,       // Cambia questo per rompere la compatibilità in Beta
     minor: 0,       // Cambia questo per aggiornamenti "sicuri"
     stage: 'stable',  // 'stable' o 'beta'
 
