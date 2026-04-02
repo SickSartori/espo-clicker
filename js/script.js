@@ -208,32 +208,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dataString = `${scoreToSend}-${prestigeToSend}-${currentSaveToken}`;
                 const signature = await generateHash(dataString);
 
-                fetch('php/save_progress.php', {
+                const savePayload = {
+                    username: gameState.user.username,
+                    password: currentUserPassword,
+                    saveData: compressed,
+                    score: scoreToSend,
+                    prestige: prestigeToSend,
+                    equippedSkin: gameState.skins.current,
+                    totalFormattazioni: gameState.totalFormattazioni || 0,
+                    hash: signature
+                };
+
+                await fetch('php/save_progress.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     keepalive: true,
-                    body: JSON.stringify({
-                        username: gameState.user.username,
-                        password: currentUserPassword,
-                        saveData: compressed,
-                        score: scoreToSend,
-                        prestige: prestigeToSend,
-                        equippedSkin: gameState.skins.current,
-                        totalFormattazioni: gameState.totalFormattazioni || 0,
-                        hash: signature
-                    })
+                    body: JSON.stringify(savePayload)
                 })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.status === 'conflict') {
-                            // Avvisa l'utente che i dati sul server sono migliori
+                        if (data.status === 'success') {
+                            console.log(`[Save✓] score=${scoreToSend} prestige=${prestigeToSend} format=${savePayload.totalFormattazioni}`);
+                        } else if (data.status === 'conflict') {
+                            console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
                             window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
+                        } else if (data.status === 'warning') {
+                            console.warn(`[Save✗ WARNING] ${data.message}`);
+                            window.EspooClicker.showToast("⚠️ Sessione scaduta! Ricarica la pagina per salvare.", "error");
+                        } else {
+                            console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
                         }
                     })
-                    .catch(err => console.warn("Errore Salvataggio Cloud:", err));
+                    .catch(err => console.warn("[Save✗ NETWORK]", err));
             } catch (e) {
-                console.error("Errore hashing save:", e);
+                console.error("[Save✗ HASH]", e);
             }
+        } else {
+            console.warn(`[Save SKIP] user=${!!gameState.user.username} pass=${!!currentUserPassword} token=${!!currentSaveToken}`);
         }
     }
 
@@ -1261,8 +1272,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? currentSkin.themeConfig.specialMusic
                     : (gameState.user.bgMusicSelection || 'sound-bg-music');
 
-                const targetAudio = document.getElementById(targetId);
-                const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
+                const howl = (typeof AudioManager !== 'undefined') ? AudioManager.getHowl(targetId) : null;
+                const isBlocked = (gameState.user.masterVolume > 0 && howl && !howl.playing() && !window.currentActiveEvent);
 
                 if (isBlocked) {
                     if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();

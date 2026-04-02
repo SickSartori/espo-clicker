@@ -237,16 +237,19 @@ const AudioManager = {
                 src: [src],
                 volume: 0, // Impostato dinamicamente al play
                 loop: !!sound.loop,
-                preload: sound.category === 'effetti', // Preload solo SFX
+                preload: sound.type === 'sfx', // Preload tutti gli SFX (non musica)
                 html5: sound.type === 'music',  // Music via HTML5 (streaming, no decode)
                 pool: sound.type === 'sfx' ? 5 : 1, // Pool per SFX (max 5 copie simultanee)
                 onplayerror: (id) => {
-                    // Autoplay policy: riprova dopo unlock
+                    // Autoplay policy: sblocca AudioContext e riprova
                     if (!this._audioUnlocked) {
-                        Howler.once('unlock', () => {
-                            this._audioUnlocked = true;
-                            this._sounds[sound.id].play();
-                        });
+                        const ctx = Howler.ctx;
+                        if (ctx && ctx.state === 'suspended') {
+                            ctx.resume().then(() => {
+                                this._audioUnlocked = true;
+                                this._sounds[sound.id].play();
+                            }).catch(() => {});
+                        }
                     }
                 },
                 onloaderror: (id, err) => {
@@ -390,7 +393,7 @@ const AudioManager = {
             }
         }
 
-        // Applica: crossfade tra tracce
+        // Applica: una traccia alla volta, stop immediato sulle non-target
         allMusicIds.forEach(id => {
             const howl = this._sounds[id];
             if (!howl) return;
@@ -405,23 +408,22 @@ const AudioManager = {
 
                 if (vol > 0) {
                     if (!howl.playing()) {
+                        // Fade-in DOPO l'evento 'play': evita _playLock che mette
+                        // la chiamata volume() in coda e non la esegue mai
                         howl.volume(0);
+                        howl.once('play', () => { howl.fade(0, vol, 600); });
                         howl.play();
-                        howl.fade(0, vol, 800); // Fade-in 800ms
                     } else {
-                        howl.volume(vol); // Aggiorna volume se già in play
+                        // Cancella fade in corso e imposta volume target
+                        howl.fade(vol, vol, 1);
                     }
+                } else if (howl.playing()) {
+                    howl.stop();
                 }
             } else {
+                // Stop immediato: evita race condition con fade interval in corso
                 if (howl.playing()) {
-                    // Fade-out 500ms prima di fermare
-                    howl.fade(howl.volume(), 0, 500);
-                    setTimeout(() => {
-                        if (!howl.playing()) return;
-                        // Ricontrolla che non sia stato riavviato nel frattempo
-                        const stillTarget = this._currentMusic === id;
-                        if (!stillTarget) howl.stop();
-                    }, 550);
+                    howl.stop();
                 }
             }
         });
@@ -559,7 +561,7 @@ const FX = {
         if (!el) {
             el = document.createElement('div');
             el.id = 'fx-combo-display';
-            el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9000;pointer-events:none;' +
+            el.style.cssText = 'position:fixed;top:140px;left:50%;transform:translateX(-50%);z-index:9000;pointer-events:none;' +
                 'font-family:var(--font-heading);font-weight:900;text-align:center;text-shadow:0 0 15px rgba(255,71,87,0.6);' +
                 'color:#ff4757;transition:opacity 0.15s ease;';
             document.body.appendChild(el);

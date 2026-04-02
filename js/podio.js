@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
 
             try {
+                // Forza salvataggio e ATTENDI la risposta del server prima di caricare
+                if (Game.saveGame) {
+                    try { await Game.saveGame(); } catch(e) {}
+                    // Attendi che il DB processi il write prima del read
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
                 const response = await fetch('php/get_leaderboard.php?nocache=' + Date.now());
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);

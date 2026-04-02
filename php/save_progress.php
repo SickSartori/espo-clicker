@@ -42,17 +42,19 @@ if (!hash_equals($serverHash, $clientHash)) {
 }
 
 // --- CONTROLLO ANTI-ROLLBACK ---
-$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni FROM $table_leaderboard WHERE username = ?");
+$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni, prestigeLevel FROM $table_leaderboard WHERE username = ?");
 $stmtCheck->bind_param("s", $user['username']);
 $stmtCheck->execute();
 $resCheck = $stmtCheck->get_result();
 
 $currentDbScore = "0";
 $currentDbFormat = 0;
+$currentDbPrestige = 0;
 
 if ($row = $resCheck->fetch_assoc()) {
     $currentDbScore = $row['score'];
     $currentDbFormat = (int)$row['totalFormattazioni'];
+    $currentDbPrestige = (int)$row['prestigeLevel'];
 }
 $stmtCheck->close();
 
@@ -67,15 +69,21 @@ function isNewScoreHigher($new, $old) {
     return strcmp($new, $old) >= 0;
 }
 
-// LOGICA V2: Se il client ha PIÙ formattazioni del DB, è un NG+ valido (ignora lo score)
+// LOGICA V3: Formattazioni > Prestige > Score (gerarchia completa anti-race)
 if ($rawFormattazioni < $currentDbFormat) {
-    // Il client sta provando a ricaricare un salvataggio vecchio pre-formattazione
+    // Salvataggio vecchio pre-formattazione
     echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Format). Please reload."]);
     exit;
-} else if ($rawFormattazioni == $currentDbFormat && !isNewScoreHigher($rawScore, $currentDbScore)) {
-    // Stessa run, ma score più basso (Rollback classico)
-    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Score). Please reload."]);
-    exit;
+} else if ($rawFormattazioni == $currentDbFormat) {
+    if ((int)$rawPrestige < $currentDbPrestige) {
+        // Auto-save stale arrivato dopo un prestige (race condition)
+        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Prestige). Please reload."]);
+        exit;
+    } else if ((int)$rawPrestige == $currentDbPrestige && !isNewScoreHigher($rawScore, $currentDbScore)) {
+        // Stessa run, ma score più basso (Rollback classico)
+        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Score). Please reload."]);
+        exit;
+    }
 }
 
 // --- SE IL CONTROLLO PASSA, SALVA TUTTO ---

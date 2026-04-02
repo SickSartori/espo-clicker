@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v3.0.1';
+const CACHE_VERSION = 'espo-v3.0.5';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -222,8 +222,9 @@ async function staleWhileRevalidate(request) {
     const cached = await caches.match(request);
     const fetchPromise = fetch(request).then(response => {
         if (response.ok) {
+            const clone = response.clone(); // Clone sincrono PRIMA che il body venga consumato
             caches.open(DYNAMIC_CACHE).then(cache => {
-                cache.put(request, response.clone());
+                cache.put(request, clone);
             });
         }
         return response;

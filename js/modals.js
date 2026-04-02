@@ -742,8 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
                 'sound-bg-music-super': 'superespo',
-                'bg-music-espory': 'freddy-espory',
-                'bg-music-divine': 'jesus'
+                'sound-bg-music-espory': 'espory',
+                'sound-bg-music-divine': 'jesus'
             };
 
             const sounds = gameData.assets.sounds;
@@ -1002,7 +1002,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 else {
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV8');
+                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
                     Game.getGameState().user.username = u;
+                    if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
                     Game.saveGame();
                 }
 
