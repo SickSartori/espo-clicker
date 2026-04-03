@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.0';
+const CACHE_VERSION = 'espo-v2.0.3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -199,10 +199,14 @@ async function cacheFirst(request) {
 
     const networkResponse = await fetch(request);
     
-    // FIX: Salva in cache solo se NON è una risposta parziale (206) per i media
+    // FIX: Evita il crash ignorando richieste da estensioni browser
+    if (!request.url.startsWith('http')) {
+        return networkResponse;
+    }
+    
     if (networkResponse.status !== 206) {
-        // Assicurati che CACHE_NAME corrisponda al nome della tua variabile cache
-        const cache = await caches.open(CACHE_NAME);
+        // FIX: Utilizzo di STATIC_CACHE invece della variabile inesistente CACHE_NAME
+        const cache = await caches.open(STATIC_CACHE);
         cache.put(request, networkResponse.clone());
     }
     
@@ -212,7 +216,8 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
     try {
         const response = await fetch(request);
-        if (response.ok) {
+        // FIX: Controllo del protocollo prima di salvare in cache
+        if (response.ok && request.url.startsWith('http')) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, response.clone());
         }
@@ -227,8 +232,9 @@ async function networkFirst(request) {
 async function staleWhileRevalidate(request) {
     const cached = await caches.match(request);
     const fetchPromise = fetch(request).then(response => {
-        if (response.ok) {
-            const clone = response.clone(); // Clone sincrono PRIMA che il body venga consumato
+        // FIX: Controllo del protocollo prima di salvare in cache
+        if (response.ok && request.url.startsWith('http')) {
+            const clone = response.clone(); 
             caches.open(DYNAMIC_CACHE).then(cache => {
                 cache.put(request, clone);
             });
