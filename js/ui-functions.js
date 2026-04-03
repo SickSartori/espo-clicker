@@ -1549,7 +1549,7 @@ function showV2MigrationModal(onConfirm) {
     overlay.className = 'modal-backdrop';
     overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
     overlay.innerHTML = `
-        <div class="modal-content" style="max-width:480px; text-align:center; animation: popIn 0.3s ease-out;">
+        <div class="modal-content" style="max-width:480px; text-align:center; animation: popIn 0.3s ease-out; padding: 10px">
             <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">BENVENUTO NELLA V2.0</h2>
             <div style="text-align:left; font-size:0.95rem; color:#bdc3c7; margin-bottom:20px;">
                 Grazie per aver giocato alla prima versione di <b>Espo Clicker</b>!<br><br>
@@ -1561,8 +1561,8 @@ function showV2MigrationModal(onConfirm) {
                     <b style="color:#9b59b6;">&#10003; BONUS VETERANO</b><br>Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
                 </div>
             </div>
-            <button class="buy-btn" style="width:100%; padding:12px; font-size:1.1rem;" id="v2-migration-confirm">
-                <i class="fa-solid fa-meteor"></i> SCOPRI LE NOVITÀ
+            <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="v2-migration-confirm">
+                <i class="fa-solid fa-meteor" style="margin-right: 2px;"></i> SCOPRI LE NOVITÀ
             </button>
         </div>`;
     document.body.appendChild(overlay);
