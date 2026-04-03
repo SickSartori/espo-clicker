@@ -56,7 +56,9 @@ async function initPlayer() {
 
     audio.addEventListener('timeupdate', updateProgress);
     audio.addEventListener('ended', () => {
-        if (!isLooping) nextTrack();
+    // Forza il caricamento del nuovo brano
+    nextTrack();
+    // Su mobile a volte serve chiamare play() esplicitamente dopo un interazione utente
     });
 
     audio.addEventListener('loadedmetadata', () => {
@@ -103,7 +105,22 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIndex = index;
     audio.src = playlist[index].file;
     document.getElementById('current-track-name').textContent = playlist[index].name;
-    
+
+    // --- AGGIUNTA PER CONTROLLI BACKGROUND ---
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: playlist[index].name,
+            artist: 'Espofy',
+            album: 'Espòòò Clicker OST',
+            artwork: [{ src: 'ico.svg', sizes: '512x512', type: 'image/svg+xml' }]
+        });
+
+        // Configura le azioni dello skip
+        navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+        navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+    }
+    // ------------------------------------------
+
     updatePlaylistUI();
     if(autoPlay) playTrack();
 }

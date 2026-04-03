@@ -319,40 +319,46 @@ i.fas, i.far, i.fab { margin-right: 8px; }
 @media screen and (max-width: 768px) {
     .app-layout {
         flex-direction: column;
+        height: calc(100vh - 120px); /* FIX: Lascia lo spazio esatto per la player-bar in basso */
     }
 
     .sidebar {
         width: 100%;
-        padding: 10px 15px;
+        padding: 15px 10px;
         border-right: none;
         border-bottom: 1px solid #222;
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: column; /* FIX: Incolonna logo e menù per evitare schiacciamenti */
+        justify-content: center;
         align-items: center;
+        gap: 15px;
     }
 
     .logo h2 {
         margin: 0;
-        font-size: 20px;
+        font-size: 22px;
+        justify-content: center;
     }
 
     .nav-links {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        gap: 20px;
+        width: 100%;
     }
 
     .nav-links li {
-        padding: 8px 12px;
+        padding: 5px 10px;
         margin: 0;
         font-size: 14px;
         border-left: none;
         border-bottom: 2px solid transparent;
+        white-space: nowrap; /* FIX: Evita che i testi dei pulsanti vadano a capo spezzandosi */
     }
 
     .nav-links li.active {
         border-left: none;
-        border-bottom: 2px solid #007bff; /* FIX: Spostato il bordo attivo in basso */
+        border-bottom: 2px solid #007bff;
     }
 
     .main-view {
@@ -360,17 +366,26 @@ i.fas, i.far, i.fab { margin-right: 8px; }
         border-radius: 0;
     }
 
-    .main-header h2 {
-        font-size: 24px;
+    .main-header {
+        padding: 15px 20px;
     }
 
-    /* FIX: Riorganizzazione della barra del player per piccoli schermi */
+    .main-header h2 {
+        font-size: 22px;
+    }
+
     .player-bar {
-        min-width: 0; /* Sovrascrive il limite desktop */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        min-width: 0; /* FIX: Rimuove il limite dei 600px che spingeva i controlli fuori schermo */
         height: auto;
         padding: 15px 10px;
-        flex-direction: column;
-        gap: 12px;
+        background-color: #1a1a1a;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        flex-direction: column; /* FIX: Incolonna il titolo della canzone e i tasti del player */
+        gap: 10px;
     }
 
     .track-info {
@@ -381,20 +396,30 @@ i.fas, i.far, i.fab { margin-right: 8px; }
 
     .track-details {
         text-align: center;
+        width: 100%;
     }
 
     .player-controls-wrapper {
         width: 100%;
     }
 
-    .volume-control {
-        display: none; /* FIX: Nascosto su mobile (su smartphone il volume si controlla con i tasti fisici) */
+    .controls {
+        justify-content: center; 
+        margin-bottom: 10px;
     }
 
-    /* FIX: Adattamento tabella playlist */
+    .progress-container {
+        width: 90%; /* FIX: Gestisce la larghezza per non toccare i bordi dello schermo */
+        margin: 0 auto;
+    }
+
+    .volume-control {
+        display: none; /* Su mobile il volume si controlla con i tasti fisici */
+    }
+
     .playlist-table th,
     .playlist-table td {
-        font-size: 12px;
-        padding: 10px 5px;
+        font-size: 13px;
+        padding: 12px 5px;
     }
 }
