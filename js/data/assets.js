@@ -57,7 +57,7 @@ window.gameData.assets = {
         // --- SUONI ARCADE ---
         'arcade-theme': {
             id: 'sound-arcade-theme',
-            file: 'arcade/assets/arcade-theme.mp3',
+            file: 'assets/sounds/arcade/arcade-theme.mp3',
             name: 'Espò Arcade',
             type: 'music',
             category: 'ambiente',
@@ -66,7 +66,7 @@ window.gameData.assets = {
         },
         'arcade-hover': {
             id: 'sound-arcade-hover',
-            file: 'arcade/assets/arcade-hover.wav',
+            file: 'assets/sounds/arcade/arcade-hover.wav',
             name: 'Arcade Hover',
             type: 'sfx',
             category: 'effetti',
@@ -74,7 +74,7 @@ window.gameData.assets = {
         },
         'arcade-start': {
             id: 'sound-arcade-start',
-            file: 'arcade/assets/arcade-start.wav',
+            file: 'assets/sounds/arcade/arcade-start.wav',
             name: 'Arcade Start',
             type: 'sfx',
             category: 'effetti',
@@ -82,7 +82,7 @@ window.gameData.assets = {
         },
         'snake-eat': {
             id: 'sound-snake-eat',
-            file: 'arcade/assets/snake-eat.wav',
+            file: 'assets/sounds/arcade/snake-eat.wav',
             name: 'Snake Mangia',
             type: 'sfx',
             category: 'effetti',
@@ -208,7 +208,7 @@ window.gameData.assets = {
         },
         'space-shoot': {
             id: 'sound-space-shoot',
-            file: 'arcade/assets/space-shoot.wav',
+            file: 'assets/sounds/arcade/space-shoot.wav',
             name: 'Space Shoot',
             type: 'sfx',
             category: 'effetti',
@@ -216,7 +216,7 @@ window.gameData.assets = {
         },
         'space-boom': {
             id: 'sound-space-boom',
-            file: 'arcade/assets/space-boom.wav',
+            file: 'assets/sounds/arcade/space-boom.wav',
             name: 'Space Explosion',
             type: 'sfx',
             category: 'effetti',
@@ -224,7 +224,7 @@ window.gameData.assets = {
         },
         'arcade-gameover': {
             id: 'sound-arcade-gameover',
-            file: 'arcade/assets/game-over.mp3',
+            file: 'assets/sounds/arcade/game-over.mp3',
             name: 'Arcade Game Over',
             type: 'sfx',
             category: 'effetti',

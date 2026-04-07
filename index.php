@@ -30,38 +30,35 @@ require_once("php/check_version.php");
 		<!-- Preload font critici -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
 		<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 		<link rel="preconnect" href="https://cdn.jsdelivr.net">
 
-		<!-- CSS Core (render-blocking intenzionale) -->
-		<link rel="stylesheet" href="css/keyframes.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/base.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/layout.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/components.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/navbar.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/clicker.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/store.css?v=<?php echo $cacheVer; ?>">
+		<!-- ============================================================ -->
+		<!-- CSS BUNDLE (18 file → 3 bundle = -15 richieste HTTP)       -->
+		<!-- Serviti da css/concat.php con gzip + cache 7 giorni        -->
+		<!-- ============================================================ -->
 
-		<!-- CSS Modali e Skins (non bloccanti) -->
-		<link rel="stylesheet" href="css/modals-core.css?v=<?php echo $cacheVer; ?>" media="all">
-		<link rel="stylesheet" href="css/modals-content.css?v=<?php echo $cacheVer; ?>" media="all">
-		<link rel="stylesheet" href="css/modals-arcade.css?v=<?php echo $cacheVer; ?>" media="all">
-		<link rel="stylesheet" href="css/skins.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/skins-modern.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="css/podio.css?v=<?php echo $cacheVer; ?>">
+		<!-- Bundle Core: keyframes, base, layout, components, navbar, clicker, store -->
+		<link rel="stylesheet" href="css/concat.php?bundle=core&v=<?php echo $cacheVer; ?>">
 
-		<!-- CSS Mobile (caricato solo su mobile) -->
-		<link rel="stylesheet" href="css/mobile.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
-		<link rel="stylesheet" href="css/mobile-simplified.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+		<!-- Bundle UI: modals, skins, podio -->
+		<link rel="stylesheet" href="css/concat.php?bundle=ui&v=<?php echo $cacheVer; ?>" media="all">
 
-		<!-- CSS Arcade (caricato solo su schermi non-mobile) -->
-		<link rel="stylesheet" href="arcade/snake/css/snake.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="arcade/space/css/space.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="arcade/asteroids/css/asteroids.css?v=<?php echo $cacheVer; ?>">
-		<link rel="stylesheet" href="arcade/super-espo/css/super-espo.css?v=<?php echo $cacheVer; ?>">
+		<!-- Bundle Mobile: caricato solo sotto 768px -->
+		<link rel="stylesheet" href="css/concat.php?bundle=mobile&v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+
+		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
+
+		<!-- ============================================================ -->
+		<!-- PRELOAD immagini critiche (above-the-fold)                  -->
+		<!-- Accelera il Largest Contentful Paint (LCP)                 -->
+		<!-- ============================================================ -->
+		<link rel="preload" as="image" href="assets/image/skins/espo.webp" fetchpriority="high">
+		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high">
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
-		<link rel="icon" type="image/png" href="assets/image/favicon.webp">
+		<link rel="icon" type="image/png" href="assets/image/ui/favicon.webp">
 	</head>
 	<body>
 		<canvas id="matrix-canvas"></canvas>
@@ -265,12 +262,25 @@ require_once("php/check_version.php");
 			</button>
 		</div>
 
+		<!-- ============================================================ -->
+		<!-- LIBRERIE ESTERNE (solo quelle necessarie all'avvio)        -->
+		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
+		<!-- ============================================================ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js" defer></script>
+		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
+
+		<!-- ============================================================ -->
+		<!-- ASSET SYSTEM                                                -->
+		<!-- asset-packages.js: definizioni pacchetti (solo dati)      -->
+		<!-- asset-manager.js:  caricamento progressivo + on-demand    -->
+		<!-- Devono precedere i file di gioco per essere disponibili   -->
+		<!-- ============================================================ -->
+		<script src="js/asset-packages.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<script src="js/asset-manager.js?v=<?php echo $cacheVer; ?>" defer></script>
 
 		<!-- Game Version -->
 		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
@@ -293,11 +303,14 @@ require_once("php/check_version.php");
 		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
 		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
 		
-		<!-- Arcade -->
-		<script src="arcade/snake/js/snake.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="arcade/space/js/space.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="arcade/asteroids/js/asteroids.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="arcade/super-espo/js/super-espo.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<!-- ============================================================ -->
+		<!-- ARCADE LAZY LOADER                                          -->
+		<!-- Carica Phaser + CSS + JS arcade solo all'apertura Arcade   -->
+		<!-- Risparmio: ~1.5 MB + 9 richieste HTTP sull'avvio          -->
+		<!-- ============================================================ -->
+		<script src="js/arcade-loader.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
+		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
 	
 		<?php
 // Uso la stessa variabile usata nella libreria check_version.php
@@ -309,6 +322,11 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 		<!-- PWA Service Worker: auto-update + auto-reload -->
 		<script>
 		if ('serviceWorker' in navigator) {
+			// Cattura se c'era già un controller PRIMA della registrazione.
+			// Se non c'era (prima installazione), non ricaricare quando il SW
+			// prende il controllo: la pagina è già stata caricata fresca.
+			const _swHadController = !!navigator.serviceWorker.controller;
+
 			window.addEventListener('load', () => {
 				navigator.serviceWorker.register('./sw.js').then(reg => {
 					console.log('[PWA] SW registrato:', reg.scope);
@@ -334,16 +352,26 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 					});
 				}).catch(err => console.warn('[PWA] Registrazione fallita:', err));
 
-				// Ascolta messaggi dal SW
+				// Ascolta messaggi dal SW — un solo reload anche se arrivano più messaggi
+				let _swReloadPending = false;
 				navigator.serviceWorker.addEventListener('message', (e) => {
 					if (e.data.type === 'SW_UPDATED' || e.data.type === 'SW_FORCE_RELOAD') {
+						// Ignora se è la prima installazione (nessun controller precedente)
+						if (!_swHadController) return;
+						if (_swReloadPending) return;
+						_swReloadPending = true;
 						console.log('[PWA] Aggiornamento ricevuto, ricarico pagina...');
 						window.location.reload();
 					}
 				});
 
-				// Rileva cambio controller (nuovo SW ha preso il controllo)
+				// controllerchange e SW_UPDATED scattano entrambi al cambio SW:
+				// usiamo lo stesso flag per evitare il doppio reload.
 				navigator.serviceWorker.addEventListener('controllerchange', () => {
+					// Ignora se è la prima installazione (nessun controller precedente)
+					if (!_swHadController) return;
+					if (_swReloadPending) return;
+					_swReloadPending = true;
 					window.location.reload();
 				});
 			});

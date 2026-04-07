@@ -226,6 +226,9 @@ const AudioManager = {
     _sounds: {},        // Cache Howl instances: { 'sound-click': Howl, ... }
     _currentMusic: null, // ID della traccia musicale attualmente in play
     _audioUnlocked: false,
+    _pendingPlay: new Set(), // Tracce con play accodato ma non ancora confermato da Howler
+    _ambienceTimer: null,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
+                             // successione (boot, cloud sync, listener) → un solo play per ciclo
 
     init() {
         // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
@@ -240,16 +243,29 @@ const AudioManager = {
                 preload: sound.type === 'sfx', // Preload tutti gli SFX (non musica)
                 html5: sound.type === 'music',  // Music via HTML5 (streaming, no decode)
                 pool: sound.type === 'sfx' ? 5 : 1, // Pool per SFX (max 5 copie simultanee)
-                onplayerror: (id) => {
-                    // Autoplay policy: sblocca AudioContext e riprova
+                onplayerror: () => {
+                    // Il play è fallito (autoplay bloccato dal browser).
+                    // 1. Rimuovi da _pendingPlay: senza questo, _applyAmbience non
+                    //    ritenterà mai perché vede il flag ancora attivo.
+                    this._pendingPlay.delete(sound.id);
+
+                    // 2. Al primo errore registra un listener una-tantum sul gesto utente.
+                    //    Quando l'utente interagisce, updateAmbience() (debounced) avvia
+                    //    un solo play controllato. Usare { once: true } garantisce che
+                    //    il listener non scatti mai più di una volta anche se arrivano
+                    //    più onplayerror prima del gesto.
                     if (!this._audioUnlocked) {
-                        const ctx = Howler.ctx;
-                        if (ctx && ctx.state === 'suspended') {
-                            ctx.resume().then(() => {
-                                this._audioUnlocked = true;
-                                this._sounds[sound.id].play();
-                            }).catch(() => {});
-                        }
+                        this._audioUnlocked = true;
+                        const onGesture = () => {
+                            const ctx = Howler.ctx;
+                            if (ctx && ctx.state === 'suspended') {
+                                ctx.resume().catch(() => {});
+                            }
+                            this.updateAmbience();
+                        };
+                        document.addEventListener('click',      onGesture, { once: true });
+                        document.addEventListener('keydown',    onGesture, { once: true });
+                        document.addEventListener('touchstart', onGesture, { once: true });
                     }
                 },
                 onloaderror: (id, err) => {
@@ -259,7 +275,9 @@ const AudioManager = {
         }
 
         this._audioUnlocked = Howler.ctx && Howler.ctx.state === 'running';
-        this.updateAmbience();
+        // NON chiamare updateAmbience() qui: i Howl sono appena creati e non è ancora
+        // noto se l'utente è loggato. Il play parte da tryStartAudio() che viene
+        // chiamata subito dopo da tryStart() e/o dal setTimeout post-loader.
     },
 
     getCustomVolume(id) {
@@ -341,6 +359,13 @@ const AudioManager = {
     },
 
     updateAmbience() {
+        // Debounce: se chiamata più volte entro 80ms, esegue solo l'ultima.
+        // Previene il doppio play causato da chiamate ravvicinate durante boot/cloud-sync.
+        clearTimeout(this._ambienceTimer);
+        this._ambienceTimer = setTimeout(() => this._applyAmbience(), 80);
+    },
+
+    _applyAmbience() {
         if (!sessionStorage.getItem('espooUser')) {
             // Ferma tutta la musica se non loggato
             for (const id in this._sounds) {
@@ -407,13 +432,19 @@ const AudioManager = {
                 }
 
                 if (vol > 0) {
-                    if (!howl.playing()) {
+                    if (!howl.playing() && !this._pendingPlay.has(id)) {
                         // Fade-in DOPO l'evento 'play': evita _playLock che mette
-                        // la chiamata volume() in coda e non la esegue mai
+                        // la chiamata volume() in coda e non la esegue mai.
+                        // _pendingPlay blocca chiamate doppie mentre Howler non ha
+                        // ancora aggiornato playing() (race condition su F5/SW cache).
+                        this._pendingPlay.add(id);
                         howl.volume(0);
-                        howl.once('play', () => { howl.fade(0, vol, 600); });
+                        howl.once('play', () => {
+                            this._pendingPlay.delete(id);
+                            howl.fade(0, vol, 600);
+                        });
                         howl.play();
-                    } else {
+                    } else if (howl.playing()) {
                         // Cancella fade in corso e imposta volume target
                         howl.fade(vol, vol, 1);
                     }
@@ -421,7 +452,8 @@ const AudioManager = {
                     howl.stop();
                 }
             } else {
-                // Stop immediato: evita race condition con fade interval in corso
+                // Stop immediato: pulisci anche il pending flag
+                this._pendingPlay.delete(id);
                 if (howl.playing()) {
                     howl.stop();
                 }
@@ -934,16 +966,16 @@ function activateCrunchTime() {
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
             // Versione 8-Bit
-            photoNormal.src = 'assets/image/espobit-fury.webp';
-            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espobit-fury.webp';
+            photoClicked.src = 'assets/image/skins/espobit-fury-click.webp';
         } else if (document.body.classList.contains('theme-super')) {
             // Versione Super Espo
-            photoNormal.src = 'assets/image/super-espofury.webp';
-            photoClicked.src = 'assets/image/super-espofury-click.webp';
+            photoNormal.src = 'assets/image/skins/super-espofury.webp';
+            photoClicked.src = 'assets/image/skins/super-espofury-click.webp';
         } else {
             // Versione Standard
-            photoNormal.src = 'assets/image/espo-fury.webp';
-            photoClicked.src = 'assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espo-fury.webp';
+            photoClicked.src = 'assets/image/skins/espo-fury-click.webp';
         }
     }
 
@@ -1195,12 +1227,12 @@ const EventHandlers = {
                 // Controlla se il tema 8-bit è attivo
                 if (document.body.classList.contains('theme-8bit')) {
                     // Se sì, usa le versioni 8-bit di Matrix
-                    photoNormal.src = 'assets/image/espobit-matrix.webp';
-                    photoClicked.src = 'assets/image/espobit-matrix-click.webp';
+                    photoNormal.src = 'assets/image/skins/espobit-matrix.webp';
+                    photoClicked.src = 'assets/image/skins/espobit-matrix-click.webp';
                 } else {
                     // Altrimenti, usa le versioni standard di Matrix
-                    photoNormal.src = 'assets/image/espo-matrix.webp';
-                    photoClicked.src = 'assets/image/espo-matrix-click.webp';
+                    photoNormal.src = 'assets/image/skins/espo-matrix.webp';
+                    photoClicked.src = 'assets/image/skins/espo-matrix-click.webp';
                 }
                 // ------------------------------------------
             }

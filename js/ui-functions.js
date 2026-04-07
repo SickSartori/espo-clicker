@@ -1326,7 +1326,7 @@ function showClickFeedback(event) {
         container.style.zIndex = '10005';
 
         const img = document.createElement('img');
-        img.src = 'assets/image/star.png';
+        img.src = 'assets/image/ui/star.png';
         img.onerror = () => {
             img.remove();
             container.innerHTML = '<i class="fa-solid fa-star" style="color:#f1c40f"></i>';
@@ -2169,7 +2169,26 @@ function equipSkin(skinId) {
 
     if (typeof playSound === 'function') playSound('sound-click');
     if (window.EspooClicker) window.EspooClicker.saveGame();
-    updateSkinsUI();
+
+    // Aggiorna solo lo stato equipaggiato senza ricostruire l'intera UI (evita il flash)
+    _refreshEquippedState(skinId);
+}
+
+// Aggiorna solo le parti di UI che cambiano quando si equipaggia una skin,
+// senza distruggere e ricreare tutti gli elementi immagine (causa del flash).
+function _refreshEquippedState(newSkinId) {
+    const toggleUI = document.getElementById('skins-ui-toggle');
+    const useModern = toggleUI ? toggleUI.checked : true;
+
+    if (useModern) {
+        // Carousel moderno: aggiorna solo i dati in memoria e il pannello info.
+        // renderModernCarousel() non tocca le <img> — aggiorna solo classi CSS e panel.
+        modernSkinsArray.forEach(s => { s.isEquipped = (s.id === newSkinId); });
+        renderModernCarousel();
+    } else {
+        // Griglia legacy: full re-render necessario (non è la vista predefinita)
+        updateSkinsUI();
+    }
 }
 
 function triggerChristmasOverlay() {

@@ -118,29 +118,30 @@
     let upWasDown = false; 
 
     function preload() {
-        const basePath = 'arcade/super-espo/assets/';
+        const imgPath   = 'assets/image/arcade/';
+        const audioPath = 'assets/sounds/arcade/super-espo/';
         const v = '?v=' + Date.now();
 
-        this.load.spritesheet('super-espo', basePath + 'espo-grown.png' + v, { frameWidth: 250, frameHeight: 424 });
-        this.load.image('floorbricks', basePath + 'floorbricks.png' + v);
-        this.load.image('emptyBlock', basePath + 'emptyBlock.png' + v);
-        this.load.spritesheet('misteryBlock', basePath + 'misteryBlock.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.spritesheet('goomba', basePath + 'goomba.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.image('bush1', basePath + 'bush1.png' + v);
-        this.load.image('bush2', basePath + 'bush2.png' + v);
-        this.load.image('mountain1', basePath + 'mountain1.png' + v);
-        this.load.image('mountain2', basePath + 'mountain2.png' + v);
-        this.load.image('cloud1', basePath + 'cloud1.png' + v);
-        this.load.image('cloud2', basePath + 'cloud2.png' + v);
-        this.load.image('fence', basePath + 'fence.png' + v);
-        this.load.spritesheet('coin', basePath + 'coin.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.image('pipe-small', basePath + 'vertical-small-tube.png' + v);
-        this.load.image('pipe-medium', basePath + 'vertical-medium-tube.png' + v);
+        this.load.spritesheet('super-espo', imgPath + 'espo-grown.png' + v, { frameWidth: 250, frameHeight: 424 });
+        this.load.image('floorbricks', imgPath + 'floorbricks.png' + v);
+        this.load.image('emptyBlock', imgPath + 'emptyBlock.png' + v);
+        this.load.spritesheet('misteryBlock', imgPath + 'misteryBlock.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('goomba', imgPath + 'goomba.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('bush1', imgPath + 'bush1.png' + v);
+        this.load.image('bush2', imgPath + 'bush2.png' + v);
+        this.load.image('mountain1', imgPath + 'mountain1.png' + v);
+        this.load.image('mountain2', imgPath + 'mountain2.png' + v);
+        this.load.image('cloud1', imgPath + 'cloud1.png' + v);
+        this.load.image('cloud2', imgPath + 'cloud2.png' + v);
+        this.load.image('fence', imgPath + 'fence.png' + v);
+        this.load.spritesheet('coin', imgPath + 'coin.png' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('pipe-small', imgPath + 'vertical-small-tube.png' + v);
+        this.load.image('pipe-medium', imgPath + 'vertical-medium-tube.png' + v);
 
-        this.load.audio('snd-jump', basePath + 'jump.wav' + v);
-        this.load.audio('snd-gameover', basePath + 'gameover.mp3' + v);
-        this.load.audio('snd-coin', basePath + 'coin.mp3' + v);
-        this.load.audio('snd-stomp', basePath + 'goomba-stomp.wav' + v);
+        this.load.audio('snd-jump',     audioPath + 'jump.wav' + v);
+        this.load.audio('snd-gameover', audioPath + 'gameover.mp3' + v);
+        this.load.audio('snd-coin',     audioPath + 'coin.mp3' + v);
+        this.load.audio('snd-stomp',    audioPath + 'goomba-stomp.wav' + v);
     }
 
     function create() {

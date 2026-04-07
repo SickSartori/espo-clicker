@@ -879,10 +879,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. ASSET CRITICI (Immagini base)
         const criticalImages = new Set([
-            'assets/image/favicon.webp',
-            'assets/image/hidden.webp',
-            'assets/image/bluescreen.webp',
-            'assets/image/super-block.webp'
+            'assets/image/ui/favicon.webp',
+            'assets/image/ui/hidden.webp',
+            'assets/image/ui/bluescreen.webp',
+            'assets/image/ui/super-block.webp'
         ]);
         const backgroundImages = new Set();
 
@@ -1092,6 +1092,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         loader.classList.add('hidden');
                         setTimeout(() => loader.remove(), 600);
                     }
+
+                    // Notifica l'AssetManager che il boot è completato:
+                    // avvia il caricamento progressivo in background delle skin.
+                    window.dispatchEvent(new CustomEvent('gameBootComplete'));
 
                     updateUI();
 
@@ -1791,7 +1795,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     showToast(gameData.texts.toasts.cloudSync);
                     setTimeout(() => {
-                        if (typeof AudioManager !== 'undefined') AudioManager.init();
+                        // Non re-inizializzare: le istanze Howl esistono già dal boot.
+                        // Basta aggiornare volumi/traccia con i dati caricati dal cloud.
+                        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
                         window.EspooClicker.tryStartAudio();
                     }, 500);
 

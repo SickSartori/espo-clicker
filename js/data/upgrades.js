@@ -173,8 +173,8 @@ window.gameData.prestigeUpgrades = {
         desc: 'Abilità Attiva: Espo si infuria! BPS x7 per 30s.',
         baseCost: new Decimal(200),
         isCounted: false,
-        furyImage: 'espo-fury.webp',
-        furyClickImage: 'espo-fury-click.webp'
+        furyImage: 'skins/espo-fury.webp',
+        furyClickImage: 'skins/espo-fury-click.webp'
     },
     bugBounty: {
         name: 'Bug Bounty',
