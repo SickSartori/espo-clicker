@@ -265,6 +265,7 @@ input:checked+.modern-slider:before {
     transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+
 /* Badge Rarità ancorato all'immagine */
 .carousel-badge {
     position: absolute;

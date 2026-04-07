@@ -6,10 +6,11 @@ require_once("php/check_version.php");
 <html lang="it">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
 		<!-- PWA Meta Tags -->
-		<meta name="theme-color" content="#3498db">
+		<meta name="theme-color" content="#3498db">	
+		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 		<meta name="apple-mobile-web-app-title" content="Espo Clicker">
@@ -19,9 +20,8 @@ require_once("php/check_version.php");
 		<meta name="msapplication-TileImage" content="assets/image/icons/icon-144.png">
 		<link rel="manifest" href="manifest.json">
 		<link rel="apple-touch-icon" href="assets/image/icons/icon-192.png">
-		<link rel="apple-touch-icon" sizes="192x192" href="assets/image/icons/icon-192.png">
-		<link rel="apple-touch-icon" sizes="152x152" href="assets/image/icons/icon-152.png">
-		<link rel="apple-touch-icon" sizes="144x144" href="assets/image/icons/icon-144.png">
+		<link rel="icon" type="image/png" sizes="192x192" href="assets/image/icons/icon-192.png">
+		<link rel="icon" type="image/png" sizes="512x512" href="assets/image/icons/icon-512.png">
 
 		<title>
 			<?php echo $labels["head_titolo"]; ?>

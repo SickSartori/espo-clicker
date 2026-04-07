@@ -36,6 +36,59 @@ body {
     overscroll-behavior-x: none;
 }
 
+button, 
+.buy-btn, 
+#clicker-btn, 
+.mobile-nav-btn,
+.carousel-item {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+#clicker-btn, 
+#manager-photo-normal, 
+#manager-photo-clicked {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+#clicker-btn img {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.carousel-item {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    will-change: transform, opacity, filter;
+    transform: translateZ(0); 
+}
+
+.carousel-item img {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+.click-feedback, 
+.click-feedback-star {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+}
+.modal-content, 
+.modal-backdrop,
+#prestige-transition-overlay {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
 h1,
 h2,
 h3,

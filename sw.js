@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.5';
+const CACHE_VERSION = 'espo-v2.0.6';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 

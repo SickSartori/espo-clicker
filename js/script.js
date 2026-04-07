@@ -1329,13 +1329,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (clickerButton) {
+            // Pulizia grafica (Blur) per togliere il focus dal bottone
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+            clickerButton.addEventListener('touchend', () => clickerButton.blur());
 
+            // 1. GESTIONE MOUSE (Nativa)
             clickerButton.addEventListener('click', (e) => {
                 tryStart();
                 resolveBug(e);
             });
+
+            // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
+            clickerButton.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
+                tryStart();
+                
+                const touch = e.touches[0];
+                
+                // Creiamo un evento sintetico con detail: 1 per superare il blocco di resolveBug
+                resolveBug({
+                    detail: 1, 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    target: clickerButton
+                });
+            }, { passive: false });
         }
 
         if (globalFilterSelect) {
