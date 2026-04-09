@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.1.8'; // Cleanup: rimossi log di debug
+const CACHE_VERSION = 'espo-v2.1.9';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -13,9 +13,9 @@ const PRECACHE_ASSETS = [
     './index.php',
 
     // CSS Bundle (sostituiscono i 18 file singoli)
-    './css/concat.php?bundle=core&v=2.1.8',
-    './css/concat.php?bundle=ui&v=2.1.8',
-    './css/concat.php?bundle=mobile&v=2.1.8',
+    './css/concat.php?bundle=core&v=2.1.9',
+    './css/concat.php?bundle=ui&v=2.1.9',
+    './css/concat.php?bundle=mobile&v=2.1.9',
 
     // JS core
     './js/version-config.js',

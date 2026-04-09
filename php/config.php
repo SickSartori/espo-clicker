@@ -6,7 +6,7 @@ return [
     "dbname" => "my_espooclicker",
     "port" => 3306,
     "instanceName" => "dev", // 'dev' o 'production'
-    "devVersion" => "2.1.8",
+    "devVersion" => "2.1.9",
     "prodVersion" => "2.0"
 ];
 ?>
