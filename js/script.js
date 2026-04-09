@@ -879,10 +879,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. ASSET CRITICI (Immagini base)
         const criticalImages = new Set([
-            'assets/image/favicon.webp',
-            'assets/image/hidden.webp',
-            'assets/image/bluescreen.webp',
-            'assets/image/super-block.webp'
+            'assets/image/ui/favicon.webp',
+            'assets/image/ui/hidden.webp',
+            'assets/image/ui/bluescreen.webp',
+            'assets/image/ui/super-block.webp'
         ]);
         const backgroundImages = new Set();
 
@@ -1092,6 +1092,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         loader.classList.add('hidden');
                         setTimeout(() => loader.remove(), 600);
                     }
+
+                    // Notifica l'AssetManager che il boot è completato:
+                    // avvia il caricamento progressivo in background delle skin.
+                    window.dispatchEvent(new CustomEvent('gameBootComplete'));
 
                     updateUI();
 
@@ -1329,13 +1333,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (clickerButton) {
+            // Pulizia grafica (Blur) per togliere il focus dal bottone
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+            clickerButton.addEventListener('touchend', () => clickerButton.blur());
 
+            // 1. GESTIONE MOUSE (Nativa)
             clickerButton.addEventListener('click', (e) => {
                 tryStart();
                 resolveBug(e);
             });
+
+            // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
+            clickerButton.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
+                tryStart();
+                
+                const touch = e.touches[0];
+                
+                // Creiamo un evento sintetico con detail: 1 per superare il blocco di resolveBug
+                resolveBug({
+                    detail: 1, 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    target: clickerButton
+                });
+            }, { passive: false });
         }
 
         if (globalFilterSelect) {
@@ -1772,7 +1795,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     showToast(gameData.texts.toasts.cloudSync);
                     setTimeout(() => {
-                        if (typeof AudioManager !== 'undefined') AudioManager.init();
+                        // Non re-inizializzare: le istanze Howl esistono già dal boot.
+                        // Basta aggiornare volumi/traccia con i dati caricati dal cloud.
+                        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
                         window.EspooClicker.tryStartAudio();
                     }, 500);
 

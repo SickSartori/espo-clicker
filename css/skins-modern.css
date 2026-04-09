@@ -245,8 +245,12 @@ input:checked+.modern-slider:before {
 /* Singolo Elemento 3D */
 .carousel-item {
     position: absolute;
+    top: 50%;
+    left: 50%;
     width: 140px;
     height: 140px;
+    margin-top: -70px;
+    margin-left: -70px;
     transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
     cursor: pointer;
     border-radius: 50%;
@@ -264,6 +268,7 @@ input:checked+.modern-slider:before {
     background: #080b0f;
     transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
 
 /* Badge Rarità ancorato all'immagine */
 .carousel-badge {

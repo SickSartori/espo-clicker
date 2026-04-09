@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.3';
+const CACHE_VERSION = 'espo-v2.1.8'; // Cleanup: rimossi log di debug
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -11,22 +11,19 @@ const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const PRECACHE_ASSETS = [
     './',
     './index.php',
-    './css/keyframes.css',
-    './css/base.css',
-    './css/layout.css',
-    './css/components.css',
-    './css/navbar.css',
-    './css/clicker.css',
-    './css/store.css',
-    './css/modals-core.css',
-    './css/modals-content.css',
-    './css/modals-arcade.css',
-    './css/skins.css',
-    './css/skins-modern.css',
-    './css/podio.css',
-    './css/mobile.css',
-    './css/mobile-simplified.css',
+
+    // CSS Bundle (sostituiscono i 18 file singoli)
+    './css/concat.php?bundle=core&v=2.1.8',
+    './css/concat.php?bundle=ui&v=2.1.8',
+    './css/concat.php?bundle=mobile&v=2.1.8',
+
+    // JS core
     './js/version-config.js',
+    './js/asset-packages.js',
+    './js/asset-manager.js',
+    './js/arcade-loader.js',
+
+    // JS data
     './js/data/core.js',
     './js/data/assets.js',
     './js/data/skins.js',
@@ -36,14 +33,53 @@ const PRECACHE_ASSETS = [
     './js/data/events.js',
     './js/data/texts.js',
     './js/data/gamestate.js',
+
+    // JS game
     './js/ui-functions.js',
     './js/game-logic.js',
     './js/script.js',
     './js/podio.js',
     './js/modals.js',
-    './assets/image/favicon.webp',
+
+    // ── Pacchetto CORE ────────────────────────────────────────
+    './assets/image/skins/espo.webp',
+    './assets/image/skins/espo-click.webp',
+    './assets/image/ui/bug.webp',
+    './assets/image/ui/hidden.webp',
+    './assets/image/ui/super-block.webp',
+    './assets/image/ui/star.png',
+
+    // ── Pacchetto UI/PWA ──────────────────────────────────────
+    './assets/image/ui/favicon.webp',
     './assets/image/icons/icon-192.png',
     './assets/image/icons/icon-512.png',
+    './assets/image/logo.svg',
+    './assets/image/ico.svg',
+
+    // ── Pacchetto SKINS_COMMON (pre-cached: ~358 KB totale) ───
+    './assets/image/skins/espobit.webp',
+    './assets/image/skins/espobit-click.webp',
+    './assets/image/skins/espobit-matrix.webp',
+    './assets/image/skins/espobit-matrix-click.webp',
+    './assets/image/skins/espobit-fury.webp',
+    './assets/image/skins/espobit-fury-click.webp',
+    './assets/image/skins/esponatale.webp',
+    './assets/image/skins/esponatale-click.webp',
+    './assets/image/skins/initiale.webp',
+    './assets/image/skins/initiale-click.webp',
+
+    // ── Pacchetto SKINS_RARE (pre-cached: ~297 KB totale) ────
+    './assets/image/skins/esporator.webp',
+    './assets/image/skins/esporator-click.webp',
+    './assets/image/skins/esponese.webp',
+    './assets/image/skins/esponese-click.webp',
+    './assets/image/skins/espocorno.webp',
+    './assets/image/skins/espocorno-click.webp',
+
+    // ── SKINS_EPIC/LEGENDARY/FURY → Dynamic Cache ─────────────
+    // Quelle più pesanti (esportia ~637 KB, fury ~2.2 MB)
+    // vengono cachate dal SW dinamicamente alla prima richiesta.
+
     './manifest.json'
 ];
 
@@ -75,7 +111,8 @@ const STATIC_PATTERNS = [
     /fonts\.gstatic/,
     /cdnjs\.cloudflare/,
     /cdn\.jsdelivr/,
-    /fontawesome/
+    /fontawesome/,
+    /concat\.php\?bundle=/ // Bundle CSS generati da concat.php
 ];
 
 // ============================================================

@@ -226,6 +226,10 @@ const AudioManager = {
     _sounds: {},        // Cache Howl instances: { 'sound-click': Howl, ... }
     _currentMusic: null, // ID della traccia musicale attualmente in play
     _audioUnlocked: false,
+    _pendingPlay: new Set(), // Tracce con play accodato ma non ancora confermato da Howler
+    _ambienceTimer: null,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
+                             // successione (boot, cloud sync, listener) → un solo play per ciclo
+    _promptEl: null,         // Riferimento all'elemento DOM del banner "clicca per l'audio"
 
     init() {
         // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
@@ -240,16 +244,31 @@ const AudioManager = {
                 preload: sound.type === 'sfx', // Preload tutti gli SFX (non musica)
                 html5: sound.type === 'music',  // Music via HTML5 (streaming, no decode)
                 pool: sound.type === 'sfx' ? 5 : 1, // Pool per SFX (max 5 copie simultanee)
-                onplayerror: (id) => {
-                    // Autoplay policy: sblocca AudioContext e riprova
+                onplayerror: () => {
+                    // Il play è fallito (autoplay bloccato dal browser).
+                    // 1. Rimuovi da _pendingPlay: senza questo, _applyAmbience non
+                    //    ritenterà mai perché vede il flag ancora attivo.
+                    this._pendingPlay.delete(sound.id);
+
+                    // 2. Al primo errore registra un listener una-tantum sul gesto utente.
+                    //    Quando l'utente interagisce, updateAmbience() (debounced) avvia
+                    //    un solo play controllato. Usare { once: true } garantisce che
+                    //    il listener non scatti mai più di una volta anche se arrivano
+                    //    più onplayerror prima del gesto.
                     if (!this._audioUnlocked) {
-                        const ctx = Howler.ctx;
-                        if (ctx && ctx.state === 'suspended') {
-                            ctx.resume().then(() => {
-                                this._audioUnlocked = true;
-                                this._sounds[sound.id].play();
-                            }).catch(() => {});
-                        }
+                        this._audioUnlocked = true;
+                        const onGesture = () => {
+                            this._hideAudioPrompt();
+                            const ctx = Howler.ctx;
+                            if (ctx && ctx.state === 'suspended') {
+                                ctx.resume().catch(() => {});
+                            }
+                            this.updateAmbience();
+                        };
+                        document.addEventListener('click',      onGesture, { once: true });
+                        document.addEventListener('keydown',    onGesture, { once: true });
+                        document.addEventListener('touchstart', onGesture, { once: true });
+                        this._showAudioPrompt();
                     }
                 },
                 onloaderror: (id, err) => {
@@ -259,7 +278,27 @@ const AudioManager = {
         }
 
         this._audioUnlocked = Howler.ctx && Howler.ctx.state === 'running';
-        this.updateAmbience();
+        // NON chiamare updateAmbience() qui: i Howl sono appena creati e non è ancora
+        // noto se l'utente è loggato. Il play parte da tryStartAudio() che viene
+        // chiamata subito dopo da tryStart() e/o dal setTimeout post-loader.
+    },
+
+    _showAudioPrompt() {
+        if (this._promptEl) return;
+        const el = document.createElement('div');
+        el.id = 'audio-unlock-prompt';
+        el.innerHTML = '<i class="fas fa-volume-up"></i><span>Clicca per attivare l\'audio</span>';
+        document.body.appendChild(el);
+        this._promptEl = el;
+        requestAnimationFrame(() => el.classList.add('visible'));
+    },
+
+    _hideAudioPrompt() {
+        if (!this._promptEl) return;
+        const el = this._promptEl;
+        this._promptEl = null;
+        el.classList.remove('visible');
+        setTimeout(() => el.remove(), 400);
     },
 
     getCustomVolume(id) {
@@ -341,6 +380,13 @@ const AudioManager = {
     },
 
     updateAmbience() {
+        // Debounce: se chiamata più volte entro 80ms, esegue solo l'ultima.
+        // Previene il doppio play causato da chiamate ravvicinate durante boot/cloud-sync.
+        clearTimeout(this._ambienceTimer);
+        this._ambienceTimer = setTimeout(() => this._applyAmbience(), 80);
+    },
+
+    _applyAmbience() {
         if (!sessionStorage.getItem('espooUser')) {
             // Ferma tutta la musica se non loggato
             for (const id in this._sounds) {
@@ -407,21 +453,30 @@ const AudioManager = {
                 }
 
                 if (vol > 0) {
-                    if (!howl.playing()) {
+                    if (!howl.playing() && !this._pendingPlay.has(id)) {
                         // Fade-in DOPO l'evento 'play': evita _playLock che mette
-                        // la chiamata volume() in coda e non la esegue mai
+                        // la chiamata volume() in coda e non la esegue mai.
+                        // _pendingPlay blocca chiamate doppie mentre Howler non ha
+                        // ancora aggiornato playing() (race condition su F5/SW cache).
+                        this._pendingPlay.add(id);
                         howl.volume(0);
-                        howl.once('play', () => { howl.fade(0, vol, 600); });
+                        howl.once('play', () => {
+                            this._pendingPlay.delete(id);
+                            howl.fade(0, vol, 600);
+                        });
                         howl.play();
-                    } else {
+                    } else if (howl.playing()) {
                         // Cancella fade in corso e imposta volume target
-                        howl.fade(vol, vol, 1);
+                        howl.fade(howl.volume(), vol, 300);
                     }
                 } else if (howl.playing()) {
-                    howl.stop();
+                    // Pausa invece di stop: preserva la posizione nella traccia
+                    // così l'unmute riprende da dove era (non dal principio)
+                    howl.pause();
                 }
             } else {
-                // Stop immediato: evita race condition con fade interval in corso
+                // Stop immediato: pulisci anche il pending flag
+                this._pendingPlay.delete(id);
                 if (howl.playing()) {
                     howl.stop();
                 }
@@ -561,10 +616,13 @@ const FX = {
         if (!el) {
             el = document.createElement('div');
             el.id = 'fx-combo-display';
-            el.style.cssText = 'position:fixed;top:140px;left:50%;transform:translateX(-50%);z-index:9000;pointer-events:none;' +
-                'font-family:var(--font-heading);font-weight:900;text-align:center;text-shadow:0 0 15px rgba(255,71,87,0.6);' +
-                'color:#ff4757;transition:opacity 0.15s ease;';
-            document.body.appendChild(el);
+            el.style.cssText = 'position:absolute;top:10px;left:50%;z-index:9000;pointer-events:none;' +
+                'font-family:var(--font-heading);font-weight:900;white-space:nowrap;' +
+                'text-shadow:0 0 15px rgba(255,71,87,0.6);color:#ff4757;transition:opacity 0.15s ease;';
+            const section = document.getElementById('clicker-section');
+            (section || document.body).appendChild(el);
+            // Centra via GSAP così scale e translateX coesistono nello stesso layer
+            if (typeof gsap !== 'undefined') gsap.set(el, { xPercent: -50 });
         }
         // Scala e colore in base al combo
         let size = count >= 30 ? '2.2rem' : count >= 20 ? '1.8rem' : count >= 10 ? '1.5rem' : '1.2rem';
@@ -575,10 +633,13 @@ const FX = {
         el.style.opacity = '1';
         el.textContent = `x${count} COMBO`;
 
-        // Pulse con GSAP se disponibile
+        // Pulse con GSAP — xPercent:-50 mantenuto in entrambi i frame per non perdere la centratura
         if (typeof gsap !== 'undefined') {
-            gsap.killTweensOf(el, 'scale');
-            gsap.fromTo(el, { scale: 1.3 }, { scale: 1, duration: 0.15, ease: 'back.out(2)' });
+            gsap.killTweensOf(el);
+            gsap.fromTo(el,
+                { scale: 1.3, xPercent: -50 },
+                { scale: 1,   xPercent: -50, duration: 0.15, ease: 'back.out(2)' }
+            );
         }
     },
 
@@ -595,15 +656,18 @@ const FX = {
         const container = document.getElementById('click-feedback-container');
         if (!container) return;
 
+        const isSquare = document.body.classList.contains('theme-8bit') || document.body.classList.contains('theme-super');
+        const radius = isSquare ? '0' : '50%';
+
         for (let i = 0; i < count; i++) {
             const p = document.createElement('div');
-            const size = 3 + Math.random() * 4;
+            const size = isSquare ? (4 + Math.random() * 5) : (3 + Math.random() * 4);
             const color = colors[Math.floor(Math.random() * colors.length)];
             const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
             const dist = 40 + Math.random() * 60;
 
             p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${size}px;height:${size}px;
-                border-radius:50%;background:${color};pointer-events:none;z-index:15;
+                border-radius:${radius};background:${color};pointer-events:none;z-index:15;
                 box-shadow:0 0 ${size * 2}px ${color}`;
             container.appendChild(p);
 
@@ -934,16 +998,16 @@ function activateCrunchTime() {
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
             // Versione 8-Bit
-            photoNormal.src = 'assets/image/espobit-fury.webp';
-            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espobit-fury.webp';
+            photoClicked.src = 'assets/image/skins/espobit-fury-click.webp';
         } else if (document.body.classList.contains('theme-super')) {
             // Versione Super Espo
-            photoNormal.src = 'assets/image/super-espofury.webp';
-            photoClicked.src = 'assets/image/super-espofury-click.webp';
+            photoNormal.src = 'assets/image/skins/super-espofury.webp';
+            photoClicked.src = 'assets/image/skins/super-espofury-click.webp';
         } else {
             // Versione Standard
-            photoNormal.src = 'assets/image/espo-fury.webp';
-            photoClicked.src = 'assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espo-fury.webp';
+            photoClicked.src = 'assets/image/skins/espo-fury-click.webp';
         }
     }
 
@@ -1048,14 +1112,14 @@ function resumeCrunchTimeEffects() {
 
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
-            photoNormal.src = 'assets/image/espobit-fury.webp';
-            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espobit-fury.webp';
+            photoClicked.src = 'assets/image/skins/espobit-fury-click.webp';
         } else if (document.body.classList.contains('theme-super')) {
-            photoNormal.src = 'assets/image/super-espofury.webp';
-            photoClicked.src = 'assets/image/super-espofury-click.webp';
+            photoNormal.src = 'assets/image/skins/super-espofury.webp';
+            photoClicked.src = 'assets/image/skins/super-espofury-click.webp';
         } else {
-            photoNormal.src = 'assets/image/espo-fury.webp';
-            photoClicked.src = 'assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espo-fury.webp';
+            photoClicked.src = 'assets/image/skins/espo-fury-click.webp';
         }
     }
 
@@ -1195,12 +1259,12 @@ const EventHandlers = {
                 // Controlla se il tema 8-bit è attivo
                 if (document.body.classList.contains('theme-8bit')) {
                     // Se sì, usa le versioni 8-bit di Matrix
-                    photoNormal.src = 'assets/image/espobit-matrix.webp';
-                    photoClicked.src = 'assets/image/espobit-matrix-click.webp';
+                    photoNormal.src = 'assets/image/skins/espobit-matrix.webp';
+                    photoClicked.src = 'assets/image/skins/espobit-matrix-click.webp';
                 } else {
                     // Altrimenti, usa le versioni standard di Matrix
-                    photoNormal.src = 'assets/image/espo-matrix.webp';
-                    photoClicked.src = 'assets/image/espo-matrix-click.webp';
+                    photoNormal.src = 'assets/image/skins/espo-matrix.webp';
+                    photoClicked.src = 'assets/image/skins/espo-matrix-click.webp';
                 }
                 // ------------------------------------------
             }

@@ -7,11 +7,21 @@
 
 /* SFONDO GLOBALE */
 body.theme-8bit {
+    padding-top: 70px;
     background-color: #0b1016;
     background-image:
         linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
+}
+
+/* Override: griglia pixel più fitta e statica per il tema 8-bit */
+body.theme-8bit::before {
+    background-image:
+        linear-gradient(rgba(52, 152, 219, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 152, 219, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: none;
 }
 
 /* --- RESET TIPOGRAFICO E GRAFICO PER IL GIOCO --- */
@@ -40,6 +50,22 @@ body.theme-8bit #game-container {
     border: 2px solid #34495e;
     background-color: rgba(13, 17, 23, 0.95);
     box-shadow: 0 0 0 4px #000;
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+}
+
+/* Clicker button: quadrato con pseudo-elements */
+body.theme-8bit #clicker-btn {
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #000, 0 0 20px rgba(88, 166, 255, 0.2);
+    border-color: rgba(88, 166, 255, 0.4);
+    animation: none;
+}
+
+body.theme-8bit #clicker-btn::before,
+body.theme-8bit #clicker-btn::after {
+    border-radius: 0;
+    animation: none;
 }
 
 /* --- NAVBAR --- */
@@ -219,6 +245,17 @@ body.theme-8bit #golden-bug {
 
     to {
         transform: translateY(-10px);
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    body.theme-8bit {
+        padding-top: 55px;
+    }
+
+    body.theme-8bit #game-container {
+        height: calc(100vh - 55px);
+        max-height: calc(100vh - 55px);
     }
 }
 
