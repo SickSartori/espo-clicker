@@ -40,6 +40,41 @@
     }
 
     // ─────────────────────────────────────────────────────────
+    // Helper: carica immagini con concorrenza limitata
+    // Evita di saturare il server con troppe richieste parallele.
+    // ─────────────────────────────────────────────────────────
+    var MAX_CONCURRENT = 3;
+
+    function _loadQueue(filenames) {
+        return new Promise(function (resolve) {
+            var index    = 0;
+            var active   = 0;
+            var total    = filenames.length;
+            var done     = 0;
+
+            if (total === 0) { resolve(); return; }
+
+            function next() {
+                while (active < MAX_CONCURRENT && index < total) {
+                    active++;
+                    var filename = filenames[index++];
+                    _preloadImage(filename).then(function () {
+                        active--;
+                        done++;
+                        if (done === total) {
+                            resolve();
+                        } else {
+                            next();
+                        }
+                    });
+                }
+            }
+
+            next();
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
     // Helper: esegui il lavoro durante il tempo libero del browser
     // Evita di bloccare l'UI durante il loading in background.
     // ─────────────────────────────────────────────────────────
@@ -96,7 +131,7 @@
                     ' (' + images.length + ' immagini)'
                 );
 
-                Promise.all(images.map(_preloadImage)).then(function () {
+                _loadQueue(images).then(function () {
                     _loaded.add(name);
                     _loading.delete(name);
                     console.log('[AssetManager] ✅ Pronto: ' + pkg.label);
