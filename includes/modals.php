@@ -140,6 +140,12 @@
                 </button>
             </div>
 
+            <div id="pwa-install-row" style="display:none; margin-bottom: 10px;">
+                <button id="pwa-install-btn" class="buy-btn ghost-btn" style="width:100%; justify-content:center; gap:8px;">
+                    <i class="fa-solid fa-download"></i> Installa App
+                </button>
+            </div>
+
             <button id="save-settings-btn" class="buy-btn save-btn">
                 <i class="fa-solid fa-floppy-disk"></i>
 				<p style="margin-left: 5px;">

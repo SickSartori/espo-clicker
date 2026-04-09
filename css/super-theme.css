@@ -180,6 +180,20 @@ body.theme-super #golden-bug:active {
     filter: brightness(1.2);
 }
 
+/* --- CLICKER BUTTON (Quadrato, stile pixel) --- */
+body.theme-super #clicker-btn {
+    border-radius: 0;
+    border: 4px solid #fff;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
+    animation: none;
+}
+
+body.theme-super #clicker-btn::before,
+body.theme-super #clicker-btn::after {
+    border-radius: 0;
+    animation: none;
+}
+
 /* --- IMMAGINE MANAGER --- */
 body.theme-super #clicker-btn img {
     image-rendering: pixelated;

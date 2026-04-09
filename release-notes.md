@@ -11,20 +11,13 @@ Questo non è un semplice aggiornamento, è un vero e proprio salto generazional
 * **🔄 LA FORMATTAZIONE (New Game Plus):** La vera rivoluzione di questo aggiornamento! Raggiunto un certo limite, potrete "Formattare" il sistema. Questo azzererà i progressi ma vi ricompenserà con una **nuova valuta esclusiva**, permettendovi di sbloccare **nuovi potenziamenti** e **skin introvabili**. Il vero gioco inizia ora!
 * **🚀 Espansione Matematica (Fino al Qag!):** L'infrastruttura matematica è stata potenziata. Aggiunti nuovi suffissi per numeri astronomici fino al *Quadragintillion* (1e125). Inoltre, abbiamo implementato controlli rigorosi sui valori scientifici per evitare rotture nell'endgame.
 * **📱 Installa l'App Ufficiale (PWA):** Espòòò Clicker diventa un'applicazione a tutti gli effetti! Ora puoi installarla direttamente sul tuo smartphone o PC. Supporta il gioco offline, caricamenti istantanei e aggiornamenti invisibili in background.
-* **⚖️ Bilanciamento Promozione & LAB:**
-    * **Costo Promozione Ridotto:** La curva di difficoltà è stata ammorbidita. L'incremento del costo per le Promozioni passa da 5x a **2.5x**.
-    * **Calcolo Esponenziale:** Aggiunto il calcolo esponenziale per LAB e Promozione, con la visualizzazione del valore attuale della Promozione direttamente nelle statistiche.
-    * Arrotondati i costi del LAB per una migliore leggibilità.
+* **⚖️ Bilanciamento Promozione & LAB:** La curva di difficoltà è stata ammorbidita. L'incremento del costo per le Promozioni passa da 5x a **2.5x**. Aggiunto il calcolo esponenziale per LAB e Promozione, con la visualizzazione del valore attuale nelle statistiche. Arrotondati i costi del LAB per una migliore leggibilità.
 
 ---
 
 ### 🕹️ Arcade Mania 2.0
 
-*La sala giochi si espande e riceve un restyling completo, sia visivo che sonoro.*
-
-* **👾 Nuovi Minigiochi:**
-	* **Asteroids:** Un grande classico entra nella famiglia Arcade. Distruggi i meteoriti e sopravvivi!
-    * **Super Espò Run:** Preparati a correre e saltare in questa nuova avventura.
+* **👾 Nuovi Minigiochi:** **Asteroids** — un grande classico entra nella famiglia Arcade. **Super Espò Run** — preparati a correre e saltare in questa nuova avventura.
 * **🎮 Super Espò Runner Ribilanciato:** Gameplay completamente rivisto con fisica più precisa, generazione livelli migliorata e nuovi elementi di scenario. Ora ogni run è una sfida giusta!
 * **🎨 Restyling Totale Arcade:** Nuova UI dedicata, nuovi suoni esclusivi per la sala giochi e chiusura sicura dei minigiochi migliorata.
 * **🚀 Space Impacts:** Effettuata una pulizia del codice e un ribilanciamento generale delle difficoltà del minigioco.
@@ -44,36 +37,47 @@ Questo non è un semplice aggiornamento, è un vero e proprio salto generazional
 
 ### ✨ Restyling Visivo & Interazione (UI 2.0)
 
-*L'intera interfaccia è stata raffinata per un look più moderno, scuro e coerente, massimizzando lo spazio per chi gioca da telefono.*
-
+* **🖥️ Layout Full-Screen:** Il gioco ora occupa tutta la schermata, senza riquadri contenitore. Più spazio, look più immersivo.
+* **📐 Navbar Uniformata:** Tutti i bottoni della barra di navigazione hanno la stessa larghezza per un aspetto più ordinato e professionale.
+* **📲 Bottone Installa App:** Appare automaticamente nella navbar quando il browser supporta l'installazione PWA.
+* **🔘 Clicker Button Rinnovato:** Il bottone principale brilla con un anello di ping animato e un alone luminoso che respira.
 * **🔥 Sistema di Combo Visivo:** Più clicchi velocemente, più il gioco reagisce! Raggiunto il moltiplicatore x5, apparirà un contatore combo dinamico che cambierà colore e dimensione in base all'intensità dei click.
 * **💫 Feedback Click Esplosivo:** Le nuove particelle scintillanti non sono più statiche, ma aumenteranno di numero e scala man mano che la tua combo sale!
 * **🌟 Promozione Epica:** Effettuare una Promozione scatenerà ora una sequenza spettacolare con flash, vibrazioni dello schermo e animazioni orchestrate.
-* **📱 Spazi Ottimizzati (Mobile):** Abbiamo recuperato tantissimo spazio utile! Barre di navigazione più sottili, padding ridotti e un **bottone principale del clicker ingrandito** per un'esperienza touch impeccabile e più comoda.
-* **🎬 Dettagli Premium:** Nuove animazioni d'ingresso a cascata, pulsanti con effetti di profondità e luce, score dinamico e un look generale più "cyber" e meno intrusivo.
+* **📱 Spazi Ottimizzati (Mobile):** Barre di navigazione più sottili, padding ridotti e un **bottone principale del clicker ingrandito** per un'esperienza touch impeccabile.
+* **🎬 Dettagli Premium:** Nuove animazioni d'ingresso a cascata, pulsanti con effetti di profondità e luce, score dinamico e un look generale più "cyber".
+
+---
+
+### 🔥 Espo Fury Potenziato
+
+* **🌋 Effetto Fiamma Rinnovato:** L'animazione Espo Fury è stata completamente rivista con una corona di fuoco multi-layer. Anello di fuoco espandente, alone caldo arancione animato e flash sul bordo più intensi — il clicker non è mai sembrato così pericoloso.
+
+---
+
+### 🎭 Fix Temi
+
+* **◼️ Tema 8-bit — Overlap Navbar Risolto:** Corretta la sovrapposizione di 5px tra navbar (70px) e contenuto di gioco.
+* **◼️ Clicker Quadrato Coerente:** Nei temi 8-bit e Super, il bottone clicker è ora quadrato a tutti gli effetti: bordo, alone, anello e particelle esplosive incluse.
+* **🟢 Matrix — Testi Isolati:** Lo stile verde terminale ora si applica solo all'interno del gioco, senza colorare navbar o modali.
+* **🔵 Bluescreen — Griglia Nascosta:** La griglia di sfondo viene correttamente nascosta durante l'evento schermata blu.
 
 ---
 
 ### 🔊 Motore Audio 2.0 & Fix
 
-*Il comparto sonoro è stato completamente riscritto per un'esperienza da vera e propria console.*
-
 * **🎵 Audio Engine Next-Gen:** Implementato un nuovo e potente motore audio strutturato. Niente più scatti: goditi transizioni morbide (crossfade) tra le musiche e una risposta istantanea degli effetti sonori durante i click più forsennati.
 * **🎵 Nuova Traccia:** Aggiunta la "Musica Divina" al Jukebox.
-* **🔇 Fix Volume & Comandi:** * Risolto il bug che sparava l'audio al massimo dopo aver ricaricato la pagina.
-    * Lo slider del volume master e il bottone "Mute" ora rispondono istantaneamente e con assoluta precisione.
-    * Corretti gli id musicali legati ad alcune skin specifiche e fixato l'audio della *fireball* durante l'abilità Fury.
+* **🔇 Fix Volume & Comandi:** Risolto il bug che sparava l'audio al massimo dopo aver ricaricato la pagina. Lo slider del volume master e il bottone "Mute" ora rispondono istantaneamente. Il mute mette in pausa invece di riavviare la traccia. Corretti gli id musicali legati ad alcune skin specifiche e fixato l'audio della *fireball* durante l'abilità Fury.
 
 ---
 
 ### ⚙️ Engine, Sicurezza & Sotto il Cofano
 
-*Dietro le quinte, il codice ha subito una massiccia operazione di ottimizzazione per garantire stabilità, leggerezza e totale sicurezza dei dati.*
-
 * **🛡️ Sistema Anti-Rollback v3:** I tuoi salvataggi sono blindati. Abbiamo introdotto una rigida gerarchia di controllo (Formattazione > Promozione > Score) che impedisce in modo assoluto la sovrascrittura con dati vecchi.
-* **🚀 Performance & Addio Lag:** Rimossi moduli e pacchetti esterni pesanti a favore di un codice leggero scritto "in casa". Calcoli di gioco alleggeriti, canvas ottimizzati e grafiche ora accelerate via GPU. L'interfaccia non è mai stata così fluida, anche su dispositivi datati.
-* **🔄 Sincronizzazione Perfetta:** * Aggiunto un salvataggio forzato un attimo prima di aprire la Classifica Globale: il tuo punteggio online sarà sempre aggiornato all'ultimo click.
-    * Corretti bug critici sui salvataggi da Mobile e sui ripristini in background (Service Worker).
+* **💾 Fix Classifica Produzione:** Risolto un bug critico che impediva l'aggiornamento della classifica in produzione a causa di una colonna mancante nel database. I punteggi ora si sincronizzano correttamente.
+* **🚀 Performance & Addio Lag:** Rimossi moduli e pacchetti esterni pesanti a favore di un codice leggero scritto "in casa". Calcoli di gioco alleggeriti, canvas ottimizzati e grafiche ora accelerate via GPU.
+* **🔄 Sincronizzazione Perfetta:** Aggiunto un salvataggio forzato un attimo prima di aprire la Classifica Globale: il tuo punteggio online sarà sempre aggiornato all'ultimo click. Corretti bug critici sui salvataggi da Mobile e sui ripristini in background (Service Worker).
 * **🧹 Pulizia Totale al Reset:** Usare l'opzione "Cancella Dati" ora distrugge definitivamente anche i salvataggi di backup, ripristina la skin di base e ti permette di ricominciare un'avventura immacolata.
 * **🔒 Sicurezza & Token:** Aggiunti token di sessione per proteggere gli account e prevenire disconnessioni anomale.
-* **⚡ Caricamenti & File System:** Il vecchio monolite *Game-Data* è stato ordinato in più moduli, i CSS divisi per piattaforma per non forzare il layout e tutti i menu pesanti (come modali e video) godono ora di caricamento dinamico per avvii del gioco fulminei.
+* **⚡ Caricamenti & File System:** Il vecchio monolite *Game-Data* è stato ordinato in più moduli, i CSS divisi per piattaforma per non forzare il layout e tutti i menu pesanti godono ora di caricamento dinamico per avvii del gioco fulminei.

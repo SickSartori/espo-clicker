@@ -308,7 +308,7 @@
                     <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Prestige Ready</button>
+                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Promozione</button>
                     <button id="btn-force-save" class="cheat-btn info" title="Forza un salvataggio cloud immediato"><i class="fa-solid fa-cloud-arrow-up"></i> Force Save</button>
                 </div>
                 <div class="control-row">
@@ -328,8 +328,8 @@
                      <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
-                    <button id="btn-force-v2" class="cheat-btn quantum" style="border: 1px solid #9b59b6; color: #9b59b6;" title="Simula la migrazione V1->V2 per testare il riallineamento"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2.0</button>
-                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
+                    <button id="btn-force-v2" class="cheat-btn quantum" style="border: 1px solid #9b59b6; color: #9b59b6;" title="Simula la migrazione V1->V2 per testare il riallineamento"><i class="fa-solid fa-backward-fast"></i>Migrazione V2.0</button>
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> RESET</button>
                 </div>
             </div>
 
@@ -376,7 +376,7 @@
 
     // Aggiungi Bug
     document.getElementById('btn-bugs-add').addEventListener('click', () => {
-        const val = getVal('cheat-bugs-input'); 
+        const val = getVal('cheat-bugs-input');
         gameState.score = gameState.score.add(val);
         gameState.totalScore = gameState.totalScore.add(val);
         gameState.lifetimeScore = gameState.lifetimeScore.add(val);
@@ -405,7 +405,7 @@
         const val = getVal('cheat-qbits-input');
         if (!gameState.qBits) gameState.qBits = new Decimal(0);
         if (!gameState.lifetimeQBits) gameState.lifetimeQBits = new Decimal(0);
-        
+
         gameState.qBits = gameState.qBits.add(val);
         gameState.lifetimeQBits = gameState.lifetimeQBits.add(val);
         refreshUI();
@@ -417,7 +417,7 @@
         if (gameState.totalResets < 20) gameState.totalResets = 20;
         if (!gameState.prestigePoints) gameState.prestigePoints = new Decimal(0);
         gameState.prestigePoints = gameState.prestigePoints.add(1000);
-        
+
         if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
         refreshUI();
         toast("Requisiti NG+ soddisfatti! Vai nel Lab.");
@@ -611,7 +611,7 @@
     });
 
     document.getElementById('btn-event-star').addEventListener('click', () => {
-        const mult = getIntVal('cheat-404-input'); 
+        const mult = getIntVal('cheat-404-input');
         if (typeof triggerGameEvent === 'function') {
             triggerGameEvent('superStarMode', mult);
             toast(`⭐ Super Star (x${mult}) attivata`);
@@ -687,10 +687,10 @@
 
         // Ferma video se in corso
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video',
-         'britney-espoars-video', 'video-bigbang'].forEach(id => {
-            const v = document.getElementById(id);
-            if (v) { v.pause(); v.classList.add('video_display_none'); }
-        });
+            'britney-espoars-video', 'video-bigbang'].forEach(id => {
+                const v = document.getElementById(id);
+                if (v) { v.pause(); v.classList.add('video_display_none'); }
+            });
 
         // Pulisci classi CSS residue
         document.body.classList.remove('rick-rolling', 'bluescreen-active', 'matrix-active', 'super-star-active');
@@ -800,10 +800,10 @@
         // 2. Comprime e sovrascrive il salvataggio locale
         const compressed = LZString.compressToUTF16(JSON.stringify(fakeV1State));
         localStorage.setItem('espotoolClickerSaveV8', compressed);
-        
+
         // 3. Impedisce al gioco di salvare lo stato attuale sopra quello falso durante la chiusura
-        gameState.isDeleting = true; 
-        
+        gameState.isDeleting = true;
+
         // 4. Ricarica la pagina per innescare il flusso di caricamento
         location.reload();
     });

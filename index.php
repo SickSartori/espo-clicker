@@ -377,5 +377,65 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 			});
 		}
 		</script>
+		<!-- PWA Install Prompt -->
+		<script>
+		(function() {
+			let _deferredInstallPrompt = null;
+
+			const getRow = () => document.getElementById('pwa-install-row');
+
+			const isStandalone = () =>
+				window.matchMedia('(display-mode: standalone)').matches ||
+				window.navigator.standalone === true;
+
+			const isIOS = () =>
+				/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+			const showRow = () => {
+				const row = getRow();
+				if (row) row.style.display = '';
+			};
+
+			const hideRow = () => {
+				const row = getRow();
+				if (row) row.style.display = 'none';
+			};
+
+			// Se già installata non mostrare nulla
+			if (isStandalone()) return;
+
+			if (isIOS()) {
+				// iOS non supporta beforeinstallprompt — mostra sempre il bottone con istruzioni
+				showRow();
+				document.addEventListener('click', (e) => {
+					if (!e.target.closest('#pwa-install-btn')) return;
+					alert('Per installare l\'app: tocca l\'icona "Condividi" in Safari e poi "Aggiungi a schermata Home".');
+				});
+			} else {
+				// Android / Desktop Chrome/Edge
+				window.addEventListener('beforeinstallprompt', (e) => {
+					e.preventDefault();
+					_deferredInstallPrompt = e;
+					showRow();
+				});
+
+				window.addEventListener('appinstalled', () => {
+					_deferredInstallPrompt = null;
+					hideRow();
+				});
+
+				document.addEventListener('click', async (e) => {
+					if (!e.target.closest('#pwa-install-btn')) return;
+					if (!_deferredInstallPrompt) return;
+					_deferredInstallPrompt.prompt();
+					const { outcome } = await _deferredInstallPrompt.userChoice;
+					if (outcome === 'accepted') {
+						_deferredInstallPrompt = null;
+						hideRow();
+					}
+				});
+			}
+		})();
+		</script>
 	</body>
 </html>

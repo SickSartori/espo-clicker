@@ -1530,16 +1530,19 @@ function showClickFeedback(event) {
 function simpleMarkdown(md) {
     return md
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px 0;">')
+        .replace(/^### (.+)$/gm, '<h3 style="margin:14px 0 6px;color:#e0e0e0;">$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2 style="margin:18px 0 8px;">$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1 style="margin:0 0 10px;">$1</h1>')
         .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code>$1</code>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-        .replace(/<\/ul>\s*<ul>/g, '')
-        .replace(/\n{2,}/g, '<br><br>')
+        .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;">$1</code>')
+        .replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>[\s\S]*?<\/li>)/g, (m) => m)
+        .replace(/(<li>.*?<\/li>\n?)+/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$&</ul>')
+        .replace(/<\/ul>\s*<ul[^>]*>/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\n\n/g, '<br>')
         .replace(/\n/g, '<br>');
 }
 

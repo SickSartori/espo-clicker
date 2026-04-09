@@ -656,15 +656,18 @@ const FX = {
         const container = document.getElementById('click-feedback-container');
         if (!container) return;
 
+        const isSquare = document.body.classList.contains('theme-8bit') || document.body.classList.contains('theme-super');
+        const radius = isSquare ? '0' : '50%';
+
         for (let i = 0; i < count; i++) {
             const p = document.createElement('div');
-            const size = 3 + Math.random() * 4;
+            const size = isSquare ? (4 + Math.random() * 5) : (3 + Math.random() * 4);
             const color = colors[Math.floor(Math.random() * colors.length)];
             const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
             const dist = 40 + Math.random() * 60;
 
             p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${size}px;height:${size}px;
-                border-radius:50%;background:${color};pointer-events:none;z-index:15;
+                border-radius:${radius};background:${color};pointer-events:none;z-index:15;
                 box-shadow:0 0 ${size * 2}px ${color}`;
             container.appendChild(p);
 
@@ -1109,14 +1112,14 @@ function resumeCrunchTimeEffects() {
 
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
-            photoNormal.src = 'assets/image/espobit-fury.webp';
-            photoClicked.src = 'assets/image/espobit-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espobit-fury.webp';
+            photoClicked.src = 'assets/image/skins/espobit-fury-click.webp';
         } else if (document.body.classList.contains('theme-super')) {
-            photoNormal.src = 'assets/image/super-espofury.webp';
-            photoClicked.src = 'assets/image/super-espofury-click.webp';
+            photoNormal.src = 'assets/image/skins/super-espofury.webp';
+            photoClicked.src = 'assets/image/skins/super-espofury-click.webp';
         } else {
-            photoNormal.src = 'assets/image/espo-fury.webp';
-            photoClicked.src = 'assets/image/espo-fury-click.webp';
+            photoNormal.src = 'assets/image/skins/espo-fury.webp';
+            photoClicked.src = 'assets/image/skins/espo-fury-click.webp';
         }
     }
 
