@@ -229,6 +229,7 @@ const AudioManager = {
     _pendingPlay: new Set(), // Tracce con play accodato ma non ancora confermato da Howler
     _ambienceTimer: null,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
                              // successione (boot, cloud sync, listener) → un solo play per ciclo
+    _promptEl: null,         // Riferimento all'elemento DOM del banner "clicca per l'audio"
 
     init() {
         // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
@@ -257,6 +258,7 @@ const AudioManager = {
                     if (!this._audioUnlocked) {
                         this._audioUnlocked = true;
                         const onGesture = () => {
+                            this._hideAudioPrompt();
                             const ctx = Howler.ctx;
                             if (ctx && ctx.state === 'suspended') {
                                 ctx.resume().catch(() => {});
@@ -266,6 +268,7 @@ const AudioManager = {
                         document.addEventListener('click',      onGesture, { once: true });
                         document.addEventListener('keydown',    onGesture, { once: true });
                         document.addEventListener('touchstart', onGesture, { once: true });
+                        this._showAudioPrompt();
                     }
                 },
                 onloaderror: (id, err) => {
@@ -278,6 +281,24 @@ const AudioManager = {
         // NON chiamare updateAmbience() qui: i Howl sono appena creati e non è ancora
         // noto se l'utente è loggato. Il play parte da tryStartAudio() che viene
         // chiamata subito dopo da tryStart() e/o dal setTimeout post-loader.
+    },
+
+    _showAudioPrompt() {
+        if (this._promptEl) return;
+        const el = document.createElement('div');
+        el.id = 'audio-unlock-prompt';
+        el.innerHTML = '<i class="fas fa-volume-up"></i><span>Clicca per attivare l\'audio</span>';
+        document.body.appendChild(el);
+        this._promptEl = el;
+        requestAnimationFrame(() => el.classList.add('visible'));
+    },
+
+    _hideAudioPrompt() {
+        if (!this._promptEl) return;
+        const el = this._promptEl;
+        this._promptEl = null;
+        el.classList.remove('visible');
+        setTimeout(() => el.remove(), 400);
     },
 
     getCustomVolume(id) {
@@ -446,10 +467,12 @@ const AudioManager = {
                         howl.play();
                     } else if (howl.playing()) {
                         // Cancella fade in corso e imposta volume target
-                        howl.fade(vol, vol, 1);
+                        howl.fade(howl.volume(), vol, 300);
                     }
                 } else if (howl.playing()) {
-                    howl.stop();
+                    // Pausa invece di stop: preserva la posizione nella traccia
+                    // così l'unmute riprende da dove era (non dal principio)
+                    howl.pause();
                 }
             } else {
                 // Stop immediato: pulisci anche il pending flag
@@ -593,10 +616,13 @@ const FX = {
         if (!el) {
             el = document.createElement('div');
             el.id = 'fx-combo-display';
-            el.style.cssText = 'position:fixed;top:140px;left:50%;transform:translateX(-50%);z-index:9000;pointer-events:none;' +
-                'font-family:var(--font-heading);font-weight:900;text-align:center;text-shadow:0 0 15px rgba(255,71,87,0.6);' +
-                'color:#ff4757;transition:opacity 0.15s ease;';
-            document.body.appendChild(el);
+            el.style.cssText = 'position:absolute;top:10px;left:50%;z-index:9000;pointer-events:none;' +
+                'font-family:var(--font-heading);font-weight:900;white-space:nowrap;' +
+                'text-shadow:0 0 15px rgba(255,71,87,0.6);color:#ff4757;transition:opacity 0.15s ease;';
+            const section = document.getElementById('clicker-section');
+            (section || document.body).appendChild(el);
+            // Centra via GSAP così scale e translateX coesistono nello stesso layer
+            if (typeof gsap !== 'undefined') gsap.set(el, { xPercent: -50 });
         }
         // Scala e colore in base al combo
         let size = count >= 30 ? '2.2rem' : count >= 20 ? '1.8rem' : count >= 10 ? '1.5rem' : '1.2rem';
@@ -607,10 +633,13 @@ const FX = {
         el.style.opacity = '1';
         el.textContent = `x${count} COMBO`;
 
-        // Pulse con GSAP se disponibile
+        // Pulse con GSAP — xPercent:-50 mantenuto in entrambi i frame per non perdere la centratura
         if (typeof gsap !== 'undefined') {
-            gsap.killTweensOf(el, 'scale');
-            gsap.fromTo(el, { scale: 1.3 }, { scale: 1, duration: 0.15, ease: 'back.out(2)' });
+            gsap.killTweensOf(el);
+            gsap.fromTo(el,
+                { scale: 1.3, xPercent: -50 },
+                { scale: 1,   xPercent: -50, duration: 0.15, ease: 'back.out(2)' }
+            );
         }
     },
 

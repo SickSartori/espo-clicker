@@ -20,7 +20,7 @@ jobs:
 
       - name: 🔧 Set config to DEV
         run: |
-          jq '.instancename = "dev"' php/config.json > php/config.tmp && mv php/config.tmp php/config.json
+          sed -i 's/"instanceName" => "production"/"instanceName" => "dev"/' php/config.php
 
       # Step 2: Caricamento FTP
       # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.

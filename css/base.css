@@ -136,7 +136,7 @@ body {
     justify-content: center;
     align-items: flex-start;
     margin: 0;
-    padding: 85px 10px 0 10px;
+    padding: 65px 0 0 0;
     user-select: none;
     overflow: hidden;
     position: relative;
@@ -374,6 +374,54 @@ body.matrix-active .buy-btn:hover {
     font-size: 0.9rem;
     font-family: var(--font-body);
     animation: pulseText 1.5s infinite;
+}
+
+/* Audio Unlock Prompt */
+#audio-unlock-prompt {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(3rem);
+    z-index: calc(var(--z-loader) - 1);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 1.2rem;
+    background: rgba(10, 14, 28, 0.92);
+    border: 1px solid rgba(52, 152, 219, 0.45);
+    border-radius: 2rem;
+    color: #8ab8d4;
+    font-size: 0.88rem;
+    font-family: var(--font-body);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    white-space: nowrap;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+#audio-unlock-prompt.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    animation: audioPromptPulse 2.5s ease-in-out infinite;
+}
+
+#audio-unlock-prompt i {
+    font-size: 0.95rem;
+    color: #3498db;
+    animation: audioIconBounce 1.4s ease-in-out infinite;
+}
+
+@keyframes audioPromptPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(52, 152, 219, 0); }
+    50%       { box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 5px rgba(52, 152, 219, 0.12); }
+}
+
+@keyframes audioIconBounce {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.25); }
 }
 
 /*--------------------------------------------------------------------------------*/

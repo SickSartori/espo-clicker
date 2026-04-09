@@ -1,38 +1,18 @@
 /* css/layout.css - Layout e Griglia */
 
 #game-container {
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    max-width: 97%;
-    width: 98%;
-    height: calc(100vh - 90px);
-    max-height: calc(100vh - 90px);
+    width: 100%;
+    height: calc(100vh - 65px);
+    max-height: calc(100vh - 65px);
     display: flex;
     flex-wrap: nowrap;
-    margin: 0 auto;
-    animation: containerFadeIn 0.6s ease-out;
-    transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-
-#game-container:hover {
-    border-color: rgba(52, 152, 219, 0.2);
-    box-shadow:
-        0 30px 60px rgba(0, 0, 0, 0.9),
-        0 0 20px rgba(52, 152, 219, 0.08),
-        inset 0 0 40px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    animation: containerFadeIn 0.5s ease-out;
 }
 
 @keyframes containerFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(15px) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 /* Colonne */
@@ -126,6 +106,8 @@
     line-height: 1.1;
     animation: fadeIn 0.5s;
     min-width: 80px;
+    flex: 1;
+    max-width: 200px;
 }
 
 .header_stat_box_display_none {

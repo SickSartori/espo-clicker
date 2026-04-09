@@ -630,7 +630,7 @@ body.crunch-active #clicker-btn #manager-photo-clicked {
     border-color: #ffcc00;
     z-index: 5;
 }
-body div#fx-combo-display {
+#fx-combo-display {
     display: flex;
     justify-content: center;
     align-items: center;
