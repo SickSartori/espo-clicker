@@ -117,21 +117,27 @@ const STATIC_PATTERNS = [
 
 // ============================================================
 // INSTALL - Pre-cache + forza attivazione immediata
+// Carica gli asset in batch da 3 per non saturare Altervista.
 // ============================================================
+async function precacheBatched(cache, urls, batchSize) {
+    for (var i = 0; i < urls.length; i += batchSize) {
+        var batch = urls.slice(i, i + batchSize);
+        await Promise.allSettled(
+            batch.map(url =>
+                cache.add(url).catch(err => {
+                    console.warn(`[SW] Pre-cache fallito: ${url}`, err.message);
+                })
+            )
+        );
+    }
+}
+
 self.addEventListener('install', (event) => {
     console.log(`[SW] Installazione ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.open(STATIC_CACHE)
-            .then((cache) => {
-                return Promise.allSettled(
-                    PRECACHE_ASSETS.map(url =>
-                        cache.add(url).catch(err => {
-                            console.warn(`[SW] Pre-cache fallito: ${url}`, err.message);
-                        })
-                    )
-                );
-            })
-            .then(() => self.skipWaiting()) // Attiva subito, non aspettare tab chiuse
+            .then((cache) => precacheBatched(cache, PRECACHE_ASSETS, 3))
+            .then(() => self.skipWaiting())
     );
 });
 
@@ -234,19 +240,27 @@ async function cacheFirst(request) {
         return cachedResponse;
     }
 
-    const networkResponse = await fetch(request);
-    
-    // FIX: Evita il crash ignorando richieste da estensioni browser
+    // Retry fino a 2 volte in caso di connessione resettata
+    let networkResponse;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            networkResponse = await fetch(request);
+            break;
+        } catch (err) {
+            if (attempt === 2) throw err;
+            await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+        }
+    }
+
     if (!request.url.startsWith('http')) {
         return networkResponse;
     }
-    
+
     if (networkResponse.status !== 206) {
-        // FIX: Utilizzo di STATIC_CACHE invece della variabile inesistente CACHE_NAME
         const cache = await caches.open(STATIC_CACHE);
         cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
 }
 

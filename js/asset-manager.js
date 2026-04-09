@@ -26,52 +26,61 @@
     let   _bootDone = false;      // True dopo che il gioco ha fatto il boot
 
     // ─────────────────────────────────────────────────────────
-    // Helper: preload di una singola immagine
-    // Usa new Image() per forzare il browser a scaricarla e
-    // metterla in cache prima che il gioco ne abbia bisogno.
+    // Helper: preload di una singola immagine con retry
+    // Ritenta fino a MAX_RETRIES volte su errore (es. ERR_CONNECTION_RESET)
+    // prima di rinunciare silenziosamente.
     // ─────────────────────────────────────────────────────────
-    function _preloadImage(filename) {
+    var MAX_RETRIES    = 2;
+    var RETRY_DELAY_MS = 1200;
+
+    function _preloadImage(filename, attempt) {
+        attempt = attempt || 0;
         return new Promise(function (resolve) {
-            var img  = new Image();
-            img.onload  = resolve;
-            img.onerror = resolve; // Non bloccare il pacchetto se un file manca
+            var img = new Image();
+            img.onload = resolve;
+            img.onerror = function () {
+                if (attempt < MAX_RETRIES) {
+                    setTimeout(function () {
+                        _preloadImage(filename, attempt + 1).then(resolve);
+                    }, RETRY_DELAY_MS * (attempt + 1));
+                } else {
+                    resolve(); // Rinuncia silenziosamente dopo MAX_RETRIES
+                }
+            };
             img.src = IMG_BASE + filename;
         });
     }
 
     // ─────────────────────────────────────────────────────────
-    // Helper: carica immagini con concorrenza limitata
-    // Evita di saturare il server con troppe richieste parallele.
+    // Semaforo globale: massimo N richieste concorrenti in totale
+    // (condiviso tra tutti i pacchetti in caricamento simultaneo)
     // ─────────────────────────────────────────────────────────
-    var MAX_CONCURRENT = 3;
+    var MAX_CONCURRENT   = 3;
+    var _activeRequests  = 0;
+    var _pendingQueue    = [];
+
+    function _enqueue(filename) {
+        return new Promise(function (resolve) {
+            _pendingQueue.push({ filename: filename, resolve: resolve });
+            _drainQueue();
+        });
+    }
+
+    function _drainQueue() {
+        while (_activeRequests < MAX_CONCURRENT && _pendingQueue.length > 0) {
+            var item = _pendingQueue.shift();
+            _activeRequests++;
+            _preloadImage(item.filename).then(function () {
+                _activeRequests--;
+                item.resolve();
+                _drainQueue();
+            });
+        }
+    }
 
     function _loadQueue(filenames) {
-        return new Promise(function (resolve) {
-            var index    = 0;
-            var active   = 0;
-            var total    = filenames.length;
-            var done     = 0;
-
-            if (total === 0) { resolve(); return; }
-
-            function next() {
-                while (active < MAX_CONCURRENT && index < total) {
-                    active++;
-                    var filename = filenames[index++];
-                    _preloadImage(filename).then(function () {
-                        active--;
-                        done++;
-                        if (done === total) {
-                            resolve();
-                        } else {
-                            next();
-                        }
-                    });
-                }
-            }
-
-            next();
-        });
+        if (filenames.length === 0) return Promise.resolve();
+        return Promise.all(filenames.map(_enqueue));
     }
 
     // ─────────────────────────────────────────────────────────
