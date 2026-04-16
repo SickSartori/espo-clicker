@@ -3,7 +3,7 @@
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.1.9';
+const CACHE_VERSION = 'espo-v2.2.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -157,18 +157,18 @@ self.addEventListener('activate', (event) => {
                     })
             );
         })
-        .then(() => self.clients.claim()) // Prendi controllo di tutti i tab aperti
-        .then(() => {
-            // Notifica tutti i client: "nuova versione attiva, ricarica"
-            return self.clients.matchAll({ type: 'window' }).then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({
-                        type: 'SW_UPDATED',
-                        version: CACHE_VERSION
+            .then(() => self.clients.claim()) // Prendi controllo di tutti i tab aperti
+            .then(() => {
+                // Notifica tutti i client: "nuova versione attiva, ricarica"
+                return self.clients.matchAll({ type: 'window' }).then(clients => {
+                    clients.forEach(client => {
+                        client.postMessage({
+                            type: 'SW_UPDATED',
+                            version: CACHE_VERSION
+                        });
                     });
                 });
-            });
-        })
+            })
     );
 });
 
@@ -285,7 +285,7 @@ async function staleWhileRevalidate(request) {
     const fetchPromise = fetch(request).then(response => {
         // FIX: Controllo del protocollo prima di salvare in cache
         if (response.ok && request.url.startsWith('http')) {
-            const clone = response.clone(); 
+            const clone = response.clone();
             caches.open(DYNAMIC_CACHE).then(cache => {
                 cache.put(request, clone);
             });

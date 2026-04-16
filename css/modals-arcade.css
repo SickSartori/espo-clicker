@@ -8,7 +8,7 @@
     max-width: 900px;
     width: 95%;
     overflow: hidden;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-heading);
     color: #fff;
     position: relative;
     display: flex;

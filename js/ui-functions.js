@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggleUI) {
         const pref = localStorage.getItem('useModernSkinsUI');
         toggleUI.checked = pref !== 'false'; // Default a true
-        
+
         // FIX: Imposta il testo iniziale al caricamento
         if (toggleLabel) {
             toggleLabel.textContent = toggleUI.checked ? 'Card' : 'Griglia';
@@ -647,12 +647,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         toggleUI.addEventListener('change', (e) => {
             localStorage.setItem('useModernSkinsUI', e.target.checked);
-            
+
             // FIX: Aggiorna dinamicamente il testo al cambio di visualizzazione
             if (toggleLabel) {
                 toggleLabel.textContent = e.target.checked ? 'Card' : 'Griglia';
             }
-            
+
             updateSkinsUI();
         });
     }
@@ -769,7 +769,7 @@ function updateSkinsUI() {
             }
         }
 
-        const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/espo.webp') : 'assets/image/hidden.webp';
+        const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp') : 'assets/image/ui/hidden.webp';
 
         // Creazione Oggetto per il Carousel Moderno
         const skinObj = {
@@ -941,10 +941,12 @@ function updateSkinsUI() {
             stage._swipeAttached = true;
 
             if (typeof Hammer !== 'undefined') {
-                const hammer = new Hammer(stage, { recognizers: [
-                    [Hammer.Swipe, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 30, velocity: 0.3 }],
-                    [Hammer.Pan, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 10 }]
-                ]});
+                const hammer = new Hammer(stage, {
+                    recognizers: [
+                        [Hammer.Swipe, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 30, velocity: 0.3 }],
+                        [Hammer.Pan, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 10 }]
+                    ]
+                });
 
                 hammer.on('swipeleft', () => {
                     if (modernCurrentIndex < modernSkinsArray.length - 1) {
@@ -1517,7 +1519,7 @@ function showClickFeedback(event) {
             const dist = 20 + Math.random() * 35;
             spark.style.cssText = `left:${px}px;top:${py}px;` +
                 `--spark-x:${Math.cos(angle) * dist}px;--spark-y:${Math.sin(angle) * dist}px;` +
-                `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random()*100)},${Math.floor(Math.random()*80)},0.9)`;
+                `--spark-dur:${0.4 + Math.random() * 0.3}s;--spark-color:rgba(255,${100 + Math.floor(Math.random() * 100)},${Math.floor(Math.random() * 80)},0.9)`;
             feedbackContainer.appendChild(spark);
             setTimeout(() => spark.remove(), 800);
         }

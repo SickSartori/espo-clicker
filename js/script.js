@@ -167,6 +167,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const SAVE_KEY = 'espotoolClickerSaveV8';
     const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
 
+    // --------- CHECK STORAGE DISPONIBILE ---------
+    (function checkStorageAvailable() {
+        try {
+            localStorage.setItem('__espo_test__', '1');
+            localStorage.removeItem('__espo_test__');
+        } catch (e) {
+            // localStorage bloccato (Edge Tracking Prevention, Safari ITP, modalità privata)
+            const banner = document.createElement('div');
+            banner.id = 'storage-blocked-banner';
+            banner.style.cssText = [
+                'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:99999',
+                'background:#c0392b', 'color:#fff', 'text-align:center',
+                'padding:10px 16px', 'font-size:13px', 'line-height:1.5'
+            ].join(';');
+            banner.innerHTML = '⚠️ Il tuo browser blocca il salvataggio locale. I progressi <strong>non verranno salvati</strong>. ' +
+                'Su Edge: <em>Impostazioni → Privacy → Prevenzione tracciamento → disattiva per questo sito</em>. ' +
+                'Su Safari: <em>disattiva "Impedisci tracciamento cross-site"</em>. ' +
+                '<button onclick="this.parentElement.remove()" style="margin-left:12px;background:rgba(255,255,255,0.2);border:1px solid #fff;color:#fff;padding:2px 8px;cursor:pointer;border-radius:3px;">✕</button>';
+            document.body.prepend(banner);
+        }
+    })();
+
     async function saveGame() {
         if (gameState.isDeleting) return;
 

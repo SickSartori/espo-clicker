@@ -1,8 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
-    // 0. FUNZIONI HELPER GLOBALI 
+    // 0. FUNZIONI HELPER GLOBALI
     // ==========================================
+
+    // Previene ghost click su mobile: dopo touchend arriva un click sintetico ~300ms dopo.
+    // Se l'ultimo touchend è avvenuto entro 500ms, il click viene ignorato.
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', () => {
+        lastTouchEnd = Date.now();
+    }, { passive: true });
+    function isFastClick() {
+        return Date.now() - lastTouchEnd < 500;
+    }
 
     // Funzione mancante: Ferma tutti i test audio
     window.stopAllTestAudio = function () {
@@ -687,6 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
+            if (isFastClick()) return; // blocca ghost click post-touch
             if (e.target.classList.contains('modal-close-btn')) {
                 closeModal(modal);
 

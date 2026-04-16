@@ -171,3 +171,28 @@
         padding: 1px 5px;
     }
 }
+
+@media only screen and (max-width: 768px) {
+    .leaderboard-item {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .lb-left {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .leaderboard-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+
+    .leaderboard-score {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+}

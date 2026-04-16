@@ -65,15 +65,15 @@
     }
 
     /* ---------------------------------------------------
-       3. BOTTONE CHIUSURA GIGANTE (SEMPRE IN FONDO)
+       3. BOTTONE CHIUSURA (COMPATTO, SEMPRE IN FONDO)
     --------------------------------------------------- */
     html body .modal-close-btn {
         order: 99;
         position: sticky;
         bottom: 0;
         width: 100%;
-        height: 50px;
-        background: rgba(231, 76, 60, 0.9);
+        height: 36px;
+        background: rgba(231, 76, 60, 0.85);
         color: #fff;
         font-size: 0;
         display: flex;
@@ -82,7 +82,7 @@
         margin-top: auto;
         border-radius: 0;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.4);
         flex-shrink: 0;
         z-index: 1000;
         padding-bottom: env(safe-area-inset-bottom);
@@ -90,8 +90,8 @@
 
     html body .modal-close-btn::after {
         content: 'CHIUDI';
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 1.2rem;
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
         font-weight: 900;
         letter-spacing: 2px;
     }
@@ -104,7 +104,7 @@
        4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
     --------------------------------------------------- */
     html body #game-container {
-        height: calc(100dvh - 111px); /* 55px navbar + 56px bottom nav */
+        height: calc(100dvh - 111px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     }
 
     html body #center-column.mobile-active {
@@ -181,7 +181,7 @@
        5. SCHERMATA SKIN: LAYOUT APP-LIKE v3.0
     --------------------------------------------------- */
 
-    /* Container principale: riempie tutto lo spazio tra header e CHIUDI */
+    /* Container principale: scrollabile in verticale, nasconde overflow orizzontale */
     html body div#skins-modal div#skins-grid-modern {
         position: relative;
         display: flex;
@@ -189,13 +189,17 @@
         align-items: center;
         flex: 1;
         min-height: 0;
-        padding: 0;
-        overflow: hidden;
+        padding-top: 30px; /* ridotto: scala 1.35 sfora meno in alto */
+        padding-bottom: 12px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
     }
 
-    /* Carousel stage: occupa il giusto spazio, centrato */
+    /* Carousel stage: altezza adattiva — grande su schermi normali, ridotta su piccoli */
     html body div#skins-modal div#skins-grid-modern div.carousel-stage {
-        height: 36dvh;
+        height: clamp(160px, 34dvh, 240px);
         width: 100%;
         margin: 0;
         position: relative;
@@ -203,21 +207,29 @@
         flex-shrink: 0;
     }
 
-    /* Skin attiva: grande e centrata */
+    /* Dimensione base item corretta su mobile (fix margini sfasati) */
+    html body #skins-grid-modern .carousel-item {
+        width: 150px;
+        height: 150px;
+        margin-top: -75px;
+        margin-left: -75px;
+    }
+
+    /* Skin attiva: dimensione bilanciata, spostata leggermente in alto */
     html body .carousel-item.active {
-        transform: scale(1.5) translateZ(80px);
+        transform: translateY(-20px) scale(1.35);
         z-index: 50;
     }
 
-    /* Skin laterali: piccole e sfumate */
+    /* Skin laterali: visibili ma in secondo piano */
     html body #skins-grid-modern .carousel-item.prev-1,
     html body #skins-grid-modern .carousel-item.next-1 {
-        transform: translateX(105px) scale(0.55) rotateY(-25deg);
+        transform: translateX(115px) scale(0.52) rotateY(-25deg);
         opacity: 0.35;
     }
 
     html body #skins-grid-modern .carousel-item.prev-1 {
-        transform: translateX(-105px) scale(0.55) rotateY(25deg);
+        transform: translateX(-115px) scale(0.52) rotateY(25deg);
     }
 
     /* Nascondi prev-2/next-2 su mobile */
@@ -231,14 +243,17 @@
         display: none;
     }
 
-    /* Dot indicator (generati da JS) */
+    /* Dot indicator — sopra la skin (z-index > active item 50) */
     html body .carousel-dots {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 6px;
-        padding: 8px 0;
+        gap: 5px;
+        padding: 4px 0;
+        margin-top: 20px; /* clearance badge con scale(1.35): ~20px */
         flex-shrink: 0;
+        position: relative;
+        z-index: 60;
     }
 
     html body .carousel-dot {
@@ -256,9 +271,9 @@
         box-shadow: 0 0 8px var(--r-color-glow, rgba(52, 152, 219, 0.4));
     }
 
-    /* Pannello Info: compatto, trasparente, respira */
+    /* Pannello Info: padding-top largo per lasciare spazio al badge che sconfina sotto lo stage */
     html body div#skins-modal div#skins-grid-modern div.modern-info-panel {
-        padding: 8px 16px 10px;
+        padding: 12px 16px 8px; /* ridotto: translateY(-20px)+scale(1.35) tiene il badge dentro lo stage */
         margin-top: 0;
         width: 100%;
         max-width: 100%;
@@ -268,6 +283,48 @@
         box-shadow: none;
         min-height: auto;
         flex-shrink: 0;
+    }
+
+    /* Descrizione skin nascosta su mobile — testo flavor, recupera spazio per il bottone */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel .modern-info-desc {
+        display: none;
+    }
+
+    /* Requirement ("Richiede Formattazione") compatto */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel .modern-info-requirement {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+        margin-top: 0;
+    }
+
+    /* Costo Token compatto */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel .modern-info-cost,
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel [class*="cost"],
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel [class*="token"] {
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
+    /* Titolo skin compatto */
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel .modern-info-title {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+
+    /* Div inline-styled dentro modern-info-action (Richiede Formattazione + Token) */
+    html body div#skins-modal div#skins-grid-modern .modern-info-action > div {
+        font-size: 0.78rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* Bottone azione (IN USO / ACQUISTA / FORMATTA PRIMA) compatto */
+    html body #skins-modal .modern-btn-large {
+        padding: 8px 0;
+        font-size: 0.88rem;
+        width: 88%;
+        max-width: 300px;
+        border-radius: 10px;
+        box-shadow: none;
     }
 
     html body div#skins-modal div#skins-grid-modern div.modern-info-panel::before {
@@ -451,5 +508,55 @@
 
     html body #skins-modal .modern-info-action {
         padding-bottom: 8px;
+    }
+
+    /* Cheatboard: sotto i modali e semi-trasparente su mobile */
+    html body #cheatboard-container {
+        z-index: 1500; /* sotto modal-backdrop (2000) */
+    }
+
+    html body #cheatboard-handle {
+        opacity: 0.35;
+        transition: opacity 0.2s ease;
+    }
+
+    html body #cheatboard-handle:hover,
+    html body #cheatboard-handle:active {
+        opacity: 0.85;
+    }
+}
+
+/* Schermi molto bassi: iPhone 5, SE 1a gen (altezza ≤ 620px) */
+@media only screen and (max-width: 1024px) and (max-height: 620px) {
+
+    html body div#skins-modal div#skins-grid-modern div.carousel-stage {
+        height: 155px;
+        flex-shrink: 0;
+    }
+
+    html body #skins-grid-modern .carousel-item {
+        width: 110px;
+        height: 110px;
+        margin-top: -55px;
+        margin-left: -55px;
+    }
+
+    html body .carousel-item.active {
+        transform: translateY(-12px) scale(1.25);
+        z-index: 50;
+    }
+
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel {
+        padding-top: 22px;
+        margin-top: 0;
+        min-height: auto;
+    }
+
+    html body div#skins-modal div#skins-grid-modern div.modern-info-panel .modern-info-desc {
+        display: none;
+    }
+
+    html body .carousel-dots {
+        margin-top: 22px; /* ridotto per schermo piccolo */
     }
 }
