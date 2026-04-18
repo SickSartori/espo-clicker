@@ -3,10 +3,8 @@
 *.tmp
 /tmp/
 
-# Dipendenze
-# Decommentare se si usano Node.js (npm) o Composer
-# /node_modules
-# /vendor
+# Dipendenze Node.js
+node_modules/
 
 # File del Sistema Operativo
 .DS_Store
@@ -18,12 +16,15 @@ Thumbs.db
 *.swp
 *~
 
-# Database e Backup (per il deployment)
-# I file .php per la connessione al database sono inclusi 
-# perché fanno parte della struttura del progetto, ma in un progetto 
-# reale si ignorerebbe la configurazione con credenziali reali.
+# Database e Backup
 *.sql
 *.sqlite
 dump.rdb
+
+# Artefatti generati / non deployati
 code
 assets/packs
+
+# Tool interni (non deployare)
+.superpowers
+.claude

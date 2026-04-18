@@ -1,9 +1,10 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v2.0
+// ESPO CLICKER - Service Worker v3.0
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
+// Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.2.0';
+const CACHE_VERSION = 'espo-v3.0.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -12,34 +13,10 @@ const PRECACHE_ASSETS = [
     './',
     './index.php',
 
-    // CSS Bundle (sostituiscono i 18 file singoli)
-    './css/concat.php?bundle=core&v=2.1.9',
-    './css/concat.php?bundle=ui&v=2.1.9',
-    './css/concat.php?bundle=mobile&v=2.1.9',
-
-    // JS core
-    './js/version-config.js',
-    './js/asset-packages.js',
-    './js/asset-manager.js',
-    './js/arcade-loader.js',
-
-    // JS data
-    './js/data/core.js',
-    './js/data/assets.js',
-    './js/data/skins.js',
-    './js/data/teams.js',
-    './js/data/upgrades.js',
-    './js/data/achievements.js',
-    './js/data/events.js',
-    './js/data/texts.js',
-    './js/data/gamestate.js',
-
-    // JS game
-    './js/ui-functions.js',
-    './js/game-logic.js',
-    './js/script.js',
-    './js/podio.js',
-    './js/modals.js',
+    // JS + CSS Bundle (esbuild minificato)
+    './dist/game.bundle.min.js',
+    './dist/styles.bundle.min.css',
+    './dist/styles.mobile.min.css',
 
     // ── Pacchetto CORE ────────────────────────────────────────
     './assets/image/skins/espo.webp',
@@ -98,6 +75,7 @@ const NO_CACHE_PATTERNS = [
 
 // Pattern per assets statici (cache-first)
 const STATIC_PATTERNS = [
+    /\/dist\/.+\.(js|css)(\?|$)/,  // esbuild bundles — cache immutable 1 anno
     /\.css(\?|$)/,
     /\.js(\?|$)/,
     /\.webp(\?|$)/,
@@ -112,7 +90,7 @@ const STATIC_PATTERNS = [
     /cdnjs\.cloudflare/,
     /cdn\.jsdelivr/,
     /fontawesome/,
-    /concat\.php\?bundle=/ // Bundle CSS generati da concat.php
+    /concat\.php\?bundle=/ // Fallback per concat.php (deprecato)
 ];
 
 // ============================================================

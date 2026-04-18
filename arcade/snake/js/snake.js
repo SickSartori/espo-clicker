@@ -12,7 +12,7 @@
             bg: '#050a10',
             grid: 'rgba(52, 152, 219, 0.1)'
         },
-        headImageSrc: 'assets/image/espo.webp' // Fallback base
+        headImageSrc: 'assets/image/skins/espo.webp' // Fallback base
     };
 
     let canvas, ctx;

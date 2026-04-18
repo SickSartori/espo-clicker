@@ -1,0 +1,16 @@
+{
+  "name": "espo-clicker",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "build:watch": "node build.js --watch",
+    "build:dev": "node build.js --dev"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0"
+  }
+}

@@ -17,11 +17,10 @@ require_once("php/check_version.php");
 		<meta name="application-name" content="Espo Clicker">
 		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="msapplication-TileColor" content="#050505">
-		<meta name="msapplication-TileImage" content="assets/image/icons/icon-144.png">
+		<meta name="msapplication-TileImage" content="assets/image/ico.svg">
 		<link rel="manifest" href="manifest.json">
-		<link rel="apple-touch-icon" href="assets/image/icons/icon-192.png">
-		<link rel="icon" type="image/png" sizes="192x192" href="assets/image/icons/icon-192.png">
-		<link rel="icon" type="image/png" sizes="512x512" href="assets/image/icons/icon-512.png">
+		<link rel="apple-touch-icon" href="assets/image/ico.svg">
+		<link rel="icon" type="image/svg+xml" href="assets/image/ico.svg">
 
 		<title>
 			<?php echo $labels["head_titolo"]; ?>
@@ -35,18 +34,15 @@ require_once("php/check_version.php");
 		<link rel="preconnect" href="https://cdn.jsdelivr.net">
 
 		<!-- ============================================================ -->
-		<!-- CSS BUNDLE (18 file → 3 bundle = -15 richieste HTTP)       -->
-		<!-- Serviti da css/concat.php con gzip + cache 7 giorni        -->
+		<!-- CSS BUNDLE (esbuild minificato)                              -->
+		<!-- Serviti da dist/ con gzip + cache 1 anno (immutable)        -->
 		<!-- ============================================================ -->
 
-		<!-- Bundle Core: keyframes, base, layout, components, navbar, clicker, store -->
-		<link rel="stylesheet" href="css/concat.php?bundle=core&v=<?php echo $cacheVer; ?>">
-
-		<!-- Bundle UI: modals, skins, podio -->
-		<link rel="stylesheet" href="css/concat.php?bundle=ui&v=<?php echo $cacheVer; ?>" media="all">
+		<!-- Bundle Core + UI + all styles -->
+		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $cacheVer; ?>">
 
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
-		<link rel="stylesheet" href="css/concat.php?bundle=mobile&v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
 
 		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
 
@@ -58,7 +54,7 @@ require_once("php/check_version.php");
 		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high">
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
-		<link rel="icon" type="image/png" href="assets/image/ui/favicon.webp">
+		<link rel="icon" type="image/svg+xml" href="assets/image/ico.svg">
 	</head>
 	<body>
 		<canvas id="matrix-canvas"></canvas>
@@ -264,9 +260,9 @@ require_once("php/check_version.php");
 
 		<!-- ============================================================ -->
 		<!-- LIBRERIE ESTERNE (solo quelle necessarie all'avvio)        -->
+		<!-- lz-string: ora bundlato in game.bundle.min.js              -->
 		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
 		<!-- ============================================================ -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
@@ -274,34 +270,11 @@ require_once("php/check_version.php");
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
 
 		<!-- ============================================================ -->
-		<!-- ASSET SYSTEM                                                -->
-		<!-- asset-packages.js: definizioni pacchetti (solo dati)      -->
-		<!-- asset-manager.js:  caricamento progressivo + on-demand    -->
-		<!-- Devono precedere i file di gioco per essere disponibili   -->
+		<!-- GAME BUNDLE (esbuild minificato)                            -->
+		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
+		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
 		<!-- ============================================================ -->
-		<script src="js/asset-packages.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/asset-manager.js?v=<?php echo $cacheVer; ?>" defer></script>
-
-		<!-- Game Version -->
-		<script src="js/version-config.js?v=<?php echo $cacheVer; ?>" defer></script>
-
-		<!-- Gamedata -->
-		<script src="js/data/core.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/assets.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/skins.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/teams.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/upgrades.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/achievements.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/events.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/texts.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/data/gamestate.js?v=<?php echo $cacheVer; ?>" defer></script>
-
-		<!-- Game logic -->
-		<script src="js/ui-functions.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/game-logic.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/script.js?v=<?php echo $cacheVer; ?>" defer></script> 
-		<script src="js/podio.js?v=<?php echo $cacheVer; ?>" defer></script>
-		<script src="js/modals.js?v=<?php echo $cacheVer; ?>" defer></script>		
+		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>		
 		
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->

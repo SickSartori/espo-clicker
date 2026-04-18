@@ -17,14 +17,15 @@
         'arcade/super-espo/css/super-espo.css',
     ];
 
+    const _v = window.GAME_VERSION ? (window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor) : Date.now();
     const ARCADE_JS = [
         // Phaser deve essere caricato PRIMA degli altri
         'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
         // Giochi (possono caricare in parallelo dopo Phaser)
-        'arcade/snake/js/snake.js',
-        'arcade/space/js/space.js',
-        'arcade/asteroids/js/asteroids.js',
-        'arcade/super-espo/js/super-espo.js',
+        'arcade/snake/js/snake.js?v=' + _v,
+        'arcade/space/js/space.js?v=' + _v,
+        'arcade/asteroids/js/asteroids.js?v=' + _v,
+        'arcade/super-espo/js/super-espo.js?v=' + _v,
     ];
 
     // ---- Stato interno -------------------------------------

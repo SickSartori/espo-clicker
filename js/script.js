@@ -163,9 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
     statsList = document.getElementById('stats-list');
     gameContainer = document.getElementById('game-container');
 
-    // --------- SALVATAGGIO ---------
-    const SAVE_KEY = 'espotoolClickerSaveV8';
-    const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
+    // --------- SALVATAGGIO V9 (IndexedDB) ---------
+    const SAVE_KEY = 'espotoolClickerSaveV9';
+    const BACKUP_KEY = 'espotoolClickerSaveV9_Backup';
 
     // --------- CHECK STORAGE DISPONIBILE ---------
     (function checkStorageAvailable() {
@@ -200,22 +200,20 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
         gameState.lastSaveTimestamp = Date.now();
 
-        // Compressione
-        let compressed = null;
-        try {
-            const stateJSON = JSON.stringify(gameState);
-            compressed = LZString.compressToUTF16(stateJSON);
-        } catch (e) {
-            console.error("❌ Errore compressione:", e);
-            return;
-        }
+        // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
+        const stateJSON = JSON.stringify(gameState);
+        const compressed = LZString.compressToUTF16(stateJSON);
 
-        // Salvataggio Locale
         try {
-            localStorage.setItem(SAVE_KEY, compressed);
-            if (Math.random() < 0.2) localStorage.setItem(BACKUP_KEY, compressed);
+            await SaveDB.saveToIndexedDB(gameState);
         } catch (e) {
-            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
+            console.error("❌ Errore save IndexedDB:", e);
+            // Fallback localStorage
+            try {
+                localStorage.setItem(SAVE_KEY, compressed);
+            } catch (fallbackErr) {
+                if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
+            }
         }
 
         // SALVATAGGIO CLOUD SICURO
@@ -345,18 +343,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    function loadGame() {
-        // Tenta di recuperare il salvataggio principale
-        let savedState = localStorage.getItem(SAVE_KEY);
+    async function loadGame() {
+        // Carica da IndexedDB V9
+        let savedState = await SaveDB.loadFromIndexedDB();
         let loadedFromBackup = false;
 
-        // Se il salvataggio principale non esiste o è vuoto, prova il BACKUP
+        // Fallback localStorage V9
+        if (!savedState) {
+            savedState = localStorage.getItem(SAVE_KEY);
+        }
+
+        // Fallback backup
         if (!savedState) {
             savedState = localStorage.getItem(BACKUP_KEY);
-
             if (savedState) {
                 loadedFromBackup = true;
-                console.warn("⚠️ Main save non trovato. Tentativo di caricamento dal BACKUP.");
+                console.warn("⚠️ Main save non trovato. Caricamento dal BACKUP.");
             }
         }
 
@@ -364,28 +366,26 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let parsedState = null;
 
-                // --- TENTATIVO DI DECOMPRESSIONE ---
-                // Proviamo a decomprimere la stringa
-                const decompressed = LZString.decompressFromUTF16(savedState);
-
-                if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
-                    try {
-                        parsedState = JSON.parse(decompressed);
-                        // console.log("💾 Salvataggio compresso caricato.");
+                // Decompressione se da localStorage
+                if (typeof savedState === 'string') {
+                    const decompressed = LZString.decompressFromUTF16(savedState);
+                    if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
+                        try {
+                            parsedState = JSON.parse(decompressed);
+                        } catch (e) {
+                            console.warn("Dati decompressi corrotti, tento parsing diretto.");
+                        }
                     }
-                    catch (e) {
-                        console.warn("Dati decompressi corrotti, tento parsing diretto.");
+                    if (!parsedState) {
+                        try {
+                            parsedState = JSON.parse(savedState);
+                        } catch (e) {
+                            throw new Error("Impossibile parsare il salvataggio.");
+                        }
                     }
-                }
-
-// Fallback: Se la decompressione fallisce, prova a leggere come JSON puro (Legacy)
-                if (!parsedState) {
-                    try {
-                        parsedState = JSON.parse(savedState);
-                    }
-                    catch (e) {
-                        throw new Error("Impossibile parsare il salvataggio.");
-                    }
+                } else {
+                    // IndexedDB ritorna già oggetto parsed
+                    parsedState = savedState;
                 }
 
                 // 1. PRIMA COSA: Salviamo il flag per le Release Notes
@@ -400,51 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         showRN = true;
                     }
                 }
-
-                // ========================================================
-                // 2. MIGRAZIONE V1 -> V2 (RIALLINEAMENTO GLOBALE)
-                // ========================================================
-                window.triggerV2MigrationModal = false; // Flag globale per il modale
-                const saveMajor = (parsedState.version && parsedState.version.major) ? parsedState.version.major : 1;
-                const gameMajor = window.GAME_VERSION.major;
-
-                // Identifica un veterano (versione vecchia E score elevato)
-                let isVeteran = false;
-                try { if (parsedState.totalScore && new Decimal(parsedState.totalScore).gt(10000)) isVeteran = true; } catch(e){}
-
-                if (saveMajor < 2 && gameMajor >= 2 && isVeteran) {
-                    console.log("Migrazione V1 -> V2 rilevata! Eseguo riallineamento...");
-
-                    // A. Salva le uniche cose che vogliamo mantenere
-                    const savedSkins = parsedState.skins ? parsedState.skins.unlocked : ['default'];
-                    const currentSkin = parsedState.skins ? parsedState.skins.current : 'default';
-                    const username = (parsedState.user && parsedState.user.username) ? parsedState.user.username : 'Giocatore';
-                    const masterVol = (parsedState.user && parsedState.user.masterVolume !== undefined) ? parsedState.user.masterVolume : 0.8;
-
-                    // B. Genera uno stato completamente pulito
-                    let newState = getInitialGameState();
-
-                    // C. Inietta i dati salvati
-                    newState.skins.unlocked = savedSkins;
-                    newState.skins.current = currentSkin;
-                    newState.user.username = username;
-                    newState.user.masterVolume = masterVol;
-
-                    // D. PREMIO VETERANO: 1 Formattazione e 1 Q-Bit
-                    newState.totalFormattazioni = 1;
-                    newState.qBits = new Decimal(1);
-                    newState.lifetimeQBits = new Decimal(1);
-
-                    // E. Aggiorna la versione
-                    if (window.GAME_VERSION) {
-                        newState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
-                    }
-
-                    // Sostituisci l'oggetto parsato
-                    parsedState = newState;
-                    window.triggerV2MigrationModal = true;
-                }
-                // ========================================================
 
                 // Imposta la variabile per le RN in modo coerente per tutto il gioco
                 if (showRN) {
