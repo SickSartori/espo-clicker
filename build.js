@@ -16,6 +16,7 @@ const JS_FILES = [
 
   // Save system V9
   'js/save-db.js',
+  'js/error-handler.js',
 
   // CRITICO: version prima di gamestate (gamestate:113 chiama getInitialGameState() top-level)
   'js/version-config.js',
@@ -103,9 +104,7 @@ const buildCSS = async () => {
     ...cssShared,
   });
 
-  const mobileCss =
-    fs.readFileSync('css/mobile.css', 'utf8') + '\n\n' +
-    fs.readFileSync('css/mobile-simplified.css', 'utf8');
+  const mobileCss = fs.readFileSync('css/mobile.css', 'utf8');
 
   await esbuild.build({
     stdin: { contents: mobileCss, loader: 'css', resolveDir: 'css' },

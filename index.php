@@ -51,10 +51,9 @@ require_once("php/check_version.php");
 		<!-- Accelera il Largest Contentful Paint (LCP)                 -->
 		<!-- ============================================================ -->
 		<link rel="preload" as="image" href="assets/image/skins/espo.webp" fetchpriority="high">
-		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high">
+		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high" imagesrcset="assets/image/skins/espo-click.webp" imagesizes="(max-width: 768px) 120px, 240px">
 
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
-		<link rel="icon" type="image/svg+xml" href="assets/image/ico.svg">
 	</head>
 	<body>
 		<canvas id="matrix-canvas"></canvas>
@@ -307,19 +306,23 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 					// Polling: controlla aggiornamenti ogni 60 minuti
 					setInterval(() => { reg.update(); }, 60 * 60 * 1000);
 
-					// Se c'è un SW in attesa (aggiornamento trovato), attivalo
-					if (reg.waiting) {
-						reg.waiting.postMessage('FORCE_UPDATE');
+					// Se c'è un SW in attesa (aggiornamento trovato), chiedi consenso
+					if (reg.waiting && _swHadController) {
+						if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
+							reg.waiting.postMessage('SKIP_WAITING');
+						}
 					}
 
-					// Rileva nuovo SW installato → forza attivazione
+					// Rileva nuovo SW installato → chiedi consenso prima di attivare
 					reg.addEventListener('updatefound', () => {
 						const newSW = reg.installing;
 						if (!newSW) return;
 						newSW.addEventListener('statechange', () => {
 							if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-								console.log('[PWA] Nuova versione disponibile, ricarico...');
-								newSW.postMessage('FORCE_UPDATE');
+								console.log('[PWA] Nuova versione disponibile, attesa consenso...');
+								if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
+									newSW.postMessage('SKIP_WAITING');
+								}
 							}
 						});
 					});

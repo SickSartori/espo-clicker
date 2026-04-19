@@ -1,4 +1,51 @@
-# 💥 Espòòò Clicker - Release Notes Ufficiali (v2.0) 💥
+# 💥 Espòòò Clicker - Release Notes Ufficiali 💥
+
+## Versione 3.0: Performance, Stabilità e Mobile ⚡
+
+Un aggiornamento silenzioso ma potente. Nessuna nuova feature — solo il gioco che diventa più veloce, più stabile e più bello su smartphone.
+
+---
+
+### ⚡ Performance & Caricamento
+
+* **📦 Bundle unico:** Tutti i file JavaScript (15+) e CSS del gioco vengono ora compressi e unificati in un solo bundle ottimizzato. Il caricamento iniziale è drasticamente più rapido — meno richieste HTTP, meno attesa.
+* **🖼️ Skin caricate on-demand:** Le skin Epic e Legendary (le più pesanti) vengono ora scaricate solo quando apri il menu Guardaroba, non più in background durante il gioco. Risparmio immediato di ~1.6 MB nei primi minuti.
+* **🔄 Asset decodificati in background:** Le immagini delle skin vengono ora decodificate in modo asincrono, senza mai bloccare l'animazione del clicker.
+* **💾 Cache 1 anno:** I file del bundle vengono cachati dal browser per un anno intero. Dopo il primo caricamento, il gioco si avvia quasi istantaneamente anche senza rete.
+
+---
+
+### 💾 Sistema di Salvataggio V9
+
+* **🗄️ IndexedDB come storage primario:** Il salvataggio non usa più localStorage ma IndexedDB — più capiente, più affidabile, mai bloccante. Il gioco non si "inceppa" più durante i salvataggi frequenti.
+* **⏱️ Salvataggio ogni 30 secondi:** Ridotto il numero di scritture da ogni 3-5s a ogni 30s, alleggerendo il carico su mobile.
+* **🛡️ Doppio fallback:** In caso raro di errore IndexedDB, il salvataggio ricade automaticamente su localStorage. Nessuna perdita di progressi.
+* **⚠️ Guardia spazio disco:** Il gioco controlla la memoria disponibile prima di salvare e avvisa se lo spazio è quasi esaurito.
+
+---
+
+### 🛡️ Stabilità
+
+* **🌐 Gestore errori globale:** Qualsiasi errore inaspettato ora viene catturato, loggato e mostrato come toast — invece di sparire silenziosamente. Il gioco continua a funzionare.
+* **🔊 Audio a prova di crash:** Se un file audio non si carica (connessione lenta, CDN offline), il gioco ignora l'errore e continua invece di bloccarsi.
+* **🔄 Aggiornamenti SW con consenso:** Il Service Worker non forza più il reload della pagina durante il gioco. Quando è disponibile una nuova versione, ti viene chiesto prima.
+
+---
+
+### 📱 Mobile & Responsive
+
+* **🍎 Safe area iOS:** Barra di navigazione inferiore correttamente distanziata dall'indicatore home su iPhone X e successivi.
+* **👆 Touch più reattivo:** Eliminato il flash blu al tap su pulsanti. Listener touch ottimizzati per uno scroll più fluido nei menu.
+* **📐 Zero layout shift:** Il clicker principale non "salta" più cambiando skin — la dimensione è ora riservata in anticipo dal browser.
+* **📁 CSS mobile unificato:** I due file di stile mobile sono stati uniti in uno solo, riducendo il lavoro del browser al caricamento.
+
+---
+
+### 🎨 UI & Icone
+
+* **🔵 Icona SVG:** L'icona dell'app (schermata home, tab browser) è ora un SVG scalabile — nitida su qualsiasi risoluzione e display retina.
+
+---
 
 ## Versione 2.0: Formattazione, Nuovi Orizzonti e Arcade 2.0!
 

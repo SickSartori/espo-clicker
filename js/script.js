@@ -204,6 +204,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateJSON = JSON.stringify(gameState);
         const compressed = LZString.compressToUTF16(stateJSON);
 
+        // Quota guard: warn se spazio residuo < 2x dimensione save
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                const est = await navigator.storage.estimate();
+                const free = (est.quota || 0) - (est.usage || 0);
+                if (free > 0 && free < compressed.length * 4) {
+                    console.warn('[SaveGuard] Storage quasi pieno:', free, 'bytes liberi');
+                    if (window.EspooClicker) window.EspooClicker.showToast('⚠️ Memoria quasi piena', 'warning');
+                }
+            } catch (_) { /* ignore */ }
+        }
+
         try {
             await SaveDB.saveToIndexedDB(gameState);
         } catch (e) {
@@ -1313,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Pulizia grafica (Blur) per togliere il focus dal bottone
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
-            clickerButton.addEventListener('touchend', () => clickerButton.blur());
+            clickerButton.addEventListener('touchend', () => clickerButton.blur(), { passive: true });
 
             // 1. GESTIONE MOUSE (Nativa)
             clickerButton.addEventListener('click', (e) => {

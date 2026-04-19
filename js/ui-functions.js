@@ -679,6 +679,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Funzione principale per aggiornare la modale delle skin
 function updateSkinsUI() {
+    // Load Epic and Legendary skins on demand when modal opens
+    if (window.AssetManager) {
+        window.AssetManager.load('SKINS_EPIC');
+        window.AssetManager.load('SKINS_LEGENDARY');
+    }
+
     const gridLegacy = document.getElementById('skins-grid-legacy');
     const gridModern = document.getElementById('skins-grid-modern');
     const toggleUI = document.getElementById('skins-ui-toggle');

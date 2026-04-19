@@ -37,6 +37,8 @@
         attempt = attempt || 0;
         return new Promise(function (resolve) {
             var img = new Image();
+            img.decoding = 'async';
+            img.loading = 'lazy';
             img.onload = resolve;
             img.onerror = function () {
                 if (attempt < MAX_RETRIES) {

@@ -267,7 +267,7 @@ const AudioManager = {
                         };
                         document.addEventListener('click',      onGesture, { once: true });
                         document.addEventListener('keydown',    onGesture, { once: true });
-                        document.addEventListener('touchstart', onGesture, { once: true });
+                        document.addEventListener('touchstart', onGesture, { once: true, passive: true });
                         this._showAudioPrompt();
                     }
                 },

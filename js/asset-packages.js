@@ -98,12 +98,12 @@ window.ASSET_PACKAGES = {
     },
 
     // ===========================================================
-    // 📦 SKINS_EPIC — Caricato 30 secondi dopo il boot
+    // 📦 SKINS_EPIC — On-demand (caricato all'apertura della modale)
     // ===========================================================
     SKINS_EPIC: {
         label: 'Skin Epic',
         priority: 3,
-        trigger: { type: 'afterBoot', delay: 30000 },
+        trigger: { type: 'onDemand' },
         images: [
             'skins/espofempires.webp',
             'skins/espofempires-click.webp',
@@ -120,12 +120,12 @@ window.ASSET_PACKAGES = {
     },
 
     // ===========================================================
-    // 📦 SKINS_LEGENDARY — Caricato 60 secondi dopo il boot
+    // 📦 SKINS_LEGENDARY — On-demand (caricato all'apertura della modale)
     // ===========================================================
     SKINS_LEGENDARY: {
         label: 'Skin Legendary',
         priority: 4,
-        trigger: { type: 'afterBoot', delay: 60000 },
+        trigger: { type: 'onDemand' },
         images: [
             'skins/rick-espley.webp',
             'skins/rick-espley-click.webp',

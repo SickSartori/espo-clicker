@@ -4,7 +4,7 @@
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v3.0.0';
+const CACHE_VERSION = 'espo-v3.1.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -115,7 +115,6 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => precacheBatched(cache, PRECACHE_ASSETS, 3))
-            .then(() => self.skipWaiting())
     );
 });
 
@@ -195,6 +194,10 @@ self.addEventListener('message', (event) => {
             type: 'SW_VERSION',
             version: CACHE_VERSION
         });
+    }
+    // Attiva nuovo SW con consenso utente (no cache wipe)
+    if (event.data === 'SKIP_WAITING') {
+        self.skipWaiting();
     }
     // Force update: pulisci tutto e ricarica
     if (event.data === 'FORCE_UPDATE') {
