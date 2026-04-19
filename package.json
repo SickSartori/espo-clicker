@@ -5,7 +5,10 @@
   "scripts": {
     "build": "node build.js",
     "build:watch": "node build.js --watch",
-    "build:dev": "node build.js --dev"
+    "build:dev": "node build.js --dev",
+    "bump:major": "node bump-version.js major && npm run build",
+    "bump:minor": "node bump-version.js minor && npm run build",
+    "bump:patch": "node bump-version.js patch && npm run build"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"
