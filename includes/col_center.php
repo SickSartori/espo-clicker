@@ -38,7 +38,7 @@
         </button>
         <div id="cps-display">BPS: 0.0</div>
         <button id="skill-crunchTime" class="skill-btn" style="display: none;">
-            🔥 <?php echo $labels["col_center_espo_fury_titolo"]; ?> 🔥
+            <?php echo $labels["col_center_espo_fury_titolo"]; ?>
             <div class="skill-timer">
 				<?php echo $labels["col_center_espo_fury_bottone_label"]; ?>
 			</div>

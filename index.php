@@ -236,6 +236,7 @@ require_once("php/check_version.php");
 		<div id="github-link-container">
 			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="<?php echo $labels["index_github_title"]; ?>">
 				<i class="fa-brands fa-github"></i>
+				GitHub
 			</a>
 		</div>
 		

@@ -788,25 +788,29 @@ function updateSkinsUI() {
         // RENDERING LEGACY (Il vecchio design a griglia)
         // ==========================================
         if (!useModern) {
-            let displayDescHTML = "";
-            if (isUnlocked) displayDescHTML = `<div class="skin-lore">${data.desc || "..."}</div>`;
-            else if (isBuyable) displayDescHTML = `<div class="skin-lore"></div>`;
-            else displayDescHTML = `<div class="skin-fade-wrapper"><div class="desc-base">${baseText}</div><div class="desc-hover">${requirement}</div></div>`;
+            // Descrizione: solo per skin sbloccate
+            const descHTML = isUnlocked
+                ? `<div class="skin-desc"><div class="skin-lore">${data.desc || '...'}</div></div>`
+                : '';
 
             let footerHtml = '';
-            if (isEquipped) footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
-            else if (isUnlocked) footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
-            else if (isBuyable) {
+            if (isEquipped) {
+                footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
+            } else if (isUnlocked) {
+                footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
+            } else if (isBuyable) {
                 const needsFormat = data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
                 if (needsFormat) {
                     footerHtml = `<div class="skin-price" style="color:#9b59b6"><i class="fa-solid fa-rotate"></i> Formattazione</div>
-                                  <div class="skin-btn" style="background:#333; color:#777; cursor:not-allowed;">FORMATTA PRIMA</div>`;
+                                  <div class="skin-btn" style="background:#333;color:#777;cursor:not-allowed;">FORMATTA PRIMA</div>`;
                 } else {
                     const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
                     footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
-                                  <div class="skin-btn" style="${canAfford ? 'background:#f1c40f; color:#000;' : 'background:#333; color:#777; cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
+                                  <div class="skin-btn" style="${canAfford ? 'background:#f1c40f;color:#000;' : 'background:#333;color:#777;cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
                 }
-            } else footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
+            } else {
+                footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
+            }
 
             const card = document.createElement('div');
             card.className = `skin-card rarity-${data.rarity || 'common'} ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
@@ -814,7 +818,7 @@ function updateSkinsUI() {
                 <div class="skin-badge">${rarityLabel}</div>
                 <div class="skin-img-container"><img src="${imgSource}" class="skin-img"></div>
                 <div class="skin-name-display" title="${data.name}">${data.name}</div>
-                <div class="skin-desc">${displayDescHTML}</div>
+                ${descHTML}
                 <div class="skin-card-spacer"></div>
                 <div class="skin-footer">${footerHtml}</div>`;
             gridLegacy.appendChild(card);
@@ -935,6 +939,24 @@ function updateSkinsUI() {
                 } else if (e.key === 'ArrowRight' && modernCurrentIndex < modernSkinsArray.length - 1) {
                     modernCurrentIndex++;
                     renderModernCarousel();
+                    e.preventDefault();
+                } else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && currentRarityFilter === 'all') {
+                    const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'divine', 'christmas'];
+                    const curRarity = modernSkinsArray[modernCurrentIndex]?.data?.rarity;
+                    const presentRarities = RARITY_ORDER.filter(r =>
+                        modernSkinsArray.some(s => s.data?.rarity === r)
+                    );
+                    const rIdx = presentRarities.indexOf(curRarity);
+                    const n = presentRarities.length;
+                    const targetRarityIdx = e.key === 'ArrowUp'
+                        ? (rIdx + 1) % n
+                        : (rIdx - 1 + n) % n;
+                    const targetRarity = presentRarities[targetRarityIdx];
+                    const targetIdx = modernSkinsArray.findIndex(s => s.data?.rarity === targetRarity);
+                    if (targetIdx !== -1) {
+                        modernCurrentIndex = targetIdx;
+                        renderModernCarousel();
+                    }
                     e.preventDefault();
                 }
             };
@@ -1105,6 +1127,10 @@ function renderModernCarousel() {
     if (panel) {
         panel.style.setProperty('--r-color', color);
         panel.style.setProperty('--r-color-glow', glow);
+        // Animazione slide-in al cambio skin
+        panel.classList.remove('panel-refresh');
+        void panel.offsetWidth; // forza reflow per restart animation
+        panel.classList.add('panel-refresh');
     }
     // ------------------------------------------------------------------
 

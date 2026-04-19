@@ -35,8 +35,8 @@ html,
 body {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 button,
@@ -391,22 +391,22 @@ body.matrix-active .buy-btn:hover {
     animation: pulseText 1.5s infinite;
 }
 
-/* Audio Unlock Prompt */
+/* Audio Unlock Prompt — posizionato a destra del tasto mute */
 #audio-unlock-prompt {
     position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(3rem);
+    bottom: 20px;
+    left: 68px;
+    transform: translateY(1rem);
     z-index: calc(var(--z-loader) - 1);
     display: flex;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.65rem 1.2rem;
+    padding: 0.55rem 1rem;
     background: rgba(10, 14, 28, 0.92);
     border: 1px solid rgba(52, 152, 219, 0.45);
     border-radius: 2rem;
     color: #8ab8d4;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-family: var(--font-body);
     cursor: pointer;
     user-select: none;
@@ -419,7 +419,7 @@ body.matrix-active .buy-btn:hover {
 
 #audio-unlock-prompt.visible {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
     animation: audioPromptPulse 2.5s ease-in-out infinite;
 }
 
@@ -458,33 +458,38 @@ body.matrix-active .buy-btn:hover {
 /* Link Github */
 #github-link-container {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
     z-index: var(--z-nav);
-    opacity: 0.6;
-    transition: all 0.3s;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 8px 12px;
-    border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0.35;
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 #github-link-container:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    border-color: #3498db;
+    opacity: 0.85;
+    transform: translateX(-50%) translateY(-2px);
 }
 
 #github-link-container a {
-    color: #fff;
+    color: #7f8c8d;
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--font-heading);
+    letter-spacing: 0.5px;
+}
+
+#github-link-container:hover a {
+    color: #bdc3c7;
 }
 
 #github-link-container i {
-    font-size: 2.5rem;
+    font-size: 1rem;
 }
 
 /*--------------------------------------------------------------------------------*/

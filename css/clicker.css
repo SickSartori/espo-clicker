@@ -279,66 +279,94 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
-/* Skill Button (Crunch Time) */
+/* Skill Button (Crunch Time) — dark theme con accento arancio */
 .skill-btn {
-    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 3px 0 #a04000, 0 4px 10px rgba(230, 126, 34, 0.3);
-    padding: 1vh 30px;
-    font-size: 1rem;
+    background: linear-gradient(180deg, #1c1008 0%, #100900 100%);
+    color: #e67e22;
+    border: 1px solid rgba(230, 126, 34, 0.5);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(230, 126, 34, 0.12),
+        inset 0 1px 0 rgba(255, 165, 0, 0.06);
+    padding: 12px 40px;
+    font-size: 0.92rem;
     margin: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     font-family: var(--font-heading);
-    font-weight: 500;
+    font-weight: 900;
     cursor: pointer;
-    margin: 0;
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     z-index: 20;
     text-transform: uppercase;
     width: auto;
-    min-width: 220px;
-    letter-spacing: 1px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    transition: background 0.3s ease, box-shadow 0.3s ease, border 0.3s ease,
-                color 0.3s ease, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 240px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(230, 126, 34, 0.45);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease,
+                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Icona fuoco sinistra via pseudo-element */
+.skill-btn:not(.active):not(.cooldown)::before {
+    content: '\f06d';
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    color: rgba(230, 126, 34, 0.6);
+    font-size: 0.9rem;
+    line-height: 1;
 }
 
 .skill-btn:active {
     transform: translateY(3px);
-    box-shadow: 0 0 0 #a04000, 0 2px 5px rgba(230, 126, 34, 0.4);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8);
 }
 
-.skill-btn:hover {
-    filter: brightness(1.1);
+.skill-btn:hover:not(.active):not(.cooldown) {
+    border-color: rgba(230, 126, 34, 0.8);
+    color: #f39c12;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 28px rgba(230, 126, 34, 0.22);
+    text-shadow: 0 0 16px rgba(230, 126, 34, 0.65);
 }
 
 /* Stato Attivo (Fuoco) */
 .skill-btn.active {
-    background: linear-gradient(135deg, #c0392b, #e74c3c);
-    box-shadow: 0 0 20px #e74c3c, 0 0 40px #c0392b;
+    background: linear-gradient(180deg, #1a0000 0%, #0d0000 100%);
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 25px rgba(231, 76, 60, 0.25);
     animation: pulseGlow 0.8s infinite alternate;
-    border: 2px solid #fff;
+    text-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
+    letter-spacing: 3px;
 }
 
 /* Stato Cooldown (Grigio) */
 .skill-btn.cooldown {
-    background: #34495e;
-    color: #7f8c8d;
-    box-shadow: none;
+    background: linear-gradient(180deg, #0d1117, #080c10);
+    color: #3d5166;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
     cursor: not-allowed;
-    border: 2px solid #2c3e50;
     transform: none;
+    animation: none;
+    letter-spacing: 2px;
+    text-shadow: none;
 }
 
 /* Timer interno */
 .skill-timer {
-    font-size: 0.85rem;
-    font-weight: normal;
-    margin-top: 4px;
-    opacity: 0.9;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 3px;
+    opacity: 0.6;
+    letter-spacing: 2px;
 }
 
 /* --- Stile per Moltiplicatore 404 (Errore) --- */
@@ -396,7 +424,7 @@
 
 body #version-display {
     position: fixed;
-    bottom: 25px;
+    bottom: 58px;
     left: 50%;
     transform: translateX(-50%);
     right: auto;
@@ -425,6 +453,13 @@ body #version-display:hover {
     color: #3498db;
     transform: translateX(-50%) scale(1.05);
     box-shadow: 0 6px 15px rgba(52, 152, 219, 0.2);
+}
+
+/* Mobile: version-display back to normal bottom */
+@media (max-width: 768px) {
+    body #version-display {
+        bottom: 70px;
+    }
 }
 
 /* --- EFFETTO GLITCH 404 --- */

@@ -156,6 +156,8 @@ input:checked+.modern-slider:before {
 .skins-grid-container {
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 50vh;
     max-height: 60vh;
     background: #0d1117;
 }
@@ -168,9 +170,12 @@ input:checked+.modern-slider:before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 0 30px 0;
-    overflow: hidden;
+    padding: 20px 0 30px 0;
+    overflow: visible;
     position: relative;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 #skins-grid-modern::before {
@@ -191,15 +196,14 @@ input:checked+.modern-slider:before {
 .carousel-stage {
     position: relative;
     width: 100%;
-    height: 220px;
-    /* Aumentato per dare respiro in alto */
+    height: 195px;
     display: flex;
     align-items: center;
     justify-content: center;
     perspective: 1200px;
     margin-bottom: 0px;
     z-index: 10;
-    /*  Forza il carousel SEMPRE sopra al pannello */
+    overflow: visible;
 }
 
 /* Dot indicator (nascosto su desktop, visibile su mobile via mobile-simplified.css) */
@@ -335,6 +339,24 @@ input:checked+.modern-slider:before {
     opacity: 1;
 }
 
+/* Flash ring al cambio skin */
+@keyframes skinFlashRing {
+    0%   { opacity: 0.85; transform: scale(0.88); }
+    100% { opacity: 0;    transform: scale(1.65); }
+}
+
+.carousel-item.active::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--r-color, #fff);
+    box-shadow: 0 0 18px var(--r-color, rgba(255, 255, 255, 0.6));
+    animation: skinFlashRing 0.55s ease-out forwards;
+    pointer-events: none;
+    z-index: 15;
+}
+
 /* Posizioni Destra */
 .carousel-item.prev-1 {
     transform: translateX(-130px) translateY(-5px) scale(0.9) rotateY(20deg) translateZ(-40px);
@@ -362,17 +384,22 @@ input:checked+.modern-slider:before {
 }
 
 /* --- PANNELLO INFORMAZIONI DINAMICO --- */
+@keyframes infoPanelIn {
+    from { opacity: 0.4; transform: translateY(6px); }
+    to   { opacity: 1;   transform: translateY(0); }
+}
+
 .modern-info-panel {
     width: 100%;
-    max-width: 480px;
+    max-width: 420px;
     background: linear-gradient(180deg, #111820 0%, #0d1117 100%);
     border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 16px;
-    margin-top: -30px;
-    padding-top: 60px;
+    margin-top: -28px;
+    padding-top: 46px;
     text-align: center;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
-    min-height: 160px;
+    min-height: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -380,7 +407,11 @@ input:checked+.modern-slider:before {
     z-index: 1;
     position: relative;
     overflow: visible;
-    transition: border-color 0.3s ease, opacity 0.15s ease, transform 0.2s ease;
+    transition: border-color 0.3s ease;
+}
+
+.modern-info-panel.panel-refresh {
+    animation: infoPanelIn 0.25s ease forwards;
 }
 
 .modern-info-panel::before {
@@ -398,10 +429,10 @@ input:checked+.modern-slider:before {
 
 .modern-info-title {
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
     color: #fff;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .modern-info-desc {

@@ -524,6 +524,11 @@ body.modal-open #toast-container {
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
 }
 
+#toast-container .toast-reward {
+    border-left: 3px solid #9b59b6;
+    box-shadow: 0 0 10px rgba(155, 89, 182, 0.2);
+}
+
 /* --- Classi Tooltip ---*/
 [data-tooltip] {
     position: relative;
