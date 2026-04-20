@@ -220,116 +220,113 @@
             <span id="cheatboard-close"><i class="fa-solid fa-xmark"></i></span>
         </div>
         <div id="cheatboard-content">
-            
+
             <div class="cheat-group">
                 <div class="cheat-group-title">Risorse</div>
                 <div class="control-row">
                     <input type="text" id="cheat-bugs-input" class="cheat-input" placeholder="Bugs" value="1000000">
-                    <button id="btn-bugs-add" class="cheat-btn primary" title="Aggiunge Bug al tuo portafoglio"><i class="fa-solid fa-plus"></i> Bug</button>
+                    <button id="btn-bugs-add" class="cheat-btn primary" title="Aggiunge Bug al portafoglio"><i class="fa-solid fa-plus"></i> Bug</button>
                 </div>
                 <div class="control-row">
                     <input type="text" id="cheat-tokens-input" class="cheat-input" placeholder="Token" value="100">
-                    <button id="btn-tokens-add" class="cheat-btn gold" title="Aggiunge Token Prestigio per il Laboratorio"><i class="fa-solid fa-coins"></i> Token</button>
+                    <button id="btn-tokens-add" class="cheat-btn gold" title="Aggiunge Token Lab"><i class="fa-solid fa-coins"></i> Token</button>
                 </div>
-                <div class="control-row">
-                    <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco in avanti"><i class="fa-solid fa-forward"></i> Skip 1h</button>
-                </div>
-            </div>
-
-            <div class="cheat-group">
-                <div class="cheat-group-title">End-Game (NG+)</div>
                 <div class="control-row">
                     <input type="text" id="cheat-qbits-input" class="cheat-input" placeholder="Q-Bits" value="10">
-                    <button id="btn-qbits-add" class="cheat-btn quantum" title="Aggiunge Quantum Bits"><i class="fa-solid fa-atom"></i> Q-Bits</button>
+                    <button id="btn-qbits-add" class="cheat-btn quantum" title="Aggiunge Q-Bits"><i class="fa-solid fa-atom"></i> Q-Bits</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-format-ready" class="cheat-btn quantum" title="Imposta i requisiti per il Riavvio Universo (NG+)"><i class="fa-solid fa-meteor"></i> NG+ Ready</button>
-                    <button id="btn-add-format" class="cheat-btn quantum" title="Aggiunge +1 al contatore Formattazioni"><i class="fa-solid fa-plus"></i> Format</button>
+                    <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco"><i class="fa-solid fa-forward"></i> Skip 1h</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Statistiche</div>
-                <div class="control-row">
-                    <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
-                    <button id="btn-clicks-add" class="cheat-btn" title="Aumenta il contatore dei click manuali (utile per sblocchi)">Agg. Click</button>
-                </div>
+                <div class="cheat-group-title">Potenziamenti</div>
                 <div class="control-row">
                     <input type="text" id="cheat-bps-input" class="cheat-input" placeholder="BPS" value="1000">
-                    <button id="btn-bps-add" class="cheat-btn" title="Aggiunge un bonus piatto al BPS attuale">Bonus BPS</button>
+                    <button id="btn-bps-add" class="cheat-btn" title="Aggiunge un bonus BPS piatto">+BPS</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-bps-reset" class="cheat-btn danger" title="Azzera il bonus BPS aggiunto manualmente"><i class="fa-solid fa-rotate-left"></i> Reset BPS</button>
+                </div>
+                <div class="control-row">
+                    <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
+                    <button id="btn-clicks-add" class="cheat-btn" title="Aumenta il contatore click">+Click</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-army-100" class="cheat-btn gold" title="+100 unità a tutti i team"><i class="fa-solid fa-users"></i> +100 Army</button>
+                    <button id="btn-random-chaos" class="cheat-btn chaos" title="Risorse casuali e sblocchi random"><i class="fa-solid fa-dice"></i> Chaos</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-god-mode" class="cheat-btn matrix" style="font-weight:900; letter-spacing:2px;" title="Risorse infinite, tutto sbloccato"><i class="fa-solid fa-bolt"></i> GOD MODE</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Shop & Power</div>
+                <div class="cheat-group-title">Progressione</div>
                 <div class="control-row">
-                    <button id="btn-unlock-shop" class="cheat-btn primary" title="Compra istantaneamente tutti gli upgrade e team disponibili">Sblocca Shop</button>
-                    <button id="btn-lock-shop" class="cheat-btn danger" title="Resetta lo stato di acquisto di tutti gli oggetti"> Blocca Shop</button>
+                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Score appena sopra la soglia prestige"><i class="fa-solid fa-rocket"></i> Promozione</button>
+                    <button id="btn-max-lab" class="cheat-btn gold" title="Porta tutti gli upgrade Lab al livello massimo"><i class="fa-solid fa-flask-vial"></i> Max Lab</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-army-100" class="cheat-btn gold" title="Aggiunge +100 unità a tutti i tipi di Team"><i class="fa-solid fa-users"></i> +100 Army</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-random-chaos" class="cheat-btn chaos" title="Aggiunge risorse casuali e sblocca cose a caso!"><i class="fa-solid fa-dice"></i> RANDOM</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-god-mode" class="cheat-btn matrix" style="font-weight:900; letter-spacing:2px;" title="Risorse infinite, tutto sbloccato, potenza massima"><i class="fa-solid fa-bolt"></i> GOD MODE</button>
+                    <button id="btn-format-ready" class="cheat-btn quantum" title="Soddisfa requisiti Formattazione (NG+)"><i class="fa-solid fa-meteor"></i> NG+ Ready</button>
+                    <button id="btn-add-format" class="cheat-btn quantum" title="+1 al contatore Formattazioni"><i class="fa-solid fa-plus"></i> +Format</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Eventi e Glitch</div>
-                
+                <div class="cheat-group-title">Shop &amp; Sblocchi</div>
+                <div class="control-row">
+                    <button id="btn-unlock-shop" class="cheat-btn primary" title="Acquista tutti gli upgrade disponibili">Sblocca Shop</button>
+                    <button id="btn-lock-shop" class="cheat-btn danger" title="Resetta tutti gli acquisti">Blocca Shop</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-unlock-skins" class="cheat-btn primary" title="Sblocca tutte le skin">Sblocca Skin</button>
+                    <button id="btn-lock-skins" class="cheat-btn danger" title="Blocca tutte le skin">Blocca Skin</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-unlock-ach" class="cheat-btn primary" title="Sblocca tutti gli obiettivi">Sblocca Ach.</button>
+                    <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Eventi &amp; Glitch</div>
                 <div class="control-row">
                     <input type="number" id="cheat-404-input" class="cheat-input" placeholder="x" value="5" style="width: 50px; flex: 0.4;">
-                    <button id="btn-event-404" class="cheat-btn danger" title="Scatena l'evento Error 404 (Moltiplicatore)">404</button>
-                    <button id="btn-event-matrix" class="cheat-btn matrix" title="Attiva l'evento Matrix Hack">Matrix</button>
+                    <button id="btn-event-404" class="cheat-btn danger" title="Error 404 (moltiplicatore)">404</button>
+                    <button id="btn-event-matrix" class="cheat-btn matrix" title="Matrix Hack">Matrix</button>
                 </div>
-                
                 <div class="control-row">
                     <button id="btn-event-rick" class="cheat-btn danger" title="Never gonna give you up...">Rick</button>
-                    <button id="btn-event-ricardo" class="cheat-btn danger" title="Attiva il video Ricardo Milos">Ricardo</button>
-                    <button id="btn-event-britney" class="cheat-btn danger" title="Oops!... I debugged again">Britney</button>
+                    <button id="btn-event-ricardo" class="cheat-btn danger" title="Ricardo Milos">Ricardo</button>
+                    <button id="btn-event-britney" class="cheat-btn danger" title="Britney Espears">Britney</button>
                 </div>
-
                 <div class="control-row">
-                    <button id="btn-event-golden" class="cheat-btn gold" title="Fa apparire un Golden Bug istantaneamente"><i class="fa-solid fa-bug"></i> Golden Bug</button>
-                    <button id="btn-event-star" class="cheat-btn gold" title="Attiva evento Super Star"><i class="fa-solid fa-star"></i> Super Star</button>
+                    <button id="btn-event-golden" class="cheat-btn gold" title="Spawn Golden Bug"><i class="fa-solid fa-bug"></i> Golden Bug</button>
+                    <button id="btn-event-star" class="cheat-btn gold" title="Super Star mode"><i class="fa-solid fa-star"></i> Super Star</button>
                 </div>
-                 <div class="control-row">
-                    <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta il tempo di attesa di Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                <div class="control-row">
+                    <button id="btn-trigger-fury" class="cheat-btn chaos" title="Attiva Espo Fury (ignora cooldown)"><i class="fa-solid fa-fire"></i> Espo Fury</button>
+                    <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta cooldown Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-stop-event" class="cheat-btn danger" title="Ferma forzatamente l'evento in corso"><i class="fa-solid fa-stop"></i> Stop Evento</button>
                 </div>
             </div>
 
             <div class="cheat-group">
                 <div class="cheat-group-title">Dev Tools</div>
                 <div class="control-row">
-                    <button id="btn-debug-mode" class="cheat-btn" title="Abilita/disabilita i log in console (console.log/warn/info)"><i class="fa-solid fa-bug"></i> Debug: <span id="debug-mode-label">OFF</span></button>
-                    <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
+                    <button id="btn-debug-mode" class="cheat-btn" title="Abilita/disabilita log console"><i class="fa-solid fa-bug"></i> Debug: <span id="debug-mode-label">OFF</span></button>
+                    <button id="btn-log-state" class="cheat-btn info" title="Stampa gameState in console (F12)"><i class="fa-solid fa-code"></i> Log State</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Promozione</button>
-                    <button id="btn-force-save" class="cheat-btn info" title="Forza un salvataggio cloud immediato"><i class="fa-solid fa-cloud-arrow-up"></i> Force Save</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-stop-event" class="cheat-btn danger" title="Ferma forzatamente l'evento in corso"><i class="fa-solid fa-stop"></i> Stop Evento</button>
-                    <button id="btn-trigger-fury" class="cheat-btn chaos" title="Attiva Espo Fury (ignora cooldown)"><i class="fa-solid fa-fire"></i> Espo Fury</button>
-                </div>
-            </div>
-
-            <div class="cheat-group">
-                <div class="cheat-group-title">Sblocchi & Reset</div>
-                <div class="control-row">
-                    <button id="btn-unlock-skins" class="cheat-btn primary" title="Sblocca tutte le skin nel guardaroba">Sblocca Skin</button>
-                    <button id="btn-unlock-ach" class="cheat-btn primary" title="Sblocca tutti gli obiettivi">Sblocca Ach.</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-lock-skins" class="cheat-btn danger" title="Blocca tutte le skin e resetta i relativi obiettivi">Blocca Skin</button>
-                     <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
+                    <button id="btn-force-save" class="cheat-btn info" title="Forza salvataggio cloud immediato"><i class="fa-solid fa-cloud-arrow-up"></i> Force Save</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
-                    <button id="btn-force-v2" class="cheat-btn quantum" style="border: 1px solid #9b59b6; color: #9b59b6;" title="Simula la migrazione V1->V2 per testare il riallineamento"><i class="fa-solid fa-backward-fast"></i>Migrazione V2.0</button>
-                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> RESET</button>
+                    <button id="btn-force-v2" class="cheat-btn quantum" title="Simula migrazione V1→V2"><i class="fa-solid fa-backward-fast"></i> V2 Migration</button>
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border-color: red; color: red;" title="CANCELLA TUTTO il salvataggio"><i class="fa-solid fa-triangle-exclamation"></i> RESET</button>
                 </div>
             </div>
 
@@ -462,6 +459,14 @@
         toast(`Bonus BPS +${window.EspooClicker.formatNumber(val)} attivato`);
     });
 
+    // Reset Bonus BPS
+    document.getElementById('btn-bps-reset').addEventListener('click', () => {
+        window.cheatBPSBonus = new Decimal(0);
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+        updateGame();
+        toast("Bonus BPS resettato a 0");
+    });
+
     // --- SHOP & POWER ---
 
     document.getElementById('btn-unlock-shop').addEventListener('click', () => {
@@ -501,6 +506,13 @@
         }
         for (let key in gameData.superUpgrades) {
             if (gameState.superUpgrades[key]) gameState.superUpgrades[key].purchased = false;
+        }
+        // Reset counted prestige upgrade levels
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (data.isCounted && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].count = 0;
+            }
         }
         refreshUI();
         if (window.EspooClicker) window.EspooClicker.saveGame();
@@ -555,10 +567,13 @@
 
     // GOD MODE
     document.getElementById('btn-god-mode').addEventListener('click', () => {
-        gameState.score = new Decimal("1e33"); // 1 Decilione
+        gameState.score = new Decimal("1e33");
         gameState.totalScore = new Decimal("1e33");
-        gameState.prestigePoints = new Decimal("1e15"); // 1 Quadrilione
-        gameState.qBits = new Decimal("1000000"); // 1 Milione di QBits
+        gameState.lifetimeScore = gameState.lifetimeScore.add(new Decimal("1e33"));
+        gameState.prestigePoints = new Decimal("1e15");
+        gameState.lifetimePrestigePoints = new Decimal("1e15");
+        gameState.qBits = new Decimal("1000000");
+        gameState.lifetimeQBits = new Decimal("1000000");
 
         document.getElementById('btn-unlock-skins').click();
         document.getElementById('btn-unlock-ach').click();
@@ -620,6 +635,9 @@
 
     document.getElementById('btn-reset-cooldown').addEventListener('click', () => {
         crunchTimeCooldownEnd = 0;
+        crunchTimeEndTime = 0;
+        gameState.crunchTimeCooldownEnd = 0;
+        gameState.crunchTimeEndTime = 0;
         refreshUI();
         toast("Cooldown resettati!");
     });
@@ -636,6 +654,20 @@
             refreshUI();
             toast(`Prestigio Pronto! (Soglia: ${window.EspooClicker.formatNumber(threshold)})`);
         }
+    });
+
+    // Max Lab
+    document.getElementById('btn-max-lab').addEventListener('click', () => {
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (data.isCounted && data.maxLevel && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].count = data.maxLevel;
+            }
+        }
+        if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+        refreshUI();
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        toast("Tutti gli upgrade Lab portati al livello massimo!");
     });
 
     // --- Debug Mode Toggle ---
@@ -692,8 +724,23 @@
                 if (v) { v.pause(); v.classList.add('video_display_none'); }
             });
 
+        // Ferma Espo Fury se attiva
+        if (document.body.classList.contains('crunch-active')) {
+            crunchTimeMultiplier = new Decimal(1);
+            crunchTimeEndTime = 0;
+            crunchTimeCooldownEnd = 0;
+            gameState.crunchTimeEndTime = 0;
+            gameState.crunchTimeCooldownEnd = 0;
+            const crunchOverlay = document.getElementById('crunch-overlay');
+            if (crunchOverlay) crunchOverlay.style.display = 'none';
+            if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
+                clearInterval(fireParticleInterval);
+                fireParticleInterval = null;
+            }
+        }
+
         // Pulisci classi CSS residue
-        document.body.classList.remove('rick-rolling', 'bluescreen-active', 'matrix-active', 'super-star-active');
+        document.body.classList.remove('rick-rolling', 'bluescreen-active', 'matrix-active', 'super-star-active', 'crunch-active');
 
         // Forza clearActiveEvent
         if (typeof clearActiveEvent === 'function') clearActiveEvent();
@@ -747,10 +794,11 @@
         for (let key in gameData.achievements) {
             if (!gameState.achievements[key]) gameState.achievements[key] = {};
             gameState.achievements[key].unlocked = true;
+            gameState.achievements[key].claimed = true;
         }
         if (window.EspooClicker) window.EspooClicker.saveGame();
         refreshUI();
-        toast("Tutti gli obiettivi sbloccati!");
+        toast("Tutti gli obiettivi sbloccati e riscossi!");
     });
 
     document.getElementById('btn-lock-ach').addEventListener('click', () => {
@@ -766,19 +814,19 @@
         toast("Tutti gli obiettivi bloccati.");
     });
 
-    document.getElementById('btn-hard-reset').addEventListener('click', () => {
+    document.getElementById('btn-hard-reset').addEventListener('click', async () => {
         if (!confirm("⚠️ RESET TOTALE DEV MODE? ⚠️\nCancella tutto senza password e ricarica.")) return;
-        if (typeof resetGameToDefault === 'function') {
-            const tempUser = gameState.user.username;
-            resetGameToDefault();
-            gameState.user.username = tempUser;
+
+        gameState.isDeleting = true;
+
+        if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
+            try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
         }
-        if (window.EspooClicker) {
-            window.EspooClicker.saveGame().then(() => { location.reload(); });
-        } else {
-            localStorage.removeItem('espotoolClickerSaveV8');
-            location.reload();
-        }
+
+        localStorage.removeItem('espotoolClickerSaveV9');
+        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+
+        location.reload();
     });
 
     // --- Test Migrazione V2 ---
