@@ -92,7 +92,7 @@ function getPrestigeThreshold() {
     const resets = gameState.totalResets || 0;
 
     // Fattore di crescita (sostituisci il 5 con il valore che hai scelto per ottenere 110M)
-    const growthFactor = new Decimal(2.5);
+    const growthFactor = new Decimal(3.0);
 
     // Calcolo grezzo
     let rawThreshold = baseThreshold.mul(growthFactor.pow(resets));
@@ -835,6 +835,12 @@ function calculateBulkCost(teamKey, amount) {
     let decR = new Decimal(r);
     let discountedBaseCost = data.baseCost;
 
+    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
+    if (outsourcingState && outsourcingState.count > 0) {
+        const discount = 1 - (0.05 * outsourcingState.count);
+        discountedBaseCost = discountedBaseCost.mul(Math.max(0.75, discount));
+    }
+
     let currentSingleCost = discountedBaseCost.mul(decR.pow(state.count)).floor();
 
     if (amount === 1) {
@@ -978,8 +984,11 @@ function activateCrunchTime() {
 
     // 2. Attivazione Logica
     crunchTimeMultiplier = new Decimal(7);
-    crunchTimeEndTime = now + 30000;
-    crunchTimeCooldownEnd = crunchTimeEndTime + 300000;
+    const overclockActive = gameState.superUpgrades && gameState.superUpgrades.overclock && gameState.superUpgrades.overclock.purchased;
+    const furyDuration = overclockActive ? 60000 : 30000;
+    crunchTimeEndTime = now + furyDuration;
+    const reteContattiLevel = (gameState.prestigeUpgrades.reteContatti && gameState.prestigeUpgrades.reteContatti.count) || 0;
+    crunchTimeCooldownEnd = crunchTimeEndTime + Math.max(60000, 300000 - (reteContattiLevel * 30000));
 
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
@@ -1473,7 +1482,7 @@ function resolveBug(event) {
 
 function calculatePrestigeGained() {
     if (gameState.totalScore.lt(getPrestigeThreshold())) return new Decimal(0);
-    let base = new Decimal(2000000);
+    let base = new Decimal(250000);
     return gameState.totalScore.div(base).sqrt().floor();
 }
 
@@ -1656,7 +1665,8 @@ async function executePrestige() {
         if (gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased) {
             for (const key in gameState.teams) {
                 if (gameState.teams[key].count > 0 && baseTeamsAllowed.includes(key)) {
-                    newState.teams[key].count = Math.min(5, gameState.teams[key].count);
+                    const deadlineLevel = (gameState.prestigeUpgrades.deadlineStretta && gameState.prestigeUpgrades.deadlineStretta.count) || 0;
+                    newState.teams[key].count = Math.min(5 + deadlineLevel, gameState.teams[key].count);
                 }
             }
         } else {
@@ -1799,6 +1809,14 @@ function executeFormattingSequence() {
         lifetimeQBits: (gameState.lifetimeQBits || new Decimal(0)).add(qBitsEarned),
         superUpgrades: gameState.superUpgrades ? JSON.parse(JSON.stringify(gameState.superUpgrades)) : {}
     };
+    if (gameState.superUpgrades && gameState.superUpgrades.echoQuantico && gameState.superUpgrades.echoQuantico.purchased) {
+        const counted = Object.entries(gameState.prestigeUpgrades)
+            .filter(([, s]) => s.count > 0);
+        if (counted.length > 0) {
+            const [key, state] = counted[Math.floor(Math.random() * counted.length)];
+            superPersistentData.echoQuanticoPreserved = { key, state: JSON.parse(JSON.stringify(state)) };
+        }
+    }
 
     // 5. TIMING FASE 2 (Dopo esattamente 2 secondi dall'urlo)
     setTimeout(() => {
@@ -1847,6 +1865,12 @@ function executeFormattingSequence() {
         // === HARD RESET DEL GIOCO (Dietro le quinte) ===
         let newState = getInitialGameState();
         Object.assign(newState, superPersistentData);
+        if (superPersistentData.echoQuanticoPreserved) {
+            const { key, state } = superPersistentData.echoQuanticoPreserved;
+            if (newState.prestigeUpgrades && newState.prestigeUpgrades[key] !== undefined) {
+                newState.prestigeUpgrades[key] = state;
+            }
+        }
 
         newState.lifetimeScore = new Decimal(newState.lifetimeScore);
         newState.qBits = new Decimal(newState.qBits);

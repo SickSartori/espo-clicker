@@ -189,5 +189,25 @@ window.gameData.achievements = {
         isSecret: true, // Nascosto finché non lo fai
         reward: { type: 'multiplier', value: 1.25 }, // +25% Produzione Globale
         condition: () => gameState.totalFormattazioni >= 5
+    },
+    coscienzaEspansa: {
+        name: 'Coscienza Espansa',
+        desc: 'Possiedi 1 Singolarità Cosciente.',
+        type: 'building',
+        buildingId: 'singolaritaCosciente',
+        target: 1,
+        isSecret: false,
+        reward: { type: 'prestige', value: new Decimal(25) },
+        condition: () => gameState.teams.singolaritaCosciente.count >= 1
+    },
+    dioCodice: {
+        name: 'Dio del Codice',
+        desc: 'Possiedi 100 Architetture dell\'Infinito.',
+        type: 'building',
+        buildingId: 'architetturaInfinito',
+        target: 100,
+        isSecret: false,
+        reward: { type: 'multiplier', value: 1.15 },
+        condition: () => gameState.teams.architetturaInfinito.count >= 100
     }
-}   
+}

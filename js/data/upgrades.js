@@ -92,6 +92,27 @@ window.gameData.clickUpgrades = {
         }]
     },
 
+    interfacciaNeurale: {
+        name: 'Interfaccia Neurale',
+        desc: 'Aggiunge +2.000 al valore di ogni click.',
+        cost: new Decimal(50000000),
+        clickIncrease: new Decimal(2000),
+        requiredClicks: 25000
+    },
+    overclockingCognitivo: {
+        name: 'Overclocking Cognitivo',
+        desc: 'Triplica il valore base dei tuoi click.',
+        cost: new Decimal(250000000),
+        requiredClicks: 50000,
+        clickIncrease: new Decimal(0),
+        effects: [{
+            trigger: 'passive',
+            type: 'mult_global',
+            stat: 'clickGlobalMult',
+            val: new Decimal(3)
+        }]
+    },
+
     clickDivino: {
         name: 'Click Divino',
         desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
@@ -199,6 +220,33 @@ window.gameData.prestigeUpgrades = {
             stat: 'goldenBugSpawnTime',
             val: new Decimal(0.5)
         }]
+    },
+    reteContatti: {
+        name: 'Rete di Contatti',
+        desc: 'Riduce il cooldown di ESPO FURY di 30s per livello.',
+        baseCost: new Decimal(150),
+        isCounted: true,
+        maxLevel: 5
+    },
+    esperienzaAccumulata: {
+        name: 'Esperienza Accumulata',
+        desc: 'Aumenta il valore click del +2% per livello (permanente).',
+        baseCost: new Decimal(200),
+        isCounted: true,
+        maxLevel: 10,
+        effects: [{
+            trigger: 'passive',
+            type: 'add_mult_per_level',
+            stat: 'clickGlobalMult',
+            val: new Decimal(0.02)
+        }]
+    },
+    deadlineStretta: {
+        name: 'Deadline Stretta',
+        desc: 'keepTeams mantiene +1 livello aggiuntivo per ogni acquisto.',
+        baseCost: new Decimal(400),
+        isCounted: true,
+        maxLevel: 5
     }
 };
 
@@ -538,6 +586,110 @@ window.gameData.buildingEnhancements = {
         cost: new Decimal(30000000000000),
         multiplier: new Decimal(4),
         requiredCount: 50
+    },
+    coscienzaCollettiva: {
+        name: 'Coscienza Collettiva Quantistica',
+        desc: 'Quantum Server x4 BPS.',
+        targetTeam: 'quantumServer',
+        cost: new Decimal(550000000000),
+        multiplier: new Decimal(4),
+        requiredCount: 100
+    },
+    menteUniverso: {
+        name: 'Mente dell\'Universo',
+        desc: 'Rete Galattica x4 BPS.',
+        targetTeam: 'reteNeuraleGalattica',
+        cost: new Decimal(8500000000000),
+        multiplier: new Decimal(4),
+        requiredCount: 100
+    },
+    eternitaParallela: {
+        name: 'Eternità Parallela',
+        desc: 'Debug Temporale x4 BPS.',
+        targetTeam: 'debugTemporale',
+        cost: new Decimal(150000000000000),
+        multiplier: new Decimal(4),
+        requiredCount: 100
+    },
+    menteDivisa: {
+        name: 'Mente Divisa',
+        desc: 'Singolarità Cosciente x2 BPS.',
+        targetTeam: 'singolaritaCosciente',
+        cost: new Decimal(2400000000000),
+        multiplier: new Decimal(2),
+        requiredCount: 1
+    },
+    neuroniFotonici: {
+        name: 'Neuroni Fotonici',
+        desc: 'Singolarità Cosciente x2 BPS.',
+        targetTeam: 'singolaritaCosciente',
+        cost: new Decimal(12000000000000),
+        multiplier: new Decimal(2),
+        requiredCount: 10
+    },
+    singolaRete: {
+        name: 'Singola Rete',
+        desc: 'Singolarità Cosciente x3 BPS.',
+        targetTeam: 'singolaritaCosciente',
+        cost: new Decimal(96000000000000),
+        multiplier: new Decimal(3),
+        requiredCount: 25
+    },
+    overmindProtocol: {
+        name: 'Overmind Protocol',
+        desc: 'Singolarità Cosciente x3 BPS.',
+        targetTeam: 'singolaritaCosciente',
+        cost: new Decimal(480000000000000),
+        multiplier: new Decimal(3),
+        requiredCount: 50
+    },
+    coscienzaAssoluta: {
+        name: 'Coscienza Assoluta',
+        desc: 'Singolarità Cosciente x4 BPS.',
+        targetTeam: 'singolaritaCosciente',
+        cost: new Decimal(2400000000000000),
+        multiplier: new Decimal(4),
+        requiredCount: 100
+    },
+    frameworkRealta: {
+        name: 'Framework Realtà',
+        desc: 'Architettura dell\'Infinito x2 BPS.',
+        targetTeam: 'architetturaInfinito',
+        cost: new Decimal(38400000000000),
+        multiplier: new Decimal(2),
+        requiredCount: 1
+    },
+    compilatoreUniversale: {
+        name: 'Compilatore Universale',
+        desc: 'Architettura dell\'Infinito x2 BPS.',
+        targetTeam: 'architetturaInfinito',
+        cost: new Decimal(192000000000000),
+        multiplier: new Decimal(2),
+        requiredCount: 10
+    },
+    patchEsistenziale: {
+        name: 'Patch Esistenziale',
+        desc: 'Architettura dell\'Infinito x3 BPS.',
+        targetTeam: 'architetturaInfinito',
+        cost: new Decimal(1536000000000000),
+        multiplier: new Decimal(3),
+        requiredCount: 25
+    },
+    hotfixDivino: {
+        name: 'Hotfix Divino',
+        desc: 'Architettura dell\'Infinito x3 BPS.',
+        targetTeam: 'architetturaInfinito',
+        cost: new Decimal(7680000000000000),
+        multiplier: new Decimal(3),
+        requiredCount: 50
+    },
+    deployDelCosmo: {
+        name: 'Deploy del Cosmo',
+        desc: 'Architettura dell\'Infinito x4 BPS.',
+        targetTeam: 'architetturaInfinito',
+        cost: new Decimal(38400000000000000),
+        multiplier: new Decimal(4),
+        requiredCount: 100
     }
 };
 window.gameData.superUpgrades = {
@@ -577,6 +729,30 @@ window.gameData.superUpgrades = {
         name: 'Persistenza Memoria',
         desc: 'Mantieni i primi 5 livelli dei Team BASE (Assistente, Ticket, QA) dopo una Promozione.',
         cost: new Decimal(12),
+        isCounted: false
+    },
+    overclock: {
+        name: 'Overclock',
+        desc: 'ESPO FURY dura 60 secondi invece di 30.',
+        cost: new Decimal(15),
+        isCounted: false
+    },
+    risonanzaAurea: {
+        name: 'Risonanza Aurea',
+        desc: 'Golden Bug appare ogni 45s invece di 60s (base).',
+        cost: new Decimal(10),
+        isCounted: false,
+        effects: [{
+            trigger: 'passive',
+            type: 'mult_global',
+            stat: 'goldenBugSpawnTime',
+            val: new Decimal(0.75)
+        }]
+    },
+    echoQuantico: {
+        name: 'Echo Quantico',
+        desc: 'Ogni Formattazione mantieni 1 prestige upgrade già acquistato.',
+        cost: new Decimal(20),
         isCounted: false
     }
 };
