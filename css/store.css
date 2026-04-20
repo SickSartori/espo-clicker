@@ -81,6 +81,14 @@
     padding: 10px;
 }
 
+#global-filter-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--border-color);
+    background-image: none;
+    pointer-events: none;
+}
+
 .section-header h2 {
     font-size: 1rem;
     color: var(--text-muted);
@@ -336,12 +344,39 @@
     border-color: #4a6582;
     border-style: dashed;
     background-color: rgba(20, 30, 40, 0.4);
+    gap: 14px;
+}
+
+.locked-item .upgrade-details {
+    flex: 0 0 160px;
+    min-width: 0;
+}
+
+.locked-item .upgrade-actions {
+    display: none;
+}
+
+.locked-item .upgrade-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.locked-item .upgrade-desc {
+    white-space: normal;
+    display: block;
+    margin-top: 2px;
 }
 
 .locked-item .progress-bar-container {
     opacity: 1;
     filter: none;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    flex: 1;
+    width: auto;
+    margin-top: 0;
+    align-self: center;
 }
 
 /* --- OGGETTI DISPONIBILI (Focus) --- */

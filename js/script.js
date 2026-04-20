@@ -1439,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const filterSelect = document.getElementById('global-filter-select');
 
                 if (filterSelect) {
-                    if (tab.id === 'tab-prestige') {
+                    if (tab.id === 'tab-prestige' || tab.id === 'tab-quantum') {
                         if (!filterSelect.disabled)
                             filterSelect.setAttribute('data-prev', filterSelect.value);
 

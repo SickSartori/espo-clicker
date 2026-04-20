@@ -1036,8 +1036,9 @@ button img {
     --------------------------------------------------- */
     html body .modal-close-btn {
         order: 99;
-        position: sticky;
+        position: fixed;
         bottom: 0;
+        left: 0;
         width: 100%;
         height: 36px;
         background: rgba(231, 76, 60, 0.85);
@@ -1051,8 +1052,13 @@ button img {
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.4);
         flex-shrink: 0;
-        z-index: 1000;
+        z-index: 10000;
         padding-bottom: env(safe-area-inset-bottom);
+        cursor: pointer;
+        pointer-events: auto;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
     }
 
     html body .modal-close-btn::after {
@@ -1061,6 +1067,7 @@ button img {
         font-size: 0.85rem;
         font-weight: 900;
         letter-spacing: 2px;
+        pointer-events: none;
     }
 
     html body div#settings-modal button.modal-close-btn {
