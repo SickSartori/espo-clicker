@@ -26,6 +26,9 @@ require_once("php/check_version.php");
 			<?php echo $labels["head_titolo"]; ?>
 		</title>
 
+		<!-- Preload font logo (massima priorità — usato dal loader) -->
+		<link rel="preload" as="font" href="assets/fonts/Harabara.ttf?v=<?php echo $cacheVer; ?>" type="font/ttf" crossorigin="anonymous" fetchpriority="high">
+
 		<!-- Preload font critici -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +69,24 @@ require_once("php/check_version.php");
 				</h2>
 				<div class="loader-status" id="loader-status-text">
 					<?php echo $labels["loader_status"]; ?>
+				</div>
+
+				<div class="loader-progress-track" aria-hidden="true">
+					<div id="loader-progress-fill" class="loader-progress-fill"></div>
+				</div>
+
+				<div class="loader-meta">
+					<span id="loader-percent" class="loader-percent">0%</span>
+					<span id="loader-counter" class="loader-counter"></span>
+				</div>
+
+				<div id="loader-current-file" class="loader-current-file"></div>
+
+				<div id="loader-tip" class="loader-tip"></div>
+
+				<div id="loader-slow-hint" class="loader-slow-hint" hidden>
+					<i class="fa-solid fa-triangle-exclamation"></i>
+					<span><?php echo isset($labels["loader_slow_hint"]) ? $labels["loader_slow_hint"] : "Connessione lenta — caricamento in corso, attendere..."; ?></span>
 				</div>
 			</div>
 		</div>

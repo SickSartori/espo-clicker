@@ -866,6 +866,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const criticalPromises = [];
         const backgroundPromises = [];
 
+        // Helper: emette progress strutturato
+        const _emit = (loaded, total, currentFile) => {
+            if (!onProgress) return;
+            const percent = total > 0 ? Math.floor((loaded / total) * 100) : 100;
+            onProgress(percent, { loaded: loaded, total: total, file: currentFile || '' });
+        };
+
         // 1. ASSET CRITICI (Immagini base)
         const criticalImages = new Set([
             'assets/image/ui/favicon.webp',
@@ -917,11 +924,18 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalCritical = criticalImages.size + criticalAudioIds.length;
         let loadedCritical = 0;
 
-        const updateProgress = () => {
+        const updateProgress = (file) => {
             loadedCritical++;
-            if (onProgress && totalCritical > 0) {
-                onProgress(Math.floor((loadedCritical / totalCritical) * 100));
-            }
+            _emit(loadedCritical, totalCritical, file);
+        };
+
+        // Emit iniziale 0/N
+        _emit(0, totalCritical, '');
+
+        // Helper: estrae nome file leggibile (basename)
+        const _basename = (url) => {
+            try { return url.split('?')[0].split('/').pop() || url; }
+            catch (e) { return url; }
         };
 
         // --- CARICAMENTO IMMAGINI CRITICHE ---
@@ -930,8 +944,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 new Promise((resolve) => {
                     const img = new Image();
                     img.src = src;
-                    img.onload = () => { updateProgress(); resolve(); };
-                    img.onerror = () => { console.warn("Manca img:", src); updateProgress(); resolve(); };
+                    img.onload = () => { updateProgress(_basename(src)); resolve(); };
+                    img.onerror = () => { console.warn("Manca img:", src); updateProgress(_basename(src)); resolve(); };
                 })
             );
         });
@@ -943,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (criticalAudioIds.includes(sound.id)) {
                     // Blocca il caricamento finché non ha finito
-                    criticalPromises.push(fetch(url).then(() => updateProgress()).catch(() => updateProgress()));
+                    criticalPromises.push(fetch(url).then(() => updateProgress(_basename(url))).catch(() => updateProgress(_basename(url))));
                 } else {
                     // Lascialo scaricare in background
                     backgroundPromises.push(fetch(url).catch(() => { }));
@@ -990,11 +1004,83 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ---------------------------------------------------------
+    // LOADER UI: progress bar + counter + tip rotation
+    // ---------------------------------------------------------
+    function setupLoaderUI() {
+        const els = {
+            status:  document.getElementById('loader-status-text'),
+            fill:    document.getElementById('loader-progress-fill'),
+            percent: document.getElementById('loader-percent'),
+            counter: document.getElementById('loader-counter'),
+            file:    document.getElementById('loader-current-file'),
+            tip:     document.getElementById('loader-tip'),
+            slow:    document.getElementById('loader-slow-hint'),
+        };
+
+        const tips = (gameData.texts && gameData.texts.ui && Array.isArray(gameData.texts.ui.loaderTips))
+            ? gameData.texts.ui.loaderTips
+            : [
+                "Suggerimento: clicca veloce per moltiplicare i bug.",
+                "Le promozioni sbloccano nuove meccaniche.",
+                "Apri l'Arcade per minigiochi e bonus.",
+                "Le skin cambiano look ed effetti speciali.",
+                "Il Q-Lab si sblocca dopo molte promozioni.",
+                "Salvataggio automatico in IndexedDB locale."
+            ];
+
+        let tipIdx = 0;
+        const showNextTip = () => {
+            if (!els.tip) return;
+            els.tip.classList.remove('visible');
+            setTimeout(() => {
+                els.tip.textContent = tips[tipIdx % tips.length];
+                els.tip.classList.add('visible');
+                tipIdx++;
+            }, 250);
+        };
+        showNextTip();
+        const tipInterval = setInterval(showNextTip, 4500);
+
+        // Hint connessione lenta: appare se nessun progresso per 6s
+        let lastProgressAt = Date.now();
+        const slowCheck = setInterval(() => {
+            if (els.slow && Date.now() - lastProgressAt > 6000) {
+                els.slow.hidden = false;
+            }
+        }, 1500);
+
+        const update = (percent, info) => {
+            const pct = Math.max(0, Math.min(100, percent || 0));
+            if (els.fill)    els.fill.style.width = pct + '%';
+            if (els.percent) els.percent.textContent = pct + '%';
+
+            if (info && els.counter && info.total) {
+                els.counter.textContent = info.loaded + ' / ' + info.total;
+            }
+            if (info && els.file) {
+                els.file.textContent = info.file ? '◦ ' + info.file : '';
+            }
+            lastProgressAt = Date.now();
+            if (els.slow) els.slow.hidden = true;
+        };
+
+        const setStatus = (text) => {
+            if (els.status) els.status.textContent = text;
+        };
+
+        const dispose = () => {
+            clearInterval(tipInterval);
+            clearInterval(slowCheck);
+        };
+
+        return { update: update, setStatus: setStatus, dispose: dispose };
+    }
+
     // Setup Iniziale
     function initializeGame() {
-        const loaderStatus = document.getElementById('loader-status-text');
-
-        if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
+        const loaderUI = setupLoaderUI();
+        loaderUI.setStatus(gameData.texts.ui.loadingData);
         loadGame(); // Carica salvataggi
 
         const btnFormatOpen = document.getElementById('btn-open-format-modal');
@@ -1068,14 +1154,17 @@ document.addEventListener('DOMContentLoaded', () => {
             AudioManager.init();
 
         // AVVIO PRELOADER CON BARRA PROGRESSO
-        preloadAllAssets((percent) => {
-            if (loaderStatus) loaderStatus.textContent = `${gameData.texts.ui.loadingAssets} ${percent}%`;
+        loaderUI.setStatus(gameData.texts.ui.loadingAssets);
+        preloadAllAssets((percent, info) => {
+            loaderUI.update(percent, info);
         })
             .then(() => {
                 // 4. TUTTO PRONTO
-                if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.systemStart;
+                loaderUI.setStatus(gameData.texts.ui.systemStart);
+                loaderUI.update(100, { loaded: 1, total: 1, file: '' });
 
                 setTimeout(() => {
+                    loaderUI.dispose();
                     const loader = document.getElementById('game-loader');
                     if (loader) {
                         loader.classList.add('hidden');

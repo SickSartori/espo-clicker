@@ -26,12 +26,16 @@
     let   _bootDone = false;      // True dopo che il gioco ha fatto il boot
 
     // ─────────────────────────────────────────────────────────
-    // Helper: preload di una singola immagine con retry
-    // Ritenta fino a MAX_RETRIES volte su errore (es. ERR_CONNECTION_RESET)
-    // prima di rinunciare silenziosamente.
+    // Detect host Altervista: rallenta caricamenti per evitare
+    // ERR_CONNECTION_RESET sotto carico burst.
     // ─────────────────────────────────────────────────────────
-    var MAX_RETRIES    = 2;
-    var RETRY_DELAY_MS = 1200;
+    var IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
+
+    // ─────────────────────────────────────────────────────────
+    // Helper: preload di una singola immagine con retry + jitter
+    // ─────────────────────────────────────────────────────────
+    var MAX_RETRIES    = IS_ALTERVISTA ? 4 : 3;
+    var RETRY_DELAY_MS = 800;
 
     function _preloadImage(filename, attempt) {
         attempt = attempt || 0;
@@ -39,14 +43,18 @@
             var img = new Image();
             img.decoding = 'async';
             img.loading = 'lazy';
-            img.onload = resolve;
+            img.onload = function () { resolve(true); };
             img.onerror = function () {
                 if (attempt < MAX_RETRIES) {
+                    // Backoff esponenziale + jitter random
+                    var base = RETRY_DELAY_MS * Math.pow(2, attempt);
+                    var jitter = Math.floor(Math.random() * 400);
                     setTimeout(function () {
                         _preloadImage(filename, attempt + 1).then(resolve);
-                    }, RETRY_DELAY_MS * (attempt + 1));
+                    }, base + jitter);
                 } else {
-                    resolve(); // Rinuncia silenziosamente dopo MAX_RETRIES
+                    console.warn('[AssetManager] Asset perso dopo retry:', filename);
+                    resolve(false); // Rinuncia silenziosamente
                 }
             };
             img.src = IMG_BASE + filename;
@@ -54,10 +62,10 @@
     }
 
     // ─────────────────────────────────────────────────────────
-    // Semaforo globale: massimo N richieste concorrenti in totale
-    // (condiviso tra tutti i pacchetti in caricamento simultaneo)
+    // Semaforo globale: massimo N richieste concorrenti.
+    // Su Altervista limitiamo a 2 per ridurre stress sul server.
     // ─────────────────────────────────────────────────────────
-    var MAX_CONCURRENT   = 3;
+    var MAX_CONCURRENT   = IS_ALTERVISTA ? 2 : 3;
     var _activeRequests  = 0;
     var _pendingQueue    = [];
 
@@ -177,6 +185,10 @@
             if (!trigger || trigger.type !== 'afterBoot') return;
 
             var delay = trigger.delay || 5000;
+            // Su Altervista raddoppia il delay: il server smaltisce meglio
+            // i caricamenti se distanziati nel tempo.
+            if (IS_ALTERVISTA) delay = delay * 2;
+
             setTimeout(function () {
                 _loadPackage(name);
             }, delay);

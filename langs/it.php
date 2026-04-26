@@ -9,8 +9,9 @@
 	$labels["head_titolo"] = "Espòòò Clicker";
 
 	// LOADER
-	$labels["loader_titolo"] = "Espòòò Clicker";
+	$labels["loader_titolo"] = "Espòò Clicker";
 	$labels["loader_status"] = "Inizializzazione risorse...";
+	$labels["loader_slow_hint"] = "Connessione lenta — caricamento in corso, attendere...";
 
 	// PRESTIGIO
 	$labels["prestigio_titolo"] = "PROMOZIONE IN CORSO...";

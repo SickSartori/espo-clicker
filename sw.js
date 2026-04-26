@@ -4,60 +4,31 @@
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.0';
+const CACHE_VERSION = 'espo-v2.0.2';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
-// Asset critici da pre-cachare all'installazione
+// Pre-cache MINIMO: solo file indispensabili al primo paint.
+// Su Altervista limitare burst HTTP all'install riduce ERR_CONNECTION_RESET.
+// Tutto il resto (skin, audio, ecc.) finisce in Dynamic Cache on-demand.
 const PRECACHE_ASSETS = [
     './',
     './index.php',
+    './manifest.json',
 
-    // JS + CSS Bundle (esbuild minificato)
+    // Bundle minificati (cache immutable 1 anno via .htaccess)
     './dist/game.bundle.min.js',
     './dist/styles.bundle.min.css',
     './dist/styles.mobile.min.css',
 
-    // ── Pacchetto CORE ────────────────────────────────────────
+    // Solo asset above-the-fold critici
     './assets/image/skins/espo.webp',
     './assets/image/skins/espo-click.webp',
-    './assets/image/ui/bug.webp',
-    './assets/image/ui/hidden.webp',
-    './assets/image/ui/super-block.webp',
-    './assets/image/ui/star.png',
-
-    // ── Pacchetto UI/PWA ──────────────────────────────────────
     './assets/image/ui/favicon.webp',
-    './assets/image/icons/icon-192.png',
-    './assets/image/icons/icon-512.png',
-    './assets/image/logo.svg',
     './assets/image/ico.svg',
 
-    // ── Pacchetto SKINS_COMMON (pre-cached: ~358 KB totale) ───
-    './assets/image/skins/espobit.webp',
-    './assets/image/skins/espobit-click.webp',
-    './assets/image/skins/espobit-matrix.webp',
-    './assets/image/skins/espobit-matrix-click.webp',
-    './assets/image/skins/espobit-fury.webp',
-    './assets/image/skins/espobit-fury-click.webp',
-    './assets/image/skins/esponatale.webp',
-    './assets/image/skins/esponatale-click.webp',
-    './assets/image/skins/initiale.webp',
-    './assets/image/skins/initiale-click.webp',
-
-    // ── Pacchetto SKINS_RARE (pre-cached: ~297 KB totale) ────
-    './assets/image/skins/esporator.webp',
-    './assets/image/skins/esporator-click.webp',
-    './assets/image/skins/esponese.webp',
-    './assets/image/skins/esponese-click.webp',
-    './assets/image/skins/espocorno.webp',
-    './assets/image/skins/espocorno-click.webp',
-
-    // ── SKINS_EPIC/LEGENDARY/FURY → Dynamic Cache ─────────────
-    // Quelle più pesanti (esportia ~637 KB, fury ~2.2 MB)
-    // vengono cachate dal SW dinamicamente alla prima richiesta.
-
-    './manifest.json'
+    // Font logo (loader title)
+    './assets/fonts/Harabara.ttf'
 ];
 
 // Pattern per richieste che NON devono essere cachate (API PHP)
@@ -95,17 +66,39 @@ const STATIC_PATTERNS = [
 
 // ============================================================
 // INSTALL - Pre-cache + forza attivazione immediata
-// Carica gli asset in batch da 3 per non saturare Altervista.
+// Batch da 2 con retry esponenziale + jitter per Altervista.
 // ============================================================
+async function _fetchWithRetry(url, maxAttempts) {
+    var attempts = maxAttempts || 4;
+    var lastErr;
+    for (var i = 0; i < attempts; i++) {
+        try {
+            var res = await fetch(url, { cache: 'reload' });
+            if (res && res.ok) return res;
+            lastErr = new Error('HTTP ' + res.status);
+        } catch (err) {
+            lastErr = err;
+        }
+        // Backoff esponenziale + jitter random (evita thundering herd)
+        var base = 600 * Math.pow(2, i);
+        var jitter = Math.floor(Math.random() * 400);
+        await new Promise(r => setTimeout(r, base + jitter));
+    }
+    throw lastErr;
+}
+
 async function precacheBatched(cache, urls, batchSize) {
     for (var i = 0; i < urls.length; i += batchSize) {
         var batch = urls.slice(i, i + batchSize);
         await Promise.allSettled(
-            batch.map(url =>
-                cache.add(url).catch(err => {
-                    console.warn(`[SW] Pre-cache fallito: ${url}`, err.message);
-                })
-            )
+            batch.map(async (url) => {
+                try {
+                    var res = await _fetchWithRetry(url, 4);
+                    await cache.put(url, res);
+                } catch (err) {
+                    console.warn('[SW] Pre-cache fallito definitivamente:', url, err && err.message);
+                }
+            })
         );
     }
 }
@@ -114,7 +107,7 @@ self.addEventListener('install', (event) => {
     console.log(`[SW] Installazione ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.open(STATIC_CACHE)
-            .then((cache) => precacheBatched(cache, PRECACHE_ASSETS, 3))
+            .then((cache) => precacheBatched(cache, PRECACHE_ASSETS, 2))
     );
 });
 
@@ -154,7 +147,8 @@ self.addEventListener('activate', (event) => {
 // ============================================================
 self.addEventListener('fetch', (event) => {
 
-    if (event.request.headers.has('range') || event.request.url.match(/\.(mp3|wav|ogg)$/i)) {
+    // Range request → mai cachare (streaming parziale audio/video)
+    if (event.request.headers.has('range')) {
         event.respondWith(fetch(event.request));
         return;
     }
@@ -221,25 +215,33 @@ async function cacheFirst(request) {
         return cachedResponse;
     }
 
-    // Retry fino a 2 volte in caso di connessione resettata
+    // Retry fino a 4 volte con backoff esponenziale + jitter
+    // (Altervista chiude connessioni con ERR_CONNECTION_RESET sotto carico)
     let networkResponse;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    let lastErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
         try {
             networkResponse = await fetch(request);
             break;
         } catch (err) {
-            if (attempt === 2) throw err;
-            await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+            lastErr = err;
+            if (attempt === 3) throw err;
+            const base = 600 * Math.pow(2, attempt);
+            const jitter = Math.floor(Math.random() * 400);
+            await new Promise(r => setTimeout(r, base + jitter));
         }
     }
+
+    if (!networkResponse) throw lastErr;
 
     if (!request.url.startsWith('http')) {
         return networkResponse;
     }
 
-    if (networkResponse.status !== 206) {
-        const cache = await caches.open(STATIC_CACHE);
-        cache.put(request, networkResponse.clone());
+    // Cacha solo risposte complete (no 206 partial, no errori)
+    if (networkResponse.ok && networkResponse.status !== 206) {
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(request, networkResponse.clone()).catch(() => {});
     }
 
     return networkResponse;

@@ -23,6 +23,17 @@ window.gameData.texts = {
         loadingData: "Caricamento dati...",
         loadingAssets: "Caricamento risorse...",
         systemStart: "Avvio sistema...",
+        loaderTips: [
+            "Suggerimento: clicca veloce per moltiplicare i bug.",
+            "Le promozioni sbloccano nuove meccaniche.",
+            "Apri l'Arcade per minigiochi e bonus.",
+            "Le skin cambiano look ed effetti speciali.",
+            "Il Q-Lab si sblocca dopo molte promozioni.",
+            "Il salvataggio è automatico in IndexedDB.",
+            "Il Golden Bug appare casualmente: catturalo!",
+            "Espo Fury moltiplica i BPS x7 per pochi secondi.",
+            "Più Bug Per Secondo = promozioni più veloci."
+        ],
         promoReady: "PRONTA!",
         promotionReadyTitle: "PROMOZIONE PRONTA!",
         bugsTitle: "Bug",
