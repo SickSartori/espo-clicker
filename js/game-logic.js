@@ -235,10 +235,13 @@ const AudioManager = {
         // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
         for (const key in gameData.assets.sounds) {
             const sound = gameData.assets.sounds[key];
-            const src = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
+            const localSrc = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
+            // Su Altervista usa CDN; in caso di errore Howler proverà la 2ª src (locale)
+            const cdnSrc = (window.CDN && window.CDN.url) ? window.CDN.url(localSrc) : localSrc;
+            const src = (cdnSrc !== localSrc) ? [cdnSrc, localSrc] : [localSrc];
 
             this._sounds[sound.id] = new Howl({
-                src: [src],
+                src: src,
                 volume: 0, // Impostato dinamicamente al play
                 loop: !!sound.loop,
                 preload: sound.type === 'sfx', // Preload tutti gli SFX (non musica)
@@ -273,6 +276,21 @@ const AudioManager = {
                 },
                 onloaderror: (id, err) => {
                     console.warn(`[Audio] Errore caricamento ${sound.id}:`, err);
+                    // Fallback CDN → locale: ricostruisci Howl con sola src locale
+                    if (cdnSrc !== localSrc && !this._sounds[sound.id]._cdnFallbackUsed) {
+                        console.warn('[CDN] Audio fail, fallback locale:', sound.id);
+                        try { this._sounds[sound.id].unload(); } catch (e) {}
+                        const replacement = new Howl({
+                            src: [localSrc],
+                            volume: 0,
+                            loop: !!sound.loop,
+                            preload: sound.type === 'sfx',
+                            html5: sound.type === 'music',
+                            pool: sound.type === 'sfx' ? 5 : 1
+                        });
+                        replacement._cdnFallbackUsed = true;
+                        this._sounds[sound.id] = replacement;
+                    }
                 }
             });
         }
@@ -1178,6 +1196,18 @@ const EventHandlers = {
         if (video) {
             if (!video.src) {
                 video.src = video.getAttribute('data-src');
+                // Fallback automatico CDN → locale se errore di rete
+                if (!video._cdnFallbackBound) {
+                    video._cdnFallbackBound = true;
+                    video.addEventListener('error', function _onErr() {
+                        var fb = video.getAttribute('data-src-fallback');
+                        if (fb && video.src.indexOf(fb) === -1) {
+                            console.warn('[CDN] Video fail, fallback locale:', fb);
+                            video.src = fb;
+                            video.load();
+                        }
+                    });
+                }
                 video.load();
             }
 

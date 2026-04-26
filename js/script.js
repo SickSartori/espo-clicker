@@ -952,12 +952,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- CARICAMENTO AUDIO MISTO ---
         if (gameData.assets && gameData.assets.sounds) {
+            const _routedAudio = (p) => (window.CDN && window.CDN.url ? window.CDN.url(p) : p);
+
             Object.values(gameData.assets.sounds).forEach(sound => {
-                let url = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
+                let local = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
+                let url = _routedAudio(local);
 
                 if (criticalAudioIds.includes(sound.id)) {
                     // Blocca il caricamento finché non ha finito
-                    criticalPromises.push(fetch(url).then(() => updateProgress(_basename(url))).catch(() => updateProgress(_basename(url))));
+                    criticalPromises.push(
+                        fetch(url)
+                            .then(() => updateProgress(_basename(local)))
+                            .catch(() => updateProgress(_basename(local)))
+                    );
                 } else {
                     // Lascialo scaricare in background
                     backgroundPromises.push(fetch(url).catch(() => { }));
@@ -991,6 +998,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
         ];
 
+        const _routed = (p) => (window.CDN && window.CDN.url ? window.CDN.url(p) : p);
+
         videoData.forEach(v => {
             if (!document.getElementById(v.id)) {
                 const videoEl = document.createElement('video');
@@ -998,7 +1007,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoEl.className = `${v.class} video_display_none`;
                 videoEl.playsInline = true;
                 videoEl.preload = "none"; // Evita di scaricare il video prima del tempo
-                videoEl.setAttribute('data-src', v.src);
+                // Su Altervista usa CDN; data-src-fallback per recuperare locale se CDN fail
+                videoEl.setAttribute('data-src', _routed(v.src));
+                videoEl.setAttribute('data-src-fallback', v.src);
                 document.body.appendChild(videoEl);
             }
         });

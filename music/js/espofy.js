@@ -34,6 +34,24 @@ async function initPlayer() {
         const response = await fetch('get_songs.php');
         if (response.ok) {
             const autoSongs = await response.json();
+            // Su Altervista riscrivi il path verso il CDN jsDelivr (jsDelivr serve
+            // i file byte-per-byte dal repo GitHub — nessuna perdita di qualità).
+            // get_songs.php restituisce path relativi a /music/ (es. "songs/X.mp3").
+            const IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
+            const CDN_BASE = 'https://cdn.jsdelivr.net/gh/SickSartori/espo-clicker@2.0-Stable/';
+            const _routed = (p) => {
+                if (!IS_ALTERVISTA) return p;
+                // Path è "songs/..." → su CDN diventa "music/songs/..."
+                const fullLocal = p.indexOf('music/') === 0 ? p : 'music/' + p;
+                // get_songs.php già fa rawurlencode → non re-encodare per evitare double-encoding.
+                // Decoda e ri-encoda solo se non sembra già encodato.
+                const looksEncoded = /%[0-9A-Fa-f]{2}/.test(fullLocal);
+                const enc = looksEncoded
+                    ? fullLocal
+                    : fullLocal.split('/').map(encodeURIComponent).join('/');
+                return CDN_BASE + enc;
+            };
+            autoSongs.forEach(s => { s._localFile = s.file; s.file = _routed(s.file); });
             playlist = playlist.concat(autoSongs);
         }
 
@@ -105,6 +123,19 @@ function loadTrack(index, autoPlay = true) {
     currentTrackIndex = index;
     audio.src = playlist[index].file;
     document.getElementById('current-track-name').textContent = playlist[index].name;
+
+    // Fallback CDN → locale: se la traccia non parte, prova path locale
+    if (!audio._cdnFallbackBound) {
+        audio._cdnFallbackBound = true;
+        audio.addEventListener('error', function () {
+            const t = playlist[currentTrackIndex];
+            if (t && t._localFile && audio.src.indexOf(t._localFile) === -1) {
+                console.warn('[CDN] Track fail, fallback locale:', t._localFile);
+                audio.src = t._localFile;
+                if (isPlaying) audio.play().catch(() => {});
+            }
+        });
+    }
 
     // --- AGGIUNTA PER CONTROLLI BACKGROUND ---
     if ('mediaSession' in navigator) {
