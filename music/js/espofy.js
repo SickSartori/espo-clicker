@@ -30,28 +30,16 @@ async function initPlayer() {
     updateSliderVisuals('volume-slider');
     
     try {
-        // FIX: Carica unicamente i file locali inseriti nella cartella songs/
+        // get_songs.php gestisce automaticamente il routing:
+        //   - In locale: ritorna path relativi a /music/ (es. "songs/X.mp3")
+        //   - Su Altervista (R2 attivo): ritorna URL firmate Cloudflare R2
+        // Niente trasformazione lato client necessaria.
         const response = await fetch('get_songs.php');
         if (response.ok) {
             const autoSongs = await response.json();
-            // Su Altervista riscrivi il path verso il CDN jsDelivr (jsDelivr serve
-            // i file byte-per-byte dal repo GitHub — nessuna perdita di qualità).
-            // get_songs.php restituisce path relativi a /music/ (es. "songs/X.mp3").
-            const IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
-            const CDN_BASE = 'https://cdn.jsdelivr.net/gh/SickSartori/espo-clicker@2.0-Stable/';
-            const _routed = (p) => {
-                if (!IS_ALTERVISTA) return p;
-                // Path è "songs/..." → su CDN diventa "music/songs/..."
-                const fullLocal = p.indexOf('music/') === 0 ? p : 'music/' + p;
-                // get_songs.php già fa rawurlencode → non re-encodare per evitare double-encoding.
-                // Decoda e ri-encoda solo se non sembra già encodato.
-                const looksEncoded = /%[0-9A-Fa-f]{2}/.test(fullLocal);
-                const enc = looksEncoded
-                    ? fullLocal
-                    : fullLocal.split('/').map(encodeURIComponent).join('/');
-                return CDN_BASE + enc;
-            };
-            autoSongs.forEach(s => { s._localFile = s.file; s.file = _routed(s.file); });
+            // Salva una copia "originale" per fallback (utile in dev,
+            // su Altervista è già URL firmato e _localFile coincide)
+            autoSongs.forEach(s => { s._localFile = s.file; });
             playlist = playlist.concat(autoSongs);
         }
 

@@ -952,21 +952,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- CARICAMENTO AUDIO MISTO ---
         if (gameData.assets && gameData.assets.sounds) {
-            const _routedAudio = (p) => (window.CDN && window.CDN.url ? window.CDN.url(p) : p);
+            // Su R2 usa URL sync già cachato dal prefetch; altrimenti path locale
+            const _resolveAudio = (local) => {
+                if (window.CDN && window.CDN.urlSync) {
+                    const sync = window.CDN.urlSync(local);
+                    if (sync) return sync;
+                }
+                return local;
+            };
 
             Object.values(gameData.assets.sounds).forEach(sound => {
                 let local = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
-                let url = _routedAudio(local);
+                let url = _resolveAudio(local);
 
                 if (criticalAudioIds.includes(sound.id)) {
-                    // Blocca il caricamento finché non ha finito
                     criticalPromises.push(
                         fetch(url)
                             .then(() => updateProgress(_basename(local)))
                             .catch(() => updateProgress(_basename(local)))
                     );
                 } else {
-                    // Lascialo scaricare in background
                     backgroundPromises.push(fetch(url).catch(() => { }));
                 }
             });
@@ -998,8 +1003,6 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
         ];
 
-        const _routed = (p) => (window.CDN && window.CDN.url ? window.CDN.url(p) : p);
-
         videoData.forEach(v => {
             if (!document.getElementById(v.id)) {
                 const videoEl = document.createElement('video');
@@ -1007,9 +1010,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoEl.className = `${v.class} video_display_none`;
                 videoEl.playsInline = true;
                 videoEl.preload = "none"; // Evita di scaricare il video prima del tempo
-                // Su Altervista usa CDN; data-src-fallback per recuperare locale se CDN fail
-                videoEl.setAttribute('data-src', _routed(v.src));
-                videoEl.setAttribute('data-src-fallback', v.src);
+                // data-src-local: path originale (per CDN.url async + fallback)
+                videoEl.setAttribute('data-src-local', v.src);
+                // Se R2 disabilitato, può già usare il path locale
+                if (!window.CDN || !window.CDN.enabled) {
+                    videoEl.setAttribute('data-src', v.src);
+                }
                 document.body.appendChild(videoEl);
             }
         });
@@ -1144,7 +1150,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // TRUCCO ANTI-BLOCCO: Inizializza il video nel momento esatto del click umano
                 const video = document.getElementById('video-bigbang');
                 if (video) {
-                    if (!video.src) video.src = video.getAttribute('data-src');
+                    if (!video.src) {
+                        // Risolvi URL: se R2 attivo, usa cache sync (popolata al boot via prefetch)
+                        const direct = video.getAttribute('data-src');
+                        const local  = video.getAttribute('data-src-local');
+                        const sync   = (window.CDN && window.CDN.urlSync) ? window.CDN.urlSync(local) : null;
+                        video.src = direct || sync || local || '';
+                    }
                     video.volume = 0; // Muto temporaneamente
 
                     let p = video.play();
@@ -1160,14 +1172,48 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Inizializza Audio Context (senza suonare ancora)
-        if (typeof AudioManager !== 'undefined')
-            AudioManager.init();
+        // ─────────────────────────────────────────────────────────
+        // PREFETCH SIGNED URL R2 (solo Altervista)
+        // Risolve in batch tutti gli URL firmati per audio + video
+        // PRIMA di inizializzare AudioManager: i Howl così partono
+        // direttamente con URL R2 invece che path locale (404 su Altervista).
+        // ─────────────────────────────────────────────────────────
+        const _prefetchUrls = () => {
+            if (!window.CDN || !window.CDN.enabled || !window.CDN.prefetch) {
+                return Promise.resolve();
+            }
+            loaderUI.setStatus('Inizializzazione asset privati...');
+            const paths = [];
+            // Audio
+            if (gameData.assets && gameData.assets.sounds) {
+                Object.values(gameData.assets.sounds).forEach(s => {
+                    paths.push(s.file.includes('/') ? s.file : `assets/sounds/${s.file}`);
+                });
+            }
+            // Video (lista hardcoded sincrona con injectVideosLazily)
+            paths.push(
+                'assets/video/rick-espley-video.mp4',
+                'assets/video/ricardo-milespo-video.mp4',
+                'assets/video/ricardo-milespo-metal-video.mp4',
+                'assets/video/ricardo-milespo-dota-video.mp4',
+                'assets/video/britney-espoars-video.mp4',
+                'assets/video/bigbang-espoclicker.mp4'
+            );
+            return window.CDN.prefetch(paths).catch(err => {
+                console.warn('[CDN] Prefetch fallito, userò fallback locale:', err);
+            });
+        };
 
-        // AVVIO PRELOADER CON BARRA PROGRESSO
-        loaderUI.setStatus(gameData.texts.ui.loadingAssets);
-        preloadAllAssets((percent, info) => {
-            loaderUI.update(percent, info);
+        _prefetchUrls().then(() => {
+            // Inizializza Audio Context (senza suonare ancora)
+            if (typeof AudioManager !== 'undefined')
+                AudioManager.init();
+
+            // AVVIO PRELOADER CON BARRA PROGRESSO
+            loaderUI.setStatus(gameData.texts.ui.loadingAssets);
+            return preloadAllAssets((percent, info) => {
+                loaderUI.update(percent, info);
+            });
         })
             .then(() => {
                 // 4. TUTTO PRONTO

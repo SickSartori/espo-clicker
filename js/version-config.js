@@ -13,35 +13,38 @@ const GAME_VERSION = {
 window.GAME_VERSION = GAME_VERSION;
 
 // ============================================================
-// CDN ASSET ROUTING (jsDelivr da repo GitHub)
+// CDN ASSET ROUTING (Cloudflare R2 + presigned URL)
 // ============================================================
-// Su Altervista i file pesanti (audio/video/music) vengono serviti
-// da jsDelivr al posto del server condiviso. Lo stesso byte-per-byte,
-// nessuna ricompressione, ma:
-//   - Banda CDN globale (no throttling Altervista)
-//   - HTTP/2 multiplex
-//   - Cache edge persistente
+// Su Altervista gli asset pesanti (audio/video/music) sono privati
+// su R2 e accessibili solo via URL firmate generate dal backend PHP.
 //
-// In locale (MAMP/dev) o su qualunque altro host, i path restano
-// relativi al server stesso.
+//   - Bucket privato: nessuno scarica direttamente senza URL firmata
+//   - Banda CDN globale Cloudflare (gratis, no egress fee)
+//   - URL scadenza 1h: refresh automatico prima della scadenza
+//   - Whitelist Referer lato PHP: anti-hotlink server-side
+//
+// In locale (MAMP/dev) i path restano relativi al server stesso.
 // ============================================================
 (function () {
-    var CDN_BASE = 'https://cdn.jsdelivr.net/gh/SickSartori/espo-clicker@2.0-Stable/';
-
     var IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
 
-    // Prefissi locali che meritano routing su CDN (file pesanti)
+    // Prefissi locali che richiedono routing su R2 (asset privati)
     var CDN_PREFIXES = [
         'assets/sounds/',
         'assets/video/',
         'music/songs/'
     ];
 
-    function _shouldRoute(path) {
-        if (!IS_ALTERVISTA || !path) return false;
-        // Già URL assoluto? Non toccare.
+    // Cache URL firmati: { path: { url, expiresAt } }
+    var _urlCache = {};
+    // Coda di richieste pending per evitare richieste duplicate
+    var _pendingBatch = null;
+    var _pendingResolvers = [];
+    var _pendingPaths = new Set();
+
+    function _isRouted(path) {
+        if (!path) return false;
         if (/^https?:\/\//i.test(path)) return false;
-        // Normalizza: togli './' iniziale e '/' iniziale
         var p = String(path).replace(/^\.\//, '').replace(/^\//, '');
         for (var i = 0; i < CDN_PREFIXES.length; i++) {
             if (p.indexOf(CDN_PREFIXES[i]) === 0) return true;
@@ -49,24 +52,144 @@ window.GAME_VERSION = GAME_VERSION;
         return false;
     }
 
-    function _encodePath(path) {
-        // Mantiene gli slash, encoda spazi e caratteri speciali (es. òòò)
-        return path.split('/').map(encodeURIComponent).join('/');
+    function _normalize(path) {
+        return String(path).replace(/^\.\//, '').replace(/^\//, '');
+    }
+
+    // Soglia per considerare un URL "in scadenza" (5 min prima)
+    var REFRESH_BEFORE_MS = 5 * 60 * 1000;
+
+    function _isCachedFresh(path) {
+        var entry = _urlCache[path];
+        if (!entry) return false;
+        return entry.expiresAt - Date.now() > REFRESH_BEFORE_MS;
+    }
+
+    /**
+     * Fetch batch dei signed URLs dal backend PHP.
+     * Accumula richieste fatte nello stesso tick e le manda in un'unica POST.
+     */
+    function _fetchSignedUrls(paths) {
+        return fetch('php/get_asset_urls.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paths: paths })
+        })
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data.urls) return {};
+            var ttlMs = (data.ttl || 3600) * 1000;
+            var expiresAt = Date.now() + ttlMs;
+            Object.keys(data.urls).forEach(function (k) {
+                _urlCache[k] = { url: data.urls[k], expiresAt: expiresAt };
+            });
+            return data.urls;
+        });
+    }
+
+    /**
+     * Risolve un path in URL firmata. Batcha richieste simultanee.
+     */
+    function _resolve(path) {
+        path = _normalize(path);
+
+        // Cache hit fresca
+        if (_isCachedFresh(path)) {
+            return Promise.resolve(_urlCache[path].url);
+        }
+
+        _pendingPaths.add(path);
+
+        // Pianifica batch se non già pianificato
+        if (!_pendingBatch) {
+            _pendingBatch = new Promise(function (resolve) {
+                setTimeout(function () {
+                    var paths = Array.from(_pendingPaths);
+                    _pendingPaths = new Set();
+                    var resolvers = _pendingResolvers;
+                    _pendingResolvers = [];
+                    _pendingBatch = null;
+
+                    _fetchSignedUrls(paths)
+                        .then(function (urls) {
+                            resolvers.forEach(function (r) { r.resolve(urls[r.path] || null); });
+                            resolve();
+                        })
+                        .catch(function (err) {
+                            console.warn('[CDN] Batch sign error:', err);
+                            resolvers.forEach(function (r) { r.resolve(null); });
+                            resolve();
+                        });
+                }, 30); // Aggrega 30ms di richieste
+            });
+        }
+
+        return new Promise(function (resolve) {
+            _pendingResolvers.push({ path: path, resolve: resolve });
+        });
     }
 
     window.CDN = {
-        base: IS_ALTERVISTA ? CDN_BASE : '',
         enabled: IS_ALTERVISTA,
+        prefixes: CDN_PREFIXES,
 
         /**
-         * Trasforma un path locale in URL CDN se applicabile.
+         * True se il path va instradato via R2 signed URL.
+         */
+        isRouted: function (path) {
+            return IS_ALTERVISTA && _isRouted(path);
+        },
+
+        /**
+         * Versione SYNC: ritorna il path locale se non routato,
+         * o un URL cachato fresco se disponibile, altrimenti null.
+         * Usare quando serve un valore immediato (es. Howler.src array).
+         */
+        urlSync: function (path) {
+            if (!this.isRouted(path)) return path;
+            var p = _normalize(path);
+            return _isCachedFresh(p) ? _urlCache[p].url : null;
+        },
+
+        /**
+         * Versione ASYNC: ritorna sempre URL utilizzabile (R2 signed o locale).
          * @param {string} path - es. 'assets/sounds/click.mp3'
-         * @returns {string} URL completa (CDN o locale)
+         * @returns {Promise<string>} URL utilizzabile (signed o originale)
          */
         url: function (path) {
-            if (!_shouldRoute(path)) return path;
-            var clean = String(path).replace(/^\.\//, '').replace(/^\//, '');
-            return CDN_BASE + _encodePath(clean);
+            if (!this.isRouted(path)) return Promise.resolve(path);
+            return _resolve(path).then(function (signed) {
+                return signed || path; // Fallback locale se sign fail
+            });
+        },
+
+        /**
+         * Pre-fetch batch (consigliato al boot per ridurre round-trip).
+         * @param {string[]} paths
+         * @returns {Promise<Object>} mappa path → URL
+         */
+        prefetch: function (paths) {
+            if (!this.enabled) return Promise.resolve({});
+            var routed = paths.filter(_isRouted).map(_normalize);
+            if (routed.length === 0) return Promise.resolve({});
+            // Filtra quelli già cachati freschi
+            var toFetch = routed.filter(function (p) { return !_isCachedFresh(p); });
+            if (toFetch.length === 0) {
+                var cached = {};
+                routed.forEach(function (p) { cached[p] = _urlCache[p].url; });
+                return Promise.resolve(cached);
+            }
+            return _fetchSignedUrls(toFetch).then(function () {
+                var out = {};
+                routed.forEach(function (p) {
+                    if (_urlCache[p]) out[p] = _urlCache[p].url;
+                });
+                return out;
+            });
         }
     };
 })();

@@ -232,13 +232,16 @@ const AudioManager = {
     _promptEl: null,         // Riferimento all'elemento DOM del banner "clicca per l'audio"
 
     init() {
-        // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances
+        // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances.
+        // Su R2: l'URL firmato deve essere già stato prefetchato (window.CDN.prefetch())
+        // prima di chiamare init(). Se non c'è cache, fallback al path locale.
         for (const key in gameData.assets.sounds) {
             const sound = gameData.assets.sounds[key];
             const localSrc = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
-            // Su Altervista usa CDN; in caso di errore Howler proverà la 2ª src (locale)
-            const cdnSrc = (window.CDN && window.CDN.url) ? window.CDN.url(localSrc) : localSrc;
-            const src = (cdnSrc !== localSrc) ? [cdnSrc, localSrc] : [localSrc];
+
+            // Prova prima URL firmato sync (cache R2), altrimenti locale
+            const signed = (window.CDN && window.CDN.urlSync) ? window.CDN.urlSync(localSrc) : null;
+            const src = signed ? [signed] : [localSrc];
 
             this._sounds[sound.id] = new Howl({
                 src: src,
@@ -276,10 +279,11 @@ const AudioManager = {
                 },
                 onloaderror: (id, err) => {
                     console.warn(`[Audio] Errore caricamento ${sound.id}:`, err);
-                    // Fallback CDN → locale: ricostruisci Howl con sola src locale
-                    if (cdnSrc !== localSrc && !this._sounds[sound.id]._cdnFallbackUsed) {
+                    // Fallback R2 → locale: ricostruisci Howl con sola src locale
+                    const current = this._sounds[sound.id];
+                    if (signed && current && !current._cdnFallbackUsed) {
                         console.warn('[CDN] Audio fail, fallback locale:', sound.id);
-                        try { this._sounds[sound.id].unload(); } catch (e) {}
+                        try { current.unload(); } catch (e) {}
                         const replacement = new Howl({
                             src: [localSrc],
                             volume: 0,
@@ -1194,21 +1198,35 @@ const EventHandlers = {
         const video = document.getElementById(videoId);
 
         if (video) {
-            if (!video.src) {
-                video.src = video.getAttribute('data-src');
-                // Fallback automatico CDN → locale se errore di rete
-                if (!video._cdnFallbackBound) {
-                    video._cdnFallbackBound = true;
-                    video.addEventListener('error', function _onErr() {
-                        var fb = video.getAttribute('data-src-fallback');
-                        if (fb && video.src.indexOf(fb) === -1) {
-                            console.warn('[CDN] Video fail, fallback locale:', fb);
-                            video.src = fb;
-                            video.load();
-                        }
-                    });
+            const _resolveVideoSrc = () => {
+                if (video.src) return Promise.resolve(video.src);
+                const localPath = video.getAttribute('data-src-local');
+                const direct    = video.getAttribute('data-src');
+                if (direct) return Promise.resolve(direct);
+                if (window.CDN && window.CDN.url && localPath) {
+                    return window.CDN.url(localPath);
                 }
-                video.load();
+                return Promise.resolve(localPath || '');
+            };
+
+            if (!video.src) {
+                _resolveVideoSrc().then(src => {
+                    if (!src) return;
+                    video.src = src;
+                    // Fallback su error di rete: prova path locale
+                    if (!video._cdnFallbackBound) {
+                        video._cdnFallbackBound = true;
+                        video.addEventListener('error', function _onErr() {
+                            const fb = video.getAttribute('data-src-local');
+                            if (fb && video.src.indexOf(fb) === -1) {
+                                console.warn('[CDN] Video fail, fallback locale:', fb);
+                                video.src = fb;
+                                video.load();
+                            }
+                        });
+                    }
+                    video.load();
+                });
             }
 
             // Preparazione Video
