@@ -157,14 +157,21 @@ echo.
 echo Aggiorno develop locale...
 call git checkout develop
 call git pull origin develop
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERR] Pull develop fallito.
+    pause
+    goto menu
+)
 echo.
-echo Forzo test = develop...
-call git checkout test
-call git reset --hard develop
-call git push -f origin test
-call git checkout develop
+echo Forzo test = develop (push diretto)...
+call git push --force origin develop:test
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERR] Push a test fallito.
+    pause
+    goto menu
+)
 echo.
-echo [OK] test aggiornato! Workflow test.yml avviato su GitHub Actions.
+echo [OK] test aggiornato. Workflow test.yml avviato su GitHub Actions.
 echo      Controlla: https://github.com/SickSartori/espo-clicker/actions
 pause
 goto menu
