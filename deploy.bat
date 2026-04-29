@@ -30,18 +30,30 @@ echo   4. Build + Commit + Push  -^> develop
 echo   5. Promuovi develop       -^> test    (deploy automatico server test)
 echo   6. Promuovi test          -^> main    (release ufficiale con tag)
 echo.
-echo [ALTRE]
-echo   7. Esci
+echo [CLOUDFLARE R2 (asset privati)]
+echo   7. Sync TUTTI gli asset    -^> R2     (sounds + video + songs)
+echo   8. Sync solo /assets/sounds -^> R2
+echo   9. Sync solo /assets/video  -^> R2
+echo  10. Sync solo /music/songs   -^> R2
+echo  11. Verifica contenuto bucket R2
 echo.
-set /p choice="Scegli opzione (1-7): "
+echo [ALTRE]
+echo   0. Esci
+echo.
+set /p choice="Scegli opzione: "
 
-if "%choice%"=="1" goto build
-if "%choice%"=="2" goto major
-if "%choice%"=="3" goto minor
-if "%choice%"=="4" goto build_commit_push
-if "%choice%"=="5" goto push_test
-if "%choice%"=="6" goto push_main
-if "%choice%"=="7" exit /b 0
+if "%choice%"=="1"  goto build
+if "%choice%"=="2"  goto major
+if "%choice%"=="3"  goto minor
+if "%choice%"=="4"  goto build_commit_push
+if "%choice%"=="5"  goto push_test
+if "%choice%"=="6"  goto push_main
+if "%choice%"=="7"  goto r2_sync_all
+if "%choice%"=="8"  goto r2_sync_sounds
+if "%choice%"=="9"  goto r2_sync_video
+if "%choice%"=="10" goto r2_sync_songs
+if "%choice%"=="11" goto r2_list
+if "%choice%"=="0"  exit /b 0
 goto menu
 
 REM ----------------------------------------------------------------
@@ -217,5 +229,132 @@ echo.
 echo [OK] Release v!version! pubblicata su main!
 echo      Avvia deploy produzione manualmente:
 echo      https://github.com/SickSartori/espo-clicker/actions
+pause
+goto menu
+
+REM ================================================================
+REM  CLOUDFLARE R2 — Sync asset privati
+REM ================================================================
+REM Constants:
+REM   R2_REMOTE = nome remote configurato in rclone (default "r2")
+REM   R2_BUCKET = nome bucket
+REM   PROJECT_DIR = path assoluto progetto
+REM ================================================================
+
+:r2_check_rclone
+where rclone >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    set "RCLONE_CMD=rclone"
+    exit /b 0
+)
+REM Se rclone non e nel PATH, prova path comuni
+if exist "C:\rclone\rclone.exe" (
+    set "RCLONE_CMD=C:\rclone\rclone.exe"
+    exit /b 0
+)
+if exist "%USERPROFILE%\Downloads\rclone-v1.73.5-windows-amd64\rclone-v1.73.5-windows-amd64\rclone.exe" (
+    set "RCLONE_CMD=%USERPROFILE%\Downloads\rclone-v1.73.5-windows-amd64\rclone-v1.73.5-windows-amd64\rclone.exe"
+    exit /b 0
+)
+echo [ERR] rclone non trovato.
+echo       Installa da https://rclone.org/install/ oppure aggiungi al PATH.
+exit /b 1
+
+:r2_sync_all
+cls
+echo.
+echo ================================================================
+echo  SYNC TUTTI GLI ASSET -^> R2 (sounds + video + songs)
+echo ================================================================
+echo.
+call :r2_check_rclone
+if %ERRORLEVEL% NEQ 0 ( pause & goto menu )
+
+echo Sincronizzo assets/sounds ...
+"%RCLONE_CMD%" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4
+if %ERRORLEVEL% NEQ 0 ( echo [ERR] Sync sounds fallito. & pause & goto menu )
+
+echo.
+echo Sincronizzo assets/video ...
+"%RCLONE_CMD%" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4
+if %ERRORLEVEL% NEQ 0 ( echo [ERR] Sync video fallito. & pause & goto menu )
+
+echo.
+echo Sincronizzo music/songs ...
+"%RCLONE_CMD%" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4
+if %ERRORLEVEL% NEQ 0 ( echo [ERR] Sync songs fallito. & pause & goto menu )
+
+echo.
+echo [OK] Tutti gli asset sincronizzati su R2.
+pause
+goto menu
+
+:r2_sync_sounds
+cls
+echo.
+echo ================================================================
+echo  SYNC assets/sounds -^> R2
+echo ================================================================
+echo.
+call :r2_check_rclone
+if %ERRORLEVEL% NEQ 0 ( pause & goto menu )
+
+"%RCLONE_CMD%" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4
+echo.
+if %ERRORLEVEL% EQU 0 ( echo [OK] Sounds sincronizzati. ) else ( echo [ERR] Sync fallito. )
+pause
+goto menu
+
+:r2_sync_video
+cls
+echo.
+echo ================================================================
+echo  SYNC assets/video -^> R2
+echo ================================================================
+echo.
+call :r2_check_rclone
+if %ERRORLEVEL% NEQ 0 ( pause & goto menu )
+
+"%RCLONE_CMD%" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4
+echo.
+if %ERRORLEVEL% EQU 0 ( echo [OK] Video sincronizzati. ) else ( echo [ERR] Sync fallito. )
+pause
+goto menu
+
+:r2_sync_songs
+cls
+echo.
+echo ================================================================
+echo  SYNC music/songs -^> R2
+echo ================================================================
+echo.
+call :r2_check_rclone
+if %ERRORLEVEL% NEQ 0 ( pause & goto menu )
+
+"%RCLONE_CMD%" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4
+echo.
+if %ERRORLEVEL% EQU 0 (
+    echo [OK] Songs sincronizzate.
+    echo      Ricorda di aggiornare music/songs.json con i nuovi nomi.
+) else ( echo [ERR] Sync fallito. )
+pause
+goto menu
+
+:r2_list
+cls
+echo.
+echo ================================================================
+echo  CONTENUTO BUCKET R2 (espo-clicker-assets)
+echo ================================================================
+echo.
+call :r2_check_rclone
+if %ERRORLEVEL% NEQ 0 ( pause & goto menu )
+
+echo --- Cartelle ---
+"%RCLONE_CMD%" lsd r2:espo-clicker-assets
+echo.
+echo --- Dimensione totale ---
+"%RCLONE_CMD%" size r2:espo-clicker-assets
+echo.
 pause
 goto menu
