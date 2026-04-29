@@ -33,5 +33,6 @@ return [
     'allowed_referers' => [
         'https://espooclicker.altervista.org/',
         'http://localhost:8888/',
+        'http://localhost/',
     ],
 ];

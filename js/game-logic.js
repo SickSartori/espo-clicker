@@ -1198,22 +1198,25 @@ const EventHandlers = {
         const video = document.getElementById(videoId);
 
         if (video) {
-            const _resolveVideoSrc = () => {
-                if (video.src) return Promise.resolve(video.src);
-                const localPath = video.getAttribute('data-src-local');
+            // Risolvi src sincrono: prova cache R2, poi data-src diretto, poi locale.
+            // Cache R2 popolata al boot da _prefetchUrls() in script.js.
+            const _resolveVideoSrcSync = () => {
+                if (video.src) return video.src;
                 const direct    = video.getAttribute('data-src');
-                if (direct) return Promise.resolve(direct);
-                if (window.CDN && window.CDN.url && localPath) {
-                    return window.CDN.url(localPath);
+                if (direct) return direct;
+                const localPath = video.getAttribute('data-src-local');
+                if (window.CDN && window.CDN.urlSync && localPath) {
+                    const sync = window.CDN.urlSync(localPath);
+                    if (sync) return sync;
                 }
-                return Promise.resolve(localPath || '');
+                return localPath || '';
             };
 
             if (!video.src) {
-                _resolveVideoSrc().then(src => {
-                    if (!src) return;
-                    video.src = src;
-                    // Fallback su error di rete: prova path locale
+                const resolved = _resolveVideoSrcSync();
+                if (resolved) {
+                    video.src = resolved;
+                    // Fallback su errore di rete: prova path locale
                     if (!video._cdnFallbackBound) {
                         video._cdnFallbackBound = true;
                         video.addEventListener('error', function _onErr() {
@@ -1226,7 +1229,17 @@ const EventHandlers = {
                         });
                     }
                     video.load();
-                });
+                } else if (window.CDN && window.CDN.url) {
+                    // Cache miss: chiedi async e riprova fra poco (caso edge)
+                    const localPath = video.getAttribute('data-src-local');
+                    window.CDN.url(localPath).then(src => {
+                        if (src && !video.src) {
+                            video.src = src;
+                            video.load();
+                            video.play().catch(() => {});
+                        }
+                    });
+                }
             }
 
             // Preparazione Video

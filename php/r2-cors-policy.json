@@ -2,8 +2,8 @@
   {
     "AllowedOrigins": [
       "https://espooclicker.altervista.org",
-      "http://localhost:8888",
-      "http://localhost"
+      "http://localhost",
+      "http://localhost:8888"
     ],
     "AllowedMethods": ["GET", "HEAD"],
     "AllowedHeaders": ["*"],
