@@ -4,7 +4,7 @@
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.2';
+const CACHE_VERSION = 'espo-v2.0.3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -241,7 +241,7 @@ async function cacheFirst(request) {
     // Cacha solo risposte complete (no 206 partial, no errori)
     if (networkResponse.ok && networkResponse.status !== 206) {
         const cache = await caches.open(DYNAMIC_CACHE);
-        cache.put(request, networkResponse.clone()).catch(() => {});
+        cache.put(request, networkResponse.clone()).catch(() => { });
     }
 
     return networkResponse;
