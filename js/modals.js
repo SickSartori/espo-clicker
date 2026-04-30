@@ -697,7 +697,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
-            if (isFastClick()) return; // blocca ghost click post-touch
+            // Nota: rimosso il check isFastClick() — bloccava i click legittimi
+            // post-touchend (DevTools device emulation, mobile moderni). Con
+            // viewport width=device-width il "ghost click" 300ms non esiste più.
             if (e.target.classList.contains('modal-close-btn')) {
                 closeModal(modal);
 

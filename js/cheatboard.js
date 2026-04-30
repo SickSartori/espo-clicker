@@ -18,23 +18,27 @@
     };
 
     const styles = `
-        #cheatboard-container { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 350px; 
-            height: 100vh; 
-            background-color: rgba(10, 10, 10, 0.95); 
-            backdrop-filter: blur(10px); 
-            border-right: 1px solid #333; 
-            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6); 
-            z-index: 99999; 
-            transform: translateX(-100%); 
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
-            color: #e0e0e0; 
-            font-family: 'Consolas', 'Monaco', monospace; 
-            display: flex; 
-            flex-direction: column; 
+        #cheatboard-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 350px;
+            height: 100vh;
+            height: 100dvh; /* iOS: viewport visibile (URL bar dinamica) */
+            padding-top: env(safe-area-inset-top); /* notch/status bar */
+            padding-bottom: env(safe-area-inset-bottom); /* home indicator */
+            background-color: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #333;
+            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
         #cheatboard-container.open { 
             transform: translateX(0); 
@@ -86,16 +90,22 @@
             gap: 10px; 
             letter-spacing: 1px; 
         }
-        #cheatboard-close { 
-            cursor: pointer; 
-            color: #ff4757; 
-            font-size: 1.8rem; 
-            padding: 5px; 
-            transition: transform 0.2s; 
+        #cheatboard-close {
+            cursor: pointer;
+            color: #ff4757;
+            font-size: 1.8rem;
+            padding: 8px 12px; /* touch target 44x44 minimo Apple HIG */
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
         }
-        #cheatboard-close:hover { 
-            transform: scale(1.1); 
-            color: #ff6b81; 
+        #cheatboard-close:hover,
+        #cheatboard-close:active {
+            transform: scale(1.1);
+            color: #ff6b81;
         }
         #cheatboard-content { 
             padding: 20px; 
@@ -197,7 +207,15 @@
         #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         @media only screen and (max-width: 768px) {
             #cheatboard-container { width: 92%; max-width: none; }
-            #cheatboard-handle { top: 140px; right: -35px; width: 35px; height: 40px; }
+            #cheatboard-handle {
+                top: calc(140px + env(safe-area-inset-top));
+                right: -35px;
+                width: 35px;
+                height: 40px;
+            }
+            /* Header: padding più generoso per la X + freccia chiusura */
+            #cheatboard-header { padding: 14px 16px; }
+            #cheatboard-close { font-size: 2rem; padding: 10px 14px; }
             .control-row { flex-wrap: wrap; }
             .cheat-input { flex: 1 1 100%; margin-bottom: 5px; height: 45px; }
             .cheat-btn { flex: 1 1 100%; height: 50px; font-size: 0.9rem; }

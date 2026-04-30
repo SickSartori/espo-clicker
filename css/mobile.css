@@ -1040,7 +1040,8 @@ button img {
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 36px;
+        height: 48px; /* Apple HIG: min 44px touch target — 48px per centrare CHIUDI */
+        min-height: 48px;
         background: rgba(231, 76, 60, 0.85);
         color: #fff;
         font-size: 0;
@@ -1054,8 +1055,10 @@ button img {
         flex-shrink: 0;
         z-index: 10000;
         padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: content-box; /* L'altezza non include il padding safe-area */
         cursor: pointer;
         pointer-events: auto;
+        touch-action: manipulation; /* No 300ms tap delay, no double-tap zoom */
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
