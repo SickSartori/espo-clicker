@@ -862,15 +862,30 @@
         die.call(this);
     }
 
+    // Volumi per-suono bilanciati per FREQUENZA d'uso: i suoni sparati
+    // continuamente (jump/coin) devono essere discreti per non saturare,
+    // mentre gli eventi rari (star/gameover) possono essere protagonisti.
+    const SUPER_ESPO_VOLUMES = {
+        'snd-jump':         0.25,  // spammato ad ogni salto → molto basso
+        'snd-coin':         0.30,  // monete frequenti → basso
+        'snd-stomp':        0.40,  // schiaccia goomba: meno frequente, evento "wow"
+        'snd-gameover':     0.55,  // jingle finale → protagonismo
+        'snd-star-appears': 0.45,  // raro ma da notare
+        'snd-star-collect': 0.55,  // momento celebrativo
+    };
+
     function playSoundEffect(scene, key) {
+        const baseVol = SUPER_ESPO_VOLUMES[key] !== undefined ? SUPER_ESPO_VOLUMES[key] : 0.45;
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
             if (gs && gs.user) {
-                const vol = (gs.user.masterVolume !== undefined ? gs.user.masterVolume : 1) * (gs.user.sfxVolume !== undefined ? gs.user.sfxVolume : 1) * 0.5;
+                const m = gs.user.masterVolume !== undefined ? gs.user.masterVolume : 1;
+                const s = gs.user.sfxVolume    !== undefined ? gs.user.sfxVolume    : 1;
+                const vol = m * s * baseVol;
                 if (vol > 0.01) scene.sound.play(key, { volume: vol });
             }
         } else {
-            scene.sound.play(key, { volume: 0.5 });
+            scene.sound.play(key, { volume: baseVol });
         }
     }
 

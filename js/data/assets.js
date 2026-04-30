@@ -78,7 +78,7 @@ window.gameData.assets = {
             name: 'Arcade Start',
             type: 'sfx',
             category: 'effetti',
-            defaultVol: 0.6
+            defaultVol: 0.5
         },
         'snake-eat': {
             id: 'sound-snake-eat',
@@ -86,7 +86,7 @@ window.gameData.assets = {
             name: 'Snake Mangia',
             type: 'sfx',
             category: 'effetti',
-            defaultVol: 0.4
+            defaultVol: 0.35
         },
         'snowball': {
             id: 'sound-snowball',
@@ -212,7 +212,7 @@ window.gameData.assets = {
             name: 'Space Shoot',
             type: 'sfx',
             category: 'effetti',
-            defaultVol: 0.4
+            defaultVol: 0.30
         },
         'space-boom': {
             id: 'sound-space-boom',
@@ -220,7 +220,7 @@ window.gameData.assets = {
             name: 'Space Explosion',
             type: 'sfx',
             category: 'effetti',
-            defaultVol: 0.5
+            defaultVol: 0.40
         },
         'arcade-gameover': {
             id: 'sound-arcade-gameover',
@@ -228,7 +228,7 @@ window.gameData.assets = {
             name: 'Arcade Game Over',
             type: 'sfx',
             category: 'effetti',
-            defaultVol: 0.6
+            defaultVol: 0.50
         },
         'fireball': {
             id: 'sound-fireball',
