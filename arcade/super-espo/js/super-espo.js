@@ -44,13 +44,22 @@
 
         const mobileControls = document.createElement('div');
         mobileControls.id = 'super-espo-mobile-controls';
+        // FIX freeze-after-jump: gestiamo TUTTI gli eventi di rilascio
+        // (up/leave/cancel) altrimenti su iOS/Android il pointercancel lascia
+        // il tasto incollato a true e il personaggio non salta più.
+        const _bind = (key) =>
+            `onpointerdown="window.espoCustomKeys.${key}=true" ` +
+            `onpointerup="window.espoCustomKeys.${key}=false" ` +
+            `onpointerleave="window.espoCustomKeys.${key}=false" ` +
+            `onpointercancel="window.espoCustomKeys.${key}=false" ` +
+            `onlostpointercapture="window.espoCustomKeys.${key}=false"`;
         mobileControls.innerHTML = `
             <div style="display:flex; gap:10px;">
-                <button onpointerdown="window.espoCustomKeys.left=true" onpointerup="window.espoCustomKeys.left=false" onpointerleave="window.espoCustomKeys.left=false">◀</button>
-                <button onpointerdown="window.espoCustomKeys.down=true" onpointerup="window.espoCustomKeys.down=false" onpointerleave="window.espoCustomKeys.down=false">▼</button>
-                <button onpointerdown="window.espoCustomKeys.right=true" onpointerup="window.espoCustomKeys.right=false" onpointerleave="window.espoCustomKeys.right=false">▶</button>
+                <button ${_bind('left')}>◀</button>
+                <button ${_bind('down')}>▼</button>
+                <button ${_bind('right')}>▶</button>
             </div>
-            <button onpointerdown="window.espoCustomKeys.up=true" onpointerup="window.espoCustomKeys.up=false" onpointerleave="window.espoCustomKeys.up=false">▲</button>
+            <button ${_bind('up')}>▲</button>
         `;
         canvasWrapper.appendChild(mobileControls);
 
@@ -79,69 +88,198 @@
         if (window.EspooClicker) window.EspooClicker.playSound('sound-click');
     };
 
+    // Lista centralizzata degli audio dell'arcade Super Espò.
+    // Su Altervista vengono pre-fetchati come signed URL R2; in dev/MAMP
+    // restano path locali. Phaser preload() legge la mappa risolta.
+    const SUPER_ESPO_AUDIO = {
+        'snd-jump':         'assets/sounds/arcade/super-espo/jump.wav',
+        'snd-gameover':     'assets/sounds/arcade/super-espo/gameover.mp3',
+        'snd-coin':         'assets/sounds/arcade/super-espo/coin.mp3',
+        'snd-stomp':        'assets/sounds/arcade/super-espo/goomba-stomp.wav',
+        'snd-star-appears': 'assets/sounds/arcade/super-espo/star-appears.mp3',
+        'snd-star-collect': 'assets/sounds/arcade/super-espo/star-collect.mp3',
+    };
+
+    // Mostra il loading screen dentro #super-espo-overlay.
+    // Le 2 fasi:
+    //   1. "CONNESSIONE..." → durante CDN.prefetch (signed URL R2). Spinner only.
+    //   2. "CARICAMENTO..."  → durante Phaser preload. Progress bar reale.
+    function _showLoader(phase) {
+        const overlay = document.getElementById('super-espo-overlay');
+        if (!overlay) return;
+        if (phase === 'connecting') {
+            overlay.innerHTML = `
+                <div class="super-espo-loader">
+                    <div class="loader-spinner"></div>
+                    <div class="loader-text">CONNESSIONE…</div>
+                    <div class="loader-sub">Collegamento al server CDN</div>
+                </div>`;
+            overlay.style.display = 'flex';
+        } else if (phase === 'loading') {
+            overlay.innerHTML = `
+                <div class="super-espo-loader">
+                    <div class="loader-spinner"></div>
+                    <div class="loader-text">CARICAMENTO…</div>
+                    <div class="loader-bar"><div class="loader-bar-fill" id="super-espo-loader-fill"></div></div>
+                    <div class="loader-sub" id="super-espo-loader-percent">0%</div>
+                </div>`;
+            overlay.style.display = 'flex';
+        }
+    }
+
+    function _updateLoaderProgress(value) {
+        const fill = document.getElementById('super-espo-loader-fill');
+        const pct  = document.getElementById('super-espo-loader-percent');
+        const v = Math.round(value * 100);
+        if (fill) fill.style.width = v + '%';
+        if (pct)  pct.textContent  = v + '%';
+    }
+
+    function _hideLoader() {
+        const overlay = document.getElementById('super-espo-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
     window.startSuperEspoRun = function () {
         if (document.activeElement) document.activeElement.blur();
         window.focus();
 
-        document.getElementById('super-espo-overlay').style.display = 'none';
-        
+        // Sostituiamo i contenuti dell'overlay col loader: rimane visibile
+        // come "schermata di caricamento" finché Phaser non è pronto.
+        _showLoader('connecting');
+
         if (espoGame) espoGame.destroy(true);
 
         window.espoCustomKeys = { left: false, right: false, down: false, up: false };
+        // FIX: reset stato edge-detection del salto. Senza questo, se la run
+        // precedente è terminata con UP premuto, il primo salto della nuova
+        // partita non scatta finché l'utente non rilascia e ripreme il tasto.
+        upWasDown = false;
+
+        // Safety net: se la pagina perde focus (notifica, switch app, ecc.)
+        // azzeriamo TUTTI i tasti virtuali. Lo registriamo una sola volta.
+        if (!window._espoKeysSafetyNet) {
+            const releaseAll = () => {
+                if (window.espoCustomKeys) {
+                    window.espoCustomKeys.left = false;
+                    window.espoCustomKeys.right = false;
+                    window.espoCustomKeys.up = false;
+                    window.espoCustomKeys.down = false;
+                }
+            };
+            window.addEventListener('blur', releaseAll);
+            window.addEventListener('pagehide', releaseAll);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState !== 'visible') releaseAll();
+            });
+            window._espoKeysSafetyNet = true;
+        }
+
+        // Wrapper di preload che aggancia gli eventi di progresso al loader UI.
+        // Phaser emette 'progress' (0..1) ad ogni file caricato + 'complete' quando finisce.
+        function _preloadWithProgress() {
+            this.load.on('progress', _updateLoaderProgress);
+            this.load.on('complete', _hideLoader);
+            preload.call(this);
+        }
 
         const config = {
             type: Phaser.AUTO,
             width: 800,
             height: 400,
-            backgroundColor: '#5c94fc', 
+            backgroundColor: '#5c94fc',
             parent: 'phaser-espo-container',
             pixelArt: true,
             physics: {
                 default: 'arcade',
                 arcade: { gravity: { y: 720 }, debug: false }
             },
-            scene: { preload: preload, create: create, update: update }
+            scene: { preload: _preloadWithProgress, create: create, update: update }
         };
 
-        espoGame = new Phaser.Game(config);
+        // Pre-fetch in batch delle URL R2 firmate (no-op in dev/MAMP).
+        // Quando la promise risolve, le URL sono cachate e CDN.urlSync()
+        // chiamato dentro preload() le ritorna immediatamente senza
+        // round-trip aggiuntivi.
+        const audioPaths = Object.values(SUPER_ESPO_AUDIO);
+        const prefetch = (window.CDN && window.CDN.prefetch)
+            ? window.CDN.prefetch(audioPaths).catch((e) => {
+                console.warn('[SuperEspo] CDN prefetch fallito, fallback locale:', e);
+                return {};
+            })
+            : Promise.resolve({});
+
+        prefetch.then(() => {
+            // Guard: l'utente potrebbe aver premuto MENU durante il prefetch,
+            // facendo unmount del container. In quel caso annulla l'avvio.
+            if (!document.getElementById('phaser-espo-container')) return;
+            // Passa alla fase 2: barra di progresso reale durante Phaser preload
+            _showLoader('loading');
+            espoGame = new Phaser.Game(config);
+        });
     };
 
     let player, cursors, wasdKeys, platforms, blocks, enemies, enemyBlockers, coins;
     let bgMountains, bgClouds, decorations;
+    let powerUps;                    // gruppo fisico per la Super Stella (e futuri power-up)
     let lastChunkX = 0;
     let lastTierIndex = 0; // Traccia il tier precedente per transizioni graduali
-    
+
     let currentScore = 0;
     let maxDist = 0;
     let bonusScore = 0;
     let currentLevel = 1;
-    let upWasDown = false; 
+    let upWasDown = false;
+
+    // ---- Super Star (invincibility power-up) -------------------------------
+    const STAR_DROP_CHANCE  = 0.18;  // 18% per blocco mistero
+    const STAR_DURATION_MS  = 12000; // 12 secondi di invincibilità
+    const STAR_TINT_CYCLE   = [0xfff44f, 0xff6ec7, 0x6ec3ff, 0x9bff6e]; // giallo / rosa / azzurro / verde
+    const STOMP_SCORE       = 100;   // schiacciata semplice
+    const STAR_KILL_SCORE   = 200;   // nemico ucciso in modalità stella
+    let invincibleUntil = 0;         // timestamp ms (scene.time.now) di scadenza
+
+    // ---- Fire Flower (1-hit protection power-up) ---------------------------
+    const FIRE_DROP_CHANCE     = 0.22;   // 22% per blocco mistero
+    const FIRE_HIT_INVUL_MS    = 1500;   // dopo power-down: 1.5s invulnerabilità + lampeggio
+    const FIRE_COLLECT_SCORE   = 200;
+    let fireMode = false;                // true = player è "Espò Fire" (skin alternativa)
+    let firePowerDownUntil = 0;          // timestamp finestra di invulnerabilità post hit
 
     function preload() {
         const imgPath   = 'assets/image/arcade/';
-        const audioPath = 'assets/sounds/arcade/super-espo/';
         const v = '?v=' + Date.now();
 
-        this.load.spritesheet('super-espo', imgPath + 'espo-grown.png' + v, { frameWidth: 250, frameHeight: 424 });
-        this.load.image('floorbricks', imgPath + 'floorbricks.png' + v);
-        this.load.image('emptyBlock', imgPath + 'emptyBlock.png' + v);
-        this.load.spritesheet('misteryBlock', imgPath + 'misteryBlock.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.spritesheet('goomba', imgPath + 'goomba.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.image('bush1', imgPath + 'bush1.png' + v);
-        this.load.image('bush2', imgPath + 'bush2.png' + v);
-        this.load.image('mountain1', imgPath + 'mountain1.png' + v);
-        this.load.image('mountain2', imgPath + 'mountain2.png' + v);
-        this.load.image('cloud1', imgPath + 'cloud1.png' + v);
-        this.load.image('cloud2', imgPath + 'cloud2.png' + v);
-        this.load.image('fence', imgPath + 'fence.png' + v);
-        this.load.spritesheet('coin', imgPath + 'coin.png' + v, { frameWidth: 16, frameHeight: 16 });
-        this.load.image('pipe-small', imgPath + 'vertical-small-tube.png' + v);
-        this.load.image('pipe-medium', imgPath + 'vertical-medium-tube.png' + v);
+        // Le immagini sono servite dal server (non sono in CDN_PREFIXES).
+        // Tutti gli sprite sono in formato WebP — riduzione ~70% rispetto ai PNG originali.
+        this.load.spritesheet('super-espo', imgPath + 'espo-grown.webp' + v, { frameWidth: 250, frameHeight: 424 });
+        this.load.spritesheet('espo-fire',  imgPath + 'espo-fire.webp'  + v, { frameWidth: 250, frameHeight: 424 });
+        this.load.image('floorbricks', imgPath + 'floorbricks.webp' + v);
+        this.load.image('emptyBlock', imgPath + 'emptyBlock.webp' + v);
+        this.load.spritesheet('misteryBlock', imgPath + 'misteryBlock.webp' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('goomba', imgPath + 'goomba.webp' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('bush1', imgPath + 'bush1.webp' + v);
+        this.load.image('bush2', imgPath + 'bush2.webp' + v);
+        this.load.image('mountain1', imgPath + 'mountain1.webp' + v);
+        this.load.image('mountain2', imgPath + 'mountain2.webp' + v);
+        this.load.image('cloud1', imgPath + 'cloud1.webp' + v);
+        this.load.image('cloud2', imgPath + 'cloud2.webp' + v);
+        this.load.image('fence', imgPath + 'fence.webp' + v);
+        this.load.spritesheet('coin', imgPath + 'coin.webp' + v, { frameWidth: 16, frameHeight: 16 });
+        this.load.image('pipe-small', imgPath + 'vertical-small-tube.webp' + v);
+        this.load.image('pipe-medium', imgPath + 'vertical-medium-tube.webp' + v);
+        this.load.image('fire-flower', imgPath + 'fire-flower.webp' + v);
 
-        this.load.audio('snd-jump',     audioPath + 'jump.wav' + v);
-        this.load.audio('snd-gameover', audioPath + 'gameover.mp3' + v);
-        this.load.audio('snd-coin',     audioPath + 'coin.mp3' + v);
-        this.load.audio('snd-stomp',    audioPath + 'goomba-stomp.wav' + v);
+        // Audio: su Altervista CDN.urlSync() ritorna la signed URL R2 già
+        // pre-fetchata in startSuperEspoRun(). Le signed URL hanno query
+        // string AWS — non aggiungiamo ?v= che invaliderebbe la firma.
+        for (const key in SUPER_ESPO_AUDIO) {
+            const path = SUPER_ESPO_AUDIO[key];
+            const resolved = (window.CDN && window.CDN.urlSync) ? window.CDN.urlSync(path) : null;
+            const url = resolved || path;
+            const finalUrl = url.indexOf('?') >= 0 ? url : url + v;
+            this.load.audio(key, finalUrl);
+        }
     }
 
     function create() {
@@ -156,6 +294,12 @@
         this.anims.create({ key: 'espo-run', frames: this.anims.generateFrameNumbers('super-espo', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
         this.anims.create({ key: 'espo-crouch', frames: [{ key: 'super-espo', frame: 4 }], frameRate: 1 });
         this.anims.create({ key: 'espo-jump', frames: this.anims.generateFrameNumbers('super-espo', { start: 5, end: 5 }), frameRate: 1 });
+
+        // Fire mode: stessa struttura ma usa il spritesheet 'espo-fire'
+        this.anims.create({ key: 'fire-stop', frames: this.anims.generateFrameNumbers('espo-fire', { start: 0, end: 0 }), frameRate: 1 });
+        this.anims.create({ key: 'fire-run', frames: this.anims.generateFrameNumbers('espo-fire', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
+        this.anims.create({ key: 'fire-crouch', frames: [{ key: 'espo-fire', frame: 4 }], frameRate: 1 });
+        this.anims.create({ key: 'fire-jump', frames: this.anims.generateFrameNumbers('espo-fire', { start: 5, end: 5 }), frameRate: 1 });
 
         bgMountains = this.add.group();
         bgClouds = this.add.group();
@@ -178,7 +322,35 @@
         enemyBlockers = this.physics.add.staticGroup();
         enemies = this.physics.add.group();
         coins = this.physics.add.group({ allowGravity: false });
+        powerUps = this.physics.add.group();
         decorations = this.add.group();
+
+        // Genera la texture della Super Stella runtime (24x24, 5 punte gialle bordo nero).
+        // Usiamo canvas + textures.addCanvas per evitare di aggiungere un nuovo PNG.
+        if (!this.textures.exists('super-star')) {
+            const c = document.createElement('canvas');
+            c.width = 24; c.height = 24;
+            const cx = c.getContext('2d');
+            const cxX = 12, cxY = 12, ro = 11, ri = 5;
+            cx.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const r = (i % 2 === 0) ? ro : ri;
+                const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+                const x = cxX + Math.cos(a) * r;
+                const y = cxY + Math.sin(a) * r;
+                if (i === 0) cx.moveTo(x, y); else cx.lineTo(x, y);
+            }
+            cx.closePath();
+            cx.fillStyle = '#ffd83d';
+            cx.fill();
+            cx.lineWidth = 1.5;
+            cx.strokeStyle = '#000';
+            cx.stroke();
+            // Riflesso (occhio bianco) per effetto cartoon
+            cx.fillStyle = '#fff';
+            cx.fillRect(8, 8, 2, 2);
+            this.textures.addCanvas('super-star', c);
+        }
 
         let groundWidth = 1500;
         let startPlatformTop = 360; 
@@ -204,6 +376,9 @@
         lastChunkX = groundWidth;
         lastTierIndex = 0;
         currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
+        invincibleUntil = 0; // reset stato stella ad ogni nuova partita
+        fireMode = false;    // reset Fire Flower
+        firePowerDownUntil = 0;
 
         player = this.physics.add.sprite(100, 100, 'super-espo', 0);
         player.setCollideWorldBounds(true);
@@ -229,10 +404,31 @@
         this.physics.add.collider(enemies, platforms);
         this.physics.add.collider(player, enemies, hitEnemy, null, this);
         this.physics.add.collider(enemies, enemyBlockers);
+        // I power-up rimbalzano su tutto il terreno e vengono raccolti al contatto.
+        // Il dispatcher collectPowerUp() instrada Star vs Fire Flower in base a item.kind.
+        this.physics.add.collider(powerUps, platforms);
+        this.physics.add.collider(powerUps, blocks);
+        this.physics.add.collider(powerUps, enemyBlockers);
+        this.physics.add.overlap(player, powerUps, collectPowerUp, null, this);
     }
 
     function update() {
         if (player.isDead) return;
+
+        // ---- Stato Super Stella (invincibility) -----------------------------
+        // Tint ciclico arcobaleno + auto-reset alla scadenza.
+        const inStar = (this.time.now < invincibleUntil);
+        if (inStar) {
+            const i = Math.floor(this.time.now / 80) % STAR_TINT_CYCLE.length;
+            player.setTint(STAR_TINT_CYCLE[i]);
+        } else if (this.time.now < firePowerDownUntil) {
+            // Lampeggio post power-down: alpha alterna 0.4/1.0 ogni 80ms
+            player.setAlpha(Math.floor(this.time.now / 80) % 2 === 0 ? 0.4 : 1.0);
+            if (player.tintTopLeft !== 0xffffff) player.clearTint();
+        } else {
+            if (player.tintTopLeft !== 0xffffff) player.clearTint();
+            if (player.alpha !== 1) player.setAlpha(1);
+        }
 
         let distScore = Math.floor(Math.max(0, player.x - 100) / 10);
         if (distScore > maxDist) maxDist = distScore;
@@ -274,20 +470,24 @@
 
         player.setVelocityX(currentVel);
 
+        // Animazioni: prefisso 'fire-' se in fire mode, altrimenti 'espo-'
+        const prefix = fireMode ? 'fire' : 'espo';
         if (isGrounded) {
             if (downDown) {
-                player.anims.play('espo-crouch', true);
+                player.anims.play(prefix + '-crouch', true);
             } else if (currentVel !== 0) {
-                player.anims.play('espo-run', true);
+                player.anims.play(prefix + '-run', true);
             } else {
-                player.anims.play('espo-stop', true);
+                player.anims.play(prefix + '-stop', true);
             }
         } else {
-            player.anims.play('espo-jump', true);
+            player.anims.play(prefix + '-jump', true);
         }
 
         if (jumpJustPressed && isGrounded && !downDown) {
-            player.setVelocityY(-420);
+            // -460 garantisce ~143px di altezza salto (gravity 720), sufficienti
+            // per le float platforms più alte (110px) anche con gap massimo (180px).
+            player.setVelocityY(-460);
             playSoundEffect(this, 'snd-jump');
         }
 
@@ -312,7 +512,7 @@
         });
 
         const destroyLimitX = this.cameras.main.scrollX - 300;
-        [enemies, enemyBlockers, platforms, blocks, coins].forEach(group => {
+        [enemies, enemyBlockers, platforms, blocks, coins, powerUps].forEach(group => {
             group.getChildren().forEach(item => {
                 if ((item.x + (item.width || 0)) < destroyLimitX) {
                     item.destroy();
@@ -467,8 +667,68 @@
 
     function collectCoin(player, coin) {
         coin.destroy();
-        bonusScore += 20; 
+        bonusScore += 20;
         playSoundEffect(this, 'snd-coin');
+    }
+
+    // Dispatcher: in base a powerUp.kind decide se dare invincibilità o fire mode
+    function collectPowerUp(player, item) {
+        if (item.kind === 'fire') {
+            collectFireFlower.call(this, player, item);
+        } else {
+            collectStar.call(this, player, item);
+        }
+    }
+
+    function collectStar(player, star) {
+        star.destroy();
+        bonusScore += 250; // bonus immediato
+        invincibleUntil = this.time.now + STAR_DURATION_MS;
+        playSoundEffect(this, 'snd-star-collect');
+
+        // Mini-toast in-game tipo "INVINCIBLE!" sopra il personaggio
+        showPopupScore(this, player.x, player.y - 50, '⭐ INVINCIBILE! ⭐', '#ffd83d', 1100);
+
+        // Notifica anche fuori dal canvas (sistema toast del gioco principale)
+        if (window.EspooClicker && window.EspooClicker.showToast) {
+            window.EspooClicker.showToast('⭐ SUPER STELLA! Sei invincibile per ' + (STAR_DURATION_MS / 1000) + 's', 'reward');
+        }
+    }
+
+    function collectFireFlower(player, flower) {
+        flower.destroy();
+        bonusScore += FIRE_COLLECT_SCORE;
+        fireMode = true;
+        playSoundEffect(this, 'snd-star-collect');
+
+        // Cambia skin del personaggio (texture + animazione corrente coerente)
+        player.setTexture('espo-fire', player.frame.name);
+
+        showPopupScore(this, player.x, player.y - 50, '🔥 FIRE ESPÒ! 🔥', '#ff6347', 1100);
+        if (window.EspooClicker && window.EspooClicker.showToast) {
+            window.EspooClicker.showToast('🔥 FIRE FLOWER! Hai 1 hit di protezione', 'reward');
+        }
+    }
+
+    // Mostra un testo "+100" che fluttua verso l'alto e svanisce. Utile per il
+    // feedback visivo immediato di stomp/kill goomba e raccolta stella.
+    function showPopupScore(scene, x, y, text, color, duration) {
+        const txt = scene.add.text(x, y, text, {
+            fontFamily: 'Rajdhani, sans-serif',
+            fontSize: '20px',
+            color: color || '#ffffff',
+            stroke: '#000',
+            strokeThickness: 4,
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(40);
+        scene.tweens.add({
+            targets: txt,
+            y: y - 40,
+            alpha: 0,
+            duration: duration || 700,
+            ease: 'Power2',
+            onComplete: () => txt.destroy()
+        });
     }
 
     function hitBlock(player, block) {
@@ -476,12 +736,33 @@
             block.used = true;
             block.anims.stop();
             block.setTexture('emptyBlock');
-            bonusScore += 150;
-
-            playSoundEffect(this, 'snd-coin');
             this.tweens.add({ targets: block, y: block.y - 10, yoyo: true, duration: 100 });
 
-            // Moneta visiva che esce dal blocco (stile Mario)
+            const isInvincible = (this.time.now < invincibleUntil);
+            const roll = Math.random();
+
+            // Roll a 3 vie:
+            //   [0, STAR_DROP_CHANCE)              → Super Stella (se non già invincibile)
+            //   [STAR_DROP_CHANCE, +FIRE)          → Fire Flower (se non già fire)
+            //   [resto]                            → Moneta
+            // Lo skip dei power-up duplicati promuove automaticamente la moneta.
+            if (!isInvincible && roll < STAR_DROP_CHANCE) {
+                bonusScore += 50;
+                spawnStar(this, block.x, block.y - 20);
+                playSoundEffect(this, 'snd-star-appears');
+                return;
+            }
+            if (!fireMode && roll < STAR_DROP_CHANCE + FIRE_DROP_CHANCE) {
+                bonusScore += 50;
+                spawnFireFlower(this, block.x, block.y - 20);
+                playSoundEffect(this, 'snd-star-appears');
+                return;
+            }
+
+            // Comportamento standard: moneta + bonus score
+            bonusScore += 150;
+            playSoundEffect(this, 'snd-coin');
+
             const popCoin = this.add.sprite(block.x, block.y - 20, 'coin').setScale(1.5).setDepth(30);
             popCoin.anims.play('coin-spin', true);
             this.tweens.add({
@@ -491,20 +772,94 @@
         }
     }
 
+    // Fa uscire la Super Stella da un blocco e la mette in moto come Mario classic:
+    // emerge dal blocco con un piccolo tween, poi prende fisica e rimbalza orizzontalmente.
+    function spawnStar(scene, x, y) {
+        const star = powerUps.create(x, y, 'super-star').setDepth(25);
+        star.kind = 'star';
+        star.setBounce(1, 0.8);          // rimbalza in orizzontale e verticale come Mario
+        star.body.allowGravity = false;  // gravity disattivata durante l'emersione
+        star.body.setSize(20, 20).setOffset(2, 2);
+
+        // Animazione di emersione: sale di 24 px sopra il blocco prima di prendere vita
+        scene.tweens.add({
+            targets: star, y: y - 24, duration: 400, ease: 'Power2',
+            onComplete: () => {
+                star.body.allowGravity = true;
+                star.setVelocityX(120);  // si muove a destra
+                star.setVelocityY(-260); // primo balzo verticale
+            }
+        });
+
+        // Rotazione visiva continua
+        scene.tweens.add({ targets: star, angle: 360, duration: 900, repeat: -1 });
+    }
+
+    // Fire Flower: emerge dal blocco e si ferma. Niente rimbalzo come la stella;
+    // il giocatore deve correrci dentro per raccoglierla.
+    function spawnFireFlower(scene, x, y) {
+        const flower = powerUps.create(x, y, 'fire-flower').setDepth(25).setScale(1.5);
+        flower.kind = 'fire';
+        flower.body.allowGravity = false;
+        flower.body.immovable = true;
+        flower.body.setSize(14, 14).setOffset(1, 1);
+
+        // Emersione lenta dal blocco (stile Mario)
+        scene.tweens.add({ targets: flower, y: y - 30, duration: 500, ease: 'Power2' });
+
+        // Pulsazione idle per attirare l'attenzione
+        scene.tweens.add({
+            targets: flower, scale: 1.7, duration: 350, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+    }
+
     function hitEnemy(player, enemy) {
+        const isInvincible = (this.time.now < invincibleUntil);
+        const inPowerDownIframes = (this.time.now < firePowerDownUntil);
+
+        // Modalità Super Stella: qualsiasi contatto uccide il nemico.
+        if (isInvincible) {
+            bonusScore += STAR_KILL_SCORE;
+            showPopupScore(this, enemy.x, enemy.y - 18, '+' + STAR_KILL_SCORE, '#ffd83d');
+            enemy.body.enable = false;
+            enemy.setVelocityX(0);
+            // Effetto "knockback" del nemico in stile Mario star kill
+            enemy.setVelocityY(-260);
+            enemy.body.allowGravity = false; // evitiamo di farlo cadere troppo veloce
+            this.tweens.add({ targets: enemy, alpha: 0, angle: 180, y: enemy.y + 80, duration: 500, onComplete: () => enemy.destroy() });
+            playSoundEffect(this, 'snd-stomp');
+            return;
+        }
+
+        // Iframes post-powerdown: ignora il contatto col nemico
+        if (inPowerDownIframes) return;
+
+        // Schiacciata classica dall'alto: vale anche in fire mode (uccide il nemico
+        // senza consumare la protezione)
         if (player.body.bottom <= enemy.body.y + 10) {
+            bonusScore += STOMP_SCORE;
+            showPopupScore(this, enemy.x, enemy.y - 18, '+' + STOMP_SCORE, '#ffffff');
             enemy.body.enable = false;
             enemy.setVelocityX(0);
             enemy.anims.play('goomba-dead');
-            this.time.delayedCall(500, () => {
-                enemy.destroy();
-            });
+            this.time.delayedCall(500, () => enemy.destroy());
             player.setVelocityY(-300);
-
             playSoundEffect(this, 'snd-stomp');
-        } else {
-            die.call(this); 
+            return;
         }
+
+        // Hit laterale/dal basso: in fire mode si perde solo la protezione,
+        // altrimenti morte normale.
+        if (fireMode) {
+            fireMode = false;
+            firePowerDownUntil = this.time.now + FIRE_HIT_INVUL_MS;
+            player.setTexture('super-espo', player.frame.name);
+            playSoundEffect(this, 'snd-stomp');
+            showPopupScore(this, player.x, player.y - 30, 'POWER DOWN!', '#ff6347', 800);
+            return;
+        }
+
+        die.call(this);
     }
 
     function playSoundEffect(scene, key) {

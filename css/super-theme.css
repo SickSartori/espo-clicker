@@ -22,13 +22,13 @@ body.theme-super {
 body.theme-super::before {
     height: 100%;
     background-image:
-        url('../assets/image/arcade/cloud1.png'),
-        url('../assets/image/arcade/cloud2.png'),
-        url('../assets/image/arcade/cloud1.png'),
-        url('../assets/image/arcade/cloud2.png'),
-        url('../assets/image/arcade/cloud1.png'),
-        url('../assets/image/arcade/cloud2.png'),
-        url('../assets/image/arcade/cloud1.png');
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud2.webp'),
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud2.webp'),
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud2.webp'),
+        url('../assets/image/arcade/cloud1.webp');
     background-repeat: no-repeat;
     background-position:
         8% 55px,
@@ -62,13 +62,13 @@ body.theme-super::after {
     bottom: 44px; /* sopra la striscia mattoni (40px + 4px nera) */
     height: 110px;
     background-image:
-        url('../assets/image/arcade/mountain1.png'),
-        url('../assets/image/arcade/mountain2.png'),
-        url('../assets/image/arcade/mountain1.png'),
-        url('../assets/image/arcade/bush2.png'),
-        url('../assets/image/arcade/bush1.png'),
-        url('../assets/image/arcade/bush2.png'),
-        url('../assets/image/arcade/bush1.png');
+        url('../assets/image/arcade/mountain1.webp'),
+        url('../assets/image/arcade/mountain2.webp'),
+        url('../assets/image/arcade/mountain1.webp'),
+        url('../assets/image/arcade/bush2.webp'),
+        url('../assets/image/arcade/bush1.webp'),
+        url('../assets/image/arcade/bush2.webp'),
+        url('../assets/image/arcade/bush1.webp');
     background-repeat: no-repeat;
     background-position:
         12% bottom,
