@@ -599,6 +599,17 @@ const FX = {
     _comboThreshold: 250, // ms tra click per mantenere combo
 
     registerClick() {
+        // Durante eventi video il combo overlay copre il video — lo sopprimiamo
+        // del tutto (counter resettato, niente shake/glow/ring per non distrarre).
+        const inVideoEvent = document.body.classList.contains('rick-rolling');
+        if (inVideoEvent) {
+            this._comboCount = 0;
+            clearTimeout(this._comboTimer);
+            this._hideComboDisplay();
+            this.vibrate(10);
+            return 0;
+        }
+
         this._comboCount++;
         clearTimeout(this._comboTimer);
         this._comboTimer = setTimeout(() => {
@@ -1409,10 +1420,18 @@ function triggerGameEvent(eventKey, overrideMult = null) {
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
         emDisplay.textContent = config.toast.replace('{mult}', bonusMult);
-        emDisplay.style.display = 'block';
+        // Per video event il banner laterale è soppresso (info già nel toast).
+        // Per altri eventi (bluescreen/matrix/superStar) resta visibile.
+        emDisplay.style.display = (config.type === 'video') ? 'none' : 'block';
     }
 
-    window.EspooClicker.showToast(config.toast.replace('{mult}', bonusMult), config.toastType);
+    // Toast video event: durata estesa (8s) per compensare l'assenza del banner.
+    const toastDuration = config.type === 'video' ? 8000 : undefined;
+    window.EspooClicker.showToast(
+        config.toast.replace('{mult}', bonusMult),
+        config.toastType,
+        toastDuration
+    );
 
     if (EventHandlers[config.type]) EventHandlers[config.type](config, eventKey);
 
@@ -1458,7 +1477,12 @@ function stopBluescreenEffect() {
     if (typeof stopMatrixEffect === 'function') stopMatrixEffect();
 
     const emDisplay = document.getElementById('event-multiplier-display');
-    if (emDisplay) emDisplay.style.display = 'none';
+    if (emDisplay) {
+        clearTimeout(emDisplay._autoHideTimer);
+        emDisplay.style.display = 'none';
+        emDisplay.style.opacity = '';
+        emDisplay.style.transition = '';
+    }
 
     recalculateCPS();
 

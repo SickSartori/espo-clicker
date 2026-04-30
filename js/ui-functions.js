@@ -1620,7 +1620,7 @@ const MAX_VISIBLE_TOASTS = 3;   // Limite massimo richiesto
 let lastToastMsg = "";          // Memoria ultimo messaggio (per anti-spam)
 let lastToastTime = 0;          // Timestamp ultimo messaggio
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration) {
     // 1. ANTI-SPAM: Evita messaggi identici consecutivi
     // Se il messaggio è uguale all'ultimo ed è passato meno di 2 secondi, ignoralo.
     const now = Date.now();
@@ -1632,8 +1632,8 @@ function showToast(message, type = 'info') {
     lastToastMsg = message;
     lastToastTime = now;
 
-    // 2. Aggiungi alla Coda
-    toastQueue.push({ message, type });
+    // 2. Aggiungi alla Coda (duration opzionale, default 4000ms)
+    toastQueue.push({ message, type, duration: duration || 4000 });
 
     // 3. Prova a processare la coda
     processToastQueue();
@@ -1647,10 +1647,10 @@ function processToastQueue() {
     const data = toastQueue.shift();
     visibleToasts++; // Occupa uno slot
 
-    createToastDOM(data.message, data.type);
+    createToastDOM(data.message, data.type, data.duration);
 }
 
-function createToastDOM(message, type) {
+function createToastDOM(message, type, duration = 4000) {
     const toastContainer = document.getElementById('toast-container');
     if (!toastContainer) return;
 
@@ -1667,10 +1667,18 @@ function createToastDOM(message, type) {
     else if (type === 'info') icon = '<i class="fa-solid fa-circle-info"></i> ';
 
     toast.innerHTML = icon + message;
+
+    // Per duration > default, override animation: fade-out 0.5s appena prima della rimozione
+    if (duration && duration !== 4000) {
+        const exitDelay = Math.max(0, (duration - 500) / 1000);
+        toast.style.animation =
+            `toastEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, ` +
+            `toastExit 0.5s ease-in ${exitDelay}s forwards`;
+    }
+
     toastContainer.appendChild(toast);
 
-    // Rimozione Automatica
-    // Il CSS gestisce l'animazione di uscita a 3.5s, noi rimuoviamo il nodo a 4s
+    // Rimozione Automatica (DOM 100ms dopo fine animazione)
     setTimeout(() => {
         if (toast.parentNode) {
             toast.remove();
@@ -1679,9 +1687,8 @@ function createToastDOM(message, type) {
         visibleToasts--; // Libera uno slot
 
         // Appena si libera un posto, controlla se c'è qualcun altro in fila
-        // Usiamo un piccolo timeout per dare fluidità visiva
         setTimeout(processToastQueue, 100);
-    }, 4000);
+    }, duration + 100);
 }
 
 function checkTabNotifications() {

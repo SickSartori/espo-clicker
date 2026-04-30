@@ -558,7 +558,8 @@ body.rick-rolling #overlay-buttons-container,
 body.rick-rolling #github-link-container,
 body.rick-rolling #header-left-panel,
 body.rick-rolling #header-right-panel,
-body.rick-rolling .header-label-main {
+body.rick-rolling .header-label-main,
+body.rick-rolling #fx-combo-display {
     display: none;
 }
 
@@ -701,6 +702,72 @@ body.rick-rolling #header-left-panel,
 body.rick-rolling #header-right-panel,
 body.rick-rolling .header-label-main {
     display: none;
+}
+
+/* =========================================
+   LAYOUT VIDEO EVENT — MOBILE
+   Riduce score/cps/multiplier/clicker e li riposiziona sul lato destro
+   con safe-area, evitando overflow su schermi stretti (iPhone SE-class)
+========================================= */
+@media only screen and (max-width: 1024px) {
+    /* Nasconde anche la barra mobile inferiore durante l'evento video */
+    body.rick-rolling #mobile-nav-bar,
+    body.rick-rolling #quick-mute-btn,
+    body.rick-rolling #cheatboard-handle {
+        display: none;
+    }
+
+    body.rick-rolling .column-header-center {
+        display: none;
+    }
+
+    body.rick-rolling #game-container #score-display {
+        top: calc(12px + env(safe-area-inset-top));
+        right: calc(12px + env(safe-area-inset-right));
+        font-size: 1.3rem;
+        padding: 5px 11px;
+        border-radius: 10px;
+    }
+
+    /* BPS spostato in BASSO A SINISTRA: zona sopra libera, no overlap con score */
+    body.rick-rolling #game-container #cps-display {
+        top: auto;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        left: calc(12px + env(safe-area-inset-left));
+        right: auto;
+        text-align: left;
+        font-size: 0.95rem;
+        padding: 5px 12px;
+        max-width: 55vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Multiplier display soppresso per eventi video — gestito anche da JS */
+    body.rick-rolling #event-multiplier-display {
+        display: none;
+    }
+
+    body.rick-rolling #clicker-btn {
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        right: calc(16px + env(safe-area-inset-right));
+        width: 72px;
+        height: 72px;
+    }
+}
+
+/* Schermi molto stretti (iPhone SE/5, < 360px) */
+@media only screen and (max-width: 359px) {
+    body.rick-rolling #game-container #score-display {
+        font-size: 1.15rem;
+        padding: 5px 10px;
+    }
+
+    body.rick-rolling #clicker-btn {
+        width: 60px;
+        height: 60px;
+    }
 }
 
 /* =========================================
