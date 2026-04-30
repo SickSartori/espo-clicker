@@ -1,6 +1,7 @@
 [
   {
     "AllowedOrigins": [
+      "https://www.espooclicker.altervista.org",
       "https://espooclicker.altervista.org",
       "http://localhost",
       "http://localhost:8888"
