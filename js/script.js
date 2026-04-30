@@ -1787,6 +1787,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
                         const currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
                         const masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
+                        // Mantieni i contatori storici per non triggerare l'anti-rollback lato server
+                        const cloudLifetime = cloudState.lifetimeScore || 0;
+                        const cloudTotal = cloudState.totalScore || 0;
 
                         // B. Reset e genera stato pulito
                         if (typeof resetGameToDefault === 'function') resetGameToDefault();
@@ -1795,6 +1798,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.skins.unlocked = savedSkins;
                         gameState.skins.current = currentSkin;
                         gameState.user.masterVolume = masterVol;
+                        gameState.lifetimeScore = new Decimal(cloudLifetime);
+                        gameState.totalScore = new Decimal(cloudTotal);
 
                         // D. PREMIO VETERANO (solo se aveva un punteggio significativo)
                         if (cloudIsVeteran) {
@@ -1825,7 +1830,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
                         if (typeof updateUI === 'function') updateUI();
 
-                        showToast("Migrazione V2 completata! Benvenuto nella nuova era.", 'success');
+                        if (cloudIsVeteran) {
+                            showToast("Migrazione V2 completata! Benvenuto nella nuova era.", 'success');
+                        }
                         return;
                     }
                     // ========================================================
