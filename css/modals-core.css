@@ -379,6 +379,7 @@ body > #login-modal #login-btn:hover {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: viewport visibile (evita gap sotto URL bar) */
     background: radial-gradient(circle at center, #1a1400 0%, #050505 100%);
     z-index: 999999;
     display: none;

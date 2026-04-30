@@ -492,6 +492,7 @@ body.bluescreen-active #clicker-btn {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: viewport visibile dinamico (no taglio sotto URL bar) */
     object-fit: cover;
     z-index: var(--z-overlay);
     background: #000;
@@ -536,6 +537,7 @@ body.rick-rolling #click-feedback-container {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: matcha l'area video sopra */
     z-index: 10005;
     pointer-events: none;
     overflow: visible;

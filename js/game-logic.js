@@ -1245,13 +1245,35 @@ const EventHandlers = {
             // Preparazione Video
             video.classList.remove("video_display_none");
             video.currentTime = 0;
+            video.muted = false;
 
             // Calcolo Volume
             const customVol = getCustomVolume(config.audioId || videoId);
             video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
 
-            // Play sicuro
-            video.play().catch(e => { console.warn("Autoplay video bloccato", e); });
+            // Play robusto: su mobile (iOS PWA / Chrome Android) gli eventi partono da timer
+            // (no gesto utente) -> autoplay bloccato se non muted. Fallback: ritenta muted.
+            const _safePlay = () => {
+                const p = video.play();
+                if (p && typeof p.then === 'function') {
+                    p.catch(() => {
+                        video.muted = true;
+                        const p2 = video.play();
+                        if (p2 && typeof p2.catch === 'function') {
+                            p2.catch(err => console.warn("Video bloccato anche muted", err));
+                        }
+                    });
+                }
+            };
+            // Se i dati non sono ancora pronti (preload metadata + R2 async), ritenta su canplay
+            if (video.readyState < 2) {
+                const _onCanPlay = () => {
+                    video.removeEventListener('canplay', _onCanPlay);
+                    if (video.paused) _safePlay();
+                };
+                video.addEventListener('canplay', _onCanPlay, { once: true });
+            }
+            _safePlay();
 
             let clickOverlay = document.getElementById('video-click-overlay');
             // Creazione Overlay
@@ -1899,6 +1921,10 @@ function executeFormattingSequence() {
             video.style.left = '0';
             video.style.width = '100vw';
             video.style.height = '100vh';
+            // iOS Safari: usa il viewport dinamico se supportato (no taglio sotto URL bar)
+            if (CSS && CSS.supports && CSS.supports('height', '100dvh')) {
+                video.style.height = '100dvh';
+            }
             video.style.objectFit = 'cover';
             // Mettiamo il video a 99990, appena SOTTO all'overlay che è a 99999
             video.style.zIndex = '99990';

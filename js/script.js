@@ -1009,7 +1009,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoEl.id = v.id;
                 videoEl.className = `${v.class} video_display_none`;
                 videoEl.playsInline = true;
-                videoEl.preload = "none"; // Evita di scaricare il video prima del tempo
+                videoEl.setAttribute('playsinline', '');
+                videoEl.setAttribute('webkit-playsinline', '');
+                videoEl.preload = "metadata"; // Header pronto per play immediato su mobile
                 // data-src-local: path originale (per CDN.url async + fallback)
                 videoEl.setAttribute('data-src-local', v.src);
                 // Se R2 disabilitato, può già usare il path locale

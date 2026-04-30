@@ -800,6 +800,7 @@ body.crunch-active .upgrade-name {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: rispetta il viewport visibile (no taglio sotto la URL bar) */
     object-fit: cover;
     z-index: 10000;
     background: #000;
