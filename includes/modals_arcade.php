@@ -29,8 +29,8 @@
                         <i class="fa-solid fa-lock" style="color: #7f8c8d;"></i> Super Espò
                         <span class="locked-badge">IN ARRIVO...</span>
                     </div>-->
-                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPÒ RUNNER" data-color="#9b59b6" data-icon="fa-person-running" data-desc="Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!" onclick="if(window.startSuperEspoGame) window.startSuperEspoGame()">
-                        <i class="fa-solid fa-person-running"></i>
+                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPÒ RUNNER" data-color="#9b59b6" data-icon="fa-shoe-prints" data-desc="Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!" onclick="if(window.startSuperEspoGame) window.startSuperEspoGame()">
+                        <i class="fa-solid fa-shoe-prints"></i>
                         <span>Super Espò Runner</span>
                     </div>
 

@@ -424,14 +424,32 @@
         document.addEventListener('keyup', handleKeyUp);
 
         // Touch handlers per bottoni HTML
+        // FIX stuck-key: include touchcancel + safety net, altrimenti su iOS
+        // un touch interrotto (multi-touch, scroll, app switch) lascia il
+        // tasto a true e l'astronave continua a muoversi all'infinito.
         const btns = container.querySelectorAll('.ctrl-btn');
+        const release = (key) => () => { keys[key] = false; };
         btns.forEach(btn => {
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[btn.dataset.key] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[btn.dataset.key] = false; });
+            const k = btn.dataset.key;
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[k] = true; }, { passive: false });
+            btn.addEventListener('touchend',    (e) => { e.preventDefault(); keys[k] = false; }, { passive: false });
+            btn.addEventListener('touchcancel', (e) => { e.preventDefault(); keys[k] = false; }, { passive: false });
             // Mouse fallback per test desktop
-            btn.addEventListener('mousedown', () => keys[btn.dataset.key] = true);
-            btn.addEventListener('mouseup', () => keys[btn.dataset.key] = false);
+            btn.addEventListener('mousedown',  () => keys[k] = true);
+            btn.addEventListener('mouseup',    release(k));
+            btn.addEventListener('mouseleave', release(k));
         });
+
+        // Safety net globale: se la pagina perde focus, azzera tutti i tasti.
+        if (!window._spaceKeysSafetyNet) {
+            const releaseAll = () => { for (const k in keys) keys[k] = false; };
+            window.addEventListener('blur', releaseAll);
+            window.addEventListener('pagehide', releaseAll);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState !== 'visible') releaseAll();
+            });
+            window._spaceKeysSafetyNet = true;
+        }
     }
 
 })();
