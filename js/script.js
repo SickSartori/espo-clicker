@@ -219,7 +219,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await SaveDB.saveToIndexedDB(gameState);
         } catch (e) {
-            console.error("❌ Errore save IndexedDB:", e);
+            // Filtra errori transienti tipici durante navigate/unload o tab inattivo:
+            // AbortError (tx abortita), InvalidStateError (db chiuso) — il save
+            // riparte automaticamente al prossimo tick, non serve allarmare l'utente.
+            const transient = e && (e.name === 'AbortError' || e.name === 'InvalidStateError');
+            if (!transient) {
+                console.error("❌ Errore save IndexedDB:", e);
+            }
             // Fallback localStorage
             try {
                 localStorage.setItem(SAVE_KEY, compressed);

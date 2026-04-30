@@ -105,8 +105,11 @@ function loadThemeCSS(themeFile) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
 
-    // Recupera la versione della cache globale o usa un fallback
-    const v = window.GAME_VERSION ? window.GAME_VERSION.major : Date.now();
+    // Cache buster: preferisce il cacheVer PHP (es. "2.0.0") iniettato in index.php
+    // per matchare le altre risorse e invalidare correttamente quando si bumpa
+    // prodVersion. Fallback a GAME_VERSION.major (granularità grossolana).
+    const v = window.CACHE_VER
+        || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now());
     link.href = `css/${themeFile}?v=${v}`;
 
     document.head.appendChild(link);

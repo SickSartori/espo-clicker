@@ -26,8 +26,11 @@ require_once("php/check_version.php");
 			<?php echo $labels["head_titolo"]; ?>
 		</title>
 
-		<!-- Preload font logo (massima priorità — usato dal loader) -->
-		<link rel="preload" as="font" href="assets/fonts/Harabara.ttf?v=<?php echo $cacheVer; ?>" type="font/ttf" crossorigin="anonymous" fetchpriority="high">
+		<!-- Preload font logo (massima priorità — usato dal loader)
+		     ⚠️ URL deve matchare ESATTAMENTE quello in @font-face (base.css):
+		     senza il ?v= sennò il browser segnala "preloaded but not used"
+		     perché considera i due URL distinti. -->
+		<link rel="preload" as="font" href="assets/fonts/Harabara.ttf" type="font/ttf" crossorigin="anonymous" fetchpriority="high">
 
 		<!-- Preload font critici -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -295,7 +298,11 @@ require_once("php/check_version.php");
 		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
 		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
 		<!-- ============================================================ -->
-		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>		
+		<!-- Cache buster condiviso: usato per i theme CSS lazy-load
+		     (loadThemeCSS in ui-functions.js). Senza questo gli aggiornamenti
+		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
+		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
+		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>
 		
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->
@@ -321,57 +328,76 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 			// prende il controllo: la pagina è già stata caricata fresca.
 			const _swHadController = !!navigator.serviceWorker.controller;
 
-			window.addEventListener('load', () => {
-				navigator.serviceWorker.register('./sw.js').then(reg => {
-					console.log('[PWA] SW registrato:', reg.scope);
+			// Flag: il game loader è ancora visibile? Se sì, gli aggiornamenti
+			// vengono applicati SILENZIOSAMENTE (auto-skipWaiting + reload),
+			// così l'utente non vede prompt mentre è già sullo splash screen.
+			// Quando il loader scompare passiamo al flusso "confirm()" per
+			// non interrompere il gameplay con un reload silenzioso.
+			let _swSilentMode = true;
+			window.addEventListener('gameBootComplete', () => { _swSilentMode = false; });
 
-					// Polling: controlla aggiornamenti ogni 60 minuti
-					setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+			let _swReloadPending = false;
+			const _doReload = () => {
+				if (_swReloadPending) return;
+				_swReloadPending = true;
+				console.log('[PWA] Aggiornamento ricevuto, ricarico pagina...');
+				window.location.reload();
+			};
 
-					// Se c'è un SW in attesa (aggiornamento trovato), chiedi consenso
-					if (reg.waiting && _swHadController) {
-						if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
-							reg.waiting.postMessage('SKIP_WAITING');
+			const _activateUpdate = (sw) => {
+				if (!sw) return;
+				if (_swSilentMode) {
+					// Loader visibile → applica subito, niente prompt
+					console.log('[PWA] Update silenzioso durante splash');
+					sw.postMessage('SKIP_WAITING');
+				} else {
+					// Game UI attiva → chiedi consenso per non interrompere
+					if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
+						sw.postMessage('SKIP_WAITING');
+					}
+				}
+			};
+
+			// Registrazione IMMEDIATA (no attesa load): la SW update check parte
+			// in parallelo al boot della pagina. Costo: trascurabile (HEAD su sw.js
+			// + diff ~10KB) — beneficio: aggiornamento applicato prima del login
+			// senza prompt al primo paint.
+			navigator.serviceWorker.register('./sw.js').then(reg => {
+				console.log('[PWA] SW registrato:', reg.scope);
+
+				// Polling: controlla aggiornamenti ogni 60 minuti
+				setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+
+				// SW già in waiting da una precedente visita → applica subito
+				if (reg.waiting && _swHadController) {
+					_activateUpdate(reg.waiting);
+				}
+
+				// Nuovo SW trovato durante questa sessione
+				reg.addEventListener('updatefound', () => {
+					const newSW = reg.installing;
+					if (!newSW) return;
+					newSW.addEventListener('statechange', () => {
+						if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+							console.log('[PWA] Nuova versione installata');
+							_activateUpdate(newSW);
 						}
-					}
-
-					// Rileva nuovo SW installato → chiedi consenso prima di attivare
-					reg.addEventListener('updatefound', () => {
-						const newSW = reg.installing;
-						if (!newSW) return;
-						newSW.addEventListener('statechange', () => {
-							if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-								console.log('[PWA] Nuova versione disponibile, attesa consenso...');
-								if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
-									newSW.postMessage('SKIP_WAITING');
-								}
-							}
-						});
 					});
-				}).catch(err => console.warn('[PWA] Registrazione fallita:', err));
-
-				// Ascolta messaggi dal SW — un solo reload anche se arrivano più messaggi
-				let _swReloadPending = false;
-				navigator.serviceWorker.addEventListener('message', (e) => {
-					if (e.data.type === 'SW_UPDATED' || e.data.type === 'SW_FORCE_RELOAD') {
-						// Ignora se è la prima installazione (nessun controller precedente)
-						if (!_swHadController) return;
-						if (_swReloadPending) return;
-						_swReloadPending = true;
-						console.log('[PWA] Aggiornamento ricevuto, ricarico pagina...');
-						window.location.reload();
-					}
 				});
+			}).catch(err => console.warn('[PWA] Registrazione fallita:', err));
 
-				// controllerchange e SW_UPDATED scattano entrambi al cambio SW:
-				// usiamo lo stesso flag per evitare il doppio reload.
-				navigator.serviceWorker.addEventListener('controllerchange', () => {
-					// Ignora se è la prima installazione (nessun controller precedente)
-					if (!_swHadController) return;
-					if (_swReloadPending) return;
-					_swReloadPending = true;
-					window.location.reload();
-				});
+			// Messaggi dal SW (SW_UPDATED, SW_FORCE_RELOAD) → reload pagina
+			navigator.serviceWorker.addEventListener('message', (e) => {
+				if (e.data.type === 'SW_UPDATED' || e.data.type === 'SW_FORCE_RELOAD') {
+					if (!_swHadController) return; // prima installazione: skip
+					_doReload();
+				}
+			});
+
+			// controllerchange: dopo skipWaiting, il nuovo SW prende il controllo
+			navigator.serviceWorker.addEventListener('controllerchange', () => {
+				if (!_swHadController) return;
+				_doReload();
 			});
 		}
 		</script>
