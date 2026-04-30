@@ -1,5 +1,8 @@
 /* IMPORTO FONT PIXEL ART */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* Press Start 2P per titoli/numeri grandi, VT323 per body/descrizioni
+   (più leggibile a piccole dimensioni — le descrizioni in Press Start 2P
+   risultavano illeggibili) */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
 /* ============================================================
    TEMA 8-BIT: CLEAN CYBER
@@ -24,16 +27,42 @@ body.theme-8bit::before {
     animation: none;
 }
 
-/* --- RESET TIPOGRAFICO E GRAFICO PER IL GIOCO --- */
-body.theme-8bit #game-navbar *,
-body.theme-8bit #game-container *,
-body.theme-8bit #mobile-nav-bar *,
+/* --- TIPOGRAFIA: due livelli di font pixel --- */
+/* VT323 = monospace pixel READABLE per body/descrizioni
+   Press Start 2P = display blocky per titoli/numeri grandi
+   Niente selettore * (moltiplica le dimensioni). */
+body.theme-8bit #game-container,
+body.theme-8bit #game-navbar,
+body.theme-8bit #mobile-nav-bar,
 body.theme-8bit #golden-bug {
-    border-radius: 0;
-    box-shadow: none;
-    text-shadow: none;
+    font-family: 'VT323', 'Press Start 2P', monospace;
+    letter-spacing: 0;
+}
+
+/* Press Start 2P solo per i grandi numeri/titoli "display" */
+body.theme-8bit #score-display,
+body.theme-8bit .header-label-main,
+body.theme-8bit .nav-label,
+body.theme-8bit #game-container .tab-btn,
+body.theme-8bit #game-container .upgrade-name,
+body.theme-8bit #building-list-container .upgrade-name {
     font-family: 'Press Start 2P', monospace;
-    letter-spacing: -1px;
+}
+
+/* Reset radius/shadow/text-shadow solo dove serve, non globalmente */
+body.theme-8bit #game-container .upgrade,
+body.theme-8bit #game-container .click-upgrade,
+body.theme-8bit #game-container .enhancement-upgrade,
+body.theme-8bit #game-container .prestige-upgrade,
+body.theme-8bit #game-container .buy-btn,
+body.theme-8bit #game-container .tab-btn,
+body.theme-8bit #game-navbar .nav-item,
+body.theme-8bit #game-navbar .nav-special-btn,
+body.theme-8bit #clicker-btn,
+body.theme-8bit #manager-photo-normal,
+body.theme-8bit #manager-photo-clicked {
+    border-radius: 0;
+    text-shadow: none;
 }
 
 /* Ripristino FontAwesome per le icone */
@@ -43,6 +72,31 @@ body.theme-8bit #mobile-nav-bar i,
 body.theme-8bit #golden-bug i {
     font-family: "Font Awesome 6 Free";
     letter-spacing: normal;
+}
+
+/* --- SCALING ELEMENTI INGOMBRANTI (Score, CPS, BPS, ecc.) --- */
+/* Press Start 2P rende le glifi pixelate molto larghe a parità di pt.
+   Riduco i grandi numeri al livello di Super Espò. */
+body.theme-8bit #score-display {
+    font-size: clamp(1.2rem, 3vh, 1.8rem);
+}
+
+body.theme-8bit #cps-display,
+body.theme-8bit #bps-display,
+body.theme-8bit .header-value {
+    font-size: 0.85rem;
+    letter-spacing: 0;
+}
+
+body.theme-8bit .header-label,
+body.theme-8bit .header-label-main {
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+}
+
+body.theme-8bit .nav-label {
+    font-size: 0.55rem;
+    letter-spacing: 0;
 }
 
 /* --- GAME CONTAINER --- */
@@ -106,8 +160,13 @@ body.theme-8bit #game-container .tab-btn {
     color: #8b949e;
     border: 1px solid #30363d;
     border-bottom: none;
-    font-size: 0.6rem;
-    padding: 12px 5px;
+    font-size: 0.7rem;
+    padding: 10px 5px;
+    gap: 6px;
+}
+
+body.theme-8bit #game-container .tab-btn i {
+    font-size: 1.1rem;
 }
 
 body.theme-8bit #game-container .tab-btn.active {
@@ -117,62 +176,94 @@ body.theme-8bit #game-container .tab-btn.active {
     z-index: 10;
 }
 
+/* Fix: layout.css base mette color: var(--primary) sull'icona attiva,
+   che coincide col background blu della tab attiva → icona invisibile.
+   Forza bianco per garantire contrasto. */
+body.theme-8bit #game-container .tab-btn.active i {
+    color: #fff;
+}
+
 body.theme-8bit #game-container .tab-btn.notify {
     animation: pixelFlash 1s infinite step-end;
     border: 2px solid #2ecc71;
     border-bottom: 2px solid #2ecc71;
 }
 
-/* --- CARD UPGRADE & LISTE --- */
+/* --- CARD UPGRADE: layout ORIZZONTALE come gli altri temi ---
+   Stessa disposizione del tema standard (details a sinistra, COMPRA a destra),
+   ma con palette/font 8-bit (niente flex-direction column, niente center). */
 body.theme-8bit #game-container .upgrade,
 body.theme-8bit #game-container .click-upgrade,
 body.theme-8bit #game-container .enhancement-upgrade,
 body.theme-8bit #game-container .prestige-upgrade {
     background-color: #12171e;
     border: 1px solid #30363d;
+    border-left: 4px solid #58a6ff;
     box-shadow: 4px 4px 0 #000;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
-    text-align: center;
-    padding: 12px 10px;
-    min-height: 100px;
+    text-align: left;
+    padding: 12px 14px;
+    gap: 12px;
+    min-height: 0;
+}
+
+body.theme-8bit #game-container .upgrade-details {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    align-items: flex-start;
 }
 
 /* TESTI */
 body.theme-8bit #game-container .upgrade-name {
     color: #fff;
-    font-size: 0.6rem;
-    line-height: 1.1;
-    margin-bottom: 5px;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    letter-spacing: 0;
+    text-align: left;
 }
 
+/* upgrade-desc in VT323 (più leggibile a piccole dimensioni) */
 body.theme-8bit #game-container .upgrade-desc {
-    color: #8b949e;
-    font-size: 0.45rem;
-    line-height: 1.3;
+    color: #95a5a6;
+    font-size: 1.05rem; /* VT323 è naturalmente più piccolo a parità di rem */
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-align: left;
+    margin-bottom: 4px;
 }
 
 body.theme-8bit #game-container .upgrade-cost {
-    color: #58a6ff;
-    font-size: 0.5rem;
-    margin-top: 5px;
-    letter-spacing: -0.5px;
+    color: #f1c40f; /* giallo Mario/8bit per costo */
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    margin-top: 2px;
+    letter-spacing: 0;
+    text-align: left;
+    display: block;
 }
 
-/* --- BOTTONI COMPRA --- */
+/* --- BOTTONI COMPRA: a destra della card, larghezza fissa --- */
 body.theme-8bit #game-container .buy-btn {
-    height: 32px;
-    font-size: 0.55rem;
+    height: 40px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0;
+    padding: 0 14px;
     padding-top: 2px;
-    margin: 8px auto 0 auto;
-    width: 90%;
+    margin: 0;
+    width: auto;
+    min-width: 90px;
+    flex-shrink: 0;
     box-shadow: 3px 3px 0 #000;
     border: 1px solid #fff;
+    letter-spacing: 1px;
     transition: none;
 }
 
@@ -260,13 +351,8 @@ body.theme-8bit #golden-bug {
 }
 
 @media screen and (max-width: 1440px) {
-    body.theme-8bit {
-        font-size: 10px;
-    }
-
     body.theme-8bit #game-container .upgrade-name {
-        font-size: 0.7rem;
-        letter-spacing: -1px;
+        font-size: 0.65rem;
     }
 
     body.theme-8bit .buy-btn {
@@ -281,77 +367,104 @@ body.theme-8bit #golden-bug {
    8-BIT
    ======================================================= */
 
-/* 1. BARRA PROGRESSO (Sinistra e Destra) */
+/* 1. BARRA PROGRESSO (Sinistra e Destra)
+   VT323 invece di Press Start 2P — molto più leggibile a piccole dimensioni
+   per i contatori tipo "Assistente QA: 12/25". */
 body.theme-8bit #game-container .progress-text {
-    /* Dimensione bilanciata: né troppo piccola né enorme */
-    font-size: 0.5rem;
-
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
     letter-spacing: 0;
-
     color: #fff;
+    text-shadow: 1px 1px 0 #000;
     z-index: 10;
     line-height: 30px;
+    font-weight: normal;
 }
 
-/* 2. LISTA TEAM (Colonna Destra) - Layout e Dimensioni */
+/* 2. LISTA TEAM (Colonna Destra) — layout coerente con lo standard:
+   details (nome/BPS/costo) a sinistra, count + COMPRA a destra side-by-side. */
 body.theme-8bit #building-list-container .upgrade {
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    gap: 10px;
-    min-height: 80px;
+    padding: 14px 14px;
+    gap: 12px;
+    min-height: 0;
+    overflow: visible;
 }
 
-/* Dettagli (Nome e Costo) */
+/* Dettagli a sinistra: nome / BPS / costo stack */
 body.theme-8bit #building-list-container .upgrade-details {
-    flex: 2;
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     text-align: left;
-    overflow: hidden;
+    gap: 3px;
 }
 
-/* Nome del Team più grande e leggibile */
+/* Nome del Team — Press Start 2P, leggibile */
 body.theme-8bit #building-list-container .upgrade-name {
     font-size: 0.7rem;
-    line-height: 1.4;
-    margin-bottom: 6px;
+    line-height: 1.3;
+    margin: 0;
     letter-spacing: 0;
     white-space: normal;
+    color: #fff;
 }
 
-/* Costo e BPS */
-body.theme-8bit #building-list-container .upgrade-cost,
+/* BPS in verde 8-bit, costo giallo coin */
 body.theme-8bit #building-list-container .upgrade-bps {
-    font-size: 0.55rem;
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    color: #2ecc71;
+    margin: 0;
     letter-spacing: 0;
-    opacity: 0.9;
 }
 
-/* 3. BOTTONI E NUMERI (Destra) */
+body.theme-8bit #building-list-container .upgrade-cost {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem; /* allineato a .upgrade-cost dei potenziamenti */
+    color: #f1c40f;
+    margin: 0;
+    letter-spacing: 0;
+}
+
+/* Azioni a destra: count box + COMPRA in colonna stretta */
 body.theme-8bit #building-list-container .upgrade-actions {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-    min-width: 80px;
+    align-items: stretch;
+    justify-content: center;
+    gap: 6px;
+    min-width: 84px;
 }
 
-/* Numero posseduto (es. 1) */
+/* Count "12" come badge pixel — bordo + sfondo per stacco visivo */
 body.theme-8bit #building-list-container .upgrade-count {
-    font-size: 1rem;
-    margin-right: 0;
-    margin-bottom: 2px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    color: #58a6ff;
+    background: rgba(88, 166, 255, 0.12);
+    border: 1px solid rgba(88, 166, 255, 0.4);
+    padding: 4px 8px;
+    text-align: center;
+    line-height: 1;
+    margin: 0;
+    border-radius: 0; /* pixel-art, no curve */
 }
 
-/* Bottone Compra */
+/* COMPRA: stessa larghezza del count box, no full-width spinto */
 body.theme-8bit #building-list-container .buy-btn {
     width: 100%;
+    height: 32px;
     margin: 0;
-    font-size: 0.6rem;
-    padding: 8px 0;
-    height: auto;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    padding: 0;
+    box-shadow: 2px 2px 0 #000;
+    letter-spacing: 1px;
 }

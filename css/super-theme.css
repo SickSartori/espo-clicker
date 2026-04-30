@@ -2,12 +2,120 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* --- SFONDO MONDO SUPER --- */
+/* --- SFONDO MONDO SUPER (cielo Mario + nuvole + montagne + cespugli + pavimento) --- */
 body.theme-super {
-    background-color: #6b8cff;
+    background-color: #5c94fc; /* cielo Mario standard (matcha l'arcade) */
     background-image:
+        /* Pavimento mattoni Mario in basso */
         linear-gradient(to top, #c04800 0%, #c04800 40px, #000 40px, #000 44px, transparent 44px);
     background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: bottom;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Layer nuvole: ::before sostituisce la griglia cyber (z:-2) della base
+   Layout NON regolare: 7 nuvole a posizioni/dimensioni varie (no repeat-x rigido).
+   Eredita position:fixed, top/left/width, pointer-events da body::before. */
+body.theme-super::before {
+    height: 100%;
+    background-image:
+        url('../assets/image/arcade/cloud1.png'),
+        url('../assets/image/arcade/cloud2.png'),
+        url('../assets/image/arcade/cloud1.png'),
+        url('../assets/image/arcade/cloud2.png'),
+        url('../assets/image/arcade/cloud1.png'),
+        url('../assets/image/arcade/cloud2.png'),
+        url('../assets/image/arcade/cloud1.png');
+    background-repeat: no-repeat;
+    background-position:
+        8% 55px,
+        24% 130px,
+        42% 75px,
+        58% 175px,
+        74% 95px,
+        88% 145px,
+        96% 40px;
+    background-size:
+        100px auto,
+        72px auto,
+        128px auto,
+        88px auto,
+        96px auto,
+        80px auto,
+        56px auto;
+    background-color: transparent;
+    background-attachment: fixed;
+    image-rendering: pixelated;
+    opacity: 0.9;
+    animation: superCloudsDrift 90s linear infinite;
+    z-index: -2;
+}
+
+/* Layer cespugli + montagne: ::after sostituisce il glow ambientale (z:-1)
+   Layout vario con 6 elementi a profondità/dimensioni differenti.
+   Eredita position:fixed, left, pointer-events da body::after. */
+body.theme-super::after {
+    top: auto;
+    bottom: 44px; /* sopra la striscia mattoni (40px + 4px nera) */
+    height: 110px;
+    background-image:
+        url('../assets/image/arcade/mountain1.png'),
+        url('../assets/image/arcade/mountain2.png'),
+        url('../assets/image/arcade/mountain1.png'),
+        url('../assets/image/arcade/bush2.png'),
+        url('../assets/image/arcade/bush1.png'),
+        url('../assets/image/arcade/bush2.png'),
+        url('../assets/image/arcade/bush1.png');
+    background-repeat: no-repeat;
+    background-position:
+        12% bottom,
+        45% bottom,
+        78% bottom,
+        8% bottom,
+        32% bottom,
+        62% bottom,
+        90% bottom;
+    background-size:
+        140px auto,
+        180px auto,
+        160px auto,
+        96px auto,
+        72px auto,
+        110px auto,
+        80px auto;
+    background-color: transparent;
+    background-attachment: fixed;
+    image-rendering: pixelated;
+    filter: none;
+    animation: none;
+    z-index: -1;
+}
+
+/* Animazione nuvole — drift orizzontale lento, ogni nuvola con offset y diverso */
+@keyframes superCloudsDrift {
+    from {
+        background-position:
+            8% 55px,
+            24% 130px,
+            42% 75px,
+            58% 175px,
+            74% 95px,
+            88% 145px,
+            96% 40px;
+    }
+    to {
+        background-position:
+            calc(8% + 1500px) 55px,
+            calc(24% + 1300px) 130px,
+            calc(42% + 1700px) 75px,
+            calc(58% + 1100px) 175px,
+            calc(74% + 1400px) 95px,
+            calc(88% + 1200px) 145px,
+            calc(96% + 1600px) 40px;
+    }
 }
 body.theme-super #game-container,
 body.theme-super #game-navbar,
@@ -16,12 +124,14 @@ body.theme-super #golden-bug {
     font-family: 'Press Start 2P', cursive;
 }
 
-/* --- GAME CONTAINER (Stile Castello/Mattoni) --- */
+/* --- GAME CONTAINER (Trasparente per mostrare lo sfondo Mario) --- */
 body.theme-super #game-container {
-    background-color: #000;
+    background-color: transparent;
     border: 2px solid #fff;
     box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
     border-radius: 4px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 /* --- NAVBAR --- */
@@ -30,14 +140,90 @@ body.theme-super #game-navbar {
     border-bottom: 4px solid #000;
 }
 
-/* --- COLONNE --- */
+/* --- COLONNE (Semi-trasparenti per leggibilità mantenendo il tema) --- */
 body.theme-super .game-column {
-    background-color: #222;
+    background-color: rgba(0, 0, 0, 0.55);
     border-right: 4px solid #000;
 }
 
+body.theme-super #center-column {
+    background-color: transparent;
+}
+
 body.theme-super .tabs-header {
-    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* --- HEADER CENTRALE (BUG RISOLTI, MOLT., TOKEN, Q-BITS) ---
+   Su sfondo cielo/nuvole servono contrasto + outline pixel-art per leggibilità */
+body.theme-super .column-header-center {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-bottom: 4px solid #000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+body.theme-super .header-stat-box {
+    background-color: rgba(0, 0, 0, 0.65);
+    border: 2px solid #000;
+    border-radius: 0;
+    padding: 4px 8px;
+}
+
+body.theme-super .header-label,
+body.theme-super .header-label-main {
+    color: #ffce15;
+    text-shadow: 2px 2px 0 #000;
+}
+
+body.theme-super .header-value {
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+}
+
+body.theme-super #score-display {
+    text-shadow: 3px 3px 0 #000, 0 0 12px rgba(255, 71, 87, 0.4);
+}
+
+/* BPS display (etichetta "BPS: x,xx" sotto al manager) — stile blocco Mario */
+body.theme-super #cps-display,
+body.theme-super #bps-display {
+    color: #ffce15;
+    text-shadow: 2px 2px 0 #000;
+    background: rgba(0, 0, 0, 0.75);
+    border: 2px solid #fff;
+    box-shadow: 3px 3px 0 #000;
+    border-radius: 0;
+    padding: 6px 14px;
+    font-weight: 700;
+}
+
+body.theme-super #cps-display:hover,
+body.theme-super #bps-display:hover {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+}
+
+/* Banner versione "Novità v2.0 stable" — stile cartello Mario verde */
+body.theme-super #version-display {
+    color: #fff;
+    background: #00aa00;
+    border: 2px solid #000;
+    box-shadow: 3px 3px 0 #000;
+    border-radius: 0;
+    text-shadow: 2px 2px 0 #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    padding: 8px 14px;
+    letter-spacing: 1px;
+}
+
+body.theme-super #version-display:hover {
+    background: #00cc00;
+    color: #ffce15;
+    transform: translateX(-50%) translate(-1px, -1px);
+    box-shadow: 4px 4px 0 #000;
+    border-color: #000;
 }
 
 /* --- BOTTONI TAB --- */
