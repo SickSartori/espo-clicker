@@ -17,7 +17,13 @@
         'arcade/super-espo/css/super-espo.css',
     ];
 
-    const _v = window.GAME_VERSION ? (window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor) : Date.now();
+    // In dev locale (MAMP / localhost) usiamo Date.now() come cache-bust per
+    // evitare che il SW serva versioni stale dei file arcade durante l'iterazione.
+    // In produzione resta la versione stabile per consentire la cache HTTP/SW.
+    const _isLocal = /^(localhost|127\.|192\.168\.|10\.|0\.0\.0\.0)/.test(location.hostname);
+    const _v = (window.GAME_VERSION && !_isLocal)
+        ? (window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor)
+        : Date.now();
     const ARCADE_JS = [
         // Phaser deve essere caricato PRIMA degli altri
         'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
