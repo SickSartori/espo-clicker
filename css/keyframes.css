@@ -35,14 +35,17 @@
 @keyframes pulseGold {
     0% {
         box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7);
+        transform: scale(1);
     }
 
     70% {
         box-shadow: 0 0 0 10px rgba(241, 196, 15, 0);
+        transform: scale(1.02);
     }
 
     100% {
         box-shadow: 0 0 0 0 rgba(241, 196, 15, 0);
+        transform: scale(1);
     }
 }
 
@@ -310,25 +313,39 @@
     }
 }
 
+/* Scorrimento griglia — background-position garantisce loop seamless */
+@keyframes gridScroll {
+    0%   { background-position: 0 0, 0 0; }
+    100% { background-position: 60px 60px, 60px 60px; }
+}
+
 @keyframes gridFloat {
     0% {
-        background-position: 0 0, 0 0;
+        transform: perspective(500px) rotateX(20deg) translate3d(0, 0, 0);
+    }
+
+    30% {
+        transform: perspective(500px) rotateX(22deg) translate3d(30px, 25px, 0);
+    }
+
+    60% {
+        transform: perspective(500px) rotateX(18deg) translate3d(60px, 55px, 0);
     }
 
     100% {
-        background-position: 0 960px, 960px 0;
+        transform: perspective(500px) rotateX(20deg) translate3d(80px, 80px, 0);
     }
 }
 
 @keyframes ambientPulse {
     0% {
-        opacity: 0.5;
+        opacity: 0.55;
         transform: scale(1);
     }
 
     100% {
-        opacity: 0.8;
-        transform: scale(1.1);
+        opacity: 0.85;
+        transform: scale(1.06);
     }
 }
 
@@ -557,26 +574,31 @@
     0% {
         border-color: #ff4500;
         box-shadow:
-            inset 0 0 15px #ffae42,
-            0 0 20px #ff4500;
-        background-color: rgba(255, 0, 0, 0.6);
+            inset 0 0 20px #ff6600,
+            inset 0 0 5px rgba(255, 174, 66, 0.5),
+            0 0 25px #ff4500,
+            0 0 55px rgba(255, 69, 0, 0.5),
+            0 0 90px rgba(255, 69, 0, 0.2);
     }
 
     50% {
-        border-color: #ff6600;
+        border-color: #ffd700;
         box-shadow:
-            inset 0 0 25px #ffd700,
-            0 0 30px #ff6600;
-        background-color: rgba(255, 0, 0, 0.8);
-        /* Rosso più solido */
+            inset 0 0 35px #ffd700,
+            inset 0 0 12px rgba(255, 255, 200, 0.6),
+            0 0 50px #ff6600,
+            0 0 90px rgba(255, 150, 0, 0.55),
+            0 0 130px rgba(255, 100, 0, 0.25);
     }
 
     100% {
         border-color: #ff4500;
         box-shadow:
-            inset 0 0 15px #ffae42,
-            0 0 20px #ff4500;
-        background-color: rgba(255, 0, 0, 0.6);
+            inset 0 0 20px #ff6600,
+            inset 0 0 5px rgba(255, 174, 66, 0.5),
+            0 0 25px #ff4500,
+            0 0 55px rgba(255, 69, 0, 0.5),
+            0 0 90px rgba(255, 69, 0, 0.2);
     }
 }
 
@@ -677,4 +699,47 @@
 @keyframes blockFloat {
     from { transform: translateY(0px); }
     to { transform: translateY(-5px); }
+}
+@keyframes fireRise {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(1) translateX(0);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: translateY(-40vh) scale(1.2) translateX(var(--drift));
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-90vh) scale(0) translateX(calc(var(--drift) * 2));
+        background: rgba(50, 50, 50, 0);
+    }
+}
+@keyframes sparkFly {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(0.5);
+    }
+}
+
+@keyframes dotPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.3);
+    }
 }

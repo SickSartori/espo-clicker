@@ -6,8 +6,8 @@ let enhancementStoreSection, enhancementList, clickUpgradeList, leftColumn, righ
 let statsList, gameContainer, prestigeStore;
 window.buyMultiplier = 1;
 let currentUserPassword = null;
+let currentSaveToken = null;
 
-const CLIENT_SECRET_KEY = 'EspoClicker_Secret_X7k9P2mN5qR8vW1zY4cB6dE0fG3hJ';
 
 async function generateHash(message) {
     // 1. Tenta API Nativa (Veloce, richiede HTTPS o Localhost)
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     achievementList = document.getElementById('achievement-list');
     toastContainer = document.getElementById('toast-container');
     goldenBug = document.getElementById('golden-bug');
-    soundBluescreen = document.getElementById('sound-bluescreen');
+    // soundBluescreen ora gestito da AudioManager (Howler.js)
 
     prestigeSection = document.getElementById('prestige-section');
     prestigePointsDisplay = document.getElementById('prestige-points-display');
@@ -163,9 +163,31 @@ document.addEventListener('DOMContentLoaded', () => {
     statsList = document.getElementById('stats-list');
     gameContainer = document.getElementById('game-container');
 
-    // --------- SALVATAGGIO ---------
-    const SAVE_KEY = 'espotoolClickerSaveV8';
-    const BACKUP_KEY = 'espotoolClickerSaveV8_Backup'; // Chiave per il backup di sicurezza
+    // --------- SALVATAGGIO V9 (IndexedDB) ---------
+    const SAVE_KEY = 'espotoolClickerSaveV9';
+    const BACKUP_KEY = 'espotoolClickerSaveV9_Backup';
+
+    // --------- CHECK STORAGE DISPONIBILE ---------
+    (function checkStorageAvailable() {
+        try {
+            localStorage.setItem('__espo_test__', '1');
+            localStorage.removeItem('__espo_test__');
+        } catch (e) {
+            // localStorage bloccato (Edge Tracking Prevention, Safari ITP, modalità privata)
+            const banner = document.createElement('div');
+            banner.id = 'storage-blocked-banner';
+            banner.style.cssText = [
+                'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:99999',
+                'background:#c0392b', 'color:#fff', 'text-align:center',
+                'padding:10px 16px', 'font-size:13px', 'line-height:1.5'
+            ].join(';');
+            banner.innerHTML = '⚠️ Il tuo browser blocca il salvataggio locale. I progressi <strong>non verranno salvati</strong>. ' +
+                'Su Edge: <em>Impostazioni → Privacy → Prevenzione tracciamento → disattiva per questo sito</em>. ' +
+                'Su Safari: <em>disattiva "Impedisci tracciamento cross-site"</em>. ' +
+                '<button onclick="this.parentElement.remove()" style="margin-left:12px;background:rgba(255,255,255,0.2);border:1px solid #fff;color:#fff;padding:2px 8px;cursor:pointer;border-radius:3px;">✕</button>';
+            document.body.prepend(banner);
+        }
+    })();
 
     async function saveGame() {
         if (gameState.isDeleting) return;
@@ -178,60 +200,89 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
         gameState.lastSaveTimestamp = Date.now();
 
-        // Compressione
-        let compressed = null;
-        try {
-            const stateJSON = JSON.stringify(gameState);
-            compressed = LZString.compressToUTF16(stateJSON);
-        } catch (e) {
-            console.error("❌ Errore compressione:", e);
-            return;
+        // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
+        const stateJSON = JSON.stringify(gameState);
+        const compressed = LZString.compressToUTF16(stateJSON);
+
+        // Quota guard: warn se spazio residuo < 2x dimensione save
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                const est = await navigator.storage.estimate();
+                const free = (est.quota || 0) - (est.usage || 0);
+                if (free > 0 && free < compressed.length * 4) {
+                    console.warn('[SaveGuard] Storage quasi pieno:', free, 'bytes liberi');
+                    if (window.EspooClicker) window.EspooClicker.showToast('⚠️ Memoria quasi piena', 'warning');
+                }
+            } catch (_) { /* ignore */ }
         }
 
-        // Salvataggio Locale
         try {
-            localStorage.setItem(SAVE_KEY, compressed);
-            if (Math.random() < 0.2) localStorage.setItem(BACKUP_KEY, compressed);
+            await SaveDB.saveToIndexedDB(gameState);
         } catch (e) {
-            if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
+            // Filtra errori transienti tipici durante navigate/unload o tab inattivo:
+            // AbortError (tx abortita), InvalidStateError (db chiuso) — il save
+            // riparte automaticamente al prossimo tick, non serve allarmare l'utente.
+            const transient = e && (e.name === 'AbortError' || e.name === 'InvalidStateError');
+            if (!transient) {
+                console.error("❌ Errore save IndexedDB:", e);
+            }
+            // Fallback localStorage
+            try {
+                localStorage.setItem(SAVE_KEY, compressed);
+            } catch (fallbackErr) {
+                if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryFull, "error");
+            }
         }
 
         // SALVATAGGIO CLOUD SICURO
-        if (gameState.user.username && currentUserPassword) {
+        if (gameState.user.username && currentUserPassword && currentSaveToken) {
             try {
                 let rawScore = new Decimal(gameState.lifetimeScore);
                 if (rawScore.lt(0)) rawScore = new Decimal(0);
                 let scoreToSend = rawScore.toFixed(0);
                 const prestigeToSend = Math.floor(gameState.totalResets || 0);
 
-                // Genera la firma
-                const dataString = `${scoreToSend}-${prestigeToSend}-${CLIENT_SECRET_KEY}`;
+                // Genera la firma usando il token dinamico
+                const dataString = `${scoreToSend}-${prestigeToSend}-${currentSaveToken}`;
                 const signature = await generateHash(dataString);
 
-                fetch('php/save_progress.php', {
+                const savePayload = {
+                    username: gameState.user.username,
+                    password: currentUserPassword,
+                    saveData: compressed,
+                    score: scoreToSend,
+                    prestige: prestigeToSend,
+                    equippedSkin: gameState.skins.current,
+                    totalFormattazioni: gameState.totalFormattazioni || 0,
+                    hash: signature
+                };
+
+                await fetch('php/save_progress.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     keepalive: true,
-                    body: JSON.stringify({
-                        username: gameState.user.username,
-                        password: currentUserPassword,
-                        saveData: compressed,
-                        score: scoreToSend,
-                        prestige: prestigeToSend,
-                        hash: signature // Invio hash
-                    })
+                    body: JSON.stringify(savePayload)
                 })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.status === 'conflict') {
-                            // Avvisa l'utente che i dati sul server sono migliori
+                        if (data.status === 'success') {
+                            console.log(`[Save✓] score=${scoreToSend} prestige=${prestigeToSend} format=${savePayload.totalFormattazioni}`);
+                        } else if (data.status === 'conflict') {
+                            console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
                             window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
+                        } else if (data.status === 'warning') {
+                            console.warn(`[Save✗ WARNING] ${data.message}`);
+                            window.EspooClicker.showToast("⚠️ Sessione scaduta! Ricarica la pagina per salvare.", "error");
+                        } else {
+                            console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
                         }
                     })
-                    .catch(err => console.warn("Errore Salvataggio Cloud:", err));
+                    .catch(err => console.warn("[Save✗ NETWORK]", err));
             } catch (e) {
-                console.error("Errore hashing save:", e);
+                console.error("[Save✗ HASH]", e);
             }
+        } else {
+            console.warn(`[Save SKIP] user=${!!gameState.user.username} pass=${!!currentUserPassword} token=${!!currentSaveToken}`);
         }
     }
 
@@ -255,8 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let efficiency = 0.30; // Base 30%
 
             // Controllo di sicurezza per evitare crash se l'upgrade non è ancora nel save
-            if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn)
+            if (gameState.prestigeUpgrades &&
+                gameState.prestigeUpgrades.serverAlwaysOn &&
+                gameData.prestigeUpgrades &&
+                gameData.prestigeUpgrades.serverAlwaysOn) {
                 efficiency += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+            }
 
             if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
 
@@ -264,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawEarned = bps.mul(effectiveSeconds);
             const realEarned = rawEarned.mul(efficiency);
 
-            if (realEarned > 0) {
+            if (realEarned.gt(0)) {
                 showOfflineModal(realEarned, efficiency);
                 return;
             }
@@ -272,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.classList.add("modal_backdrop_none");
     }
 
+    // Funzione Helper per il controllo versione
     // Funzione Helper per il controllo versione
     function checkSaveCompatibility(savedData) {
         if (!window.GAME_VERSION) return true;
@@ -285,30 +341,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const current = window.GAME_VERSION;
         const saved = savedData.version;
 
-        // 2. Controllo MAJOR: Se cambia il numero principale (es. v3 -> v4), rompe tutto -> Reset
-        // Questo è l'UNICO caso in cui vogliamo resettare davvero.
+        // 2. Se il gioco è in versione STABLE, accettiamo le vecchie major version.
+        // Questo permette al 'deepMerge' di unire i vecchi dati con le nuove strutture
+        // senza cancellare i progressi dei giocatori.
+        if (current.stage === 'stable') {
+            if (saved.major !== current.major) {
+                console.info(`Migrazione Major: Save v${saved.major} -> Game v${current.major} (Stable). Permessa.`);
+            }
+            return true;
+        }
+
+        // 3. Se siamo in BETA (dev), manteniamo il controllo rigoroso: 
+        // se la major cambia, rompe tutto -> Reset forzato per test.
         if (saved.major !== current.major) {
-            console.warn(`Mismatch Major: Save v${saved.major} vs Game v${current.major}`);
+            console.warn(`Mismatch Major: Save v${saved.major} vs Game v${current.major} (Beta). Reset Forzato.`);
             return false;
         }
 
-        // 3. Abbiamo RIMOSSO il controllo su 'stage' e 'minor'.
-        // Così passando da 4.0 beta a 4.0 stable NON perderai i dati.
         return true;
     }
 
-    function loadGame() {
-        // Tenta di recuperare il salvataggio principale
-        let savedState = localStorage.getItem(SAVE_KEY);
+    async function loadGame() {
+        // Carica da IndexedDB V9
+        let savedState = await SaveDB.loadFromIndexedDB();
         let loadedFromBackup = false;
 
-        // Se il salvataggio principale non esiste o è vuoto, prova il BACKUP
+        // Fallback localStorage V9
+        if (!savedState) {
+            savedState = localStorage.getItem(SAVE_KEY);
+        }
+
+        // Fallback backup
         if (!savedState) {
             savedState = localStorage.getItem(BACKUP_KEY);
-
             if (savedState) {
                 loadedFromBackup = true;
-                console.warn("⚠️ Main save non trovato. Tentativo di caricamento dal BACKUP.");
+                console.warn("⚠️ Main save non trovato. Caricamento dal BACKUP.");
             }
         }
 
@@ -316,29 +384,44 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let parsedState = null;
 
-                // --- TENTATIVO DI DECOMPRESSIONE ---
-                // Proviamo a decomprimere la stringa
-                const decompressed = LZString.decompressFromUTF16(savedState);
-
-                if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
-                    try {
-                        parsedState = JSON.parse(decompressed);
-                        // console.log("💾 Salvataggio compresso caricato.");
+                // Decompressione se da localStorage
+                if (typeof savedState === 'string') {
+                    const decompressed = LZString.decompressFromUTF16(savedState);
+                    if (decompressed && (decompressed.startsWith('{') || decompressed.startsWith('['))) {
+                        try {
+                            parsedState = JSON.parse(decompressed);
+                        } catch (e) {
+                            console.warn("Dati decompressi corrotti, tento parsing diretto.");
+                        }
                     }
-                    catch (e) {
-                        console.warn("Dati decompressi corrotti, tento parsing diretto.");
+                    if (!parsedState) {
+                        try {
+                            parsedState = JSON.parse(savedState);
+                        } catch (e) {
+                            throw new Error("Impossibile parsare il salvataggio.");
+                        }
+                    }
+                } else {
+                    // IndexedDB ritorna già oggetto parsed
+                    parsedState = savedState;
+                }
+
+                // 1. PRIMA COSA: Salviamo il flag per le Release Notes
+                let showRN = false;
+                if (parsedState && parsedState.version && window.GAME_VERSION) {
+                    const oldMajor = parsedState.version.major || 0;
+                    const oldMinor = parsedState.version.minor || 0;
+                    const currMajor = window.GAME_VERSION.major;
+                    const currMinor = window.GAME_VERSION.minor;
+
+                    if (oldMajor < currMajor || (oldMajor === currMajor && oldMinor < currMinor)) {
+                        showRN = true;
                     }
                 }
 
-                // Fallback: Se la decompressione fallisce, prova a leggere come JSON puro (Legacy)
-                if (!parsedState) {
-                    try {
-                        parsedState = JSON.parse(savedState);
-                        // console.log("💾 Salvataggio legacy (non compresso) caricato.");
-                    }
-                    catch (e) {
-                        throw new Error("Impossibile parsare il salvataggio.");
-                    }
+                // Imposta la variabile per le RN in modo coerente per tutto il gioco
+                if (showRN) {
+                    window.shouldShowReleaseNotesOnLoad = true;
                 }
 
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
@@ -350,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
                     } catch (e) { }
 
-                    // 2. Resetta la memoria RAM
+                    // 2. Resetta la cache
                     if (typeof resetGameToDefault === 'function') {
                         resetGameToDefault();
                     }
@@ -360,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
                     }
 
-                    // 4. SCRITTURA FORZATA SU DISCO (Fix del Loop)
+                    // 4. SCRITTURA FORZATA SU DISCO
                     // Scriviamo subito il file pulito, così al prossimo F5 è valido.
                     try {
                         const newStateJSON = JSON.stringify(gameState);
@@ -395,7 +478,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         'totalOfflineScore',
                         'prestigePoints',
                         'lifetimePrestigePoints',
-                        'baseClickValue'
+                        'baseClickValue',
+                        'qBits',
+                        'lifetimeQBits'
                     ];
 
                     decimalFields.forEach(field => {
@@ -629,14 +714,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --------- LOOP DI GIOCO CORRETTO ---------
     function gameLoop() {
         const now = Date.now();
-        const deltaTime = (now - lastFrameTime) / 1000;
+        let deltaTime = (now - lastFrameTime) / 1000;
         lastFrameTime = now;
 
-        if (deltaTime > 86400) return; // Fix per tab in background da molto tempo
+        // Se il delta time è maggiore di 2 secondi, il gioco era in background.
+        // Ignoriamo questo grosso salto temporale qui, perché verrà gestito 
+        // dal checkOfflineProgress() che si attiva al caricamento o al focus.
+        if (deltaTime > 2) {
+            deltaTime = 0.1; // Fallback per far ripartire il loop dolcemente
+        }
 
         // Calcolo Score (Veloce - Ogni frame)
-        // Usiamo .mul() per moltiplicare e .add() per sommare
-        // bps è un Decimal, deltaTime è un Number (float). .mul accetta numeri.
         const scoreToAdd = bps.mul(deltaTime);
 
         gameState.score = gameState.score.add(scoreToAdd);
@@ -651,13 +739,15 @@ document.addEventListener('DOMContentLoaded', () => {
             checkAchievements();         // Controlla obiettivi
             checkTabNotifications();     // Controlla i pallini rossi sui tab
 
+            // Pulizia clickHistory spostata qui (1x/sec invece che 60x/sec)
+            const clickNow = Date.now();
+            clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
+
             lastSlowTick = now;
         }
 
-        // Gestione Click History (Veloce)
-        const clickNow = Date.now();
-        // click.value è un Decimal, ma qui non facciamo calcoli, solo filtraggio temporale
-        clickHistory = clickHistory.filter(click => clickNow - click.time < 1000);
+        // Gestione Click History (Ottimizzato: pulisce solo nella Slow Loop)
+        // Il filtraggio viene fatto 1x/sec invece che 60x/sec
 
         // --- CONTROLLO FINE CRUNCH TIME ---
         if (gameState.crunchTimeEndTime > 0 && now > gameState.crunchTimeEndTime) {
@@ -666,11 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const overlay = document.getElementById('crunch-overlay');
                 if (overlay) overlay.style.display = 'none';
 
-                const furyMusic = document.getElementById('sound-fury-music');
-                if (furyMusic) {
-                    furyMusic.pause();
-                    furyMusic.currentTime = 0;
-                }
+                if (typeof AudioManager !== 'undefined') AudioManager.stop('sound-fury-music', 300);
 
                 if (typeof AudioManager !== 'undefined')
                     AudioManager.updateAmbience();
@@ -690,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     applySkinVisuals(gameState.skins.current);
 
                 // RESET LOGICA GIOCO
-                crunchTimeMultiplier = new Decimal(1); // FIX: Reimposta come Decimal
+                crunchTimeMultiplier = new Decimal(1); // Reimposta come Decimal
                 recalculateCPS();
 
                 if (typeof updateUI === 'function') updateUI();
@@ -718,11 +804,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (uiLoopInterval) clearInterval(uiLoopInterval);
         if (saveInterval) clearInterval(saveInterval);
         if (leaderboardInterval) clearInterval(leaderboardInterval);
-
-        // Volume audio iniziale
-        document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = gameState.user.masterVolume;
-        });
 
         // LOGICA (30 FPS)
         function startGameLoop() {
@@ -765,132 +846,428 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleGoldenBug();
 
         // Salvataggio alla chiusura
-        window.addEventListener('beforeunload', () => { saveGame(); });
+        const handleAppClose = () => {
+            // Forza un salvataggio sincrono in localStorage (sempre garantito)
+            if (gameState && !gameState.isDeleting) {
+                gameState.lastSaveTimestamp = Date.now();
+                const compressed = LZString.compressToUTF16(JSON.stringify(gameState));
+                localStorage.setItem('espotoolClickerSaveV8', compressed);
+            }
+            // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
+            saveGame();
+        };
+
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                handleAppClose();
+            }
+        });
+        window.addEventListener('pagehide', handleAppClose);
+        window.addEventListener('beforeunload', handleAppClose);
         console.log("Cicli di gioco avviati correttamente.");
     }
 
     // Funzione universale per precaricare TUTTO (Immagini, Audio, Video)
     function preloadAllAssets(onProgress) {
-        const promises = [];
+        const criticalPromises = [];
+        const backgroundPromises = [];
 
-        // 1. Generazione Dinamica della lista Immagini da gameData
-        const imagesToLoad = new Set(); // Usa un Set per evitare duplicati
-
-        // Aggiungi immagini base UI
-        imagesToLoad.add('assets/image/favicon.webp');
-        imagesToLoad.add('assets/image/hidden.webp');
-        imagesToLoad.add('assets/image/bluescreen.webp');
-        imagesToLoad.add('assets/image/super-block.webp');
-
-        // Estrai immagini dalle Skin (Normali e Click)
-        if (gameData.skins) {
-            Object.values(gameData.skins).forEach(skin => {
-                if (skin.img) imagesToLoad.add(`assets/image/${skin.img}`);
-                if (skin.imgClick) imagesToLoad.add(`assets/image/${skin.imgClick}`);
-            });
-        }
-
-        // Estrai immagini dai Potenziamenti Prestigio (es. Espo Fury)
-        if (gameData.prestigeUpgrades) {
-            Object.values(gameData.prestigeUpgrades).forEach(upg => {
-                if (upg.furyImage) imagesToLoad.add(`assets/image/${upg.furyImage}`);
-                if (upg.furyClickImage) imagesToLoad.add(`assets/image/${upg.furyClickImage}`);
-            });
-        }
-
-        let totalAssets = imagesToLoad.size;
-        let loadedAssets = 0;
-
-        // AUDIO (Calcolo totale)
-        if (gameData.assets && gameData.assets.sounds) {
-            totalAssets += Object.keys(gameData.assets.sounds).length;
-        }
-
-        // Helper per aggiornare la percentuale
-        const updateProgress = () => {
-            loadedAssets++;
-            if (onProgress && totalAssets > 0) {
-                const percent = Math.floor((loadedAssets / totalAssets) * 100);
-                onProgress(percent);
-            }
+        // Helper: emette progress strutturato
+        const _emit = (loaded, total, currentFile) => {
+            if (!onProgress) return;
+            const percent = total > 0 ? Math.floor((loaded / total) * 100) : 100;
+            onProgress(percent, { loaded: loaded, total: total, file: currentFile || '' });
         };
 
-        // --- CARICAMENTO IMMAGINI ---
-        imagesToLoad.forEach(src => {
-            promises.push(
+        // 1. ASSET CRITICI (Immagini base)
+        const criticalImages = new Set([
+            'assets/image/ui/favicon.webp',
+            'assets/image/ui/hidden.webp',
+            'assets/image/ui/bluescreen.webp',
+            'assets/image/ui/super-block.webp'
+        ]);
+        const backgroundImages = new Set();
+
+        // Identifica la skin corrente per caricare SOLO quella
+        let currentSkinId = 'default';
+        if (gameState && gameState.skins && gameState.skins.current) {
+            currentSkinId = gameState.skins.current;
+        }
+
+        if (gameData.skins) {
+            Object.keys(gameData.skins).forEach(key => {
+                const skin = gameData.skins[key];
+                if (key === currentSkinId) {
+                    if (skin.img) criticalImages.add(`assets/image/${skin.img}`);
+                    if (skin.imgClick) criticalImages.add(`assets/image/${skin.imgClick}`);
+                } else {
+                    if (skin.img) backgroundImages.add(`assets/image/${skin.img}`);
+                    if (skin.imgClick) backgroundImages.add(`assets/image/${skin.imgClick}`);
+                }
+            });
+        }
+
+        // Le immagini della Fury vanno in background
+        if (gameData.prestigeUpgrades) {
+            Object.values(gameData.prestigeUpgrades).forEach(upg => {
+                if (upg.furyImage) backgroundImages.add(`assets/image/${upg.furyImage}`);
+                if (upg.furyClickImage) backgroundImages.add(`assets/image/${upg.furyClickImage}`);
+            });
+        }
+
+        // 2. AUDIO CRITICI (Solo UI ed eventuale musica della skin corrente)
+        const criticalAudioIds = ['sound-click', 'sound-buy', 'sound-error', 'sound-golden', 'sound-achievement'];
+
+        const currentSkinConf = gameData.skins[currentSkinId]?.themeConfig;
+        if (currentSkinConf && currentSkinConf.specialMusic) {
+            criticalAudioIds.push(currentSkinConf.specialMusic);
+        } else if (gameState && gameState.user && gameState.user.bgMusicSelection) {
+            criticalAudioIds.push(gameState.user.bgMusicSelection);
+        } else {
+            criticalAudioIds.push('sound-bg-music');
+        }
+
+        let totalCritical = criticalImages.size + criticalAudioIds.length;
+        let loadedCritical = 0;
+
+        const updateProgress = (file) => {
+            loadedCritical++;
+            _emit(loadedCritical, totalCritical, file);
+        };
+
+        // Emit iniziale 0/N
+        _emit(0, totalCritical, '');
+
+        // Helper: estrae nome file leggibile (basename)
+        const _basename = (url) => {
+            try { return url.split('?')[0].split('/').pop() || url; }
+            catch (e) { return url; }
+        };
+
+        // --- CARICAMENTO IMMAGINI CRITICHE ---
+        criticalImages.forEach(src => {
+            criticalPromises.push(
                 new Promise((resolve) => {
                     const img = new Image();
                     img.src = src;
-                    // Importante: risolvi la promise ANCHE in caso di errore per non bloccare il loader
-                    img.onload = () => { updateProgress(); resolve(); };
-                    img.onerror = () => { console.warn("❌ Immagine mancante:", src); updateProgress(); resolve(); };
+                    img.onload = () => { updateProgress(_basename(src)); resolve(); };
+                    img.onerror = () => { console.warn("Manca img:", src); updateProgress(_basename(src)); resolve(); };
                 })
             );
         });
 
-        // --- CARICAMENTO AUDIO ---
+        // --- CARICAMENTO AUDIO MISTO ---
         if (gameData.assets && gameData.assets.sounds) {
-            Object.values(gameData.assets.sounds).forEach(sound => {
-
-                // --- MODIFICA QUI ---
-                let url;
-                if (sound.file.includes('/')) {
-                    url = sound.file;
-                } else {
-                    url = `assets/sounds/${sound.file}`;
+            // Su R2 usa URL sync già cachato dal prefetch; altrimenti path locale
+            const _resolveAudio = (local) => {
+                if (window.CDN && window.CDN.urlSync) {
+                    const sync = window.CDN.urlSync(local);
+                    if (sync) return sync;
                 }
-                // --------------------
+                return local;
+            };
 
-                promises.push(
-                    fetch(url)
-                        .then(() => updateProgress())
-                        .catch(() => { console.warn("❌ Audio mancante:", url); updateProgress(); })
-                );
+            Object.values(gameData.assets.sounds).forEach(sound => {
+                let local = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
+                let url = _resolveAudio(local);
+
+                if (criticalAudioIds.includes(sound.id)) {
+                    criticalPromises.push(
+                        fetch(url)
+                            .then(() => updateProgress(_basename(local)))
+                            .catch(() => updateProgress(_basename(local)))
+                    );
+                } else {
+                    backgroundPromises.push(fetch(url).catch(() => { }));
+                }
             });
         }
 
-        // Se non c'è nulla da caricare
-        if (totalAssets === 0) return Promise.resolve();
+        // --- DOPO I CRITICI, CARICA IL BACKGROUND E I VIDEO ---
+        Promise.all(criticalPromises).then(() => {
+            backgroundImages.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+            Promise.all(backgroundPromises);
 
-        // Attendi tutto (Promise.allSettled sarebbe meglio in ES2020, ma all va bene grazie ai catch interni)
-        return Promise.all(promises);
+            // Inietta i tag video nell'HTML in modo pigro
+            injectVideosLazily();
+        });
+
+        return totalCritical === 0 ? Promise.resolve() : Promise.all(criticalPromises);
+    }
+
+    // Crea i tag <video> pesanti dinamicamente e li aggiunge in background
+    function injectVideosLazily() {
+        const videoData = [
+            { id: 'rick-roll-video', class: 'rick_roll_video', src: 'assets/video/rick-espley-video.mp4' },
+            { id: 'ricardo-video', class: 'ricardo_video', src: 'assets/video/ricardo-milespo-video.mp4' },
+            { id: 'ricardo-metal-video', class: 'ricardo_metal_video', src: 'assets/video/ricardo-milespo-metal-video.mp4' },
+            { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' },
+            { id: 'britney-espoars-video', class: 'britney_espoars_video', src: 'assets/video/britney-espoars-video.mp4' },
+            { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
+        ];
+
+        videoData.forEach(v => {
+            if (!document.getElementById(v.id)) {
+                const videoEl = document.createElement('video');
+                videoEl.id = v.id;
+                videoEl.className = `${v.class} video_display_none`;
+                videoEl.playsInline = true;
+                videoEl.setAttribute('playsinline', '');
+                videoEl.setAttribute('webkit-playsinline', '');
+                videoEl.preload = "metadata"; // Header pronto per play immediato su mobile
+                // data-src-local: path originale (per CDN.url async + fallback)
+                videoEl.setAttribute('data-src-local', v.src);
+                // Se R2 disabilitato, può già usare il path locale
+                if (!window.CDN || !window.CDN.enabled) {
+                    videoEl.setAttribute('data-src', v.src);
+                }
+                document.body.appendChild(videoEl);
+            }
+        });
+    }
+
+    // ---------------------------------------------------------
+    // LOADER UI: progress bar + counter + tip rotation
+    // ---------------------------------------------------------
+    function setupLoaderUI() {
+        const els = {
+            status:  document.getElementById('loader-status-text'),
+            fill:    document.getElementById('loader-progress-fill'),
+            percent: document.getElementById('loader-percent'),
+            counter: document.getElementById('loader-counter'),
+            file:    document.getElementById('loader-current-file'),
+            tip:     document.getElementById('loader-tip'),
+            slow:    document.getElementById('loader-slow-hint'),
+        };
+
+        const tips = (gameData.texts && gameData.texts.ui && Array.isArray(gameData.texts.ui.loaderTips))
+            ? gameData.texts.ui.loaderTips
+            : [
+                "Suggerimento: clicca veloce per moltiplicare i bug.",
+                "Le promozioni sbloccano nuove meccaniche.",
+                "Apri l'Arcade per minigiochi e bonus.",
+                "Le skin cambiano look ed effetti speciali.",
+                "Il Q-Lab si sblocca dopo molte promozioni.",
+                "Salvataggio automatico in IndexedDB locale."
+            ];
+
+        let tipIdx = 0;
+        const showNextTip = () => {
+            if (!els.tip) return;
+            els.tip.classList.remove('visible');
+            setTimeout(() => {
+                els.tip.textContent = tips[tipIdx % tips.length];
+                els.tip.classList.add('visible');
+                tipIdx++;
+            }, 250);
+        };
+        showNextTip();
+        const tipInterval = setInterval(showNextTip, 4500);
+
+        // Hint connessione lenta: appare se nessun progresso per 6s
+        let lastProgressAt = Date.now();
+        const slowCheck = setInterval(() => {
+            if (els.slow && Date.now() - lastProgressAt > 6000) {
+                els.slow.hidden = false;
+            }
+        }, 1500);
+
+        const update = (percent, info) => {
+            const pct = Math.max(0, Math.min(100, percent || 0));
+            if (els.fill)    els.fill.style.width = pct + '%';
+            if (els.percent) els.percent.textContent = pct + '%';
+
+            if (info && els.counter && info.total) {
+                els.counter.textContent = info.loaded + ' / ' + info.total;
+            }
+            if (info && els.file) {
+                els.file.textContent = info.file ? '◦ ' + info.file : '';
+            }
+            lastProgressAt = Date.now();
+            if (els.slow) els.slow.hidden = true;
+        };
+
+        const setStatus = (text) => {
+            if (els.status) els.status.textContent = text;
+        };
+
+        const dispose = () => {
+            clearInterval(tipInterval);
+            clearInterval(slowCheck);
+        };
+
+        return { update: update, setStatus: setStatus, dispose: dispose };
     }
 
     // Setup Iniziale
     function initializeGame() {
-        const loaderStatus = document.getElementById('loader-status-text');
-
-        if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.loadingData;
+        const loaderUI = setupLoaderUI();
+        loaderUI.setStatus(gameData.texts.ui.loadingData);
         loadGame(); // Carica salvataggi
 
-        // Inizializza Audio Context (senza suonare ancora)
-        if (typeof AudioManager !== 'undefined')
-            AudioManager.init();
+        const btnFormatOpen = document.getElementById('btn-open-format-modal');
+        const btnFormatExecute = document.getElementById('btn-execute-format'); // Fallback se c'è ancora l'id vecchio
+        const formatModal = document.getElementById('format-modal');
+        const btnConfirmFormat = document.getElementById('btn-confirm-format');
 
-        // AVVIO PRELOADER CON BARRA PROGRESSO
-        preloadAllAssets((percent) => {
-            if (loaderStatus) loaderStatus.textContent = `${gameData.texts.ui.loadingAssets} ${percent}%`;
+        const openFormatHandler = () => {
+            // CONTROLLO DI SICUREZZA
+            if ((gameState.totalResets || 0) < 20) {
+                if (window.EspooClicker) window.EspooClicker.showToast("Devi effettuare almeno 20 Promozioni in questo Universo per formattare!", "error");
+                return;
+            }
+
+            if (formatModal) {
+                const tokenDiv = gameState.prestigePoints.div(10000);
+                let bonusQbits = new Decimal(0);
+                if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+                let qBitsEarned = new Decimal(1).add(bonusQbits);
+                const previewEl = document.getElementById('format-gain-qbit');
+                if (previewEl) previewEl.textContent = `+${formatNumber(qBitsEarned)}`;
+
+                formatModal.style.display = 'flex';
+                formatModal.style.opacity = '1';
+
+                const content = formatModal.querySelector('.modal-content');
+                if (content) {
+                    if (typeof gsap !== 'undefined') {
+                        gsap.fromTo(content,
+                            { scale: 0.8, opacity: 0, y: 20 },
+                            { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+                        );
+                    } else {
+                        content.style.opacity = '1';
+                        content.style.transform = 'scale(1) translateY(0px)';
+                    }
+                }
+                // ===================================================
+
+                document.body.classList.add('modal-open');
+                playSound('sound-click');
+            }
+        };
+
+        if (btnFormatOpen) btnFormatOpen.addEventListener('click', openFormatHandler);
+        if (btnFormatExecute) btnFormatExecute.addEventListener('click', openFormatHandler);
+
+        if (btnConfirmFormat) {
+            btnConfirmFormat.addEventListener('click', () => {
+                // TRUCCO ANTI-BLOCCO: Inizializza il video nel momento esatto del click umano
+                const video = document.getElementById('video-bigbang');
+                if (video) {
+                    if (!video.src) {
+                        // Risolvi URL: se R2 attivo, usa cache sync (popolata al boot via prefetch)
+                        const direct = video.getAttribute('data-src');
+                        const local  = video.getAttribute('data-src-local');
+                        const sync   = (window.CDN && window.CDN.urlSync) ? window.CDN.urlSync(local) : null;
+                        video.src = direct || sync || local || '';
+                    }
+                    video.volume = 0; // Muto temporaneamente
+
+                    let p = video.play();
+                    if (p !== undefined) {
+                        p.then(() => {
+                            video.pause();
+                            video.currentTime = 0;
+                        }).catch(e => { console.warn("Trick Autoplay fallito:", e); });
+                    }
+                }
+
+                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // PREFETCH SIGNED URL R2 (solo Altervista)
+        // Risolve in batch tutti gli URL firmati per audio + video
+        // PRIMA di inizializzare AudioManager: i Howl così partono
+        // direttamente con URL R2 invece che path locale (404 su Altervista).
+        // ─────────────────────────────────────────────────────────
+        const _prefetchUrls = () => {
+            if (!window.CDN || !window.CDN.enabled || !window.CDN.prefetch) {
+                return Promise.resolve();
+            }
+            loaderUI.setStatus('Inizializzazione asset privati...');
+            const paths = [];
+            // Audio
+            if (gameData.assets && gameData.assets.sounds) {
+                Object.values(gameData.assets.sounds).forEach(s => {
+                    paths.push(s.file.includes('/') ? s.file : `assets/sounds/${s.file}`);
+                });
+            }
+            // Video (lista hardcoded sincrona con injectVideosLazily)
+            paths.push(
+                'assets/video/rick-espley-video.mp4',
+                'assets/video/ricardo-milespo-video.mp4',
+                'assets/video/ricardo-milespo-metal-video.mp4',
+                'assets/video/ricardo-milespo-dota-video.mp4',
+                'assets/video/britney-espoars-video.mp4',
+                'assets/video/bigbang-espoclicker.mp4'
+            );
+            return window.CDN.prefetch(paths).catch(err => {
+                console.warn('[CDN] Prefetch fallito, userò fallback locale:', err);
+            });
+        };
+
+        _prefetchUrls().then(() => {
+            // Inizializza Audio Context (senza suonare ancora)
+            if (typeof AudioManager !== 'undefined')
+                AudioManager.init();
+
+            // AVVIO PRELOADER CON BARRA PROGRESSO
+            loaderUI.setStatus(gameData.texts.ui.loadingAssets);
+            return preloadAllAssets((percent, info) => {
+                loaderUI.update(percent, info);
+            });
         })
             .then(() => {
                 // 4. TUTTO PRONTO
-                if (loaderStatus) loaderStatus.textContent = gameData.texts.ui.systemStart;
+                loaderUI.setStatus(gameData.texts.ui.systemStart);
+                loaderUI.update(100, { loaded: 1, total: 1, file: '' });
 
                 setTimeout(() => {
+                    loaderUI.dispose();
                     const loader = document.getElementById('game-loader');
                     if (loader) {
                         loader.classList.add('hidden');
                         setTimeout(() => loader.remove(), 600);
                     }
 
+                    // Notifica l'AssetManager che il boot è completato:
+                    // avvia il caricamento progressivo in background delle skin.
+                    window.dispatchEvent(new CustomEvent('gameBootComplete'));
+
                     updateUI();
 
                     // LOGICA F5 / REFRESH:
                     // Controlliamo se c'è una sessione utente attiva (quindi niente login richiesto)
-                    const hasSession = sessionStorage.getItem('espooUser') || (gameState.user.username && gameState.user.username !== 'Giocatore');
+                    // NOTA: Usiamo SOLO sessionStorage per evitare che i modali appaiano prima del login
+                    const hasSession = sessionStorage.getItem('espooUser');
 
                     // Se abbiamo una sessione E il loader è finito, proviamo a suonare.
                     if (hasSession) {
                         window.EspooClicker.tryStartAudio();
+                        startGameRoutines();
+                        
+                        // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
+                        if (window.triggerV2MigrationModal) {
+                            setTimeout(() => {
+                                showV2MigrationModal(() => {
+                                    if (window.shouldShowReleaseNotesOnLoad && window.EspooClicker.openReleaseNotes) {
+                                        window.EspooClicker.openReleaseNotes();
+                                    }
+                                });
+                                if (window.EspooClicker) window.EspooClicker.saveGame();
+                            }, 800);
+                        } else if (window.shouldShowReleaseNotesOnLoad) {
+                            // Mostra solo le RN se non c'è stata la migrazione
+                            setTimeout(() => {
+                                if (window.EspooClicker.openReleaseNotes) window.EspooClicker.openReleaseNotes();
+                            }, 800);
+                        }
                     }
 
                 }, 500);
@@ -898,14 +1275,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Setup Listener Vari
         const now = Date.now();
-
-        if (typeof AudioManager !== 'undefined')
-            AudioManager.init();
-
-        const bgMusic = document.getElementById('sound-bg-music');
-        const snowAudio = document.getElementById('sound-snowball');
-        const masterVol = gameState.user.masterVolume;
-        const musicVol = gameState.user.musicVolume;
 
         const tryStart = () => {
             // 1. CONTROLLO CRITICO: Se non c'è una sessione utente, siamo al Login.
@@ -926,11 +1295,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Genera l'interfaccia iniziale
         if (typeof refreshAllStores === 'function') refreshAllStores();
-
-        // --- SETUP STANDARD ---
-        document.querySelectorAll('audio').forEach(audio => {
-            audio.volume = gameState.user.masterVolume;
-        });
 
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('dragstart', event => event.preventDefault());
@@ -961,8 +1325,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const soundClick = document.getElementById('sound-click');
-        if (soundClick) soundClick.playbackRate = 1;
+        // Reset playback rate del click sound
+        const clickHowl = (typeof AudioManager !== 'undefined') ? AudioManager.getHowl('sound-click') : null;
+        if (clickHowl) clickHowl.rate(1);
 
         let isFuryResumed = false;
 
@@ -1049,13 +1414,13 @@ document.addEventListener('DOMContentLoaded', () => {
             muteBtn.addEventListener('click', () => {
                 const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
 
-                // Identifica la traccia corretta (FIX APPLICATO QUI)
+                // Identifica la traccia corretta
                 const targetId = (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic)
                     ? currentSkin.themeConfig.specialMusic
                     : (gameState.user.bgMusicSelection || 'sound-bg-music');
 
-                const targetAudio = document.getElementById(targetId);
-                const isBlocked = (gameState.user.masterVolume > 0 && targetAudio && targetAudio.paused && !window.currentActiveEvent);
+                const howl = (typeof AudioManager !== 'undefined') ? AudioManager.getHowl(targetId) : null;
+                const isBlocked = (gameState.user.masterVolume > 0 && howl && !howl.playing() && !window.currentActiveEvent);
 
                 if (isBlocked) {
                     if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
@@ -1111,13 +1476,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (clickerButton) {
+            // Pulizia grafica (Blur) per togliere il focus dal bottone
             clickerButton.addEventListener('mouseup', () => clickerButton.blur());
             clickerButton.addEventListener('mouseleave', () => clickerButton.blur());
+            clickerButton.addEventListener('touchend', () => clickerButton.blur(), { passive: true });
 
+            // 1. GESTIONE MOUSE (Nativa)
             clickerButton.addEventListener('click', (e) => {
                 tryStart();
                 resolveBug(e);
             });
+
+            // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
+            clickerButton.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
+                tryStart();
+                
+                const touch = e.touches[0];
+                
+                // Creiamo un evento sintetico con detail: 1 per superare il blocco di resolveBug
+                resolveBug({
+                    detail: 1, 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    target: clickerButton
+                });
+            }, { passive: false });
         }
 
         if (globalFilterSelect) {
@@ -1141,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (targetId === 'right-column') document.body.classList.add('mobile-view-right');
         }
 
-        // --- FIX AVVIO MOBILE: Forza la vista centrale al caricamento ---
+        // Avvio MOBILE
         if (window.innerWidth <= 1024) {
             // 1. Imposta la classe al body per dire che siamo al centro
             document.body.classList.add('mobile-view-center');
@@ -1209,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const filterSelect = document.getElementById('global-filter-select');
 
                 if (filterSelect) {
-                    if (tab.id === 'tab-prestige') {
+                    if (tab.id === 'tab-prestige' || tab.id === 'tab-quantum') {
                         if (!filterSelect.disabled)
                             filterSelect.setAttribute('data-prev', filterSelect.value);
 
@@ -1261,9 +1645,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const vDisplay = document.getElementById('version-display');
 
         if (vDisplay && window.GAME_VERSION) {
-            vDisplay.textContent = window.GAME_VERSION.toString();
+            vDisplay.innerHTML = `<i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i>Novità ${window.GAME_VERSION.toString()}`;
+            
             if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12';
             if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
+            
+            // Abilitiamo i click direttamente tramite stile inline
+            vDisplay.style.pointerEvents = 'auto';
+            vDisplay.style.cursor = 'pointer';
         }
     }
 
@@ -1278,7 +1667,46 @@ document.addEventListener('DOMContentLoaded', () => {
         formatNumber: formatNumber,
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
+        setSaveToken: (token) => { currentSaveToken = token; },
 
+        openReleaseNotes: async () => {
+        const modal = document.getElementById('release-notes-modal');
+        const content = document.getElementById('release-notes-content');
+        if (!modal || !content) return;
+
+        // 1. Mostra il modale e avvia l'animazione di entrata (ripristinando l'opacità)
+        modal.style.display = 'flex';
+        
+        const modalContent = modal.querySelector('.modal-content');
+        if (typeof gsap !== 'undefined' && modalContent) {
+            gsap.fromTo(modalContent,
+                { scale: 0.8, opacity: 0, y: 20 },
+                { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
+            );
+            gsap.to(modal, { opacity: 1, duration: 0.3 });
+        } else {
+            modal.style.opacity = 1;
+            if (modalContent) {
+                modalContent.style.opacity = 1;
+                modalContent.style.transform = 'none';
+            }
+        }
+
+        document.body.classList.add('modal-open');
+
+        // 2. Carica e formatta il Markdown
+        try {
+            const response = await fetch('release-notes.md?v=' + Date.now());
+            if (!response.ok) throw new Error("File non trovato");
+            const mdText = await response.text();
+
+            content.innerHTML = simpleMarkdown(mdText);
+            
+            window.shouldShowReleaseNotesOnLoad = false; 
+        } catch (e) {
+            content.innerHTML = '<p style="color: #e74c3c; text-align: center;">Impossibile caricare le novità.</p>';
+        }
+    },
         tryStartAudio: () => {
             // 1. Controllo Sessione
             if (!sessionStorage.getItem('espooUser')) {
@@ -1292,23 +1720,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 AudioManager.updateAmbience();
             }
         },
+
         setMasterVolume: (volume) => {
             gameState.user.masterVolume = parseFloat(volume);
-            document.querySelectorAll('audio').forEach(audio => {
-                if (audio.id === 'sound-snowball')
-                    audio.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * 1.5;
-                else
-                    audio.volume = gameState.user.masterVolume;
-            });
+            // Aggiorna tutto via AudioManager per applicare masterVolume * musicVolume * customVol
+            if (typeof AudioManager !== 'undefined') {
+                AudioManager.updateAmbience();
+            }
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
 
-        loadCheatboard: () => {
-            if (document.querySelector('script[src="js/cheatboard.js"]')) return;
-
-
-        },
 
         loadCloudData: (cloudJSON) => {
             if (cloudJSON) {
@@ -1348,16 +1770,74 @@ document.addEventListener('DOMContentLoaded', () => {
                             return;
                         }
                     }
-                    // ---------------------------------------------------
 
-                    // 3. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
+                    // ========================================================
+                    // 3. MIGRAZIONE V1 -> V2 (CLOUD)
+                    // ========================================================
+                    const cloudMajor = (cloudState.version && cloudState.version.major) ? cloudState.version.major : 1;
+                    const currentMajor = window.GAME_VERSION ? window.GAME_VERSION.major : 2;
+
+                    let cloudIsVeteran = false;
+                    try { if (cloudState.totalScore && new Decimal(cloudState.totalScore).gt(10000)) cloudIsVeteran = true; } catch(e){}
+
+                    if (cloudMajor < 2 && currentMajor >= 2) {
+                        console.log("☁️ Migrazione Cloud V1 -> V2 rilevata!");
+
+                        // A. Salva le uniche cose che vogliamo mantenere dal cloud
+                        const savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
+                        const currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
+                        const masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
+
+                        // B. Reset e genera stato pulito
+                        if (typeof resetGameToDefault === 'function') resetGameToDefault();
+
+                        // C. Inietta i dati salvati
+                        gameState.skins.unlocked = savedSkins;
+                        gameState.skins.current = currentSkin;
+                        gameState.user.masterVolume = masterVol;
+
+                        // D. PREMIO VETERANO (solo se aveva un punteggio significativo)
+                        if (cloudIsVeteran) {
+                            gameState.totalFormattazioni = 1;
+                            gameState.qBits = new Decimal(1);
+                            gameState.lifetimeQBits = new Decimal(1);
+                            window.triggerV2MigrationModal = true;
+                        }
+
+                        // E. Aggiorna versione e username
+                        if (window.GAME_VERSION) {
+                            gameState.version = JSON.parse(JSON.stringify(window.GAME_VERSION));
+                        }
+                        const currentSessionUser = sessionStorage.getItem('espooUser');
+                        if (currentSessionUser) gameState.user.username = currentSessionUser;
+
+                        // F. Flag Release Notes
+                        window.shouldShowReleaseNotesOnLoad = true;
+
+                        // G. Salva subito in cloud per allineare il DB
+                        saveGame();
+                        localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
+
+                        if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+                        calculatePrestigeBonus();
+                        recalculateCPS();
+                        if (typeof refreshAllStores === 'function') refreshAllStores();
+                        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+                        if (typeof updateUI === 'function') updateUI();
+
+                        showToast("Migrazione V2 completata! Benvenuto nella nuova era.", 'success');
+                        return;
+                    }
+                    // ========================================================
+
+                    // 4. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
 
                     // Pulizia grafica liste
                     const achList = document.getElementById('achievement-list');
                     if (achList) achList.innerHTML = '';
 
-                    // --- 4. CONTROLLO COMPATIBILITÀ CLOUD ---
+                    // --- 5. CONTROLLO COMPATIBILITÀ CLOUD ---
                     if (!checkSaveCompatibility(cloudState)) {
                         console.warn("⚠️ Cloud Save incompatibile: Eseguo migrazione e sovrascrittura.");
 
@@ -1375,8 +1855,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         // Username Sessione (lo manteniamo)
-                        const currentSessionUser = sessionStorage.getItem('espooUser');
-                        if (currentSessionUser) gameState.user.username = currentSessionUser;
+                        const currentSessionUser2 = sessionStorage.getItem('espooUser');
+                        if (currentSessionUser2) gameState.user.username = currentSessionUser2;
 
                         // SALVIAMO SUBITO per aggiornare il Database con la versione corretta
                         saveGame();
@@ -1391,13 +1871,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         delete cloudState.buildings;
                     }
 
-                    // 5. Uniamo i dati (Merge)
+                    // 6. Uniamo i dati (Merge)
                     deepMerge(gameState, cloudState);
 
                     // 6. Ripristino oggetti Decimali
                     const decimalFields = [
                         'score', 'totalScore', 'lifetimeScore', 'totalOfflineScore',
-                        'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue'
+                        'prestigePoints', 'lifetimePrestigePoints', 'baseClickValue',
+                        'qBits', 'lifetimeQBits'
                     ];
                     decimalFields.forEach(field => {
                         gameState[field] = new Decimal(gameState[field] || 0);
@@ -1438,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateUI === 'function') updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV8', JSON.stringify(gameState));
+                    localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in gameData.achievements) {
@@ -1457,7 +1938,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     showToast(gameData.texts.toasts.cloudSync);
                     setTimeout(() => {
-                        if (typeof AudioManager !== 'undefined') AudioManager.init();
+                        // Non re-inizializzare: le istanze Howl esistono già dal boot.
+                        // Basta aggiornare volumi/traccia con i dati caricati dal cloud.
+                        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
                         window.EspooClicker.tryStartAudio();
                     }, 500);
 
@@ -1465,9 +1948,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Errore parsing cloud", e);
                 }
             }
-        }
+        },
     };
 
+    let originalTitle = document.title;
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) document.title = 'I bug si accumulano...';
+        else document.title = originalTitle;
+
+        if (document.visibilityState === 'visible') {
+            lastFrameTime = Date.now(); // Resetta il timer per evitare salti
+            checkOfflineProgress();       // Controlla se mostrare il modale offline
+        }
+    });
 
     initializeGame();
+    document.dispatchEvent(new Event('EspoGameReady'));
+    console.log("✅ Evento EspoGameReady inviato.");
 });

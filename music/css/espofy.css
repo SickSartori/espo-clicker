@@ -1,0 +1,425 @@
+* {
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+.app-layout {
+    display: flex;
+    height: calc(100vh - 90px);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 240px;
+    background-color: #121212;
+    padding: 24px 12px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #222;
+}
+
+.logo h2 {
+    margin: 0 0 30px 12px;
+    font-size: 24px;
+    color: #007bff; /* Colore Espo Blu */
+    text-shadow: 0 0 10px rgba(0, 123, 255, 0.4); /* Glow effect */
+    display: flex;
+    align-items: center;
+}
+
+/* FIX: Stile per il nuovo logo SVG */
+.custom-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li {
+    padding: 12px;
+    color: #b3b3b3;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-bottom: 5px;
+}
+
+.nav-links li:hover {
+    color: #fff;
+}
+
+.nav-links li.active {
+    color: #fff;
+    background-color: #1a1a1a;
+    border-left: 4px solid #007bff; /* Tocco di classe Espò */
+}
+
+.back-btn {
+    color: #007bff;
+    text-decoration: none;
+    display: block;
+}
+
+/* Main View */
+.main-view {
+    flex: 1;
+    background: linear-gradient(180deg, #18283b 0%, #121212 100%); /* Sfumatura blu notte */
+    border-radius: 8px;
+    margin: 8px 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.main-header {
+    padding: 24px;
+    background-color: rgba(0,0,0,0.3);
+}
+
+.main-header h2 {
+    margin: 0;
+    font-size: 32px;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.playlist-content {
+    flex: 1;
+    padding: 0 24px 24px 24px;
+    overflow-y: auto;
+}
+
+/* Scrollbar personalizzata */
+.playlist-content::-webkit-scrollbar {
+    width: 10px;
+}
+.playlist-content::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 5px;
+}
+.playlist-content::-webkit-scrollbar-thumb:hover {
+    background-color: #007bff;
+}
+
+/* Tabella Playlist */
+.playlist-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.playlist-table th {
+    color: #b3b3b3;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1px solid #333;
+    padding: 12px 10px;
+}
+
+.playlist-table td {
+    padding: 12px 10px;
+    color: #b3b3b3;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.playlist-table tbody tr {
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.playlist-table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.15); /* Hover azzurrino */
+}
+
+.playlist-table tbody tr:hover td {
+    color: #fff;
+}
+
+.playlist-table tbody tr.playing {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.playlist-table tbody tr.playing td {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.track-title {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Player Bar */
+.player-bar {
+    height: 90px;
+    background-color: #1a1a1a;
+    border-top: 1px solid #282828;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10;
+    min-width: 600px; 
+}
+
+.track-info {
+    width: 25%;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap; 
+}
+
+.track-details {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-details h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #fff;
+    /* FIX: Aggiunto l'ellipsis per i titoli lunghi */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-details span {
+    font-size: 12px;
+    color: #007bff;
+}
+
+.player-controls-wrapper {
+    width: 50%;
+    max-width: 600px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.ctrl-btn {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ctrl-btn:hover {
+    color: #fff;
+}
+
+/* FIX: Tasto Play reso simile a quelli in gioco */
+.play-btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+}
+
+.play-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.1);
+}
+
+.progress-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    gap: 10px;
+    font-size: 12px;
+    color: #b3b3b3;
+}
+
+/* FIX: Configurazione dinamica dei Range Input */
+input[type=range] {
+    -webkit-appearance: none;
+    background: #4d4d4d; 
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    flex: 1;
+    cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff; /* Pallino bianco */
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.volume-control {
+    width: 25%;
+    min-width: 120px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-right: 10px;
+}
+
+.volume-control input {
+    width: 80px; 
+    flex: none;  
+    margin: 0;
+}
+
+.vol-icon {
+    color: #b3b3b3;
+}
+
+/* Allineamento icone FontAwesome */
+i.fas, i.far, i.fab { margin-right: 8px; }
+.controls i.fas { margin-right: 0; }
+.play-btn i { margin-left: 2px; }
+.play-btn i.fa-pause { margin-left: 0; }
+
+/* FIX: Adattamento per dispositivi mobili */
+@media screen and (max-width: 768px) {
+    .app-layout {
+        flex-direction: column;
+        height: calc(100vh - 120px); /* FIX: Lascia lo spazio esatto per la player-bar in basso */
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 15px 10px;
+        border-right: none;
+        border-bottom: 1px solid #222;
+        flex-direction: column; /* FIX: Incolonna logo e menù per evitare schiacciamenti */
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .logo h2 {
+        margin: 0;
+        font-size: 22px;
+        justify-content: center;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .nav-links li {
+        padding: 5px 10px;
+        margin: 0;
+        font-size: 14px;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap; /* FIX: Evita che i testi dei pulsanti vadano a capo spezzandosi */
+    }
+
+    .nav-links li.active {
+        border-left: none;
+        border-bottom: 2px solid #007bff;
+    }
+
+    .main-view {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .main-header {
+        padding: 15px 20px;
+    }
+
+    .main-header h2 {
+        font-size: 22px;
+    }
+
+    .player-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        min-width: 0; /* FIX: Rimuove il limite dei 600px che spingeva i controlli fuori schermo */
+        height: auto;
+        padding: 15px 10px;
+        background-color: #1a1a1a;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        flex-direction: column; /* FIX: Incolonna il titolo della canzone e i tasti del player */
+        gap: 10px;
+    }
+
+    .track-info {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .track-details {
+        text-align: center;
+        width: 100%;
+    }
+
+    .player-controls-wrapper {
+        width: 100%;
+    }
+
+    .controls {
+        justify-content: center; 
+        margin-bottom: 10px;
+    }
+
+    .progress-container {
+        width: 90%; /* FIX: Gestisce la larghezza per non toccare i bordi dello schermo */
+        margin: 0 auto;
+    }
+
+    .volume-control {
+        display: none; /* Su mobile il volume si controlla con i tasti fisici */
+    }
+
+    .playlist-table th,
+    .playlist-table td {
+        font-size: 13px;
+        padding: 12px 5px;
+    }
+}

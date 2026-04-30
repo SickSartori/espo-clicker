@@ -15,9 +15,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    background-color: rgba(255, 255, 255, 0.05);
-    /* Più trasparente */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 8px;
     transition: transform 0.2s, background-color 0.2s;
 }
@@ -28,11 +27,25 @@
     transform: translateX(5px);
 }
 
-/* Sezione Sinistra (Rank + Info) */
+.leaderboard-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid;
+    /* Il colore viene iniettato dal JS in base alla rarità */
+    background-color: #111;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+}
+
+/* Sezione Sinistra (Rank + Avatar + Info) */
 .lb-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
 }
 
 /* Rank (Numero o Trofeo) */
@@ -40,32 +53,44 @@
     font-family: var(--font-heading);
     font-weight: 800;
     font-size: 1.2rem;
-    min-width: 30px;
+    min-width: 28px;
     text-align: center;
     color: #7f8c8d;
+    flex-shrink: 0;
 }
 
-/* Info Utente (Nome e Badge impilati o affiancati) */
+/* Info Utente (Nome + Badges impilati) */
 .lb-user-info {
     display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.lb-badges {
+    display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
 .leaderboard-name {
     font-weight: 700;
     color: #fff;
     font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Badge Livello */
 .level-badge {
     font-size: 0.65rem;
-    background-color: #34495e;
+    background-color: #111820;
     color: #3498db;
     padding: 2px 6px;
     border-radius: 4px;
-    border: 1px solid #4a6582;
+    border: 1px solid rgba(52, 152, 219, 0.3);
     font-weight: 800;
     letter-spacing: 0.5px;
 }
@@ -108,4 +133,66 @@
     border: 1px solid #3498db;
     box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
     background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media only screen and (max-width: 1024px) {
+    .leaderboard-item {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .lb-left {
+        gap: 8px;
+    }
+
+    .leaderboard-rank {
+        font-size: 1rem;
+        min-width: 24px;
+    }
+
+    .leaderboard-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .leaderboard-name {
+        font-size: 0.9rem;
+    }
+
+    .leaderboard-score {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .level-badge {
+        font-size: 0.6rem;
+        padding: 1px 5px;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .leaderboard-item {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .lb-left {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .leaderboard-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+
+    .leaderboard-score {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
 }

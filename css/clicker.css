@@ -9,7 +9,7 @@
     flex-grow: 1;
     height: 100%;
     min-height: 0;
-    gap: 2vh;
+    gap: clamp(15px, 3vh, 30px);
 }
 
 /* Feedback (+1 click) */
@@ -35,32 +35,71 @@
     z-index: calc(var(--z-content) + 1);
     white-space: nowrap;
     width: auto;
+    will-change: transform, opacity;
+}
 
+/* Micro-particella sparkle al click */
+.click-spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--spark-color, rgba(255, 255, 255, 0.8));
+    pointer-events: none;
+    z-index: calc(var(--z-content) + 2);
+    animation: sparkBurst var(--spark-dur, 0.6s) ease-out forwards;
+    box-shadow: 0 0 6px var(--spark-color, rgba(255, 255, 255, 0.6));
+    will-change: transform, opacity;
+}
+
+@keyframes sparkBurst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--spark-x, 30px), var(--spark-y, -30px)) scale(0);
+    }
 }
 
 /* Bottone Clicker */
 #clicker-btn {
     background: none;
-    border: none;
+    border: 2px solid rgba(52, 152, 219, 0.25);
     padding: 0;
     cursor: pointer;
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1),
+                box-shadow 0.3s ease, border-color 0.3s ease;
     z-index: var(--z-content);
     position: relative;
     /* DIMENSIONE REATTIVA:
-       - Minimo: 180px 
+       - Minimo: 180px
        - Ideale: 35% dell'altezza dello schermo (35vh)
-       - Massimo: 280px 
+       - Massimo: 280px
     */
     width: clamp(180px, 35vh, 280px);
     height: clamp(180px, 35vh, 280px);
-    margin: 0 auto;
+    margin: 0;
     flex-shrink: 0;
     outline: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-
     border-radius: 50%;
+    box-shadow:
+        0 0 0 4px rgba(52, 152, 219, 0.08),
+        0 0 30px rgba(52, 152, 219, 0.15),
+        0 0 60px rgba(52, 152, 219, 0.06),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+#clicker-btn:hover {
+    border-color: rgba(52, 152, 219, 0.45);
+    box-shadow:
+        0 0 0 6px rgba(52, 152, 219, 0.1),
+        0 0 40px rgba(52, 152, 219, 0.25),
+        0 0 80px rgba(52, 152, 219, 0.1),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 #clicker-btn:focus {
@@ -73,7 +112,29 @@
 
 #clicker-btn.click-shrink {
     transform: scale(0.90);
-    transition: transform 0.05s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ritorno elastico quando il click finisce */
+#clicker-btn:not(.click-shrink) {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Anello di ping al click */
+#clicker-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(52, 152, 219, 0.6);
+    pointer-events: none;
+    z-index: -1;
+    animation: clickerRingPing 2.5s ease-out infinite;
 }
 
 #clicker-btn::after {
@@ -82,12 +143,42 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 120%;
-    height: 120%;
-    background: radial-gradient(circle, rgba(52, 152, 219, 0.2) 0%, transparent 70%);
+    width: 130%;
+    height: 130%;
+    background: radial-gradient(circle,
+        rgba(52, 152, 219, 0.18) 0%,
+        rgba(52, 152, 219, 0.06) 40%,
+        transparent 70%);
     z-index: -1;
     pointer-events: none;
     border-radius: 50%;
+    animation: clickerGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes clickerRingPing {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1.35);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.35);
+        opacity: 0;
+    }
+}
+
+@keyframes clickerGlow {
+    from {
+        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.08);
+    }
 }
 
 #manager-photo-normal,
@@ -95,19 +186,20 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    object-fit: cover;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
     position: absolute;
     top: 0;
     left: 0;
-    transition: none;
     filter: none;
+    transition: none;
 }
 
 #manager-photo-clicked {
     opacity: 0;
 }
 
-/* Scambio Immagine */
+/* Scambio Immagine: swap istantaneo senza transizione */
 #clicker-btn.clicked #manager-photo-normal {
     opacity: 0;
 }
@@ -123,12 +215,16 @@
     font-size: clamp(1.5rem, 4vh, 2.5rem);
     color: #ff4757;
     margin: 0;
-    padding: 0;
-    text-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
+    padding: 4px 16px;
     line-height: 1;
-    transition: transform 0.1s;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
     position: relative;
     cursor: help;
+}
+
+#score-display.score-bump {
+    transform: scale(1.08);
+    text-shadow: 0 0 25px rgba(255, 71, 87, 0.7);
 }
 
 #score-display[data-tooltip]:hover::after {
@@ -143,7 +239,6 @@
     min-width: auto;
     white-space: nowrap;
     background-color: rgba(10, 15, 20, 0.98);
-    border: 1px solid #ff4757;
     color: #fff;
     padding: 6px 12px;
     border-radius: 6px;
@@ -170,71 +265,108 @@
     font-family: var(--font-heading);
     font-size: 1.2rem;
     font-weight: 600;
-    color: #bdc3c7;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px 12px;
+    color: #95a5a6;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px 16px;
     border-radius: 20px;
-    margin-top: 32px;
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: color 0.3s ease, background 0.3s ease;
 }
 
-/* Skill Button (Crunch Time) */
+#cps-display:hover {
+    color: #bdc3c7;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Skill Button (Crunch Time) — dark theme con accento arancio */
 .skill-btn {
-    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 3px 0 #a04000, 0 4px 10px rgba(230, 126, 34, 0.3);
-    padding: 1vh 30px;
-    font-size: 1rem;
-    margin-top: 2vh;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+    background: linear-gradient(180deg, #1c1008 0%, #100900 100%);
+    color: #e67e22;
+    border: 1px solid rgba(230, 126, 34, 0.5);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(230, 126, 34, 0.12),
+        inset 0 1px 0 rgba(255, 165, 0, 0.06);
+    padding: 12px 40px;
+    font-size: 0.92rem;
+    margin: 0;
+    border-radius: 10px;
+    font-family: var(--font-heading);
+    font-weight: 900;
     cursor: pointer;
-    margin-bottom: 10px;
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     z-index: 20;
     text-transform: uppercase;
     width: auto;
-    min-width: 220px;
-    letter-spacing: 1px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    min-width: 240px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(230, 126, 34, 0.45);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease,
+                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Icona fuoco sinistra via pseudo-element */
+.skill-btn:not(.active):not(.cooldown)::before {
+    content: '\f06d';
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    color: rgba(230, 126, 34, 0.6);
+    font-size: 0.9rem;
+    line-height: 1;
 }
 
 .skill-btn:active {
     transform: translateY(3px);
-    box-shadow: 0 0 0 #a04000, 0 2px 5px rgba(230, 126, 34, 0.4);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8);
 }
 
-.skill-btn:hover {
-    filter: brightness(1.1);
+.skill-btn:hover:not(.active):not(.cooldown) {
+    border-color: rgba(230, 126, 34, 0.8);
+    color: #f39c12;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 28px rgba(230, 126, 34, 0.22);
+    text-shadow: 0 0 16px rgba(230, 126, 34, 0.65);
 }
 
 /* Stato Attivo (Fuoco) */
 .skill-btn.active {
-    background: linear-gradient(135deg, #c0392b, #e74c3c);
-    box-shadow: 0 0 20px #e74c3c, 0 0 40px #c0392b;
+    background: linear-gradient(180deg, #1a0000 0%, #0d0000 100%);
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 25px rgba(231, 76, 60, 0.25);
     animation: pulseGlow 0.8s infinite alternate;
-    border: 2px solid #fff;
+    text-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
+    letter-spacing: 3px;
 }
 
 /* Stato Cooldown (Grigio) */
 .skill-btn.cooldown {
-    background: #34495e;
-    color: #7f8c8d;
-    box-shadow: none;
+    background: linear-gradient(180deg, #0d1117, #080c10);
+    color: #3d5166;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
     cursor: not-allowed;
-    border: 2px solid #2c3e50;
     transform: none;
+    animation: none;
+    letter-spacing: 2px;
+    text-shadow: none;
 }
 
 /* Timer interno */
 .skill-timer {
-    font-size: 0.85rem;
-    font-weight: normal;
-    margin-top: 4px;
-    opacity: 0.9;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 3px;
+    opacity: 0.6;
+    letter-spacing: 2px;
 }
 
 /* --- Stile per Moltiplicatore 404 (Errore) --- */
@@ -252,7 +384,7 @@
 /* --- Display Bonus Prestigio (Sotto il clicker) --- */
 #prestige-bonus-display {
     font-size: 1rem;
-    margin-top: 15px;
+    margin: 0;
     color: #5dade2;
     font-weight: bold;
     text-align: center;
@@ -270,6 +402,7 @@
     justify-content: center;
     transition: transform 0.2s;
     animation: wobble 0.5s infinite, bugRandomWander 3s linear infinite alternate;
+    will-change: transform;
 }
 
 #golden-bug.visible {
@@ -291,7 +424,7 @@
 
 body #version-display {
     position: fixed;
-    bottom: 25px;
+    bottom: 58px;
     left: 50%;
     transform: translateX(-50%);
     right: auto;
@@ -301,8 +434,32 @@ body #version-display {
     font-weight: bold;
     color: rgba(255, 255, 255, 0.25);
     text-shadow: 1px 1px 2px #000;
-    pointer-events: none;
     white-space: nowrap;
+}
+body #version-display {
+    transition: all 0.2s ease-in-out;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: auto; /* Sovrascrive il none di base */
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+body #version-display:hover {
+    background: rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.4);
+    color: #3498db;
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.2);
+}
+
+/* Mobile: version-display back to normal bottom */
+@media (max-width: 768px) {
+    body #version-display {
+        bottom: 70px;
+    }
 }
 
 /* --- EFFETTO GLITCH 404 --- */
@@ -328,12 +485,14 @@ body.bluescreen-active #clicker-btn {
 .rick_roll_video,
 .ricardo_video,
 .ricardo_metal_video,
-.ricardo_dota_video {
+.ricardo_dota_video,
+.britney_espoars_video {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: viewport visibile dinamico (no taglio sotto URL bar) */
     object-fit: cover;
     z-index: var(--z-overlay);
     background: #000;
@@ -378,6 +537,7 @@ body.rick-rolling #click-feedback-container {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* iOS: matcha l'area video sopra */
     z-index: 10005;
     pointer-events: none;
     overflow: visible;
@@ -398,7 +558,8 @@ body.rick-rolling #overlay-buttons-container,
 body.rick-rolling #github-link-container,
 body.rick-rolling #header-left-panel,
 body.rick-rolling #header-right-panel,
-body.rick-rolling .header-label-main {
+body.rick-rolling .header-label-main,
+body.rick-rolling #fx-combo-display {
     display: none;
 }
 
@@ -422,7 +583,6 @@ body.rick-rolling #center-column {
     pointer-events: none;
 }
 
-/* Fix Numeri Click */
 /* Uso body.rick-rolling per dare più peso rispetto alla regola base .click-feedback */
 body.rick-rolling #click-feedback-container .click-feedback {
     z-index: 10006;
@@ -440,7 +600,7 @@ body.rick-rolling #game-container #score-display {
     transform: none;
     margin: 0;
     z-index: 10020;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-heading);
     font-size: 2.2rem;
     font-weight: 800;
     color: #f1c40f;
@@ -545,20 +705,105 @@ body.rick-rolling .header-label-main {
 }
 
 /* =========================================
+   LAYOUT VIDEO EVENT — MOBILE
+   Riduce score/cps/multiplier/clicker e li riposiziona sul lato destro
+   con safe-area, evitando overflow su schermi stretti (iPhone SE-class)
+========================================= */
+@media only screen and (max-width: 1024px) {
+    /* Nasconde anche la barra mobile inferiore durante l'evento video */
+    body.rick-rolling #mobile-nav-bar,
+    body.rick-rolling #quick-mute-btn,
+    body.rick-rolling #cheatboard-handle {
+        display: none;
+    }
+
+    body.rick-rolling .column-header-center {
+        display: none;
+    }
+
+    body.rick-rolling #game-container #score-display {
+        top: calc(12px + env(safe-area-inset-top));
+        right: calc(12px + env(safe-area-inset-right));
+        font-size: 1.3rem;
+        padding: 5px 11px;
+        border-radius: 10px;
+    }
+
+    /* BPS spostato in BASSO A SINISTRA: zona sopra libera, no overlap con score */
+    body.rick-rolling #game-container #cps-display {
+        top: auto;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        left: calc(12px + env(safe-area-inset-left));
+        right: auto;
+        text-align: left;
+        font-size: 0.95rem;
+        padding: 5px 12px;
+        max-width: 55vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Multiplier display soppresso per eventi video — gestito anche da JS */
+    body.rick-rolling #event-multiplier-display {
+        display: none;
+    }
+
+    body.rick-rolling #clicker-btn {
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        right: calc(16px + env(safe-area-inset-right));
+        width: 72px;
+        height: 72px;
+    }
+}
+
+/* Schermi molto stretti (iPhone SE/5, < 360px) */
+@media only screen and (max-width: 359px) {
+    body.rick-rolling #game-container #score-display {
+        font-size: 1.15rem;
+        padding: 5px 10px;
+    }
+
+    body.rick-rolling #clicker-btn {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* =========================================
    EFFETTO BORDO INFIAMMATO (ESPO FURY)
 ========================================= */
 
 body.crunch-active #clicker-btn {
     border-radius: 50%;
     border: 4px solid #ff4500;
-    animation: fury-fire-pulse 1.5s infinite alternate ease-in-out;
-    transition: border-color 0.5s, box-shadow 0.5s, background-color 0.5s;
+    animation: fury-fire-pulse 0.8s infinite alternate ease-in-out;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Anello di fiamma espandente (usa il ::before esistente) */
+body.crunch-active #clicker-btn::before {
+    border: 3px solid rgba(255, 120, 0, 0.85);
+    animation: furyRingExpand 1.1s ease-out infinite;
+    border-radius: 50%;
+}
+
+/* Alone caldo (usa il ::after esistente) */
+body.crunch-active #clicker-btn::after {
+    background: radial-gradient(circle,
+        rgba(255, 100, 0, 0.4) 0%,
+        rgba(255, 50, 0, 0.18) 40%,
+        transparent 70%);
+    animation: furyGlowPulse 0.8s ease-in-out infinite alternate;
+    width: 145%;
+    height: 145%;
 }
 
 body.crunch-active #clicker-btn:active {
     box-shadow:
-        inset 0 0 30px #ffd700,
-        0 0 40px #ff4500;
+        inset 0 0 40px #ffd700,
+        0 0 60px #ff4500,
+        0 0 100px rgba(255, 100, 0, 0.5);
     transform: scale(0.95);
 }
 
@@ -566,7 +811,38 @@ body.crunch-active #clicker-btn:active {
 body.crunch-active #clicker-btn #manager-photo-normal,
 body.crunch-active #clicker-btn #manager-photo-clicked {
     background: radial-gradient(circle, #ffffcc 10%, #ffaa00 40%, #cc0000 100%);
-    box-shadow: inset 0 0 15px #ff0000, 0 0 10px #ff4500;
+    box-shadow: inset 0 0 20px #ff2200, 0 0 15px #ff4500;
     border-color: #ffcc00;
     z-index: 5;
+}
+
+@keyframes furyRingExpand {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.9;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes furyGlowPulse {
+    from {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.12);
+    }
+}
+#fx-combo-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

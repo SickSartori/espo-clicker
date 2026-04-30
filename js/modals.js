@@ -1,21 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
-    // 0. FUNZIONI HELPER GLOBALI 
+    // 0. FUNZIONI HELPER GLOBALI
     // ==========================================
+
+    // Previene ghost click su mobile: dopo touchend arriva un click sintetico ~300ms dopo.
+    // Se l'ultimo touchend è avvenuto entro 500ms, il click viene ignorato.
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', () => {
+        lastTouchEnd = Date.now();
+    }, { passive: true });
+    function isFastClick() {
+        return Date.now() - lastTouchEnd < 500;
+    }
 
     // Funzione mancante: Ferma tutti i test audio
     window.stopAllTestAudio = function () {
-        document.querySelectorAll('audio, video').forEach(media => {
-            // Non fermare la musica di background se non siamo nel mixer
-            // Ma per sicurezza nel test, mettiamo in pausa se sta suonando
-            if (!media.paused && media.id !== 'sound-bg-music') {
-                media.pause();
-                media.currentTime = 0;
+        // Ferma tutti i suoni SFX gestiti da Howler (non la musica di background)
+        if (typeof AudioManager !== 'undefined') {
+            for (const id in AudioManager._sounds) {
+                const def = AudioManager._getSoundDef(id);
+                if (def && def.type !== 'music') {
+                    const howl = AudioManager._sounds[id];
+                    if (howl && howl.playing()) howl.stop();
+                }
             }
-            // Se è un video di test, nascondilo
-            if (media.tagName === 'VIDEO' && media.id.startsWith('video-')) {
-                media.style.display = 'none';
+        }
+        // Ferma video di test creati dinamicamente
+        document.querySelectorAll('video').forEach(v => {
+            if (!v.paused) {
+                v.pause();
+                v.currentTime = 0;
             }
         });
     };
@@ -114,26 +129,116 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Aggiungi il riferimento
     const openArcadeBtn = document.getElementById('open-arcade-btn');
     const arcadeModal = document.getElementById('arcade-modal');
+    
+    const versionDisplayBtn = document.getElementById('version-display');
+
+    if (versionDisplayBtn) {
+    versionDisplayBtn.style.pointerEvents = 'auto'; // Abilita i click
+    versionDisplayBtn.style.cursor = 'pointer';
+    versionDisplayBtn.title = "Leggi le novità dell'aggiornamento";
+    
+    versionDisplayBtn.addEventListener('click', () => {
+        const Game = getGameAPI();
+        if (Game && Game.openReleaseNotes) Game.openReleaseNotes();
+    });
+}
 
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            // Recupera il record salvato
-            const Game = window.EspooClicker;
-            if (Game) {
-                const state = Game.getGameState();
-                // Se non esiste ancora l'oggetto, mostra 0
-                const highScore = (state.arcadeHighScores && state.arcadeHighScores.snake) ? state.arcadeHighScores.snake : 0;
-
-                // Aggiorna l'HTML
-                const scoreDisplay = document.getElementById('arcade-high-score');
-                if (scoreDisplay) scoreDisplay.textContent = highScore;
-            }
+            window.currentActiveEvent = 'Arcade Mode';
+            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
             openModal(arcadeModal);
+
+            // Inizializza l'anteprima col primo gioco
+            const firstGame = document.querySelector('.arcade-menu-item:not(.locked)');
+            if (firstGame) firstGame.dispatchEvent(new Event('mouseenter'));
         });
     }
 
+    // Logica Hover/Click sul menu Arcade
+    document.querySelectorAll('.arcade-menu-item:not(.locked)').forEach(item => {
+        const updatePreview = () => {
+            // Aggiorna stato attivo menu
+            document.querySelectorAll('.arcade-menu-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            // Preleva dati
+            const gameKey = item.getAttribute('data-game');
+            const title = item.getAttribute('data-title');
+            const color = item.getAttribute('data-color');
+            const iconClass = item.getAttribute('data-icon');
+            const desc = item.getAttribute('data-desc');
+
+            // Aggiorna DOM
+            const iconEl = document.getElementById('preview-icon');
+            const titleEl = document.getElementById('preview-title');
+            const descEl = document.getElementById('preview-desc');
+            const scoreEl = document.getElementById('preview-highscore');
+
+            if (iconEl) { iconEl.className = `fa-solid ${iconClass}`; iconEl.style.color = color; }
+            if (titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
+            if (descEl) descEl.textContent = desc;
+
+            // Recupera High Score
+            const Game = window.EspooClicker;
+            if (Game && scoreEl) {
+                const state = Game.getGameState();
+                const score = (state.arcadeHighScores && state.arcadeHighScores[gameKey]) ? state.arcadeHighScores[gameKey] : 0;
+                scoreEl.textContent = score;
+            }
+        };
+
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('active')) {
+                if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                    window.EspooClicker.playSound('sound-arcade-hover');
+                }
+            }
+            updatePreview();
+        });
+
+        item.addEventListener('click', () => {
+            updatePreview();
+            if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
+                window.EspooClicker.playSound('sound-click'); // Suono click normale per la selezione
+            }
+        });
+    });
+
+    // --- NAVIGAZIONE TASTIERA MENU ARCADE ---
+    document.addEventListener('keydown', (e) => {
+        const arcadeModal = document.getElementById('arcade-modal');
+        const selector = document.getElementById('arcade-game-selector');
+
+        // Controlliamo se il modale dell'Arcade è aperto E se siamo nella schermata di Selezione
+        if (arcadeModal && arcadeModal.style.display === 'flex' &&
+            selector && selector.style.display !== 'none') {
+
+            const items = Array.from(selector.querySelectorAll('.arcade-menu-item:not(.locked)'));
+            if (items.length === 0) return;
+
+            let currentIndex = items.findIndex(item => item.classList.contains('active'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+            }
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    items[currentIndex].click(); // Avvia il gioco selezionato
+                }
+            }
+        }
+    });
 
     // Funzione per tentare il play
     function tryPlayMusic() {
@@ -174,8 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnConfirmPrestige) {
         btnConfirmPrestige.addEventListener('click', () => {
-            if (typeof executePrestige === 'function') {
-                executePrestige();
+            const action = btnConfirmPrestige.getAttribute('data-action');
+            if (action === 'format') {
+                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
+            } else {
+                if (typeof executePrestige === 'function') executePrestige();
             }
         });
     }
@@ -299,19 +407,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 valSpan.textContent = Math.round(newVal * 100) + '%';
                 valSpan.style.color = newVal === 0 ? '#7f8c8d' : '#3498db';
 
-                // Applica volume in tempo reale se sta suonando
-                const activeEl = document.getElementById(targetId);
-                if (activeEl && !activeEl.paused) {
-                    const userVol = Game.getGameState().user;
-                    // Determina canale
-                    const isMusic = activeEl.classList.contains('music') || targetId.includes('music') || targetId.includes('bluescreen'); // Logica base
-                    // Migliore: guarda gameData.assets se possibile, o usa convenzione
-                    let channelVol = userVol.sfxVolume;
-                    if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen') {
-                        channelVol = userVol.musicVolume;
-                    }
-
-                    activeEl.volume = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * newVal));
+                // Applica volume in tempo reale via AudioManager
+                if (typeof AudioManager !== 'undefined') {
+                    const def = AudioManager._getSoundDef(targetId);
+                    const type = (def && def.type === 'music') ? 'music' : 'sfx';
+                    AudioManager.setVolume(targetId, AudioManager._calcVolume(targetId, type));
                 }
             });
         });
@@ -325,64 +425,74 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTestAudioClick(btn) {
         const targetId = btn.getAttribute('data-target');
         const icon = btn.querySelector('i');
-        const el = document.getElementById(targetId);
 
-        if (!el) return;
+        // Video: gestione diretta sull'elemento DOM
+        const videoEl = document.getElementById(targetId);
+        if (videoEl && videoEl.tagName === 'VIDEO') {
+            if (!videoEl.paused && !videoEl.ended) {
+                videoEl.pause();
+                videoEl.currentTime = 0;
+                btn.classList.remove('playing');
+                icon.className = 'fa-solid fa-play';
+                icon.style.marginLeft = '2px';
+                return;
+            }
+            window.stopAllTestAudio();
+            window.resetTestButtons();
+            const Game = getGameAPI();
+            const userVol = Game.getGameState().user;
+            const customVal = (Game.getGameState().user.audioCustom[targetId] ?? 1);
+            const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * userVol.musicVolume * customVal));
+            videoEl.volume = finalVol;
+            videoEl.currentTime = 0;
+            videoEl.style.display = 'none'; // Solo audio nel mixer
+            videoEl.play().then(() => {
+                btn.classList.add('playing');
+                icon.className = 'fa-solid fa-stop';
+                icon.style.marginLeft = '0';
+                videoEl.onended = () => {
+                    btn.classList.remove('playing');
+                    icon.className = 'fa-solid fa-play';
+                    icon.style.marginLeft = '2px';
+                };
+            }).catch(e => {
+                if (e.name !== 'AbortError') console.error("Errore playback video test:", e);
+            });
+            return;
+        }
+
+        // Audio: gestione via AudioManager (Howler)
+        if (typeof AudioManager === 'undefined') return;
+        const howl = AudioManager.getHowl(targetId);
+        if (!howl) return;
 
         // Se sta già suonando, ferma
-        if (!el.paused && !el.ended) {
-            el.pause();
-            el.currentTime = 0;
+        if (howl.playing()) {
+            howl.stop();
             btn.classList.remove('playing');
             icon.className = 'fa-solid fa-play';
             icon.style.marginLeft = '2px';
             return;
         }
 
-        // Ferma altri test
         window.stopAllTestAudio();
         window.resetTestButtons();
 
-        const Game = getGameAPI();
-        const userVol = Game.getGameState().user;
+        const def = AudioManager._getSoundDef(targetId);
+        const type = (def && def.type === 'music') ? 'music' : 'sfx';
+        const vol = AudioManager._calcVolume(targetId, type);
 
-        // Calcola Volume Reale
-        let channelVol = userVol.sfxVolume;
-        if (targetId === 'sound-bg-music' || targetId === 'sound-snowball' || targetId === 'sound-fury-music' || targetId === 'sound-bluescreen' || targetId.includes('video')) {
-            channelVol = userVol.musicVolume;
-        }
+        howl.volume(vol > 0 ? vol : 0.1);
+        howl.play();
+        btn.classList.add('playing');
+        icon.className = 'fa-solid fa-stop';
+        icon.style.marginLeft = '0';
 
-        const customVal = Game.getGameState().user.audioCustom[targetId];
-        const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * channelVol * customVal));
-
-        // Setup Video (se necessario)
-        if (el.tagName === 'VIDEO') {
-            el.style.display = 'block';
-            el.style.zIndex = '99999'; // Sopra al modale per vederlo, o nascondilo e senti solo audio
-            // Per il test mixer, forse meglio sentire solo l'audio o mostrare una preview?
-            // Per ora lo lasciamo hidden nel CSS base o lo mostriamo
-            el.style.display = 'none'; // Sentiamo solo l'audio per il test
-        }
-
-        el.volume = finalVol;
-        el.currentTime = 0;
-
-        el.play().then(() => {
-            btn.classList.add('playing');
-            icon.className = 'fa-solid fa-stop';
-            icon.style.marginLeft = '0';
-
-            // Auto-reset a fine traccia
-            el.onended = () => {
-                btn.classList.remove('playing');
-                icon.className = 'fa-solid fa-play';
-                icon.style.marginLeft = '2px';
-            };
-        }).catch(e => {
-            // Ignora l'errore se è stato causato da una pausa improvvisa (AbortError)
-            if (e.name !== 'AbortError') {
-                console.error("Errore playback test:", e);
-            }
+        // Auto-reset a fine traccia (per suoni non-loop)
+        howl.once('end', () => {
+            btn.classList.remove('playing');
+            icon.className = 'fa-solid fa-play';
+            icon.style.marginLeft = '2px';
         });
     }
 
@@ -398,16 +508,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (settingsModal) settingsModal.style.display = 'none';
             if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
 
-            // STOP TOTALE: Silenzia tutto per il test
-            document.querySelectorAll('audio, video').forEach(el => {
-                if (!el.paused) {
-                    el.pause();
-                    // Resetta solo se non è la bg-music (per riprenderla dopo se serve)
-                    // ma per sicurezza nel mixer vogliamo silenzio, quindi ok pausa.
-                    if (el.id !== 'sound-bg-music' && el.id !== 'sound-snowball') {
-                        el.currentTime = 0;
-                    }
+            // STOP TOTALE: Silenzia tutto (Howler + video DOM)
+            if (typeof AudioManager !== 'undefined') {
+                for (const id in AudioManager._sounds) {
+                    AudioManager.stop(id, 0);
                 }
+            }
+            document.querySelectorAll('video').forEach(el => {
+                if (!el.paused) { el.pause(); el.currentTime = 0; }
             });
 
             // Genera interfaccia
@@ -495,7 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.body.classList.add('modal-open');
 
-            // --- FIX AUDIO ---
             // Suona SOLO se il modale NON è quello di login
             if (modal.id !== 'login-modal') {
                 if (typeof AudioManager !== 'undefined') {
@@ -590,8 +697,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allModals.forEach(modal => {
         modal.addEventListener('click', (e) => {
+            // Nota: rimosso il check isFastClick() — bloccava i click legittimi
+            // post-touchend (DevTools device emulation, mobile moderni). Con
+            // viewport width=device-width il "ghost click" 300ms non esiste più.
             if (e.target.classList.contains('modal-close-btn')) {
-                modal.style.display = 'none';
+                closeModal(modal);
+
+                if (modal.id === 'arcade-modal' && window.currentActiveEvent === 'Arcade Mode') {
+                    window.currentActiveEvent = null;
+                    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                    if (typeof window.exitSnakeGame === 'function') window.exitSnakeGame();
+                    if (typeof window.exitSpaceGame === 'function') window.exitSpaceGame();
+                }
+
             }
         });
     });
@@ -609,7 +727,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (masterDisplay) masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
         }
 
-        // --- FIX GESTIONE MUSICA ---
         const oldMusicSelect = document.getElementById('bg-music-select');
         const lockMsg = document.getElementById('bg-music-lock-msg');
 
@@ -637,7 +754,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-music-v3': null,
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
-                'sound-bg-music-super': 'superespo'
+                'sound-bg-music-super': 'superespo',
+                'sound-bg-music-espory': 'espory',
+                'sound-bg-music-divine': 'jesus'
             };
 
             const sounds = gameData.assets.sounds;
@@ -718,26 +837,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const initInterval = setInterval(() => {
-        if (window.EspooClicker) {
-            clearInterval(initInterval);
-            setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
-            setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
-            setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+    function initModalBindings() {
+        const Game = window.EspooClicker;
+        if (!Game) return;
 
-            const sessUser = sessionStorage.getItem('espooUser');
-            const sessPass = sessionStorage.getItem('espooPass');
-            if (sessUser && sessPass) {
-                loginInput.value = sessUser;
-                loginPasswordInput.value = sessPass;
-                loginButton.click();
-            } else {
-                openModal(loginModal);
-            }
+        // Setup Slider Audio
+        setupAudioControl(masterSlider, masterDisplay, 'masterVolume');
+        setupAudioControl(sfxSlider, sfxDisplay, 'sfxVolume');
+        setupAudioControl(musicSlider, musicDisplay, 'musicVolume', true);
+
+        // Auto-Login da sessione
+        const sessUser = sessionStorage.getItem('espooUser');
+        const sessPass = sessionStorage.getItem('espooPass');
+
+        if (sessUser && sessPass) {
+            Game.getGameState().user.username = sessUser;
+            loginInput.value = sessUser;
+            loginPasswordInput.value = sessPass;
+            loginButton.click();
         }
-    }, 100);
+        else
+            openModal(loginModal);
+
+        console.log("✅ Modals.js inizializzato via Evento.");
+    }
+
+    // Logica ibrida: Se il gioco è già pronto, esegui subito. Altrimenti aspetta l'evento.
+    if (window.EspooClicker)
+        initModalBindings();
+    else
+        document.addEventListener('EspoGameReady', initModalBindings);
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
+
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
@@ -843,8 +975,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     localStorage.removeItem('espotoolClickerSaveV8');
                     localStorage.removeItem('espotoolClickerSaveV8_Backup');
-                    // ----------------------------------------------
-
                     location.reload();
                 } else {
                     alert(data.message);
@@ -879,18 +1009,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
+                Game.setSaveToken(data.save_token);
 
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV8');
+                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
                     Game.getGameState().user.username = u;
+                    if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
                     Game.saveGame();
                 }
 
                 closeModal(loginModal);
                 Game.startGameRoutines();
-
 
                 // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
                 if (typeof window.updateAmbientVolume === 'function') {
@@ -916,6 +1048,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.tryStartAudio();
 
                 Game.showToast(gameData.texts.toasts.welcome + " " + u);
+
+                // --- CONTROLLO MODALI POST-LOGIN (Migrazione V2 o Release Notes) ---
+                if (window.triggerV2MigrationModal) {
+                    setTimeout(() => {
+                        showV2MigrationModal(() => {
+                            window.triggerV2MigrationModal = false;
+                            if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
+                                Game.openReleaseNotes();
+                            }
+                        });
+                    }, 500);
+                } else if (window.shouldShowReleaseNotesOnLoad) {
+                    setTimeout(() => {
+                        if (Game.openReleaseNotes) Game.openReleaseNotes();
+                    }, 500);
+                }
             } else {
                 alert(data.message);
             }

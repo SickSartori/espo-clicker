@@ -1,15 +1,16 @@
 <?php
-// template/php/api_bootstrap.php
+session_start(); // Inizializza la sessione per il token dinamico
 require_once __DIR__ . '/db_connect.php';
 
 // Imposta header standard per tutte le risposte
 header('Content-Type: application/json');
 
 // Funzione per leggere l'input JSON
-function getJsonInput() {
+function getJsonInput()
+{
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
-    
+
     if (!$data) {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Dati JSON non validi."]);
@@ -19,7 +20,8 @@ function getJsonInput() {
 }
 
 // Funzione per autenticare l'utente
-function authenticate($conn, $username, $password) {
+function authenticate($conn, $username, $password)
+{
     global $table_users;
 
     if (empty($username) || empty($password)) {
@@ -40,7 +42,7 @@ function authenticate($conn, $username, $password) {
     }
 
     $user = $res->fetch_assoc();
-    
+
     if (!password_verify($password, $user['password_hash'])) {
         http_response_code(403);
         echo json_encode(["status" => "error", "message" => "Password errata."]);

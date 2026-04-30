@@ -12,7 +12,7 @@
     image-rendering: pixelated; 
 }
 
-/* Overlay UI - FIX VISIBILITÀ */
+/* Overlay UI */
 .arcade-ui-overlay {
     position: absolute;
     top: 0;

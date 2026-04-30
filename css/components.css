@@ -5,19 +5,37 @@
     background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 0 15px;
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--font-heading);
     cursor: pointer;
-    transition: all 0.1s;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
     letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Effetto shine al hover */
+.buy-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s ease;
+}
+
+.buy-btn:not(:disabled):hover::before {
+    left: 100%;
 }
 
 .buy-btn:hover:not(:disabled) {
@@ -50,14 +68,19 @@ body .buy-btn.owned {
 
 .buy-btn:not(:disabled) {
     border: 1px solid #2ecc71;
-    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
-    transition: all 0.2s ease;
+    box-shadow: 0 3px 0 rgba(39, 174, 96, 0.4), 0 0 8px rgba(46, 204, 113, 0.2);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .buy-btn:not(:disabled):hover {
     background-color: #27ae60;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    box-shadow: 0 4px 0 rgba(39, 174, 96, 0.4), 0 0 20px rgba(46, 204, 113, 0.4);
     transform: translateY(-2px);
+}
+
+.buy-btn:not(:disabled):active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(39, 174, 96, 0.4);
 }
 
 /*
@@ -65,7 +88,7 @@ body .buy-btn.owned {
  */
 .ghost-btn {
     background: transparent;
-    border: 1px solid #5d7c9a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     width: auto;
     padding: 6px 12px;
     height: auto;
@@ -74,7 +97,8 @@ body .buy-btn.owned {
 }
 
 .ghost-btn:hover {
-    background: #34495e;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /*
@@ -86,6 +110,7 @@ body .buy-btn.owned {
     border: 1px solid #3498db;
     color: #3498db;
     height: 40px;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .outline-btn:hover {
@@ -119,7 +144,7 @@ input[type=range] {
     flex-grow: 1;
     height: 6px;
     border-radius: 3px;
-    background: #34495e;
+    background: #0d1117;
     outline: none;
     -webkit-appearance: none;
 }
@@ -128,10 +153,16 @@ input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 18px;
     height: 18px;
-    background: #3498db;
+    background: #ecf0f1;
     border-radius: 50%;
     cursor: pointer;
-    border: 2px solid #2c3e50;
+    border: 2px solid #3498db;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
 }
 
 /*
@@ -299,7 +330,7 @@ input:focus {
     -webkit-appearance: none;
     width: 100%;
     height: 4px;
-    background: #34495e;
+    background: #0d1117;
     border-radius: 2px;
 }
 
@@ -327,7 +358,7 @@ input:focus {
     align-items: center;
     gap: 15px;
     margin-bottom: 15px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(0, 0, 0, 0.2);
     padding: 8px 10px;
     border-radius: 8px;
 }
@@ -491,6 +522,11 @@ body.modal-open #toast-container {
 #toast-container .toast-achievement {
     border-left: 3px solid #f1c40f;
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+}
+
+#toast-container .toast-reward {
+    border-left: 3px solid #9b59b6;
+    box-shadow: 0 0 10px rgba(155, 89, 182, 0.2);
 }
 
 /* --- Classi Tooltip ---*/

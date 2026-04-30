@@ -81,6 +81,14 @@
     padding: 10px;
 }
 
+#global-filter-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--border-color);
+    background-image: none;
+    pointer-events: none;
+}
+
 .section-header h2 {
     font-size: 1rem;
     color: var(--text-muted);
@@ -105,37 +113,44 @@
 
 #buy-controls {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     width: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 4px;
+    box-sizing: border-box;
 }
 
 #buy-controls .buy-btn {
     flex: 1;
-    height: 42px;
-    font-size: 1rem;
+    height: 34px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
     padding: 0;
     margin: 0;
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    border-radius: 6px;
+    background: transparent;
+    border: none;
     box-shadow: none;
+    color: #5d7c9a;
+    border-radius: 6px;
     opacity: 1;
-    transition: all 0.2s ease;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 #buy-controls .buy-btn.active {
-    background-color: var(--success);
-    color: #1a1a1a;
-    border-color: #27ae60;
-    font-weight: 800;
-    box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+    background: #2ecc71;
+    color: #000;
+    font-weight: 900;
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.35);
 }
 
-#buy-controls .buy-btn:hover {
-    border-color: var(--primary);
-    color: #fff;
-    transform: translateY(-1px);
+#buy-controls .buy-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #ecf0f1;
+    transform: none;
+    border-color: transparent;
 }
 
 .section-header {
@@ -185,7 +200,59 @@
 }
 
 #building-list-container .upgrade {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(52, 152, 219, 0.15);
+    border-left: 3px solid var(--primary);
+    background: linear-gradient(100deg, rgba(52, 152, 219, 0.05) 0%, transparent 60%);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+#building-list-container .upgrade:hover:not(.locked-item) {
+    border-color: rgba(52, 152, 219, 0.5);
+    border-left-color: var(--primary);
+    background: linear-gradient(100deg, rgba(52, 152, 219, 0.1) 0%, transparent 60%);
+}
+
+#building-list-container .upgrade-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+#building-list-container .upgrade-bps {
+    color: #2ecc71;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 1px;
+}
+
+#building-list-container .upgrade-cost {
+    font-size: 0.8rem;
+    margin-top: 2px;
+    font-weight: 700;
+}
+
+#building-list-container .upgrade-count {
+    font-size: 1.15rem;
+    font-weight: 900;
+    min-width: 34px;
+    text-align: center;
+    background: rgba(52, 152, 219, 0.12);
+    border: 1px solid rgba(52, 152, 219, 0.25);
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: #5dade2;
+    line-height: 1;
+}
+
+#building-list-container .buy-btn {
+    min-width: 80px;
+    height: 34px;
+    font-size: 0.78rem;
+    padding: 0 10px;
+    border-radius: 6px;
 }
 
 .upgrade:hover,
@@ -277,12 +344,39 @@
     border-color: #4a6582;
     border-style: dashed;
     background-color: rgba(20, 30, 40, 0.4);
+    gap: 14px;
+}
+
+.locked-item .upgrade-details {
+    flex: 0 0 160px;
+    min-width: 0;
+}
+
+.locked-item .upgrade-actions {
+    display: none;
+}
+
+.locked-item .upgrade-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.locked-item .upgrade-desc {
+    white-space: normal;
+    display: block;
+    margin-top: 2px;
 }
 
 .locked-item .progress-bar-container {
     opacity: 1;
     filter: none;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    flex: 1;
+    width: auto;
+    margin-top: 0;
+    align-self: center;
 }
 
 /* --- OGGETTI DISPONIBILI (Focus) --- */
@@ -305,44 +399,60 @@
     padding: 10px 15px 40px 15px;
 }
 
-/* Grid Layout per le liste (Click e Migliorie) */
+/* Lista singola colonna (Click e Migliorie) */
 #click-upgrade-list,
 #enhancement-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .click-upgrade,
 .enhancement-upgrade {
-    flex-direction: column;
-    align-items: stretch;
-    height: 100%;
-    box-sizing: border-box;
-    margin-bottom: 0;
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    margin-bottom: 6px;
 }
 
 .upgrade .buy-btn,
 .click-upgrade .buy-btn,
 .enhancement-upgrade .buy-btn {
-    height: 32px;
-    font-size: 0.8rem;
+    height: 34px;
+    font-size: 0.78rem;
     min-width: 80px;
-    width: 100%;
-    margin-top: 8px;
+    width: auto;
+    padding: 0 10px;
+    margin-top: 0;
 }
 
 /* Varianti Colore */
 .click-upgrade {
-    border-color: #3e805d;
+    border: 1px solid rgba(46, 204, 113, 0.15);
+    border-left: 3px solid #2ecc71;
+    background: linear-gradient(100deg, rgba(46, 204, 113, 0.05) 0%, transparent 60%);
+}
+
+.click-upgrade:hover:not(.purchased):not(.locked-item) {
+    border-color: rgba(46, 204, 113, 0.4);
+    border-left-color: #2ecc71;
+    background: linear-gradient(100deg, rgba(46, 204, 113, 0.1) 0%, transparent 60%);
 }
 
 .click-upgrade .buy-btn {
     background-color: #2ecc71;
+    color: #000;
 }
 
 .enhancement-upgrade {
-    border-color: #1abc9c;
+    border: 1px solid rgba(26, 188, 156, 0.15);
+    border-left: 3px solid #1abc9c;
+    background: linear-gradient(100deg, rgba(26, 188, 156, 0.05) 0%, transparent 60%);
+}
+
+.enhancement-upgrade:hover:not(.purchased):not(.locked-item) {
+    border-color: rgba(26, 188, 156, 0.4);
+    border-left-color: #1abc9c;
+    background: linear-gradient(100deg, rgba(26, 188, 156, 0.1) 0%, transparent 60%);
 }
 
 .enhancement-upgrade .upgrade-name {
@@ -351,27 +461,31 @@
 
 .enhancement-upgrade .buy-btn {
     background-color: #1abc9c;
+    color: #000;
 }
 
 /* Prestigio */
 .prestige-upgrade {
-    background: var(--bg-panel);
-    border: 1px solid #b7950b;
+    background: linear-gradient(100deg, rgba(241, 196, 15, 0.05) 0%, transparent 60%);
+    border: 1px solid rgba(241, 196, 15, 0.15);
+    border-left: 3px solid #f1c40f;
     box-shadow: none;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 15px;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 6px;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 /* Hover Effect (Solo se NON acquistato) */
 .prestige-upgrade:not(.purchased):hover {
-    border-color: #f1c40f;
-    background-color: rgba(241, 196, 15, 0.05);
-    transform: translateY(-1px);
+    border-color: rgba(241, 196, 15, 0.4);
+    border-left-color: #f1c40f;
+    background: linear-gradient(100deg, rgba(241, 196, 15, 0.1) 0%, transparent 60%);
+    transform: none;
 }
 
 /* Bottoni Lab (Stato Normale: Oro) */
@@ -379,11 +493,28 @@
     background: linear-gradient(to bottom, #f1c40f, #d4ac0d);
     color: #1a1a1a;
     border: 1px solid #b7950b;
-    min-width: 100px;
-    height: 32px;
-    font-size: 0.8rem;
+    min-width: 80px;
+    height: 34px;
+    font-size: 0.78rem;
+    padding: 0 10px;
+    border-radius: 6px;
     margin: 0;
     font-weight: 800;
+    width: auto;
+}
+
+/* Count badge Lab - oro */
+.prestige-upgrade .upgrade-count {
+    font-size: 1.15rem;
+    font-weight: 900;
+    min-width: 34px;
+    text-align: center;
+    background: rgba(241, 196, 15, 0.12);
+    border: 1px solid rgba(241, 196, 15, 0.25);
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: #f1c40f;
+    line-height: 1;
 }
 
 .prestige-upgrade .buy-btn:disabled {
@@ -592,25 +723,51 @@
     text-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
 }
 
-@media screen and (max-width: 1360px) {
+/* --- STILI QUANTUM LAB --- */
+.buy-btn.quantum-btn {
+    background: linear-gradient(to bottom, #9b59b6, #732d91);
+    color: #fff;
+    border: 1px solid #5b247a;
+    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+}
 
-    #click-upgrade-list,
-    #enhancement-list {
-        grid-template-columns: 1fr;
-    }
+.buy-btn.quantum-btn:hover:not(:disabled):not(.owned) {
+    background: linear-gradient(to bottom, #a569bd, #8e44ad);
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.8);
+    border-color: #d2b4de;
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+}
+
+.prestige-upgrade.quantum-card {
+    border: 1px solid rgba(142, 68, 173, 0.15);
+    border-left: 3px solid #8e44ad;
+    background: linear-gradient(100deg, rgba(155, 89, 182, 0.05) 0%, transparent 60%);
+}
+
+.prestige-upgrade.quantum-card:not(.purchased):hover {
+    border-color: rgba(142, 68, 173, 0.4);
+    border-left-color: #8e44ad;
+    background: linear-gradient(100deg, rgba(155, 89, 182, 0.1) 0%, transparent 60%);
+}
+
+.prestige-upgrade.quantum-card .upgrade-name,
+.prestige-upgrade.quantum-card .upgrade-cost {
+    color: #9b59b6;
+}
+
+.prestige-upgrade.quantum-card .upgrade-count {
+    background: rgba(155, 89, 182, 0.12);
+    border: 1px solid rgba(155, 89, 182, 0.25);
+    color: #9b59b6;
 }
 
 @media screen and (max-width: 1366px) {
 
-    #click-upgrade-list,
-    #enhancement-list {
-        grid-template-columns: 1fr;
-    }
-
     .upgrade,
     .click-upgrade,
     .enhancement-upgrade {
-        padding: 8px;
+        padding: 8px 12px;
     }
 
     .upgrade-name {

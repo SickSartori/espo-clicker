@@ -1,174 +1,407 @@
 /* code/css/modals-arcade.css */
 
-/* --- STRUTTURA CABINATO (Pulita & Widescreen) --- */
 .arcade-cabinet {
-    background-color: #111;
+    background-color: #050505;
     border: 4px solid #2c3e50;
-    box-shadow: 0 0 40px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 50px rgba(52, 152, 219, 0.3), inset 0 0 20px #000;
     border-radius: 20px;
-    /* MODIFICA: Larghezza aumentata a 850px per widescreen */
-    max-width: 850px; 
+    max-width: 900px;
     width: 95%;
     overflow: hidden;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-heading);
     color: #fff;
     position: relative;
     display: flex;
     flex-direction: column;
 }
 
-/* Header semplice (stile originale) */
 .arcade-header {
-    background: #000;
-    padding: 20px;
+    background: linear-gradient(to bottom, #151b22, #050505);
+    padding: 25px;
     text-align: center;
-    border-bottom: 2px solid #333;
+    border-bottom: 3px solid #222;
     position: relative;
     z-index: 1000;
     flex-shrink: 0;
 }
 
+/* NUOVO EFFETTO NEON PULITO */
 .arcade-title-neon {
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-heading);
     font-weight: 900;
-    font-size: 2rem;
-    color: #f1c40f;
-    text-shadow: 0 0 10px #e67e22;
+    font-size: 2.2rem;
+    color: #fff;
+    text-shadow:
+        0 0 5px #fff,
+        0 0 15px #3498db,
+        0 0 30px #3498db,
+        0 0 50px #3498db;
     letter-spacing: 4px;
     line-height: 1;
-}
-
-.arcade-subtitle {
-    font-size: 0.8rem;
-    color: #3498db;
-    letter-spacing: 2px;
-    margin-top: 5px;
+    margin: 0;
     text-transform: uppercase;
 }
 
 .arcade-close {
-    color: #e74c3c;
+    color: #555;
     top: 15px;
-    right: 15px;
+    right: 20px;
     opacity: 0.8;
     z-index: 1001;
 }
 
 .arcade-close:hover {
-    opacity: 1;
+    color: #e74c3c;
     text-shadow: 0 0 10px #e74c3c;
 }
 
-/* --- CONTENUTO --- */
+/* CONTENITORE CON SCANLINES GLOBALI LEGGERE */
 .arcade-screen-container {
-    padding: 20px;
+    padding: 0;
     background: #0a0a0a;
     flex-grow: 1;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    min-height: 450px;
+    overflow: hidden;
+    position: relative;
 }
 
-/* Griglia Giochi */
-.arcade-games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-    width: 100%;
-    max-width: 800px;
-}
-
-/* Card Stile Originale */
-.arcade-game-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid #444;
-    border-radius: 10px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.arcade-game-card:hover {
-    border-color: #2ecc71;
-    background: rgba(46, 204, 113, 0.1);
-    transform: translateY(-3px);
-}
-
-.arcade-game-card.locked {
+.global-crt-filter::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+    background-size: 100% 4px;
+    z-index: 900;
+    pointer-events: none;
+    /* Permette di cliccare attraverso il filtro */
     opacity: 0.5;
-    cursor: not-allowed;
-    border-style: dashed;
 }
 
-/* Thumbnails */
-.game-thumb {
-    width: 60px;
-    height: 60px;
+/* --- LAYOUT SPLIT --- */
+.arcade-split-layout {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100%;
+    flex-grow: 1;
+    position: relative;
+    z-index: 5;
+    /* Sotto le scanlines globali */
+}
+
+/* Menu a sinistra */
+.arcade-menu-list {
+    flex: 0 0 35%;
+    background: #111;
+    border-right: 3px solid #222;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.arcade-menu-item {
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #7f8c8d;
+    cursor: pointer;
+    border-left: 5px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-transform: uppercase;
+    position: relative;
+}
+
+.arcade-menu-item i {
+    font-size: 1.3rem;
+    width: 25px;
+    text-align: center;
+}
+
+.arcade-menu-item:hover:not(.locked) {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.arcade-menu-item.active {
+    background: rgba(52, 152, 219, 0.15);
+    color: #fff;
+    border-left: 5px solid #3498db;
+    box-shadow: inset 0 0 20px rgba(52, 152, 219, 0.1);
+}
+
+.arcade-menu-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #050505;
+    pointer-events: none;
+}
+
+.locked-badge {
+    position: absolute;
+    right: 15px;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+/* Monitor a destra */
+.arcade-preview-monitor {
+    flex: 1;
     background: #000;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    margin-bottom: 10px;
-    border: 1px solid #333;
-    color: #fff;
+    padding: 40px;
+    text-align: center;
 }
 
-.snake-theme .game-thumb { 
-    color: #2ecc71; 
-    border-color: #2ecc71; 
+/* =========================================
+   IL FILTRO CRT VERO E PROPRIO (Usato nell'anteprima e nel Canvas del gioco)
+   ========================================= */
+.crt-effect {
+    position: relative;
+    overflow: hidden;
 }
 
-.game-title {
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: #fff;
-    margin-bottom: 4px;
+/* Scanlines marcate per i giochi/anteprima */
+.crt-effect::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+    z-index: 10;
+    background-size: 100% 4px;
+    pointer-events: none;
 }
 
-.game-desc {
-    font-size: 0.7rem;
-    color: #aaa;
+/* Vignettatura (L'ombra curva interna del tubo catodico) e riflesso */
+.crt-effect::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.05);
+    z-index: 11;
+    pointer-events: none;
+    animation: crtFlicker 0.15s infinite;
 }
 
-.arcade-play-btn {
-    background: #3498db;
-    color: #fff;
-    border: none;
-    padding: 6px 0;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    width: 100%;
-    margin-top: 10px;
-    cursor: pointer;
+@keyframes crtFlicker {
+    0% {
+        opacity: 0.95;
+    }
+
+    50% {
+        opacity: 0.98;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
-.arcade-game-card:hover .arcade-play-btn {
-    background: #2980b9;
-}
-
-/* Footer Minimal (Senza Insert Coin) */
-.arcade-footer {
-    background: #050505;
-    padding: 10px 20px;
+.preview-content {
+    position: relative;
+    z-index: 5;
     display: flex;
-    justify-content: center; /* Centrato */
+    flex-direction: column;
     align-items: center;
-    border-top: 2px solid #333;
-    font-family: monospace;
-    font-size: 0.9rem;
-    flex-shrink: 0;
 }
 
-.highscore-ticker {
-    color: #e74c3c;
+#preview-icon {
+    font-size: 4.5rem;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 15px currentColor);
+}
+
+#preview-title {
+    font-family: 'Courier New', monospace;
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0 0 15px 0;
+    text-shadow: 0 0 10px currentColor;
+    letter-spacing: 2px;
+}
+
+#preview-desc {
+    color: #bdc3c7;
+    font-size: 1rem;
+    max-width: 80%;
+    line-height: 1.4;
+    margin-bottom: 30px;
+    font-family: var(--font-heading);
+}
+
+.preview-stats {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1.2rem;
     font-weight: bold;
+    color: #f1c40f;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+    font-family: 'Courier New', monospace;
+}
+
+.insert-coin-text {
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    animation: flashText 1s infinite step-end;
+}
+
+/* =========================================
+   UI DEI GIOCHI IN ESECUZIONE 
+   ========================================= */
+
+#arcade-active-game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    padding: 10px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+}
+
+/* Animazione di Accensione TV CRT */
+.crt-turn-on {
+    animation: turn-on 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes turn-on {
+    0% {
+        transform: scale(1, 0.001);
+        filter: brightness(10);
+    }
+
+    40% {
+        transform: scale(1, 0.001);
+        filter: brightness(10);
+    }
+
+    70% {
+        transform: scale(1, 1);
+        filter: brightness(1);
+    }
+
+    100% {
+        transform: scale(1, 1);
+        filter: brightness(1);
+    }
+}
+
+/* Barra superiore universale dei giochi */
+.arcade-game-topbar {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    background: #111;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 8px 15px;
+    box-sizing: border-box;
+}
+
+.arcade-game-topbar .arcade-btn.secondary {
+    margin: 0;
+}
+
+/* Display Punteggi Standardizzato */
+.arcade-stats-box {
+    display: flex;
+    gap: 15px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1rem;
+    background: #050505;
+    padding: 5px 15px;
+    border-radius: 4px;
+    border: 1px solid #222;
+}
+
+.arcade-stats-box .stat {
+    color: #7f8c8d;
+}
+
+.arcade-stats-box .val-score {
+    color: #2ecc71;
+    text-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
+}
+
+.arcade-stats-box .val-record {
+    color: #e74c3c;
     text-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
+
+.arcade-stats-box .val-hp {
+    color: #f1c40f;
+}
+
+@keyframes flashText {
+
+    0%,
+    49% {
+        opacity: 1;
+    }
+
+    50%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Mobile fallback */
+@media (max-width: 768px) {
+    .arcade-split-layout {
+        flex-direction: column;
+    }
+
+    .arcade-menu-list {
+        flex: none;
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 3px solid #222;
+    }
+
+    .arcade-preview-monitor {
+        flex: 1;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .arcade-game-topbar {
+        flex-direction: column;
+        gap: 10px;
+    }
 }

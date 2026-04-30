@@ -17,56 +17,76 @@ if (!isset($data['saveData'])) {
 // --- Dati in Arrivo ---
 $rawScore = isset($data['score']) ? (string)$data['score'] : "0";
 $rawPrestige = isset($data['prestige']) ? (string)$data['prestige'] : "0";
+$rawEquippedSkin = isset($data['equippedSkin']) ? (string)$data['equippedSkin'] : 'default';
+$rawFormattazioni = isset($data['totalFormattazioni']) ? (int)$data['totalFormattazioni'] : 0;
 
 // Cleanup base
 if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { $rawScore = "0"; }
 
-// Hash check (Mantieni la tua logica di sicurezza esistente qui)
+// RECUPERO TOKEN DINAMICO DI SESSIONE
+$sessionToken = isset($_SESSION['save_token']) ? $_SESSION['save_token'] : '';
+
+if (empty($sessionToken)) {
+    echo json_encode(["status" => "warning", "message" => "Save rejected: Session expired. Please reload."]);
+    exit;
+}
+
+// Hash check dinamico
 $clientHash = isset($data['hash']) ? $data['hash'] : '';
-$dataString = $rawScore . '-' . $rawPrestige . '-' . GAME_SECRET_KEY;
+$dataString = $rawScore . '-' . $rawPrestige . '-' . $sessionToken;
 $serverHash = hash(HASH_ALGO, $dataString);
 
 if (!hash_equals($serverHash, $clientHash)) {
-    // ... Log errore hash ...
     echo json_encode(["status" => "warning", "message" => "Save rejected: Integrity check failed."]);
     exit;
 }
 
-// --- NUOVO: CONTROLLO ANTI-ROLLBACK ---
-// Recuperiamo il punteggio attuale dal DB per confrontarlo
-$stmtCheck = $conn->prepare("SELECT score FROM $table_leaderboard WHERE username = ?");
+// --- CONTROLLO ANTI-ROLLBACK ---
+$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni, prestigeLevel FROM $table_leaderboard WHERE username = ?");
 $stmtCheck->bind_param("s", $user['username']);
 $stmtCheck->execute();
 $resCheck = $stmtCheck->get_result();
+
 $currentDbScore = "0";
+$currentDbFormat = 0;
+$currentDbPrestige = 0;
+
 if ($row = $resCheck->fetch_assoc()) {
     $currentDbScore = $row['score'];
+    $currentDbFormat = (int)$row['totalFormattazioni'];
+    $currentDbPrestige = (int)$row['prestigeLevel'];
 }
 $stmtCheck->close();
 
-// Funzione per confrontare numeri molto grandi (stringhe)
 function isNewScoreHigher($new, $old) {
-    // Rimuovi eventuali notazioni scientifiche se presenti o gestiscile, 
-    // ma assumendo numeri interi salvati come stringhe:
+    $new = strtolower(trim($new));
+    $old = strtolower(trim($old));
+    if (strpos($new, 'e') !== false || strpos($old, 'e') !== false) {
+        return (float)$new >= (float)$old;
+    }
     if (strlen($new) > strlen($old)) return true;
     if (strlen($new) < strlen($old)) return false;
     return strcmp($new, $old) >= 0;
 }
 
-// SE il nuovo punteggio è INFERIORE a quello nel DB, RIFIUTIAMO il salvataggio
-// Nota: Questo non impedisce i reset manuali fatti tramite reset_progress.php,
-// protegge solo i salvataggi automatici accidentali.
-if (!isNewScoreHigher($rawScore, $currentDbScore)) {
-    echo json_encode([
-        "status" => "conflict", 
-        "message" => "Cloud save is newer. Please reload."
-    ]);
+// LOGICA V3: Formattazioni > Prestige > Score (gerarchia completa anti-race)
+if ($rawFormattazioni < $currentDbFormat) {
+    // Salvataggio vecchio pre-formattazione
+    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Format). Please reload."]);
     exit;
+} else if ($rawFormattazioni == $currentDbFormat) {
+    if ((int)$rawPrestige < $currentDbPrestige) {
+        // Auto-save stale arrivato dopo un prestige (race condition)
+        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Prestige). Please reload."]);
+        exit;
+    } else if ((int)$rawPrestige == $currentDbPrestige && !isNewScoreHigher($rawScore, $currentDbScore)) {
+        // Stessa run, ma score più basso (Rollback classico)
+        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Score). Please reload."]);
+        exit;
+    }
 }
 
 // --- SE IL CONTROLLO PASSA, SALVA TUTTO ---
-
-// 1. Aggiorna JSON Utente
 $saveJson = json_encode($data['saveData']);
 $stmt = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE id = ?");
 $stmt->bind_param("si", $saveJson, $user['id']);
@@ -79,14 +99,16 @@ if (!$stmt->execute()) {
 
 // 2. Aggiorna Leaderboard
 $stmtLb = $conn->prepare("
-    INSERT INTO $table_leaderboard (username, score, prestigeLevel, timestamp) 
-    VALUES (?, ?, ?, NOW())
+    INSERT INTO $table_leaderboard (username, score, prestigeLevel, equippedSkin, totalFormattazioni, timestamp) 
+    VALUES (?, ?, ?, ?, ?, NOW())
     ON DUPLICATE KEY UPDATE 
         score = VALUES(score), 
         prestigeLevel = VALUES(prestigeLevel),
+        equippedSkin = VALUES(equippedSkin),
+        totalFormattazioni = VALUES(totalFormattazioni),
         timestamp = NOW()
 ");
-$stmtLb->bind_param("sss", $user['username'], $rawScore, $rawPrestige);
+$stmtLb->bind_param("ssssi", $user['username'], $rawScore, $rawPrestige, $rawEquippedSkin, $rawFormattazioni);
 $stmtLb->execute();
 
 echo json_encode(["status" => "success", "message" => "Saved and Verified"]);

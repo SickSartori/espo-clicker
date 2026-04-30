@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
 
             try {
+                // Forza salvataggio e ATTENDI la risposta del server prima di caricare
+                if (Game.saveGame) {
+                    try { await Game.saveGame(); } catch(e) {}
+                    // Attendi che il DB processi il write prima del read
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
                 const response = await fetch('php/get_leaderboard.php?nocache=' + Date.now());
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
@@ -37,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Costruisci la lista HTML
                 leaderboardList.innerHTML = ''; // Pulisci
+                const currentUsername = sessionStorage.getItem('espooUser');
                 scores.forEach((entry, index) => {
                     const item = document.createElement('div');
-                    // Aggiungi una classe speciale se è la top 3 per lo styling CSS
                     let rankClass = '';
                     if (index === 0) rankClass = 'rank-1';
                     else if (index === 1) rankClass = 'rank-2';
@@ -49,17 +56,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Gestione Icona Rango
                     let rankDisplay = `#${index + 1}`;
-                    if (index === 0) rankDisplay = '<i class="fa-solid fa-trophy" style="color: #f1c40f;"></i>'; // Oro
-                    if (index === 1) rankDisplay = '<i class="fa-solid fa-medal" style="color: #bdc3c7;"></i>'; // Argento
-                    if (index === 2) rankDisplay = '<i class="fa-solid fa-medal" style="color: #cd7f32;"></i>'; // Bronzo
+                    if (index === 0) rankDisplay = '<i class="fa-solid fa-trophy" style="color: #f1c40f;"></i>';
+                    if (index === 1) rankDisplay = '<i class="fa-solid fa-medal" style="color: #bdc3c7;"></i>';
+                    if (index === 2) rankDisplay = '<i class="fa-solid fa-medal" style="color: #cd7f32;"></i>';
 
-                    // Gestione Livello (Prestigio)
+                    // Gestione Livello
                     let level = entry.prestigeLevel || 0;
-                    // Badge colorato per il livello
                     let prestigeBadge = `<span class="level-badge">LIV. ${level}</span>`;
 
-                    // Controlla se è l'utente corrente (opzionale, richiede di sapere l'username locale)
-                    const currentUsername = sessionStorage.getItem('espooUser');
+                    // ---  GESTIONE FOTO PROFILO (SKIN) ---
+                    let skinId = entry.equippedSkin || 'default';
+
+                    // Per l'utente corrente, usa la skin locale (potrebbe non essere ancora salvata nel DB)
+                    if (entry.username === currentUsername && Game.getGameState) {
+                        const localState = Game.getGameState();
+                        if (localState && localState.skins && localState.skins.current) {
+                            skinId = localState.skins.current;
+                        }
+                    }
+
+                    // Recuperiamo i dati della skin (se esiste, altrimenti default)
+                    let skinData = window.gameData.skins[skinId] || window.gameData.skins['default'];
+                    let avatarImg = skinData.img ? `assets/image/${skinData.img}` : 'assets/image/espo.webp';
+
+                    // Colore del bordo in base alla rarità
+                    const rColors = {
+                        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+                        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+                    };
+                    let borderColor = rColors[skinData.rarity] || rColors['common'];
+
+                    let avatarHTML = `<img src="${avatarImg}" class="leaderboard-avatar" style="border-color: ${borderColor};">`;
+                    // ----------------------------------------
+
+                    // Gestione Formattazioni (NG+)
+                    let formattazioni = entry.totalFormattazioni ? parseInt(entry.totalFormattazioni) : 0;
+                    let formatBadge = '';
+                    if (formattazioni > 0) {
+                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="Formattazioni (NG+)"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
+                    }
+
                     if (entry.username === currentUsername) {
                         item.classList.add('is-me');
                     }
@@ -67,9 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.innerHTML = `
                         <div class="lb-left">
                             <span class="leaderboard-rank">${rankDisplay}</span>
+                            ${avatarHTML}
                             <div class="lb-user-info">
                                 <span class="leaderboard-name">${escapeHTML(entry.username)}</span>
-                                ${prestigeBadge}
+                                <div class="lb-badges">
+                                    ${prestigeBadge}
+                                    ${formatBadge}
+                                </div>
                             </div>
                         </div>
                         <span class="leaderboard-score">${Game.formatNumber(entry.score)} <i class="fa-solid fa-bug"></i></span>

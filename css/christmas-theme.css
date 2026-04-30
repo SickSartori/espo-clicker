@@ -76,29 +76,8 @@ body.theme-christmas.rick-rolling .game-column {
     background: transparent;
 }
 
-/* --- ANIMAZIONI SPECIFICHE --- */
-.christmas-title {
-    font-size: 4rem;
-    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    animation: pulseButton 1s infinite;
-}
 
-.christmas-subtitle {
-    font-size: 1.5rem;
-}
 
-@media (max-width: 768px) {
-    .christmas-title {
-        font-size: 8vw;
-        white-space: nowrap;
-        text-align: center;
-    }
-
-    .christmas-subtitle {
-        font-size: 1rem;
-        padding: 0 20px;
-    }
-}
 
 /* --- EFFETTO NEVE (Overlay Globale) --- */
 .snow_container {

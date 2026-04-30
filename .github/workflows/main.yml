@@ -24,10 +24,20 @@ jobs:
       - name: 🔧 Set config to PRODUCTION
         run: |
           echo "Impostazione ambiente su PRODUCTION..."
-          jq '.instancename = "production"' php/config.json > php/config.tmp && mv php/config.tmp php/config.json
-          
-          # Verifica nei log (opzionale)
-          grep "instancename" php/config.json
+
+          # Imposta instanceName=production in config.php
+          sed -i 's/"instanceName" => "dev"/"instanceName" => "production"/' php/config.php
+
+          # Estrae devVersion e prodVersion da config.php e aggiorna sw.js
+          DEV_VER=$(grep -oP '"devVersion" => "\K[^"]+' php/config.php)
+          PROD_VER=$(grep -oP '"prodVersion" => "\K[^"]+' php/config.php)
+          echo "Sostituzione versione SW: $DEV_VER → $PROD_VER"
+          sed -i "s/espo-v${DEV_VER}/espo-v${PROD_VER}/g" sw.js
+          sed -i "s/v=${DEV_VER}/v=${PROD_VER}/g" sw.js
+
+          # Verifica
+          grep "instanceName" php/config.php
+          grep "CACHE_VERSION" sw.js
 
       # Step 3: Rimuovi file di sviluppo/cheat
       - name: 🗑️ Rimuovi file di debug (cheatboard.js)
@@ -46,3 +56,22 @@ jobs:
             **/.git*/**
             .github/**
             **/.DS_Store
+            **/Thumbs.db
+            .gitignore
+            README.md
+            code.md
+            game-meta.md
+            build.js
+            bump-version.js
+            deploy.bat
+            package.json
+            package-lock.json
+            node_modules/**
+            .claude/**
+            dist/**/*.map
+            php/r2-config.example.php
+            php/r2-cors-policy.json
+            css/concat.php
+            assets/sounds/**
+            assets/video/**
+            music/songs/**

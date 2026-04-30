@@ -1,6 +1,5 @@
 (function () {
     // --- 0. Stato Globale Cheat ---
-    // Usiamo Decimal anche qui per coerenza nei calcoli
     window.cheatBPSBonus = new Decimal(0);
 
     // --- 1. Hook nella Logica di Gioco ---
@@ -9,39 +8,37 @@
     window.recalculateCPS = function () {
         originalRecalculateCPS();
 
-        // Controllo esistenza BPS
         if (typeof bps !== 'undefined') {
-            // Usa .add() invece di += per mantenere bps come Decimal
-            // Se bps è diventato un numero per errore, lo riconvertiamo
             if (!(bps instanceof Decimal)) {
                 bps = new Decimal(bps || 0);
             }
-
             bps = bps.add(window.cheatBPSBonus);
-
-            // Sicurezza: non andare sotto zero
             if (bps.lt(0)) bps = new Decimal(0);
         }
     };
 
     const styles = `
-        #cheatboard-container { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 350px; 
-            height: 100vh; 
-            background-color: rgba(10, 10, 10, 0.95); 
-            backdrop-filter: blur(10px); 
-            border-right: 1px solid #333; 
-            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6); 
-            z-index: 99999; 
-            transform: translateX(-100%); 
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
-            color: #e0e0e0; 
-            font-family: 'Consolas', 'Monaco', monospace; 
-            display: flex; 
-            flex-direction: column; 
+        #cheatboard-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 350px;
+            height: 100vh;
+            height: 100dvh; /* iOS: viewport visibile (URL bar dinamica) */
+            padding-top: env(safe-area-inset-top); /* notch/status bar */
+            padding-bottom: env(safe-area-inset-bottom); /* home indicator */
+            background-color: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #333;
+            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
         #cheatboard-container.open { 
             transform: translateX(0); 
@@ -93,16 +90,22 @@
             gap: 10px; 
             letter-spacing: 1px; 
         }
-        #cheatboard-close { 
-            cursor: pointer; 
-            color: #ff4757; 
-            font-size: 1.4rem; 
-            padding: 5px; 
-            transition: transform 0.2s; 
+        #cheatboard-close {
+            cursor: pointer;
+            color: #ff4757;
+            font-size: 1.8rem;
+            padding: 8px 12px; /* touch target 44x44 minimo Apple HIG */
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
         }
-        #cheatboard-close:hover { 
-            transform: scale(1.1); 
-            color: #ff6b81; 
+        #cheatboard-close:hover,
+        #cheatboard-close:active {
+            transform: scale(1.1);
+            color: #ff6b81;
         }
         #cheatboard-content { 
             padding: 20px; 
@@ -123,7 +126,7 @@
             gap: 12px; 
         }
         .cheat-group-title { 
-               font-size: 0.7rem; 
+            font-size: 0.7rem; 
             color: #888; 
             text-transform: uppercase; 
             font-weight: 700; 
@@ -183,89 +186,40 @@
         .cheat-btn:active { 
             transform: translateY(1px); 
         }
-        .cheat-btn.primary { 
-            border-color: #00ff9d; 
-            color: #00ff9d; 
-            background: rgba(0, 255, 157, 0.05); 
-        }
-        .cheat-btn.primary:hover { 
-            background: rgba(0, 255, 157, 0.15); 
-        }
-        .cheat-btn.danger { 
-            border-color: #ff4757; 
-            color: #ff4757; 
-            background: rgba(255, 71, 87, 0.05); 
-        }
-        .cheat-btn.danger:hover { 
-            background: rgba(255, 71, 87, 0.15); 
-        }
-        .cheat-btn.gold { 
-            border-color: #f1c40f; 
-            color: #f1c40f; 
-            background: rgba(241, 196, 15, 0.05); 
-        }
-        .cheat-btn.gold:hover { 
-            background: rgba(241, 196, 15, 0.15); 
-        }
-        .cheat-btn.matrix { 
-            border-color: #0f0; 
-            color: #0f0; 
-            background: rgba(0, 255, 0, 0.05); 
-        }
-        .cheat-btn.matrix:hover { 
-            background: rgba(0, 255, 0, 0.15); 
-            text-shadow: 0 0 5px #0f0; 
-        }
-        .cheat-btn.info { 
-            border-color: #3498db; 
-            color: #3498db; 
-            background: rgba(52, 152, 219, 0.05); 
-        }
-        .cheat-btn.info:hover { 
-            background: rgba(52, 152, 219, 0.15); 
-        }
-        .cheat-btn.chaos { 
-            border-color: #9b59b6; 
-            color: #9b59b6; 
-            background: rgba(155, 89, 182, 0.05); 
-        }
-        .cheat-btn.chaos:hover { 
-            background: rgba(155, 89, 182, 0.15); 
-        }
-        #cheatboard-content::-webkit-scrollbar { 
-            width: 5px; 
-        }
-        #cheatboard-content::-webkit-scrollbar-thumb { 
-            background: #333; 
-            border-radius: 3px; 
-        }
+        .cheat-btn.primary { border-color: #00ff9d; color: #00ff9d; background: rgba(0, 255, 157, 0.05); }
+        .cheat-btn.primary:hover { background: rgba(0, 255, 157, 0.15); }
+        .cheat-btn.danger { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.05); }
+        .cheat-btn.danger:hover { background: rgba(255, 71, 87, 0.15); }
+        .cheat-btn.gold { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
+        .cheat-btn.gold:hover { background: rgba(241, 196, 15, 0.15); }
+        .cheat-btn.matrix { border-color: #0f0; color: #0f0; background: rgba(0, 255, 0, 0.05); }
+        .cheat-btn.matrix:hover { background: rgba(0, 255, 0, 0.15); text-shadow: 0 0 5px #0f0; }
+        .cheat-btn.info { border-color: #3498db; color: #3498db; background: rgba(52, 152, 219, 0.05); }
+        .cheat-btn.info:hover { background: rgba(52, 152, 219, 0.15); }
+        .cheat-btn.chaos { border-color: #e67e22; color: #e67e22; background: rgba(230, 126, 34, 0.05); }
+        .cheat-btn.chaos:hover { background: rgba(230, 126, 34, 0.15); }
+        
+        /* NUOVO STILE: QUANTUM */
+        .cheat-btn.quantum { border-color: #9b59b6; color: #9b59b6; background: rgba(155, 89, 182, 0.05); }
+        .cheat-btn.quantum:hover { background: rgba(155, 89, 182, 0.15); box-shadow: 0 0 10px rgba(155, 89, 182, 0.3); }
+
+        #cheatboard-content::-webkit-scrollbar { width: 5px; }
+        #cheatboard-content::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         @media only screen and (max-width: 768px) {
-            #cheatboard-container { 
-                width: 92%; 
-                max-width: none; 
+            #cheatboard-container { width: 92%; max-width: none; }
+            #cheatboard-handle {
+                top: calc(140px + env(safe-area-inset-top));
+                right: -35px;
+                width: 35px;
+                height: 40px;
             }
-            #cheatboard-handle { 
-                top: 140px; 
-                right: -35px; 
-                width: 35px; 
-                height: 40px; 
-            }
-            .control-row { 
-                flex-wrap: wrap; 
-            }
-            .cheat-input { 
-                flex: 1 1 100%; 
-                margin-bottom: 5px; 
-                height: 45px; 
-            }
-            .cheat-btn { 
-                flex: 1 1 100%; 
-                height: 50px; 
-                font-size: 0.9rem; 
-            }
-            .control-row .cheat-btn:not(:first-child) { 
-                flex: 1; 
-            }
+            /* Header: padding più generoso per la X + freccia chiusura */
+            #cheatboard-header { padding: 14px 16px; }
+            #cheatboard-close { font-size: 2rem; padding: 10px 14px; }
+            .control-row { flex-wrap: wrap; }
+            .cheat-input { flex: 1 1 100%; margin-bottom: 5px; height: 45px; }
+            .cheat-btn { flex: 1 1 100%; height: 50px; font-size: 0.9rem; }
+            .control-row .cheat-btn:not(:first-child) { flex: 1; }
         }
     `;
 
@@ -284,96 +238,113 @@
             <span id="cheatboard-close"><i class="fa-solid fa-xmark"></i></span>
         </div>
         <div id="cheatboard-content">
-            
+
             <div class="cheat-group">
                 <div class="cheat-group-title">Risorse</div>
                 <div class="control-row">
                     <input type="text" id="cheat-bugs-input" class="cheat-input" placeholder="Bugs" value="1000000">
-                    <button id="btn-bugs-add" class="cheat-btn primary" title="Aggiunge Bug al tuo portafoglio"><i class="fa-solid fa-plus"></i> Bug</button>
+                    <button id="btn-bugs-add" class="cheat-btn primary" title="Aggiunge Bug al portafoglio"><i class="fa-solid fa-plus"></i> Bug</button>
                 </div>
                 <div class="control-row">
                     <input type="text" id="cheat-tokens-input" class="cheat-input" placeholder="Token" value="100">
-                    <button id="btn-tokens-add" class="cheat-btn gold" title="Aggiunge Token Prestigio per il Laboratorio"><i class="fa-solid fa-coins"></i> Token</button>
+                    <button id="btn-tokens-add" class="cheat-btn gold" title="Aggiunge Token Lab"><i class="fa-solid fa-coins"></i> Token</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco in avanti"><i class="fa-solid fa-forward"></i> Skip 1h</button>
+                    <input type="text" id="cheat-qbits-input" class="cheat-input" placeholder="Q-Bits" value="10">
+                    <button id="btn-qbits-add" class="cheat-btn quantum" title="Aggiunge Q-Bits"><i class="fa-solid fa-atom"></i> Q-Bits</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-time-warp" class="cheat-btn" title="Simula 1 ora di gioco"><i class="fa-solid fa-forward"></i> Skip 1h</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Statistiche</div>
-                <div class="control-row">
-                    <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
-                    <button id="btn-clicks-add" class="cheat-btn" title="Aumenta il contatore dei click manuali (utile per sblocchi)">Agg. Click</button>
-                </div>
+                <div class="cheat-group-title">Potenziamenti</div>
                 <div class="control-row">
                     <input type="text" id="cheat-bps-input" class="cheat-input" placeholder="BPS" value="1000">
-                    <button id="btn-bps-add" class="cheat-btn" title="Aggiunge un bonus piatto al BPS attuale">Bonus BPS</button>
+                    <button id="btn-bps-add" class="cheat-btn" title="Aggiunge un bonus BPS piatto">+BPS</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-bps-reset" class="cheat-btn danger" title="Azzera il bonus BPS aggiunto manualmente"><i class="fa-solid fa-rotate-left"></i> Reset BPS</button>
+                </div>
+                <div class="control-row">
+                    <input type="number" id="cheat-clicks-input" class="cheat-input" placeholder="Click" value="1000">
+                    <button id="btn-clicks-add" class="cheat-btn" title="Aumenta il contatore click">+Click</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-army-100" class="cheat-btn gold" title="+100 unità a tutti i team"><i class="fa-solid fa-users"></i> +100 Army</button>
+                    <button id="btn-random-chaos" class="cheat-btn chaos" title="Risorse casuali e sblocchi random"><i class="fa-solid fa-dice"></i> Chaos</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-god-mode" class="cheat-btn matrix" style="font-weight:900; letter-spacing:2px;" title="Risorse infinite, tutto sbloccato"><i class="fa-solid fa-bolt"></i> GOD MODE</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Shop & Power</div>
+                <div class="cheat-group-title">Progressione</div>
                 <div class="control-row">
-                    <button id="btn-unlock-shop" class="cheat-btn primary" title="Compra istantaneamente tutti gli upgrade e team disponibili">Sblocca Shop</button>
-                    <button id="btn-lock-shop" class="cheat-btn danger" title="Resetta lo stato di acquisto di tutti gli oggetti"> Blocca Shop</button>
+                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Score appena sopra la soglia prestige"><i class="fa-solid fa-rocket"></i> Promozione</button>
+                    <button id="btn-max-lab" class="cheat-btn gold" title="Porta tutti gli upgrade Lab al livello massimo"><i class="fa-solid fa-flask-vial"></i> Max Lab</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-army-100" class="cheat-btn gold" title="Aggiunge +100 unità a tutti i tipi di Team"><i class="fa-solid fa-users"></i> +100 Army</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-random-chaos" class="cheat-btn chaos" title="Aggiunge risorse casuali e sblocca cose a caso!"><i class="fa-solid fa-dice"></i> RANDOM</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-god-mode" class="cheat-btn matrix" style="font-weight:900; letter-spacing:2px;" title="Risorse infinite, tutto sbloccato, potenza massima"><i class="fa-solid fa-bolt"></i> GOD MODE</button>
+                    <button id="btn-format-ready" class="cheat-btn quantum" title="Soddisfa requisiti Formattazione (NG+)"><i class="fa-solid fa-meteor"></i> NG+ Ready</button>
+                    <button id="btn-add-format" class="cheat-btn quantum" title="+1 al contatore Formattazioni"><i class="fa-solid fa-plus"></i> +Format</button>
                 </div>
             </div>
 
             <div class="cheat-group">
-                <div class="cheat-group-title">Eventi e Glitch</div>
-                
+                <div class="cheat-group-title">Shop &amp; Sblocchi</div>
+                <div class="control-row">
+                    <button id="btn-unlock-shop" class="cheat-btn primary" title="Acquista tutti gli upgrade disponibili">Sblocca Shop</button>
+                    <button id="btn-lock-shop" class="cheat-btn danger" title="Resetta tutti gli acquisti">Blocca Shop</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-unlock-skins" class="cheat-btn primary" title="Sblocca tutte le skin">Sblocca Skin</button>
+                    <button id="btn-lock-skins" class="cheat-btn danger" title="Blocca tutte le skin">Blocca Skin</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-unlock-ach" class="cheat-btn primary" title="Sblocca tutti gli obiettivi">Sblocca Ach.</button>
+                    <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
+                </div>
+            </div>
+
+            <div class="cheat-group">
+                <div class="cheat-group-title">Eventi &amp; Glitch</div>
                 <div class="control-row">
                     <input type="number" id="cheat-404-input" class="cheat-input" placeholder="x" value="5" style="width: 50px; flex: 0.4;">
-                    <button id="btn-event-404" class="cheat-btn danger" title="Scatena l'evento Error 404 (Moltiplicatore)">404</button>
-                    <button id="btn-event-matrix" class="cheat-btn matrix" title="Attiva l'evento Matrix Hack">Matrix</button>
+                    <button id="btn-event-404" class="cheat-btn danger" title="Error 404 (moltiplicatore)">404</button>
+                    <button id="btn-event-matrix" class="cheat-btn matrix" title="Matrix Hack">Matrix</button>
                 </div>
-                
                 <div class="control-row">
                     <button id="btn-event-rick" class="cheat-btn danger" title="Never gonna give you up...">Rick</button>
-                    <button id="btn-event-ricardo" class="cheat-btn danger" title="Attiva il video Ricardo Milos">Ricardo</button>
+                    <button id="btn-event-ricardo" class="cheat-btn danger" title="Ricardo Milos">Ricardo</button>
+                    <button id="btn-event-britney" class="cheat-btn danger" title="Britney Espears">Britney</button>
                 </div>
-
                 <div class="control-row">
-                    <button id="btn-event-golden" class="cheat-btn gold" title="Fa apparire un Golden Bug istantaneamente"><i class="fa-solid fa-bug"></i> Golden Bug</button>
-                    <button id="btn-event-star" class="cheat-btn gold" title="Attiva evento Super Star"><i class="fa-solid fa-star"></i> Super Star</button>
+                    <button id="btn-event-golden" class="cheat-btn gold" title="Spawn Golden Bug"><i class="fa-solid fa-bug"></i> Golden Bug</button>
+                    <button id="btn-event-star" class="cheat-btn gold" title="Super Star mode"><i class="fa-solid fa-star"></i> Super Star</button>
                 </div>
-                 <div class="control-row">
-                    <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta il tempo di attesa di Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                <div class="control-row">
+                    <button id="btn-trigger-fury" class="cheat-btn chaos" title="Attiva Espo Fury (ignora cooldown)"><i class="fa-solid fa-fire"></i> Espo Fury</button>
+                    <button id="btn-reset-cooldown" class="cheat-btn" title="Resetta cooldown Espo Fury"><i class="fa-solid fa-clock-rotate-left"></i> Reset CD</button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-stop-event" class="cheat-btn danger" title="Ferma forzatamente l'evento in corso"><i class="fa-solid fa-stop"></i> Stop Evento</button>
                 </div>
             </div>
 
             <div class="cheat-group">
                 <div class="cheat-group-title">Dev Tools</div>
                 <div class="control-row">
-                    <button id="btn-prestige-ready" class="cheat-btn gold" title="Imposta lo score appena sopra la soglia per il prestigio"><i class="fa-solid fa-rocket"></i> Prestige Ready</button>
+                    <button id="btn-debug-mode" class="cheat-btn" title="Abilita/disabilita log console"><i class="fa-solid fa-bug"></i> Debug: <span id="debug-mode-label">OFF</span></button>
+                    <button id="btn-log-state" class="cheat-btn info" title="Stampa gameState in console (F12)"><i class="fa-solid fa-code"></i> Log State</button>
                 </div>
                 <div class="control-row">
-                    <button id="btn-log-state" class="cheat-btn info" title="Stampa lo stato del gioco nella console del browser (F12)"><i class="fa-solid fa-code"></i> Log State</button>
-                </div>
-            </div>
-
-            <div class="cheat-group">
-                <div class="cheat-group-title">Sblocchi & Reset</div>
-                <div class="control-row">
-                    <button id="btn-unlock-skins" class="cheat-btn primary" title="Sblocca tutte le skin nel guardaroba">Sblocca Skin</button>
-                    <button id="btn-unlock-ach" class="cheat-btn primary" title="Sblocca tutti gli obiettivi">Sblocca Ach.</button>
-                </div>
-                <div class="control-row">
-                    <button id="btn-lock-skins" class="cheat-btn danger" title="Blocca tutte le skin e resetta i relativi obiettivi">Blocca Skin</button>
-                     <button id="btn-lock-ach" class="cheat-btn danger" title="Blocca tutti gli obiettivi">Blocca Ach.</button>
+                    <button id="btn-force-save" class="cheat-btn info" title="Forza salvataggio cloud immediato"><i class="fa-solid fa-cloud-arrow-up"></i> Force Save</button>
                 </div>
                 <div class="control-row" style="margin-top: 10px;">
-                    <button id="btn-hard-reset" class="cheat-btn danger" style="border: 1px solid red; color: red;" title="CANCELLA TUTTO il salvataggio e ricarica"><i class="fa-solid fa-triangle-exclamation"></i> HARD RESET</button>
+                    <button id="btn-force-v2" class="cheat-btn quantum" title="Simula migrazione V1→V2"><i class="fa-solid fa-backward-fast"></i> V2 Migration</button>
+                    <button id="btn-hard-reset" class="cheat-btn danger" style="border-color: red; color: red;" title="CANCELLA TUTTO il salvataggio"><i class="fa-solid fa-triangle-exclamation"></i> RESET</button>
                 </div>
             </div>
 
@@ -383,7 +354,6 @@
     document.body.appendChild(container);
 
     // --- 4. Funzioni Helper ---
-    // Usiamo new Decimal per leggere gli input, così supporta "1e24"
     const getVal = (id) => {
         const val = document.getElementById(id).value;
         try {
@@ -393,7 +363,6 @@
         }
     };
 
-    // Per i campi che devono rimanere interi (come i click manuali)
     const getIntVal = (id) => parseInt(document.getElementById(id).value) || 0;
 
     const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
@@ -422,7 +391,7 @@
 
     // Aggiungi Bug
     document.getElementById('btn-bugs-add').addEventListener('click', () => {
-        const val = getVal('cheat-bugs-input'); // Ritorna Decimal
+        const val = getVal('cheat-bugs-input');
         gameState.score = gameState.score.add(val);
         gameState.totalScore = gameState.totalScore.add(val);
         gameState.lifetimeScore = gameState.lifetimeScore.add(val);
@@ -432,7 +401,7 @@
 
     // Aggiungi Token Lab
     document.getElementById('btn-tokens-add').addEventListener('click', () => {
-        const val = getVal('cheat-tokens-input'); // Ritorna Decimal
+        const val = getVal('cheat-tokens-input');
         gameState.prestigePoints = gameState.prestigePoints.add(val);
         if (gameState.lifetimePrestigePoints) {
             gameState.lifetimePrestigePoints = gameState.lifetimePrestigePoints.add(val);
@@ -444,22 +413,55 @@
         toast(`Aggiunti ${window.EspooClicker.formatNumber(val)} Token Lab`);
     });
 
+    // --- NUOVA LOGICA END-GAME ---
+
+    // Aggiungi Q-Bits
+    document.getElementById('btn-qbits-add').addEventListener('click', () => {
+        const val = getVal('cheat-qbits-input');
+        if (!gameState.qBits) gameState.qBits = new Decimal(0);
+        if (!gameState.lifetimeQBits) gameState.lifetimeQBits = new Decimal(0);
+
+        gameState.qBits = gameState.qBits.add(val);
+        gameState.lifetimeQBits = gameState.lifetimeQBits.add(val);
+        refreshUI();
+        toast(`Aggiunti ${window.EspooClicker.formatNumber(val)} Q-Bits`);
+    });
+
+    // NG+ Ready
+    document.getElementById('btn-format-ready').addEventListener('click', () => {
+        if (gameState.totalResets < 20) gameState.totalResets = 20;
+        if (!gameState.prestigePoints) gameState.prestigePoints = new Decimal(0);
+        gameState.prestigePoints = gameState.prestigePoints.add(1000);
+
+        if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
+        refreshUI();
+        toast("Requisiti NG+ soddisfatti! Vai nel Lab.");
+    });
+
+    // +1 Formattazione
+    document.getElementById('btn-add-format').addEventListener('click', () => {
+        if (!gameState.totalFormattazioni) gameState.totalFormattazioni = 0;
+        gameState.totalFormattazioni += 1;
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        refreshUI();
+        toast("Contatore Formattazioni aumentato (+1)");
+    });
+
     // Salto Temporale
     document.getElementById('btn-time-warp').addEventListener('click', () => {
-        // bps è Decimal
         if (bps.lte(0)) { toast("BPS è 0! Impossibile viaggiare."); return; }
         const seconds = 3600;
-        const gain = bps.mul(seconds); // Decimal * Number = Decimal
+        const gain = bps.mul(seconds);
 
         gameState.score = gameState.score.add(gain);
         gameState.totalScore = gameState.totalScore.add(gain);
         gameState.lifetimeScore = gameState.lifetimeScore.add(gain);
-        gameState.totalPlayTime += seconds; // Playtime è numero
+        gameState.totalPlayTime += seconds;
         refreshUI();
         toast(`Salto Temporale! (+${window.EspooClicker ? window.EspooClicker.formatNumber(gain) : gain} Bug)`);
     });
 
-    // Aggiungi Click (Questi sono interi, usiamo getIntVal e +=)
+    // Aggiungi Click
     document.getElementById('btn-clicks-add').addEventListener('click', () => {
         const val = getIntVal('cheat-clicks-input');
         gameState.totalClicks += val;
@@ -469,10 +471,18 @@
 
     // Aggiungi Bonus BPS
     document.getElementById('btn-bps-add').addEventListener('click', () => {
-        const val = getVal('cheat-bps-input'); // Decimal
+        const val = getVal('cheat-bps-input');
         window.cheatBPSBonus = window.cheatBPSBonus.add(val);
         refreshUI();
         toast(`Bonus BPS +${window.EspooClicker.formatNumber(val)} attivato`);
+    });
+
+    // Reset Bonus BPS
+    document.getElementById('btn-bps-reset').addEventListener('click', () => {
+        window.cheatBPSBonus = new Decimal(0);
+        if (typeof recalculateCPS === 'function') recalculateCPS();
+        updateGame();
+        toast("Bonus BPS resettato a 0");
     });
 
     // --- SHOP & POWER ---
@@ -489,6 +499,10 @@
             if (!data.isCounted && gameState.prestigeUpgrades[key]) {
                 gameState.prestigeUpgrades[key].purchased = true;
             }
+        }
+        // Sblocca anche il Quantum Lab
+        for (let key in gameData.superUpgrades) {
+            if (gameState.superUpgrades[key]) gameState.superUpgrades[key].purchased = true;
         }
         refreshUI();
         if (window.EspooClicker) window.EspooClicker.saveGame();
@@ -508,6 +522,16 @@
                 gameState.prestigeUpgrades[key].purchased = false;
             }
         }
+        for (let key in gameData.superUpgrades) {
+            if (gameState.superUpgrades[key]) gameState.superUpgrades[key].purchased = false;
+        }
+        // Reset counted prestige upgrade levels
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (data.isCounted && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].count = 0;
+            }
+        }
         refreshUI();
         if (window.EspooClicker) window.EspooClicker.saveGame();
         toast("Tutto lo shop è stato bloccato.");
@@ -521,10 +545,8 @@
         toast("Rinforzi arrivati! (+100 unità a tutti)");
     });
 
-
     // RANDOM CHAOS
     document.getElementById('btn-random-chaos').addEventListener('click', () => {
-        // Genera valori random grandi
         const randBugs = new Decimal("1e9").mul(Math.random());
         const randTokens = new Decimal("5000").mul(Math.random());
 
@@ -563,10 +585,13 @@
 
     // GOD MODE
     document.getElementById('btn-god-mode').addEventListener('click', () => {
-        // Assegnazione diretta di Decimali
-        gameState.score = new Decimal("1e33"); // 1 Decilione
+        gameState.score = new Decimal("1e33");
         gameState.totalScore = new Decimal("1e33");
-        gameState.prestigePoints = new Decimal("1e15"); // 1 Quadrilione
+        gameState.lifetimeScore = gameState.lifetimeScore.add(new Decimal("1e33"));
+        gameState.prestigePoints = new Decimal("1e15");
+        gameState.lifetimePrestigePoints = new Decimal("1e15");
+        gameState.qBits = new Decimal("1000000");
+        gameState.lifetimeQBits = new Decimal("1000000");
 
         document.getElementById('btn-unlock-skins').click();
         document.getElementById('btn-unlock-ach').click();
@@ -604,6 +629,13 @@
         if (typeof triggerGameEvent === 'function') triggerGameEvent('ricardo');
     });
 
+    document.getElementById('btn-event-britney').addEventListener('click', () => {
+        if (typeof triggerGameEvent === 'function') {
+            triggerGameEvent('britneyEspears');
+            toast('🎤 Britney Espears attivata');
+        }
+    });
+
     document.getElementById('btn-event-golden').addEventListener('click', () => {
         if (typeof spawnGoldenBug === 'function') {
             spawnGoldenBug();
@@ -612,7 +644,7 @@
     });
 
     document.getElementById('btn-event-star').addEventListener('click', () => {
-        const mult = getIntVal('cheat-404-input'); // Riutilizziamo l'input del moltiplicatore per comodità
+        const mult = getIntVal('cheat-404-input');
         if (typeof triggerGameEvent === 'function') {
             triggerGameEvent('superStarMode', mult);
             toast(`⭐ Super Star (x${mult}) attivata`);
@@ -621,6 +653,9 @@
 
     document.getElementById('btn-reset-cooldown').addEventListener('click', () => {
         crunchTimeCooldownEnd = 0;
+        crunchTimeEndTime = 0;
+        gameState.crunchTimeCooldownEnd = 0;
+        gameState.crunchTimeEndTime = 0;
         refreshUI();
         toast("Cooldown resettati!");
     });
@@ -628,21 +663,121 @@
     // --- Dev Tools ---
 
     document.getElementById('btn-prestige-ready').addEventListener('click', () => {
-        if (gameData.PRESTIGE_THRESHOLD) {
-            // soglia + 1
-            const readyScore = gameData.PRESTIGE_THRESHOLD.add(1);
+        if (typeof getPrestigeThreshold === 'function') {
+            const threshold = getPrestigeThreshold();
+            const readyScore = threshold.add(1);
             gameState.totalScore = readyScore;
             gameState.score = readyScore;
             if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
             refreshUI();
-            toast("Prestigio Pronto!");
+            toast(`Prestigio Pronto! (Soglia: ${window.EspooClicker.formatNumber(threshold)})`);
         }
     });
 
+    // Max Lab
+    document.getElementById('btn-max-lab').addEventListener('click', () => {
+        for (let key in gameData.prestigeUpgrades) {
+            const data = gameData.prestigeUpgrades[key];
+            if (data.isCounted && data.maxLevel && gameState.prestigeUpgrades[key]) {
+                gameState.prestigeUpgrades[key].count = data.maxLevel;
+            }
+        }
+        if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
+        refreshUI();
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        toast("Tutti gli upgrade Lab portati al livello massimo!");
+    });
+
+    // --- Debug Mode Toggle ---
+    const debugLabel = document.getElementById('debug-mode-label');
+    const debugBtn = document.getElementById('btn-debug-mode');
+
+    const updateDebugUI = () => {
+        debugLabel.textContent = window.DEBUG_MODE ? 'ON' : 'OFF';
+        debugBtn.classList.toggle('matrix', window.DEBUG_MODE);
+        debugBtn.classList.toggle('danger', !window.DEBUG_MODE);
+    };
+    updateDebugUI();
+
+    debugBtn.addEventListener('click', () => {
+        window.DEBUG_MODE = !window.DEBUG_MODE;
+        updateDebugUI();
+        toast(`Debug Mode: ${window.DEBUG_MODE ? 'ON — Log attivi in console' : 'OFF — Console silenziata'}`);
+    });
+
     document.getElementById('btn-log-state').addEventListener('click', () => {
-        console.log("--- GAME STATE ---", gameState);
-        console.log("--- GAME DATA ---", gameData);
+        // Usa _originalConsole per bypassare il filtro DEBUG_MODE
+        const c = window._console || console;
+        c.log("--- GAME STATE ---", JSON.parse(JSON.stringify(gameState)));
+        c.log("--- GAME DATA ---", gameData);
+        c.log("--- AUDIO ---", typeof AudioManager !== 'undefined' ? AudioManager._sounds : 'N/A');
         toast("Stato stampato in console (F12)");
+    });
+
+    // --- Force Save ---
+    document.getElementById('btn-force-save').addEventListener('click', async () => {
+        if (window.EspooClicker && window.EspooClicker.saveGame) {
+            await window.EspooClicker.saveGame();
+            toast("Salvataggio cloud forzato!");
+        } else {
+            toast("saveGame non disponibile");
+        }
+    });
+
+    // --- Stop Evento in corso ---
+    document.getElementById('btn-stop-event').addEventListener('click', () => {
+        if (!window.currentActiveEvent) {
+            toast("Nessun evento attivo.");
+            return;
+        }
+        const evtName = window.currentActiveEvent;
+
+        // Ferma bluescreen/matrix/star
+        if (typeof stopBluescreenEffect === 'function') stopBluescreenEffect();
+
+        // Ferma video se in corso
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video',
+            'britney-espoars-video', 'video-bigbang'].forEach(id => {
+                const v = document.getElementById(id);
+                if (v) { v.pause(); v.classList.add('video_display_none'); }
+            });
+
+        // Ferma Espo Fury se attiva
+        if (document.body.classList.contains('crunch-active')) {
+            crunchTimeMultiplier = new Decimal(1);
+            crunchTimeEndTime = 0;
+            crunchTimeCooldownEnd = 0;
+            gameState.crunchTimeEndTime = 0;
+            gameState.crunchTimeCooldownEnd = 0;
+            const crunchOverlay = document.getElementById('crunch-overlay');
+            if (crunchOverlay) crunchOverlay.style.display = 'none';
+            if (typeof fireParticleInterval !== 'undefined' && fireParticleInterval) {
+                clearInterval(fireParticleInterval);
+                fireParticleInterval = null;
+            }
+        }
+
+        // Pulisci classi CSS residue
+        document.body.classList.remove('rick-rolling', 'bluescreen-active', 'matrix-active', 'super-star-active', 'crunch-active');
+
+        // Forza clearActiveEvent
+        if (typeof clearActiveEvent === 'function') clearActiveEvent();
+        window.currentActiveEvent = null;
+
+        if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+        refreshUI();
+        toast(`Evento "${evtName}" fermato forzatamente`);
+    });
+
+    // --- Trigger Espo Fury (ignora cooldown) ---
+    document.getElementById('btn-trigger-fury').addEventListener('click', () => {
+        if (typeof crunchTimeCooldownEnd !== 'undefined') crunchTimeCooldownEnd = 0;
+        if (typeof activateCrunchTime === 'function') {
+            activateCrunchTime();
+            toast("Espo Fury attivata!");
+        } else {
+            toast("activateCrunchTime non disponibile");
+        }
     });
 
     // --- Sblocchi & Reset ---
@@ -677,10 +812,11 @@
         for (let key in gameData.achievements) {
             if (!gameState.achievements[key]) gameState.achievements[key] = {};
             gameState.achievements[key].unlocked = true;
+            gameState.achievements[key].claimed = true;
         }
         if (window.EspooClicker) window.EspooClicker.saveGame();
         refreshUI();
-        toast("Tutti gli obiettivi sbloccati!");
+        toast("Tutti gli obiettivi sbloccati e riscossi!");
     });
 
     document.getElementById('btn-lock-ach').addEventListener('click', () => {
@@ -696,19 +832,46 @@
         toast("Tutti gli obiettivi bloccati.");
     });
 
-    document.getElementById('btn-hard-reset').addEventListener('click', () => {
+    document.getElementById('btn-hard-reset').addEventListener('click', async () => {
         if (!confirm("⚠️ RESET TOTALE DEV MODE? ⚠️\nCancella tutto senza password e ricarica.")) return;
-        if (typeof resetGameToDefault === 'function') {
-            const tempUser = gameState.user.username;
-            resetGameToDefault();
-            gameState.user.username = tempUser;
+
+        gameState.isDeleting = true;
+
+        if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
+            try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
         }
-        if (window.EspooClicker) {
-            window.EspooClicker.saveGame().then(() => { location.reload(); });
-        } else {
-            localStorage.removeItem('espotoolClickerSaveV8');
-            location.reload();
-        }
+
+        localStorage.removeItem('espotoolClickerSaveV9');
+        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+
+        location.reload();
+    });
+
+    // --- Test Migrazione V2 ---
+    document.getElementById('btn-force-v2').addEventListener('click', () => {
+        if (!confirm("⚠️ SIMULARE MIGRAZIONE V2? Creerà un falso salvataggio V1 e ricaricherà la pagina per testare il flusso di benvenuto.")) return;
+
+        // 1. Crea un falso stato V1 (molti punti, nessuna formattazione, versione vecchia)
+        const fakeV1State = {
+            version: { major: 1, minor: 4, stage: 'stable' },
+            user: { username: gameState.user.username },
+            skins: { unlocked: gameState.skins.unlocked, current: gameState.skins.current },
+            score: "1000000000000000",
+            totalScore: "1000000000000000",
+            lifetimeScore: "1000000000000000",
+            totalClicks: 50000,
+            // Mancano volutamente QBits e formattazioni
+        };
+
+        // 2. Comprime e sovrascrive il salvataggio locale
+        const compressed = LZString.compressToUTF16(JSON.stringify(fakeV1State));
+        localStorage.setItem('espotoolClickerSaveV8', compressed);
+
+        // 3. Impedisce al gioco di salvare lo stato attuale sopra quello falso durante la chiusura
+        gameState.isDeleting = true;
+
+        // 4. Ricarica la pagina per innescare il flusso di caricamento
+        location.reload();
     });
 
 })();
