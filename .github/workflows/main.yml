@@ -56,3 +56,22 @@ jobs:
             **/.git*/**
             .github/**
             **/.DS_Store
+            **/Thumbs.db
+            .gitignore
+            README.md
+            code.md
+            game-meta.md
+            build.js
+            bump-version.js
+            deploy.bat
+            package.json
+            package-lock.json
+            node_modules/**
+            .claude/**
+            dist/**/*.map
+            php/r2-config.example.php
+            php/r2-cors-policy.json
+            css/concat.php
+            assets/sounds/**
+            assets/video/**
+            music/songs/**
