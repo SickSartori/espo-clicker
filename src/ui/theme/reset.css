@@ -1,0 +1,68 @@
+/* =====================================================================
+   Modern reset — basato su Josh Comeau + adattato.
+   Solo opt-in: applicato sotto [data-v3] per non rompere il legacy.
+   ===================================================================== */
+
+[data-v3] *,
+[data-v3] *::before,
+[data-v3] *::after {
+  box-sizing: border-box;
+}
+
+[data-v3] {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-base);
+  color: var(--fg-primary);
+  background: var(--bg-page);
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+[data-v3] img,
+[data-v3] picture,
+[data-v3] video,
+[data-v3] canvas,
+[data-v3] svg {
+  display: block;
+  max-width: 100%;
+}
+
+[data-v3] input,
+[data-v3] button,
+[data-v3] textarea,
+[data-v3] select {
+  font: inherit;
+  color: inherit;
+}
+
+[data-v3] button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+[data-v3] p,
+[data-v3] h1,
+[data-v3] h2,
+[data-v3] h3,
+[data-v3] h4,
+[data-v3] h5,
+[data-v3] h6 {
+  overflow-wrap: break-word;
+  margin: 0;
+}
+
+/* Focus ring tastiera — invisibile su click, evidente su Tab */
+[data-v3] :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+[data-v3] :focus:not(:focus-visible) {
+  outline: none;
+}

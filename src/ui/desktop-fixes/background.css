@@ -1,0 +1,29 @@
+/* =====================================================================
+   v3 desktop refresh — sfondo
+   =====================================================================
+   Mantiene la griglia tech esistente ma aggiunge:
+   - vignetting radiale per focus al centro
+   - gradient diagonale sottile (depth)
+   - layer blur dietro al clicker per profondità
+   ===================================================================== */
+
+@media (min-width: 769px) {
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.45) 100%),
+      linear-gradient(135deg, rgba(52, 152, 219, 0.04) 0%, transparent 50%, rgba(155, 89, 182, 0.03) 100%);
+  }
+
+  /* Glow dietro clicker: DISABILITATO (utente preferisce pulito) */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #clicker-section::before {
+    animation: none !important;
+  }
+}

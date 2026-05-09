@@ -1,11 +1,11 @@
 const GAME_VERSION = {
-    major: 2,       // Cambia questo per rompere la compatibilità in Beta
+    major: 3,       // Cambia questo per rompere la compatibilità in Beta
     minor: 0,       // Cambia questo per aggiornamenti "sicuri"
-    stage: 'stable',  // 'stable' o 'beta'
+    stage: '',      // 'stable' o 'beta' o '' per nessun suffisso
 
-    // Funzione per stampare la versione (es. "v3.1 beta")
+    // Funzione per stampare la versione (es. "v3.0 beta")
     toString: function () {
-        return `v${this.major}.${this.minor} ${this.stage}`;
+        return `v${this.major}.${this.minor}${this.stage ? ' ' + this.stage : ''}`;
     }
 };
 

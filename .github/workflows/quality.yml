@@ -1,0 +1,44 @@
+name: Quality (V3)
+
+on:
+  pull_request:
+    branches: [develop-exp, develop, main]
+  push:
+    branches: [develop-exp]
+
+jobs:
+  test-and-budget:
+    name: 🧪 Test + Bundle Budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build legacy + v3
+        run: npm run build
+
+      - name: Bundle budget check
+        run: node scripts/bundle-budget.js
+
+      - name: Upload bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundles
+          path: |
+            dist/
+            dist-v3/
+          retention-days: 7

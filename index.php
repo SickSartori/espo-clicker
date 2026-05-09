@@ -6,7 +6,11 @@ require_once("php/check_version.php");
 <html lang="it">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<!-- v3 a11y: rimossi maximum-scale=1.0 e user-scalable=no (WCAG 1.4.4) -->
+
+		<!-- color-scheme dichiarato → riduce flash su prefers-color-scheme cambio -->
+		<meta name="color-scheme" content="dark light">
 
 		<!-- PWA Meta Tags -->
 		<meta name="theme-color" content="#3498db">	
@@ -50,6 +54,16 @@ require_once("php/check_version.php");
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
 		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
 
+		<!-- V3 styles (tokens, primitives, skip-link a11y). Solo se build V3 presente.
+		     Cache buster via filemtime() — ogni rebuild Vite invalida cache SW automaticamente. -->
+		<?php
+		$v3CssPath = __DIR__ . '/dist-v3/assets/v3-styles.css';
+		if (file_exists($v3CssPath)):
+			$v3CssVer = filemtime($v3CssPath);
+		?>
+		<link rel="stylesheet" href="dist-v3/assets/v3-styles.css?v=<?php echo $v3CssVer; ?>">
+		<?php endif; ?>
+
 		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
 
 		<!-- ============================================================ -->
@@ -62,7 +76,8 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 	</head>
 	<body>
-		<canvas id="matrix-canvas"></canvas>
+		<a href="#center-column" class="v3-skip-link">Salta al contenuto principale</a>
+		<canvas id="matrix-canvas" aria-hidden="true"></canvas>
 
 		<div id="game-loader">
 			<div class="loader-content">
@@ -94,7 +109,7 @@ require_once("php/check_version.php");
 			</div>
 		</div>
 
-		<div id="toast-container"></div>
+		<div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
 		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
 			<div class="prestige-anim-container" id="prestige-anim-container">
@@ -151,22 +166,22 @@ require_once("php/check_version.php");
 		<?php include 'includes/modals_arcade.php'; ?>
 		<?php include 'includes/modals_help.php'; ?>
 
-		<nav id="game-navbar">
+		<nav id="game-navbar" aria-label="Menu principale">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
-					<i class="nav-icon fa-solid fa-circle-question"></i>
+					<i class="nav-icon" data-lucide="book-open"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_guida"]; ?>
 					</span>
 				</button>
 				<button id="open-stats-btn" class="nav-item" title="<?php echo $labels["navbar_stats"]; ?>">
-					<i class="nav-icon fa-solid fa-chart-pie"></i>
+					<i class="nav-icon" data-lucide="chart-line"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_stats"]; ?>
 					</span>
 				</button>
 				<button id="open-arcade-btn" class="nav-item" title="<?php echo $labels["navbar_arcade"]; ?>">
-					<i class="nav-icon fa-solid fa-gamepad"></i>
+					<i class="nav-icon" data-lucide="gamepad-2"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_arcade"]; ?>
 					</span>
@@ -175,19 +190,19 @@ require_once("php/check_version.php");
 
 			<div class="nav-group center">
 				<button id="open-achievements-btn" class="nav-item" title="<?php echo $labels["navbar_obiettivi"]; ?>">
-					<i class="nav-icon fa-solid fa-trophy"></i>
+					<i class="nav-icon" data-lucide="award"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_obiettivi"]; ?>
 					</span>
 				</button>
 				<button id="open-skins-btn" class="nav-item" title="<?php echo $labels["navbar_skin"]; ?>">
-					<i class="nav-icon fa-solid fa-shirt"></i>
+					<i class="nav-icon" data-lucide="palette"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_skin"]; ?>
 					</span>
 				</button>
 				<button id="open-leaderboard-btn" class="nav-item" title="<?php echo $labels["navbar_classifica"]; ?>">
-					<i class="nav-icon fa-solid fa-medal"></i>
+					<i class="nav-icon" data-lucide="trophy"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_classifica"]; ?>
 					</span>
@@ -196,13 +211,13 @@ require_once("php/check_version.php");
 
 			<div class="nav-group right">
 				<button id="open-prestige-hub-btn" class="nav-special-btn">
-					<i class="nav-icon fa-solid fa-rocket"></i>
+					<i class="nav-icon" data-lucide="zap"></i>
 					<span>
 						<?php echo $labels["navbar_promozione"]; ?>
 					</span>
 				</button>
 				<button id="open-settings-btn" class="nav-item" title="<?php echo $labels["navbar_opzioni"]; ?>">
-					<i class="nav-icon fa-solid fa-gear"></i>
+					<i class="nav-icon" data-lucide="sliders"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_opzioni"]; ?>
 					</span>
@@ -218,19 +233,19 @@ require_once("php/check_version.php");
 			<div id="left-column" class="game-column">
 				<div class="tabs-header">
 					<button class="tab-btn active" data-target="upgrade-store" id="tab-click">
-						<i class="fa-solid fa-computer-mouse"></i>
+						<i data-lucide="mouse-pointer-2"></i>
 						<?php echo $labels["game_container_click_titolo"]; ?>
 					</button>
 					<button class="tab-btn" data-target="enhancement-store" id="tab-auto">
-						<i class="fa-solid fa-robot"></i>
+						<i data-lucide="cog"></i>
 						<?php echo $labels["game_container_auto_titolo"]; ?>
 					</button>
 					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige">
-						<i class="fa-solid fa-flask"></i>
+						<i data-lucide="flask-conical"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
 					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" style="display:none; color: #9b59b6;">
-						<i class="fa-solid fa-atom"></i> Q-Lab
+						<i data-lucide="atom"></i> Q-Lab
 					</button>
 				</div>
 				
@@ -267,7 +282,7 @@ require_once("php/check_version.php");
 		<div id="crunch-overlay"></div>
 		<div id="fire-particles-container"></div>
 
-		<div id="mobile-nav-bar">
+		<div id="mobile-nav-bar" role="navigation" aria-label="Navigazione mobile">
 			<button class="mobile-nav-btn" data-target="left-column">
 				<i class="fa-solid fa-bolt"></i>
 				<span><?php echo $labels["mobile_tab_upgrade"]; ?></span>
@@ -303,6 +318,20 @@ require_once("php/check_version.php");
 		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
 		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
 		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>
+
+		<!-- ============================================================ -->
+		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
+		<!-- Espone window.EspoV3 con i moduli TS migrati progressivamente -->
+		<!-- Caricato solo se dist-v3/ esiste (build:v3 eseguita)         -->
+		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
+		<!-- ============================================================ -->
+		<?php
+		$v3JsPath = __DIR__ . '/dist-v3/game.modules.js';
+		if (file_exists($v3JsPath)):
+			$v3JsVer = filemtime($v3JsPath);
+		?>
+		<script type="module" src="dist-v3/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
+		<?php endif; ?>
 		
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->

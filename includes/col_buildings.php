@@ -1,7 +1,7 @@
 <div id="right-column" class="game-column">
     <div class="column-header-aligned">
         <h2>
-			<i class="fa-solid fa-users"></i>
+			<i data-lucide="users"></i>
 			<?php echo $labels["col_buildings_titolo"]; ?>
 		</h2>
     </div>

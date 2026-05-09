@@ -1,0 +1,61 @@
+/* =====================================================================
+   v3 theme entry — importato da main.ts.
+   Ordine: tokens base → reset → primitives → temi.
+   I temi sono opt-in via [data-theme='X'] sull'elemento [data-v3].
+   ===================================================================== */
+
+@import './tokens.css';
+@import './tokens-v3.css';
+@import './reset.css';
+@import './primitives.css';
+@import '../icons/lucide-style.css';
+@import './themes/8bit.css';
+@import './themes/super.css';
+@import './themes/christmas.css';
+
+/* Mobile fixes — override su mobile.css legacy */
+@import '../mobile-fixes/modal-close.css';
+@import '../mobile-fixes/skins-modal.css';
+@import '../mobile-fixes/achievements-modal.css';
+
+/* Desktop refresh — HUD/FUI cyberpunk-tech identity (>= 769px) */
+@import '../desktop-fixes/background.css';
+@import '../desktop-fixes/layout-shell.css';
+@import '../desktop-fixes/skin-ambient.css';
+@import '../desktop-fixes/signature-effects.css';
+@import '../desktop-fixes/header-navbar.css';
+@import '../desktop-fixes/score-header.css';
+@import '../desktop-fixes/clicker-button.css';
+@import '../desktop-fixes/clicker-3d.css';
+@import '../desktop-fixes/tabs.css';
+@import '../desktop-fixes/cards.css';
+@import '../desktop-fixes/skins-modal-v3.css';
+@import '../desktop-fixes/modals-shell.css';
+
+/* =====================================================================
+   Stili globali a11y critici (non scoped [data-v3]).
+   ===================================================================== */
+
+.v3-skip-link {
+  position: fixed;
+  top: -100px;
+  left: 8px;
+  background: #3498db;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  z-index: 9999;
+  transition: top 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.v3-skip-link:focus,
+.v3-skip-link:focus-visible {
+  top: 8px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

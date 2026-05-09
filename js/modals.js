@@ -584,22 +584,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function getGameAPI() { return window.EspooClicker || null; }
     function openModal(modal) {
         if (modal) {
-            // 1. Prepara lo stato iniziale
+            // Anti-flicker: nascondi mentre prepari layout, poi mostra in un solo frame
+            modal.style.visibility = 'hidden';
             modal.style.display = 'flex';
             modal.style.opacity = 0;
 
             const content = modal.querySelector('.modal-content');
 
-            // 2. Animazione GSAP
-            if (content) {
-                gsap.fromTo(content,
-                    { scale: 0.8, opacity: 0, y: 20 },
-                    { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
-                );
-                gsap.to(modal, { opacity: 1, duration: 0.3 });
-            } else {
-                modal.style.opacity = 1;
-            }
+            // Aspetta UN frame perché il browser calcoli layout completo,
+            // poi rivela con animazione → niente flash di contenuto non posizionato
+            requestAnimationFrame(() => {
+                modal.style.visibility = 'visible';
+
+                if (content) {
+                    // Animazione "finestra": fade + leggero scale (no Y translate)
+                    gsap.fromTo(content,
+                        { scale: 0.97, opacity: 0 },
+                        { scale: 1, opacity: 1, duration: 0.26, ease: "power2.out", clearProps: 'transform' }
+                    );
+                    gsap.to(modal, { opacity: 1, duration: 0.22, ease: "power1.out" });
+                } else {
+                    modal.style.opacity = 1;
+                }
+            });
 
             document.body.classList.add('modal-open');
 

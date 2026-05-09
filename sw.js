@@ -4,7 +4,7 @@
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.8';
+const CACHE_VERSION = 'espo-v2.0.9-v3alpha';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -158,6 +158,14 @@ self.addEventListener('fetch', (event) => {
 
     if (request.method !== 'GET') return;
     if (NO_CACHE_PATTERNS.some(pattern => pattern.test(url))) return;
+
+    // V3 Vite bundle: stale-while-revalidate per evitare cache stale
+    // dopo rebuild senza dover bumpare CACHE_VERSION manualmente.
+    // Il filemtime nel link PHP garantisce comunque cache-bust deterministico.
+    if (/\/dist-v3\//.test(url)) {
+        event.respondWith(staleWhileRevalidate(request));
+        return;
+    }
 
     // Cache-First per assets statici
     if (STATIC_PATTERNS.some(pattern => pattern.test(url))) {

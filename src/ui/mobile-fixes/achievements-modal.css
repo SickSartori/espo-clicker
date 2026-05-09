@@ -1,0 +1,221 @@
+/* =====================================================================
+   v3 mobile fixes — Achievements modal "Obiettivi"
+   =====================================================================
+   Problemi risolti:
+   - mobile.css:1411 nasconde .trophy-desc → utente non vede cosa serve
+   - barra CHIUDI rossa fixed bottom copre ultimo achievement
+   - layout cramped, niente respiro tra titolo e progress
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  /* -------------------------------------------------------------------
+     1. Modal full-height + flex column (no spazi morti).
+     ------------------------------------------------------------------- */
+  html body #achievements-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  html body #achievements-modal h2 {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 14px 60px 12px 18px;
+    font-size: 1.15rem;
+    text-align: left;
+  }
+
+  /* -------------------------------------------------------------------
+     2. X close pillola top-right (override CHIUDI rosso bar).
+     ------------------------------------------------------------------- */
+  html body #achievements-modal .modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    left: auto;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    color: #fff;
+    box-shadow: none;
+    z-index: 10;
+    padding: 0;
+    margin: 0;
+    font-size: 0;
+    transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html body #achievements-modal .modal-close-btn::after {
+    content: '\00d7';
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  html body #achievements-modal .modal-close-btn:hover,
+  html body #achievements-modal .modal-close-btn:focus-visible {
+    background: rgba(231, 76, 60, 0.55);
+    transform: scale(1.05);
+    outline: none;
+  }
+
+  html body #achievements-modal .modal-close-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* -------------------------------------------------------------------
+     3. Lista scrollabile occupa spazio rimanente.
+     Padding-bottom per non coprire ultimo item (anche con safe-area).
+     ------------------------------------------------------------------- */
+  html body #achievements-modal #achievement-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  /* -------------------------------------------------------------------
+     4. RIVELA descrizione obiettivo + flavor text.
+     Override mobile.css:1411-1414 (display: none).
+     Ora utente vede cosa serve fare per sbloccare.
+     ------------------------------------------------------------------- */
+  html body #achievements-modal #achievement-list .trophy-desc {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.3;
+    margin-top: 3px;
+  }
+
+  /* Flavor text: opzionale, mostralo solo se sbloccato per non sovraccaricare */
+  html body #achievements-modal #achievement-list .trophy-row.completed .trophy-flavor,
+  html body #achievements-modal #achievement-list .trophy-row.unclaimed .trophy-flavor {
+    display: block !important;
+    font-size: 0.7rem;
+    color: rgba(241, 196, 15, 0.7);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* Locked + secret: nascondi flavor (solo desc) */
+  html body #achievements-modal #achievement-list .trophy-row.locked .trophy-flavor,
+  html body #achievements-modal #achievement-list .trophy-row.secret .trophy-flavor {
+    display: none !important;
+  }
+
+  /* -------------------------------------------------------------------
+     5. Layout trophy-row più ariosa per leggibilità.
+     ------------------------------------------------------------------- */
+  html body #achievements-modal #achievement-list .trophy-row {
+    min-height: 64px;
+    padding: 10px 12px;
+    gap: 10px;
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-content {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* -------------------------------------------------------------------
+     6. Progress bar più visibile: barra verticale a destra, testo sotto
+        invece di sovrapposto (Zen Master era illeggibile).
+     ------------------------------------------------------------------- */
+  html body #achievements-modal #achievement-list .trophy-action {
+    grid-column: 1 / -1; /* full width sotto il titolo */
+    margin-top: 4px;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-progress {
+    position: relative;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-progress .t-prog-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    border-radius: 999px;
+    transition: width 300ms ease-out;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-progress .t-prog-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+  }
+
+  /* Bottone claim full width */
+  html body #achievements-modal #achievement-list .trophy-claim-btn {
+    width: 100%;
+    min-height: 36px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  /* Done check icon */
+  html body #achievements-modal #achievement-list .trophy-done {
+    width: 100%;
+    text-align: center;
+    color: #2ecc71;
+    font-size: 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #achievements-modal .modal-close-btn,
+  html body #achievements-modal #achievement-list .trophy-progress .t-prog-bar {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,315 @@
+/* =====================================================================
+   v3 desktop — Score header HUD pro
+   =====================================================================
+   Approccio HUD/FUI: corner brackets + scanline overlay + JetBrains Mono labels +
+   numero score gigante con stroke + drop-shadow neon + tabular-nums.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ---------------- Container HUD ---------------- */
+  html body .column-header-center {
+    position: relative;
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    background:
+      radial-gradient(ellipse 100% 100% at 50% 0%,
+        rgba(255, 61, 92, 0.06) 0%,
+        transparent 60%),
+      linear-gradient(180deg,
+        rgba(15, 23, 42, 0.92) 0%,
+        rgba(10, 15, 28, 0.7) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 4px;
+    padding: 12px 16px;
+    height: 88px;
+    min-height: 88px;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: visible;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  /* Score area: KEEP position: absolute from legacy (centered via transform).
+     Only add max-width so large numbers don't overlap side panels. */
+  html body .header-main-score {
+    /* position: absolute + transform: translate(-50%,-50%) inherited from legacy */
+    max-width: calc(100% - 220px); /* leave room for both side panels */
+    gap: 4px;
+    overflow: visible; /* tooltip must escape */
+  }
+
+  /* Scanline overlay sopra il container */
+  html body .column-header-center::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 217, 255, 0.025) 4px,
+      transparent 5px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Pulse line bottom (HUD active indicator) */
+  html body .column-header-center::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 25%;
+    right: 25%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 61, 92, 0.7),
+      rgba(0, 217, 255, 0.7),
+      transparent);
+    box-shadow: 0 0 12px rgba(255, 61, 92, 0.4);
+    animation: v3-hud-pulse 3s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes v3-hud-pulse {
+    0%, 100% { opacity: 0.6; transform: scaleX(1); }
+    50%      { opacity: 1; transform: scaleX(1.05); }
+  }
+
+  /* ---------------- Score principale ---------------- */
+  html body .header-main-score {
+    text-align: center;
+    padding: 0 16px;
+    /* KEEP position: absolute from legacy — do NOT override to relative.
+       z-index works on absolute elements too. */
+    z-index: 3;
+  }
+
+  html body .header-main-score .header-label-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: rgba(248, 250, 252, 0.5);
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  html body .header-main-score .header-label-main::before,
+  html body .header-main-score .header-label-main::after {
+    content: '[';
+    color: rgba(0, 217, 255, 0.4);
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+
+  html body .header-main-score .header-label-main::after {
+    content: ']';
+  }
+
+  html body .header-main-score .header-label-main i {
+    color: var(--v3-accent-red, #ff3d5c);
+    font-size: 0.85rem;
+    filter: drop-shadow(0 0 6px rgba(255, 61, 92, 0.7));
+  }
+
+  html body #score-display {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: clamp(1.2rem, 1.6vw, 1.8rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    background: linear-gradient(180deg,
+      #ffffff 0%,
+      #ff8a9d 30%,
+      var(--v3-accent-red, #ff3d5c) 65%,
+      #b91c1c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 18px rgba(255, 61, 92, 0.3);
+    letter-spacing: -0.02em;
+    transition: transform var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    filter: drop-shadow(0 2px 8px rgba(255, 61, 92, 0.2));
+    display: block;
+    text-align: center;
+    min-height: 1.2em;
+    max-width: 100%;
+    white-space: nowrap;
+    position: relative;
+    /* NO overflow:hidden — clips the hover tooltip (::after) */
+    overflow: visible;
+    cursor: help;
+    /* Fallback color */
+    color: var(--v3-accent-red, #ff3d5c);
+  }
+
+  /* Gradient text SOLO se supportato */
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    html body #score-display {
+      color: transparent;
+    }
+  }
+
+  html body #score-display.score-bump {
+    transform: scale(1.06);
+    filter: drop-shadow(0 6px 24px rgba(255, 61, 92, 0.6));
+  }
+
+  /* ---------- Tooltip hover: mostra valore completo ---------- */
+  html body #score-display[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+    white-space: nowrap;
+    background: rgba(10, 15, 28, 0.96);
+    color: #fff !important; /* override color:transparent da gradient text */
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    -webkit-text-fill-color: #fff;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 217, 255, 0.25);
+    font-size: 0.85rem;
+    font-weight: 700;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 217, 255, 0.15);
+    pointer-events: none;
+  }
+
+  html body #score-display[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: rgba(0, 217, 255, 0.4);
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  /* ---------------- Stat boxes laterali ---------------- */
+  html body #header-left-panel,
+  html body #header-right-panel {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 4px;
+    padding: 10px 14px;
+    max-width: 160px;
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    position: relative;
+    overflow: hidden;
+    z-index: 3;
+  }
+
+  /* Status indicator dot pulsante (LEDsystem) */
+  html body #header-left-panel::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--v3-tier-legendary, #f59e0b);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+    animation: v3-led-blink 2.5s ease-in-out infinite;
+  }
+
+  html body #header-right-panel::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--v3-tier-rare, #3b82f6);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+    animation: v3-led-blink 2.5s ease-in-out infinite 1.25s;
+  }
+
+  @keyframes v3-led-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  html body #header-left-panel:hover,
+  html body #header-right-panel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 217, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 217, 255, 0.15);
+  }
+
+  html body .header-stat-box .header-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    font-weight: 700;
+    color: var(--v3-fg-secondary, #cbd5e1);
+  }
+
+  html body .header-stat-box .header-label i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    margin-right: 4px;
+    font-size: 0.7rem;
+  }
+
+  html body .header-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  /* Color per tipo */
+  html body #display-career-bonus {
+    background: linear-gradient(135deg, #fbbf24 0%, var(--v3-tier-legendary, #f59e0b) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+  }
+
+  html body #prestige-points-display {
+    background: linear-gradient(135deg, #60a5fa 0%, var(--v3-tier-rare, #3b82f6) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+
+  html body #header-qbit-display {
+    background: linear-gradient(135deg, #c084fc 0%, var(--v3-tier-epic, #a855f7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .column-header-center::after,
+  html body #header-left-panel::before,
+  html body #header-right-panel::before {
+    animation: none !important;
+  }
+}

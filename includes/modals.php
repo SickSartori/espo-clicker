@@ -365,18 +365,19 @@
 </div>
 
 <div id="skins-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 850px; width: 95%;"> <button class="modal-close-btn">&times;</button>
+    <div class="modal-content skins-modal-v3" style="max-width: 1320px; width: 95%;">
+        <button class="modal-close-btn">&times;</button>
         <h2>
-			<i class="fa-solid fa-shirt"></i>
-			<?php echo $labels["modals_guardaroba_titolo"]; ?>
-		</h2>
-        
+            <i data-lucide="palette"></i>
+            <?php echo $labels["modals_guardaroba_titolo"]; ?>
+        </h2>
+
         <div class="skins-controls-bar">
             <div class="skins-filters">
                 <button class="skin-filter-btn active" data-filter="all">Tutte</button>
                 <button class="skin-filter-btn" data-filter="unlocked">Sbloccate</button>
                 <button class="skin-filter-btn" data-filter="locked">Bloccate</button>
-                
+
                 <select id="skin-rarity-filter" class="clean-input skin-select-filter">
                     <option value="all">Tutte le Rarità</option>
                     <option value="common">Comune</option>
@@ -387,21 +388,10 @@
                     <option value="christmas">Festiva</option>
                 </select>
             </div>
-            
-            <div class="skins-toggle-wrapper">
-                <span id="skins-ui-label" style="font-size: 0.8rem; color: #bdc3c7; margin-right: 8px;">Vista: Card</span>
-                <label class="modern-switch">
-                    <input type="checkbox" id="skins-ui-toggle" checked>
-                    <span class="modern-slider"></span>
-                </label>
-            </div>
         </div>
 
-        <div id="skins-grid-legacy" class="skins-grid-container" style="display: none;">
-            </div>
-        
-        <div id="skins-grid-modern" class="skins-grid-container">
-            </div>
+        <!-- Singolo container unificato (no più toggle / carousel / legacy) -->
+        <div id="skins-grid-modern" class="skins-grid-container skins-unified-grid"></div>
     </div>
 </div>
 

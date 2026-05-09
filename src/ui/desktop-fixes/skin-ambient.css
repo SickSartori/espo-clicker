@@ -1,0 +1,227 @@
+/* =====================================================================
+   v3 — Clicker section ambient (sfondi HUD per rarità)
+   =====================================================================
+   Scope: SOLO #clicker-section (non globale).
+   Ogni rarità ha pattern HUD-tech diverso animato dietro al clicker.
+   z-index 0 (dietro al bottone z-index 5, dietro alle img).
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ── Base wrapper: ::before/::after già usati per orbital rings.
+        Applichiamo bg pattern direttamente al #clicker-section. ── */
+  html body #clicker-section {
+    position: relative;
+    overflow: hidden;
+    /* base radial glow (tinta rarità — fade fluido) */
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        var(--skin-rarity-glow, rgba(0, 217, 255, 0.12)) 0%,
+        transparent 70%);
+    transition: background 800ms ease;
+  }
+
+  /* ── Ambient pattern overlay: usiamo una nuova layer CSS via outline-hack →
+        in alternativa applichiamo bg multipli su #clicker-section + animation. ── */
+  html body #clicker-section::before {
+    /* (esistente: outer dashed orbital ring — non tocchiamo) */
+  }
+
+  /* ════════════════════════════════════════════════
+     Common — HUD grid statico tech (linee sottili)
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="common"] #clicker-section {
+    background:
+      /* Grid HUD verticale */
+      linear-gradient(90deg,
+        transparent 0,
+        transparent calc(50% - 1px),
+        rgba(148, 163, 184, 0.06) 50%,
+        transparent calc(50% + 1px),
+        transparent 100%) 0 0/60px 100% repeat-x,
+      /* Grid HUD orizzontale */
+      linear-gradient(0deg,
+        transparent 0,
+        transparent calc(50% - 1px),
+        rgba(148, 163, 184, 0.04) 50%,
+        transparent calc(50% + 1px),
+        transparent 100%) 0 0/100% 60px repeat-y,
+      /* Glow centrale */
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(148, 163, 184, 0.20) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-grid 18s linear infinite;
+  }
+
+  @keyframes v3-clicker-bg-grid {
+    0%   { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 60px 0, 0 60px, 0 0; }
+  }
+
+  /* ════════════════════════════════════════════════
+     Rare — Data streams blu Matrix verticali
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="rare"] #clicker-section {
+    background:
+      /* Vertical streams */
+      repeating-linear-gradient(180deg,
+        transparent 0,
+        transparent 30px,
+        rgba(0, 217, 255, 0.10) 31px,
+        rgba(0, 217, 255, 0.18) 38px,
+        rgba(0, 217, 255, 0.10) 45px,
+        transparent 46px,
+        transparent 90px) 0 0/40px 200% repeat,
+      /* Glow centro cyan */
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(0, 217, 255, 0.25) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-rain 4s linear infinite;
+  }
+
+  @keyframes v3-clicker-bg-rain {
+    0%   { background-position: 0 0%, 0 0; }
+    100% { background-position: 0 100%, 0 0; }
+  }
+
+  /* ════════════════════════════════════════════════
+     Epic — Hex grid viola + radar pulse
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="epic"] #clicker-section {
+    background:
+      /* Hex pattern (diagonali incrociate) */
+      repeating-linear-gradient(60deg,
+        transparent 0, transparent 24px,
+        rgba(192, 132, 252, 0.06) 25px, transparent 26px) 0 0/auto,
+      repeating-linear-gradient(-60deg,
+        transparent 0, transparent 24px,
+        rgba(192, 132, 252, 0.06) 25px, transparent 26px) 0 0/auto,
+      /* Radar pulse */
+      radial-gradient(circle at 50% 50%,
+        transparent 30%,
+        rgba(168, 85, 247, 0.15) 40%,
+        transparent 50%,
+        rgba(168, 85, 247, 0.10) 70%,
+        transparent 80%),
+      /* Glow centro */
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(168, 85, 247, 0.25) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-radar 5s ease-in-out infinite;
+  }
+
+  @keyframes v3-clicker-bg-radar {
+    0%, 100% { background-size: auto, auto, 100% 100%, 100% 100%; opacity: 0.85; }
+    50%      { background-size: auto, auto, 140% 140%, 100% 100%; opacity: 1; }
+  }
+
+  /* ════════════════════════════════════════════════
+     Legendary — Raggi conici dorati rotanti
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="legendary"] #clicker-section {
+    background:
+      conic-gradient(from 0deg at 50% 50%,
+        transparent 0deg,
+        rgba(252, 211, 77, 0.12) 25deg,
+        transparent 60deg,
+        rgba(245, 158, 11, 0.16) 130deg,
+        transparent 175deg,
+        rgba(252, 211, 77, 0.10) 240deg,
+        transparent 285deg,
+        rgba(245, 158, 11, 0.14) 360deg),
+      /* Particelle dorate */
+      radial-gradient(circle 1.5px at 25% 30%, rgba(252, 211, 77, 0.6) 50%, transparent 51%) 0 0/200px 200px,
+      radial-gradient(circle 2px at 70% 60%, rgba(252, 211, 77, 0.5) 50%, transparent 51%) 0 0/250px 250px,
+      radial-gradient(circle 1px at 45% 80%, rgba(255, 230, 100, 0.5) 50%, transparent 51%) 0 0/180px 180px,
+      /* Glow centro */
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(245, 158, 11, 0.22) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-rays 22s linear infinite;
+  }
+
+  @keyframes v3-clicker-bg-rays {
+    /* Rays statici (animation conic-gradient rotation richiede @property non sempre supportato).
+       Le particelle si muovono via background-position. */
+    0%   { background-position: 50% 50%, 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: 50% 50%, 200px 200px, -250px 250px, 180px -180px, 0 0; }
+  }
+
+  /* (Legendary rays restano statici — pseudo-elements già usati da orbital rings) */
+
+  /* ════════════════════════════════════════════════
+     Divine — Aurora boreale eterea calda
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="divine"] #clicker-section {
+    background:
+      /* Aurora bands diagonali */
+      linear-gradient(135deg,
+        transparent 0%,
+        rgba(255, 240, 180, 0.14) 20%,
+        transparent 40%,
+        rgba(255, 220, 160, 0.18) 60%,
+        transparent 80%,
+        rgba(255, 250, 200, 0.10) 100%) 0 0/200% 200% no-repeat,
+      /* Glow centro */
+      radial-gradient(ellipse 80% 70% at 50% 50%,
+        rgba(255, 238, 144, 0.28) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-aurora 14s ease-in-out infinite;
+  }
+
+  @keyframes v3-clicker-bg-aurora {
+    0%, 100% {
+      background-position: 0% 50%, 50% 50%;
+      filter: hue-rotate(0deg) brightness(1);
+    }
+    50% {
+      background-position: 100% 50%, 50% 50%;
+      filter: hue-rotate(15deg) brightness(1.08);
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     Christmas — Neve che cade + bagliore caldo
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="christmas"] #clicker-section {
+    background:
+      /* Snow layer 1 (piccoli, veloci) */
+      radial-gradient(circle 1.5px at 10% 5%, rgba(255,255,255,0.8) 50%, transparent 51%) 0 0/120px 200px repeat,
+      /* Snow layer 2 (medi) */
+      radial-gradient(circle 2px at 50% 30%, rgba(255,255,255,0.7) 50%, transparent 51%) 0 0/180px 250px repeat,
+      /* Snow layer 3 (grandi, lenti) */
+      radial-gradient(circle 2.5px at 80% 70%, rgba(255,255,255,0.6) 50%, transparent 51%) 0 0/240px 300px repeat,
+      /* Glow rosso caldo basso */
+      radial-gradient(ellipse 90% 50% at 50% 100%,
+        rgba(239, 68, 68, 0.18) 0%,
+        rgba(245, 158, 11, 0.10) 40%,
+        transparent 80%),
+      /* Glow centro */
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(239, 68, 68, 0.20) 0%,
+        transparent 70%);
+    animation: v3-clicker-bg-snow 12s linear infinite;
+  }
+
+  @keyframes v3-clicker-bg-snow {
+    0% {
+      background-position:
+        0 -200px, 0 -250px, 0 -300px,
+        0 0, 50% 50%;
+    }
+    100% {
+      background-position:
+        20px 200px, -25px 250px, 15px 300px,
+        0 0, 50% 50%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #clicker-section,
+  body[data-current-skin-rarity] #clicker-section,
+  body[data-current-skin-rarity="legendary"] #clicker-section::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}

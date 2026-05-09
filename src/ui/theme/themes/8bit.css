@@ -1,0 +1,30 @@
+/* =====================================================================
+   Tema 8-bit — solo override token, no selettori specifici.
+   Sostituisce 469 righe di css/8bit-theme.css quando migrato.
+   ===================================================================== */
+
+[data-v3][data-theme='8bit'] {
+  --color-bg-base: #0f0f1f;
+  --color-bg-surface: #1a1a3a;
+  --color-bg-elevated: #252550;
+  --color-fg-base: #00ff00;
+  --color-fg-muted: #88ff88;
+  --color-accent: #ff00ff;
+  --color-accent-hover: #cc00cc;
+  --color-success: #00ffff;
+  --color-warning: #ffff00;
+  --color-danger: #ff0044;
+
+  --font-sans: 'Press Start 2P', 'Courier New', monospace;
+  --font-display: 'Press Start 2P', 'Courier New', monospace;
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-full: 0;
+
+  --shadow-1: 4px 4px 0 #000;
+  --shadow-2: 6px 6px 0 #000;
+  --shadow-3: 8px 8px 0 #000;
+}

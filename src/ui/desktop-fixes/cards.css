@@ -1,0 +1,544 @@
+/* =====================================================================
+   v3 desktop — Cards (Upgrade + Team) HUD pro
+   =====================================================================
+   - Bordo angolato clip-path (corner cut) per feel HUD
+   - Tier color stripe sinistra (rarity 5 livelli)
+   - Hover lift + cyan glow + shimmer
+   - Bottoni COMPRA monospace uppercase
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* =================================================================
+     Upgrade cards (Click + Auto + Lab + Quantum)
+     ================================================================= */
+  html body .upgrade-item,
+  html body .enhancement-item,
+  html body .prestige-item,
+  html body .quantum-item {
+    position: relative;
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.7) 0%,
+      rgba(10, 15, 28, 0.5) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.1);
+    border-radius: 4px;
+    padding: 14px 16px 14px 22px; /* spazio extra sx per tier stripe */
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  /* Tier stripe verticale sinistra (default = common slate) */
+  html body .upgrade-item::before,
+  html body .enhancement-item::before,
+  html body .prestige-item::before,
+  html body .quantum-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--v3-tier-color, var(--v3-tier-common, #94a3b8));
+    box-shadow: 0 0 8px var(--v3-tier-glow, rgba(148, 163, 184, 0.4));
+    z-index: 1;
+  }
+
+  /* Default tier per tipo (gli upgrade legacy non hanno data-tier — usiamo prezzo come proxy via class) */
+  html body .upgrade-item.tier-uncommon::before,
+  html body .enhancement-item.tier-uncommon::before { background: var(--v3-tier-uncommon, #10b981); box-shadow: 0 0 8px var(--v3-tier-uncommon-glow, rgba(16,185,129,0.5)); }
+  html body .upgrade-item.tier-rare::before,
+  html body .enhancement-item.tier-rare::before     { background: var(--v3-tier-rare, #3b82f6); box-shadow: 0 0 8px var(--v3-tier-rare-glow, rgba(59,130,246,0.5)); }
+  html body .upgrade-item.tier-epic::before,
+  html body .enhancement-item.tier-epic::before     { background: var(--v3-tier-epic, #a855f7); box-shadow: 0 0 8px var(--v3-tier-epic-glow, rgba(168,85,247,0.55)); }
+  html body .upgrade-item.tier-legendary::before,
+  html body .enhancement-item.tier-legendary::before { background: var(--v3-tier-legendary, #f59e0b); box-shadow: 0 0 8px var(--v3-tier-legendary-glow, rgba(245,158,11,0.6)); }
+
+  /* Prestige sempre epic, Quantum sempre legendary (tematico) */
+  html body .prestige-item::before { background: var(--v3-tier-epic, #a855f7); box-shadow: 0 0 12px rgba(168,85,247,0.55); }
+  html body .quantum-item::before  { background: linear-gradient(180deg, #00d9ff, #a855f7, #f59e0b); box-shadow: 0 0 14px rgba(168,85,247,0.6); }
+
+  /* Hover */
+  html body .upgrade-item:hover,
+  html body .enhancement-item:hover,
+  html body .prestige-item:hover,
+  html body .quantum-item:hover {
+    transform: translateX(3px);
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.06) 0%,
+      rgba(15, 23, 42, 0.7) 100%);
+    border-color: rgba(0, 217, 255, 0.4);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(0, 217, 255, 0.12),
+      0 0 24px rgba(0, 217, 255, 0.1);
+  }
+
+  /* Stato comprato — verde */
+  html body .upgrade-item.purchased,
+  html body .enhancement-item.purchased,
+  html body .prestige-item.purchased {
+    background: linear-gradient(180deg,
+      rgba(16, 185, 129, 0.08) 0%,
+      rgba(15, 23, 42, 0.7) 100%);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  html body .upgrade-item.purchased::after,
+  html body .enhancement-item.purchased::after,
+  html body .prestige-item.purchased::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: var(--v3-tier-uncommon, #10b981);
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+
+  /* Stato locked */
+  html body .upgrade-item.locked,
+  html body .enhancement-item.locked {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+  }
+
+  /* Tipografia interna card */
+  html body .upgrade-item h3,
+  html body .upgrade-item .item-name,
+  html body .enhancement-item h3,
+  html body .enhancement-item .item-name {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--v3-fg-primary, #f8fafc);
+    margin: 0 0 4px;
+  }
+
+  html body .upgrade-item p,
+  html body .upgrade-item .item-desc,
+  html body .enhancement-item p,
+  html body .enhancement-item .item-desc {
+    font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif);
+    font-size: 0.82rem;
+    color: var(--v3-fg-muted, #64748b);
+    line-height: 1.4;
+    margin: 0 0 6px;
+  }
+
+  /* Costo — JetBrains gold/cyan */
+  html body .upgrade-item [class*="cost"],
+  html body .enhancement-item [class*="cost"],
+  html body .upgrade-item [class*="price"],
+  html body .enhancement-item [class*="price"] {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--v3-tier-legendary, #f59e0b);
+    text-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
+    letter-spacing: 0.5px;
+  }
+
+  /* =================================================================
+     Team / Building cards (colonna destra)
+     ================================================================= */
+  html body #buildings-list .building-card,
+  html body .building-item {
+    position: relative;
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.75) 0%,
+      rgba(10, 15, 28, 0.55) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 4px;
+    padding: 14px 14px 14px 22px;
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  /* Tier stripe sinistra (default rare = team standard) */
+  html body #buildings-list .building-card::before,
+  html body .building-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--v3-tier-rare, #3b82f6);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    z-index: 1;
+  }
+
+  /* Tier escalation per livello team (data-tier o class proxy) */
+  html body .building-item[data-tier="3"]::before,
+  html body .building-item.tier-epic::before { background: var(--v3-tier-epic, #a855f7); box-shadow: 0 0 10px rgba(168,85,247,0.55); }
+  html body .building-item[data-tier="4"]::before,
+  html body .building-item.tier-legendary::before { background: var(--v3-tier-legendary, #f59e0b); box-shadow: 0 0 12px rgba(245,158,11,0.6); }
+  html body .building-item[data-tier="5"]::before,
+  html body .building-item.tier-divine::before {
+    background: linear-gradient(180deg, #00d9ff 0%, #a855f7 50%, #f59e0b 100%);
+    box-shadow: 0 0 14px rgba(168,85,247,0.7);
+  }
+
+  html body #buildings-list .building-card:hover,
+  html body .building-item:hover {
+    transform: translateX(-3px);
+    border-color: rgba(0, 217, 255, 0.5);
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.05) 0%,
+      rgba(15, 23, 42, 0.7) 100%);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(0, 217, 255, 0.12),
+      0 0 24px rgba(0, 217, 255, 0.12);
+  }
+
+  /* Building stat colors (BPS = green, costo = gold) */
+  html body .building-item .bps-info,
+  html body .building-item [class*="bps"],
+  html body #buildings-list [class*="bps"] {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    color: var(--v3-tier-uncommon, #10b981);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+  }
+
+  /* Quantità building (badge) */
+  html body .building-item [class*="count"],
+  html body .building-item [class*="quantity"],
+  html body #buildings-list [class*="count"] {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--v3-fg-primary, #f8fafc);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =================================================================
+     Bottoni COMPRA / BUY HUD
+     ================================================================= */
+  html body .buy-btn,
+  html body button[id^="buy-"],
+  html body button[onclick*="buy"] {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.18) 0%,
+      rgba(0, 217, 255, 0.08) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.4);
+    border-radius: 3px;
+    color: var(--v3-accent-cyan, #00d9ff);
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    text-shadow: 0 0 6px rgba(0, 217, 255, 0.5);
+    box-shadow:
+      0 2px 8px rgba(0, 217, 255, 0.15),
+      inset 0 1px 0 rgba(0, 217, 255, 0.1);
+    transition: all var(--v3-dur-fast, 150ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    cursor: pointer;
+  }
+
+  html body .buy-btn:hover:not(:disabled):not([disabled]) {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.35) 0%,
+      rgba(0, 217, 255, 0.15) 100%);
+    color: #fff;
+    border-color: var(--v3-accent-cyan, #00d9ff);
+    box-shadow:
+      0 4px 14px rgba(0, 217, 255, 0.4),
+      0 0 24px rgba(0, 217, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+  }
+
+  html body .buy-btn:active:not(:disabled):not([disabled]) {
+    transform: translateY(0) scale(0.97);
+  }
+
+  html body .buy-btn:disabled,
+  html body .buy-btn[disabled],
+  html body button.disabled {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(248, 250, 252, 0.25);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+    text-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* Quantum/Prestige buy buttons → viola */
+  html body .quantum-btn,
+  html body .prestige-buy-btn {
+    background: linear-gradient(135deg,
+      rgba(168, 85, 247, 0.22) 0%,
+      rgba(168, 85, 247, 0.1) 100%);
+    border-color: rgba(168, 85, 247, 0.5);
+    color: #c084fc;
+    text-shadow: 0 0 6px rgba(168, 85, 247, 0.5);
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.18);
+  }
+
+  html body .quantum-btn:hover,
+  html body .prestige-buy-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(168, 85, 247, 0.4) 0%,
+      rgba(168, 85, 247, 0.18) 100%);
+    color: #fff;
+    border-color: var(--v3-tier-epic, #a855f7);
+    box-shadow:
+      0 4px 14px rgba(168, 85, 247, 0.45),
+      0 0 24px rgba(168, 85, 247, 0.35);
+  }
+
+  /* =================================================================
+     Buy multiplier (1X / 5X / 10X / MAX)
+     ================================================================= */
+  html body .buy-multiplier-row,
+  html body #buy-multiplier-buttons {
+    background: rgba(0, 217, 255, 0.04);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 4px;
+    padding: 4px;
+    display: flex;
+    gap: 2px;
+  }
+
+  html body .buy-multiplier-btn {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 2px;
+    padding: 8px 0;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    color: rgba(248, 250, 252, 0.55);
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    cursor: pointer;
+  }
+
+  html body .buy-multiplier-btn:hover:not(.active) {
+    background: rgba(0, 217, 255, 0.08);
+    color: var(--v3-fg-primary, #f8fafc);
+  }
+
+  html body .buy-multiplier-btn:active {
+    transform: scale(0.94);
+  }
+
+  html body .buy-multiplier-btn.active {
+    background: linear-gradient(180deg,
+      rgba(16, 185, 129, 0.3) 0%,
+      rgba(16, 185, 129, 0.15) 100%);
+    color: var(--v3-tier-uncommon, #10b981);
+    box-shadow:
+      0 0 0 1px rgba(16, 185, 129, 0.4),
+      0 0 12px rgba(16, 185, 129, 0.25),
+      inset 0 1px 0 rgba(16, 185, 129, 0.2);
+    text-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+  }
+
+  /* =================================================================
+     Column header titles (TEAMS, POTENZIAMENTI CLICK ecc.)
+     ================================================================= */
+  html body #buildings-header,
+  html body [class*="column-title"],
+  html body .col-header,
+  html body h2.section-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--v3-fg-primary, #f8fafc);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+    margin: 0 -16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.04),
+      transparent);
+  }
+
+  html body #buildings-header i,
+  html body .col-header i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5));
+  }
+
+  /* =================================================================
+     Scrollbar HUD
+     ================================================================= */
+  html body .game-column::-webkit-scrollbar,
+  html body #buildings-list::-webkit-scrollbar,
+  html body #upgrade-store::-webkit-scrollbar,
+  html body #enhancement-store::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  html body .game-column::-webkit-scrollbar-track,
+  html body #buildings-list::-webkit-scrollbar-track,
+  html body #upgrade-store::-webkit-scrollbar-track,
+  html body #enhancement-store::-webkit-scrollbar-track {
+    background: rgba(0, 217, 255, 0.04);
+  }
+
+  html body .game-column::-webkit-scrollbar-thumb,
+  html body #buildings-list::-webkit-scrollbar-thumb,
+  html body #upgrade-store::-webkit-scrollbar-thumb,
+  html body #enhancement-store::-webkit-scrollbar-thumb {
+    background: rgba(0, 217, 255, 0.25);
+    border-radius: 999px;
+    transition: background 200ms ease;
+  }
+
+  html body .game-column::-webkit-scrollbar-thumb:hover,
+  html body #buildings-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 217, 255, 0.5);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+  }
+
+  html body .game-column,
+  html body #buildings-list,
+  html body #upgrade-store,
+  html body #enhancement-store {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 217, 255, 0.25) rgba(0, 217, 255, 0.04);
+  }
+
+  /* =================================================================
+     Buy controls (1X / 5X / 10X / MAX) — switch animation
+     ================================================================= */
+  html body #buy-controls {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.7) 0%,
+      rgba(10, 15, 28, 0.5) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 4px;
+  }
+
+  html body #buy-controls .buy-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    border-radius: 2px;
+    transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Active multiplier — green glow with entrance animation */
+  html body #buy-controls .buy-btn.active {
+    background: linear-gradient(180deg,
+      rgba(16, 185, 129, 0.3) 0%,
+      rgba(16, 185, 129, 0.15) 100%);
+    color: var(--v3-tier-uncommon, #10b981);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow:
+      0 0 0 1px rgba(16, 185, 129, 0.4),
+      0 0 12px rgba(16, 185, 129, 0.25),
+      inset 0 1px 0 rgba(16, 185, 129, 0.2);
+    text-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+    animation: v3-switch-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes v3-switch-pop {
+    0%   { transform: scale(0.9); opacity: 0.5; }
+    50%  { transform: scale(1.06); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Inactive multiplier */
+  html body #buy-controls .buy-btn:not(.active) {
+    background: transparent;
+    color: rgba(248, 250, 252, 0.45);
+    border-color: transparent;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  html body #buy-controls .buy-btn:not(.active):hover {
+    background: rgba(0, 217, 255, 0.08);
+    color: var(--v3-fg-primary, #f8fafc);
+  }
+
+  /* =================================================================
+     TEAMS column header — alignment fix
+     ================================================================= */
+  html body .column-header-aligned h2 {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--v3-fg-primary, #f8fafc);
+  }
+
+  html body .column-header-aligned h2 i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    font-size: 1rem;
+    filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.5));
+  }
+
+  /* =================================================================
+     Building card — icon + text alignment
+     ================================================================= */
+  html body .building-item .building-name,
+  html body .building-item h3,
+  html body #building-list-container .building-name {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--v3-fg-primary, #f8fafc);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  html body .building-item .building-cost,
+  html body #building-list-container [class*="cost"] {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--v3-tier-legendary, #f59e0b);
+    text-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .upgrade-item,
+  html body .enhancement-item,
+  html body .building-item,
+  html body .buy-btn,
+  html body .buy-multiplier-btn,
+  html body #buy-controls .buy-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}

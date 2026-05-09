@@ -1,0 +1,127 @@
+/* =====================================================================
+   Primitives — componenti base costruiti su tokens.
+   Mobile-first. Usano container queries dove possibile.
+   ===================================================================== */
+
+/* === Card === */
+[data-v3] .v3-card {
+  background: var(--bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: background var(--motion-base) var(--ease-out),
+              border-color var(--motion-base) var(--ease-out),
+              transform var(--motion-base) var(--ease-spring);
+}
+
+[data-v3] .v3-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--color-border-strong);
+}
+
+[data-v3] .v3-card[data-state='locked'] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+[data-v3] .v3-card[data-state='owned'] {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 8%, var(--bg-card));
+}
+
+/* === Button === */
+[data-v3] .v3-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px; /* WCAG target size */
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  background: var(--color-accent);
+  color: white;
+  transition: transform var(--motion-fast) var(--ease-spring),
+              background var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out);
+  box-shadow: var(--shadow-1);
+  user-select: none;
+}
+
+[data-v3] .v3-btn:hover {
+  background: var(--color-accent-hover);
+  box-shadow: var(--shadow-2);
+}
+
+[data-v3] .v3-btn:active {
+  transform: scale(0.96);
+}
+
+[data-v3] .v3-btn[disabled],
+[data-v3] .v3-btn[aria-disabled='true'] {
+  background: var(--color-fg-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+[data-v3] .v3-btn--ghost {
+  background: transparent;
+  color: var(--fg-primary);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: none;
+}
+
+[data-v3] .v3-btn--ghost:hover {
+  background: var(--color-accent-soft);
+}
+
+[data-v3] .v3-btn--danger {
+  background: var(--color-danger);
+}
+[data-v3] .v3-btn--success {
+  background: var(--color-success);
+}
+
+/* === Glass surface === */
+[data-v3] .v3-glass {
+  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+/* === Bento grid === */
+[data-v3] .v3-bento {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
+
+@container (min-width: 720px) {
+  [data-v3] .v3-bento {
+    gap: var(--space-4);
+  }
+}
+
+/* === Tabular numbers (score display) === */
+[data-v3] .v3-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* === Visually hidden (a11y) === */
+[data-v3] .v3-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* === Skip link === a11y critico, non scoped [data-v3] */

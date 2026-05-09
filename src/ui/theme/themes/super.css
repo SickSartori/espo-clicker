@@ -1,0 +1,21 @@
+/* =====================================================================
+   Tema Super — sostituisce css/super-theme.css (475 righe).
+   ===================================================================== */
+
+[data-v3][data-theme='super'] {
+  --color-bg-base: #001220;
+  --color-bg-surface: #002b50;
+  --color-bg-elevated: #003a70;
+  --color-fg-base: #ffd700;
+  --color-fg-muted: #f5b041;
+  --color-accent: #e74c3c;
+  --color-accent-hover: #c0392b;
+  --color-success: #27ae60;
+
+  --shadow-1: 0 0 8px rgba(255, 215, 0, 0.3);
+  --shadow-2: 0 0 16px rgba(255, 215, 0, 0.4);
+  --shadow-3: 0 0 32px rgba(255, 215, 0, 0.5);
+
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}

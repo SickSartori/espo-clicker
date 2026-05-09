@@ -1,0 +1,126 @@
+/* =====================================================================
+   Espo_Clicker v3 — Tokens v3 (cyberpunk-tech HUD)
+   =====================================================================
+   Direzione: HUD / Sci-Fi FUI + OLED Dark Mode ibrido.
+   Da skill ui-ux-pro-max: stile professionale tech, no infantile.
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* === Palette base OLED dark === */
+  --v3-bg-void: #050810;
+  --v3-bg-deep: #0a0f1c;
+  --v3-bg-surface: #0f172a;
+  --v3-bg-elevated: #1e293b;
+  --v3-bg-overlay: rgba(10, 15, 28, 0.85);
+
+  /* === Foreground === */
+  --v3-fg-primary: #f8fafc;
+  --v3-fg-secondary: #cbd5e1;
+  --v3-fg-muted: #64748b;
+  --v3-fg-disabled: #334155;
+
+  /* === Accent neon (signature) === */
+  --v3-accent-cyan: #00d9ff;
+  --v3-accent-cyan-glow: rgba(0, 217, 255, 0.5);
+  --v3-accent-red: #ff3d5c;
+  --v3-accent-red-glow: rgba(255, 61, 92, 0.5);
+  --v3-accent-purple: #a855f7;
+  --v3-accent-green: #10b981;
+
+  /* === Rarity tier system (5 livelli + divine) === */
+  --v3-tier-common: #94a3b8;
+  --v3-tier-common-glow: rgba(148, 163, 184, 0.4);
+  --v3-tier-uncommon: #10b981;
+  --v3-tier-uncommon-glow: rgba(16, 185, 129, 0.5);
+  --v3-tier-rare: #3b82f6;
+  --v3-tier-rare-glow: rgba(59, 130, 246, 0.5);
+  --v3-tier-epic: #a855f7;
+  --v3-tier-epic-glow: rgba(168, 85, 247, 0.55);
+  --v3-tier-legendary: #f59e0b;
+  --v3-tier-legendary-glow: rgba(245, 158, 11, 0.6);
+  --v3-tier-divine: linear-gradient(135deg, #00d9ff 0%, #a855f7 50%, #f59e0b 100%);
+
+  /* === Borders === */
+  --v3-border-subtle: rgba(148, 163, 184, 0.08);
+  --v3-border-default: rgba(148, 163, 184, 0.15);
+  --v3-border-strong: rgba(148, 163, 184, 0.3);
+  --v3-border-neon: rgba(0, 217, 255, 0.4);
+
+  /* === Spacing (4px base) === */
+  --v3-space-1: 4px;
+  --v3-space-2: 8px;
+  --v3-space-3: 12px;
+  --v3-space-4: 16px;
+  --v3-space-5: 20px;
+  --v3-space-6: 24px;
+  --v3-space-8: 32px;
+  --v3-space-10: 40px;
+  --v3-space-12: 48px;
+
+  /* === Typography === */
+  --v3-font-display: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --v3-font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --v3-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* === Sizes (clamp fluid) === */
+  --v3-fs-xs: clamp(0.7rem, 0.65rem + 0.2vw, 0.78rem);
+  --v3-fs-sm: clamp(0.82rem, 0.78rem + 0.2vw, 0.92rem);
+  --v3-fs-md: clamp(0.95rem, 0.9rem + 0.2vw, 1.05rem);
+  --v3-fs-lg: clamp(1.15rem, 1.05rem + 0.4vw, 1.4rem);
+  --v3-fs-xl: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+  --v3-fs-2xl: clamp(2rem, 1.6rem + 1.6vw, 3rem);
+  --v3-fs-hero: clamp(2.8rem, 2rem + 3vw, 5rem);
+
+  /* === Radius (più stretto = più tech, no rounded clown) === */
+  --v3-radius-sm: 4px;
+  --v3-radius-md: 8px;
+  --v3-radius-lg: 12px;
+  --v3-radius-xl: 16px;
+  --v3-radius-pill: 999px;
+
+  /* === Motion (signature) === */
+  --v3-ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --v3-ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+  --v3-ease-precise: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --v3-dur-instant: 80ms;
+  --v3-dur-fast: 150ms;
+  --v3-dur-base: 220ms;
+  --v3-dur-slow: 360ms;
+  --v3-dur-extra: 600ms;
+
+  /* === Shadows (depth + neon glow) === */
+  --v3-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --v3-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --v3-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --v3-shadow-glow-cyan: 0 0 24px var(--v3-accent-cyan-glow);
+  --v3-shadow-glow-red: 0 0 24px var(--v3-accent-red-glow);
+
+  /* === Gradients signature === */
+  --v3-grad-hud: linear-gradient(135deg,
+    rgba(15, 23, 42, 0.9) 0%,
+    rgba(10, 15, 28, 0.7) 100%);
+  --v3-grad-accent: linear-gradient(135deg,
+    var(--v3-accent-cyan) 0%,
+    #0ea5e9 50%,
+    var(--v3-accent-purple) 100%);
+  --v3-grad-fire: linear-gradient(135deg,
+    #ff7f50 0%,
+    var(--v3-accent-red) 60%,
+    #c0392b 100%);
+}
+
+/* =====================================================================
+   Reduced motion override
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --v3-dur-instant: 1ms;
+    --v3-dur-fast: 1ms;
+    --v3-dur-base: 1ms;
+    --v3-dur-slow: 1ms;
+    --v3-dur-extra: 1ms;
+  }
+}

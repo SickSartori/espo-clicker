@@ -25,6 +25,14 @@ dump.rdb
 code
 assets/packs
 
+# Vite v3 dev output (decideremo se committare a fine migrazione)
+dist-v3/
+
+# Vitest / TS cache
+coverage/
+.vite/
+*.tsbuildinfo
+
 # Tool interni (non deployare)
 .superpowers
 .claude

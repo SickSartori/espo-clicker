@@ -1,0 +1,64 @@
+/* =====================================================================
+   v3 — Modals Shell (anti-flicker, finestra stabile)
+   =====================================================================
+   Override globale del flash su apertura modal. Tutti i .modal-content
+   ricevono fade-in lineare (no scale + translate che causano jump
+   percepito come "lampeggio"). Backdrop sfuma blur.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ── Backdrop generico — fade liscio (no animation re-trigger ad ogni redraw) ── */
+  html body .modal-backdrop {
+    animation: v3-mb-fade 200ms ease-out !important;
+    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.78) !important;
+  }
+
+  @keyframes v3-mb-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── Modal content: solid window feel — opacity-only fade ── */
+  html body .modal-backdrop > .modal-content {
+    animation: v3-mc-window 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+    will-change: opacity, transform;
+    backface-visibility: hidden;
+    transform-origin: center;
+    /* Border + shadow per "finestra" visibile */
+    border: 1px solid rgba(0, 217, 255, 0.16);
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(0, 217, 255, 0.08),
+      0 0 80px rgba(0, 217, 255, 0.06) !important;
+  }
+
+  @keyframes v3-mc-window {
+    from {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Modali specifici già v3-styled: skip extra animations */
+  html body div#skins-modal.modal-backdrop > .modal-content.skins-modal-v3,
+  html body div#achievements-modal.modal-backdrop > .modal-content,
+  html body div#stats-modal.modal-backdrop > .modal-content,
+  html body div#settings-modal.modal-backdrop > .modal-content {
+    animation: v3-mc-window 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .modal-backdrop,
+  html body .modal-backdrop > .modal-content {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

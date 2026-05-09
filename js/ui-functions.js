@@ -681,29 +681,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Funzione principale per aggiornare la modale delle skin
+// === Guardaroba unificato (v3) — render grid moderno con sfondo dinamico ===
 function updateSkinsUI() {
-    // Load Epic and Legendary skins on demand when modal opens
     if (window.AssetManager) {
         window.AssetManager.load('SKINS_EPIC');
         window.AssetManager.load('SKINS_LEGENDARY');
     }
 
-    const gridLegacy = document.getElementById('skins-grid-legacy');
-    const gridModern = document.getElementById('skins-grid-modern');
-    const toggleUI = document.getElementById('skins-ui-toggle');
+    const grid = document.getElementById('skins-grid-modern');
+    if (!grid) return;
 
-    if (!gridLegacy || !gridModern) return;
-
-    const useModern = toggleUI ? toggleUI.checked : true;
-
-    gridLegacy.style.display = useModern ? 'none' : 'grid';
-    gridModern.style.display = useModern ? 'flex' : 'none';
-
-    gridLegacy.innerHTML = '';
-    gridModern.innerHTML = '';
-    modernSkinsArray = []; // Svuota l'array per il carousel
-
-    // Sicurezza salvataggi
     if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
     if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
 
@@ -713,6 +700,14 @@ function updateSkinsUI() {
     const rarityMap = {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
         'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
+    };
+    const rColors = {
+        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
+        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
+    };
+    const rGlows = {
+        'common': 'rgba(189,195,199,0.18)', 'rare': 'rgba(52,152,219,0.25)', 'epic': 'rgba(155,89,182,0.25)',
+        'legendary': 'rgba(241,196,15,0.3)', 'divine': 'rgba(255,238,144,0.4)', 'christmas': 'rgba(231,76,60,0.3)'
     };
 
     const skinToAchievement = {};
@@ -724,19 +719,15 @@ function updateSkinsUI() {
         }
     }
 
-    // CONTROLLO E DISABILITAZIONE FILTRO "BLOCCATE"
     let lockedCount = 0;
     for (const key in gameData.skins) {
         if (!unlockedList.includes(key)) lockedCount++;
     }
-
     const lockedFilterBtn = document.querySelector('.skin-filter-btn[data-filter="locked"]');
     if (lockedFilterBtn) {
         if (lockedCount === 0) {
             lockedFilterBtn.disabled = true;
-            lockedFilterBtn.style.pointerEvents = 'none'; // Previene hover e click
-
-            // Se eravamo proprio nella tab "Bloccate" quando è stata comprata l'ultima skin, torniamo a "Tutte"
+            lockedFilterBtn.style.pointerEvents = 'none';
             if (currentSkinFilter === 'locked') {
                 currentSkinFilter = 'all';
                 document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
@@ -749,23 +740,21 @@ function updateSkinsUI() {
         }
     }
 
-    // 1. ELABORAZIONE DATI E FILTRI
+    const rarityOrder = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
+    const skinsArray = [];
     for (const key in gameData.skins) {
         const data = gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
         const isEquipped = currentSkin === key;
         const isBuyable = !isUnlocked && data.cost !== undefined;
         const canAfford = isBuyable && gameState.prestigePoints.gte(data.cost);
-        const rarityLabel = rarityMap[data.rarity] || 'COMUNE';
 
-        // Filtri
         if (currentSkinFilter === 'unlocked' && !isUnlocked) continue;
         if (currentSkinFilter === 'locked' && isUnlocked) continue;
         if (currentRarityFilter !== 'all' && data.rarity !== currentRarityFilter) continue;
 
-        let requirement = "";
+        let requirement = '';
         let baseText = gameData.texts.ui.unknown;
-
         if (!isUnlocked && !isBuyable) {
             const linkedAch = skinToAchievement[key];
             if (linkedAch) {
@@ -777,426 +766,156 @@ function updateSkinsUI() {
                 baseText = gameData.texts.ui.skinLocked;
             }
         }
+        const imgSource = isUnlocked
+            ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
+            : 'assets/image/ui/hidden.webp';
 
-        const imgSource = isUnlocked ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp') : 'assets/image/ui/hidden.webp';
-
-        // Creazione Oggetto per il Carousel Moderno
-        const skinObj = {
+        skinsArray.push({
             id: key, data, isUnlocked, isEquipped, isBuyable, canAfford,
-            rarityLabel, requirement, baseText, imgSource
-        };
-        modernSkinsArray.push(skinObj);
+            rarityLabel: rarityMap[data.rarity] || 'COMUNE',
+            requirement, baseText, imgSource,
+            color: rColors[data.rarity] || rColors['common'],
+            glow: rGlows[data.rarity] || rGlows['common']
+        });
+    }
+    skinsArray.sort((a, b) => (rarityOrder[a.data.rarity] || 0) - (rarityOrder[b.data.rarity] || 0));
+    modernSkinsArray = skinsArray;
 
-        // ==========================================
-        // RENDERING LEGACY (Il vecchio design a griglia)
-        // ==========================================
-        if (!useModern) {
-            // Descrizione: solo per skin sbloccate
-            const descHTML = isUnlocked
-                ? `<div class="skin-desc"><div class="skin-lore">${data.desc || '...'}</div></div>`
-                : '';
-
-            let footerHtml = '';
-            if (isEquipped) {
-                footerHtml = `<div class="skin-btn equipped"><i class="fa-solid fa-check"></i> ${gameData.texts.ui.equipped}</div>`;
-            } else if (isUnlocked) {
-                footerHtml = `<div class="skin-btn action" onclick="equipSkin('${key}')">${gameData.texts.ui.useSkin}</div>`;
-            } else if (isBuyable) {
-                const needsFormat = data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
-                if (needsFormat) {
-                    footerHtml = `<div class="skin-price" style="color:#9b59b6"><i class="fa-solid fa-rotate"></i> Formattazione</div>
-                                  <div class="skin-btn" style="background:#333;color:#777;cursor:not-allowed;">FORMATTA PRIMA</div>`;
-                } else {
-                    const priceClass = canAfford ? '#f1c40f' : '#e74c3c';
-                    footerHtml = `<div class="skin-price" style="color:${priceClass}"><i class="fa-solid fa-flask"></i> ${data.cost}</div>
-                                  <div class="skin-btn" style="${canAfford ? 'background:#f1c40f;color:#000;' : 'background:#333;color:#777;cursor:not-allowed;'}" ${canAfford ? `onclick="buySkin('${key}')"` : ''}>${canAfford ? 'COMPRA' : 'NO TOKEN'}</div>`;
-                }
-            } else {
-                footerHtml = `<div class="skin-btn locked"><i class="fa-solid fa-lock"></i> BLOCCATO</div>`;
-            }
-
-            const card = document.createElement('div');
-            card.className = `skin-card rarity-${data.rarity || 'common'} ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
-            card.innerHTML = `
-                <div class="skin-badge">${rarityLabel}</div>
-                <div class="skin-img-container"><img src="${imgSource}" class="skin-img"></div>
-                <div class="skin-name-display" title="${data.name}">${data.name}</div>
-                ${descHTML}
-                <div class="skin-card-spacer"></div>
-                <div class="skin-footer">${footerHtml}</div>`;
-            gridLegacy.appendChild(card);
-        }
+    const equippedSkin = skinsArray.find(s => s.isEquipped) || skinsArray[0];
+    if (equippedSkin) {
+        grid.style.setProperty('--bg-glow-color', equippedSkin.glow);
+        grid.style.setProperty('--bg-rarity-color', equippedSkin.color);
     }
 
-    // Ordinamento per rarità (common → rare → epic → legendary → divine → christmas)
-    const rarityOrder = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
-    modernSkinsArray.sort((a, b) => {
-        const ra = rarityOrder[a.data.rarity] || 0;
-        const rb = rarityOrder[b.data.rarity] || 0;
-        return ra - rb;
-    });
-
-    // Gestone Messaggio Vuoto
-    if (modernSkinsArray.length === 0) {
-        const msg = `<div style="text-align: center; color: #7f8c8d; padding: 40px; font-style: italic; width: 100%;">Nessuna skin corrisponde ai filtri.</div>`;
-        if (useModern) gridModern.innerHTML = msg; else gridLegacy.innerHTML = msg;
+    if (skinsArray.length === 0) {
+        grid.innerHTML = '<div class="skins-empty">Nessuna skin corrisponde ai filtri.</div>';
         return;
     }
 
-    // ==========================================
-    // RENDERING MODERNO (Carousel Cover Flow)
-    // ==========================================
-    if (useModern) {
-        modernCurrentIndex = 0;
-        let foundIndex = -1;
+    grid.innerHTML = skinsArray.map(skin => {
+        let stateClass = '';
+        if (skin.isEquipped) stateClass = 'equipped';
+        else if (skin.isUnlocked) stateClass = 'unlocked';
+        else stateClass = 'locked';
 
-        if (lastViewedSkinId) {
-            foundIndex = modernSkinsArray.findIndex(s => s.id === lastViewedSkinId);
-        }
+        // Mostra sempre il nome skin (anche quando bloccata)
+        const nameHtml = skin.data.name || '???';
 
-        if (foundIndex !== -1) {
-            modernCurrentIndex = foundIndex;
-        } else {
-            modernCurrentIndex = Math.max(0, modernSkinsArray.findIndex(s => s.isEquipped));
-        }
+        // Doppio-click: equip diretto se sbloccata + non equipaggiata.
+        // Singolo click: apri preview modal con descrizione.
+        const dblHandler = (skin.isUnlocked && !skin.isEquipped)
+            ? `ondblclick="event.stopPropagation();equipSkin('${skin.id}')"`
+            : '';
 
-        // Crea la struttura base del Carousel e del Pannello
-        gridModern.innerHTML = `
-            <div class="carousel-stage" id="carousel-stage">
-                <button class="carousel-nav-btn" id="carousel-prev"><i class="fa-solid fa-chevron-left"></i></button>
-                <div id="carousel-track" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
-                <button class="carousel-nav-btn" id="carousel-next"><i class="fa-solid fa-chevron-right"></i></button>
+        return `
+            <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
+                 style="--r-color:${skin.color};--r-glow:${skin.glow};"
+                 onclick="showSkinPreview('${skin.id}')"
+                 ${dblHandler}
+                 title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — Doppio click: equipaggia' : 'Click per dettagli'}"
+                 role="button" tabindex="0">
+                <div class="skin-rarity-badge">${skin.rarityLabel}</div>
+                ${skin.isEquipped ? '<div class="skin-equipped-pill"><i class="fa-solid fa-check"></i></div>' : ''}
+                <div class="skin-img-wrap">
+                    <img src="${skin.imgSource}" alt="${skin.data.name}" loading="lazy">
+                    ${!skin.isUnlocked ? '<div class="skin-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                </div>
+                <div class="skin-name-display">${nameHtml}</div>
             </div>
-            <div class="carousel-dots" id="carousel-dots"></div>
-            <div class="modern-info-panel" id="modern-info-panel"></div>
         `;
-
-        const track = document.getElementById('carousel-track');
-
-        // Genera gli elementi (immagini) nel track
-        modernSkinsArray.forEach((skin, index) => {
-            const item = document.createElement('div');
-            item.className = `carousel-item ${!skin.isUnlocked ? 'locked' : ''}`;
-            item.setAttribute('data-index', index);
-
-            // Variabili CSS per i colori della rarità (glow del bordo)
-            const rColors = {
-                'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
-                'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
-            };
-            const rGlows = {
-                'common': 'rgba(189,195,199,0.4)', 'rare': 'rgba(52,152,219,0.4)', 'epic': 'rgba(155,89,182,0.4)',
-                'legendary': 'rgba(241,196,15,0.4)', 'divine': 'rgba(255,238,144,0.6)', 'christmas': 'rgba(231,76,60,0.4)'
-            };
-
-            const color = rColors[skin.data.rarity] || rColors['common'];
-            const glow = rGlows[skin.data.rarity] || rGlows['common'];
-
-            item.style.setProperty('--r-color', color);
-            item.style.setProperty('--r-color-glow', glow);
-
-            item.innerHTML = `
-                <img src="${skin.imgSource}">
-                <div class="carousel-badge">${skin.rarityLabel}</div>
-                ${!skin.isUnlocked ? '<i class="fa-solid fa-lock carousel-lock"></i>' : ''}
-            `;
-
-            // Cliccare su un elemento laterale lo porta al centro
-            item.addEventListener('click', () => {
-                if (modernCurrentIndex !== index) {
-                    modernCurrentIndex = index;
-                    renderModernCarousel();
-                }
-            });
-
-            track.appendChild(item);
-        });
-
-        // Eventi Frecce Navigazione
-        document.getElementById('carousel-prev').addEventListener('click', () => {
-            if (modernCurrentIndex > 0) {
-                modernCurrentIndex--;
-                renderModernCarousel();
-            }
-        });
-
-        document.getElementById('carousel-next').addEventListener('click', () => {
-            if (modernCurrentIndex < modernSkinsArray.length - 1) {
-                modernCurrentIndex++;
-                renderModernCarousel();
-            }
-        });
-
-        // Navigazione Tastiera (frecce SX/DX) quando il modale è aperto
-        if (!window._carouselKeyHandler) {
-            window._carouselKeyHandler = (e) => {
-                const modal = document.getElementById('skins-modal');
-                if (!modal || modal.style.display === 'none') return;
-                const toggle = document.getElementById('skins-ui-toggle');
-                if (!toggle || !toggle.checked) return;
-
-                if (e.key === 'ArrowLeft' && modernCurrentIndex > 0) {
-                    modernCurrentIndex--;
-                    renderModernCarousel();
-                    e.preventDefault();
-                } else if (e.key === 'ArrowRight' && modernCurrentIndex < modernSkinsArray.length - 1) {
-                    modernCurrentIndex++;
-                    renderModernCarousel();
-                    e.preventDefault();
-                } else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && currentRarityFilter === 'all') {
-                    const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'divine', 'christmas'];
-                    const curRarity = modernSkinsArray[modernCurrentIndex]?.data?.rarity;
-                    const presentRarities = RARITY_ORDER.filter(r =>
-                        modernSkinsArray.some(s => s.data?.rarity === r)
-                    );
-                    const rIdx = presentRarities.indexOf(curRarity);
-                    const n = presentRarities.length;
-                    const targetRarityIdx = e.key === 'ArrowUp'
-                        ? (rIdx + 1) % n
-                        : (rIdx - 1 + n) % n;
-                    const targetRarity = presentRarities[targetRarityIdx];
-                    const targetIdx = modernSkinsArray.findIndex(s => s.data?.rarity === targetRarity);
-                    if (targetIdx !== -1) {
-                        modernCurrentIndex = targetIdx;
-                        renderModernCarousel();
-                    }
-                    e.preventDefault();
-                }
-            };
-            document.addEventListener('keydown', window._carouselKeyHandler);
-        }
-
-        // Touch/Swipe — Hammer.js (nativo) con fallback manuale
-        const stage = document.getElementById('carousel-stage');
-        if (stage && !stage._swipeAttached) {
-            stage._swipeAttached = true;
-
-            if (typeof Hammer !== 'undefined') {
-                const hammer = new Hammer(stage, {
-                    recognizers: [
-                        [Hammer.Swipe, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 30, velocity: 0.3 }],
-                        [Hammer.Pan, { direction: Hammer.DIRECTION_HORIZONTAL, threshold: 10 }]
-                    ]
-                });
-
-                hammer.on('swipeleft', () => {
-                    if (modernCurrentIndex < modernSkinsArray.length - 1) {
-                        modernCurrentIndex++;
-                        renderModernCarousel();
-                    }
-                });
-
-                hammer.on('swiperight', () => {
-                    if (modernCurrentIndex > 0) {
-                        modernCurrentIndex--;
-                        renderModernCarousel();
-                    }
-                });
-
-                // Feedback visivo durante il pan (drag)
-                let panStartIndex = modernCurrentIndex;
-                hammer.on('panstart', () => { panStartIndex = modernCurrentIndex; });
-                hammer.on('panend', (e) => {
-                    // Se non è stato un swipe, controlla lo spostamento
-                    if (Math.abs(e.deltaX) > 60) {
-                        const dir = e.deltaX > 0 ? -1 : 1;
-                        const target = panStartIndex + dir;
-                        if (target >= 0 && target < modernSkinsArray.length) {
-                            modernCurrentIndex = target;
-                            renderModernCarousel();
-                        }
-                    }
-                });
-            } else {
-                // Fallback: swipe manuale senza Hammer.js
-                let touchStartX = 0, touchDelta = 0;
-                stage.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchDelta = 0; }, { passive: true });
-                stage.addEventListener('touchmove', (e) => { touchDelta = e.touches[0].clientX - touchStartX; }, { passive: true });
-                stage.addEventListener('touchend', () => {
-                    if (touchDelta > 40 && modernCurrentIndex > 0) { modernCurrentIndex--; renderModernCarousel(); }
-                    else if (touchDelta < -40 && modernCurrentIndex < modernSkinsArray.length - 1) { modernCurrentIndex++; renderModernCarousel(); }
-                }, { passive: true });
-            }
-        }
-
-        // Scroll ruota mouse nel carousel (desktop)
-        if (stage && !stage._wheelAttached) {
-            stage._wheelAttached = true;
-            let wheelCooldown = false;
-            stage.addEventListener('wheel', (e) => {
-                if (wheelCooldown) return;
-                wheelCooldown = true;
-                setTimeout(() => { wheelCooldown = false; }, 250);
-
-                if (e.deltaY > 0 && modernCurrentIndex < modernSkinsArray.length - 1) {
-                    modernCurrentIndex++;
-                    renderModernCarousel();
-                } else if (e.deltaY < 0 && modernCurrentIndex > 0) {
-                    modernCurrentIndex--;
-                    renderModernCarousel();
-                }
-                e.preventDefault();
-            }, { passive: false });
-        }
-
-        // Esegue il render iniziale
-        renderModernCarousel();
-    }
+    }).join('');
 }
 
-// Funzione helper per aggiornare posizioni 3D e Pannello Info
-function renderModernCarousel() {
-    const items = document.querySelectorAll('.carousel-item');
-    const prevBtn = document.getElementById('carousel-prev');
-    const nextBtn = document.getElementById('carousel-next');
-
-    // Abilita/Disabilita frecce
-    if (prevBtn) prevBtn.style.opacity = modernCurrentIndex === 0 ? '0.3' : '1';
-    if (nextBtn) nextBtn.style.opacity = modernCurrentIndex === modernSkinsArray.length - 1 ? '0.3' : '1';
-
-    // Assegna le classi CSS per le posizioni 3D
-    items.forEach((item, index) => {
-        item.className = 'carousel-item ' + (!modernSkinsArray[index].isUnlocked ? 'locked' : '');
-
-        const diff = index - modernCurrentIndex;
-
-        if (diff === 0) item.classList.add('active');
-        else if (diff === -1) item.classList.add('prev-1');
-        else if (diff === -2) item.classList.add('prev-2');
-        else if (diff === 1) item.classList.add('next-1');
-        else if (diff === 2) item.classList.add('next-2');
-        else item.classList.add('hidden'); // Troppo lontani
-    });
-
-    // Aggiorna dot indicator
-    const dotsContainer = document.getElementById('carousel-dots');
-    if (dotsContainer) {
-        const total = modernSkinsArray.length;
-        // Mostra max 9 dots, comprime quelli lontani
-        const maxDots = Math.min(total, 9);
-        let dotsHTML = '';
-        if (total <= maxDots) {
-            for (let i = 0; i < total; i++) {
-                dotsHTML += `<span class="carousel-dot${i === modernCurrentIndex ? ' active' : ''}"></span>`;
-            }
-        } else {
-            // Finestra scorrevole di dots centrata sull'indice corrente
-            let start = Math.max(0, modernCurrentIndex - 4);
-            let end = Math.min(total, start + maxDots);
-            if (end - start < maxDots) start = Math.max(0, end - maxDots);
-            for (let i = start; i < end; i++) {
-                const dist = Math.abs(i - modernCurrentIndex);
-                const cls = i === modernCurrentIndex ? ' active' : '';
-                const scale = dist >= 4 ? ' style="transform:scale(0.5);opacity:0.3"' : dist >= 3 ? ' style="transform:scale(0.7);opacity:0.5"' : '';
-                dotsHTML += `<span class="carousel-dot${cls}"${scale}></span>`;
-            }
-        }
-        dotsContainer.innerHTML = dotsHTML;
-
-        // Passa il colore rarità ai dots
-        const currentSkin = modernSkinsArray[modernCurrentIndex];
-        if (currentSkin) {
-            const rColors = { 'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6', 'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c' };
-            const rGlows = { 'common': 'rgba(189,195,199,0.4)', 'rare': 'rgba(52,152,219,0.4)', 'epic': 'rgba(155,89,182,0.4)', 'legendary': 'rgba(241,196,15,0.4)', 'divine': 'rgba(255,238,144,0.6)', 'christmas': 'rgba(231,76,60,0.4)' };
-            dotsContainer.style.setProperty('--r-color', rColors[currentSkin.data.rarity] || '#3498db');
-            dotsContainer.style.setProperty('--r-color-glow', rGlows[currentSkin.data.rarity] || 'rgba(52,152,219,0.4)');
-        }
-    }
-
-    // Aggiorna il Pannello Informazioni in basso
-    const panel = document.getElementById('modern-info-panel');
-    if (!panel) return;
-
-    const skin = modernSkinsArray[modernCurrentIndex];
+// === Skin Preview Modal (apre on click su card) ===
+function showSkinPreview(skinId) {
+    const skin = (typeof modernSkinsArray !== 'undefined' && modernSkinsArray)
+        ? modernSkinsArray.find(s => s.id === skinId)
+        : null;
     if (!skin) return;
-    lastViewedSkinId = skin.id;
 
-    // --- AGGIUNTA: Passa i colori della rarità ai contenitori padre ---
-    const gridModern = document.getElementById('skins-grid-modern');
-
-    const rColors = {
-        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
-        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
-    };
-    const rGlows = {
-        'common': 'rgba(189,195,199,0.1)', 'rare': 'rgba(52,152,219,0.2)', 'epic': 'rgba(155,89,182,0.2)',
-        'legendary': 'rgba(241,196,15,0.2)', 'divine': 'rgba(255,238,144,0.3)', 'christmas': 'rgba(231,76,60,0.2)'
-    };
-
-    const color = rColors[skin.data.rarity] || rColors['common'];
-    const glow = rGlows[skin.data.rarity] || rGlows['common'];
-
-    if (gridModern) gridModern.style.setProperty('--bg-glow-color', glow);
-    if (panel) {
-        panel.style.setProperty('--r-color', color);
-        panel.style.setProperty('--r-color-glow', glow);
-        // Animazione slide-in al cambio skin
-        panel.classList.remove('panel-refresh');
-        void panel.offsetWidth; // forza reflow per restart animation
-        panel.classList.add('panel-refresh');
-    }
-    // ------------------------------------------------------------------
-
-    let descHtml = '';
-    if (skin.isUnlocked) {
-        descHtml = `<div class="modern-info-desc">"${skin.data.desc || '...'}"</div>`;
-    } else if (skin.isBuyable) {
-        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
-        if (needsFormat) {
-            descHtml = `<div class="modern-info-desc" style="color:#9b59b6;">Sbloccata dopo la prima Formattazione del sistema.</div>`;
-        } else {
-            descHtml = `<div class="modern-info-desc">Disponibile nel Negozio del Laboratorio.</div>`;
-        }
-    } else {
-        descHtml = `
-            <div class="modern-info-desc" style="color:#7f8c8d; font-style:normal;">${skin.baseText}</div>
-            <div class="modern-info-requirement"><i class="fa-solid fa-circle-exclamation"></i> ${skin.requirement}</div>
-        `;
+    let modal = document.getElementById('skin-preview-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'skin-preview-modal';
+        modal.className = 'modal-backdrop skin-preview-backdrop';
+        document.body.appendChild(modal);
     }
 
     let actionHtml = '';
     if (skin.isEquipped) {
-        actionHtml = `<button class="modern-btn-large modern-btn-equipped"><i class="fa-solid fa-check"></i> IN USO</button>`;
+        actionHtml = '<button class="preview-btn equipped-btn" disabled><i class="fa-solid fa-check"></i> EQUIPAGGIATA</button>';
     } else if (skin.isUnlocked) {
-        actionHtml = `<button class="modern-btn-large modern-btn-equip" onclick="equipSkin('${skin.id}')">EQUIPAGGIA SKIN</button>`;
+        actionHtml = `<button class="preview-btn equip-btn" onclick="equipSkin('${skin.id}'); closeSkinPreview();">EQUIPAGGIA</button>`;
     } else if (skin.isBuyable) {
         const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
         if (needsFormat) {
             actionHtml = `
-                <div style="color: #9b59b6; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
-                <div style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
-                <button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> FORMATTA PRIMA</button>
-            `;
-        } else if (skin.canAfford) {
-            actionHtml = `
-                <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
-                <button class="modern-btn-large modern-btn-buy" onclick="buySkin('${skin.id}')">COMPRA SKIN</button>
-            `;
+                <div class="preview-cost format"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
+                <div class="preview-cost-value"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="preview-btn disabled-btn" disabled><i class="fa-solid fa-lock"></i> FORMATTA PRIMA</button>`;
         } else {
+            const costClass = skin.canAfford ? 'afford' : 'noafford';
+            const btnClass = skin.canAfford ? 'buy-btn' : 'disabled-btn';
+            const btnLabel = skin.canAfford ? 'COMPRA SKIN' : 'TOKEN INSUFFICIENTI';
+            const onClick = skin.canAfford ? `onclick="buySkin('${skin.id}'); closeSkinPreview();"` : 'disabled';
             actionHtml = `
-                <div style="color: #e74c3c; font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
-                <button class="modern-btn-large modern-btn-disabled" disabled>TOKEN INSUFFICIENTI</button>
-            `;
+                <div class="preview-cost-value ${costClass}"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
+                <button class="preview-btn ${btnClass}" ${onClick}>${btnLabel}</button>`;
         }
     } else {
-        actionHtml = `<button class="modern-btn-large modern-btn-disabled" disabled><i class="fa-solid fa-lock"></i> BLOCCATA</button>`;
+        const reqHtml = skin.requirement
+            ? `<div class="preview-requirement"><i class="fa-solid fa-circle-exclamation"></i> ${skin.requirement}</div>`
+            : '';
+        actionHtml = `${reqHtml}<button class="preview-btn disabled-btn" disabled><i class="fa-solid fa-lock"></i> BLOCCATA</button>`;
     }
 
-    // Transizione fluida: fade out → update → fade in
-    panel.style.opacity = '0';
-    panel.style.transform = 'translateY(6px)';
-    setTimeout(() => {
-        panel.innerHTML = `
-            <div class="modern-info-title">${skin.data.name}</div>
-            ${descHtml}
-            <div class="modern-info-action">
-                ${actionHtml}
+    const descHtml = skin.isUnlocked && skin.data.desc
+        ? `<div class="preview-desc">"${skin.data.desc}"</div>`
+        : '';
+
+    const nameHtml = skin.data.name || skin.baseText || '???';
+
+    modal.innerHTML = `
+        <div class="modal-content skin-preview-content"
+             style="--r-color:${skin.color};--r-glow:${skin.glow};">
+            <button class="modal-close-btn" onclick="closeSkinPreview()">&times;</button>
+            <div class="preview-rarity-banner">${skin.rarityLabel}</div>
+            <div class="preview-img-stage ${!skin.isUnlocked ? 'locked' : ''}">
+                <img src="${skin.imgSource}" alt="${skin.data.name}">
+                ${!skin.isUnlocked ? '<div class="preview-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                ${skin.isEquipped ? '<div class="preview-equipped-flag"><i class="fa-solid fa-check"></i> IN USO</div>' : ''}
             </div>
-        `;
-        panel.style.opacity = '1';
-        panel.style.transform = 'translateY(0)';
-    }, 150);
+            <div class="preview-body">
+                <h3 class="preview-name">${nameHtml}</h3>
+                ${descHtml}
+                <div class="preview-action">${actionHtml}</div>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+
+    // ESC closes
+    if (!window._skinPreviewKeyHandler) {
+        window._skinPreviewKeyHandler = (e) => {
+            const m = document.getElementById('skin-preview-modal');
+            if (m && m.style.display !== 'none' && e.key === 'Escape') {
+                closeSkinPreview();
+            }
+        };
+        document.addEventListener('keydown', window._skinPreviewKeyHandler);
+    }
+
+    // Click backdrop closes
+    modal.onclick = (e) => { if (e.target === modal) closeSkinPreview(); };
 }
+
+function closeSkinPreview() {
+    const modal = document.getElementById('skin-preview-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.showSkinPreview = showSkinPreview;
+window.closeSkinPreview = closeSkinPreview;
 
 
 function updateAchievementsUI() {
@@ -2221,21 +1940,14 @@ function equipSkin(skinId) {
     _refreshEquippedState(skinId);
 }
 
-// Aggiorna solo le parti di UI che cambiano quando si equipaggia una skin,
-// senza distruggere e ricreare tutti gli elementi immagine (causa del flash).
+// Aggiorna stato equipped + sfondo dinamico body (rarità skin attiva)
 function _refreshEquippedState(newSkinId) {
-    const toggleUI = document.getElementById('skins-ui-toggle');
-    const useModern = toggleUI ? toggleUI.checked : true;
-
-    if (useModern) {
-        // Carousel moderno: aggiorna solo i dati in memoria e il pannello info.
-        // renderModernCarousel() non tocca le <img> — aggiorna solo classi CSS e panel.
-        modernSkinsArray.forEach(s => { s.isEquipped = (s.id === newSkinId); });
-        renderModernCarousel();
-    } else {
-        // Griglia legacy: full re-render necessario (non è la vista predefinita)
-        updateSkinsUI();
+    // Set body data-attribute per CSS in-game tinted background
+    if (gameData?.skins?.[newSkinId]?.rarity) {
+        document.body.setAttribute('data-current-skin-rarity', gameData.skins[newSkinId].rarity);
     }
+    // Re-render unified grid
+    updateSkinsUI();
 }
 
 function triggerChristmasOverlay() {
@@ -2335,6 +2047,11 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
     const theme = skinData.themeConfig || {};
+
+    // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
+    if (skinData.rarity) {
+        document.body.setAttribute('data-current-skin-rarity', skinData.rarity);
+    }
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');
