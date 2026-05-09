@@ -807,6 +807,14 @@ function updateSkinsUI() {
             ? `ondblclick="event.stopPropagation();equipSkin('${skin.id}')"`
             : '';
 
+        // Quick-equip button: solo per skin sbloccate ma NON equipaggiate
+        let quickEquipHtml = '';
+        if (skin.isEquipped) {
+            quickEquipHtml = '<button class="skin-equip-toggle equipped" title="Equipaggiata" disabled><i class="fa-solid fa-check"></i></button>';
+        } else if (skin.isUnlocked) {
+            quickEquipHtml = `<button class="skin-equip-toggle" title="Equipaggia subito" onclick="event.stopPropagation();equipSkin('${skin.id}')"><i class="fa-solid fa-circle-play"></i></button>`;
+        }
+
         return `
             <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
                  style="--r-color:${skin.color};--r-glow:${skin.glow};"
@@ -815,7 +823,7 @@ function updateSkinsUI() {
                  title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — Doppio click: equipaggia' : 'Click per dettagli'}"
                  role="button" tabindex="0">
                 <div class="skin-rarity-badge">${skin.rarityLabel}</div>
-                ${skin.isEquipped ? '<div class="skin-equipped-pill"><i class="fa-solid fa-check"></i></div>' : ''}
+                ${quickEquipHtml}
                 <div class="skin-img-wrap">
                     <img src="${skin.imgSource}" alt="${skin.data.name}" loading="lazy">
                     ${!skin.isUnlocked ? '<div class="skin-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
@@ -879,7 +887,7 @@ function showSkinPreview(skinId) {
         <div class="modal-content skin-preview-content"
              style="--r-color:${skin.color};--r-glow:${skin.glow};">
             <button class="modal-close-btn" onclick="closeSkinPreview()">&times;</button>
-            <div class="preview-rarity-banner">${skin.rarityLabel}</div>
+            <div class="preview-rarity-banner" data-rarity="${skin.rarityLabel}"></div>
             <div class="preview-img-stage ${!skin.isUnlocked ? 'locked' : ''}">
                 <img src="${skin.imgSource}" alt="${skin.data.name}">
                 ${!skin.isUnlocked ? '<div class="preview-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
@@ -1336,81 +1344,84 @@ function showV2MigrationModal(onConfirm) {
     });
 }
 
-const toastQueue = [];          // Coda dei messaggi in attesa
-let visibleToasts = 0;          // Contatore messaggi attualmente a schermo
-const MAX_VISIBLE_TOASTS = 3;   // Limite massimo richiesto
-let lastToastMsg = "";          // Memoria ultimo messaggio (per anti-spam)
-let lastToastTime = 0;          // Timestamp ultimo messaggio
+// === TOAST SYSTEM v3 — slot-based, no shift on add/remove ===
+const toastQueue = [];                     // Coda messaggi in attesa
+const MAX_VISIBLE_TOASTS = 5;              // Limite slot visibili
+const TOAST_SLOTS = new Array(MAX_VISIBLE_TOASTS).fill(false); // false = libero
+let lastToastMsg = "";
+let lastToastTime = 0;
 
 function showToast(message, type = 'info', duration) {
-    // 1. ANTI-SPAM: Evita messaggi identici consecutivi
-    // Se il messaggio è uguale all'ultimo ed è passato meno di 2 secondi, ignoralo.
+    // Anti-spam: stesso messaggio entro 2s → skip
     const now = Date.now();
-    if (message === lastToastMsg && (now - lastToastTime < 2000)) {
-        return;
-    }
-
-    // Aggiorna memoria
+    if (message === lastToastMsg && (now - lastToastTime < 2000)) return;
     lastToastMsg = message;
     lastToastTime = now;
 
-    // 2. Aggiungi alla Coda (duration opzionale, default 4000ms)
-    toastQueue.push({ message, type, duration: duration || 4000 });
-
-    // 3. Prova a processare la coda
+    toastQueue.push({ message, type, duration: duration || 3500 });
     processToastQueue();
 }
 
-function processToastQueue() {
-    // Se abbiamo già raggiunto il limite o non c'è nulla in coda, fermati
-    if (visibleToasts >= MAX_VISIBLE_TOASTS || toastQueue.length === 0) return;
-
-    // Estrai il prossimo messaggio (FIFO)
-    const data = toastQueue.shift();
-    visibleToasts++; // Occupa uno slot
-
-    createToastDOM(data.message, data.type, data.duration);
+function _findFreeSlot() {
+    for (let i = 0; i < TOAST_SLOTS.length; i++) {
+        if (!TOAST_SLOTS[i]) return i;
+    }
+    return -1;
 }
 
-function createToastDOM(message, type, duration = 4000) {
+function processToastQueue() {
+    if (toastQueue.length === 0) return;
+    const slot = _findFreeSlot();
+    if (slot === -1) return; // tutti slot pieni, aspetta libero
+
+    const data = toastQueue.shift();
+    TOAST_SLOTS[slot] = true;
+    createToastDOM(data.message, data.type, data.duration, slot);
+}
+
+function createToastDOM(message, type, duration, slot) {
     const toastContainer = document.getElementById('toast-container');
     if (!toastContainer) return;
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    toast.dataset.slot = slot;
+    // Posizione fissa via CSS variable — niente flex layout shift
+    toast.style.setProperty('--slot-index', slot);
 
-    // Icone
     let icon = '';
-    if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i> ';
-    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i> ';
-    else if (type === 'achievement') icon = '<i class="fa-solid fa-trophy"></i> ';
-    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation"></i> ';
-    else if (type === 'reward') icon = '<i class="fa-solid fa-gift"></i> ';
-    else if (type === 'info') icon = '<i class="fa-solid fa-circle-info"></i> ';
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i>';
+    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i>';
+    else if (type === 'achievement') icon = '<i class="fa-solid fa-trophy"></i>';
+    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+    else if (type === 'reward') icon = '<i class="fa-solid fa-gift"></i>';
+    else if (type === 'info') icon = '<i class="fa-solid fa-circle-info"></i>';
 
-    toast.innerHTML = icon + message;
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${message}</span><span class="toast-progress" style="--life:${duration}ms"></span>`;
 
-    // Per duration > default, override animation: fade-out 0.5s appena prima della rimozione
-    if (duration && duration !== 4000) {
-        const exitDelay = Math.max(0, (duration - 500) / 1000);
-        toast.style.animation =
-            `toastEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, ` +
-            `toastExit 0.5s ease-in ${exitDelay}s forwards`;
-    }
+    // Click chiude subito
+    toast.addEventListener('click', () => _dismissToast(toast, slot));
 
     toastContainer.appendChild(toast);
 
-    // Rimozione Automatica (DOM 100ms dopo fine animazione)
+    // Auto-dismiss
+    const dismissTimer = setTimeout(() => _dismissToast(toast, slot), duration);
+    toast._dismissTimer = dismissTimer;
+}
+
+function _dismissToast(toast, slot) {
+    if (!toast || toast._dismissed) return;
+    toast._dismissed = true;
+    if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
+
+    toast.classList.add('toast-leaving');
+
+    // Libera slot DOPO exit anim (350ms)
     setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
-        }
-
-        visibleToasts--; // Libera uno slot
-
-        // Appena si libera un posto, controlla se c'è qualcun altro in fila
-        setTimeout(processToastQueue, 100);
-    }, duration + 100);
+        if (toast.parentNode) toast.remove();
+        TOAST_SLOTS[slot] = false;
+        processToastQueue();
+    }, 360);
 }
 
 function checkTabNotifications() {

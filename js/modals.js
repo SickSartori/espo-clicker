@@ -584,29 +584,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function getGameAPI() { return window.EspooClicker || null; }
     function openModal(modal) {
         if (modal) {
-            // Anti-flicker: nascondi mentre prepari layout, poi mostra in un solo frame
-            modal.style.visibility = 'hidden';
-            modal.style.display = 'flex';
-            modal.style.opacity = 0;
-
             const content = modal.querySelector('.modal-content');
 
-            // Aspetta UN frame perché il browser calcoli layout completo,
-            // poi rivela con animazione → niente flash di contenuto non posizionato
-            requestAnimationFrame(() => {
-                modal.style.visibility = 'visible';
+            // Kill animazioni in corso (close ancora attivo, ecc.)
+            if (typeof gsap !== 'undefined') {
+                gsap.killTweensOf(modal);
+                if (content) gsap.killTweensOf(content);
+            }
 
-                if (content) {
-                    // Animazione "finestra": fade + leggero scale (no Y translate)
-                    gsap.fromTo(content,
-                        { scale: 0.97, opacity: 0 },
-                        { scale: 1, opacity: 1, duration: 0.26, ease: "power2.out", clearProps: 'transform' }
-                    );
-                    gsap.to(modal, { opacity: 1, duration: 0.22, ease: "power1.out" });
-                } else {
-                    modal.style.opacity = 1;
-                }
-            });
+            // Reset stato pulito (modal magari era a metà close)
+            modal.style.visibility = '';
+            modal.style.display = 'flex';
+            modal.style.opacity = '';
+            if (content) {
+                content.style.transform = '';
+                content.style.opacity = '';
+            }
+
+            // Animazione "finestra": fade + leggero scale (subito, no rAF)
+            if (content && typeof gsap !== 'undefined') {
+                gsap.fromTo(content,
+                    { scale: 0.97, opacity: 0 },
+                    { scale: 1, opacity: 1, duration: 0.26, ease: "power2.out", clearProps: 'transform,opacity' }
+                );
+                gsap.fromTo(modal,
+                    { opacity: 0 },
+                    { opacity: 1, duration: 0.22, ease: "power1.out", clearProps: 'opacity' }
+                );
+            } else if (content) {
+                modal.style.opacity = 1;
+            }
 
             document.body.classList.add('modal-open');
 
@@ -625,21 +632,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) {
             const content = modal.querySelector('.modal-content');
 
-            // Animazione di uscita (veloce)
-            if (content) {
+            // Kill any open tweens prima di partire close
+            if (typeof gsap !== 'undefined') {
+                gsap.killTweensOf(modal);
+                if (content) gsap.killTweensOf(content);
+            }
+
+            // Animazione uscita (veloce, no scale 0.8 = no jump grosso)
+            if (content && typeof gsap !== 'undefined') {
                 gsap.to(content, {
-                    scale: 0.8,
+                    scale: 0.97,
                     opacity: 0,
-                    duration: 0.2,
+                    duration: 0.18,
                     ease: "power2.in",
                     onComplete: () => {
                         modal.style.display = 'none';
+                        // Reset hard per prossimo open
+                        content.style.transform = '';
+                        content.style.opacity = '';
+                        modal.style.opacity = '';
                         finishClose();
                     }
                 });
-                gsap.to(modal, { opacity: 0, duration: 0.2 });
+                gsap.to(modal, { opacity: 0, duration: 0.18 });
             } else {
                 modal.style.display = 'none';
+                if (content) { content.style.transform = ''; content.style.opacity = ''; }
+                modal.style.opacity = '';
                 finishClose();
             }
 

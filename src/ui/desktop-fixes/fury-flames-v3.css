@@ -1,0 +1,235 @@
+/* =====================================================================
+   v3 — Espo Fury flames (rifacimento — vere fiamme, no più palline)
+   =====================================================================
+   Override del sistema legacy `.fire-particle` / `.fire-spark`.
+   Approccio CSS-only:
+   - Forma a goccia (teardrop) via border-radius asimmetrico
+   - Gradiente verticale: bianco→giallo→arancio→rosso→trasparente
+   - Core inner via ::before (cuore caldo bianco)
+   - Flicker via filter (no transform conflict con rise animation)
+   - Heat haze a terra via container::before
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* Container: rimosso filter contrast 200% (HDR look fake) */
+  html body #fire-particles-container {
+    filter: none !important;
+    background: radial-gradient(ellipse 80% 30% at 50% 100%,
+      rgba(255, 100, 0, 0.18) 0%,
+      rgba(255, 50, 0, 0.08) 35%,
+      transparent 70%) !important;
+    overflow: hidden;
+  }
+
+  /* Heat haze a terra (distorsione orizzontale) */
+  html body #fire-particles-container::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 25vh;
+    background: radial-gradient(ellipse 60% 100% at 50% 100%,
+      rgba(255, 80, 0, 0.25) 0%,
+      rgba(255, 40, 0, 0.10) 50%,
+      transparent 80%);
+    pointer-events: none;
+    animation: v3-heat-haze 2.4s ease-in-out infinite alternate;
+    filter: blur(20px);
+    mix-blend-mode: screen;
+    z-index: 0;
+  }
+
+  @keyframes v3-heat-haze {
+    0%   { transform: scaleX(1) scaleY(1) translateX(0); opacity: 0.7; }
+    50%  { transform: scaleX(1.05) scaleY(1.08) translateX(8px); opacity: 0.95; }
+    100% { transform: scaleX(0.97) scaleY(1) translateX(-6px); opacity: 0.8; }
+  }
+
+  /* ════════════════════════════════════════════════
+     FLAME PARTICLE — forma goccia, gradiente verticale
+     ════════════════════════════════════════════════ */
+  html body #fire-particles-container .fire-particle {
+    /* Reset legacy */
+    background: linear-gradient(180deg,
+      rgba(255, 255, 220, 0) 0%,
+      rgba(255, 240, 180, 0.4) 8%,
+      rgba(255, 220, 80, 0.95) 22%,
+      rgba(255, 140, 30, 0.9) 45%,
+      rgba(255, 70, 0, 0.75) 70%,
+      rgba(180, 10, 0, 0.4) 88%,
+      rgba(60, 0, 0, 0) 100%) !important;
+    /* Goccia: punta in alto, base larga */
+    border-radius: 45% 45% 45% 45% / 90% 90% 25% 25% !important;
+    filter: blur(5px) brightness(1.3) saturate(1.3) !important;
+    mix-blend-mode: lighten !important;
+    opacity: 0;
+    will-change: transform, opacity, filter;
+    /* Override animation legacy con la nuova v3 */
+    transform-origin: 50% 100%;
+  }
+
+  /* Core caldo interno (bianco-giallo) */
+  html body #fire-particles-container .fire-particle::before {
+    content: '';
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    width: 45%;
+    height: 55%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg,
+      rgba(255, 255, 240, 0) 0%,
+      rgba(255, 250, 200, 0.95) 35%,
+      rgba(255, 220, 120, 0.7) 65%,
+      rgba(255, 160, 60, 0.3) 100%);
+    border-radius: 45% 45% 45% 45% / 100% 100% 30% 30%;
+    filter: blur(3px);
+    mix-blend-mode: lighten;
+    pointer-events: none;
+  }
+
+  /* Tip licking detail (lingua di fuoco) */
+  html body #fire-particles-container .fire-particle::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    width: 15%;
+    height: 30%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse 50% 100% at 50% 100%,
+      rgba(255, 200, 80, 0.8) 0%,
+      transparent 70%);
+    filter: blur(2px);
+    mix-blend-mode: lighten;
+    pointer-events: none;
+  }
+
+  /* Override animation: usa keyframes v3 (rise + flicker indipendenti) */
+  html body #fire-particles-container .fire-particle[style*="fireRise"] {
+    animation-name: v3-flame-rise, v3-flame-flicker !important;
+    animation-duration: inherit, 0.16s !important;
+    animation-timing-function: linear, ease-in-out !important;
+    animation-fill-mode: forwards, none !important;
+    animation-iteration-count: 1, infinite !important;
+    animation-direction: normal, alternate !important;
+  }
+
+  @keyframes v3-flame-rise {
+    0% {
+      translate: 0 0;
+      scale: 1 1;
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      translate: calc(var(--drift, 0) * 0.5) -45vh;
+      scale: 0.85 1.15;
+      opacity: 0.85;
+    }
+    100% {
+      translate: var(--drift, 0px) -95vh;
+      scale: 0.15 0.4;
+      opacity: 0;
+    }
+  }
+
+  /* Flicker via filter (no conflict con transform/translate del rise) */
+  @keyframes v3-flame-flicker {
+    0% {
+      filter: blur(5px) brightness(1.25) saturate(1.3) hue-rotate(-3deg);
+    }
+    100% {
+      filter: blur(6px) brightness(1.5) saturate(1.4) hue-rotate(4deg);
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     SPARK — ember piccola tipo lingua veloce
+     ════════════════════════════════════════════════ */
+  html body #fire-particles-container .fire-spark {
+    width: 3px !important;
+    height: 10px !important;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 220, 0) 0%,
+      rgba(255, 240, 150, 1) 30%,
+      rgba(255, 180, 60, 0.95) 60%,
+      rgba(255, 80, 0, 0) 100%) !important;
+    border-radius: 50% 50% 50% 50% / 70% 70% 20% 20% !important;
+    filter: blur(0.8px) drop-shadow(0 0 4px rgba(255, 200, 60, 0.85)) !important;
+    mix-blend-mode: lighten;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  /* Override sparkFly: aggiunge rotazione + horizontal sway */
+  html body #fire-particles-container .fire-spark[style*="sparkFly"] {
+    animation-name: v3-spark-fly !important;
+  }
+
+  @keyframes v3-spark-fly {
+    0% {
+      translate: 0 0;
+      rotate: 0deg;
+      opacity: 1;
+      scale: 1;
+    }
+    20% {
+      translate: calc(var(--spark-drift, 5px) * 0.3) -20vh;
+      rotate: 25deg;
+      opacity: 1;
+    }
+    60% {
+      translate: calc(var(--spark-drift, 5px) * 0.7) -55vh;
+      rotate: -20deg;
+      opacity: 0.7;
+    }
+    100% {
+      translate: var(--spark-drift, 5px) -100vh;
+      rotate: 40deg;
+      opacity: 0;
+      scale: 0.4;
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     CRUNCH-ACTIVE clicker button — fiamme intorno
+     ════════════════════════════════════════════════ */
+  body.crunch-active #clicker-btn {
+    border-color: #ff6b00 !important;
+    box-shadow:
+      inset 0 -10px 30px rgba(255, 80, 0, 0.4),
+      0 0 30px rgba(255, 100, 0, 0.6),
+      0 0 60px rgba(255, 60, 0, 0.4) !important;
+    animation: v3-fury-btn-pulse 0.45s ease-in-out infinite alternate !important;
+  }
+
+  @keyframes v3-fury-btn-pulse {
+    0% {
+      border-color: #ff6b00;
+      box-shadow:
+        inset 0 -10px 30px rgba(255, 80, 0, 0.4),
+        0 0 30px rgba(255, 100, 0, 0.6),
+        0 0 60px rgba(255, 60, 0, 0.4);
+    }
+    100% {
+      border-color: #ffaa00;
+      box-shadow:
+        inset 0 -14px 38px rgba(255, 120, 30, 0.55),
+        0 0 44px rgba(255, 140, 0, 0.8),
+        0 0 90px rgba(255, 80, 0, 0.5);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #fire-particles-container .fire-particle,
+  html body #fire-particles-container .fire-spark,
+  html body #fire-particles-container::before {
+    animation: none !important;
+  }
+}

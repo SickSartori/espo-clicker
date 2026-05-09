@@ -1090,14 +1090,18 @@ function spawnFireParticle(container) {
     const p = document.createElement('div');
     p.classList.add('fire-particle');
 
-    // Posizione
-    const left = Math.random() * 100;
+    // Posizione (concentrata su bordi sinistro/destro per effetto "muri di fiamma")
+    let left;
+    const r = Math.random();
+    if (r < 0.4)      left = Math.random() * 25;          // 0-25% (sinistra)
+    else if (r < 0.8) left = 75 + Math.random() * 25;     // 75-100% (destra)
+    else              left = 25 + Math.random() * 50;     // 25-75% (centro sparso)
     p.style.left = `${left}%`;
 
-    // Dimensioni variabili (più grandi al centro per effetto "falò")
-    const sizeBase = 60 + Math.random() * 120;
+    // Dimensioni: flame stretto + alto (proportional teardrop)
+    const sizeBase = 35 + Math.random() * 70;
     p.style.width = `${sizeBase}px`;
-    p.style.height = `${sizeBase * 1.2}px`;
+    p.style.height = `${sizeBase * 1.8}px`;
 
     // Durata
     const duration = 1.5 + Math.random() * 2;
@@ -1122,6 +1126,10 @@ function spawnFireParticle(container) {
         const s = document.createElement('div');
         s.classList.add('fire-spark');
         s.style.left = `${left + (Math.random() * 20 - 10)}%`;
+
+        // Drift orizzontale per movimento naturale
+        const sparkDrift = (Math.random() - 0.5) * 80;
+        s.style.setProperty('--spark-drift', `${sparkDrift}px`);
 
         const sDuration = 0.5 + Math.random() * 1.5;
         s.style.animation = `sparkFly ${sDuration}s linear forwards`;
@@ -2121,43 +2129,49 @@ function scheduleGoldenBug() {
 }
 
 function spawnGoldenBug() {
-    // Reset
-    goldenBug.classList.remove('visible');
+    // Reset stato pulito (anim residue, classi)
+    goldenBug.classList.remove('visible', 'despawning', 'clicked');
 
-    const bugWidth = 60;
-    const bugHeight = 60;
-
-    const padding = 20;
+    const bugWidth = 64;
+    const bugHeight = 64;
+    const padding = 24;
 
     const targetArea = document.getElementById('clicker-section');
     if (!targetArea) return;
 
     const rect = targetArea.getBoundingClientRect();
 
-    // Calcolo con dimensioni corrette
     const maxX = rect.width - bugWidth - (padding * 2);
     const maxY = rect.height - bugHeight - (padding * 2);
 
-    // Evita valori negativi se lo schermo è minuscolo
     const randomX = Math.max(0, Math.random() * maxX);
     const randomY = Math.max(0, Math.random() * maxY);
 
-    // Conversione in coordinate ASSOLUTE (per il body)
-    // Sommiamo la posizione dell'area + lo scroll della pagina + il padding + la posizione random
     const finalLeft = rect.left + window.scrollX + padding + randomX;
     const finalTop = rect.top + window.scrollY + padding + randomY;
 
-    // Applica posizione
     goldenBug.style.left = `${finalLeft}px`;
     goldenBug.style.top = `${finalTop}px`;
 
-    // Mostra (Flex per centrare l'icona)
+    // Force reflow per riavviare animazioni dopo remove .visible
+    void goldenBug.offsetWidth;
     goldenBug.classList.add('visible');
 
-    // Timer Sparizione
-    setTimeout(() => {
-        goldenBug.classList.remove('visible');
-    }, 10000); // 10 secondi
+    // Cleanup precedenti timer
+    if (window._goldenBugDespawnTimer) clearTimeout(window._goldenBugDespawnTimer);
+    if (window._goldenBugWarnTimer) clearTimeout(window._goldenBugWarnTimer);
+
+    // Warning ultimi 2s — flicker urgente
+    window._goldenBugWarnTimer = setTimeout(() => {
+        if (goldenBug.classList.contains('visible')) {
+            goldenBug.classList.add('despawning');
+        }
+    }, 8000);
+
+    // Despawn dopo 10s
+    window._goldenBugDespawnTimer = setTimeout(() => {
+        goldenBug.classList.remove('visible', 'despawning');
+    }, 10000);
 
     scheduleGoldenBug();
     return true;
@@ -2165,6 +2179,8 @@ function spawnGoldenBug() {
 
 function clickGoldenBug() {
     const goldenBug = document.getElementById('golden-bug');
+    if (goldenBug && goldenBug.classList.contains('clicked')) return; // anti-doppio-click
+
     playSound('sound-golden');
     gameState.totalGoldenBugsClicked++;
 
@@ -2179,6 +2195,18 @@ function clickGoldenBug() {
     gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
 
     window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
-    if (goldenBug) goldenBug.classList.remove('visible');
+
+    // Cancella timer despawn (clicked, niente warning ulteriore)
+    if (window._goldenBugDespawnTimer) clearTimeout(window._goldenBugDespawnTimer);
+    if (window._goldenBugWarnTimer) clearTimeout(window._goldenBugWarnTimer);
+
+    if (goldenBug) {
+        goldenBug.classList.remove('despawning');
+        goldenBug.classList.add('clicked');
+        // Rimuovi dopo animazione explosion (320ms)
+        setTimeout(() => {
+            goldenBug.classList.remove('visible', 'clicked');
+        }, 340);
+    }
     updateUI();
 }

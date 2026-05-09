@@ -1,0 +1,321 @@
+/* =====================================================================
+   v3 — Golden Bug rework (cyber-coin floating)
+   =====================================================================
+   Sostituisce wobble + bugRandomWander legacy con:
+   - Spawn pop con bounce + glitch flash
+   - Idle: float verticale dolce + rotazione lenta (no wander aggressivo)
+   - Orbital ring ruotante (::before)
+   - Aura pulse colorata (::after)
+   - Despawn warning: flicker urgenza ultimi 2s (.despawning)
+   - Click: explosion + fade (.clicked)
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* Override layout legacy */
+  html body #golden-bug {
+    position: absolute;
+    cursor: pointer;
+    z-index: var(--z-golden-bug, 900);
+    width: 64px;
+    height: 64px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    /* Reset legacy animations */
+    animation: none !important;
+    will-change: transform, opacity;
+    transition: filter 200ms ease;
+    /* Hit area un po' più ampia ma invisibile */
+    padding: 0;
+  }
+
+  html body #golden-bug.visible {
+    display: flex !important;
+    animation: v3-bug-spawn 320ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               v3-bug-float 1.8s ease-in-out 320ms infinite,
+               v3-bug-glitch-burst 1.8s steps(1) 320ms infinite !important;
+  }
+
+  /* ─── ORBITAL RING (::before) — anello dorato ruotante ─── */
+  html body #golden-bug::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px dashed rgba(252, 211, 77, 0.55);
+    border-top-color: rgba(252, 211, 77, 0.95);
+    border-right-color: rgba(245, 158, 11, 0.7);
+    animation: v3-bug-orbit 2s linear infinite;
+    pointer-events: none;
+    box-shadow:
+      0 0 12px rgba(252, 211, 77, 0.4),
+      inset 0 0 12px rgba(252, 211, 77, 0.2);
+    opacity: 0;
+    transition: opacity 280ms ease-out;
+  }
+
+  html body #golden-bug.visible::before {
+    opacity: 1;
+  }
+
+  /* ─── AURA pulse (::after) — bagliore dietro ─── */
+  html body #golden-bug::after {
+    content: '';
+    position: absolute;
+    inset: -22px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(252, 211, 77, 0.45) 0%,
+      rgba(245, 158, 11, 0.18) 40%,
+      transparent 70%);
+    animation: v3-bug-aura 1.2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+  }
+
+  html body #golden-bug.visible::after {
+    opacity: 1;
+  }
+
+  /* Scanline overlay (i::before è FA glyph — uso ::after per non rompere icona) */
+  html body #golden-bug i::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.22) 2.5px,
+      rgba(0, 0, 0, 0) 3px
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    opacity: 0.7;
+    z-index: 3;
+    animation: v3-bug-scanline 1.2s linear infinite;
+  }
+
+  @keyframes v3-bug-scanline {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 8px; }
+  }
+
+  /* ─── Icon interna (FA bug o skin override) ─── */
+  html body #golden-bug i {
+    font-size: 2.2rem;
+    color: #fde68a;
+    /* Chromatic aberration via multi-layer text-shadow (RGB split) */
+    text-shadow:
+      -1.5px 0 0 rgba(0, 217, 255, 0.85),
+      1.5px 0 0 rgba(255, 61, 92, 0.85),
+      0 0 8px rgba(252, 211, 77, 0.9),
+      0 0 18px rgba(245, 158, 11, 0.7),
+      0 0 32px rgba(245, 158, 11, 0.4);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    animation:
+      v3-bug-icon-spin 3.5s linear infinite,
+      v3-bug-chroma 0.7s steps(8) infinite;
+    transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), color 160ms ease;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Hover: magnetic ingrandimento + colore bianco caldo */
+  html body #golden-bug:hover {
+    filter: brightness(1.25) saturate(1.2);
+  }
+  html body #golden-bug:hover i {
+    transform: scale(1.18) rotate(-12deg);
+    color: #fff;
+    text-shadow:
+      0 0 12px #fff,
+      0 0 28px #fde68a,
+      0 0 48px rgba(245, 158, 11, 0.8);
+  }
+  html body #golden-bug:hover::before {
+    border-color: rgba(255, 255, 255, 0.85);
+    border-top-color: #fff;
+    box-shadow:
+      0 0 24px rgba(252, 211, 77, 0.7),
+      inset 0 0 18px rgba(255, 255, 255, 0.4);
+    animation-duration: 0.9s;
+  }
+  html body #golden-bug:hover::after {
+    background: radial-gradient(circle,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(252, 211, 77, 0.35) 35%,
+      transparent 70%);
+  }
+
+  /* Despawn warning: ultimi ~2s — flicker urgente rosso/oro + glitch hard */
+  html body #golden-bug.despawning {
+    animation: v3-bug-float 1.4s ease-in-out infinite,
+               v3-bug-warn 220ms steps(2) infinite,
+               v3-bug-glitch-hard 140ms steps(3) infinite !important;
+  }
+  html body #golden-bug.despawning i {
+    text-shadow:
+      -3px 0 0 rgba(0, 217, 255, 0.95),
+      3px 0 0 rgba(255, 61, 92, 0.95),
+      0 0 8px rgba(252, 211, 77, 0.9),
+      0 0 18px rgba(245, 158, 11, 0.7);
+    animation:
+      v3-bug-icon-spin 3.5s linear infinite,
+      v3-bug-chroma 200ms steps(4) infinite;
+  }
+  html body #golden-bug.despawning::before {
+    border-color: rgba(255, 61, 92, 0.7);
+    border-top-color: #ff3d5c;
+    animation-duration: 1.2s;
+    box-shadow: 0 0 18px rgba(255, 61, 92, 0.5);
+  }
+  html body #golden-bug.despawning::after {
+    background: radial-gradient(circle,
+      rgba(255, 61, 92, 0.4) 0%,
+      rgba(245, 158, 11, 0.2) 50%,
+      transparent 70%);
+    animation-duration: 0.6s;
+  }
+
+  /* Click: explosion + fade */
+  html body #golden-bug.clicked {
+    pointer-events: none;
+    animation: v3-bug-click-explode 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+  html body #golden-bug.clicked::before,
+  html body #golden-bug.clicked::after {
+    animation: v3-bug-burst 320ms ease-out forwards !important;
+  }
+
+  /* ════════════════════════════════════════════════
+     KEYFRAMES
+     ════════════════════════════════════════════════ */
+
+  @keyframes v3-bug-spawn {
+    0%   { transform: scale(0) rotate(-180deg) skewX(20deg); opacity: 0; filter: blur(4px) hue-rotate(180deg); }
+    35%  { transform: scale(1.3) rotate(8deg) skewX(-8deg); opacity: 1; filter: blur(0) hue-rotate(0deg); }
+    50%  { transform: scale(1.18) rotate(20deg) skewX(0); opacity: 0.6; filter: blur(0); }
+    65%  { transform: scale(1.08) rotate(-4deg) skewX(4deg); opacity: 1; }
+    80%  { transform: scale(0.94) rotate(-8deg); }
+    100% { transform: scale(1) rotate(0deg) skewX(0); opacity: 1; }
+  }
+
+  /* Glitch burst — micro-displacement + scanline jump random */
+  @keyframes v3-bug-glitch-burst {
+    0%, 88%, 100% {
+      transform: translate(0, 0);
+      clip-path: none;
+    }
+    89% {
+      transform: translate(-2px, 1px);
+      clip-path: inset(20% 0 60% 0);
+    }
+    91% {
+      transform: translate(3px, -2px);
+      clip-path: inset(60% 0 10% 0);
+    }
+    93% {
+      transform: translate(-1px, 2px);
+      clip-path: inset(30% 0 40% 0);
+    }
+    95% {
+      transform: translate(2px, 0);
+      clip-path: inset(0 0 80% 0);
+    }
+    97% {
+      transform: translate(0, -1px);
+      clip-path: none;
+    }
+  }
+
+  @keyframes v3-bug-glitch-hard {
+    0%   { transform: translate(0, 0) skewX(0); }
+    33%  { transform: translate(-3px, 1px) skewX(-4deg); }
+    66%  { transform: translate(2px, -2px) skewX(3deg); }
+    100% { transform: translate(0, 0) skewX(0); }
+  }
+
+  @keyframes v3-bug-chroma {
+    0%, 100% {
+      text-shadow:
+        -1.5px 0 0 rgba(0, 217, 255, 0.85),
+        1.5px 0 0 rgba(255, 61, 92, 0.85),
+        0 0 8px rgba(252, 211, 77, 0.9),
+        0 0 18px rgba(245, 158, 11, 0.7);
+    }
+    25% {
+      text-shadow:
+        -3px 0.5px 0 rgba(0, 217, 255, 0.95),
+        2.5px -0.5px 0 rgba(255, 61, 92, 0.95),
+        0 0 10px rgba(252, 211, 77, 1),
+        0 0 22px rgba(245, 158, 11, 0.8);
+    }
+    50% {
+      text-shadow:
+        2px 0 0 rgba(0, 217, 255, 0.7),
+        -2px 0 0 rgba(255, 61, 92, 0.7),
+        0 0 6px rgba(252, 211, 77, 0.85);
+    }
+    75% {
+      text-shadow:
+        -1px -1px 0 rgba(0, 217, 255, 0.9),
+        1px 1px 0 rgba(255, 61, 92, 0.9),
+        0 0 12px rgba(252, 211, 77, 0.95);
+    }
+  }
+
+  @keyframes v3-bug-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25%      { transform: translateY(-6px) rotate(2deg); }
+    50%      { transform: translateY(-4px) rotate(-3deg); }
+    75%      { transform: translateY(-8px) rotate(1deg); }
+  }
+
+  @keyframes v3-bug-orbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes v3-bug-aura {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50%      { transform: scale(1.18); opacity: 1; }
+  }
+
+  @keyframes v3-bug-icon-spin {
+    0%   { transform: rotate(0deg); }
+    50%  { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  @keyframes v3-bug-warn {
+    0%, 49%   { filter: brightness(1) saturate(1) hue-rotate(0deg); }
+    50%, 100% { filter: brightness(1.4) saturate(1.4) hue-rotate(-25deg); }
+  }
+
+  @keyframes v3-bug-click-explode {
+    0%   { transform: scale(1); opacity: 1; filter: brightness(1); }
+    25%  { transform: scale(1.45) rotate(12deg); opacity: 1; filter: brightness(2.5) blur(0); }
+    100% { transform: scale(2.2) rotate(180deg); opacity: 0; filter: brightness(3) blur(8px); }
+  }
+
+  @keyframes v3-bug-burst {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #golden-bug.visible,
+  html body #golden-bug::before,
+  html body #golden-bug::after,
+  html body #golden-bug i {
+    animation: none !important;
+  }
+  html body #golden-bug.visible {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+  }
+}

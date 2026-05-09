@@ -1,56 +1,324 @@
 /* =====================================================================
-   v3 — Modals Shell (anti-flicker, finestra stabile)
+   v3 — Modals Shell (cyberpunk-tech finestra)
    =====================================================================
-   Override globale del flash su apertura modal. Tutti i .modal-content
-   ricevono fade-in lineare (no scale + translate che causano jump
-   percepito come "lampeggio"). Backdrop sfuma blur.
+   Override visivo + anti-flicker per tutti i modal eccetto arcade.
+   Stile coerente con guardaroba v3: dark gradient bg, cyan border,
+   monospace headers, modern close X, structured padding.
    ===================================================================== */
 
+/* ── ESCLUSIONI: arcade-modal mantiene il suo stile retro ── */
 @media (min-width: 769px) {
 
-  /* ── Backdrop generico — fade liscio (no animation re-trigger ad ogni redraw) ── */
+  /* ── Backdrop generico — solo styling, animazione la fa GSAP ── */
   html body .modal-backdrop {
-    animation: v3-mb-fade 200ms ease-out !important;
-    backdrop-filter: blur(6px);
-    background: rgba(0, 0, 0, 0.78) !important;
+    backdrop-filter: blur(8px);
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.04) 0%, transparent 60%),
+      rgba(3, 7, 15, 0.82) !important;
+    animation: none !important;
   }
 
-  @keyframes v3-mb-fade {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  /* ── Modal content: solid window feel — opacity-only fade ── */
-  html body .modal-backdrop > .modal-content {
-    animation: v3-mc-window 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  /* ── Modal content: window feel — niente CSS animation (GSAP gestisce) ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content {
+    animation: none !important;
     will-change: opacity, transform;
     backface-visibility: hidden;
     transform-origin: center;
-    /* Border + shadow per "finestra" visibile */
-    border: 1px solid rgba(0, 217, 255, 0.16);
+
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.98) 0%,
+      rgba(10, 15, 28, 0.96) 100%) !important;
+    border: 1px solid rgba(0, 217, 255, 0.18) !important;
+    border-radius: 8px !important;
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(0, 217, 255, 0.08),
+      0 0 0 1px rgba(0, 217, 255, 0.06),
       0 0 80px rgba(0, 217, 255, 0.06) !important;
+    color: var(--v3-fg-primary, #f8fafc) !important;
+    overflow: hidden;
+    position: relative;
   }
 
-  @keyframes v3-mc-window {
-    from {
-      opacity: 0;
-      transform: scale(0.985);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+  /* Top accent stripe (sottile barra cyan in cima) */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(0, 217, 255, 0.6) 20%,
+      rgba(0, 217, 255, 0.9) 50%,
+      rgba(0, 217, 255, 0.6) 80%,
+      transparent 100%);
+    z-index: 5;
+    pointer-events: none;
   }
 
-  /* Modali specifici già v3-styled: skip extra animations */
-  html body div#skins-modal.modal-backdrop > .modal-content.skins-modal-v3,
-  html body div#achievements-modal.modal-backdrop > .modal-content,
-  html body div#stats-modal.modal-backdrop > .modal-content,
-  html body div#settings-modal.modal-backdrop > .modal-content {
-    animation: v3-mc-window 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  /* ── H2 header: monospace, letter-spacing, accent bottom border ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > h2 {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    color: #fff !important;
+    padding: 18px 60px !important;
+    margin: 0 !important;
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.06) 0%,
+      transparent 100%) !important;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.15) !important;
+    border-radius: 0 !important;
+    min-height: 56px;
+    box-sizing: border-box;
+    text-shadow: 0 0 14px rgba(0, 217, 255, 0.3);
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > h2 i {
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.6));
+  }
+
+  /* H3 subgroup */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content h3,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content .group-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--v3-accent-cyan, #00d9ff);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+    border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Close X button: modern circle red, rotate 90° on hover ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > .modal-close-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    background: linear-gradient(135deg,
+      rgba(255, 61, 92, 0.22) 0%,
+      rgba(255, 61, 92, 0.10) 100%) !important;
+    border: 1px solid rgba(255, 61, 92, 0.45) !important;
+    color: #fff !important;
+    border-radius: 50% !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease !important;
+    z-index: 100 !important;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.4),
+      0 0 12px rgba(255, 61, 92, 0.18) !important;
+    text-shadow: 0 0 6px rgba(255, 61, 92, 0.5) !important;
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > .modal-close-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(255, 61, 92, 0.5) 0%,
+      rgba(255, 61, 92, 0.3) 100%) !important;
+    border-color: var(--v3-accent-red, #ff3d5c) !important;
+    transform: rotate(90deg) scale(1.05) !important;
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(255, 61, 92, 0.5) !important;
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > .modal-close-btn:active {
+    transform: rotate(90deg) scale(0.95) !important;
+  }
+
+  /* ── Inner sections: padding + scrollable bodies ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > #achievement-list,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > #stats-list,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > .settings-content,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content > .modal-desc {
+    padding: 20px 24px !important;
+    max-height: calc(90vh - 100px);
+    overflow-y: auto;
+  }
+
+  /* ── Buttons inside modals: cyan/accent ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content button:not(.modal-close-btn):not(.skin-card-v3 *):not(.skin-action-btn):not(.skin-filter-btn) {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: transform 200ms ease, background 200ms ease, box-shadow 200ms ease;
+  }
+
+  /* ── Inputs: dark + cyan border ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="text"],
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="email"],
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="password"],
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="number"],
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content select,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content textarea {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(0, 217, 255, 0.2) !important;
+    color: var(--v3-fg-primary, #f8fafc) !important;
+    border-radius: 4px !important;
+    padding: 8px 12px !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.85rem !important;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input:focus,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content select:focus,
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content textarea:focus {
+    outline: none !important;
+    border-color: var(--v3-accent-cyan, #00d9ff) !important;
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.15), 0 0 16px rgba(0, 217, 255, 0.2) !important;
+  }
+
+  /* ── Range sliders: cyan track ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="range"].custom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(90deg,
+      var(--v3-accent-cyan, #00d9ff) 0%,
+      rgba(0, 217, 255, 0.3) 100%);
+    height: 4px;
+    border-radius: 2px;
+    border: none !important;
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="range"].custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--v3-accent-cyan, #00d9ff);
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.6);
+    cursor: pointer;
+    transition: transform 200ms ease;
+  }
+
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content input[type="range"].custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  /* ── Labels ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: rgba(248, 250, 252, 0.85);
+  }
+
+  /* ── Scrollbar styling ── */
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content *::-webkit-scrollbar-track {
+    background: rgba(0, 217, 255, 0.04);
+    border-radius: 999px;
+  }
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content *::-webkit-scrollbar-thumb {
+    background: rgba(0, 217, 255, 0.3);
+    border-radius: 999px;
+  }
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content *::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 217, 255, 0.5);
+  }
+
+  /* ────────────────────────────────────────────────
+     PER-MODAL ACCENT (top stripe color override)
+     ──────────────────────────────────────────────── */
+  html body div#prestige-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #f1c40f 20%, #f1c40f 80%, transparent);
+  }
+  html body div#prestige-modal.modal-backdrop > .modal-content {
+    border-color: rgba(241, 196, 15, 0.3) !important;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(241, 196, 15, 0.12),
+      0 0 80px rgba(241, 196, 15, 0.12) !important;
+  }
+  html body div#prestige-modal.modal-backdrop > .modal-content > h2 i {
+    color: #f1c40f !important;
+    filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.7));
+  }
+
+  html body div#format-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #9b59b6 20%, #9b59b6 80%, transparent);
+  }
+  html body div#format-modal.modal-backdrop > .modal-content {
+    border-color: rgba(155, 89, 182, 0.35) !important;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(155, 89, 182, 0.15),
+      0 0 80px rgba(155, 89, 182, 0.15) !important;
+  }
+  html body div#format-modal.modal-backdrop > .modal-content > h2 i {
+    color: #c084fc !important;
+    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.7));
+  }
+
+  html body div#release-notes-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #f1c40f 20%, #f1c40f 80%, transparent);
+  }
+
+  html body div#login-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #3498db 20%, #3498db 80%, transparent);
+  }
+
+  html body div#leaderboard-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #10b981 20%, #10b981 80%, transparent);
+  }
+  html body div#leaderboard-modal.modal-backdrop > .modal-content > h2 i {
+    color: #10b981 !important;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.7));
+  }
+
+  html body div#account-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #00d9ff 20%, #a855f7 80%, transparent);
+  }
+
+  html body div#advanced-audio-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #a855f7 20%, #a855f7 80%, transparent);
+  }
+  html body div#advanced-audio-modal.modal-backdrop > .modal-content > h2 i {
+    color: #c084fc !important;
+    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.7));
+  }
+
+  html body div#achievements-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #fbbf24 20%, #fbbf24 80%, transparent);
+  }
+  html body div#achievements-modal.modal-backdrop > .modal-content > h2 i {
+    color: #fbbf24 !important;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.7));
+  }
+
+  html body div#stats-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #00d9ff 20%, #00d9ff 80%, transparent);
+  }
+
+  html body div#help-modal.modal-backdrop > .modal-content::before {
+    background: linear-gradient(90deg, transparent, #10b981 20%, #10b981 80%, transparent);
+  }
+  html body div#help-modal.modal-backdrop > .modal-content > h2 i {
+    color: #10b981 !important;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.7));
   }
 }
 
