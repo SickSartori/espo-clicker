@@ -2,96 +2,208 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* --- SFONDO MONDO SUPER (cielo Mario + nuvole + montagne + cespugli + pavimento) --- */
+/* --- SFONDO MONDO SUPER — body NEUTRO (scenery solo in center-column) --- */
 body.theme-super {
-    background-color: #5c94fc; /* cielo Mario standard (matcha l'arcade) */
-    background-image:
-        /* Pavimento mattoni Mario in basso */
-        linear-gradient(to top, #c04800 0%, #c04800 40px, #000 40px, #000 44px, transparent 44px);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-position: bottom;
+    background-color: #5c94fc;
+    background-image: none;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     -ms-interpolation-mode: nearest-neighbor;
 }
 
+/* ────────────────────────────────────────────────
+   SCENERY MARIO SOLO NEL CENTER-COLUMN
+   Layer parallax animati: cielo + nuvole + montagne + tubi + bricks
+   ──────────────────────────────────────────────── */
+body.theme-super #center-column {
+    background-color: #5c94fc !important;
+    background-image:
+        url('../assets/image/arcade/floorbricks.webp') !important;
+    background-repeat: repeat-x !important;
+    background-position: 0 bottom !important;
+    background-size: auto 48px !important;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    position: relative;
+    overflow: hidden;
+    animation: superCenterFloor 24s linear infinite;
+}
+
+/* Floor seamless: scroll di multiplo intero pixel brick (768px = ~16 bricks 48px) */
+@keyframes superCenterFloor {
+    from { background-position-x: 0; }
+    to   { background-position-x: -768px; }
+}
+
+/* Assicura nitidezza pixel-art su tutti gli img/bg dentro center-column */
+body.theme-super #center-column img,
+body.theme-super #center-column [style*="background-image"] {
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+}
+
+/* ────────────────────────────────────────────────
+   SEAMLESS LOOP STRATEGY
+   Element width = 200% (2 container widths)
+   Pattern duplicato a +100% container offset
+   = element positions: original X/2 + (X/2 + 50%)
+   Animate translateX 0 → -50% (= -1 container width)
+   End = start visually → loop perfetto
+   ──────────────────────────────────────────────── */
+
+/* Layer FAR — clouds + blocchi + mountains (parallax slow background)
+   Element 200% width, pattern duplicato a +50% element offset = loop seamless */
+body.theme-super #center-column::before {
+    content: '' !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background-image:
+        /* CLOUDS SET A + B */
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud2.webp'),
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud1.webp'),
+        url('../assets/image/arcade/cloud2.webp'),
+        url('../assets/image/arcade/cloud1.webp'),
+        /* MOUNTAINS A + B */
+        url('../assets/image/arcade/mountain1.webp'),
+        url('../assets/image/arcade/mountain2.webp'),
+        url('../assets/image/arcade/mountain1.webp'),
+        url('../assets/image/arcade/mountain2.webp');
+    background-repeat: no-repeat;
+    background-position:
+        /* CLOUDS — A: 6%, 18%, 38% B(+50%): 56%, 68%, 88% (element-relative) */
+        6% 12%,
+        18% 22%,
+        38% 8%,
+        56% 12%,
+        68% 22%,
+        88% 8%,
+        /* MOUNTAINS — A: 30/45% element B: 80/95% element */
+        30% calc(100% - 48px),
+        45% calc(100% - 48px),
+        80% calc(100% - 48px),
+        95% calc(100% - 48px);
+    background-size:
+        72px auto,
+        58px auto,
+        92px auto,
+        72px auto,
+        58px auto,
+        92px auto,
+        130px auto,
+        160px auto,
+        130px auto,
+        160px auto;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    pointer-events: none;
+    z-index: 0;
+    animation: superCenterClouds 60s linear infinite;
+    opacity: 0.95;
+}
+
+/* Layer NEAR — tubi + cespugli (parallax fast foreground) */
+body.theme-super #center-column::after {
+    content: '' !important;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 160px;
+    background-image:
+        /* TUBES SET A — medium, small, medium */
+        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../assets/image/arcade/vertical-small-tube.webp'),
+        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        /* TUBES SET B duplicate */
+        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../assets/image/arcade/vertical-small-tube.webp'),
+        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        /* BUSHES — accent tra tubi, SET A + B */
+        url('../assets/image/arcade/bush1.webp'),
+        url('../assets/image/arcade/bush2.webp'),
+        url('../assets/image/arcade/bush1.webp'),
+        url('../assets/image/arcade/bush2.webp');
+    background-repeat: no-repeat;
+    background-position:
+        /* TUBES container 18/50/82% = element 9/25/41% + 59/75/91% */
+        9% calc(100% - 48px),
+        25% calc(100% - 48px),
+        41% calc(100% - 48px),
+        59% calc(100% - 48px),
+        75% calc(100% - 48px),
+        91% calc(100% - 48px),
+        /* BUSHES between tubes: element 17/33% + 67/83% */
+        17% calc(100% - 48px),
+        33% calc(100% - 48px),
+        67% calc(100% - 48px),
+        83% calc(100% - 48px);
+    background-size:
+        72px auto,
+        56px auto,
+        72px auto,
+        72px auto,
+        56px auto,
+        72px auto,
+        68px auto,
+        80px auto,
+        68px auto,
+        80px auto;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+    pointer-events: none;
+    z-index: 1;
+    animation: superCenterTerrain 24s linear infinite;
+}
+
+/* Loop seamless: element 200% width, translate -50% = -1 container width.
+   Pattern duplicato a +50% element offset → end visivamente = start. */
+@keyframes superCenterClouds {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes superCenterTerrain {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Clicker section sopra scenery (z > tubi ::after che è z:1) */
+body.theme-super #center-column > * {
+    position: relative;
+    z-index: 2;
+}
+
 /* Layer nuvole: ::before sostituisce la griglia cyber (z:-2) della base
    Layout NON regolare: 7 nuvole a posizioni/dimensioni varie (no repeat-x rigido).
    Eredita position:fixed, top/left/width, pointer-events da body::before. */
+/* DISABLED — scenery ora solo in #center-column (vedi sopra) */
 body.theme-super::before {
-    height: 100%;
-    background-image:
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud2.webp'),
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud2.webp'),
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud2.webp'),
-        url('../assets/image/arcade/cloud1.webp');
-    background-repeat: no-repeat;
-    background-position:
-        8% 55px,
-        24% 130px,
-        42% 75px,
-        58% 175px,
-        74% 95px,
-        88% 145px,
-        96% 40px;
-    background-size:
-        100px auto,
-        72px auto,
-        128px auto,
-        88px auto,
-        96px auto,
-        80px auto,
-        56px auto;
-    background-color: transparent;
-    background-attachment: fixed;
-    image-rendering: pixelated;
-    opacity: 0.9;
-    animation: superCloudsDrift 90s linear infinite;
-    z-index: -2;
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    animation: none !important;
 }
 
 /* Layer cespugli + montagne: ::after sostituisce il glow ambientale (z:-1)
    Layout vario con 6 elementi a profondità/dimensioni differenti.
    Eredita position:fixed, left, pointer-events da body::after. */
 body.theme-super::after {
-    top: auto;
-    bottom: 44px; /* sopra la striscia mattoni (40px + 4px nera) */
-    height: 110px;
-    background-image:
-        url('../assets/image/arcade/mountain1.webp'),
-        url('../assets/image/arcade/mountain2.webp'),
-        url('../assets/image/arcade/mountain1.webp'),
-        url('../assets/image/arcade/bush2.webp'),
-        url('../assets/image/arcade/bush1.webp'),
-        url('../assets/image/arcade/bush2.webp'),
-        url('../assets/image/arcade/bush1.webp');
-    background-repeat: no-repeat;
-    background-position:
-        12% bottom,
-        45% bottom,
-        78% bottom,
-        8% bottom,
-        32% bottom,
-        62% bottom,
-        90% bottom;
-    background-size:
-        140px auto,
-        180px auto,
-        160px auto,
-        96px auto,
-        72px auto,
-        110px auto,
-        80px auto;
-    background-color: transparent;
-    background-attachment: fixed;
-    image-rendering: pixelated;
-    filter: none;
-    animation: none;
-    z-index: -1;
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    animation: none !important;
 }
 
 /* Animazione nuvole — drift orizzontale lento, ogni nuvola con offset y diverso */
@@ -337,33 +449,37 @@ body.theme-super .buy-btn:hover:not(:disabled) {
     transform: translateY(-2px);
 }
 
-/* --- GOLDEN BUG --- */
+/* --- GOLDEN BUG (Mario super-block) --- */
 body.theme-super #golden-bug {
-    width: 50px;
-    height: 50px;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-    background-image: url('../assets/image/ui/super-block.webp');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-
-    animation: blockFloat 0.8s infinite alternate ease-in-out;
-
-    /* --- PER RENDERLO SEMPRE VISIBILE (DEBUG) --- */
-    /* Decommenta le due righe sotto per tenerlo fisso a schermo mentre lavori */
-    /* display: flex; */
-    /* opacity: 1; */
+    width: 50px !important;
+    height: 50px !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background-image: url('../assets/image/ui/super-block.webp') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    animation: blockFloat 0.8s infinite alternate ease-in-out !important;
+    filter: none !important;
 }
 
 body.theme-super #golden-bug i {
-    display: none;
+    display: none !important;
+}
+body.theme-super #golden-bug::before,
+body.theme-super #golden-bug::after {
+    display: none !important;
+    content: none !important;
+    animation: none !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 body.theme-super #golden-bug:active {
-    transform: translateY(-15px) scale(1.1);
-    filter: brightness(1.2);
+    transform: translateY(-15px) scale(1.1) !important;
+    filter: brightness(1.2) !important;
 }
 
 /* --- CLICKER BUTTON (Quadrato, stile pixel) --- */

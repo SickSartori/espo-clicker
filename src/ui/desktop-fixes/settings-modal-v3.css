@@ -1,0 +1,437 @@
+/* =====================================================================
+   v3 — Settings Modal (rifacimento layout, cyber-tech compact)
+   =====================================================================
+   - Modal più largo (480px)
+   - Sliders inline compatti (icon + label + slider + value tutti row)
+   - Card-based sections
+   - Account preview card riprogettata
+   - Save button footer prominente
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  html body #settings-modal .modal-content {
+    max-width: 480px !important;
+    width: 92vw !important;
+    padding: 0 !important;
+  }
+
+  html body #settings-modal .settings-content {
+    padding: 18px 22px 22px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: calc(90vh - 80px);
+    overflow-y: auto;
+  }
+
+  /* ── Section card ── */
+  html body #settings-modal .settings-group {
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.65),
+      rgba(8, 12, 22, 0.85)) !important;
+    border: 1px solid rgba(0, 217, 255, 0.14) !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 0 !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Accent stripe sinistro */
+  html body #settings-modal .settings-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.8),
+      rgba(0, 217, 255, 0.2),
+      transparent);
+  }
+
+  html body #settings-modal .settings-group .group-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+    margin: 0 0 12px 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Slider row compatta: tutto in linea */
+  html body #settings-modal .slider-row {
+    display: grid !important;
+    grid-template-columns: 32px 1fr 56px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 217, 255, 0.06) !important;
+  }
+
+  html body #settings-modal .slider-row:first-of-type {
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  /* Icon box compatta */
+  html body #settings-modal .slider-row .slider-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 6px;
+    background: rgba(0, 217, 255, 0.08);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--v3-accent-cyan, #00d9ff);
+    font-size: 0.78rem;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.12);
+    flex-shrink: 0;
+  }
+
+  html body #settings-modal .slider-row .slider-icon i {
+    font-size: 0.78rem;
+    width: 12px;
+    height: 12px;
+    line-height: 1;
+  }
+
+  /* Wrapper label+slider stacked dentro stessa cella grid */
+  html body #settings-modal .slider-row .slider-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  html body #settings-modal .slider-row .slider-wrapper label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    color: rgba(248, 250, 252, 0.7) !important;
+    margin: 0 !important;
+  }
+
+  /* Slider stile cyan moderno (track con gradient progress) */
+  html body #settings-modal .custom-slider {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 100% !important;
+    height: 4px !important;
+    background: linear-gradient(90deg,
+      rgba(0, 217, 255, 0.7) 0%,
+      rgba(0, 217, 255, 0.3) 100%) !important;
+    border-radius: 999px !important;
+    border: none !important;
+    outline: none !important;
+    cursor: pointer;
+    margin: 0 !important;
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.15);
+  }
+
+  html body #settings-modal .custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    border: 2px solid var(--v3-accent-cyan, #00d9ff) !important;
+    box-shadow:
+      0 0 0 3px rgba(0, 217, 255, 0.15),
+      0 0 14px rgba(0, 217, 255, 0.6) !important;
+    cursor: pointer;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  html body #settings-modal .custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    box-shadow:
+      0 0 0 4px rgba(0, 217, 255, 0.2),
+      0 0 20px rgba(0, 217, 255, 0.8) !important;
+  }
+
+  /* Value display */
+  html body #settings-modal .slider-row .slider-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+    text-align: right;
+    min-width: 0;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Bg music selector row (no slider) ── */
+  html body #settings-modal .slider-row:has(select#bg-music-select) {
+    grid-template-columns: 32px 1fr;
+  }
+
+  html body #settings-modal #bg-music-select {
+    background: rgba(2, 6, 14, 0.7) !important;
+    border: 1px solid rgba(0, 217, 255, 0.2) !important;
+    color: #fff !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.5px !important;
+    padding: 7px 10px !important;
+    border-radius: 5px !important;
+    width: 100% !important;
+    cursor: pointer;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d9ff' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    background-size: 14px !important;
+    padding-right: 32px !important;
+  }
+
+  html body #settings-modal #bg-music-select:focus {
+    border-color: var(--v3-accent-cyan, #00d9ff) !important;
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.15), 0 0 18px rgba(0, 217, 255, 0.25) !important;
+    outline: none;
+  }
+
+  /* ── Mixer button ── */
+  html body #settings-modal #open-advanced-audio-btn {
+    width: 100% !important;
+    margin-top: 14px !important;
+    padding: 10px !important;
+    background: linear-gradient(135deg,
+      rgba(168, 85, 247, 0.18),
+      rgba(168, 85, 247, 0.08)) !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+    color: #c084fc !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    border-radius: 5px !important;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 200ms ease;
+    height: auto !important;
+  }
+
+  html body #settings-modal #open-advanced-audio-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(168, 85, 247, 0.35),
+      rgba(168, 85, 247, 0.18)) !important;
+    color: #fff !important;
+    box-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* ── Account card ── */
+  html body #settings-modal .account-preview-card {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.10),
+      rgba(168, 85, 247, 0.06)) !important;
+    border: 1px solid rgba(0, 217, 255, 0.22) !important;
+    border-radius: 8px !important;
+    padding: 14px 16px !important;
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  html body #settings-modal .account-preview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.8), rgba(168, 85, 247, 0.5), transparent);
+  }
+
+  html body #settings-modal .account-preview-card .acc-details {
+    min-width: 0;
+  }
+
+  html body #settings-modal .account-preview-card small {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(248, 250, 252, 0.5);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  html body #settings-modal .account-preview-card .acc-name {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html body #settings-modal #open-account-btn {
+    background: rgba(0, 217, 255, 0.15) !important;
+    border: 1px solid rgba(0, 217, 255, 0.45) !important;
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    padding: 8px 14px !important;
+    border-radius: 5px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+
+  html body #settings-modal #open-account-btn:hover {
+    background: rgba(0, 217, 255, 0.3) !important;
+    color: #fff !important;
+    box-shadow: 0 0 16px rgba(0, 217, 255, 0.4);
+  }
+
+  /* ── PWA install row ── */
+  html body #settings-modal #pwa-install-row {
+    margin: 0 !important;
+  }
+
+  html body #settings-modal #pwa-install-btn {
+    width: 100% !important;
+    padding: 10px !important;
+    background: linear-gradient(135deg,
+      rgba(16, 185, 129, 0.18),
+      rgba(16, 185, 129, 0.08)) !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    color: #10b981 !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    border-radius: 5px !important;
+    cursor: pointer;
+    transition: all 200ms ease;
+    height: auto !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  html body #settings-modal #pwa-install-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(16, 185, 129, 0.35),
+      rgba(16, 185, 129, 0.18)) !important;
+    color: #fff !important;
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* ── Save button — footer prominente ── */
+  html body #settings-modal #save-settings-btn {
+    width: 100% !important;
+    margin: 4px 0 0 0 !important;
+    padding: 12px !important;
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.3),
+      rgba(0, 180, 220, 0.18)) !important;
+    border: 1px solid var(--v3-accent-cyan, #00d9ff) !important;
+    color: #fff !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    border-radius: 6px !important;
+    cursor: pointer;
+    transition: all 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.18),
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      0 0 28px rgba(0, 217, 255, 0.25);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    height: auto !important;
+  }
+
+  html body #settings-modal #save-settings-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 100%);
+    transition: left 600ms ease;
+  }
+
+  html body #settings-modal #save-settings-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.5),
+      rgba(0, 180, 220, 0.3)) !important;
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.4),
+      0 12px 32px rgba(0, 0, 0, 0.6),
+      0 0 44px rgba(0, 217, 255, 0.5);
+    transform: translateY(-2px);
+  }
+
+  html body #settings-modal #save-settings-btn:hover::before {
+    left: 100%;
+  }
+
+  html body #settings-modal #save-settings-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  html body #settings-modal #save-settings-btn p {
+    margin: 0 !important;
+  }
+
+  html body #settings-modal #save-settings-btn i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.7));
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #settings-modal #save-settings-btn,
+  html body #settings-modal .custom-slider::-webkit-slider-thumb {
+    transition: none !important;
+  }
+}

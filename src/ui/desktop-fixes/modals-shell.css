@@ -18,6 +18,43 @@
     animation: none !important;
   }
 
+  /* Login modal: backdrop solido pieno (no gioco visibile dietro) */
+  html body div#login-modal.modal-backdrop {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 217, 255, 0.06) 0%, transparent 60%),
+      linear-gradient(180deg, #02050b 0%, #050810 50%, #02050b 100%) !important;
+    backdrop-filter: blur(20px) saturate(0.6) !important;
+  }
+
+  /* Nascondi gioco quando login aperto via vignette pesante */
+  html body div#login-modal.modal-backdrop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 50%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.6) 60%,
+      rgba(0, 0, 0, 0.95) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  html body div#login-modal.modal-backdrop > .modal-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Blur + dim game-container quando login aperto (modern :has) */
+  html body:has(#login-modal[style*="flex"]) #game-container,
+  html body:has(#login-modal[style*="block"]) #game-container,
+  html body:has(#login-modal[style*="flex"]) #game-navbar,
+  html body:has(#login-modal[style*="block"]) #game-navbar,
+  html body:has(#login-modal[style*="flex"]) #matrix-canvas,
+  html body:has(#login-modal[style*="block"]) #matrix-canvas {
+    filter: blur(14px) brightness(0.25) saturate(0.5) !important;
+    pointer-events: none !important;
+    user-select: none;
+  }
+
   /* ── Modal content: window feel — niente CSS animation (GSAP gestisce) ── */
   html body .modal-backdrop:not(#arcade-modal) > .modal-content {
     animation: none !important;

@@ -188,6 +188,29 @@
   }
 
   /* ════════════════════════════════════════════════════
+     SQUARE CLICKER (8bit, ecc.): scale ridotta — bordi quadrati
+     amplificano percezione movimento. Compensare con scale più sottile.
+     ════════════════════════════════════════════════════ */
+  html body.theme-8bit #clicker-btn:active,
+  html body.theme-super #clicker-btn:active {
+    transform:
+      rotateX(calc(var(--tilt-x, 0deg) + 1deg))
+      rotateY(var(--tilt-y, 0deg))
+      translateY(2px)
+      scale(0.97);
+  }
+
+  html body.theme-8bit #clicker-btn.click-shrink,
+  html body.theme-super #clicker-btn.click-shrink {
+    transform: scale(0.96) !important;
+  }
+
+  html body.theme-8bit #clicker-btn:active img,
+  html body.theme-super #clicker-btn:active img {
+    transform: scale(0.98);
+  }
+
+  /* ════════════════════════════════════════════════════
      Orbital rings — perspective space (section)
      ════════════════════════════════════════════════════ */
   html body #clicker-section::before {

@@ -35,6 +35,10 @@
 @import '../desktop-fixes/golden-bug-v3.css';
 @import '../desktop-fixes/toasts-v3.css';
 @import '../desktop-fixes/fury-flames-v3.css';
+@import '../desktop-fixes/login-modal-v3.css';
+@import '../desktop-fixes/settings-modal-v3.css';
+@import '../desktop-fixes/account-modal-v3.css';
+@import '../desktop-fixes/super-theme-v3.css';
 
 /* =====================================================================
    Stili globali a11y critici (non scoped [data-v3]).

@@ -1,0 +1,343 @@
+/* =====================================================================
+   v3 — Login Modal UI (match logo cyan/tech)
+   =====================================================================
+   Modernizza login per allinearsi al logo bug+gear cyan.
+   Hexagonal accents, cyan glow, inputs HUD-style, button gradient.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ── Modal content override ── */
+  html body #login-modal .modal-content {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%,
+        rgba(0, 217, 255, 0.12) 0%,
+        transparent 60%),
+      linear-gradient(180deg,
+        rgba(15, 23, 42, 0.98) 0%,
+        rgba(8, 12, 22, 0.98) 100%) !important;
+    border: 1px solid rgba(0, 217, 255, 0.28) !important;
+    border-top: none !important;
+    border-radius: 12px !important;
+    max-width: 400px !important;
+    width: 92vw;
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.12),
+      0 24px 80px rgba(0, 0, 0, 0.85),
+      0 0 120px rgba(0, 217, 255, 0.15) !important;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanline top accent (replace border-top blu legacy) */
+  html body #login-modal .modal-content::before {
+    content: '' !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(0, 217, 255, 0.4) 15%,
+      rgba(0, 217, 255, 1) 50%,
+      rgba(0, 217, 255, 0.4) 85%,
+      transparent 100%) !important;
+    z-index: 5;
+    pointer-events: none;
+    animation: v3-login-scanline 3s ease-in-out infinite;
+  }
+
+  @keyframes v3-login-scanline {
+    0%, 100% { opacity: 0.7; box-shadow: 0 0 12px rgba(0, 217, 255, 0.4); }
+    50%      { opacity: 1; box-shadow: 0 0 24px rgba(0, 217, 255, 0.8); }
+  }
+
+  /* Hex pattern background (logo-style) */
+  html body #login-modal .modal-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(60deg,
+        transparent 0, transparent 36px,
+        rgba(0, 217, 255, 0.03) 37px, transparent 38px),
+      repeating-linear-gradient(-60deg,
+        transparent 0, transparent 36px,
+        rgba(0, 217, 255, 0.03) 37px, transparent 38px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.7;
+  }
+
+  /* Tutti i children sopra hex pattern */
+  html body #login-modal .modal-content > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Logo container — halo glow ── */
+  html body #login-modal .modal-content > div:first-child {
+    padding: 36px 24px 16px !important;
+    position: relative;
+  }
+
+  html body #login-modal .modal-content > div:first-child > div:first-child {
+    margin-bottom: 20px !important;
+    color: transparent !important;
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Halo radiale dietro logo */
+  html body #login-modal .modal-content > div:first-child > div:first-child::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle,
+      rgba(0, 217, 255, 0.25) 0%,
+      rgba(0, 217, 255, 0.08) 40%,
+      transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    animation: v3-login-halo 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes v3-login-halo {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    to   { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  }
+
+  /* Logo SVG/img */
+  html body #login-modal .login-logo {
+    width: 96px !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    filter: drop-shadow(0 0 16px rgba(0, 217, 255, 0.6))
+            drop-shadow(0 0 32px rgba(0, 217, 255, 0.3));
+    animation: v3-login-logo-float 3.6s ease-in-out infinite;
+  }
+
+  @keyframes v3-login-logo-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+
+  /* Tagline sotto logo */
+  html body #login-modal .modal-content > div:first-child p {
+    color: rgba(248, 250, 252, 0.7) !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase;
+    margin-top: 8px !important;
+    position: relative;
+  }
+
+  /* Decoratori laterali ascii-like alla tagline */
+  html body #login-modal .modal-content > div:first-child p::before,
+  html body #login-modal .modal-content > div:first-child p::after {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.6), transparent);
+    vertical-align: middle;
+    margin: 0 10px;
+  }
+
+  /* ── Body inputs ── */
+  html body #login-modal .settings-content {
+    padding: 16px 28px 32px !important;
+  }
+
+  html body #login-modal .input-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  html body #login-modal .input-group-modern {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(2, 6, 14, 0.7) !important;
+    border: 1px solid rgba(0, 217, 255, 0.18) !important;
+    border-radius: 6px !important;
+    transition: border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+    overflow: hidden;
+  }
+
+  html body #login-modal .input-group-modern:focus-within {
+    border-color: var(--v3-accent-cyan, #00d9ff) !important;
+    background: rgba(2, 6, 14, 0.9) !important;
+    box-shadow:
+      0 0 0 3px rgba(0, 217, 255, 0.15),
+      0 0 24px rgba(0, 217, 255, 0.2);
+  }
+
+  /* Sottile linea cyan animata sotto input al focus */
+  html body #login-modal .input-group-modern::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(0, 217, 255, 0.9),
+      transparent);
+    transform: translateX(-50%);
+    transition: width 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  html body #login-modal .input-group-modern:focus-within::after {
+    width: 100%;
+  }
+
+  html body #login-modal .input-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 217, 255, 0.6);
+    border-right: 1px solid rgba(0, 217, 255, 0.1);
+    transition: color 220ms ease;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  html body #login-modal .input-icon i,
+  html body #login-modal .input-icon svg {
+    font-size: 0.85rem !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 1 !important;
+  }
+
+  html body #login-modal .input-group-modern:focus-within .input-icon {
+    color: var(--v3-accent-cyan, #00d9ff);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
+  }
+  html body #login-modal .input-group-modern:focus-within .input-icon i {
+    filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.7));
+  }
+
+  html body #login-modal .input-group-modern input {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  html body #login-modal .input-group-modern input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+  }
+
+  html body #login-modal .toggle-pass-btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(0, 217, 255, 0.5) !important;
+    padding: 0 14px !important;
+    height: 44px;
+    cursor: pointer;
+    transition: color 200ms ease;
+  }
+  html body #login-modal .toggle-pass-btn:hover {
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+  }
+
+  /* ── Submit button — gradient cyan glow ── */
+  html body #login-modal #login-btn {
+    width: 100%;
+    margin-top: 22px !important;
+    height: 48px !important;
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.25) 0%,
+      rgba(0, 180, 220, 0.18) 100%) !important;
+    border: 1px solid var(--v3-accent-cyan, #00d9ff) !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    cursor: pointer;
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.18),
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(0, 217, 255, 0.25) !important;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
+    transition: all 220ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    position: relative;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Shimmer scan sweep su hover */
+  html body #login-modal #login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 100%);
+    transition: left 600ms ease;
+  }
+
+  html body #login-modal #login-btn:hover {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.45) 0%,
+      rgba(0, 180, 220, 0.30) 100%) !important;
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.4),
+      0 12px 32px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(0, 217, 255, 0.5) !important;
+    transform: translateY(-2px);
+  }
+
+  html body #login-modal #login-btn:hover::before {
+    left: 100%;
+  }
+
+  html body #login-modal #login-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  html body #login-modal #login-btn i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.8));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #login-modal .login-logo,
+  html body #login-modal .modal-content::before,
+  html body #login-modal .modal-content > div:first-child > div:first-child::before {
+    animation: none !important;
+  }
+}

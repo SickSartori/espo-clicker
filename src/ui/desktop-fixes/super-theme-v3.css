@@ -1,0 +1,421 @@
+/* =====================================================================
+   v3 — Super Espò theme (Mario retro look)
+   =====================================================================
+   Palette Mario:
+   - Cielo: #5c94fc
+   - Rosso: #e70010
+   - Giallo: #ffce15
+   - Verde tubo: #00aa00 / #008800
+   - Marrone brick: #c04800
+   - Nero contorno: #000
+   Stile: pixel-art chunky border + box-shadow stepped (no shadow blur).
+   Mantiene layout v3 ma look Mario classico.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* Font: Press Start 2P + IBM Plex per leggibilità testi lunghi */
+  body.theme-super,
+  body.theme-super #game-container,
+  body.theme-super #game-navbar {
+    font-family: 'Press Start 2P', 'IBM Plex Sans', sans-serif !important;
+  }
+
+  /* Body bg sky kept by legacy super-theme.css */
+
+  /* ────────────────────────────────────────────────
+     GAME CONTAINER — pixel-art frame
+     ──────────────────────────────────────────────── */
+  body.theme-super #game-container {
+    background: rgba(0, 0, 0, 0.7) !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    box-shadow:
+      inset 0 0 0 2px #fff,
+      6px 6px 0 #000,
+      0 0 0 6px rgba(192, 72, 0, 0.4) !important;
+    backdrop-filter: none !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     NAVBAR — Mario brick brown
+     ──────────────────────────────────────────────── */
+  body.theme-super #game-navbar {
+    background: linear-gradient(180deg, #c04800 0%, #8b3300 100%) !important;
+    border-bottom: 4px solid #000 !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: none !important;
+  }
+
+  body.theme-super #game-navbar .nav-item {
+    color: #ffce15 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 1px !important;
+  }
+
+  body.theme-super #game-navbar .nav-item:hover {
+    color: #fff !important;
+    text-shadow: 2px 2px 0 #e70010 !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     COLUMNS — dark Mario panel
+     ──────────────────────────────────────────────── */
+  body.theme-super .game-column {
+    background: rgba(0, 0, 0, 0.78) !important;
+    border-right: 4px solid #000 !important;
+  }
+
+  body.theme-super .tabs-header {
+    background: #000 !important;
+    border-bottom: 4px solid #c04800 !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     CENTER HEADER — yellow text + black outline
+     ──────────────────────────────────────────────── */
+  body.theme-super .column-header-center {
+    background: rgba(0, 0, 0, 0.65) !important;
+    border-bottom: 4px solid #000 !important;
+    backdrop-filter: none !important;
+  }
+
+  body.theme-super .header-stat-box {
+    background: rgba(0, 0, 0, 0.85) !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    padding: 6px 12px !important;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.5), 2px 2px 0 #000 !important;
+  }
+
+  body.theme-super .header-label,
+  body.theme-super .header-label-main {
+    color: #ffce15 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.55rem !important;
+    letter-spacing: 1px !important;
+  }
+
+  body.theme-super .header-value {
+    color: #fff !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Multiplier + Token più piccoli */
+  body.theme-super #mult-display,
+  body.theme-super #token-display,
+  body.theme-super .header-stat-box .header-value {
+    font-size: 0.85rem !important;
+  }
+
+  body.theme-super #score-display {
+    color: #ffce15 !important;
+    text-shadow: 3px 3px 0 #000, 2px 2px 0 #e70010 !important;
+    font-size: 1.2rem !important;
+  }
+
+  /* BPS display — Mario green pipe pill */
+  body.theme-super #cps-display,
+  body.theme-super #bps-display {
+    color: #ffce15 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    background: #00aa00 !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    padding: 6px 14px !important;
+    box-shadow: inset 0 -3px 0 #006600, 3px 3px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.65rem !important;
+    font-weight: 400 !important;
+  }
+
+  body.theme-super #cps-display:hover,
+  body.theme-super #bps-display:hover {
+    background: #00cc00 !important;
+    transform: translate(-1px, -1px);
+    box-shadow: inset 0 -3px 0 #006600, 4px 4px 0 #000 !important;
+  }
+
+  /* Version display — cartello Mario verde */
+  body.theme-super #version-display {
+    color: #fff !important;
+    background: #00aa00 !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 -3px 0 #006600, 3px 3px 0 #000 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.55rem !important;
+    padding: 6px 14px !important;
+    letter-spacing: 1px !important;
+  }
+
+  body.theme-super #version-display:hover {
+    background: #00cc00 !important;
+    color: #ffce15 !important;
+    transform: translateX(-50%) translate(-1px, -1px) !important;
+    box-shadow: inset 0 -3px 0 #006600, 4px 4px 0 #000 !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     TABS — Mario yellow buttons + red active
+     ──────────────────────────────────────────────── */
+  body.theme-super .tab-btn {
+    background: #ffce15 !important;
+    color: #000 !important;
+    border: 3px solid #000 !important;
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.3) !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    margin-right: 4px !important;
+    padding: 8px 14px !important;
+    text-shadow: none !important;
+  }
+
+  body.theme-super .tab-btn:hover {
+    background: #fff !important;
+    transform: translateY(-2px);
+  }
+
+  body.theme-super .tab-btn.active {
+    background: #e70010 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+    box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.4), 2px 2px 0 #000 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    transform: translateY(-2px);
+  }
+
+  body.theme-super .tab-btn.notify {
+    background: #000 !important;
+    color: #f8b800 !important;
+    border-color: #f8b800 !important;
+    animation: marioTabBlink 0.6s steps(2) infinite !important;
+  }
+
+  @keyframes marioTabBlink {
+    0%, 49%   { background: #000; color: #f8b800; }
+    50%, 100% { background: #f8b800; color: #000; }
+  }
+
+  /* ────────────────────────────────────────────────
+     UPGRADE CARDS — blocco blu sotterraneo Mario
+     ──────────────────────────────────────────────── */
+  body.theme-super .upgrade,
+  body.theme-super .click-upgrade,
+  body.theme-super .prestige-upgrade,
+  body.theme-super .enhancement-upgrade {
+    background: #004080 !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    box-shadow:
+      inset 3px 3px 0 rgba(255, 255, 255, 0.25),
+      inset -3px -3px 0 rgba(0, 0, 0, 0.4),
+      3px 3px 0 #000 !important;
+    color: #fff !important;
+    margin-bottom: 10px !important;
+    padding: 12px !important;
+  }
+
+  body.theme-super .upgrade-name {
+    color: #ffce15 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.65rem !important;
+    line-height: 1.4 !important;
+    font-weight: 400 !important;
+  }
+
+  body.theme-super .upgrade-desc,
+  body.theme-super .upgrade .desc-base,
+  body.theme-super .upgrade .desc-hover {
+    color: #fff !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.55rem !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Locked Mario style */
+  body.theme-super #game-container .upgrade.locked-item,
+  body.theme-super #game-container .click-upgrade.locked-item,
+  body.theme-super #game-container .enhancement-upgrade.locked-item,
+  body.theme-super #game-container .prestige-upgrade.locked-item {
+    background: #1a1a1a !important;
+    border: 3px dashed #555 !important;
+    box-shadow: none !important;
+    opacity: 0.7 !important;
+    filter: grayscale(0.9) !important;
+  }
+
+  body.theme-super #game-container .locked-item .upgrade-name {
+    color: #888 !important;
+    text-shadow: 1px 1px 0 #000 !important;
+  }
+
+  body.theme-super #game-container .locked-item .upgrade-desc {
+    color: #666 !important;
+    text-shadow: none !important;
+  }
+
+  body.theme-super #game-container .locked-item .progress-bar-container {
+    background: #000 !important;
+    border: 2px solid #444 !important;
+    height: 16px !important;
+    border-radius: 0 !important;
+  }
+
+  body.theme-super #game-container .locked-item .progress-bar-fill {
+    background: linear-gradient(90deg, #f8b800, #c04800) !important;
+    border-radius: 0 !important;
+  }
+
+  body.theme-super #game-container .locked-item .progress-text {
+    color: #ffce15 !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.5rem !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     BUY BUTTONS — Mario green pipe gradient
+     ──────────────────────────────────────────────── */
+  body.theme-super .buy-btn {
+    background: linear-gradient(180deg, #00cc00 0%, #00aa00 50%, #008800 100%) !important;
+    border: 3px solid #000 !important;
+    border-radius: 0 !important;
+    color: #fff !important;
+    box-shadow:
+      inset 2px 2px 0 rgba(255, 255, 255, 0.35),
+      inset -2px -2px 0 rgba(0, 0, 0, 0.4),
+      3px 3px 0 #000 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 1px !important;
+    padding: 8px 14px !important;
+  }
+
+  body.theme-super .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #00ee00, #00cc00 50%, #00aa00) !important;
+    transform: translate(-1px, -1px) !important;
+    box-shadow:
+      inset 2px 2px 0 rgba(255, 255, 255, 0.4),
+      inset -2px -2px 0 rgba(0, 0, 0, 0.4),
+      4px 4px 0 #000 !important;
+  }
+
+  body.theme-super .buy-btn:active:not(:disabled) {
+    transform: translate(2px, 2px) !important;
+    box-shadow:
+      inset 2px 2px 0 rgba(0, 0, 0, 0.4),
+      inset -2px -2px 0 rgba(255, 255, 255, 0.2),
+      1px 1px 0 #000 !important;
+  }
+
+  /* Moltiplicatore acquisto attivo (1x/5x/10x/MAX selezionato) — rosso Mario chiaro */
+  body.theme-super #buy-controls .buy-btn.active {
+    background: linear-gradient(180deg, #ff5050 0%, #e70010 50%, #b8000c 100%) !important;
+    color: #fff !important;
+    border-color: #ffce15 !important;
+    box-shadow:
+      inset 2px 2px 0 rgba(255, 255, 255, 0.35),
+      inset -2px -2px 0 rgba(0, 0, 0, 0.4),
+      0 0 0 2px #000,
+      0 0 14px rgba(255, 206, 21, 0.6),
+      3px 3px 0 #000 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    transform: translateY(-2px) !important;
+    position: relative;
+    z-index: 1;
+  }
+
+  body.theme-super #buy-controls .buy-btn.active:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ff7070, #e70010 50%, #b8000c) !important;
+    transform: translateY(-3px) !important;
+  }
+
+  body.theme-super #game-container .buy-btn:disabled {
+    background: #555 !important;
+    border-color: #222 !important;
+    color: #999 !important;
+    box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.5) !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    filter: grayscale(0.7) !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     CLICKER BUTTON — square Mario pixel-art frame
+     ──────────────────────────────────────────────── */
+  body.theme-super #clicker-btn {
+    border-radius: 0 !important;
+    border: 4px solid #000 !important;
+    box-shadow:
+      inset 4px 4px 0 rgba(255, 255, 255, 0.25),
+      inset -4px -4px 0 rgba(0, 0, 0, 0.4),
+      6px 6px 0 rgba(0, 0, 0, 0.6),
+      0 0 24px rgba(255, 206, 21, 0.3) !important;
+    background: #ffce15 !important;
+  }
+
+  body.theme-super #clicker-btn::before,
+  body.theme-super #clicker-btn::after {
+    border-radius: 0 !important;
+    animation: none !important;
+  }
+
+  body.theme-super #clicker-btn img,
+  body.theme-super #clicker-btn #manager-photo-normal,
+  body.theme-super #clicker-btn #manager-photo-clicked {
+    image-rendering: pixelated !important;
+    border: 4px solid #000 !important;
+    box-shadow: 0 0 0 4px #fff !important;
+    border-radius: 0 !important;
+  }
+
+  /* Golden bug Mario super-block: legacy super-theme.css */
+
+  /* ────────────────────────────────────────────────
+     PROGRESS BARS — Mario power-up bar
+     ──────────────────────────────────────────────── */
+  body.theme-super .progress-bar-container {
+    background: #000 !important;
+    border: 2px solid #000 !important;
+    border-radius: 0 !important;
+    height: 18px !important;
+    overflow: hidden;
+  }
+
+  body.theme-super .progress-bar-fill {
+    background: linear-gradient(90deg, #ffce15, #f8b800, #e70010) !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3) !important;
+  }
+
+  body.theme-super .progress-text {
+    color: #fff !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.55rem !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     COST / COINS — Mario coin yellow
+     ──────────────────────────────────────────────── */
+  body.theme-super .upgrade-cost,
+  body.theme-super .cost-display {
+    color: #ffce15 !important;
+    text-shadow: 2px 2px 0 #000 !important;
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: 0.6rem !important;
+  }
+}

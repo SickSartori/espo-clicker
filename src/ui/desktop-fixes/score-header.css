@@ -216,36 +216,12 @@
     z-index: 3;
   }
 
-  /* Status indicator dot pulsante (LEDsystem) */
-  html body #header-left-panel::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--v3-tier-legendary, #f59e0b);
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
-    animation: v3-led-blink 2.5s ease-in-out infinite;
-  }
-
+  /* Status LED dots rimossi su richiesta */
+  html body #header-left-panel::before,
   html body #header-right-panel::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--v3-tier-rare, #3b82f6);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
-    animation: v3-led-blink 2.5s ease-in-out infinite 1.25s;
-  }
-
-  @keyframes v3-led-blink {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.4; }
+    display: none !important;
+    content: none !important;
+    animation: none !important;
   }
 
   html body #header-left-panel:hover,
