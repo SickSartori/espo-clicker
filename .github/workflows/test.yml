@@ -18,6 +18,19 @@ jobs:
       - name: Checkout del codice sorgente
         uses: actions/checkout@v4 # Scarica i file dalla repository
 
+      # Step 1b: Build bundle (dist-v3/ è gitignored → va generato qui)
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 📦 Install dipendenze
+        run: npm ci
+
+      - name: 🏗️ Build (legacy esbuild + v3 Vite)
+        run: npm run build
+
       - name: 🔧 Set config to DEV
         run: |
           sed -i 's/"instanceName" => "production"/"instanceName" => "dev"/' php/config.php
@@ -37,3 +50,9 @@ jobs:
             **/.git*
             **/.git*/**
             .github/**
+            node_modules/**
+            **/*.map
+            code.md
+            game-meta.md
+            release-notes.md
+            super-midu-bros-main/**

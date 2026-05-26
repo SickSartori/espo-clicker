@@ -20,6 +20,19 @@ jobs:
       - name: Checkout del codice
         uses: actions/checkout@v4
 
+      # Step 1b: Build bundle (dist-v3/ è gitignored → va generato qui)
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 📦 Install dipendenze
+        run: npm ci
+
+      - name: 🏗️ Build (legacy esbuild + v3 Vite)
+        run: npm run build
+
       # Step 2: Forza la configurazione su PRODUCTION
       - name: 🔧 Set config to PRODUCTION
         run: |
@@ -56,3 +69,9 @@ jobs:
             **/.git*/**
             .github/**
             **/.DS_Store
+            node_modules/**
+            **/*.map
+            code.md
+            game-meta.md
+            release-notes.md
+            super-midu-bros-main/**
