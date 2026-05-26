@@ -37,6 +37,18 @@
                v3-bug-glitch-burst 1.8s steps(1) 320ms infinite !important;
   }
 
+  /* ─── VARIETÀ golden bug (tinta via filter, smooth con transition base) ─── */
+  /* Lucky → verde smeraldo: ricompensa maggiorata */
+  html body #golden-bug.gb-lucky {
+    filter: hue-rotate(85deg) saturate(1.35)
+            drop-shadow(0 0 9px rgba(46, 204, 113, 0.65));
+  }
+  /* Frenzy → rosso/arancio: buff click temporaneo */
+  html body #golden-bug.gb-frenzy {
+    filter: hue-rotate(-38deg) saturate(1.6) brightness(1.12)
+            drop-shadow(0 0 9px rgba(231, 76, 60, 0.65));
+  }
+
   /* ─── ORBITAL RING (::before) — anello dorato ruotante ─── */
   html body #golden-bug::before {
     content: '';

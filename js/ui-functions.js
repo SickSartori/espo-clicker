@@ -1179,9 +1179,13 @@ function showClickFeedback(event) {
     }
     else {
         // --- CLICK STANDARD ---
-        let val = (typeof calculateClickValue === 'function')
-            ? calculateClickValue()
-            : gameState.baseClickValue;
+        // Usa il valore reale appena guadagnato (include bonus combo) se disponibile,
+        // altrimenti ricalcola.
+        let val = (typeof window._lastClickValue !== 'undefined' && window._lastClickValue !== null)
+            ? window._lastClickValue
+            : (typeof calculateClickValue === 'function')
+                ? calculateClickValue()
+                : gameState.baseClickValue;
 
         feedback.textContent = `+${formatNumber(val)}`;
 

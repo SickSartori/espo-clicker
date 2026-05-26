@@ -944,7 +944,9 @@ function buyTeam(teamKey) {
     if (gameState.score.gte(currentCost)) {
         playSound('sound-buy');
         gameState.score = gameState.score.minus(currentCost);
+        const oldCount = state.count;
         state.count += amount;
+        checkBuildingMilestone(teamKey, oldCount, state.count);
         recalculateCPS();
         refreshAllStores();
         window.EspooClicker.saveGame();
@@ -953,6 +955,30 @@ function buyTeam(teamKey) {
         playSound('sound-error');
         window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
     }
+}
+
+// Pop "traguardo" quando un team supera una soglia di unità possedute.
+// Riempie il vuoto del mid-game con un feedback gratificante (toast + flash).
+function checkBuildingMilestone(teamKey, oldCount, newCount) {
+    const milestones = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
+    let reached = 0;
+    for (const m of milestones) {
+        if (oldCount < m && newCount >= m) reached = m; // tiene il più alto attraversato
+    }
+    // Oltre 1000: un pop ogni 250 unità
+    if (newCount >= 1000) {
+        const step = 250;
+        const newTier = Math.floor(newCount / step) * step;
+        if (newTier > Math.floor(oldCount / step) * step && newTier > reached) reached = newTier;
+    }
+    if (reached <= 0) return;
+
+    const teamData = gameData.teams[teamKey];
+    const name = (teamData && teamData.name) ? teamData.name : teamKey;
+    if (window.EspooClicker && window.EspooClicker.showToast) {
+        window.EspooClicker.showToast('🏆 ' + name + ': ' + reached + ' unità!', 'reward');
+    }
+    if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(0, 217, 255, 0.10)', 0.18);
 }
 
 function calculatePrestigeBonus() {
@@ -1522,6 +1548,11 @@ function calculateClickValue() {
         val = val.add(bps.mul(percent));
     }
 
+    // Golden Bug "Frenzy": buff temporaneo al valore del click
+    if (window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd) {
+        val = val.mul(window.goldenFrenzyMult || 1);
+    }
+
     return val;
 }
 function calculateRawClickValue() {
@@ -1553,7 +1584,22 @@ function resolveBug(event) {
         AudioManager.playClickEffect();
     }
 
-    const currentClickValue = calculateClickValue();
+    // FX v3.0: registra combo PRIMA, così il bonus combo si applica a questo click.
+    // (haptic, shake progressivo e combo counter sono gestiti qui dentro)
+    let comboCount = 0;
+    if (typeof FX !== 'undefined') comboCount = FX.registerClick();
+
+    let currentClickValue = calculateClickValue();
+
+    // Bonus combo: clic rapidi consecutivi aumentano il valore del click.
+    // Combo 6+ → +1% per combo, fino a +100% (combo 106). Premia il click attivo
+    // senza sbilanciare il late-game (i BPS restano dominanti).
+    if (comboCount > 5) {
+        const comboMult = 1 + Math.min(comboCount - 5, 100) * 0.01;
+        currentClickValue = currentClickValue.mul(comboMult);
+    }
+    // Stash per showClickFeedback (mostra il +N reale incluso il bonus combo)
+    window._lastClickValue = currentClickValue;
 
     clickHistory.push({ time: Date.now(), value: currentClickValue });
     gameState.score = gameState.score.add(currentClickValue);
@@ -1562,9 +1608,6 @@ function resolveBug(event) {
     gameState.totalClicks++;
 
     if (typeof showClickFeedback === 'function') showClickFeedback(event);
-
-    // FX v3.0: registra click per combo, haptic, shake progressivo
-    if (typeof FX !== 'undefined') FX.registerClick();
 
     // --- NUOVA LOGICA ANIMAZIONE CLICK ---
     // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
@@ -2151,6 +2194,16 @@ function spawnGoldenBug() {
     goldenBug.style.left = `${finalLeft}px`;
     goldenBug.style.top = `${finalTop}px`;
 
+    // Varietà: scegli il tipo di bug (effetto "cosa mi esce?")
+    //   standard 70% · lucky 18% (ricompensa ×8) · frenzy 12% (buff click ×7 15s)
+    const typeRoll = Math.random();
+    let bugType = 'standard';
+    if (typeRoll < 0.12) bugType = 'frenzy';
+    else if (typeRoll < 0.30) bugType = 'lucky';
+    window._goldenBugType = bugType;
+    goldenBug.classList.remove('gb-lucky', 'gb-frenzy');
+    if (bugType !== 'standard') goldenBug.classList.add('gb-' + bugType);
+
     // Force reflow per riavviare animazioni dopo remove .visible
     void goldenBug.offsetWidth;
     goldenBug.classList.add('visible');
@@ -2183,16 +2236,33 @@ function clickGoldenBug() {
     gameState.totalGoldenBugsClicked++;
 
     const currentClickValue = calculateClickValue();
+    const bugType = window._goldenBugType || 'standard';
 
-    // Formula: (BPS * 30 + Click * 10 + 10) * Multiplier
+    // Formula base: (BPS * 30 + Click * 10 + 10) * Multiplier
     let bonus = bps.mul(30).add(currentClickValue.mul(10)).add(10);
     bonus = bonus.mul(window.goldenBugMult);
+
+    // Varietà bug: modifica ricompensa / attiva buff
+    let toastMsg;
+    if (bugType === 'lucky') {
+        bonus = bonus.mul(8); // jackpot
+        toastMsg = '🍀 BUG FORTUNATO! +' + formatNumber(bonus) + ' bug!';
+    } else if (bugType === 'frenzy') {
+        bonus = bonus.mul(2); // piccolo bonus immediato
+        // Buff temporaneo: click ×7 per 15s (gestito in calculateClickValue)
+        window.goldenFrenzyMult = new Decimal(7);
+        window.goldenFrenzyEnd = Date.now() + 15000;
+        if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(231,76,60,0.15)', 0.25);
+        toastMsg = '⚡ FRENESIA! Click ×7 per 15 secondi!';
+    } else {
+        toastMsg = gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus));
+    }
 
     gameState.score = gameState.score.add(bonus);
     gameState.totalScore = gameState.totalScore.add(bonus);
     gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
 
-    window.EspooClicker.showToast(gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus)), 'reward');
+    window.EspooClicker.showToast(toastMsg, 'reward');
 
     // Cancella timer despawn (clicked, niente warning ulteriore)
     if (window._goldenBugDespawnTimer) clearTimeout(window._goldenBugDespawnTimer);
@@ -2208,3 +2278,64 @@ function clickGoldenBug() {
     }
     updateUI();
 }
+
+// ============================================================
+// BONUS GIORNALIERO (login streak)
+// ------------------------------------------------------------
+// Stato in localStorage (NON in gameState) → immune al merge cloud.
+// Idempotente per giorno (date-gate). Riscosso dopo che il boot
+// + sync cloud si sono assestati, così non viene sovrascritto.
+// ============================================================
+const DAILY_BONUS_KEY = 'espo_daily_bonus';
+
+function _dailyDateStr(offsetDays) {
+    const d = new Date();
+    if (offsetDays) d.setDate(d.getDate() + offsetDays);
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function claimDailyBonus() {
+    if (typeof gameState === 'undefined' || !gameState.score) return;
+
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(DAILY_BONUS_KEY)) || {}; } catch (e) { data = {}; }
+
+    const today = _dailyDateStr(0);
+    if (data.lastDate === today) return; // già riscosso oggi
+
+    // Streak: +1 se ieri, altrimenti riparte da 1
+    let streak = 1;
+    if (data.lastDate === _dailyDateStr(-1)) streak = (data.streak || 0) + 1;
+
+    // Ricompensa = "secondi di produzione" (scala con lo streak, cap 7gg)
+    // + un pavimento per i neogiocatori con BPS bassi.
+    const cap = Math.min(streak, 7);
+    const secs = 600 + cap * 200; // 800s (g1) → 2000s (g7+)
+    let reward = bps.mul(secs);
+    const floor = gameState.baseClickValue.mul(50 * cap + 50);
+    if (reward.lt(floor)) reward = floor;
+    if (reward.lt(50)) reward = new Decimal(50);
+
+    gameState.score = gameState.score.add(reward);
+    gameState.totalScore = gameState.totalScore.add(reward);
+    gameState.lifetimeScore = gameState.lifetimeScore.add(reward);
+
+    try {
+        localStorage.setItem(DAILY_BONUS_KEY, JSON.stringify({ lastDate: today, streak: streak }));
+    } catch (e) {}
+
+    if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
+    if (typeof updateUI === 'function') updateUI();
+
+    const msg = '🎁 Bonus giornaliero · Giorno ' + streak + ' · +' + formatNumber(reward) + ' bug!';
+    if (window.EspooClicker && window.EspooClicker.showToast) {
+        window.EspooClicker.showToast(msg, 'reward');
+    }
+    if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(46, 204, 113, 0.12)', 0.3);
+}
+
+// Trigger: dopo EspoGameReady, attende l'assestamento del sync cloud poi riscuote.
+// (game-logic.js è bundlato prima di script.js → il listener è pronto al dispatch)
+document.addEventListener('EspoGameReady', () => {
+    setTimeout(claimDailyBonus, 3500);
+}, { once: true });
