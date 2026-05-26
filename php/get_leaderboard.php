@@ -5,9 +5,11 @@ header('Content-Type: application/json');
 
 try {
     // Ordine di priorità: Formattazioni > Prestigio > Punteggio (Score)
-    $sql = "SELECT username, score, prestigeLevel, equippedSkin, totalFormattazioni, timestamp 
-            FROM $table_leaderboard 
-            ORDER BY totalFormattazioni DESC, prestigeLevel DESC, CAST(score AS DECIMAL(65,0)) DESC, timestamp ASC";
+    // LIMIT 100: evita full-table scan/dump su host condiviso (Altervista) al crescere degli utenti.
+    $sql = "SELECT username, score, prestigeLevel, equippedSkin, totalFormattazioni, timestamp
+            FROM $table_leaderboard
+            ORDER BY totalFormattazioni DESC, prestigeLevel DESC, CAST(score AS DECIMAL(65,0)) DESC, timestamp ASC
+            LIMIT 100";
 
     $result = $conn->query($sql);
     $leaderboard = [];
