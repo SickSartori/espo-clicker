@@ -25,6 +25,9 @@ dump.rdb
 code
 assets/packs
 
+# Sourcemap dev (non servono in produzione)
+dist/*.map
+
 # Vite v3 dev output (decideremo se committare a fine migrazione)
 dist-v3/
 
