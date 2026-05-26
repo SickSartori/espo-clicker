@@ -59,29 +59,21 @@
   }
 
   /* ════════════════════════════════════════════════
-     Rare — Data streams blu Matrix verticali
+     Rare — Glow cyan soft con respiro delicato (minimal)
      ════════════════════════════════════════════════ */
   body[data-current-skin-rarity="rare"] #clicker-section {
     background:
-      /* Vertical streams */
-      repeating-linear-gradient(180deg,
-        transparent 0,
-        transparent 30px,
-        rgba(0, 217, 255, 0.10) 31px,
-        rgba(0, 217, 255, 0.18) 38px,
-        rgba(0, 217, 255, 0.10) 45px,
-        transparent 46px,
-        transparent 90px) 0 0/40px 200% repeat,
-      /* Glow centro cyan */
-      radial-gradient(ellipse 70% 60% at 50% 50%,
-        rgba(0, 217, 255, 0.25) 0%,
-        transparent 70%);
-    animation: v3-clicker-bg-rain 4s linear infinite;
+      /* Glow centro cyan — unico layer, niente pattern */
+      radial-gradient(ellipse 72% 62% at 50% 50%,
+        rgba(0, 217, 255, 0.22) 0%,
+        rgba(0, 217, 255, 0.08) 45%,
+        transparent 72%);
+    animation: v3-clicker-bg-rare-breathe 7s ease-in-out infinite;
   }
 
-  @keyframes v3-clicker-bg-rain {
-    0%   { background-position: 0 0%, 0 0; }
-    100% { background-position: 0 100%, 0 0; }
+  @keyframes v3-clicker-bg-rare-breathe {
+    0%, 100% { background-size: 100% 100%;   opacity: 0.85; }
+    50%      { background-size: 116% 112%;   opacity: 1; }
   }
 
   /* ════════════════════════════════════════════════
@@ -120,15 +112,16 @@
      ════════════════════════════════════════════════ */
   body[data-current-skin-rarity="legendary"] #clicker-section {
     background:
+      /* Raggi dorati morbidi — wrap senza cucitura (0deg = 360deg = transparent),
+         transizioni larghe = niente righe nette */
       conic-gradient(from 0deg at 50% 50%,
         transparent 0deg,
-        rgba(252, 211, 77, 0.12) 25deg,
-        transparent 60deg,
-        rgba(245, 158, 11, 0.16) 130deg,
-        transparent 175deg,
-        rgba(252, 211, 77, 0.10) 240deg,
-        transparent 285deg,
-        rgba(245, 158, 11, 0.14) 360deg),
+        rgba(252, 211, 77, 0.10) 60deg,
+        transparent 120deg,
+        rgba(245, 158, 11, 0.12) 190deg,
+        transparent 250deg,
+        rgba(252, 211, 77, 0.10) 310deg,
+        transparent 360deg),
       /* Particelle dorate */
       radial-gradient(circle 1.5px at 25% 30%, rgba(252, 211, 77, 0.6) 50%, transparent 51%) 0 0/200px 200px,
       radial-gradient(circle 2px at 70% 60%, rgba(252, 211, 77, 0.5) 50%, transparent 51%) 0 0/250px 250px,
