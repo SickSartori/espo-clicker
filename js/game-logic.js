@@ -1638,7 +1638,22 @@ function resolveBug(event) {
         }, 120);
     }
 
-    if (typeof updateClickStore === 'function') updateClickStore();
+    // Throttle: durante lo spam click ridisegniamo il negozio (sort + DOM) al massimo
+    // ~ogni 200ms invece che a ogni click. La chiamata "trailing" assicura che lo stato
+    // finale (progress bar, sblocchi) sia corretto anche a fine raffica.
+    if (typeof updateClickStore === 'function') {
+        const now = Date.now();
+        if (!window._clickStoreLast || now - window._clickStoreLast >= 200) {
+            window._clickStoreLast = now;
+            updateClickStore();
+        } else if (!window._clickStoreTrailing) {
+            window._clickStoreTrailing = setTimeout(() => {
+                window._clickStoreTrailing = null;
+                window._clickStoreLast = Date.now();
+                updateClickStore();
+            }, 200);
+        }
+    }
     // updateUI() non viene più chiamata ad ogni click: il loop UI a 100ms la gestisce già.
     // Questo evita 50-100 update DOM/sec durante lo spam click.
 }
