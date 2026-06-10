@@ -2205,8 +2205,12 @@ function updateStatsUI() {
     const totalFormats = gameState.totalFormattazioni || 0;
     const totalQBits = gameState.lifetimeQBits || new Decimal(0);
 
-    // --- GENERAZIONE HTML CON TOOLTIP SEMPLICI ---
-    statsList.innerHTML = `
+    // --- STRUTTURA (costruita UNA SOLA VOLTA) ---
+    // Prima si riscriveva tutto l'innerHTML a ogni tick (10x/s): i nodi venivano
+    // distrutti e ricreati, resettando hover e tooltip a meta'. Ora la struttura
+    // si genera una volta e a ogni tick aggiorniamo SOLO i valori in place.
+    if (!document.getElementById('st-score')) {
+        statsList.innerHTML = `
         <div class="stats-container">
 
             <!-- HERO: Progresso Promozione -->
@@ -2217,13 +2221,13 @@ function updateStatsUI() {
                             <i class="fa-solid fa-rocket" style="color: #2ecc71; margin-right: 6px;"></i>
                             Progresso Promozione
                             <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
-                                (Obiettivo: <span class="simple-tooltip" data-tooltip="${formatFullNumber(threshold)}">${formatNumber(threshold)}</span>)
+                                (Obiettivo: <span id="st-threshold" class="simple-tooltip" data-tooltip=""></span>)
                             </span>
                         </span>
-                        <span style="color: ${progress >= 100 ? '#2ecc71' : '#fff'}; font-size: 1.1rem; font-weight: 800;">${progress.toFixed(2)}%</span>
+                        <span id="st-progress-pct" style="font-size: 1.1rem; font-weight: 800;"></span>
                     </div>
                     <div class="stat-progress-bg">
-                        <div class="stat-progress-fill" style="width: ${progress}%;"></div>
+                        <div id="st-progress-fill" class="stat-progress-fill" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
@@ -2234,27 +2238,21 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> Bug Attuali</span>
-                        <span class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip="${formatFullNumber(gameState.score)}">
-                            ${formatNumber(Math.floor(gameState.score))}
-                        </span>
+                        <span id="st-score" class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> Totale Run</span>
-                        <span class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip="${formatFullNumber(gameState.totalScore)}">
-                            ${formatNumber(gameState.totalScore)}
-                        </span>
+                        <span id="st-total" class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Totale Carriera</span>
-                        <span class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip="${formatFullNumber(gameState.lifetimeScore)}">
-                            ${formatNumber(gameState.lifetimeScore)}
-                        </span>
+                        <span id="st-lifetime" class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Offline</span>
-                        <span class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="${formatFullNumber(totalOffline)}">
-                            ${formatNumber(totalOffline)}
-                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">(${offlinePercentText})</span>
+                        <span id="st-offline" class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="">
+                            <span id="st-offline-val"></span>
+                            <span id="st-offline-pct" style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;"></span>
                         </span>
                     </div>
                 </div>
@@ -2266,46 +2264,40 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-gauge-high" style="color: #e67e22; margin-right: 4px; font-size: 0.65rem;"></i> BPS</span>
-                        <span class="stat-value simple-tooltip" style="color: #e67e22;" data-tooltip="${formatFullNumber(bps)}">
-                            ${formatNumber(bps)}
-                        </span>
+                        <span id="st-bps" class="stat-value simple-tooltip" style="color: #e67e22;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-hand-pointer" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click</span>
                         <span class="stat-value" style="color: #e74c3c;">
-                            ${formatNumber(rawClick)}
-                            <span style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;">
-                                (x${formatNumber(totalClick)})
-                            </span>
+                            <span id="st-click"></span>
+                            <span id="st-click-mult" style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;"></span>
                         </span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Moltiplicatore</span>
-                        <span class="stat-value" style="color: #f1c40f;">x${formatNumber(prestigeBonus)}</span>
+                        <span id="st-mult" class="stat-value" style="color: #f1c40f;"></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-dice" style="color: #1abc9c; margin-right: 4px; font-size: 0.65rem;"></i> Crit Chance</span>
-                        <span class="stat-value" style="color: #1abc9c;">${(goldenBugChance * 100).toFixed(2)}%</span>
+                        <span id="st-crit" class="stat-value" style="color: #1abc9c;"></span>
                     </div>
                 </div>
             </div>
 
-            ${(totalFormats > 0 || totalQBits.gt(0)) ? `
-            <!-- Multiverso -->
-            <div class="stats-section" style="border-color: rgba(155, 89, 182, 0.3);">
+            <!-- Multiverso (NG+) -->
+            <div id="st-multiverse" class="stats-section" style="border-color: rgba(155, 89, 182, 0.3); display: none;">
                 <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> Multiverso (NG+)</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Universi Distrutti</span>
-                        <span class="stat-value" style="color: #e74c3c;">${formatNumber(totalFormats)}</span>
+                        <span id="st-formats" class="stat-value" style="color: #e74c3c;"></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Energia Quantica</span>
-                        <span class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);">${formatNumber(totalQBits)} Q-Bits</span>
+                        <span id="st-qbits" class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);"></span>
                     </div>
                 </div>
             </div>
-            ` : ''}
 
             <!-- Profilo -->
             <div class="stats-section">
@@ -2313,25 +2305,67 @@ function updateStatsUI() {
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
-                        <span class="stat-value" style="text-transform: capitalize; color: #9b59b6;">
-                            ${(gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default')}
-                        </span>
+                        <span id="st-skin" class="stat-value" style="text-transform: capitalize; color: #9b59b6;"></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> Tempo di Gioco</span>
-                        <span class="stat-value">${formatTime(gameState.totalPlayTime)}</span>
+                        <span id="st-playtime" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click Totali</span>
-                        <span class="stat-value">${formatNumber(gameState.totalClicks)}</span>
+                        <span id="st-clicks" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> Promozioni</span>
-                        <span class="stat-value">${formatNumber(gameState.totalResets)}</span>
+                        <span id="st-resets" class="stat-value"></span>
                     </div>
                 </div>
             </div>
 
         </div>
     `;
+    }
+
+    // --- VALORI (aggiornati in place: niente rebuild, hover/tooltip preservati) ---
+    const _set = (id, txt) => { const e = document.getElementById(id); if (e && e.textContent !== String(txt)) e.textContent = String(txt); };
+    const _attr = (id, name, val) => { const e = document.getElementById(id); if (e && e.getAttribute(name) !== String(val)) e.setAttribute(name, String(val)); };
+
+    _attr('st-threshold', 'data-tooltip', formatFullNumber(threshold));
+    _set('st-threshold', formatNumber(threshold));
+    const _pct = document.getElementById('st-progress-pct');
+    if (_pct) { _pct.textContent = progress.toFixed(2) + '%'; _pct.style.color = progress >= 100 ? '#2ecc71' : '#fff'; }
+    const _fill = document.getElementById('st-progress-fill');
+    if (_fill) _fill.style.width = progress + '%';
+
+    _attr('st-score', 'data-tooltip', formatFullNumber(gameState.score));
+    _set('st-score', formatNumber(Math.floor(gameState.score)));
+    _attr('st-total', 'data-tooltip', formatFullNumber(gameState.totalScore));
+    _set('st-total', formatNumber(gameState.totalScore));
+    _attr('st-lifetime', 'data-tooltip', formatFullNumber(gameState.lifetimeScore));
+    _set('st-lifetime', formatNumber(gameState.lifetimeScore));
+    _attr('st-offline', 'data-tooltip', formatFullNumber(totalOffline));
+    _set('st-offline-val', formatNumber(totalOffline));
+    _set('st-offline-pct', '(' + offlinePercentText + ')');
+
+    _attr('st-bps', 'data-tooltip', formatFullNumber(bps));
+    _set('st-bps', formatNumber(bps));
+    _set('st-click', formatNumber(rawClick));
+    _set('st-click-mult', '(x' + formatNumber(totalClick) + ')');
+    _set('st-mult', 'x' + formatNumber(prestigeBonus));
+    _set('st-crit', (goldenBugChance * 100).toFixed(2) + '%');
+
+    const _mv = document.getElementById('st-multiverse');
+    if (_mv) {
+        const _show = (totalFormats > 0 || totalQBits.gt(0));
+        _mv.style.display = _show ? '' : 'none';
+        if (_show) {
+            _set('st-formats', formatNumber(totalFormats));
+            _set('st-qbits', formatNumber(totalQBits) + ' Q-Bits');
+        }
+    }
+
+    _set('st-skin', (gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default'));
+    _set('st-playtime', formatTime(gameState.totalPlayTime));
+    _set('st-clicks', formatNumber(gameState.totalClicks));
+    _set('st-resets', formatNumber(gameState.totalResets));
 }
