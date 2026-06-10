@@ -1,5 +1,5 @@
 <div id="center-column" class="game-column" role="main" aria-label="<?php echo $labels["col_center_bug_risolti_label"]; ?>">
-    <div class="column-header-center" role="status" aria-live="polite" aria-atomic="false">
+    <div class="column-header-center">
         <div id="header-left-panel" class="header-stat-box header_stat_box_display_none">
             <span class="header-label">
 				<i data-lucide="zap" aria-hidden="true"></i>
@@ -38,7 +38,7 @@
             <img id="manager-photo-clicked" src="assets/image/skins/espo-click.webp" alt="" draggable="false">
             <img id="manager-photo-normal" src="assets/image/skins/espo.webp" alt="" draggable="false">
         </button>
-        <div id="cps-display" aria-live="polite" aria-label="Bug per secondo">BPS: 0.0</div>
+        <div id="cps-display" aria-label="Bug per secondo">BPS: 0.0</div>
         <button id="skill-crunchTime" class="skill-btn" style="display: none;">
             <?php echo $labels["col_center_espo_fury_titolo"]; ?>
             <div class="skill-timer">
