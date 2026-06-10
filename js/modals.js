@@ -675,6 +675,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // A11y: Esc chiude il modale visibile in cima (tranne il login, che e' un gate)
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const open = Array.from(document.querySelectorAll('.modal-backdrop'))
+            .filter(m => m.style.display === 'flex' && m.style.opacity !== '0' && m.id !== 'login-modal');
+        if (open.length) closeModal(open[open.length - 1]);
+    });
+
+    // A11y: chiudi cliccando sullo sfondo, fuori dal contenuto (tranne il login)
+    allModals.forEach(m => {
+        m.addEventListener('click', (e) => {
+            if (e.target === m && m.id !== 'login-modal') closeModal(m);
+        });
+    });
+
     if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
         if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
         openModal(achievementsModal);
