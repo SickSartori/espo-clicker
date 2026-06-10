@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Se il gioco è in versione STABLE, accettiamo le vecchie major version.
         // Questo permette al 'deepMerge' di unire i vecchi dati con le nuove strutture
         // senza cancellare i progressi dei giocatori.
-        if (current.stage === 'stable') {
+        if (current.stage === 'stable' || !current.stage) {
             if (saved.major !== current.major) {
                 console.info(`Migrazione Major: Save v${saved.major} -> Game v${current.major} (Stable). Permessa.`);
             }
