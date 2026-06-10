@@ -116,12 +116,24 @@ const buildCSS = async () => {
 // ============================================================
 // Run
 // ============================================================
+// break_eternity.js: usato da arcade.php, va copiato in dist/ (non è generato dal bundle)
+const copyVendor = () => {
+  const src = 'node_modules/break_eternity.js/dist/break_eternity.min.js';
+  const dest = 'dist/break_eternity.min.js';
+  if (!fs.existsSync(src)) {
+    console.error('File mancante:', src, '— esegui `npm ci`');
+    process.exit(1);
+  }
+  fs.copyFileSync(src, dest);
+};
+
 const run = async () => {
   console.time('Build');
   await Promise.all([buildJS(), buildCSS()]);
+  copyVendor();
   console.timeEnd('Build');
 
-  ['dist/game.bundle.min.js', 'dist/styles.bundle.min.css', 'dist/styles.mobile.min.css'].forEach(f => {
+  ['dist/game.bundle.min.js', 'dist/styles.bundle.min.css', 'dist/styles.mobile.min.css', 'dist/break_eternity.min.js'].forEach(f => {
     const kb = (fs.statSync(f).size / 1024).toFixed(1);
     console.log(`✓ ${f} (${kb} KB)`);
   });

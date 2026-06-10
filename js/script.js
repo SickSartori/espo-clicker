@@ -381,6 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (savedState) {
+            // Marca che un salvataggio esisteva (usato per il default filtro store dei nuovi giocatori)
+            window._espoHadSave = true;
             try {
                 let parsedState = null;
 
@@ -851,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gameState && !gameState.isDeleting) {
                 gameState.lastSaveTimestamp = Date.now();
                 const compressed = LZString.compressToUTF16(JSON.stringify(gameState));
-                localStorage.setItem('espotoolClickerSaveV8', compressed);
+                localStorage.setItem('espotoolClickerSaveV9', compressed);
             }
             // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
             saveGame();
@@ -1348,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Fury Mode attiva: skip caricamento skin standard.");
 
         const globalFilterSelect = document.getElementById('global-filter-select');
-        if (globalFilterSelect && !localStorage.getItem('espotoolClickerSaveV8')) {
+        if (globalFilterSelect && !window._espoHadSave) {
             globalFilterSelect.value = 'available';
             gameState.filterSettings.globalFilter = 'available';
         }
@@ -1821,7 +1823,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // G. Salva subito in cloud per allineare il DB
                         saveGame();
-                        localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
+                        localStorage.setItem('espotoolClickerSaveV9', LZString.compressToUTF16(JSON.stringify(gameState)));
 
                         if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
                         calculatePrestigeBonus();
@@ -1926,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateUI === 'function') updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(gameState)));
+                    localStorage.setItem('espotoolClickerSaveV9', LZString.compressToUTF16(JSON.stringify(gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in gameData.achievements) {

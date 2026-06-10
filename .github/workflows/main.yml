@@ -59,7 +59,7 @@ jobs:
       # Step 4: Caricamento FTP
       # NOTA: Assicurati che FTP_REMOTE_PATH punti alla cartella di produzione (es. public_html)
       - name: 📂 Caricamento FTP su Server
-        uses: SamKirkland/FTP-Deploy-Action@master
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}

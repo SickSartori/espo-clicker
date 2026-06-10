@@ -1,9 +1,6 @@
 <?php
-    // DB
-    define("DB_ADDRESS", "localhost");
-	define("DB_USER", "root");
-	define("DB_PASSWORD", "root");
-	define("DB_NAME", "test");
+    // NB: le credenziali DB NON stanno qui. La connessione usa l'array
+    // restituito da php/config.php (vedi php/db_connect.php).
 
     // General
     define("SECOND", 1);

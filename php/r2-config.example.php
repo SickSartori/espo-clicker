@@ -9,10 +9,10 @@
 
 return [
     // Endpoint S3-compatible (URL "Default" da dashboard R2)
-    'endpoint'    => 'https://9f66805c2cfeb7131383cce0fe741f13.r2.cloudflarestorage.com',
+    'endpoint'    => 'https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
 
     // Account ID (visibile in dashboard R2 — non segreto)
-    'account_id'  => '9f66805c2cfeb7131383cce0fe741f13',
+    'account_id'  => '<ACCOUNT_ID>',
 
     // Bucket privato dove sono caricati gli asset
     'bucket'      => 'espo-clicker-assets',

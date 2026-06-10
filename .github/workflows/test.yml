@@ -39,7 +39,7 @@ jobs:
       # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
       # L'azione FTP caricherà direttamente tutti i file scaricati.
       - name: Caricamento FTP su Server
-        uses: SamKirkland/FTP-Deploy-Action@master
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}

@@ -896,11 +896,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
 
-    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
-            localStorage.removeItem('espotoolClickerSaveV8');
-            localStorage.removeItem('espotoolClickerSaveV8_Backup');
+            if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
+                try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+            }
+            localStorage.removeItem('espotoolClickerSaveV9');
+            localStorage.removeItem('espotoolClickerSaveV9_Backup');
             location.reload();
         }
     });
@@ -972,7 +975,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Account eliminato. Addio!");
                 sessionStorage.clear();
                 localStorage.clear(); // Pulisce tutto il browser
-                localStorage.removeItem('espotoolClickerSaveV8'); // Doppia sicurezza
+                if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
+                    try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+                }
                 location.reload();
             } else {
                 alert(data.message);
@@ -999,8 +1004,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     alert("Progressi resettati con successo.");
 
-                    localStorage.removeItem('espotoolClickerSaveV8');
-                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
+                    if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
+                        try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+                    }
+                    localStorage.removeItem('espotoolClickerSaveV9');
+                    localStorage.removeItem('espotoolClickerSaveV9_Backup');
                     location.reload();
                 } else {
                     alert(data.message);
@@ -1040,8 +1048,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
-                    localStorage.removeItem('espotoolClickerSaveV8');
-                    localStorage.removeItem('espotoolClickerSaveV8_Backup');
+                    localStorage.removeItem('espotoolClickerSaveV9');
+                    localStorage.removeItem('espotoolClickerSaveV9_Backup');
                     Game.getGameState().user.username = u;
                     if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
                     Game.saveGame();
