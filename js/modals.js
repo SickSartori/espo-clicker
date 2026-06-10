@@ -190,8 +190,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fmt = (Game.formatNumber) ? Game.formatNumber(reward) : reward.toString();
                 Game.showToast(`🎮 ARCADE REWARD: +${fmt} BUG!`, 'reward');
             }
-            // Clear pending
-            localStorage.removeItem('espo_arcade_pending_rewards');
+            // Clear pending — ANTI-RACE: se il tab arcade ha scritto ALTRI reward tra
+            // la lettura e questo punto, sottrai solo quanto incassato invece di azzerare.
+            const cur = localStorage.getItem('espo_arcade_pending_rewards');
+            if (cur && cur !== raw && typeof Decimal !== 'undefined') {
+                try {
+                    const curData = JSON.parse(cur);
+                    const residue = new Decimal(curData.score || '0').sub(data.score);
+                    if (residue.gt(0)) {
+                        localStorage.setItem('espo_arcade_pending_rewards',
+                            JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
+                    } else {
+                        localStorage.removeItem('espo_arcade_pending_rewards');
+                    }
+                } catch (e2) { localStorage.removeItem('espo_arcade_pending_rewards'); }
+            } else {
+                localStorage.removeItem('espo_arcade_pending_rewards');
+            }
+            // Aggiorna il mirror del saldo letto dal wallet arcade (totale = mirror + pending).
+            // Senza questo, all'incasso il totale arcade CALAVA del pending appena azzerato:
+            // i bug guadagnati sembravano "apparire e poi tornare a 0".
+            try { if (gs.score && gs.score.toString) localStorage.setItem('espo_main_bugs', gs.score.toString()); } catch (e3) {}
         } catch (e) {
             console.warn('[arcade reward claim] fail', e);
         }

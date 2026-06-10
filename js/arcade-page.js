@@ -194,6 +194,10 @@
             _showScorePopup(delta);
             _flashWallet();
             if (window._arcadeSfxReward) window._arcadeSfxReward();
+        } else if (curPending === 0 && _prevPendingVal > 0) {
+            // Pending incassato dal gioco principale (mirror gia' aggiornato → il totale
+            // NON cala): flash morbido sul totale come conferma dell'incasso.
+            _flashWallet();
         }
         _prevPendingVal = curPending;
     }
