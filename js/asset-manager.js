@@ -42,7 +42,9 @@
         return new Promise(function (resolve) {
             var img = new Image();
             img.decoding = 'async';
-            img.loading = 'lazy';
+            // NB: niente loading='lazy' — un'Image() staccata dal DOM con lazy non
+            // scarica MAI (resta in attesa di un'intersezione che non avviene), bloccando
+            // la coda di preload. Per il prefetch serve il caricamento immediato.
             img.onload = function () { resolve(true); };
             img.onerror = function () {
                 if (attempt < MAX_RETRIES) {

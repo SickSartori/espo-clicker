@@ -900,6 +900,13 @@ function calculateMaxAffordable(teamKey) {
     let decR = new Decimal(r);
 
     let discountedBase = data.baseCost;
+    // Applica lo sconto Outsourcing come fa calculateBulkCost, altrimenti il "MAX"
+    // sovrastima il costo e sottostima le unita' acquistabili (fino a ~25%).
+    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
+    if (outsourcingState && outsourcingState.count > 0) {
+        const discount = 1 - (0.05 * outsourcingState.count);
+        discountedBase = discountedBase.mul(Math.max(0.75, discount));
+    }
     let currentSingleCost = discountedBase.mul(decR.pow(state.count)).floor();
 
     if (gameState.score.lt(currentSingleCost)) return 0;
