@@ -294,6 +294,24 @@ function renderStoreSection(config) {
         });
     }
 
+    // Onboarding: se in modalita' "available" non c'e' nulla da comprare (es. nuovo
+    // giocatore con tutto bloccato), rivela il prossimo obiettivo piu' vicino allo
+    // sblocco, con la sua progress bar, cosi' la tab non resta vuota.
+    let nextLockedKey = null;
+    if (mode === 'available') {
+        const hasAvailable = items.some(it => it.status.unlocked && !it.status.purchased && !it.status.isMaxed);
+        if (!hasAvailable) {
+            let bestProgress = -1;
+            items.forEach(it => {
+                if (!it.status.unlocked && !it.status.purchased && !it.status.isMaxed &&
+                    typeof it.status.progress === 'number' && it.status.progress > bestProgress) {
+                    bestProgress = it.status.progress;
+                    nextLockedKey = it.key;
+                }
+            });
+        }
+    }
+
     // RENDERING NEL DOM
     items.forEach(item => {
         const { key, data, state, status } = item;
@@ -313,6 +331,7 @@ function renderStoreSection(config) {
             else if (mode === 'purchased' && (status.purchased || status.isMaxed)) isVisible = true;
             else if (mode === 'locked' && !status.unlocked && !status.purchased) isVisible = true;
             else if (mode === 'available' && status.unlocked && !status.purchased && !status.isMaxed) isVisible = true;
+            else if (mode === 'available' && key === nextLockedKey) isVisible = true;
         }
 
         if (!isVisible) { if (el) el.style.display = 'none'; return; }
