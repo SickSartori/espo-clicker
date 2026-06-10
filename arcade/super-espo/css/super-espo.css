@@ -79,9 +79,12 @@
     user-select: none;
 }
 
+/* Controlli touch locali DISATTIVATI: sostituiti dal pad virtuale globale
+   (#arcade-virtual-pad), che per Super Espò pilota i tasti via window.espoCustomKeys.
+   Evita il doppione di D-pad su mobile. */
 @media (max-width: 768px) {
     #super-espo-mobile-controls {
-        display: flex;
+        display: none;
     }
 }
 

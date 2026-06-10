@@ -2,6 +2,9 @@
 
 (function () {
     let espoGame = null;
+    let espoRunToken = 0; // invalida le run in volo (prefetch async) se l'utente esce/riavvia
+    let _suRecordCache = -1; // record letto una volta per run (vedi updateUI)
+    let _suDieTimer = null;  // timeout del game-over, da cancellare se si esce prima
 
     window.espoCustomKeys = { left: false, right: false, down: false, up: false }; 
 
@@ -27,8 +30,9 @@
             <button class="arcade-btn secondary" onclick="window.exitSuperEspoGame()">
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
+            <span class="topbar-game-label" style="color:#9b59b6">SUPER ESPO</span>
             <div class="arcade-stats-box" id="super-espo-score-ui">
-                <span class="stat">LOOP: <span class="val-level" style="color:#e74c3c; font-weight:bold;">1</span></span>
+                <span class="stat">LOOP: <span class="val-level">1</span></span>
                 <span class="stat">SCORE: <span class="val-score">0</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
@@ -39,8 +43,10 @@
         canvasWrapper.id = 'phaser-espo-container';
         canvasWrapper.className = 'crt-turn-on crt-effect';
         canvasWrapper.style.position = 'relative';
-        canvasWrapper.style.width = '800px';
-        canvasWrapper.style.height = '400px';
+        // Il wrapper riempie il contenitore via flex:1 (CSS .crt-effect). NON impostare
+        // height:100% qui: con la topbar presente causerebbe overflow e il canvas
+        // finirebbe troppo in basso invece che centrato verticalmente.
+        canvasWrapper.style.width = '100%';
 
         const mobileControls = document.createElement('div');
         mobileControls.id = 'super-espo-mobile-controls';
@@ -67,7 +73,7 @@
         overlay.id = 'super-espo-overlay';
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
-            <div class="super-espo-title">SUPER ESPÒ</div>
+            <div class="super-espo-title">SUPER ESPO</div>
             <div class="super-espo-instructions">
                 Frecce/WASD per muoverti, SU per saltare, GIÙ per abbassarti.<br>
                 Schiaccia i Bug, raccogli monete e non cadere!
@@ -80,7 +86,12 @@
     };
 
     window.exitSuperEspoGame = function () {
+        espoRunToken++; // invalida eventuali prefetch/run in volo
+        if (_suDieTimer) { clearTimeout(_suDieTimer); _suDieTimer = null; }
+        if (window._espoLoaderTimeout) { clearTimeout(window._espoLoaderTimeout); window._espoLoaderTimeout = null; }
         if (espoGame) { espoGame.destroy(true); espoGame = null; }
+        // Reset state singletons (texture refs distrutti col game)
+        fireHintText = null;
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
         if (gameContainer) { gameContainer.innerHTML = ''; gameContainer.style.display = 'none'; }
@@ -148,13 +159,17 @@
         // come "schermata di caricamento" finché Phaser non è pronto.
         _showLoader('connecting');
 
-        if (espoGame) espoGame.destroy(true);
+        if (espoGame) { espoGame.destroy(true); espoGame = null; }
+        const myToken = ++espoRunToken; // questa run; se ne parte un'altra, la invalida
+        _suRecordCache = -1; // forza la rilettura del record per la nuova partita
 
         window.espoCustomKeys = { left: false, right: false, down: false, up: false };
         // FIX: reset stato edge-detection del salto. Senza questo, se la run
         // precedente è terminata con UP premuto, il primo salto della nuova
         // partita non scatta finché l'utente non rilascia e ripreme il tasto.
         upWasDown = false;
+        lastGroundedTime = -1e9;
+        lastJumpPressTime = -1e9;
 
         // Safety net: se la pagina perde focus (notifica, switch app, ecc.)
         // azzeriamo TUTTI i tasti virtuali. Lo registriamo una sola volta.
@@ -175,21 +190,46 @@
             window._espoKeysSafetyNet = true;
         }
 
+        // Safety net: timeout assoluto per evitare loader bloccato a 100%
+        // (es. asset 404 silenzioso, evento complete non emesso).
+        if (window._espoLoaderTimeout) clearTimeout(window._espoLoaderTimeout);
+        window._espoLoaderTimeout = setTimeout(() => {
+            console.warn('[super-espo] Loader timeout 5s — force hide');
+            _hideLoader();
+        }, 5000);
+
         // Wrapper di preload che aggancia gli eventi di progresso al loader UI.
         // Phaser emette 'progress' (0..1) ad ogni file caricato + 'complete' quando finisce.
         function _preloadWithProgress() {
             this.load.on('progress', _updateLoaderProgress);
-            this.load.on('complete', _hideLoader);
+            this.load.on('complete', () => {
+                if (window._espoLoaderTimeout) {
+                    clearTimeout(window._espoLoaderTimeout);
+                    window._espoLoaderTimeout = null;
+                }
+                _hideLoader();
+            });
+            // loaderror: continua comunque (asset failed → log + skip)
+            this.load.on('loaderror', (file) => {
+                console.warn('[super-espo] Asset load fail:', file.key, file.src);
+            });
             preload.call(this);
         }
 
         const config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 400,
             backgroundColor: '#5c94fc',
-            parent: 'phaser-espo-container',
             pixelArt: true,
+            // Scale.FIT: il canvas si ridimensiona per riempire il contenitore
+            // (wrapper flex) mantenendo l'aspect ratio, centrato. Elimina gli
+            // spazi vuoti laterali/inferiori della vecchia dimensione fissa.
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                parent: 'phaser-espo-container',
+                width: 1280,
+                height: 560
+            },
             physics: {
                 default: 'arcade',
                 arcade: { gravity: { y: 720 }, debug: false }
@@ -210,9 +250,12 @@
             : Promise.resolve({});
 
         prefetch.then(() => {
-            // Guard: l'utente potrebbe aver premuto MENU durante il prefetch,
-            // facendo unmount del container. In quel caso annulla l'avvio.
+            // Guard: l'utente potrebbe aver premuto MENU/RIAVVIA durante il prefetch.
+            // Se nel frattempo e' partita un'altra run (token diverso) o il container
+            // e' stato smontato, annulla per non creare un Phaser.Game orfano (loop/input doppi).
+            if (myToken !== espoRunToken) return;
             if (!document.getElementById('phaser-espo-container')) return;
+            if (espoGame) { espoGame.destroy(true); espoGame = null; }
             // Passa alla fase 2: barra di progresso reale durante Phaser preload
             _showLoader('loading');
             espoGame = new Phaser.Game(config);
@@ -220,10 +263,13 @@
     };
 
     let player, cursors, wasdKeys, platforms, blocks, enemies, enemyBlockers, coins;
-    let bgMountains, bgClouds, decorations;
+    let bgHills, bgMountains, bgClouds, decorations, groundFill;
     let powerUps;                    // gruppo fisico per la Super Stella (e futuri power-up)
+    let fireballs;                   // gruppo proiettili fireball
+    let shootKeys;                   // tasti X / F per sparare
     let lastChunkX = 0;
     let lastTierIndex = 0; // Traccia il tier precedente per transizioni graduali
+    let camScrollMax = -1e9;         // scroll X massimo raggiunto → camera runner (solo avanti)
 
     let currentScore = 0;
     let maxDist = 0;
@@ -231,31 +277,61 @@
     let currentLevel = 1;
     let upWasDown = false;
 
+    // ---- Feel del movimento (stile Mario): inerzia + salto variabile ----------
+    const RUN_ACCEL      = 1100; // accelerazione a terra (px/s²)
+    const RUN_TURN_ACCEL = 2200; // accelerazione in inversione (skid, più reattivo)
+    const RUN_AIR_ACCEL  = 750;  // controllo ridotto in aria
+    const RUN_FRICTION    = 1500; // attrito a terra (decelerazione quando rilasci)
+    const JUMP_VEL        = 480;  // spinta salto piena (tenendo premuto)
+    const JUMP_CUT_VEL    = 320;  // velocità minima se rilasci subito (salto corto ma "vero")
+    const EXTRA_FALL      = 420;  // gravità extra in caduta → discesa secca, meno galleggiamento
+    const COYOTE_MS       = 100;  // tolleranza salto dopo aver lasciato il bordo
+    const JUMP_BUFFER_MS  = 130;  // pre-input salto poco prima di atterrare
+    let lastGroundedTime = -1e9;
+    let lastJumpPressTime = -1e9;
+
     // ---- Super Star (invincibility power-up) -------------------------------
     const STAR_DROP_CHANCE  = 0.18;  // 18% per blocco mistero
     const STAR_DURATION_MS  = 12000; // 12 secondi di invincibilità
     const STAR_TINT_CYCLE   = [0xfff44f, 0xff6ec7, 0x6ec3ff, 0x9bff6e]; // giallo / rosa / azzurro / verde
     const STOMP_SCORE       = 100;   // schiacciata semplice
     const STAR_KILL_SCORE   = 200;   // nemico ucciso in modalità stella
+    const SHELL_SPEED       = 320;   // velocità del guscio koopa calciato
+    const SHELL_KILL_SCORE  = 150;   // nemico ucciso dal guscio in movimento
+    const SHELL_GRACE_MS    = 300;   // tempo prima che un guscio fermo possa essere calciato
+    const SHELL_LIFE_MS     = 6000;  // auto-despawn guscio (fermo o in movimento)
+    // I mattoni di terreno/piattaforme si estendono fin quaggiù: riempiono il
+    // fondo del canvas (niente striscia di cielo sotto) e danno un look "pieno".
+    const GROUND_BOTTOM     = 760;
     let invincibleUntil = 0;         // timestamp ms (scene.time.now) di scadenza
 
     // ---- Fire Flower (1-hit protection power-up) ---------------------------
     const FIRE_DROP_CHANCE     = 0.22;   // 22% per blocco mistero
     const FIRE_HIT_INVUL_MS    = 1500;   // dopo power-down: 1.5s invulnerabilità + lampeggio
     const FIRE_COLLECT_SCORE   = 200;
-    let fireMode = false;                // true = player è "Espò Fire" (skin alternativa)
-    let firePowerDownUntil = 0;          // timestamp finestra di invulnerabilità post hit
+    let playerForm = 'small';            // 'small' | 'grown' | 'fire' (modello Mario classico)
+    let firePowerDownUntil = 0;          // timestamp iframes invulnerabilità dopo downgrade
+    const PLAYER_SCALE = 0.32;           // scala sprite player → ~30px small / ~61px grown (frame 95/190px)
+    const MUSH_DROP_CHANCE = 0.5;        // se small: prob. fungo dal blocco mistero
+    const MUSH_COLLECT_SCORE = 200;
 
     function preload() {
         const imgPath   = 'assets/image/arcade/';
-        const v = '?v=' + Date.now();
+        // Versione STABILE per build (non Date.now()): senza, ogni partita riscaricava
+        // ~30 sprite bypassando la cache HTTP. window.CACHE_VER e' iniettato da arcade.php.
+        const v = '?v=' + (window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor : '3.0'));
 
         // Le immagini sono servite dal server (non sono in CDN_PREFIXES).
         // Tutti gli sprite sono in formato WebP — riduzione ~70% rispetto ai PNG originali.
-        this.load.spritesheet('super-espo', imgPath + 'espo-grown.webp' + v, { frameWidth: 250, frameHeight: 424 });
-        this.load.spritesheet('espo-fire',  imgPath + 'espo-fire.webp'  + v, { frameWidth: 250, frameHeight: 424 });
+        // Player: 3 forme (sprite aggiornati). Convenzione frame: 0=stop, 1-3=run, 5=jump.
+        // Confini frame verificati via scan colonne trasparenti.
+        this.load.spritesheet('espo-small', imgPath + 'espo.webp'        + v, { frameWidth: 83,  frameHeight: 95 });   // 6 frame
+        this.load.spritesheet('espo-grown', imgPath + 'mario-grown.webp' + v, { frameWidth: 100, frameHeight: 190 });  // 6 frame
+        this.load.spritesheet('espo-fire',  imgPath + 'mario-fire.webp'  + v, { frameWidth: 100, frameHeight: 190 });  // 7 frame
         this.load.image('floorbricks', imgPath + 'floorbricks.webp' + v);
         this.load.image('emptyBlock', imgPath + 'emptyBlock.webp' + v);
+        this.load.image('brick', imgPath + 'brick.webp' + v);           // mattone (blocco solido decorativo)
+        this.load.image('hardblock', imgPath + 'hardblock.webp' + v);   // blocco solido per scalinate
         this.load.spritesheet('misteryBlock', imgPath + 'misteryBlock.webp' + v, { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('goomba', imgPath + 'goomba.webp' + v, { frameWidth: 16, frameHeight: 16 });
         this.load.image('bush1', imgPath + 'bush1.webp' + v);
@@ -268,7 +344,16 @@
         this.load.spritesheet('coin', imgPath + 'coin.webp' + v, { frameWidth: 16, frameHeight: 16 });
         this.load.image('pipe-small', imgPath + 'vertical-small-tube.webp' + v);
         this.load.image('pipe-medium', imgPath + 'vertical-medium-tube.webp' + v);
-        this.load.image('fire-flower', imgPath + 'fire-flower.webp' + v);
+        this.load.image('pipe-large', imgPath + 'vertical-large-tube.webp' + v);
+        // Fire flower è una spritesheet 4 frames 16x16 (animazione spin)
+        this.load.spritesheet('fire-flower', imgPath + 'fire-flower.webp' + v, { frameWidth: 16, frameHeight: 16 });
+        // Fireball proiettile (4 frame 8x8) + esplosione impatto (3 frame 16x16) — da super-midu-bros
+        this.load.spritesheet('fireball', imgPath + 'fireball.png' + v, { frameWidth: 8, frameHeight: 8 });
+        this.load.spritesheet('fireball-explosion', imgPath + 'fireball-explosion.png' + v, { frameWidth: 16, frameHeight: 16 });
+        // Power-up fungo (cresci) + nemico koopa/shell — da super-midu-bros
+        this.load.image('super-mushroom', imgPath + 'super-mushroom.png' + v);
+        this.load.spritesheet('koopa', imgPath + 'koopa.png' + v, { frameWidth: 16, frameHeight: 24 });
+        this.load.spritesheet('shell', imgPath + 'shell.png' + v, { frameWidth: 16, frameHeight: 15 });
 
         // Audio: su Altervista CDN.urlSync() ritorna la signed URL R2 già
         // pre-fetchata in startSuperEspoRun(). Le signed URL hanno query
@@ -283,39 +368,79 @@
     }
 
     function create() {
+        // Belt-and-suspenders: hide loader anche da create() in caso evento complete saltato
+        _hideLoader();
+        if (window._espoLoaderTimeout) {
+            clearTimeout(window._espoLoaderTimeout);
+            window._espoLoaderTimeout = null;
+        }
+
         this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1000);
-        this.physics.world.checkCollision.down = false; 
+        this.physics.world.checkCollision.down = false;
 
         this.anims.create({ key: 'goomba-walk', frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
         this.anims.create({ key: 'goomba-dead', frames: [{ key: 'goomba', frame: 2 }] });
         this.anims.create({ key: 'block-flash', frames: this.anims.generateFrameNumbers('misteryBlock', { start: 0, end: 2 }), frameRate: 6, repeat: -1, yoyo: true });
         this.anims.create({ key: 'coin-spin', frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
-        this.anims.create({ key: 'espo-stop', frames: this.anims.generateFrameNumbers('super-espo', { start: 0, end: 0 }), frameRate: 1 });
-        this.anims.create({ key: 'espo-run', frames: this.anims.generateFrameNumbers('super-espo', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
-        this.anims.create({ key: 'espo-crouch', frames: [{ key: 'super-espo', frame: 4 }], frameRate: 1 });
-        this.anims.create({ key: 'espo-jump', frames: this.anims.generateFrameNumbers('super-espo', { start: 5, end: 5 }), frameRate: 1 });
+        this.anims.create({ key: 'fire-flower-spin', frames: this.anims.generateFrameNumbers('fire-flower', { start: 0, end: 3 }), frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'fireball-spin', frames: this.anims.generateFrameNumbers('fireball', { start: 0, end: 3 }), frameRate: 14, repeat: -1 });
+        this.anims.create({ key: 'fireball-explode', frames: this.anims.generateFrameNumbers('fireball-explosion', { start: 0, end: 2 }), frameRate: 18, repeat: 0 });
+        // Anim player per forma (small/grown/fire): 0=stop, 1-3=run, 5=jump.
+        [['espo-small', 'small'], ['espo-grown', 'grown'], ['espo-fire', 'fire']].forEach(([key, form]) => {
+            this.anims.create({ key: form + '-stop', frames: this.anims.generateFrameNumbers(key, { start: 0, end: 0 }), frameRate: 1 });
+            this.anims.create({ key: form + '-run',  frames: this.anims.generateFrameNumbers(key, { start: 1, end: 3 }), frameRate: 12, repeat: -1 });
+            this.anims.create({ key: form + '-jump', frames: this.anims.generateFrameNumbers(key, { start: 5, end: 5 }), frameRate: 1 });
+        });
+        // Crouch (solo forma grande): frame 4 dello spritesheet grown/fire.
+        this.anims.create({ key: 'grown-crouch', frames: [{ key: 'espo-grown', frame: 4 }], frameRate: 1 });
+        this.anims.create({ key: 'fire-crouch',  frames: [{ key: 'espo-fire',  frame: 4 }], frameRate: 1 });
 
-        // Fire mode: stessa struttura ma usa il spritesheet 'espo-fire'
-        this.anims.create({ key: 'fire-stop', frames: this.anims.generateFrameNumbers('espo-fire', { start: 0, end: 0 }), frameRate: 1 });
-        this.anims.create({ key: 'fire-run', frames: this.anims.generateFrameNumbers('espo-fire', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
-        this.anims.create({ key: 'fire-crouch', frames: [{ key: 'espo-fire', frame: 4 }], frameRate: 1 });
-        this.anims.create({ key: 'fire-jump', frames: this.anims.generateFrameNumbers('espo-fire', { start: 5, end: 5 }), frameRate: 1 });
+        // Koopa cammina (2 frame); guscio statico
+        this.anims.create({ key: 'koopa-walk', frames: this.anims.generateFrameNumbers('koopa', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'shell-idle', frames: [{ key: 'shell', frame: 0 }], frameRate: 1 });
+        this.anims.create({ key: 'shell-spin', frames: this.anims.generateFrameNumbers('shell', { start: 0, end: 1 }), frameRate: 18, repeat: -1 });
 
+        bgHills = this.add.group();
         bgMountains = this.add.group();
         bgClouds = this.add.group();
 
-        for (let i = 0; i < 4; i++) {
+        // STRATO LONTANO — colline grandi, parallax molto lento, tinta azzurrata
+        // (effetto foschia/profondità). Stanno dietro a tutto (depth -3).
+        for (let i = 0; i < 5; i++) {
+            let hKey = i % 2 === 0 ? 'mountain2' : 'mountain1';
+            let hill = this.add.image(i * 360, 415, hKey)
+                .setScale(Phaser.Math.FloatBetween(2.6, 3.4))
+                .setOrigin(0.5, 1).setScrollFactor(0.12, 1)
+                .setTint(0x7fa0e0).setDepth(-3);
+            bgHills.add(hill);
+        }
+
+        // STRATO MEDIO — montagne con altezze e scale variate (depth -2).
+        // Base alzata (400, vicino al livello del suolo 360) così emergono dietro
+        // al pavimento e restano ben visibili (prima erano troppo nascoste).
+        for (let i = 0; i < 5; i++) {
             let mKey = i % 2 === 0 ? 'mountain1' : 'mountain2';
-            let mt = this.add.image(i * 350, 450, mKey).setScale(2).setOrigin(0.5, 1).setScrollFactor(0.2, 1);
+            let mt = this.add.image(i * 300, 400, mKey)
+                .setScale(Phaser.Math.FloatBetween(1.5, 2.4))
+                .setOrigin(0.5, 1).setScrollFactor(0.25, 1).setDepth(-2);
             bgMountains.add(mt);
         }
 
-        for (let i = 0; i < 6; i++) {
+        // NUVOLE — più numerose, quote e dimensioni varie (depth -1)
+        for (let i = 0; i < 9; i++) {
             let cKey = i % 2 === 0 ? 'cloud1' : 'cloud2';
-            let cloud = this.add.image(i * 200, Phaser.Math.Between(80, 180), cKey)
-                            .setScale(Phaser.Math.FloatBetween(0.15, 0.4)).setScrollFactor(0.4, 1);
+            let cloud = this.add.image(i * 150, Phaser.Math.Between(10, 250), cKey)
+                .setScale(Phaser.Math.FloatBetween(0.14, 0.42))
+                .setScrollFactor(Phaser.Math.FloatBetween(0.35, 0.5), 1).setDepth(-1);
             bgClouds.add(cloud);
         }
+
+        // RIEMPIMENTO "TERRA" — banda scura sotto la linea del suolo (y360 in giù).
+        // Sta DIETRO le piattaforme (depth -0.5) e DAVANTI a cielo/montagne, così i
+        // "pozzi" tra le piattaforme mostrano terra scura invece del cielo azzurro.
+        // Riposizionata in update() per seguire la camera.
+        groundFill = this.add.rectangle(0, 360, 1700, 480, 0x352515)
+            .setOrigin(0, 0).setDepth(-0.5);
 
         platforms = this.physics.add.staticGroup();
         blocks = this.physics.add.staticGroup();
@@ -352,10 +477,10 @@
             this.textures.addCanvas('super-star', c);
         }
 
-        let groundWidth = 1500;
-        let startPlatformTop = 360; 
-        let groundHeight = 500 - startPlatformTop; 
-        
+        let groundWidth = 720;
+        let startPlatformTop = 360;
+        let groundHeight = GROUND_BOTTOM - startPlatformTop; // estende il brick fino in fondo
+
         let ground = this.add.tileSprite(groundWidth / 2, startPlatformTop + (groundHeight / 2), groundWidth, groundHeight, 'floorbricks');
         ground.tileScaleX = 2; ground.tileScaleY = 2;
         this.physics.add.existing(ground, true);
@@ -363,9 +488,9 @@
 
         // Decorazioni iniziali sulla piattaforma di partenza
         const startDecos = [
-            { key: 'bush2', x: 350, scale: 0.7 },
-            { key: 'fence', x: 700, scale: 0.55 },
-            { key: 'bush1', x: 1100, scale: 0.5 }
+            { key: 'bush2', x: 240, scale: 0.7 },
+            { key: 'fence', x: 440, scale: 0.55 },
+            { key: 'bush1', x: 640, scale: 0.5 }
         ];
         startDecos.forEach(d => {
             const deco = this.add.image(d.x, startPlatformTop, d.key)
@@ -375,21 +500,27 @@
 
         lastChunkX = groundWidth;
         lastTierIndex = 0;
+        camScrollMax = -1e9; // reset camera runner (si riaggancia al primo frame)
         currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
         invincibleUntil = 0; // reset stato stella ad ogni nuova partita
-        fireMode = false;    // reset Fire Flower
+        playerForm = 'small';   // parte piccolo (cresce col fungo)
         firePowerDownUntil = 0;
 
-        player = this.physics.add.sprite(100, 100, 'super-espo', 0);
+        player = this.physics.add.sprite(100, 100, 'espo-small', 0);
         player.setCollideWorldBounds(true);
-        player.setScale(42 / player.height); // ~13% dello schermo visibile (stile Mario NES)
+        setPlayerForm(this, 'small'); // texture + scala + body coerenti con la forma
         player.setDepth(20);
         player.isDead = false;
 
         this.cameras.main.setZoom(1.25);
-        const offsetX = -(this.sys.game.config.width * 0.3); 
-        this.cameras.main.setBounds(0, 80, Number.MAX_SAFE_INTEGER, 320);
-        this.cameras.main.startFollow(player, true, 1, 0, offsetX, 0); 
+        // CAMERA RUNNER: niente startFollow. Lo scroll X è gestito a mano in update()
+        // in modo MONOTÒNO (solo avanti, mai indietro): così il player può arretrare
+        // fino al bordo sinistro del canvas e lì fermarsi (fuori vista), e appena
+        // riprende ad avanzare la camera si riaggancia. Finestra verticale FISSA.
+        this.cameras.main.setBounds(0, -1000, Number.MAX_SAFE_INTEGER, 100000);
+        const _viewBottomY = 408; // più in basso → più zona cielo sopra
+        const _camAnchor0 = this.cameras.main.width * 0.2; // posizione di aggancio del player
+        this.cameras.main.setScroll(player.x - _camAnchor0, _viewBottomY - (this.cameras.main.height / 1.25));
 
         cursors = this.input.keyboard.createCursorKeys();
         wasdKeys = this.input.keyboard.addKeys({
@@ -397,22 +528,68 @@
             down: Phaser.Input.Keyboard.KeyCodes.S, right: Phaser.Input.Keyboard.KeyCodes.D
         });
 
-        this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,W,A,S,D');
+        this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,W,A,S,D,X,F');
+        shootKeys = this.input.keyboard.addKeys({
+            x: Phaser.Input.Keyboard.KeyCodes.X,
+            f: Phaser.Input.Keyboard.KeyCodes.F
+        });
+
+        // Fireballs group: proiettili Fire mode
+        fireballs = this.physics.add.group();
+
         this.physics.add.collider(player, platforms);
         this.physics.add.collider(player, blocks, hitBlock, null, this);
         this.physics.add.overlap(player, coins, collectCoin, null, this);
         this.physics.add.collider(enemies, platforms);
-        this.physics.add.collider(player, enemies, hitEnemy, null, this);
+        // OVERLAP (non collider): il contatto col nemico NON spinge fisicamente il
+        // nemico — gestisce solo stomp/danno via hitEnemy (come in Super Mario).
+        this.physics.add.overlap(player, enemies, hitEnemy, null, this);
         this.physics.add.collider(enemies, enemyBlockers);
+        // Guscio koopa in movimento che travolge altri nemici (overlap = non fisico,
+        // i nemici normali continuano a non spingersi tra loro).
+        this.physics.add.overlap(enemies, enemies, shellVsEnemy, null, this);
         // I power-up rimbalzano su tutto il terreno e vengono raccolti al contatto.
         // Il dispatcher collectPowerUp() instrada Star vs Fire Flower in base a item.kind.
         this.physics.add.collider(powerUps, platforms);
         this.physics.add.collider(powerUps, blocks);
         this.physics.add.collider(powerUps, enemyBlockers);
         this.physics.add.overlap(player, powerUps, collectPowerUp, null, this);
+
+        // Fireball collisions
+        this.physics.add.collider(fireballs, platforms, fireballHitGround, null, this);
+        this.physics.add.collider(fireballs, blocks, fireballHitGround, null, this);
+        this.physics.add.collider(fireballs, enemyBlockers);
+        this.physics.add.overlap(fireballs, enemies, fireballHitEnemy, null, this);
     }
 
-    function update() {
+    // Cambia forma player (small/grown/fire): texture + scala + body + anim.
+    // Tiene i piedi piantati (cresce verso l'alto, si rimpicciolisce verso il basso).
+    function setPlayerForm(scene, form) {
+        if (!player) return;
+        const wasH = player.displayHeight || 0;
+        playerForm = form;
+        const spec = form === 'small'
+            ? { tex: 'espo-small', fw: 83, fh: 95 }
+            : { tex: form === 'fire' ? 'espo-fire' : 'espo-grown', fw: 100, fh: 190 };
+        player.anims.stop();
+        if (scene.textures.exists(spec.tex)) player.setTexture(spec.tex, 0);
+        player.setScale(PLAYER_SCALE);
+        if (player.body) {
+            // hitbox ~metà larghezza frame (sprite centrato con padding), ~82% altezza, piedi in basso
+            const bw = Math.round(spec.fw * 0.5);
+            const bh = Math.round(spec.fh * 0.82);
+            player.body.setSize(bw, bh);
+            player.body.setOffset(Math.round((spec.fw - bw) / 2), spec.fh - bh);
+        }
+        const newH = player.displayHeight;
+        if (wasH) player.y -= (newH - wasH) / 2;
+        const onGround = !!(player.body && (player.body.blocked.down || player.body.touching.down));
+        const moving = !!(player.body && Math.abs(player.body.velocity.x) > 5);
+        const a = !onGround ? form + '-jump' : (moving ? form + '-run' : form + '-stop');
+        if (scene.anims.exists(a)) player.anims.play(a, true);
+    }
+
+    function update(time, delta) {
         if (player.isDead) return;
 
         // ---- Stato Super Stella (invincibility) -----------------------------
@@ -453,42 +630,110 @@
 
         let jumpPressed = cursors.up.isDown || wasdKeys.up.isDown || window.espoCustomKeys.up;
         let jumpJustPressed = jumpPressed && !upWasDown;
-        upWasDown = jumpPressed; 
+        upWasDown = jumpPressed;
 
+        // Fire mode: spara con X o F + gestione caricatore/ricarica + HUD munizioni
+        if (playerForm === 'fire') {
+            // Ricarica completata → rifornisci il caricatore
+            if (fireballAmmo <= 0 && this.time.now >= fireballReloadUntil) fireballAmmo = MAX_FIREBALLS;
+            if (shootKeys && (shootKeys.x.isDown || shootKeys.f.isDown)) shootFireball(this);
+            // Aggiorna l'indicatore munizioni (pallini) / "RICARICA…"
+            if (fireHintText && fireHintText.scene) {
+                if (fireballAmmo <= 0) {
+                    fireHintText.setText('🔥 RICARICA…');
+                } else {
+                    let dots = '';
+                    for (let i = 0; i < MAX_FIREBALLS; i++) dots += (i < fireballAmmo) ? '●' : '○';
+                    fireHintText.setText('🔥 X/F  ' + dots);
+                }
+            }
+        }
+
+        const dt = Math.min(delta || 16.7, 50) / 1000; // secondi (cap anti-salti)
         let isGrounded = player.body.blocked.down || player.body.touching.down || player.body.onFloor();
 
-        let moveSpeed = 180 + (Math.pow(currentLevel, 1.2) * 6);
-        let currentVel = 0; 
+        // Crouch possibile solo da grande (grown/fire); small non si abbassa.
+        const crouching = downDown && isGrounded && playerForm !== 'small';
 
-        if (downDown && isGrounded) {
-            currentVel = 0; 
-        } else if (leftDown) { 
-            currentVel = -moveSpeed; player.flipX = true; 
-        } else if (rightDown) { 
-            currentVel = moveSpeed; player.flipX = false; 
+        // ---- CAMERA RUNNER (solo avanti) + bordo sinistro invisibile ----
+        // La camera scorre solo in avanti (camScrollMax non cala mai). Se il player
+        // arretra, la camera resta ferma e lui scivola verso il bordo SINISTRO del
+        // canvas, dove si ferma (fuori vista) — niente muro a metà schermo. Appena
+        // riavanza fino all'anchor, la camera si riaggancia. atBackLimit va calcolato
+        // PRIMA del movimento per azzerare vx in tempo (no corsa sul posto al bordo).
+        const _cam = this.cameras.main;
+        const _halfHidden = (_cam.width - _cam.width / _cam.zoom) / 2; // px nascosti a sx dallo zoom
+        const _anchor = _cam.width * 0.2;                              // dove agganciare il player
+        let _desiredScroll = player.x - _anchor;
+        if (_desiredScroll < -_halfHidden) _desiredScroll = -_halfHidden; // worldView.x >= bounds.x (0)
+        if (_desiredScroll > camScrollMax) camScrollMax = _desiredScroll; // monotòno: mai indietro
+        _cam.scrollX = camScrollMax;
+        const minPlayerX = camScrollMax + _halfHidden + player.body.halfWidth; // bordo sx visibile
+        const atBackLimit = player.x <= minPlayerX + 1;
+
+        // ---- MOVIMENTO CON INERZIA (accelera / decelera / skid in inversione) ----
+        const maxSpeed = 180 + (Math.pow(currentLevel, 1.2) * 6);
+        let vx = player.body.velocity.x;
+        let dir = 0;
+        if (!crouching) { if (leftDown) dir = -1; else if (rightDown) dir = 1; }
+
+        if (dir !== 0) {
+            const turning = (dir > 0 && vx < 0) || (dir < 0 && vx > 0);
+            const accel = isGrounded ? (turning ? RUN_TURN_ACCEL : RUN_ACCEL) : RUN_AIR_ACCEL;
+            vx += dir * accel * dt;
+            vx = Phaser.Math.Clamp(vx, -maxSpeed, maxSpeed);
+            player.flipX = dir < 0;
+        } else if (isGrounded) {
+            // Attrito a terra: decelera fino a fermarsi (in aria mantiene la quantità di moto)
+            const fr = RUN_FRICTION * dt;
+            if (Math.abs(vx) <= fr) vx = 0; else vx -= Math.sign(vx) * fr;
         }
+        // Al limite: niente spinta verso sinistra (no velocità → no corsa sul posto)
+        if (atBackLimit && vx < 0) vx = 0;
+        player.setVelocityX(vx);
 
-        player.setVelocityX(currentVel);
+        // Clamp posizione: non uscire dal bordo sinistro visibile (resta fuori vista)
+        if (player.x < minPlayerX) player.x = minPlayerX;
 
-        // Animazioni: prefisso 'fire-' se in fire mode, altrimenti 'espo-'
-        const prefix = fireMode ? 'fire' : 'espo';
-        if (isGrounded) {
-            if (downDown) {
-                player.anims.play(prefix + '-crouch', true);
-            } else if (currentVel !== 0) {
-                player.anims.play(prefix + '-run', true);
-            } else {
-                player.anims.play(prefix + '-stop', true);
-            }
-        } else {
-            player.anims.play(prefix + '-jump', true);
-        }
+        // ---- SALTO AD ALTEZZA VARIABILE + coyote time + jump buffer ----
+        if (isGrounded) lastGroundedTime = time;
+        if (jumpJustPressed) lastJumpPressTime = time;
+        const canCoyote = (time - lastGroundedTime) <= COYOTE_MS;
+        const jumpBuffered = (time - lastJumpPressTime) <= JUMP_BUFFER_MS;
 
-        if (jumpJustPressed && isGrounded && !downDown) {
-            // -460 garantisce ~143px di altezza salto (gravity 720), sufficienti
-            // per le float platforms più alte (110px) anche con gap massimo (180px).
-            player.setVelocityY(-460);
+        // Salta sempre se a terra (o coyote) + input bufferizzato: niente altri vincoli
+        // (es. spingere contro un muro NON deve impedire il salto). Il doppio salto è
+        // evitato consumando coyote/buffer qui sotto.
+        if (jumpBuffered && canCoyote && !crouching) {
+            player.setVelocityY(-JUMP_VEL);
+            lastJumpPressTime = -1e9; // consuma il buffer
+            lastGroundedTime = -1e9;  // niente doppio salto
             playSoundEffect(this, 'snd-jump');
+        }
+        // Jump cut: se rilasci mentre sali → salto più corto (altezza variabile)
+        if (!jumpPressed && player.body.velocity.y < -JUMP_CUT_VEL) {
+            player.setVelocityY(-JUMP_CUT_VEL);
+        }
+        // Gravità extra in CADUTA (solo in aria): discesa più "secca" e reattiva
+        // → il salto si sente come un platform vero, non come gravità lenta.
+        if (!isGrounded && player.body.velocity.y > 0) {
+            player.body.velocity.y += EXTRA_FALL * dt;
+        }
+
+        // ---- ANIMAZIONI per forma corrente (small/grown/fire) ----
+        // Se spinge contro un muro (bloccato in quella direzione) NON è in corsa →
+        // anim ferma, niente "corsa sul posto" contro il muro.
+        const pushingWall = (player.body.blocked.left && leftDown) || (player.body.blocked.right && rightDown) || (atBackLimit && leftDown);
+        const movingX = Math.abs(player.body.velocity.x) > 8 && !pushingWall;
+        const prefix = playerForm;
+        if (!isGrounded) {
+            player.anims.play(prefix + '-jump', true);
+        } else if (crouching) {
+            const ck = prefix + '-crouch';
+            if (this.anims.exists(ck)) player.anims.play(ck, true);
+            else { player.anims.stop(); player.setFrame(4); }
+        } else {
+            player.anims.play(prefix + (movingX ? '-run' : '-stop'), true);
         }
 
         if (player.x + 1200 > lastChunkX) {
@@ -497,17 +742,48 @@
 
         if (player.y > 450) die.call(this);
 
-        bgMountains.getChildren().forEach(mt => {
-            let screenX = mt.x - (this.cameras.main.scrollX * mt.scrollFactorX);
-            if (screenX < -200) mt.x = (this.cameras.main.scrollX * mt.scrollFactorX) + 1000;
+        // ---- Recycle parallax: riposiziona l'elemento uscito a sinistra DOPO
+        //      il più a destra del suo gruppo → spaziatura sempre uniforme ----
+        const _recycle = (group, offLeftScreen, spacing, onRecycle) => {
+            const cam = this.cameras.main;
+            group.getChildren().forEach(item => {
+                const screenX = item.x - (cam.scrollX * item.scrollFactorX);
+                if (screenX < offLeftScreen) {
+                    let maxX = -Infinity;
+                    group.getChildren().forEach(o => { if (o !== item && o.x > maxX) maxX = o.x; });
+                    item.x = (maxX === -Infinity ? item.x : maxX) + spacing;
+                    if (onRecycle) onRecycle(item);
+                }
+            });
+        };
+        // La banda "terra" segue la camera così copre sempre i pozzi nella vista
+        if (groundFill) groundFill.x = this.cameras.main.scrollX - 200;
+
+        _recycle(bgHills, -900, 360);
+        _recycle(bgMountains, -500, 300);
+        _recycle(bgClouds, -300, 150, (c) => {
+            c.y = Phaser.Math.Between(10, 250);
+            c.setScale(Phaser.Math.FloatBetween(0.14, 0.42));
+            c.setTexture(Math.random() > 0.5 ? 'cloud1' : 'cloud2');
         });
 
-        bgClouds.getChildren().forEach(c => {
-            let screenX = c.x - (this.cameras.main.scrollX * c.scrollFactorX);
-            if (screenX < -150) {
-                c.x = (this.cameras.main.scrollX * c.scrollFactorX) + 900 + Phaser.Math.Between(0, 150);
-                c.y = Phaser.Math.Between(80, 180);
-                c.setTexture(Math.random() > 0.5 ? 'cloud1' : 'cloud2');
+        // Nemici: orientamento secondo la direzione + animazioni di camminata.
+        // Salta i nemici morti/disabilitati (body.enable=false): altrimenti la loro
+        // animazione di morte verrebbe sovrascritta da quella di camminata.
+        enemies.getChildren().forEach(e => {
+            if (!e.active || (e.body && e.body.enable === false)) return;
+            const vx = e.body ? e.body.velocity.x : 0;
+            if (e.kind === 'shell') {
+                // Il guscio in movimento ruota; lo orientiamo nella direzione di marcia.
+                if (e.shellState === 'moving' && Math.abs(vx) > 5) e.flipX = vx > 0;
+                return;
+            }
+            // Koopa/goomba: guardano dove camminano (sprite di default rivolto a sinistra).
+            if (Math.abs(vx) > 5) e.flipX = vx > 0;
+            const want = e.kind === 'koopa' ? 'koopa-walk' : 'goomba-walk';
+            if (this.anims.exists(want)) {
+                const cur = (e.anims && e.anims.currentAnim) ? e.anims.currentAnim.key : null;
+                if (cur !== want) e.anims.play(want, true);
             }
         });
 
@@ -537,14 +813,16 @@
         let widthMax = Math.max(220, 380 - currentLevel * 8);
         let width = Phaser.Math.Between(widthMin, widthMax);
 
-        const tiers = [380, 365, 345, 320, 300];
-        // Transizione graduale: max ±1 tier per volta
-        let tierStep = Phaser.Math.Between(-1, 1);
+        // Range di quota più ampio (6 livelli, ~135px) per uno skyline vario.
+        // Indice basso = piattaforma bassa (vicino al suolo); alto = elevata.
+        const tiers = [385, 360, 335, 305, 275, 250];
+        // Passo fino a ±2 tier → dislivelli marcati ma sempre saltabili (~54px/2tier
+        // contro ~143px di altezza salto).
+        let tierStep = Phaser.Math.Between(-2, 2);
         let newTierIndex = Phaser.Math.Clamp(lastTierIndex + tierStep, 0, tiers.length - 1);
-        // Forte bias verso il basso: piattaforme alte sono rare e tornano giù
-        if (newTierIndex >= 3 && Math.random() > 0.3) newTierIndex--;
-        if (newTierIndex >= 2 && Math.random() > 0.5) newTierIndex--;
-        // Gap grandi forzano piattaforme allo stesso livello o più basse (raggiungibili)
+        // Bias verso il basso SOLO sui tier più alti, leggero → la quota varia davvero
+        if (newTierIndex >= 4 && Math.random() > 0.55) newTierIndex--;
+        // Gap grandi: non salire oltre il tier corrente (raggiungibilità garantita)
         if (gap > 120) newTierIndex = Math.min(newTierIndex, Math.max(0, lastTierIndex));
         lastTierIndex = newTierIndex;
         let platformTop = tiers[newTierIndex];
@@ -554,7 +832,7 @@
         }
 
         const newX = lastChunkX + gap + width / 2;
-        const platHeight = 500 - platformTop;
+        const platHeight = GROUND_BOTTOM - platformTop; // colonna di mattoni fino in fondo
         const platCenterY = platformTop + (platHeight / 2);
 
         const plat = scene.add.tileSprite(newX, platCenterY, width, platHeight, 'floorbricks');
@@ -567,95 +845,152 @@
         let rightB = scene.add.rectangle(newX + width/2, platformTop - 32, 2, 64, 0x000000, 0);
         scene.physics.add.existing(rightB, true); enemyBlockers.add(rightB);
 
-        // FIX: Aggiunta variabile per monitorare la presenza di una piattaforma sospesa
-        let isFloating = false;
+        // ---- CONTENUTO: set-piece riconoscibili (scalinate, tubi, file di blocchi,
+        //      mini-piattaforme di mattoni, archi di monete) invece di roba random ----
+        const piece = buildSetPiece(scene, newX, width, platformTop);
 
-        if (chunkType >= 8 && width > 250) {
-            isFloating = true;
-            const floatWidth = Phaser.Math.Between(100, width - 60);
-            const floatTop = platformTop - Phaser.Math.Between(80, 110);
-            const floatPlat = scene.add.tileSprite(newX, floatTop + 16, floatWidth, 32, 'floorbricks');
-            floatPlat.tileScaleX = 2; floatPlat.tileScaleY = 2;
-            scene.physics.add.existing(floatPlat, true);
-            platforms.add(floatPlat);
-
-            if (Math.random() > 0.3) spawnCoinsList(scene, newX, floatTop - 40, Phaser.Math.Between(2, 4));
-        }
-
-        let hasObstacle = false;
-        let randObstacle = Math.random();
-        
-        if (width > 200 && randObstacle > 0.5 && chunkType < 8) {
-            hasObstacle = true;
-            const obstacles = ['pipe-small', 'pipe-medium', 'emptyBlock'];
-            const obstacleKey = Phaser.Utils.Array.GetRandom(obstacles);
-            const obj = platforms.create(newX, platformTop, obstacleKey).setScale(1.2).setOrigin(0.5, 1);
-            obj.refreshBody();
-        }
-
-        // FIX: Condizione `!isFloating` aggiunta per evitare il posizionamento di blocchi nei mattoni sospesi
-        if (!hasObstacle && !isFloating) {
-            if (Math.random() > 0.4) {
-                const numBlocks = Phaser.Math.Between(1, 3);
-                const blockHeight = platformTop - 120; 
-                for (let i = 0; i < numBlocks; i++) {
-                    const bx = newX - ((numBlocks-1)*16) + (i * 32);
-                    const b = blocks.create(bx, blockHeight, 'misteryBlock').setScale(2).refreshBody();
-                    b.anims.play('block-flash', true);
-                    b.used = false;
-                }
-            } else if (Math.random() > 0.4) {
-                spawnCoinsList(scene, newX, platformTop - 40, Phaser.Math.Between(2, 4));
-            }
-        }
-
-        // Decorazioni: bush e fence (solo su piattaforme larghe, senza ostacoli)
-        if (!hasObstacle && width > 180 && Math.random() > 0.5) {
-            // Fence solo su piattaforme a livello terra (tier alto), bush ovunque
-            const isGroundLevel = platformTop >= 350;
-            let decoKey, decoScale;
-            if (isGroundLevel && Math.random() > 0.6) {
-                decoKey = 'fence';
-                decoScale = 0.55;
-            } else {
-                decoKey = Math.random() > 0.5 ? 'bush1' : 'bush2';
-                decoScale = decoKey === 'bush1' ? 0.5 : 0.7;
-            }
-            // Piazza vicino al bordo della piattaforma, non al centro (stile Mario)
+        // Decorazioni di scenario (cespugli / recinto a livello terra)
+        if (width > 170 && Math.random() > 0.45) {
+            const pool = [{ key: 'bush1', scale: 0.5 }, { key: 'bush2', scale: 0.7 }];
+            if (platformTop >= 350) pool.push({ key: 'fence', scale: 0.55 });
+            const pick = Phaser.Utils.Array.GetRandom(pool);
             const side = Math.random() > 0.5 ? 1 : -1;
-            const decoX = newX + side * Phaser.Math.Between(width / 6, width / 3);
-            const deco = scene.add.image(decoX, platformTop, decoKey)
-                .setScale(decoScale).setOrigin(0.5, 1).setDepth(1).setAlpha(0.9);
+            const decoX = newX + side * Phaser.Math.Between(width / 6, width / 2.5);
+            const deco = scene.add.image(decoX, platformTop, pick.key)
+                .setScale(pick.scale).setOrigin(0.5, 1).setDepth(1).setAlpha(0.92);
             decorations.add(deco);
         }
 
-        const enemyChance = Math.min(0.9, 0.4 + currentLevel * 0.08);
-        if (Math.random() < enemyChance) {
+        // Niente nemico su set-piece con ostacoli SOLIDI a terra (tubi/scalinate):
+        // resterebbe intrappolato a rimbalzare in loop tra l'ostacolo e il bordo.
+        const groundObstacle = (piece === 'pipes' || piece === 'stairs');
+        const enemyChance = Math.min(0.95, 0.7 + currentLevel * 0.06);
+        if (!groundObstacle && Math.random() < enemyChance) {
             spawnEnemy(newX + (Math.random() > 0.5 ? width/4 : -width/4), platformTop - 16);
-            if (width > 350 && Math.random() > 0.5) {
+            // 2° nemico già su piattaforme medie (prima solo > 350)
+            if (width > 240 && Math.random() < 0.6) {
                 spawnEnemy(newX - width/3, platformTop - 16);
+            }
+            // 3° nemico su piattaforme molto larghe ai livelli avanzati
+            if (width > 340 && currentLevel >= 2 && Math.random() < 0.5) {
+                spawnEnemy(newX, platformTop - 16);
             }
         }
 
         lastChunkX += gap + width;
     }
 
+    // ====================================================================
+    // SET-PIECE: strutture riconoscibili costruite sulla piattaforma.
+    // Scelte pesate da larghezza/quota/livello → livello "disegnato".
+    // ====================================================================
+    function buildSetPiece(scene, x, width, top) {
+        const pool = ['blocks', 'coins', 'plain', 'plain'];
+        if (width > 220) pool.push('brickrow', 'pipes');
+        if (width > 200 && top >= 320) pool.push('stairs'); // scalinate su piattaforme non troppo alte
+        if (currentLevel >= 2 && width > 220) pool.push('pipes', 'brickrow');
+        const kind = Phaser.Utils.Array.GetRandom(pool);
+        switch (kind) {
+            case 'stairs':   buildStairs(scene, x, width, top); break;
+            case 'pipes':    buildPipeRow(scene, x, width, top); break;
+            case 'brickrow': buildBrickRow(scene, x, width, top); break;
+            case 'blocks':   buildBlockRow(scene, x, width, top); break;
+            case 'coins':    spawnCoinArc(scene, x, top - 50, Phaser.Math.Between(4, 6)); break;
+            default: break;  // plain → solo decorazioni (gestite fuori)
+        }
+        return kind;
+    }
+
+    // Scalinata di blocchi solidi (hardblock), ascendente o discendente.
+    function buildStairs(scene, x, width, top) {
+        const bs = 32; // blocco 16px * scala 2
+        const maxSteps = Math.max(2, Math.min(4, Math.floor(width / 52)));
+        const steps = Phaser.Math.Between(2, maxSteps);
+        const ascending = Math.random() > 0.5;
+        const startX = x - (steps * bs) / 2 + bs / 2;
+        for (let s = 0; s < steps; s++) {
+            const h = ascending ? (s + 1) : (steps - s);
+            const colX = startX + s * bs;
+            for (let b = 0; b < h; b++) {
+                const blk = platforms.create(colX, top - 16 - b * bs, 'hardblock').setScale(2);
+                blk.refreshBody();
+            }
+        }
+    }
+
+    // Tubi sulla piattaforma → ostacoli da scavalcare. Spaziatura FISSA (>=120px)
+    // così non si accatastano mai; numero limitato dalla larghezza.
+    function buildPipeRow(scene, x, width, top) {
+        const PIPE_GAP = 120;
+        const maxN = Math.max(1, Math.min(3, Math.floor(width / PIPE_GAP)));
+        const n = (maxN <= 1) ? 1 : Phaser.Math.Between(2, maxN);
+        const totalW = (n - 1) * PIPE_GAP;
+        const startX = x - totalW / 2;
+        for (let i = 0; i < n; i++) {
+            const k = Math.random() > 0.5 ? 'pipe-medium' : 'pipe-small';
+            const obj = platforms.create(startX + i * PIPE_GAP, top, k).setScale(1.2).setOrigin(0.5, 1);
+            obj.refreshBody();
+        }
+    }
+
+    // Mini-piattaforma di mattoni solidi all'altezza di salto + monete sopra.
+    function buildBrickRow(scene, x, width, top) {
+        const maxN = Math.max(3, Math.min(6, Math.floor(width / 36)));
+        const n = Phaser.Math.Between(3, maxN);
+        const by = top - Phaser.Math.Between(95, 120);
+        const startX = x - ((n - 1) * 32) / 2;
+        for (let i = 0; i < n; i++) {
+            const blk = platforms.create(startX + i * 32, by, 'brick').setScale(2);
+            blk.refreshBody();
+        }
+        if (Math.random() > 0.4) spawnCoinsList(scene, x, by - 40, Math.min(n, 4));
+    }
+
+    // Fila di blocchi mistero (colpibili da sotto) all'altezza di salto.
+    function buildBlockRow(scene, x, width, top) {
+        const n = Phaser.Math.Between(1, 3);
+        const by = top - 120;
+        for (let i = 0; i < n; i++) {
+            const bx = x - ((n - 1) * 32) / 2 + i * 32;
+            const b = blocks.create(bx, by, 'misteryBlock').setScale(2).refreshBody();
+            b.anims.play('block-flash', true);
+            b.used = false;
+        }
+    }
+
     function spawnCoinsList(scene, centerX, yPos, numCoins) {
         for (let i = 0; i < numCoins; i++) {
             const cx = centerX - ((numCoins-1)*16) + (i * 32);
             let coin = coins.create(cx, yPos, 'coin').setScale(1.5);
-            coin.anims.play('coin-spin', true); 
+            coin.anims.play('coin-spin', true);
             scene.tweens.add({ targets: coin, y: coin.y - 8, yoyo: true, repeat: -1, duration: 800 });
         }
     }
 
+    // Arco di monete (curva verso l'alto) — varietà rispetto alla fila dritta.
+    function spawnCoinArc(scene, centerX, baseY, numCoins) {
+        for (let i = 0; i < numCoins; i++) {
+            const t = numCoins > 1 ? (i / (numCoins - 1)) : 0.5; // 0..1
+            const cx = centerX - ((numCoins - 1) * 16) + (i * 32);
+            const cy = baseY - Math.sin(t * Math.PI) * 46;       // apice al centro
+            const coin = coins.create(cx, cy, 'coin').setScale(1.5);
+            coin.anims.play('coin-spin', true);
+        }
+    }
+
     function spawnEnemy(x, y) {
-        const enemy = enemies.create(x, y, 'goomba').setScale(1.5);
+        // Koopa (più alto, un filo più lento) può comparire da subito per varietà.
+        // Stomp → guscio. ~32% dei nemici sono Koopa.
+        const isKoopa = Math.random() < 0.32;
+        const enemy = enemies.create(x, isKoopa ? y - 10 : y, isKoopa ? 'koopa' : 'goomba').setScale(1.5);
+        enemy.kind = isKoopa ? 'koopa' : 'goomba';
+        enemy.setDepth(5); // sopra le decorazioni (depth 1), sotto il player (20)
         enemy.setBounceX(1);
         let eSpeed = Phaser.Math.Between(50, 100) + (currentLevel * 5);
+        if (isKoopa) eSpeed = Math.round(eSpeed * 0.8);
         if (Math.random() > 0.5) eSpeed = -eSpeed;
         enemy.setVelocityX(eSpeed);
-        enemy.anims.play('goomba-walk', true);
+        enemy.anims.play(isKoopa ? 'koopa-walk' : 'goomba-walk', true);
     }
 
     function showLevelUp(scene, level) {
@@ -673,11 +1008,9 @@
 
     // Dispatcher: in base a powerUp.kind decide se dare invincibilità o fire mode
     function collectPowerUp(player, item) {
-        if (item.kind === 'fire') {
-            collectFireFlower.call(this, player, item);
-        } else {
-            collectStar.call(this, player, item);
-        }
+        if (item.kind === 'fire') collectFireFlower.call(this, player, item);
+        else if (item.kind === 'mushroom') collectMushroom.call(this, player, item);
+        else collectStar.call(this, player, item);
     }
 
     function collectStar(player, star) {
@@ -696,17 +1029,154 @@
     }
 
     function collectFireFlower(player, flower) {
-        flower.destroy();
-        bonusScore += FIRE_COLLECT_SCORE;
-        fireMode = true;
+        try {
+            if (flower && flower.destroy) flower.destroy();
+            bonusScore += FIRE_COLLECT_SCORE;
+            playSoundEffect(this, 'snd-star-collect');
+            setPlayerForm(this, 'fire');   // diventa Fire (da qualsiasi forma)
+            fireballAmmo = MAX_FIREBALLS;   // caricatore pieno alla raccolta
+            fireballReloadUntil = 0;
+            player.setTint(0xffcc00);
+            this.time.delayedCall(200, () => { if (player && player.clearTint) player.clearTint(); });
+            showPopupScore(this, player.x, player.y - 50, '🔥 FIRE ESPO! 🔥', '#ff6347', 1100);
+            showFireHint(this);
+            if (window.EspooClicker && window.EspooClicker.showToast) {
+                window.EspooClicker.showToast('🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco', 'reward');
+            }
+        } catch (err) {
+            console.error('[super-espo] collectFireFlower fail:', err);
+        }
+    }
+
+    // Super Mushroom: small → grown. Se già grown/fire → bonus punti.
+    function collectMushroom(player, mush) {
+        if (mush && mush.destroy) mush.destroy();
+        bonusScore += MUSH_COLLECT_SCORE;
         playSoundEffect(this, 'snd-star-collect');
+        if (playerForm === 'small') {
+            setPlayerForm(this, 'grown');
+            player.setTint(0x9cff7a);
+            this.time.delayedCall(200, () => { if (player && player.clearTint) player.clearTint(); });
+            showPopupScore(this, player.x, player.y - 50, '🍄 SUPER ESPO!', '#9cff7a', 1100);
+            if (window.EspooClicker && window.EspooClicker.showToast) {
+                window.EspooClicker.showToast('🍄 SUPER MUSHROOM! Sei cresciuto', 'reward');
+            }
+        } else {
+            bonusScore += 150;
+            showPopupScore(this, player.x, player.y - 50, '🍄 +' + (MUSH_COLLECT_SCORE + 150), '#9cff7a', 900);
+        }
+    }
 
-        // Cambia skin del personaggio (texture + animazione corrente coerente)
-        player.setTexture('espo-fire', player.frame.name);
+    // ---- Fire Hint UI ----------------------------------------------------
+    let fireHintText = null;
+    function showFireHint(scene) {
+        if (fireHintText && fireHintText.scene) return; // già visibile
+        fireHintText = scene.add.text(
+            scene.cameras.main.width - 20, 20,
+            '🔥 X / F → SPARA',
+            {
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '16px',
+                color: '#ff6347',
+                stroke: '#000',
+                strokeThickness: 4,
+                fontStyle: 'bold'
+            }
+        ).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
+        scene.tweens.add({
+            targets: fireHintText, alpha: 0.6, duration: 600, yoyo: true, repeat: -1
+        });
+    }
+    function hideFireHint() {
+        if (fireHintText && fireHintText.destroy) {
+            fireHintText.destroy();
+            fireHintText = null;
+        }
+    }
 
-        showPopupScore(this, player.x, player.y - 50, '🔥 FIRE ESPÒ! 🔥', '#ff6347', 1100);
-        if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast('🔥 FIRE FLOWER! Hai 1 hit di protezione', 'reward');
+    // ---- Fireball shooting ----------------------------------------------
+    const FIREBALL_SPEED = 320;
+    const FIREBALL_BOUNCE_Y = -220;
+    const FIREBALL_GRAVITY_Y = 600;
+    const FIREBALL_COOLDOWN_MS = 280;  // gap minimo tra un colpo e l'altro
+    const FIREBALL_LIFE_MS = 2400;
+    const MAX_FIREBALLS = 3;           // colpi per "caricatore"
+    const FIREBALL_RELOAD_MS = 2500;   // attesa di ricarica a caricatore vuoto
+    let lastFireballTime = 0;
+    let fireballAmmo = MAX_FIREBALLS;
+    let fireballReloadUntil = 0;
+
+    // Esplosione one-shot all'impatto del fireball (nemico o fine vita).
+    function spawnExplosion(scene, x, y) {
+        if (!scene.anims.exists('fireball-explode')) return;
+        const ex = scene.add.sprite(x, y, 'fireball-explosion', 0).setScale(2.5).setDepth(16);
+        ex.play('fireball-explode');
+        ex.once('animationcomplete', () => { if (ex && ex.destroy) ex.destroy(); });
+    }
+
+    function shootFireball(scene) {
+        if (playerForm !== 'fire' || !player || player.isDead) return;
+        const now = scene.time.now;
+        if (fireballAmmo <= 0) return;                              // caricatore vuoto → in ricarica
+        if (now - lastFireballTime < FIREBALL_COOLDOWN_MS) return;  // gap tra colpi
+        lastFireballTime = now;
+
+        fireballAmmo--;
+        // Esaurito il caricatore → avvia il timer di ricarica
+        if (fireballAmmo <= 0) fireballReloadUntil = now + FIREBALL_RELOAD_MS;
+
+        const dir = player.flipX ? -1 : 1;
+        const fb = fireballs.create(
+            player.x + dir * 22,
+            player.y - 4,
+            'fireball',
+            0
+        );
+        fb.setScale(2.5);
+        fb.setDepth(15);
+        fb.body.setSize(6, 6).setOffset(1, 1);
+        fb.body.allowGravity = true;
+        fb.body.setGravityY(FIREBALL_GRAVITY_Y);
+        fb.body.setVelocityX(dir * FIREBALL_SPEED);
+        fb.body.setVelocityY(-150);
+        fb.body.setBounceY(0.85);
+        fb.body.setBounceX(0);
+        fb.dir = dir;
+        fb.bornAt = now;
+
+        // Anim spin (4 frame fireball). Lo sprite è già arancio: niente tint né rotation extra.
+        if (scene.anims.exists('fireball-spin')) fb.anims.play('fireball-spin');
+
+        // Auto-despawn con piccola esplosione finale
+        scene.time.delayedCall(FIREBALL_LIFE_MS, () => {
+            if (fb && fb.active) { spawnExplosion(scene, fb.x, fb.y); fb.destroy(); }
+        });
+
+        playSoundEffect(scene, 'snd-jump');
+    }
+
+    function fireballHitEnemy(fb, enemy) {
+        if (!fb || !enemy) return;
+        spawnExplosion(this, fb.x, fb.y);
+        if (fb.destroy) fb.destroy();
+        // Riusa logica stomp
+        if (enemy.body) enemy.body.enable = false;
+        if (enemy.anims) enemy.anims.play('goomba-dead');
+        bonusScore += 50;
+        playSoundEffect(this, 'snd-stomp');
+        const scene = this;
+        scene.tweens.add({
+            targets: enemy, y: enemy.y + 30, alpha: 0, duration: 400,
+            onComplete: () => { if (enemy.destroy) enemy.destroy(); }
+        });
+        showPopupScore(scene, enemy.x, enemy.y - 20, '+50', '#ff6347', 600);
+    }
+
+    function fireballHitGround(fb) {
+        // bounce gestito da physics. Solo despawn se fuori camera.
+        if (!fb) return;
+        if (fb.x < this.cameras.main.scrollX - 100 || fb.x > this.cameras.main.scrollX + this.cameras.main.width + 100) {
+            if (fb.destroy) fb.destroy();
         }
     }
 
@@ -746,13 +1216,20 @@
             //   [STAR_DROP_CHANCE, +FIRE)          → Fire Flower (se non già fire)
             //   [resto]                            → Moneta
             // Lo skip dei power-up duplicati promuove automaticamente la moneta.
+            // Se small → priorità fungo (cresci). Poi stella, poi fiore, poi moneta.
+            if (playerForm === 'small' && roll < MUSH_DROP_CHANCE) {
+                bonusScore += 50;
+                spawnMushroom(this, block.x, block.y - 20);
+                playSoundEffect(this, 'snd-star-appears');
+                return;
+            }
             if (!isInvincible && roll < STAR_DROP_CHANCE) {
                 bonusScore += 50;
                 spawnStar(this, block.x, block.y - 20);
                 playSoundEffect(this, 'snd-star-appears');
                 return;
             }
-            if (!fireMode && roll < STAR_DROP_CHANCE + FIRE_DROP_CHANCE) {
+            if (playerForm !== 'fire' && roll < STAR_DROP_CHANCE + FIRE_DROP_CHANCE) {
                 bonusScore += 50;
                 spawnFireFlower(this, block.x, block.y - 20);
                 playSoundEffect(this, 'snd-star-appears');
@@ -798,18 +1275,40 @@
     // Fire Flower: emerge dal blocco e si ferma. Niente rimbalzo come la stella;
     // il giocatore deve correrci dentro per raccoglierla.
     function spawnFireFlower(scene, x, y) {
-        const flower = powerUps.create(x, y, 'fire-flower').setDepth(25).setScale(1.5);
+        const flower = powerUps.create(x, y, 'fire-flower').setDepth(25).setScale(1.6);
         flower.kind = 'fire';
         flower.body.allowGravity = false;
         flower.body.immovable = true;
         flower.body.setSize(14, 14).setOffset(1, 1);
 
-        // Emersione lenta dal blocco (stile Mario)
+        // Anim 4 frames spritesheet (sprite Mario-style)
+        if (scene.anims.exists('fire-flower-spin')) {
+            flower.anims.play('fire-flower-spin');
+        }
+
+        // Emersione lenta dal blocco
         scene.tweens.add({ targets: flower, y: y - 30, duration: 500, ease: 'Power2' });
 
-        // Pulsazione idle per attirare l'attenzione
+        // Pulsazione scale per attirare attenzione
         scene.tweens.add({
-            targets: flower, scale: 1.7, duration: 350, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+            targets: flower, scale: 1.9, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+    }
+
+    // Super Mushroom: emerge dal blocco, poi cammina e rimbalza (stile Mario).
+    function spawnMushroom(scene, x, y) {
+        const m = powerUps.create(x, y, 'super-mushroom').setDepth(25).setScale(1.5);
+        m.kind = 'mushroom';
+        m.body.allowGravity = false;
+        m.body.setSize(14, 14).setOffset(1, 1);
+        scene.tweens.add({
+            targets: m, y: y - 22, duration: 400, ease: 'Power2',
+            onComplete: () => {
+                if (!m.active) return;
+                m.body.allowGravity = true;
+                m.setBounceX(1);
+                m.setVelocityX(90);
+            }
         });
     }
 
@@ -834,32 +1333,112 @@
         // Iframes post-powerdown: ignora il contatto col nemico
         if (inPowerDownIframes) return;
 
-        // Schiacciata classica dall'alto: vale anche in fire mode (uccide il nemico
-        // senza consumare la protezione)
-        if (player.body.bottom <= enemy.body.y + 10) {
+        // ---- GUSCIO KOOPA (kind 'shell') --------------------------------
+        if (enemy.kind === 'shell') {
+            if (enemy.shellState === 'moving') {
+                // Stomp dall'alto su un guscio in corsa → lo ferma di nuovo
+                const stomped = (player.body.bottom <= enemy.body.y + 12) && (player.body.velocity.y >= 0);
+                if (stomped) {
+                    stopShell(this, enemy);
+                    player.setVelocityY(-300);
+                    bonusScore += STOMP_SCORE;
+                    showPopupScore(this, enemy.x, enemy.y - 16, '+' + STOMP_SCORE, '#fff');
+                    playSoundEffect(this, 'snd-stomp');
+                } else {
+                    // Colpito di lato da un guscio in corsa → danno
+                    playerTakeHit(this);
+                }
+            } else {
+                // Guscio fermo: calcialo (dopo il breve grace period)
+                if (this.time.now >= (enemy.shellReadyAt || 0)) kickShell(this, enemy, player);
+            }
+            return;
+        }
+
+        // Schiacciata dall'alto (robusta con overlap): il player sta CADENDO e i suoi
+        // piedi sono sopra la metà del nemico. Vale anche in fire mode.
+        const stompFromAbove = player.body.velocity.y > 0 &&
+            player.body.bottom <= enemy.body.y + (enemy.body.height * 0.5);
+        if (stompFromAbove) {
             bonusScore += STOMP_SCORE;
             showPopupScore(this, enemy.x, enemy.y - 18, '+' + STOMP_SCORE, '#ffffff');
-            enemy.body.enable = false;
-            enemy.setVelocityX(0);
-            enemy.anims.play('goomba-dead');
-            this.time.delayedCall(500, () => enemy.destroy());
             player.setVelocityY(-300);
             playSoundEffect(this, 'snd-stomp');
+            if (enemy.kind === 'koopa') {
+                // Koopa schiacciato → guscio FERMO che resta calciabile (come in Mario)
+                stopShell(this, enemy);
+            } else {
+                enemy.body.enable = false;
+                enemy.setVelocityX(0);
+                enemy.anims.play('goomba-dead');
+                this.time.delayedCall(500, () => enemy.destroy());
+            }
             return;
         }
 
-        // Hit laterale/dal basso: in fire mode si perde solo la protezione,
-        // altrimenti morte normale.
-        if (fireMode) {
-            fireMode = false;
-            firePowerDownUntil = this.time.now + FIRE_HIT_INVUL_MS;
-            player.setTexture('super-espo', player.frame.name);
-            playSoundEffect(this, 'snd-stomp');
-            showPopupScore(this, player.x, player.y - 30, 'POWER DOWN!', '#ff6347', 800);
+        // Hit laterale/dal basso: downgrade forma (fire→grown→small→morte) + iframes invuln.
+        playerTakeHit(this);
+    }
+
+    // Player colpito di lato/dal basso: power-down (fire→grown→small) o morte.
+    function playerTakeHit(scene) {
+        if (playerForm === 'fire' || playerForm === 'grown') {
+            setPlayerForm(scene, playerForm === 'fire' ? 'grown' : 'small');
+            firePowerDownUntil = scene.time.now + FIRE_HIT_INVUL_MS;
+            hideFireHint();
+            playSoundEffect(scene, 'snd-stomp');
+            showPopupScore(scene, player.x, player.y - 30, 'POWER DOWN!', '#ff6347', 800);
             return;
         }
+        die.call(scene);
+    }
 
-        die.call(this);
+    // Koopa schiacciato/fermato → guscio immobile, calciabile dopo il grace period.
+    function stopShell(scene, shell) {
+        shell.kind = 'shell';
+        shell.shellState = 'idle';
+        shell.shellReadyAt = scene.time.now + SHELL_GRACE_MS;
+        if (shell.body) { shell.body.enable = true; shell.setVelocityX(0); }
+        if (scene.anims.exists('shell-idle')) shell.anims.play('shell-idle');
+        else if (scene.textures.exists('shell')) shell.setTexture('shell', 0);
+        if (shell._expireEvt) shell._expireEvt.remove(false);
+        shell._expireEvt = scene.time.delayedCall(SHELL_LIFE_MS, () => {
+            if (shell && shell.active && shell.shellState === 'idle') {
+                scene.tweens.add({ targets: shell, alpha: 0, duration: 400, onComplete: () => { if (shell.destroy) shell.destroy(); } });
+            }
+        });
+    }
+
+    // Guscio calciato → scivola veloce nella direzione opposta al player.
+    function kickShell(scene, shell, byPlayer) {
+        shell.shellState = 'moving';
+        const dir = (shell.x >= byPlayer.x) ? 1 : -1;
+        if (shell.body) { shell.body.enable = true; shell.setVelocityX(dir * SHELL_SPEED); }
+        shell.flipX = dir > 0;
+        if (scene.anims.exists('shell-spin')) shell.anims.play('shell-spin', true);
+        playSoundEffect(scene, 'snd-stomp');
+        showPopupScore(scene, shell.x, shell.y - 16, 'KICK!', '#ffffff', 500);
+        if (shell._expireEvt) shell._expireEvt.remove(false);
+        shell._expireEvt = scene.time.delayedCall(SHELL_LIFE_MS, () => {
+            if (shell && shell.active) {
+                scene.tweens.add({ targets: shell, alpha: 0, duration: 400, onComplete: () => { if (shell.destroy) shell.destroy(); } });
+            }
+        });
+    }
+
+    // Overlap nemici↔nemici: un guscio in movimento travolge i nemici normali.
+    function shellVsEnemy(a, b) {
+        let shell = null, victim = null;
+        if (a.kind === 'shell' && a.shellState === 'moving') { shell = a; victim = b; }
+        else if (b.kind === 'shell' && b.shellState === 'moving') { shell = b; victim = a; }
+        if (!shell || !victim || !victim.active || victim.kind === 'shell') return;
+        if (victim.body) victim.body.enable = false;
+        victim.setVelocityX(0);
+        if (victim.kind === 'goomba' && this.anims.exists('goomba-dead')) victim.anims.play('goomba-dead');
+        bonusScore += SHELL_KILL_SCORE;
+        showPopupScore(this, victim.x, victim.y - 18, '+' + SHELL_KILL_SCORE, '#ffd83d');
+        playSoundEffect(this, 'snd-stomp');
+        this.tweens.add({ targets: victim, alpha: 0, angle: 180, y: victim.y + 40, duration: 450, onComplete: () => { if (victim.destroy) victim.destroy(); } });
     }
 
     // Volumi per-suono bilanciati per FREQUENZA d'uso: i suoni sparati
@@ -867,7 +1446,7 @@
     // mentre gli eventi rari (star/gameover) possono essere protagonisti.
     const SUPER_ESPO_VOLUMES = {
         'snd-jump':         0.25,  // spammato ad ogni salto → molto basso
-        'snd-coin':         0.30,  // monete frequenti → basso
+        'snd-coin':         0.18,  // monete frequenti → basso (-40% rispetto a 0.30)
         'snd-stomp':        0.40,  // schiaccia goomba: meno frequente, evento "wow"
         'snd-gameover':     0.55,  // jingle finale → protagonismo
         'snd-star-appears': 0.45,  // raro ma da notare
@@ -898,9 +1477,13 @@
             if (levelEl) levelEl.innerText = currentLevel;
             if (scoreEl) scoreEl.innerText = currentScore;
             if (recordEl) {
-                const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
-                const saved = (gs && gs.arcadeHighScores) ? (gs.arcadeHighScores.superespo || 0) : 0;
-                recordEl.innerText = Math.max(saved, currentScore);
+                // Record letto UNA volta per run (cambia solo in die()): evita
+                // getGameState() — alloc oggetto + Proxy + read localStorage — a ogni frame.
+                if (_suRecordCache < 0) {
+                    const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+                    _suRecordCache = (gs && gs.arcadeHighScores) ? (gs.arcadeHighScores.superespo || 0) : 0;
+                }
+                recordEl.innerText = Math.max(_suRecordCache, currentScore);
             }
         }
     }
@@ -908,16 +1491,20 @@
     function die() {
         if (player.isDead) return;
         player.isDead = true;
-        
+        playerForm = 'small';
+        hideFireHint();
+        if (fireballs && fireballs.clear) fireballs.clear(true, true);
+
         player.setTint(0xff0000);
         player.setVelocityX(0);
         player.setVelocityY(-350);
-        player.setCollideWorldBounds(false); 
-        player.body.checkCollision.none = true; 
+        player.setCollideWorldBounds(false);
+        player.body.checkCollision.none = true;
         
         enemies.getChildren().forEach(e => e.setVelocityX(0)); 
 
         playSoundEffect(this, 'snd-gameover');
+        if (window.arcadeSfx) window.arcadeSfx.gameover();
 
         let reward = 0;
         if (typeof window.Decimal !== 'undefined' && typeof window.bps !== 'undefined' && typeof window.bps.gt === 'function') {
@@ -926,38 +1513,42 @@
             reward = bpsVal.mul(currentScore).mul(multiplier).floor();
         }
 
+        let isNewRecord = false;
+        let rewardStr = null;
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
             let hasReward = typeof reward.gt === 'function' ? reward.gt(0) : reward > 0;
-            
             if (currentScore > 0 && hasReward) {
                 gs.score = gs.score.add(reward);
-                window.EspooClicker.showToast(`🔥 RUN COMPLETATA! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
+                rewardStr = window.EspooClicker.formatNumber(reward);
             }
             if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
             if (currentScore > (gs.arcadeHighScores.superespo || 0)) {
                 gs.arcadeHighScores.superespo = currentScore;
-                window.EspooClicker.showToast(`🏆 NUOVO RECORD: ${currentScore}!`, 'achievement');
+                isNewRecord = true;
             }
             window.EspooClicker.saveGame();
             window.updateUI?.();
         }
 
-        setTimeout(() => {
-            const overlay = document.getElementById('super-espo-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div class="super-espo-dead-title">GAME OVER</div>
-                    <div style="color:#fff; margin-bottom:10px;">Score: <span style="color:#f1c40f">${currentScore}</span></div>
-                    <div style="color:#bdc3c7; font-size:1.2rem; margin-bottom:20px;">Loop: <span style="color:#e74c3c; font-weight:bold;">${currentLevel}</span></div>
-                    <div style="display:flex; gap:10px; justify-content:center;">
-                        <button class="arcade-btn secondary" onclick="window.exitSuperEspoGame()">MENU</button>
-                        <button class="arcade-btn" onclick="window.startSuperEspoRun()" style="background:#9b59b6; color:#fff; border-color:#8e44ad;">RIPROVA</button>
-                    </div>
-                `;
+        // Game Over animato condiviso (stile Snake), dopo l'animazione di morte.
+        // Salviamo l'id: se l'utente esce (MENU) entro 1800ms, exitSuperEspoGame lo annulla
+        // per non aprire l'overlay su un container gia' svuotato.
+        if (_suDieTimer) clearTimeout(_suDieTimer);
+        _suDieTimer = setTimeout(() => {
+            _suDieTimer = null;
+            if (typeof window.showArcadeGameOver === 'function') {
+                window.showArcadeGameOver({
+                    overlay: document.getElementById('super-espo-overlay'),
+                    score: currentScore,
+                    rewardStr: rewardStr,
+                    isNewRecord: isNewRecord,
+                    statLabel: 'LOOP', statValue: currentLevel, statColor: '#9b59b6',
+                    onReturn: window.exitSuperEspoGame,
+                    onRetry: window.startSuperEspoRun
+                });
             }
-        }, 1800); 
+        }, 1800);
     }
 
 })();

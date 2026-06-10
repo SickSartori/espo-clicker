@@ -15,6 +15,8 @@
         'arcade/space/css/space.css',
         'arcade/asteroids/css/asteroids.css',
         'arcade/super-espo/css/super-espo.css',
+        'arcade/invaders/css/invaders.css',
+        'arcade/centipede/css/centipede.css',
     ];
 
     // In dev locale (MAMP / localhost) usiamo Date.now() come cache-bust per
@@ -24,15 +26,17 @@
     const _v = (window.GAME_VERSION && !_isLocal)
         ? (window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor)
         : Date.now();
-    const ARCADE_JS = [
-        // Phaser deve essere caricato PRIMA degli altri
-        'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js',
-        // Giochi (possono caricare in parallelo dopo Phaser)
+    const PHASER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js';
+    // I 5 giochi canvas NON dipendono da Phaser → si caricano subito, in parallelo.
+    const CANVAS_GAMES = [
         'arcade/snake/js/snake.js?v=' + _v,
         'arcade/space/js/space.js?v=' + _v,
         'arcade/asteroids/js/asteroids.js?v=' + _v,
-        'arcade/super-espo/js/super-espo.js?v=' + _v,
+        'arcade/invaders/js/invaders.js?v=' + _v,
+        'arcade/centipede/js/centipede.js?v=' + _v,
     ];
+    // Super Espò è l'UNICO che richiede Phaser.
+    const SUPER_ESPO_JS = 'arcade/super-espo/js/super-espo.js?v=' + _v;
 
     // ---- Stato interno -------------------------------------
 
@@ -111,17 +115,21 @@
 
             _promise = Promise.all(ARCADE_CSS.map(loadCSS))
                 .then(function () {
-                    // Carica Phaser.js per primo (dipendenza dei giochi)
-                    return loadScript(ARCADE_JS[0]);
-                })
-                .then(function () {
-                    // Carica i giochi in parallelo dopo Phaser
-                    return Promise.all(ARCADE_JS.slice(1).map(loadScript));
+                    // I 5 giochi canvas si caricano subito, in parallelo, SENZA dipendere da Phaser.
+                    var canvas = CANVAS_GAMES.map(loadScript);
+                    // Phaser + Super Espò a parte: se la CDN cade, i 5 canvas restano giocabili.
+                    var phaserChain = loadScript(PHASER_CDN)
+                        .then(function () { return loadScript(SUPER_ESPO_JS); })
+                        .catch(function (err) {
+                            window._arcadePhaserFailed = true;
+                            console.warn('[ArcadeLoader] ⚠️ Phaser/Super Espò non caricati (CDN giù?):', err);
+                        });
+                    return Promise.all(canvas.concat([phaserChain]));
                 })
                 .then(function () {
                     _loaded  = true;
                     _loading = false;
-                    console.log('[ArcadeLoader] ✅ Assets Arcade caricati con successo.');
+                    console.log('[ArcadeLoader] ✅ Assets Arcade caricati.');
                 })
                 .catch(function (err) {
                     _loading = false;

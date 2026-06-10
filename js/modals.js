@@ -146,16 +146,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Aggiungi il listener (nella sezione dove ci sono gli altri btn.addEventListener)
     if (openArcadeBtn) {
         openArcadeBtn.addEventListener('click', () => {
-            window.currentActiveEvent = 'Arcade Mode';
-            if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+            // Apri arcade in nuova scheda fullscreen (no più modal)
+            // Sync BPS corrente via localStorage per reward calc accurato
+            try {
+                if (typeof bps !== 'undefined' && bps && bps.toString) {
+                    localStorage.setItem('espo_main_bps', bps.toString());
+                }
+                // Mirror del saldo Bug totale per il wallet dell'arcade standalone
+                // (arcade.php legge 'espo_main_bugs' + i pending per il totale).
+                const _gs = (window.EspooClicker && window.EspooClicker.getGameState) ? window.EspooClicker.getGameState() : null;
+                if (_gs && _gs.score != null && _gs.score.toString) {
+                    localStorage.setItem('espo_main_bugs', _gs.score.toString());
+                }
+            } catch (e) {}
 
-            openModal(arcadeModal);
+            const arcadeWin = window.open('arcade.php', 'espo-arcade',
+                'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
+            if (arcadeWin && arcadeWin.focus) arcadeWin.focus();
 
-            // Inizializza l'anteprima col primo gioco
-            const firstGame = document.querySelector('.arcade-menu-item:not(.locked)');
-            if (firstGame) firstGame.dispatchEvent(new Event('mouseenter'));
+            if (window.EspooClicker && window.EspooClicker.playSound) {
+                window.EspooClicker.playSound('sound-click');
+            }
         });
     }
+
+    // Polling pending rewards da arcade tab (ogni 5s + on focus)
+    function _claimArcadeRewards() {
+        try {
+            const raw = localStorage.getItem('espo_arcade_pending_rewards');
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (!data || !data.score || parseFloat(data.score) <= 0) return;
+
+            const Game = getGameAPI ? getGameAPI() : window.EspooClicker;
+            if (!Game) return;
+            const gs = Game.getGameState ? Game.getGameState() : null;
+            if (!gs) return;
+
+            const reward = (typeof Decimal !== 'undefined') ? new Decimal(data.score) : parseFloat(data.score);
+            gs.score = gs.score.add ? gs.score.add(reward) : (gs.score + reward);
+            if (Game.saveGame) Game.saveGame();
+            if (Game.showToast) {
+                const fmt = (Game.formatNumber) ? Game.formatNumber(reward) : reward.toString();
+                Game.showToast(`🎮 ARCADE REWARD: +${fmt} BUG!`, 'reward');
+            }
+            // Clear pending
+            localStorage.removeItem('espo_arcade_pending_rewards');
+        } catch (e) {
+            console.warn('[arcade reward claim] fail', e);
+        }
+    }
+    setInterval(_claimArcadeRewards, 5000);
+    window.addEventListener('focus', _claimArcadeRewards);
 
     // Logica Hover/Click sul menu Arcade
     document.querySelectorAll('.arcade-menu-item:not(.locked)').forEach(item => {
@@ -168,16 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const gameKey = item.getAttribute('data-game');
             const title = item.getAttribute('data-title');
             const color = item.getAttribute('data-color');
-            const iconClass = item.getAttribute('data-icon');
             const desc = item.getAttribute('data-desc');
 
             // Aggiorna DOM
-            const iconEl = document.getElementById('preview-icon');
             const titleEl = document.getElementById('preview-title');
             const descEl = document.getElementById('preview-desc');
             const scoreEl = document.getElementById('preview-highscore');
 
-            if (iconEl) { iconEl.className = `fa-solid ${iconClass}`; iconEl.style.color = color; }
             if (titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
             if (descEl) descEl.textContent = desc;
 
@@ -749,6 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
                     if (typeof window.exitSnakeGame === 'function') window.exitSnakeGame();
                     if (typeof window.exitSpaceGame === 'function') window.exitSpaceGame();
+                    if (typeof window.exitAsteroidsGame === 'function') window.exitAsteroidsGame();
+                    if (typeof window.exitInvadersGame === 'function') window.exitInvadersGame();
+                    if (typeof window.exitCentipedeGame === 'function') window.exitCentipedeGame();
                 }
 
             }
