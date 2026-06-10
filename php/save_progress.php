@@ -19,6 +19,7 @@ $rawScore = isset($data['score']) ? (string)$data['score'] : "0";
 $rawPrestige = isset($data['prestige']) ? (string)$data['prestige'] : "0";
 $rawEquippedSkin = isset($data['equippedSkin']) ? (string)$data['equippedSkin'] : 'default';
 $rawFormattazioni = isset($data['totalFormattazioni']) ? (int)$data['totalFormattazioni'] : 0;
+$prestigeInt = (int)$rawPrestige; // versione intera per il DB (difesa XSS: prestigeLevel sempre numerico)
 
 // Cleanup base
 if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { $rawScore = "0"; }
@@ -108,7 +109,7 @@ $stmtLb = $conn->prepare("
         totalFormattazioni = VALUES(totalFormattazioni),
         timestamp = NOW()
 ");
-$stmtLb->bind_param("ssssi", $user['username'], $rawScore, $rawPrestige, $rawEquippedSkin, $rawFormattazioni);
+$stmtLb->bind_param("ssisi", $user['username'], $rawScore, $prestigeInt, $rawEquippedSkin, $rawFormattazioni);
 $stmtLb->execute();
 
 echo json_encode(["status" => "success", "message" => "Saved and Verified"]);

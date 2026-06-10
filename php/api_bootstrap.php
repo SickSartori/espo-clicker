@@ -11,7 +11,7 @@ function getJsonInput()
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
-    if (!$data) {
+    if ($data === null) {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Dati JSON non validi."]);
         exit;

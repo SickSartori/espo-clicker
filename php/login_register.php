@@ -32,6 +32,15 @@ if ($row = $res->fetch_assoc()) {
 }
 else {
     // REGISTRAZIONE
+    // Validazione SOLO per i nuovi account (gli utenti esistenti possono sempre loggare)
+    if (!preg_match('/^[\p{L}0-9 ._-]{3,20}$/u', $username)) {
+        echo json_encode(["status" => "error", "message" => "Username non valido (3-20 caratteri: lettere, numeri, spazio, . _ -)."]);
+        exit;
+    }
+    if (strlen($password) < 8) {
+        echo json_encode(["status" => "error", "message" => "La password deve avere almeno 8 caratteri."]);
+        exit;
+    }
     $hashed = password_hash($password, PASSWORD_DEFAULT);
     $ins = $conn->prepare("INSERT INTO $table_users (username, password_hash) VALUES (?, ?)");
     $ins->bind_param("ss", $username, $hashed);

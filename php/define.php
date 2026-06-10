@@ -17,7 +17,7 @@
     define("ABSOLUTE_PATH", $_SERVER['DOCUMENT_ROOT'] . URI);
 
     // URL
-    define("SCHEME", $_SERVER['REQUEST_SCHEME']);
+    define("SCHEME", $_SERVER['REQUEST_SCHEME'] ?? (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http'));
     define("HOST", $_SERVER['HTTP_HOST']);
 
 	// LANGUAGES
