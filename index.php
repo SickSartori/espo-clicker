@@ -268,9 +268,9 @@ require_once("php/check_version.php");
 			<?php include 'includes/col_buildings.php'; ?>
 		</div>
 
-		<div id="golden-bug" title="<?php echo $labels["index_golden_bug_title"]; ?>">
-			<i class="fa-solid fa-bug"></i>
-		</div> 
+		<div id="golden-bug" role="button" tabindex="0" aria-label="<?php echo $labels["index_golden_bug_title"]; ?>" title="<?php echo $labels["index_golden_bug_title"]; ?>">
+			<i class="fa-solid fa-bug" aria-hidden="true"></i>
+		</div>
 
 		<div id="github-link-container">
 			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="<?php echo $labels["index_github_title"]; ?>">

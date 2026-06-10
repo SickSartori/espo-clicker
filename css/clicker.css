@@ -102,7 +102,20 @@
         inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
-#clicker-btn:focus {
+/* A11y: anello di focus visibile SOLO per la tastiera, non per mouse/touch */
+:focus-visible {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+#clicker-btn:focus-visible {
+    outline: 3px solid #3498db;
+    outline-offset: 4px;
+}
+#clicker-btn:focus:not(:focus-visible) {
     outline: none;
 }
 

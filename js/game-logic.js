@@ -1570,8 +1570,11 @@ function calculateRawClickValue() {
 }
 
 function resolveBug(event) {
-    if (event.detail === 0) return;
-    if (typeof clickerButton !== 'undefined' && clickerButton) clickerButton.blur();
+    // Blocca solo i click sintetici da script (autoclicker): isTrusted=false.
+    // L'attivazione reale da tastiera (Enter/Spazio) ha detail===0 ma isTrusted===true → consentita (a11y).
+    if (event.detail === 0 && event.isTrusted === false) return;
+    // Niente blur(): il focus da tastiera deve restare sul bottone per i click ripetuti.
+    // Il focus del mouse e' gia' gestito dai listener mouseup/mouseleave/touchend.
 
     const isSuperTheme = document.body.classList.contains('theme-super');
     const isFuryActive = (typeof crunchTimeEndTime !== 'undefined' && crunchTimeEndTime > Date.now());

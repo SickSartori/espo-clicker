@@ -1392,7 +1392,6 @@ document.addEventListener('DOMContentLoaded', () => {
         multiplierValues.forEach(val => {
             if (multiplierBtns[val]) {
                 multiplierBtns[val].addEventListener('click', (e) => {
-                    multiplierBtns[val].blur();
                     playSound('sound-click');
                     setBuyMultiplier(val);
                 });
@@ -1402,8 +1401,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setBuyMultiplier(1);
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            // Evita lo scroll della pagina con Spazio SOLO quando nessun controllo e' a fuoco.
+            // Non blocchiamo piu' Enter/Spazio sui bottoni: servono per attivarli da tastiera (a11y).
+            if (e.key === ' ' && e.target === document.body) {
                 e.preventDefault();
             }
         });
@@ -1627,16 +1627,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
-                if (e.detail === 0) return;
-                crunchBtn.blur();
+                // Consenti l'attivazione da tastiera (detail 0 ma isTrusted true); blocca solo i .click() da script
+                if (e.detail === 0 && e.isTrusted === false) return;
                 activateCrunchTime();
             });
         }
 
-        if (goldenBug) goldenBug.addEventListener('click', (e) => {
-            if (e.detail === 0) return;
-            clickGoldenBug();
-        });
+        if (goldenBug) {
+            goldenBug.addEventListener('click', (e) => {
+                // Blocca solo i .click() sintetici da script; mouse e tastiera reali passano
+                if (e.detail === 0 && e.isTrusted === false) return;
+                clickGoldenBug();
+            });
+            // Il golden bug e' un <div role="button">: la tastiera non genera click nativo, lo gestiamo qui
+            goldenBug.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    clickGoldenBug();
+                }
+            });
+        }
 
         const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
         const prestigeModal = document.getElementById('prestige-modal');
