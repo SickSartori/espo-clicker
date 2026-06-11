@@ -1597,30 +1597,46 @@ function calculateVisualBPS() {
 const scoreAnimState = { value: 0 };
 let _scoreTween = null;
 
+// Oltre questa soglia i JS Number perdono la precisione intera (2^53): animare con
+// GSAP un Number verso un Decimal enorme produce lag e valori spuri (es. il contatore
+// che "si ferma"/glitcha attorno a 100,00 Sxd ≈ 1e53). Sopra la soglia scriviamo
+// direttamente il Decimal formattato — l'animazione count-up a quelle scale non è
+// comunque percepibile. Sotto, manteniamo l'animazione fluida (Number esatti).
+const SCORE_ANIM_MAX = Number.MAX_SAFE_INTEGER; // ~9.007e15
+
 function updateScoreBoard(totalBPS) {
-    // Se è la prima volta (o reset/promozione), allinea subito senza animazione
-    if (Math.abs(scoreAnimState.value - gameState.score) > gameState.score * 0.5)
-        scoreAnimState.value = gameState.score;
+    const scoreNum = gameState.score.toNumber(); // Infinity se oltre il range Number
 
-    // Kill tween precedente per evitare stacking durante rapid clicks
-    if (_scoreTween) _scoreTween.kill();
+    if (!isFinite(scoreNum) || scoreNum > SCORE_ANIM_MAX) {
+        // Numero troppo grande per un'animazione affidabile: scrittura diretta dal Decimal
+        if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
+        scoreAnimState.value = scoreNum; // mantiene coerente lo stato per i confronti
+        setTextIfChanged('score-display', formatNumber(gameState.score));
+    } else {
+        // Se è la prima volta (o reset/promozione), allinea subito senza animazione
+        if (Math.abs(scoreAnimState.value - scoreNum) > scoreNum * 0.5)
+            scoreAnimState.value = scoreNum;
 
-    // GSAP anima il valore "visuale" verso il valore reale
-    _scoreTween = gsap.to(scoreAnimState, {
-        duration: 0.2,
-        value: gameState.score,
-        ease: "power1.out",
-        onUpdate: () => {
-            setTextIfChanged('score-display', formatNumber(Math.trunc(scoreAnimState.value)));
-        }
-    });
+        // Kill tween precedente per evitare stacking durante rapid clicks
+        if (_scoreTween) _scoreTween.kill();
+
+        // GSAP anima il valore "visuale" (Number) verso il valore reale (Number)
+        _scoreTween = gsap.to(scoreAnimState, {
+            duration: 0.2,
+            value: scoreNum,
+            ease: "power1.out",
+            onUpdate: () => {
+                setTextIfChanged('score-display', formatNumber(Math.trunc(scoreAnimState.value)));
+            }
+        });
+    }
 
     const scoreEl = getEl('score-display');
     if (scoreEl) {
         scoreEl.setAttribute('data-tooltip', formatFullNumber(gameState.score));
         scoreEl.classList.add('simple-tooltip');
         // Micro-bump visivo quando il punteggio aumenta
-        if (gameState.score > scoreAnimState.value * 1.001) {
+        if (scoreNum > scoreAnimState.value * 1.001) {
             scoreEl.classList.add('score-bump');
             clearTimeout(scoreEl._bumpTimer);
             scoreEl._bumpTimer = setTimeout(() => scoreEl.classList.remove('score-bump'), 150);
@@ -1843,7 +1859,11 @@ function updateSkillButton() {
 function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
     if (tabPrestige) {
-        const show = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
+        const _pp = gameState.prestigePoints || new Decimal(0);
+        const _lpp = gameState.lifetimePrestigePoints || new Decimal(0);
+        // totalFormattazioni>0 incluso: il format azzera resets/punti ma la promozione
+        // è già sbloccata, quindi il tab deve restare visibile dopo una formattazione.
+        const show = gameState.totalResets > 0 || _pp.gt(0) || _lpp.gt(0) || (gameState.totalFormattazioni || 0) > 0;
         if (show) tabPrestige.classList.remove("tab_promozione");
     }
 
@@ -1873,12 +1893,15 @@ function updatePrestigeVisuals() {
     const lifetimePoints = gameState.lifetimePrestigePoints || new Decimal(0);
 
     const canPrestige = currentScore.gte(threshold);
+    const hasFormatted = (gameState.totalFormattazioni || 0) > 0;
 
     // Mostra il bottone SE:
     // 1. Puoi fare prestigio ORA (canPrestige)
     // 2. OPPURE hai già fatto prestigio in passato (resets > 0)
     // 3. OPPURE hai dei token da spendere (prestigePoints > 0)
-    const shouldShow = canPrestige || resets > 0 || prestigePoints.gt(0) || lifetimePoints.gt(0);
+    // 4. OPPURE hai già formattato: la formattazione azzera resets/prestigePoints,
+    //    ma chi ha formattato ha ovviamente sbloccato la promozione → resta visibile.
+    const shouldShow = canPrestige || resets > 0 || prestigePoints.gt(0) || lifetimePoints.gt(0) || hasFormatted;
 
     if (!shouldShow) {
         if (prestigeBtn.style.display !== 'none') prestigeBtn.style.display = 'none';
@@ -1936,16 +1959,6 @@ function updatePrestigeUI() {
     updatePrestigeVisuals();
 }
 
-
-function shouldItemBeVisible(mode, isPurchased, isUnlocked) {
-    switch (mode) {
-        case 'available': return isUnlocked && !isPurchased;
-        case 'locked': return !isUnlocked && !isPurchased;
-        case 'purchased': return isPurchased;
-        case 'all': return true;
-        default: return isUnlocked && !isPurchased;
-    }
-}
 
 function setEmptyMessage(el, mode) {
     if (mode === 'available') el.textContent = gameData.texts.ui.noItemsBuy;
@@ -2316,6 +2329,10 @@ function updateStatsUI() {
                         <span id="st-clicks" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-fire" style="color: #ff4757; margin-right: 4px; font-size: 0.65rem;"></i> Combo Record</span>
+                        <span id="st-combo" class="stat-value" style="color: #ff4757;"></span>
+                    </div>
+                    <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> Promozioni</span>
                         <span id="st-resets" class="stat-value"></span>
                     </div>
@@ -2338,7 +2355,7 @@ function updateStatsUI() {
     if (_fill) _fill.style.width = progress + '%';
 
     _attr('st-score', 'data-tooltip', formatFullNumber(gameState.score));
-    _set('st-score', formatNumber(Math.floor(gameState.score)));
+    _set('st-score', formatNumber(gameState.score.floor()));
     _attr('st-total', 'data-tooltip', formatFullNumber(gameState.totalScore));
     _set('st-total', formatNumber(gameState.totalScore));
     _attr('st-lifetime', 'data-tooltip', formatFullNumber(gameState.lifetimeScore));
@@ -2367,5 +2384,6 @@ function updateStatsUI() {
     _set('st-skin', (gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default'));
     _set('st-playtime', formatTime(gameState.totalPlayTime));
     _set('st-clicks', formatNumber(gameState.totalClicks));
+    _set('st-combo', 'x' + formatNumber(gameState.longestCombo || 0));
     _set('st-resets', formatNumber(gameState.totalResets));
 }

@@ -104,39 +104,6 @@ function sha256_fallback(ascii) {
     return result;
 }
 
-// Source - https://stackoverflow.com/a/66072001
-// Posted by Mohsen Alyafei, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-01-09, License - CC BY-SA 4.0
-
-/******************************************************************
- * Converts e-Notation Numbers to Plain Numbers
- ******************************************************************
- * @function eToNumber(number)
- * @version  1.00
- * @param   {e nottation Number} valid Number in exponent format.
- *          pass number as a string for very large 'e' numbers or with large fractions
- *          (none 'e' number returned as is).
- * @return  {string}  a decimal number string.
- * @author  Mohsen Alyafei
- * @date    17 Jan 2020
- * Note: No check is made for NaN or undefined input numbers.
- *
- *****************************************************************/
-function eToNumber(num) {
-    let sign = "";
-    (num += "").charAt(0) == "-" && (num = num.substring(1), sign = "-");
-    let arr = num.split(/[e]/ig);
-    if (arr.length < 2) return sign + num;
-    let dot = (.1).toLocaleString('it-IT').substr(1, 1), n = arr[0], exp = +arr[1],
-        w = (n = n.replace(/^0+/, '')).replace(dot, ''),
-        pos = n.split(dot)[1] ? n.indexOf(dot) + exp : w.length + exp,
-        L = pos - w.length, s = "" + BigInt(w);
-    w = exp >= 0 ? (L >= 0 ? s + "0".repeat(L) : r()) : (pos <= 0 ? "0" + dot + "0".repeat(Math.abs(pos)) + s : r());
-    L = w.split(dot); if (L[0] == 0 && L[1] == 0 || (+w == 0 && +s == 0)) w = 0; //** added 9/10/2021
-    return sign + w;
-    function r() { return w.replace(new RegExp(`^(.{${pos}})(.)`), `$1${dot}$2`) }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     // --------- Assegnazione Variabili ---------
     clickerButton = document.getElementById('clicker-btn');
@@ -199,7 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameState.crunchTimeEndTime = crunchTimeEndTime;
         gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
-        gameState.lastSaveTimestamp = Date.now();
+        // Aggiorna il riferimento "ultima presenza attiva" SOLO se la tab è visibile.
+        // Se aggiornato anche da tab in background, l'autosave (30s) lo faceva avanzare
+        // di continuo e i guadagni offline al ritorno non maturavano mai (diff ~0).
+        if (document.visibilityState === 'visible') {
+            gameState.lastSaveTimestamp = Date.now();
+        }
 
         // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
         const stateJSON = JSON.stringify(gameState);
@@ -671,6 +643,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // girare prima che il salvataggio sia applicato a gameState. Risincronizziamo
         // qui in modo che l'icona rifletta il masterVolume effettivamente caricato.
         updateMuteButton();
+
+        // Stesso motivo: i negozi vengono renderizzati in initializeGame con lo stato
+        // di DEFAULT (es. totalClicks=0), quindi i potenziamenti click apparivano
+        // bloccati "0/10" anche con click già fatti. Ri-renderizziamo col save caricato.
+        if (typeof refreshAllStores === 'function') refreshAllStores();
     }
 
     function deepMerge(target, source) {
@@ -820,14 +797,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameLoopInterval = null;
     let uiLoopInterval = null;
     let saveInterval = null;
-    let leaderboardInterval = null;
+    let gameRoutinesStarted = false;   // guardia: avvia i cicli UNA sola volta
 
     function startGameRoutines() {
+        // Guardia anti-doppio-avvio: su F5 con sessione veniva chiamata sia dal boot sia
+        // dall'auto-login → loop RAF e listener di chiusura duplicati (CPU doppia, save
+        // concorrenti, golden bug raddoppiati). Avviamo i cicli una sola volta.
+        if (gameRoutinesStarted) return;
+        gameRoutinesStarted = true;
+
         // STOP preventivo: Se esistono già intervalli attivi, cancellali
         if (gameLoopInterval) clearInterval(gameLoopInterval);
         if (uiLoopInterval) clearInterval(uiLoopInterval);
         if (saveInterval) clearInterval(saveInterval);
-        if (leaderboardInterval) clearInterval(leaderboardInterval);
 
         // LOGICA (30 FPS)
         function startGameLoop() {
@@ -873,7 +855,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const handleAppClose = () => {
             // Forza un salvataggio sincrono in localStorage (sempre garantito)
             if (gameState && !gameState.isDeleting) {
-                gameState.lastSaveTimestamp = Date.now();
+                // Non bumpare il riferimento offline se stiamo andando in background
+                // (visibilitychange→hidden): così al ritorno i guadagni offline maturano.
+                if (document.visibilityState === 'visible') {
+                    gameState.lastSaveTimestamp = Date.now();
+                }
                 const compressed = LZString.compressToUTF16(JSON.stringify(gameState));
                 localStorage.setItem('espotoolClickerSaveV9', compressed);
             }
@@ -1333,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         isBluescreenActive = false;
-        bluescreenMultiplier = 1;
+        bluescreenMultiplier = new Decimal(1);
         if (window.hasOwnProperty('currentActiveEvent')) window.currentActiveEvent = null;
 
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {

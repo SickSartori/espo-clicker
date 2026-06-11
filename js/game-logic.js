@@ -345,6 +345,9 @@ const AudioManager = {
         const vol = this._calcVolume(id, type);
         if (vol < 0.01) return;
 
+        // Annulla un eventuale stop-con-fade pendente: stiamo ripartendo questa traccia.
+        if (howl._fadeStopTimer) { clearTimeout(howl._fadeStopTimer); howl._fadeStopTimer = null; }
+
         if (type === 'sfx') {
             howl.volume(vol);
             howl.play();
@@ -358,9 +361,12 @@ const AudioManager = {
     stop(id, fadeMs) {
         const howl = this._sounds[id];
         if (!howl) return;
+        if (howl._fadeStopTimer) { clearTimeout(howl._fadeStopTimer); howl._fadeStopTimer = null; }
         if (fadeMs && fadeMs > 0 && howl.playing()) {
             howl.fade(howl.volume(), 0, fadeMs);
-            setTimeout(() => howl.stop(), fadeMs);
+            // Traccia il timer: se la stessa traccia riparte entro fadeMs, play() lo annulla
+            // (altrimenti lo stop ritardato fermava la NUOVA riproduzione).
+            howl._fadeStopTimer = setTimeout(() => { howl._fadeStopTimer = null; howl.stop(); }, fadeMs);
         } else {
             howl.stop();
         }
@@ -609,6 +615,13 @@ const FX = {
         }
 
         this._comboCount++;
+
+        // Record combo più lunga (statistica lifetime, persiste su prestige/format)
+        if (typeof gameState !== 'undefined' && gameState &&
+            this._comboCount > (gameState.longestCombo || 0)) {
+            gameState.longestCombo = this._comboCount;
+        }
+
         clearTimeout(this._comboTimer);
         this._comboTimer = setTimeout(() => {
             this._comboCount = 0;
@@ -1786,7 +1799,8 @@ async function executePrestige() {
     const persistentKeys = [
         'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks',
         'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
-        'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni'
+        'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni', 'longestCombo',
+        'arcadeHighScores'
     ];
 
     const preservedData = {};
@@ -1985,6 +1999,8 @@ function executeFormattingSequence() {
         totalClicks: gameState.totalClicks,
         totalPlayTime: gameState.totalPlayTime,
         totalGoldenBugsClicked: gameState.totalGoldenBugsClicked,
+        longestCombo: gameState.longestCombo || 0,
+        arcadeHighScores: gameState.arcadeHighScores ? JSON.parse(JSON.stringify(gameState.arcadeHighScores)) : {},
         totalFormattazioni: (gameState.totalFormattazioni || 0) + 1,
         qBits: (gameState.qBits || new Decimal(0)).add(qBitsEarned),
         lifetimeQBits: (gameState.lifetimeQBits || new Decimal(0)).add(qBitsEarned),
