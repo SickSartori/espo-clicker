@@ -9,7 +9,7 @@
     define("DAY", 24 * HOUR);
     define("MONTH", 30 * DAY);
     define("YEAR", 12 * MONTH);
-	define("TOKEN_LIFETIME", 1 * HOUR);
+	define("TOKEN_LIFETIME", 1 * DAY);
 
     // PATH
     define("DOCUMENT_ROOT", $_SERVER['DOCUMENT_ROOT']);

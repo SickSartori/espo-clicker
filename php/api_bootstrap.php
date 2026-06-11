@@ -1,5 +1,14 @@
 <?php
-session_start(); // Inizializza la sessione per il token dinamico
+require_once __DIR__ . '/define.php';
+ini_set('session.gc_maxlifetime', 86400 + 3600); // 25h — margine sopra TOKEN_LIFETIME
+session_set_cookie_params([
+    'lifetime'  => 86400 + 3600,
+    'path'      => '/',
+    'httponly'  => true,                                                   // non leggibile da JS (anti-furto cookie via XSS)
+    'secure'    => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'), // Secure solo su HTTPS (su localhost http resta usabile)
+    'samesite'  => 'Lax'                                                   // mitiga CSRF
+]);
+session_start();
 require_once __DIR__ . '/db_connect.php';
 
 // Imposta header standard per tutte le risposte
@@ -17,6 +26,28 @@ function getJsonInput()
         exit;
     }
     return $data;
+}
+
+// Valida il token di sessione e controlla scadenza (24h)
+function validateToken()
+{
+    $token = $_SESSION['save_token'] ?? '';
+    $createdAt = $_SESSION['token_created_at'] ?? 0;
+
+    if (empty($token)) {
+        http_response_code(401);
+        echo json_encode(["status" => "token_expired", "message" => "Sessione mancante. Effettua il login."]);
+        exit;
+    }
+
+    if ((time() - $createdAt) > TOKEN_LIFETIME) {
+        unset($_SESSION['save_token'], $_SESSION['token_created_at']);
+        http_response_code(401);
+        echo json_encode(["status" => "token_expired", "message" => "Sessione scaduta (24h). Effettua nuovamente il login."]);
+        exit;
+    }
+
+    return $token;
 }
 
 // Funzione per autenticare l'utente

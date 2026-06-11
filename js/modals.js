@@ -936,6 +936,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isMusic || key === 'masterVolume') {
                 if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
             }
+            // Mantieni sincronizzata l'icona del quick-mute con lo slider master
+            if (key === 'masterVolume' && typeof Game.updateMuteButton === 'function') {
+                Game.updateMuteButton();
+            }
         });
     }
 
@@ -971,6 +975,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('EspoGameReady', initModalBindings);
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
+
+    window._showLoginForTokenExpiry = () => {
+        const sessUser = sessionStorage.getItem('espooUser');
+        const sessPass = sessionStorage.getItem('espooPass');
+        if (sessUser && sessPass && loginInput && loginPasswordInput) {
+            loginInput.value = sessUser;
+            loginPasswordInput.value = sessPass;
+            handleLogin();
+        } else if (loginModal) {
+            openModal(loginModal);
+        }
+    };
 
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
         if (confirm(gameData.texts.dialogs.logout)) {
@@ -1119,7 +1135,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
-                Game.setSaveToken(data.save_token);
+                Game.setSaveToken(data.save_token, data.token_expires_at);
+                window._tokenExpiredNotified = false;
 
                 if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
@@ -1153,6 +1170,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     musicSlider.value = userVol.musicVolume;
                     if (musicDisplay) musicDisplay.textContent = Math.round(userVol.musicVolume * 100);
                 }
+                // Sincronizza anche l'icona del quick-mute col volume caricato dal salvataggio
+                if (typeof Game.updateMuteButton === 'function') Game.updateMuteButton();
 
                 // 3. INFINE fai partire l'audio (ora che i volumi sono corretti)
                 Game.tryStartAudio();

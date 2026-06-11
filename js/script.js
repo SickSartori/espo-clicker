@@ -7,6 +7,7 @@ let statsList, gameContainer, prestigeStore;
 window.buyMultiplier = 1;
 let currentUserPassword = null;
 let currentSaveToken = null;
+let tokenExpiresAt = 0;
 
 
 async function generateHash(message) {
@@ -235,6 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // SALVATAGGIO CLOUD SICURO
+        if (tokenExpiresAt && Date.now() > tokenExpiresAt) {
+            if (!window._tokenExpiredNotified) {
+                window._tokenExpiredNotified = true;
+                currentSaveToken = null;
+                if (window.EspooClicker) window.EspooClicker.showToast("⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.", "error");
+                if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
+            }
+        }
         if (gameState.user.username && currentUserPassword && currentSaveToken) {
             try {
                 let rawScore = new Decimal(gameState.lifetimeScore);
@@ -267,6 +276,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(data => {
                         if (data.status === 'success') {
                             console.log(`[Save✓] score=${scoreToSend} prestige=${prestigeToSend} format=${savePayload.totalFormattazioni}`);
+                        } else if (data.status === 'token_expired') {
+                            console.warn(`[Save✗ TOKEN EXPIRED] ${data.message}`);
+                            currentSaveToken = null;
+                            if (!window._tokenExpiredNotified) {
+                                window._tokenExpiredNotified = true;
+                                window.EspooClicker.showToast("⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.", "error");
+                                if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
+                            }
                         } else if (data.status === 'conflict') {
                             console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
                             window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
@@ -649,6 +666,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
 
         if (bps.lt(0)) bps = new Decimal(0);
+
+        // loadGame è async: l'init dell'icona del quick-mute (in initializeGame) può
+        // girare prima che il salvataggio sia applicato a gameState. Risincronizziamo
+        // qui in modo che l'icona rifletta il masterVolume effettivamente caricato.
+        updateMuteButton();
     }
 
     function deepMerge(target, source) {
@@ -1108,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeGame() {
         const loaderUI = setupLoaderUI();
         loaderUI.setStatus(gameData.texts.ui.loadingData);
-        loadGame(); // Carica salvataggi
+        const loadGamePromise = loadGame(); // Carica salvataggi (async: attesa più sotto)
 
         const btnFormatOpen = document.getElementById('btn-open-format-modal');
         const btnFormatExecute = document.getElementById('btn-execute-format'); // Fallback se c'è ancora l'id vecchio
@@ -1410,8 +1432,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const muteBtn = document.getElementById('quick-mute-btn');
         if (muteBtn) {
-            // Imposta icona iniziale
-            muteBtn.innerHTML = gameState.user.masterVolume <= 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+            // Imposta icona iniziale (poi risincronizzata dopo il caricamento del salvataggio)
+            updateMuteButton();
 
             muteBtn.addEventListener('click', () => {
                 const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
@@ -1426,7 +1448,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (isBlocked) {
                     if (window.EspooClicker && window.EspooClicker.tryStartAudio) window.EspooClicker.tryStartAudio();
-                    muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 }
                 else {
                     // LOGICA MUTE / UNMUTE CLASSICA
@@ -1434,12 +1455,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         // MUTA TUTTO
                         gameState.lastVolume = gameState.user.masterVolume;
                         gameState.user.masterVolume = 0;
-                        muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                     }
                     else {
                         // UNMUTE
                         gameState.user.masterVolume = gameState.lastVolume || 1.0;
-                        muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                         playSound('sound-click');
 
                         // Riavvia l'audio se necessario
@@ -1474,6 +1493,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 }
+
+                // Single source of truth: sincronizza l'icona con lo stato finale del volume
+                updateMuteButton();
             });
         }
 
@@ -1666,6 +1688,24 @@ document.addEventListener('DOMContentLoaded', () => {
             vDisplay.style.pointerEvents = 'auto';
             vDisplay.style.cursor = 'pointer';
         }
+
+        // Espone il caricamento del salvataggio locale: chi avvia il boot attende
+        // questa promise prima di emettere EspoGameReady (vedi fondo file).
+        return loadGamePromise;
+    }
+
+    // Single source of truth per l'icona del bottone mute rapido.
+    // Deriva lo stato dell'icona da gameState.user.masterVolume.
+    // Va chiamata da OGNI punto che modifica masterVolume (slider, login/cloud, API)
+    // per evitare che l'icona si desincronizzi dallo stato reale dell'audio.
+    function updateMuteButton() {
+        const btn = document.getElementById('quick-mute-btn');
+        if (!btn) return;
+        const muted = !gameState || !gameState.user || gameState.user.masterVolume <= 0;
+        btn.innerHTML = muted
+            ? '<i class="fa-solid fa-volume-xmark"></i>'
+            : '<i class="fa-solid fa-volume-high"></i>';
+        btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
     }
 
     // --------- API GLOBALE ---------
@@ -1676,10 +1716,14 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast: showToast,
         playSound: playSound,
         updateStatsUI: updateStatsUI,
+        updateMuteButton: updateMuteButton,
         formatNumber: formatNumber,
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
-        setSaveToken: (token) => { currentSaveToken = token; },
+        setSaveToken: (token, expiresAt) => {
+            currentSaveToken = token;
+            if (expiresAt) tokenExpiresAt = expiresAt * 1000;
+        },
 
         openReleaseNotes: async () => {
         const modal = document.getElementById('release-notes-modal');
@@ -1739,6 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof AudioManager !== 'undefined') {
                 AudioManager.updateAmbience();
             }
+            updateMuteButton();
         },
         startGameRoutines: startGameRoutines,
         executePrestige: executePrestige,
@@ -1981,7 +2026,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    initializeGame();
-    document.dispatchEvent(new Event('EspoGameReady'));
-    console.log("✅ Evento EspoGameReady inviato.");
+    // Attendi il caricamento del salvataggio LOCALE prima di emettere EspoGameReady,
+    // che innesca l'auto-login e quindi il caricamento CLOUD. In questo modo il cloud
+    // (autoritativo per un utente loggato) è SEMPRE l'ultimo a scrivere
+    // masterVolume/audio/icona: niente più race tra load locale e cloud che lasciava
+    // l'icona su "mute" mentre l'audio era attivo (dopo clean cache + Shift+F5).
+    // .finally garantisce che EspoGameReady venga emesso anche se loadGame fallisce.
+    Promise.resolve(initializeGame())
+        .catch(e => console.error("Errore in initializeGame/loadGame:", e))
+        .finally(() => {
+            document.dispatchEvent(new Event('EspoGameReady'));
+            console.log("✅ Evento EspoGameReady inviato.");
+        });
 });

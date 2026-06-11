@@ -10,9 +10,10 @@ if (empty($username) || empty($password)) {
     exit;
 }
 
-// Genera un token dinamico unico per questa sessione di gioco
+// Genera un token dinamico unico per questa sessione di gioco (valido 24h)
 $sessionToken = bin2hex(random_bytes(16));
 $_SESSION['save_token'] = $sessionToken;
+$_SESSION['token_created_at'] = time();
 
 // 1. Cerca utente
 $stmt = $conn->prepare("SELECT id, password_hash, save_data FROM $table_users WHERE username = ?");
@@ -24,7 +25,7 @@ if ($row = $res->fetch_assoc()) {
     // LOGIN
     if (password_verify($password, $row['password_hash'])) {
         // Aggiunto "save_token" alla risposta
-        echo json_encode(["status" => "success", "action" => "login", "save_data" => $row['save_data'], "save_token" => $sessionToken]);
+        echo json_encode(["status" => "success", "action" => "login", "save_data" => $row['save_data'], "save_token" => $sessionToken, "token_expires_at" => time() + TOKEN_LIFETIME]);
     }
     else {
         echo json_encode(["status" => "error", "message" => "Password errata."]);
@@ -47,7 +48,7 @@ else {
 
     if ($ins->execute()) {
         // Aggiunto "save_token" alla risposta
-        echo json_encode(["status" => "success", "action" => "register", "save_data" => null, "save_token" => $sessionToken]);
+        echo json_encode(["status" => "success", "action" => "register", "save_data" => null, "save_token" => $sessionToken, "token_expires_at" => time() + TOKEN_LIFETIME]);
     }
     else {
         echo json_encode(["status" => "error", "message" => "Username occupato o errore."]);

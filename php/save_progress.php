@@ -24,13 +24,8 @@ $prestigeInt = (int)$rawPrestige; // versione intera per il DB (difesa XSS: pres
 // Cleanup base
 if (!preg_match('/^[0-9\.eE\+\-]+$/', $rawScore)) { $rawScore = "0"; }
 
-// RECUPERO TOKEN DINAMICO DI SESSIONE
-$sessionToken = isset($_SESSION['save_token']) ? $_SESSION['save_token'] : '';
-
-if (empty($sessionToken)) {
-    echo json_encode(["status" => "warning", "message" => "Save rejected: Session expired. Please reload."]);
-    exit;
-}
+// Valida token (24h expiry) — esce con 401 se scaduto
+$sessionToken = validateToken();
 
 // Hash check dinamico
 $clientHash = isset($data['hash']) ? $data['hash'] : '';
