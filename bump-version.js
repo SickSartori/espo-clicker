@@ -57,5 +57,16 @@ sw = sw.replace(/const CACHE_VERSION = '[^']*'/, `const CACHE_VERSION = 'espo-v$
 fs.writeFileSync(swPath, sw);
 console.log('✓ sw.js');
 
+// Update php/config.php (devVersion + prodVersion → cacheVer per asset busting)
+const phpConfigPath = path.join(__dirname, 'php', 'config.php');
+if (fs.existsSync(phpConfigPath)) {
+    let phpConfig = fs.readFileSync(phpConfigPath, 'utf8');
+    phpConfig = phpConfig.replace(/"devVersion"\s*=>\s*"[^"]*"/, `"devVersion" => "${newVersion}"`);
+    phpConfig = phpConfig.replace(/"prodVersion"\s*=>\s*"[^"]*"/, `"prodVersion" => "${newVersion}"`);
+    fs.writeFileSync(phpConfigPath, phpConfig);
+    console.log('✓ php/config.php (dev + prod version)');
+}
+
 console.log(`\n✨ Version bumped to ${newVersion}`);
-console.log('Run: npm run build');
+console.log('Cache invalidata: sw.js + php/config.php');
+console.log('Build automatica via npm script chain.');
