@@ -177,6 +177,7 @@
         }
 
         .arcade-menu-list {
+            box-sizing: border-box;
             flex: 0 0 340px;
             display: flex;
             flex-direction: column;
@@ -195,6 +196,7 @@
         }
 
         .arcade-preview-monitor {
+            box-sizing: border-box;
             flex: 1;
             background:
                 radial-gradient(ellipse 70% 80% at 50% 40%, rgba(0, 217, 255, 0.06) 0%, transparent 60%),
@@ -665,9 +667,10 @@
 /* ============================================================ */
 /* OTTIMIZZAZIONE SPAZI — riempi il viewport, niente void        */
 /* ============================================================ */
-/* Spazio in basso per il virtual pad — mobile override */
-@media (max-width: 768px) {
-    body.playing #arcade-fs-body { padding-bottom: 150px; }
+/* Spazio in basso per il virtual pad — mobile override (pad compatto ≈157px + 10px offset).
+   Gated su touch: su desktop stretto il pad non appare, niente vuoto. */
+@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
+    body.playing #arcade-fs-body { padding-bottom: 180px; }
 }
 
 /* Riempi il monitor preview (prima ~28% pieno): contenuto più grande */
