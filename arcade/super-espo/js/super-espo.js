@@ -664,7 +664,12 @@
         const _cam = this.cameras.main;
         const _halfHidden = (_cam.width - _cam.width / _cam.zoom) / 2; // px nascosti a sx dallo zoom
         const _anchor = _cam.width * 0.2;                              // dove agganciare il player
-        let _desiredScroll = player.x - _anchor;
+        // IMPORTANTE: usa la posizione del BODY (gia' integrato in questo frame), non
+        // player.x (lo sprite viene sincronizzato col body solo in postupdate, quindi
+        // in update() e' ancora alla posizione del frame precedente). Seguendo lo sprite
+        // vecchio la camera restava indietro di velocita'×dt per frame → tremolio mentre
+        // si avanza. Il body.center e' dove lo sprite verra' effettivamente disegnato.
+        let _desiredScroll = (player.body ? player.body.center.x : player.x) - _anchor;
         if (_desiredScroll < -_halfHidden) _desiredScroll = -_halfHidden; // worldView.x >= bounds.x (0)
         if (_desiredScroll > camScrollMax) camScrollMax = _desiredScroll; // monotòno: mai indietro
         _cam.scrollX = camScrollMax;
