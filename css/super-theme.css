@@ -509,7 +509,7 @@ body.theme-super #clicker-btn img {
 body.theme-super.crunch-active #clicker-btn {
     border-radius: 0;
     border: 4px solid #f8b800; /* Giallo fuoco */
-    animation: superFuryPulse 0.1s infinite alternate step-end;
+    animation: superFuryPulse 0.5s infinite alternate step-end; /* a11y WCAG 2.3.1: <3 flash/s (era 0.1s = ~10/s, rischio fotosensibilita') */
     background-color: #b00000;
     box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
 }
@@ -575,7 +575,7 @@ body.super-star-active .header-value {
 
 /* PULSAZIONE CONTENITORE CLICKER */
 body.super-star-active #clicker-btn {
-    animation: superStarPulse 0.1s ease-in-out infinite alternate;
+    animation: superStarPulse 0.5s ease-in-out infinite alternate; /* a11y WCAG 2.3.1: pulsazione sotto i 3/s */
     border: 4px solid #fff;
 }
 
