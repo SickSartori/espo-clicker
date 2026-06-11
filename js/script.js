@@ -1385,10 +1385,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (multiplierBtns[val]) {
                     multiplierBtns[val].style.backgroundColor = '';
 
-                    if (val === value)
-                        multiplierBtns[val].classList.add('active');
-                    else
-                        multiplierBtns[val].classList.remove('active');
+                    const _isActive = (val === value);
+                    multiplierBtns[val].classList.toggle('active', _isActive);
+                    multiplierBtns[val].setAttribute('aria-pressed', _isActive ? 'true' : 'false');
                 }
             });
 
@@ -1592,9 +1591,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                tabs.forEach(t => t.classList.remove('active'));
+                tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
                 contents.forEach(c => c.style.display = 'none');
                 tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
 
                 const targetId = tab.getAttribute('data-target');
                 document.getElementById(targetId).style.display = 'block';
@@ -1809,6 +1809,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
 
                             saveGame();
+                            if (typeof refreshAllStores === 'function') refreshAllStores();
                             updateUI();
                             return;
                         }

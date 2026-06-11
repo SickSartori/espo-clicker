@@ -358,7 +358,7 @@ function renderStoreSection(config) {
                 </div>
                 <div class="upgrade-actions">
                     ${countBadge}
-                    <button class="buy-btn" id="buy-${key}" data-upgrade-name="${key}">${status.label}</button>
+                    <button class="buy-btn" id="buy-${key}" data-upgrade-name="${key}" aria-label="${status.label} ${data.name}">${status.label}</button>
                 </div>
                 <div class="progress-bar-container" style="display:none;">
                     <div class="progress-bar-fill"></div>

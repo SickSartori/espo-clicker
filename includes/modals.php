@@ -353,12 +353,13 @@
 				</div>
             </div>
 
-            <button id="btn-confirm-format" class="buy-btn quantum-btn" style="
-                width: 100%; 
-                height: 55px; 
-                font-size: 1.2rem; 
+            <button id="btn-confirm-format" class="buy-btn quantum-btn" aria-label="Made in Heaven: formatta l'universo e ricomincia da capo (New Game Plus)" style="
+                width: 100%;
+                height: 55px;
+                font-size: 1.2rem;
                 border-radius: 8px;">
                 <i class="fa-solid fa-meteor"></i> MADE IN HEAVEN
+                <span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.85; margin-top:2px;">Formatta l'universo &middot; NG+</span>
             </button>
         </div>
     </div>

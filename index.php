@@ -229,28 +229,28 @@ require_once("php/check_version.php");
 			<i class="fa-solid fa-volume-high"></i>
 		</button>
 
-		<div id="game-container">
-			<div id="left-column" class="game-column">
-				<div class="tabs-header">
-					<button class="tab-btn active" data-target="upgrade-store" id="tab-click">
+		<div id="game-container"><h1 style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;">Espò Clicker</h1>
+			<div id="left-column" class="game-column" role="region" aria-label="Potenziamenti click e automazione">
+				<div class="tabs-header" role="tablist" aria-label="Categorie negozio">
+					<button class="tab-btn active" data-target="upgrade-store" id="tab-click" role="tab" aria-selected="true" aria-controls="upgrade-store">
 						<i data-lucide="mouse-pointer-2"></i>
 						<?php echo $labels["game_container_click_titolo"]; ?>
 					</button>
-					<button class="tab-btn" data-target="enhancement-store" id="tab-auto">
+					<button class="tab-btn" data-target="enhancement-store" id="tab-auto" role="tab" aria-selected="false" aria-controls="enhancement-store">
 						<i data-lucide="cog"></i>
 						<?php echo $labels["game_container_auto_titolo"]; ?>
 					</button>
-					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige">
+					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige" role="tab" aria-selected="false" aria-controls="prestige-wrapper">
 						<i data-lucide="flask-conical"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
-					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" style="display:none; color: #9b59b6;">
+					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" role="tab" aria-selected="false" aria-controls="quantum-wrapper" style="display:none; color: #9b59b6;">
 						<i data-lucide="atom"></i> Q-Lab
 					</button>
 				</div>
 				
 				<div id="global-filter-section">
-					<select id="global-filter-select">
+					<select id="global-filter-select" aria-label="Filtro negozio">
 						<option value="available"><?php echo $labels["game_container_da_comprare"]; ?></option>
 						<option value="locked"><?php echo $labels["game_container_in_arrivo"]; ?></option>
 						<option value="purchased"><?php echo $labels["game_container_gia_presi"]; ?></option>
