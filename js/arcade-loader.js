@@ -23,9 +23,12 @@
     // evitare che il SW serva versioni stale dei file arcade durante l'iterazione.
     // In produzione resta la versione stabile per consentire la cache HTTP/SW.
     const _isLocal = /^(localhost|127\.|192\.168\.|10\.|0\.0\.0\.0)/.test(location.hostname);
-    const _v = (window.GAME_VERSION && !_isLocal)
-        ? (window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor)
-        : Date.now();
+    // Cache-bust dei singoli giochi: in prod usa la versione PIENA (CACHE_VER, con patch,
+    // iniettata da arcade.php/index.php) — non solo major.minor, altrimenti i fix di patch
+    // ai giochi (es. super-espo.js) non bustavano mai la cache HTTP (Expires 1 anno).
+    const _v = _isLocal
+        ? Date.now()
+        : (window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major + '.' + window.GAME_VERSION.minor : '3.0'));
     const PHASER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js';
     // I 5 giochi canvas NON dipendono da Phaser → si caricano subito, in parallelo.
     const CANVAS_GAMES = [

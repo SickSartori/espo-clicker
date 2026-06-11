@@ -1,6 +1,6 @@
 {
   "name": "espo-clicker",
-  "version": "2.0.0",
+  "version": "3.0.12",
   "private": true,
   "scripts": {
     "build": "node build.js && npm run build:v3",
@@ -16,9 +16,13 @@
     "typecheck": "tsc --noEmit",
     "budget": "node scripts/bundle-budget.js",
     "lighthouse": "lhci autorun",
+    "cache:bump": "node bump-version.js patch",
     "bump:major": "node bump-version.js major && npm run build",
     "bump:minor": "node bump-version.js minor && npm run build",
-    "bump:patch": "node bump-version.js patch && npm run build"
+    "bump:patch": "node bump-version.js patch && npm run build",
+    "release": "node bump-version.js patch && npm run build",
+    "release:minor": "node bump-version.js minor && npm run build",
+    "release:major": "node bump-version.js major && npm run build"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

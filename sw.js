@@ -1,10 +1,10 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v2.0
+// ESPO CLICKER - Service Worker v3.0.12
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v2.0.9-v3alpha';
+const CACHE_VERSION = 'espo-v3.0.12';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -41,7 +41,12 @@ const NO_CACHE_PATTERNS = [
     /change_username/,
     /delete_user/,
     /reset_progress/,
-    /check_version/
+    /check_version/,
+    // --- CODICE ARCADE: mai cachato dal SW → sempre fresco (niente versioni stale) ---
+    /\/arcade\/[^?]*\.(?:js|css)(?:\?|$)/, // JS/CSS dei giochi (arcade/<gioco>/...)
+    /arcade-fullscreen\.css/,
+    /arcade-page\.js/,
+    /arcade-loader\.js/
 ];
 
 // Pattern per assets statici (cache-first)
