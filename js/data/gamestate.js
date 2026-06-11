@@ -40,6 +40,7 @@ function getInitialGameState() {
         qBits: new Decimal(0),
         lifetimeQBits: new Decimal(0),
         totalGoldenBugsClicked: 0,
+        longestCombo: 0,
         totalPlayTime: 0,
         lifetimeScore: new Decimal(0),
         lastSaveTimestamp: Date.now(),
