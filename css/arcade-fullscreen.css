@@ -302,7 +302,7 @@
             font-family: 'Rajdhani', sans-serif;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #8a9aaa;
+            color: #9aa8b5; /* floor AA testo piccolo su fondo scuro */
             letter-spacing: 0.5px;
         }
 
@@ -354,7 +354,7 @@
         .vp-label {
             font-family: 'Courier New', monospace;
             font-size: 0.6rem;
-            color: #6c7a85;
+            color: #9aa8b5; /* floor AA testo piccolo su fondo scuro */
             letter-spacing: 1.5px;
             text-transform: uppercase;
         }
@@ -475,12 +475,14 @@
             .arcade-fs-layout { flex-direction: column; }
             .arcade-menu-list { flex: 0 0 auto; max-height: 220px; }
 
+            /* gap/padding compatti: con D-pad 44px il pad totale resta 356px (entra su 360) */
             #arcade-virtual-pad {
-                padding: 10px 14px;
-                gap: 18px;
+                padding: 10px 10px;
+                gap: 12px;
                 bottom: 10px;
             }
-            .vp-dpad { grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 38px); }
+            /* 44px = touch target minimo Apple HIG/WCAG 2.5.8 */
+            .vp-dpad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); }
             .vp-action-btn { width: 54px; height: 54px; font-size: 0.7rem; }
 
             /* Hide menu list when game is active on mobile */
@@ -512,9 +514,9 @@
 /* ============================================================ */
 .arcade-menu-item {
     font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 0.7rem;
+    font-size: 12px; /* floor leggibilità (root 14px: i rem ingannano) */
     letter-spacing: 1px;
-    color: #8a9aaa;
+    color: #9aa8b5; /* floor AA testo piccolo su fondo scuro */
     gap: 8px;
     padding: 10px 12px;
     cursor: pointer;
@@ -552,7 +554,7 @@
     text-shadow: 0 0 6px var(--game-color, #00d9ff);
 }
 .arcade-menu-item:hover:not(.locked) .item-num {
-    color: #8a9aaa;
+    color: #b8c4d0;
 }
 .item-info {
     display: flex;
@@ -569,7 +571,7 @@
     font-family: 'Rajdhani', sans-serif;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #7a8a9a;
+    color: #9aa8b5; /* floor AA testo piccolo su fondo scuro */
     letter-spacing: 0;
     text-transform: none;
     line-height: 1.2;
@@ -581,7 +583,7 @@
     color: rgba(var(--game-rgb, 0, 217, 255), 0.75);
 }
 .arcade-menu-item:hover:not(.locked) .item-desc {
-    color: #8a9aaa;
+    color: #b8c4d0;
 }
 
 /* ============================================================ */
@@ -667,10 +669,10 @@
 /* ============================================================ */
 /* OTTIMIZZAZIONE SPAZI — riempi il viewport, niente void        */
 /* ============================================================ */
-/* Spazio in basso per il virtual pad — mobile override (pad compatto ≈157px + 10px offset).
+/* Spazio in basso per il virtual pad — mobile override (pad con D-pad 44px ≈186px + 10px offset).
    Gated su touch: su desktop stretto il pad non appare, niente vuoto. */
 @media (max-width: 768px) and (hover: none) and (pointer: coarse) {
-    body.playing #arcade-fs-body { padding-bottom: 180px; }
+    body.playing #arcade-fs-body { padding-bottom: 200px; }
 }
 
 /* Riempi il monitor preview (prima ~28% pieno): contenuto più grande */
@@ -710,9 +712,10 @@
 
 /* Mobile: menu compatto */
 @media (max-width: 768px) {
-    .arcade-menu-list .arcade-menu-item { font-size: 0.55rem; padding: 8px 10px; }
+    /* niente font-size override: vale il floor 12px della regola base */
+    .arcade-menu-list .arcade-menu-item { padding: 8px 10px; }
     .arcade-menu-list { gap: 3px; max-height: 38vh; }
-    .item-desc { font-size: 0.7rem; }
+    .item-desc { font-size: 12px; } /* floor leggibilità */
     #arcade-fs-body { padding: 10px 12px 14px; }
 }
 

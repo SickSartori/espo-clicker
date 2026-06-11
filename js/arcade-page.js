@@ -316,6 +316,7 @@
             if (active) return;
             active = true;
             btn.classList.add('pressed');
+            if (navigator.vibrate) navigator.vibrate(10); /* aptico; no-op dove non supportato (iOS) */
             fireKey('keydown', desc);
         };
         const release = (e) => {
