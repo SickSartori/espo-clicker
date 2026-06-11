@@ -48,11 +48,11 @@ window.gameData.teams = {
     singolaritaCosciente: {
         name: 'Singolarità Cosciente',
         baseCost: new Decimal(240000000000),
-        cpsPerUnit: new Decimal(700000)
+        cpsPerUnit: new Decimal(700000000)
     },
     architetturaInfinito: {
         name: 'Architettura dell\'Infinito',
         baseCost: new Decimal(3840000000000),
-        cpsPerUnit: new Decimal(11000000)
+        cpsPerUnit: new Decimal(11000000000)
     }
 };
