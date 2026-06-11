@@ -469,7 +469,7 @@
   /* Inactive multiplier */
   html body #buy-controls .buy-btn:not(.active) {
     background: transparent;
-    color: rgba(248, 250, 252, 0.45);
+    color: rgba(248, 250, 252, 0.6); /* 0.45 era borderline AA su pannelli chiari */
     border-color: transparent;
     box-shadow: none;
     text-shadow: none;

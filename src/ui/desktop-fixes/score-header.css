@@ -236,7 +236,7 @@
     font-size: 0.58rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    opacity: 0.5;
+    opacity: 0.75; /* 0.5 scendeva sotto AA 4.5:1 */
     font-weight: 700;
     color: var(--v3-fg-secondary, #cbd5e1);
   }

@@ -44,7 +44,7 @@
 .nav-item {
     background: transparent;
     border: none;
-    color: #546478;
+    color: #8b9bb0; /* >=4.5:1 su #0a0d12 (AA testo piccolo) */
     cursor: pointer;
     display: flex;
     flex-direction: column;

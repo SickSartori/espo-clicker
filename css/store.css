@@ -133,7 +133,7 @@
     background: transparent;
     border: none;
     box-shadow: none;
-    color: #5d7c9a;
+    color: #8b9bb0; /* >=4.5:1 su fondo scuro (AA testo piccolo) */
     border-radius: 6px;
     opacity: 1;
     transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;

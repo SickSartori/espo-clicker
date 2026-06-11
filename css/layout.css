@@ -187,7 +187,7 @@
     flex: 1;
     background: transparent;
     border: none;
-    color: #4a6582;
+    color: #8b9bb0; /* >=4.5:1 su fondo scuro (AA testo piccolo) */
     font-weight: 700;
     font-size: 0.82rem;
     padding: 0 6px;
@@ -212,7 +212,7 @@
 }
 
 .tab-btn:hover {
-    color: #7f8c8d;
+    color: #c8d6e5;
     opacity: 1;
     background: rgba(255, 255, 255, 0.025);
 }
