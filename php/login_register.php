@@ -10,6 +10,14 @@ if (empty($username) || empty($password)) {
     exit;
 }
 
+// Rate limiting: blocca dopo troppi tentativi FALLITI dallo stesso IP (anti brute-force)
+$__ip = clientIp();
+if (tooManyAttempts($conn, $__ip)) {
+    http_response_code(429);
+    echo json_encode(["status" => "error", "message" => "Troppi tentativi di accesso. Riprova tra qualche minuto."]);
+    exit;
+}
+
 // Genera un token dinamico unico per questa sessione di gioco (valido 24h)
 $sessionToken = bin2hex(random_bytes(16));
 $_SESSION['save_token'] = $sessionToken;
@@ -24,10 +32,11 @@ $res = $stmt->get_result();
 if ($row = $res->fetch_assoc()) {
     // LOGIN
     if (password_verify($password, $row['password_hash'])) {
-        // Aggiunto "save_token" alla risposta
+        clearAttempts($conn, $__ip); // login riuscito → azzera i tentativi falliti dell'IP
         echo json_encode(["status" => "success", "action" => "login", "save_data" => $row['save_data'], "save_token" => $sessionToken, "token_expires_at" => time() + TOKEN_LIFETIME]);
     }
     else {
+        recordFailedAttempt($conn, $__ip);
         echo json_encode(["status" => "error", "message" => "Password errata."]);
     }
 }

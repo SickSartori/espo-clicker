@@ -37,8 +37,31 @@ if (!hash_equals($serverHash, $clientHash)) {
     exit;
 }
 
-// --- CONTROLLO ANTI-ROLLBACK ---
-$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni, prestigeLevel FROM $table_leaderboard WHERE username = ?");
+function isNewScoreHigher($new, $old) {
+    $new = strtolower(trim($new));
+    $old = strtolower(trim($old));
+    if (strpos($new, 'e') !== false || strpos($old, 'e') !== false) {
+        return (float)$new >= (float)$old;
+    }
+    if (strlen($new) > strlen($old)) return true;
+    if (strlen($new) < strlen($old)) return false;
+    return strcmp($new, $old) >= 0;
+}
+
+// Annulla la transazione ed esce con un conflitto (nessuna scrittura applicata)
+function rollbackConflict($conn, $msg) {
+    $conn->rollback();
+    echo json_encode(["status" => "conflict", "message" => $msg]);
+    exit;
+}
+
+// --- CONTROLLO ANTI-ROLLBACK (ATOMICO: transazione + SELECT ... FOR UPDATE) ---
+// Senza transazione due salvataggi concorrenti potevano leggere entrambi il vecchio
+// valore e l'ultimo a scrivere "vinceva", facendo regredire lo score. Il lock di riga
+// serializza controllo+scrittura per lo stesso utente.
+$conn->begin_transaction();
+
+$stmtCheck = $conn->prepare("SELECT score, totalFormattazioni, prestigeLevel FROM $table_leaderboard WHERE username = ? FOR UPDATE");
 $stmtCheck->bind_param("s", $user['username']);
 $stmtCheck->execute();
 $resCheck = $stmtCheck->get_result();
@@ -54,40 +77,24 @@ if ($row = $resCheck->fetch_assoc()) {
 }
 $stmtCheck->close();
 
-function isNewScoreHigher($new, $old) {
-    $new = strtolower(trim($new));
-    $old = strtolower(trim($old));
-    if (strpos($new, 'e') !== false || strpos($old, 'e') !== false) {
-        return (float)$new >= (float)$old;
-    }
-    if (strlen($new) > strlen($old)) return true;
-    if (strlen($new) < strlen($old)) return false;
-    return strcmp($new, $old) >= 0;
-}
-
 // LOGICA V3: Formattazioni > Prestige > Score (gerarchia completa anti-race)
 if ($rawFormattazioni < $currentDbFormat) {
-    // Salvataggio vecchio pre-formattazione
-    echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Format). Please reload."]);
-    exit;
+    rollbackConflict($conn, "Cloud save is newer (Format). Please reload.");
 } else if ($rawFormattazioni == $currentDbFormat) {
     if ((int)$rawPrestige < $currentDbPrestige) {
-        // Auto-save stale arrivato dopo un prestige (race condition)
-        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Prestige). Please reload."]);
-        exit;
+        rollbackConflict($conn, "Cloud save is newer (Prestige). Please reload.");
     } else if ((int)$rawPrestige == $currentDbPrestige && !isNewScoreHigher($rawScore, $currentDbScore)) {
-        // Stessa run, ma score più basso (Rollback classico)
-        echo json_encode(["status" => "conflict", "message" => "Cloud save is newer (Score). Please reload."]);
-        exit;
+        rollbackConflict($conn, "Cloud save is newer (Score). Please reload.");
     }
 }
 
-// --- SE IL CONTROLLO PASSA, SALVA TUTTO ---
+// --- SE IL CONTROLLO PASSA, SALVA TUTTO (stessa transazione) ---
 $saveJson = json_encode($data['saveData']);
 $stmt = $conn->prepare("UPDATE $table_users SET save_data = ? WHERE id = ?");
 $stmt->bind_param("si", $saveJson, $user['id']);
 
 if (!$stmt->execute()) {
+    $conn->rollback();
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "Database save failed."]);
     exit;
@@ -95,10 +102,10 @@ if (!$stmt->execute()) {
 
 // 2. Aggiorna Leaderboard
 $stmtLb = $conn->prepare("
-    INSERT INTO $table_leaderboard (username, score, prestigeLevel, equippedSkin, totalFormattazioni, timestamp) 
+    INSERT INTO $table_leaderboard (username, score, prestigeLevel, equippedSkin, totalFormattazioni, timestamp)
     VALUES (?, ?, ?, ?, ?, NOW())
-    ON DUPLICATE KEY UPDATE 
-        score = VALUES(score), 
+    ON DUPLICATE KEY UPDATE
+        score = VALUES(score),
         prestigeLevel = VALUES(prestigeLevel),
         equippedSkin = VALUES(equippedSkin),
         totalFormattazioni = VALUES(totalFormattazioni),
@@ -107,6 +114,7 @@ $stmtLb = $conn->prepare("
 $stmtLb->bind_param("ssisi", $user['username'], $rawScore, $prestigeInt, $rawEquippedSkin, $rawFormattazioni);
 $stmtLb->execute();
 
+$conn->commit();
 echo json_encode(["status" => "success", "message" => "Saved and Verified"]);
 $conn->close();
 ?>

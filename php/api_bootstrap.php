@@ -82,4 +82,56 @@ function authenticate($conn, $username, $password)
 
     return $user;
 }
+
+// ============================================================
+// RATE LIMITING (anti brute-force su login)
+// Tabella auto-creata (niente migrazione manuale). Conta i tentativi
+// FALLITI per IP in una finestra mobile; oltre la soglia → 429.
+// ============================================================
+function clientIp()
+{
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+}
+
+function _ensureAttemptsTable($conn)
+{
+    $conn->query("CREATE TABLE IF NOT EXISTS login_attempts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ip VARCHAR(45) NOT NULL,
+        ts DATETIME NOT NULL,
+        INDEX idx_ip_ts (ip, ts)
+    )");
+}
+
+function tooManyAttempts($conn, $ip, $max = 10, $minutes = 15)
+{
+    _ensureAttemptsTable($conn);
+    $stmt = $conn->prepare("SELECT COUNT(*) AS c FROM login_attempts WHERE ip = ? AND ts > (NOW() - INTERVAL ? MINUTE)");
+    $stmt->bind_param("si", $ip, $minutes);
+    $stmt->execute();
+    $c = (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+    $stmt->close();
+    return $c >= $max;
+}
+
+function recordFailedAttempt($conn, $ip)
+{
+    _ensureAttemptsTable($conn);
+    $stmt = $conn->prepare("INSERT INTO login_attempts (ip, ts) VALUES (?, NOW())");
+    $stmt->bind_param("s", $ip);
+    $stmt->execute();
+    $stmt->close();
+    // Pulizia opportunistica dei record vecchi (~5% delle volte)
+    if (mt_rand(1, 20) === 1) {
+        $conn->query("DELETE FROM login_attempts WHERE ts < (NOW() - INTERVAL 1 HOUR)");
+    }
+}
+
+function clearAttempts($conn, $ip)
+{
+    $stmt = $conn->prepare("DELETE FROM login_attempts WHERE ip = ?");
+    $stmt->bind_param("s", $ip);
+    $stmt->execute();
+    $stmt->close();
+}
 ?>
