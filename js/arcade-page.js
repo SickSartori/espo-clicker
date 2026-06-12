@@ -357,7 +357,7 @@
         snake:     { dpad: ['up','down','left','right'], actions: [],                          labels: {} },
         space:     { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } },
         asteroids: { dpad: ['up','left','right'],        actions: ['fire'],                    labels: { fire: 'FIRE', up: 'BOOST' } },
-        superespo: { dpad: ['up','down','left','right'], actions: ['fire','x'],                labels: { fire: 'JUMP', x: 'FIRE' } },
+        superespo: { dpad: ['up','down','left','right'], actions: ['x'],                       labels: { x: 'FIRE' } },
         invaders:  { dpad: ['left','right'],             actions: ['fire'],                    labels: { fire: 'FIRE' } },
         centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } }
     };
