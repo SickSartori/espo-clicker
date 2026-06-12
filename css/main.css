@@ -1,4 +1,4 @@
-/* Core bundle — same files as concat.php?bundle=core */
+/* Core bundle — entrypoint esbuild per dist/styles.bundle.min.css */
 @import './keyframes.css';
 @import './base.css';
 @import './layout.css';
