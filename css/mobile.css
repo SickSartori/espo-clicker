@@ -167,16 +167,21 @@
         margin-left: 0;
     }
 
-    /* 5. BOTTONE PROMOZIONE (Icona Razzo Quadrata) */
+    /* 5. BOTTONE PROMOZIONE (Icona + Percentuale, impilate) */
+    /* Prima alternava icona/percentuale con un'animazione opacity di 7s, ma il
+       cambio risultava bloccato (animazione congelata / throttling): la % non
+       compariva mai. Ora mostriamo icona sopra e % sotto, sempre visibili. */
     .nav-special-btn {
         font-size: 0;
         padding: 0;
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         border-radius: 8px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 1px;
         margin-left: 5px;
         background: linear-gradient(135deg, #8e44ad, #9b59b6);
         border: 1px solid #a569bd;
@@ -185,32 +190,35 @@
         position: relative;
     }
 
-    .nav-special-btn span {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 800;
-        color: #fff;
-        white-space: nowrap;
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        opacity: 0;
-        animation: mobileTextSwitch 7s infinite;
-    }
-
     .nav-special-btn .nav-icon {
-        font-size: 1.2rem;
+        font-size: 1rem;
         margin: 0;
         color: #fff;
-        position: static;
-        left: 50%;
-        top: 50%;
-        animation: mobileIconSwitch 7s infinite;
+        line-height: 1;
+        animation: none;
         transform: none;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .nav-special-btn span {
+        display: block;
+        position: static;
+        transform: none;
+        opacity: 1;
+        animation: none;
+        font-size: 0.5rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: 0;
+        color: #fff;
+        white-space: nowrap;
+    }
+
+    /* Stato "Pronta": "PRONTA!" non entra nel quadrato → basta l'icona verde pulsante */
+    .nav-special-btn.promotion-ready span {
+        display: none;
     }
 
     /* Stato "Pronta" (Verde Pulsante) */
