@@ -468,3 +468,17 @@ body.theme-8bit #building-list-container .buy-btn {
     box-shadow: 2px 2px 0 #000;
     letter-spacing: 1px;
 }
+
+/* prefers-reduced-motion: i :not(#_) alzano la specificità così il reset
+   batte le animazioni del tema su selettori con ID (golden bug ecc.),
+   non scavalcabili dal reset globale di base.css. */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-8bit:not(#_),
+    body.theme-8bit:not(#_)::before,
+    body.theme-8bit:not(#_)::after,
+    body.theme-8bit:not(#_) *:not(#_),
+    body.theme-8bit:not(#_) *:not(#_)::before,
+    body.theme-8bit:not(#_) *:not(#_)::after {
+        animation: none !important;
+    }
+}

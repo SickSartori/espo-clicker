@@ -590,3 +590,21 @@ body.super-star-active #clicker-btn {
         background: rgba(0, 0, 0, 0.2);
     }
 }
+
+/* ============================================================ */
+/* prefers-reduced-motion: rispetta la preferenza dell'utente.   */
+/* I :not(#_) alzano la specificità (ID fittizio mai matchato),  */
+/* così il reset batte anche le animazioni del tema dichiarate   */
+/* !important su selettori con ID (#clicker-btn ecc.), che il    */
+/* reset globale di base.css non riusciva a scavalcare.          */
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-super:not(#_),
+    body.theme-super:not(#_)::before,
+    body.theme-super:not(#_)::after,
+    body.theme-super:not(#_) *:not(#_),
+    body.theme-super:not(#_) *:not(#_)::before,
+    body.theme-super:not(#_) *:not(#_)::after {
+        animation: none !important;
+    }
+}

@@ -139,3 +139,17 @@ body.theme-christmas.rick-rolling .game-column {
     display: flex;
     animation: fadeIn 0.5s;
 }
+
+/* prefers-reduced-motion: i :not(#_) alzano la specificità così il reset
+   batte le animazioni del tema su selettori con ID, non scavalcabili dal
+   reset globale di base.css. */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-christmas:not(#_),
+    body.theme-christmas:not(#_)::before,
+    body.theme-christmas:not(#_)::after,
+    body.theme-christmas:not(#_) *:not(#_),
+    body.theme-christmas:not(#_) *:not(#_)::before,
+    body.theme-christmas:not(#_) *:not(#_)::after {
+        animation: none !important;
+    }
+}
