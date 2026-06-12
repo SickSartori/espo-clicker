@@ -210,7 +210,10 @@
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
                 parent: 'phaser-espo-container',
-                width: 1280,
+                // Su mobile (portrait) una larghezza di design minore = canvas FIT
+                // più ALTO (riempie il vuoto verticale), mostrando meno mondo ai lati.
+                // Il player è ancorato a cam.width*0.2 (relativo) → resta visibile.
+                width: (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ? 800 : 1280,
                 height: 560
             },
             physics: {

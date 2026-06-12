@@ -1,8 +1,12 @@
 // code/arcade/space/js/space.js
 
 (function () {
+    // Su mobile (portrait) una larghezza di gioco minore dà un canvas FIT più ALTO
+    // (riempie il vuoto verticale) mostrando meno mondo ai lati. Tutto il gioco usa
+    // CONFIG.width (canvas, clamp player, spawn nemici, stelle) → resta coerente.
+    const _isMobilePortrait = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
     const CONFIG = {
-        width: 1100,
+        width: _isMobilePortrait ? 750 : 1100,
         height: 540,
         playerSpeed: 2,
         bulletSpeed: 10,
