@@ -129,10 +129,13 @@
         justify-content: space-between;
     }
 
+    /* Dissolve i 3 gruppi (left/center/right): su desktop sono flex:1 con
+       allineamenti interni, ma con Aiuto/Arcade nascosti su mobile restava la
+       barra sbilanciata (1 icona a sx, cluster al centro). Con display:contents
+       le icone diventano figli diretti della barra e space-between le distribuisce
+       in modo uniforme. */
     .nav-group {
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        display: contents;
     }
 
     .nav-label {
@@ -152,6 +155,16 @@
     .nav-icon {
         font-size: 1.2rem;
         margin: 0;
+    }
+
+    /* Badge notifica: la posizione desktop (left:55% + margin 12px, tarata su
+       item da 72px) finiva fuori dall'icona mobile e veniva tagliata da
+       overflow:hidden. Su mobile va in alto a destra, dentro i bordi dell'item. */
+    .nav-item.notify-overlay::after {
+        top: 5px;
+        left: auto;
+        right: 5px;
+        margin-left: 0;
     }
 
     /* 5. BOTTONE PROMOZIONE (Icona Razzo Quadrata) */
