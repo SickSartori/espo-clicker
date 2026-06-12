@@ -473,7 +473,17 @@
             .fs-info-bar { display: none; }
             #arcade-fs-close { width: 36px; height: 36px; font-size: 1rem; }
             .arcade-fs-layout { flex-direction: column; }
-            .arcade-menu-list { flex: 0 0 auto; max-height: 220px; }
+            /* Mobile: preview/monitor del gioco SOPRA, elenco giochi SOTTO */
+            #arcade-game-selector { order: 1; }
+            .arcade-menu-list {
+                order: 2;
+                flex: 0 0 auto;
+                max-height: 220px;
+                /* lista ora in basso: bordo/ombra sul lato superiore, non a destra */
+                border-right: none;
+                border-top: 3px solid #1a2530;
+                box-shadow: inset 0 8px 14px -8px rgba(0, 0, 0, 0.8);
+            }
 
             /* gap/padding compatti: con D-pad 44px il pad totale resta 356px (entra su 360) */
             #arcade-virtual-pad {
