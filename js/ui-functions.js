@@ -99,8 +99,19 @@ function formatFullNumber(num) {
 // --- LAZY LOAD CSS ---
 const loadedThemes = new Set();
 
-function loadThemeCSS(themeFile) {
-    if (!themeFile || loadedThemes.has(themeFile)) return;
+// Callback in coda per i temi il cui CSS è ancora in volo (evita link duplicati)
+const pendingThemeLoads = {};
+
+function loadThemeCSS(themeFile, onReady) {
+    if (!themeFile || loadedThemes.has(themeFile)) {
+        if (onReady) onReady();
+        return;
+    }
+    if (pendingThemeLoads[themeFile]) {
+        if (onReady) pendingThemeLoads[themeFile].push(onReady);
+        return;
+    }
+    pendingThemeLoads[themeFile] = onReady ? [onReady] : [];
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -112,9 +123,20 @@ function loadThemeCSS(themeFile) {
         || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now());
     link.href = `css/${themeFile}?v=${v}`;
 
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
+        loadedThemes.add(themeFile);
+        const cbs = pendingThemeLoads[themeFile] || [];
+        delete pendingThemeLoads[themeFile];
+        cbs.forEach(cb => { try { cb(); } catch (e) { console.warn('[Tema] callback equip fallita', e); } });
+        console.log(`[Tema] Caricato dinamicamente: ${themeFile}`);
+    };
+    link.onload = finish;
+    link.onerror = finish; // CSS irraggiungibile: applica comunque la classe, meglio di un equip bloccato
+    setTimeout(finish, 2500); // failsafe: onload sui <link> non è garantito ovunque
     document.head.appendChild(link);
-    loadedThemes.add(themeFile);
-    console.log(`[Tema] Caricato dinamicamente: ${themeFile}`);
 }
 
 function formatTime(totalSeconds) {
@@ -2091,6 +2113,7 @@ const VFXManager = {
 };
 
 function applySkinVisuals(skinId, forcePlayMusic = false) {
+    if (!applySkinVisuals._token) applySkinVisuals._token = 0;
     const data = gameData.skins[skinId];
     const skinData = data || gameData.skins['default'];
     const theme = skinData.themeConfig || {};
@@ -2110,11 +2133,6 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     document.body.style = ''; // Pulisce le var CSS custom
     VFXManager.stopAll();
 
-    // 2. LAZY LOAD CSS ESTERNI (Per temi strutturali complessi come 8bit o Super)
-    if (theme.cssFile) {
-        loadThemeCSS(theme.cssFile);
-    }
-
     // 3. APPLICAZIONE VARIABILI CSS CUSTOM (Per varianti di colore leggere)
     if (theme.cssVars) {
         for (const [property, value] of Object.entries(theme.cssVars)) {
@@ -2122,9 +2140,22 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         }
     }
 
-    // 4. APPLICAZIONE CLASSE BODY
+    // 2+4. LAZY LOAD CSS ESTERNI + CLASSE BODY
+    // La classe body si applica solo a CSS caricato (link.onload): al primo
+    // equip evita il flash di tema rotto (FOUC). Il token scarta i callback
+    // di un equip ormai superato da uno più recente.
+    const applyToken = ++applySkinVisuals._token;
     if (theme.bodyClass) {
-        document.body.classList.add(theme.bodyClass);
+        if (theme.cssFile) {
+            loadThemeCSS(theme.cssFile, () => {
+                if (applyToken !== applySkinVisuals._token) return;
+                document.body.classList.add(theme.bodyClass);
+            });
+        } else {
+            document.body.classList.add(theme.bodyClass);
+        }
+    } else if (theme.cssFile) {
+        loadThemeCSS(theme.cssFile);
     }
 
     // 5. APPLICAZIONE EFFETTI VISIVI (Neve, Fuoco, ecc.)
