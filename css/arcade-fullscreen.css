@@ -334,14 +334,23 @@
         body.playing #arcade-fs-body {
             padding-bottom: 0;
         }
-        /* Solo dispositivi touch (mobile/tablet): mostra il flipper + spazio in basso */
-        @media (hover: none) and (pointer: coarse) {
+        /* Dispositivi touch: mostra il flipper + spazio in basso.
+           Solo (pointer: coarse) — niente "and (hover:none)": alcuni telefoni
+           riportano hover:hover e l'AND falliva, lasciando il pad nascosto. */
+        @media (pointer: coarse) {
             #arcade-virtual-pad.active {
                 display: flex !important;
             }
             body.playing #arcade-fs-body {
                 padding-bottom: 130px;
             }
+        }
+        /* Fallback JS: alcuni browser non riportano pointer:coarse in modo affidabile */
+        html.touch-device #arcade-virtual-pad.active {
+            display: flex !important;
+        }
+        html.touch-device body.playing #arcade-fs-body {
+            padding-bottom: 200px;
         }
 
         .vp-section {
@@ -681,7 +690,7 @@
 /* ============================================================ */
 /* Spazio in basso per il virtual pad — mobile override (pad con D-pad 44px ≈186px + 10px offset).
    Gated su touch: su desktop stretto il pad non appare, niente vuoto. */
-@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
+@media (max-width: 768px) and (pointer: coarse) {
     body.playing #arcade-fs-body { padding-bottom: 200px; }
 }
 

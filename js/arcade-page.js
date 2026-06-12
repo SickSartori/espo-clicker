@@ -5,6 +5,20 @@
 // Dipendenze caricate prima: break_eternity (Decimal), arcade-loader (ArcadeLoader).
 // ============================================================
 
+// ----- Rilevamento touch robusto -----
+// La media query (hover:none) and (pointer:coarse) NON matcha su diversi telefoni
+// (browser che riportano hover:hover), e il virtual pad non compariva mai.
+// Aggiungiamo una classe su <html> come fallback affidabile lato CSS.
+(function () {
+    try {
+        var isTouch = ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0) ||
+            (navigator.msMaxTouchPoints > 0) ||
+            (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        if (isTouch) document.documentElement.classList.add('touch-device');
+    } catch (e) {}
+})();
+
 // ----- Stub minimo EspooClicker per arcade (score sync via localStorage) -----
 (function () {
     const STORAGE_KEY = 'espo_arcade_pending_rewards';
