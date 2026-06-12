@@ -14,7 +14,6 @@
       var(--v3-accent-red, #ff3d5c) 60%,
       #c0392b 100%);
     border: 1px solid rgba(255, 61, 92, 0.6);
-    border-radius: 6px;
     font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
     font-weight: 800;
     text-transform: uppercase;
