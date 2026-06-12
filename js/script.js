@@ -1524,7 +1524,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
+        // Solo i pulsanti che cambiano colonna (hanno data-target): il bottone
+        // Arcade è un'azione (apre arcade.php) e va escluso dallo switcher.
+        const mobileBtns = document.querySelectorAll('.mobile-nav-btn[data-target]');
 
         // Funzione helper per gestire le classi del body (per il Golden Bug)
         function setMobileViewClass(targetId) {

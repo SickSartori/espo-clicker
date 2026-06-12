@@ -170,6 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Bottone Arcade nella nav mobile: riusa l'apertura dell'arcade (mirror BPS/Bug,
+    // window.open, suono) delegando al click del pulsante desktop.
+    const mobileArcadeBtn = document.getElementById('mobile-arcade-btn');
+    if (mobileArcadeBtn && openArcadeBtn) {
+        mobileArcadeBtn.addEventListener('click', () => openArcadeBtn.click());
+    }
+
     // Polling pending rewards da arcade tab (ogni 5s + on focus)
     function _claimArcadeRewards() {
         try {

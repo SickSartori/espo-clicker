@@ -295,6 +295,10 @@ require_once("php/check_version.php");
 				<i class="fa-solid fa-users"></i>
 				<span><?php echo $labels["mobile_tab_team"]; ?></span>
 			</button>
+			<button id="mobile-arcade-btn" class="mobile-nav-btn mobile-nav-arcade" title="<?php echo $labels["navbar_arcade"]; ?>">
+				<i class="fa-solid fa-ghost"></i>
+				<span><?php echo $labels["navbar_arcade"]; ?></span>
+			</button>
 		</div>
 
 		<!-- ============================================================ -->
