@@ -816,67 +816,110 @@
 .offline_modal_content {
     text-align: center;
     border-color: #f39c12;
+    max-width: 440px;
+    box-shadow: 0 0 40px rgba(243, 156, 18, 0.18), 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .offline_modal_content h2 {
-    color: #f39c12;
-    border-bottom-color: #f39c12;
+    color: #f7b733;
+    border-bottom-color: rgba(243, 156, 18, 0.35);
+    letter-spacing: 0.5px;
 }
 
 .offline_content {
-    padding: 30px;
+    padding: 28px 26px 26px;
     overflow-y: auto;
     flex-grow: 1;
 }
 
 .offline_content_sottotitolo {
-    color: #bdc3c7;
-    font-size: 1.1rem;
+    color: #aeb9c4;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    margin: 0 0 22px;
 }
 
+/* Efficienza server: badge/pill compatto e centrato */
 .offline_content_efficienza_server {
-    margin: 20px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto 22px;
+    padding: 7px 16px;
+    background: rgba(52, 152, 219, 0.08);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 999px;
 }
 
 .offline_content_label_efficienza_server {
     text-transform: uppercase;
-    font-size: 0.8rem;
-    color: #7f8c8d;
-    margin-bottom: 5px;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    color: #8fa3b5;
+    margin: 0;
 }
 
 .offline_efficiency_display {
-    font-weight: bold;
-    color: #3498db;
-    font-size: 1.2rem;
+    font-weight: 800;
+    color: #5dade2;
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
 }
 
+/* Card guadagno: hero con bagliore dorato */
 .offline_content_guadagno {
-    background: rgba(243, 156, 18, 0.1);
-    border: 1px solid #d35400;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background:
+        radial-gradient(ellipse 80% 90% at 50% 30%, rgba(241, 196, 15, 0.12), transparent 70%),
+        rgba(243, 156, 18, 0.06);
+    border: 1px solid rgba(243, 156, 18, 0.45);
+    padding: 22px 18px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    overflow: hidden;
 }
 
 .offline_earnings_display {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #f1c40f;
-    text-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+    display: block;
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1.05;
+    color: #ffd54a;
+    text-shadow: 0 0 18px rgba(243, 156, 18, 0.55), 0 2px 0 rgba(0, 0, 0, 0.3);
+    word-break: break-word;
 }
 
 .offline_content_guadagno_label {
-    font-size: 1.2rem;
-    color: #f1c40f;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #e0a838;
 }
 
 .offline_content_button {
-    background: linear-gradient(to right, #f1c40f, #e67e22);
-    color: #2c3e50;
-    font-size: 1.2rem;
+    background: linear-gradient(180deg, #ffd24a 0%, #f1980f 100%);
+    color: #2c2113;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     padding: 15px;
     width: 100%;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 0 #b9760a, 0 8px 20px rgba(243, 156, 18, 0.35);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.offline_content_button:hover { filter: brightness(1.05); }
+
+.offline_content_button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #b9760a, 0 3px 10px rgba(243, 156, 18, 0.3);
 }
 
 /* --- STILI MARKDOWN PER RELEASE NOTES --- */
