@@ -177,6 +177,7 @@ input[type="number"] {
     color: var(--text-main);
     font-family: var(--font-heading);
     height: 45px;
+    font-size: 16px; /* floor: sotto i 16px iOS Safari auto-zooma al focus */
 }
 
 input:focus {
@@ -244,7 +245,7 @@ input:focus {
     color: #fff;
     flex-grow: 1;
     outline: none;
-    font-size: 0.95rem;
+    font-size: 16px; /* floor anti auto-zoom iOS (con root 13-14px i rem ingannano) */
 }
 
 .input-group-row {

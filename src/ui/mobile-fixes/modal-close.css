@@ -18,9 +18,9 @@
     right: 10px;
     bottom: auto;
     left: auto;
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
+    width: 44px; /* touch target minimo Apple HIG/WCAG 2.5.8 */
+    height: 44px;
+    min-height: 44px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;

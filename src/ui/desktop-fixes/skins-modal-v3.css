@@ -70,8 +70,8 @@ html body div#skins-modal.modal-backdrop {
   border: 1px solid rgba(255, 61, 92, 0.45) !important;
   color: #fff !important;
   border-radius: 50% !important;
-  width: 20px !important;
-  height: 20px !important;
+  width: 28px !important; /* 20px era sotto il minimo WCAG 2.5.8 (24px) */
+  height: 28px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -217,6 +217,15 @@ html body div#skins-modal #skins-grid-modern.skins-unified-grid,
   html body div#skins-modal #skins-grid-modern.skins-unified-grid,
   .skins-unified-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+/* Phone: senza questo step restavano 4 colonne anche a 375px (card da 68px) */
+@media (max-width: 768px) {
+  html body div#skins-modal #skins-grid-modern.skins-unified-grid,
+  .skins-unified-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 12px !important;
   }
 }
 

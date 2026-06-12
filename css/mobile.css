@@ -1543,3 +1543,17 @@ button img {
         padding: 12px 20px;
     }
 }
+
+/* ==========================================================================
+   FLOOR INPUT 16px — anti auto-zoom iOS Safari (WCAG/usabilità form)
+   Caricato con media (max-width: 768px): vale solo su phone.
+   Specificità alta (html body) per battere .clean-input input e simili.
+   ========================================================================== */
+html body input[type="text"],
+html body input[type="password"],
+html body input[type="number"],
+html body input[type="email"],
+html body .input-group-modern input,
+html body .clean-input input {
+    font-size: 16px;
+}

@@ -17,9 +17,10 @@
     right: 10px;
     bottom: auto;
     left: auto;
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
+    /* !important: deve battere il 28px !important desktop di skins-modal-v3.css */
+    width: 44px !important; /* touch target minimo Apple HIG/WCAG 2.5.8 */
+    height: 44px !important;
+    min-height: 44px !important;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
