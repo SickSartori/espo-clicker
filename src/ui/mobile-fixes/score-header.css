@@ -1,0 +1,152 @@
+/* =====================================================================
+   v3 mobile — Score header HUD (allinea lo stile alla versione desktop)
+   =====================================================================
+   La controparte mobile di desktop-fixes/score-header.css: porta su mobile
+   la "console" HUD (cornice cyan, gradiente, stat-box bordati, pulse line,
+   font mono) invece della barra piatta legacy. Caricato dopo styles.mobile,
+   quindi vince sulle regole base senza !important.
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  /* ---------------- Container HUD (card, non barra piatta) ---------------- */
+  html body .column-header-center {
+    position: relative;
+    background:
+      radial-gradient(ellipse 100% 100% at 50% 0%, rgba(255, 61, 92, 0.06) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 15, 28, 0.78) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 8px;
+    box-shadow:
+      0 6px 22px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    margin: 6px 8px;
+    padding: 8px 10px;
+    height: auto;
+    min-height: 0;
+    gap: 8px;
+    overflow: visible;
+  }
+
+  /* Scanline overlay come desktop */
+  html body .column-header-center::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent 0, transparent 3px,
+      rgba(0, 217, 255, 0.025) 4px, transparent 5px);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+  }
+
+  /* Pulse line inferiore (indicatore HUD attivo) */
+  html body .column-header-center::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 25%;
+    right: 25%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent,
+      rgba(255, 61, 92, 0.7), rgba(0, 217, 255, 0.7), transparent);
+    box-shadow: 0 0 12px rgba(255, 61, 92, 0.4);
+    animation: v3-hud-pulse 3s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  /* ---------------- Stat box laterali (bordo cyan) ---------------- */
+  html body #header-left-panel,
+  html body #header-right-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 6px;
+    padding: 6px 8px;
+    max-width: 108px;
+    flex: 0 1 auto;
+    position: relative;
+    overflow: hidden;
+    z-index: 3;
+  }
+
+  html body .column-header-center .header-stat-box .header-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.8;
+    color: var(--v3-fg-secondary, #cbd5e1);
+  }
+
+  html body .column-header-center .header-stat-box .header-label i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    margin-right: 3px;
+  }
+
+  html body .column-header-center .header-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+    line-height: 1.1;
+  }
+
+  /* Colori per tipo (come desktop) */
+  html body #display-career-bonus {
+    background: linear-gradient(135deg, #fbbf24 0%, var(--v3-tier-legendary, #f59e0b) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  html body #prestige-points-display {
+    background: linear-gradient(135deg, #60a5fa 0%, var(--v3-tier-rare, #3b82f6) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  html body #header-qbit-display {
+    background: linear-gradient(135deg, #c084fc 0%, var(--v3-tier-epic, #a855f7) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* ---------------- Score principale (gradiente rosso come desktop) ---------------- */
+  html body .column-header-center .header-main-score {
+    z-index: 3;
+    max-width: calc(100% - 232px);
+  }
+
+  html body .column-header-center .header-main-score .header-label-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(248, 250, 252, 0.55);
+    font-weight: 700;
+  }
+
+  html body .column-header-center .header-main-score .header-label-main i {
+    color: var(--v3-accent-red, #ff3d5c);
+    filter: drop-shadow(0 0 6px rgba(255, 61, 92, 0.7));
+  }
+
+  html body .column-header-center #score-display {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #ffffff 0%, #ff8a9d 30%,
+      var(--v3-accent-red, #ff3d5c) 65%, #b91c1c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 14px rgba(255, 61, 92, 0.3);
+    color: var(--v3-accent-red, #ff3d5c);
+  }
+
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    html body .column-header-center #score-display { color: transparent; }
+  }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  html body .column-header-center::after { animation: none; }
+}
