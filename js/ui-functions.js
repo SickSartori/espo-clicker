@@ -2130,7 +2130,13 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     Array.from(document.body.classList).forEach(cls => {
         if (cls.startsWith('theme-')) document.body.classList.remove(cls);
     });
-    document.body.style = ''; // Pulisce le var CSS custom
+    // Pulisce SOLO le CSS custom properties (--*) lasciate dai temi, non tutti
+    // gli inline style del body: `body.style = ''` azzerava anche stili impostati
+    // da altri sistemi (es. effetti transitori), non solo le var del tema.
+    for (let i = document.body.style.length - 1; i >= 0; i--) {
+        const prop = document.body.style[i];
+        if (prop.startsWith('--')) document.body.style.removeProperty(prop);
+    }
     VFXManager.stopAll();
 
     // 3. APPLICAZIONE VARIABILI CSS CUSTOM (Per varianti di colore leggere)
