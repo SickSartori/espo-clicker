@@ -588,8 +588,19 @@ document.addEventListener('DOMContentLoaded', () => {
             function selectItem(item) {
                 if (!item) return;
                 selectedItem = item;
-                document.querySelectorAll('.arcade-menu-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.arcade-menu-item').forEach(i => {
+                    i.classList.remove('active');
+                    // A11y: roving tabindex + stato selezione per screen reader (solo sulle voci option, non sulla locked)
+                    if (i.getAttribute('role') === 'option' && i.getAttribute('aria-disabled') !== 'true') {
+                        i.setAttribute('aria-selected', 'false');
+                        i.setAttribute('tabindex', '-1');
+                    }
+                });
                 item.classList.add('active');
+                if (item.getAttribute('role') === 'option') {
+                    item.setAttribute('aria-selected', 'true');
+                    item.setAttribute('tabindex', '0');
+                }
                 window._arcadeSelectedGame = item.getAttribute('data-game');
                 const color = item.getAttribute('data-color') || '#00d9ff';
                 const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
@@ -633,6 +644,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         selectItem(navItems[idx]);
                         sfxHover();
                         navItems[idx].scrollIntoView({ block: 'nearest' });
+                        // A11y: porta il focus reale sulla voce così lo screen reader annuncia la selezione
+                        if (typeof navItems[idx].focus === 'function') navItems[idx].focus();
                     } else if (e.key === 'Enter') {
                         e.preventDefault();
                         if (window.launchArcadeGame) window.launchArcadeGame();
@@ -751,13 +764,13 @@ window.showArcadeGameOver = function (opts) {
     if (statLabel != null && statValue != null) {
         var st = document.createElement('div');
         st.innerHTML = statLabel + ': <span style="color:' + statColor + '">' + statValue + '</span>';
-        st.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.55rem;color:#7a8a9a;letter-spacing:2px;margin-bottom:14px;";
+        st.style.cssText = "font-family:'Press Start 2P',monospace;font-size:11px;color:#9aa8b5;letter-spacing:2px;margin-bottom:14px;";
         wrap.appendChild(st);
     }
 
     var sLabel = document.createElement('div');
     sLabel.textContent = 'PUNTEGGIO';
-    sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.5rem;color:#5a6a7a;letter-spacing:3px;margin-bottom:6px;";
+    sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:11px;color:#9aa8b5;letter-spacing:3px;margin-bottom:6px;";
     wrap.appendChild(sLabel);
 
     var sVal = document.createElement('div');
@@ -797,7 +810,7 @@ window.showArcadeGameOver = function (opts) {
     // Etichetta + barra: ritorno automatico al menu se non si clicca RESTART.
     var retLabel = document.createElement('div');
     retLabel.textContent = onRetry ? '▸ o torna al menu… ◂' : '▸ ritorno al menu ◂';
-    retLabel.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:0.85rem;color:#4a5a6a;letter-spacing:1px;margin-top:16px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;";
+    retLabel.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:0.95rem;color:#9aa8b5;letter-spacing:1px;margin-top:16px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;";
     wrap.appendChild(retLabel);
 
     var bar = document.createElement('div');

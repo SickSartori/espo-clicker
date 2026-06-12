@@ -67,33 +67,33 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
         <div class="arcade-screen-container global-crt-filter">
             <div class="arcade-fs-layout">
 
-                <div class="arcade-menu-list">
-                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-desc="Mangia i bug, evita i muri. Un classico intramontabile.">
+                <div class="arcade-menu-list" role="listbox" aria-label="Seleziona un gioco">
+                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-desc="Mangia i bug, evita i muri. Un classico intramontabile." role="option" tabindex="0" aria-selected="true" aria-label="Snake Protocol — Mangia bug, evita i muri">
                         <span class="item-num">01</span>
                         <div class="item-info"><span class="item-name">SNAKE PROTOCOL</span><span class="item-desc">Mangia bug, evita i muri</span></div>
                     </div>
-                    <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-desc="Naviga nello spazio e distruggi gli sciami di bug alieni.">
+                    <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-desc="Naviga nello spazio e distruggi gli sciami di bug alieni." role="option" tabindex="-1" aria-selected="false" aria-label="Space Impact — Distruggi gli sciami alieni">
                         <span class="item-num">02</span>
                         <div class="item-info"><span class="item-name">SPACE IMPACT</span><span class="item-desc">Distruggi gli sciami alieni</span></div>
                     </div>
-                    <div class="arcade-menu-item" data-game="asteroids" data-title="ESPO-ROIDS" data-color="#e67e22" data-desc="Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!">
+                    <div class="arcade-menu-item" data-game="asteroids" data-title="ESPO-ROIDS" data-color="#e67e22" data-desc="Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!" role="option" tabindex="-1" aria-selected="false" aria-label="Espo-Roids — Sopravvivi agli asteroidi">
                         <span class="item-num">03</span>
                         <div class="item-info"><span class="item-name">ESPO-ROIDS</span><span class="item-desc">Sopravvivi agli asteroidi</span></div>
                     </div>
-                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPO" data-color="#9b59b6" data-desc="Endless platformer. Corri, salta, schiaccia i Goomba-Bug.">
+                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPO" data-color="#9b59b6" data-desc="Endless platformer. Corri, salta, schiaccia i Goomba-Bug." role="option" tabindex="-1" aria-selected="false" aria-label="Super Espo — Corri, salta, schiaccia">
                         <span class="item-num">04</span>
                         <div class="item-info"><span class="item-name">SUPER ESPO</span><span class="item-desc">Corri, salta, schiaccia!</span></div>
                     </div>
-                    <div class="arcade-menu-item" data-game="invaders" data-title="BUG INVADERS" data-color="#2ecc71" data-desc="Difendi i bunker, abbatti lo sciame di alieni-bug.">
+                    <div class="arcade-menu-item" data-game="invaders" data-title="BUG INVADERS" data-color="#2ecc71" data-desc="Difendi i bunker, abbatti lo sciame di alieni-bug." role="option" tabindex="-1" aria-selected="false" aria-label="Bug Invaders — Difendi dai bug invasori">
                         <span class="item-num">05</span>
                         <div class="item-info"><span class="item-name">BUG INVADERS</span><span class="item-desc">Difendi dai bug invasori</span></div>
                     </div>
-                    <div class="arcade-menu-item" data-game="centipede" data-title="BUG CRAWLER" data-color="#f472b6" data-desc="Distruggi il centopiedi nel campo dei funghi.">
+                    <div class="arcade-menu-item" data-game="centipede" data-title="BUG CRAWLER" data-color="#f472b6" data-desc="Distruggi il centopiedi nel campo dei funghi." role="option" tabindex="-1" aria-selected="false" aria-label="Bug Crawler — Distruggi il centopiedi">
                         <span class="item-num">06</span>
                         <div class="item-info"><span class="item-name">BUG CRAWLER</span><span class="item-desc">Distruggi il centopiedi</span></div>
                     </div>
 
-                    <div class="arcade-menu-item locked">
+                    <div class="arcade-menu-item locked" role="option" aria-disabled="true" aria-label="In arrivo prossimamente">
                         <span class="item-num">--</span>
                         <div class="item-info"><span class="item-name">??? COMING SOON</span></div>
                     </div>
