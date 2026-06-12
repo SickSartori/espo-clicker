@@ -793,7 +793,7 @@
     top: 6px;
     right: 8px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.4rem;
+    font-size: 10px; /* era 0.4rem (~5.6px a root 14px): illeggibile con Press Start 2P */
     letter-spacing: 1px;
     line-height: 1;
     color: var(--game-color, #2ecc71);
@@ -959,6 +959,14 @@ body.playing #arcade-game-selector > .arcade-preview-monitor {
             transparent 12px);
     box-shadow: 0 0 6px rgba(0, 217, 255, 0.5);
     animation: fs-lights 1.8s linear infinite reverse;
+}
+
+/* Perf: durante una partita (body.playing) ferma le animazioni decorative
+   sempre visibili dell'header (le altre — marquee preview, LED dei giochi —
+   stanno su elementi nascosti in gameplay), così la GPU lavora sul canvas. */
+body.playing #arcade-fs-header::before,
+body.playing #arcade-fs-header::after {
+    animation-play-state: paused;
 }
 
 /* --- Preview monitor glow follows game color --- */
