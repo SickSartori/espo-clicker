@@ -130,23 +130,11 @@
         canvasWrapper.appendChild(overlay);
         gameContainer.appendChild(canvasWrapper);
 
-        // Mobile Controls
-        const mobileControls = document.createElement('div');
-        mobileControls.id = 'space-mobile-controls';
-        mobileControls.innerHTML = `
-            <div class="d-pad">
-                <button class="ctrl-btn btn-up" data-key="ArrowUp"><i class="fa-solid fa-caret-up"></i></button>
-                <button class="ctrl-btn btn-left" data-key="ArrowLeft"><i class="fa-solid fa-caret-left"></i></button>
-                <button class="ctrl-btn btn-down" data-key="ArrowDown"><i class="fa-solid fa-caret-down"></i></button>
-                <button class="ctrl-btn btn-right" data-key="ArrowRight"><i class="fa-solid fa-caret-right"></i></button>
-            </div>
-            <div class="fire-btn-group">
-                <button class="ctrl-btn btn-fire" data-key="Space">FIRE</button>
-            </div>
-        `;
-        gameContainer.appendChild(mobileControls);
-
-        setupInputs(mobileControls);
+        // I controlli touch sono forniti dal virtual pad globale di arcade.php
+        // (sintetizza KeyboardEvent che handleKeyDown intercetta). Niente D-pad legacy:
+        // su mobile comparivano due controlli, e su desktop ≤1024px il vecchio pad
+        // appariva pure via media query width-based.
+        setupInputs();
         initStars();
         draw(); // Primo render statico
     };
@@ -438,7 +426,7 @@
         // FIX stuck-key: include touchcancel + safety net, altrimenti su iOS
         // un touch interrotto (multi-touch, scroll, app switch) lascia il
         // tasto a true e l'astronave continua a muoversi all'infinito.
-        const btns = container.querySelectorAll('.ctrl-btn');
+        const btns = container ? container.querySelectorAll('.ctrl-btn') : [];
         const release = (key) => () => { keys[key] = false; };
         btns.forEach(btn => {
             const k = btn.dataset.key;

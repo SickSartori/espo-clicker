@@ -48,26 +48,9 @@
         // finirebbe troppo in basso invece che centrato verticalmente.
         canvasWrapper.style.width = '100%';
 
-        const mobileControls = document.createElement('div');
-        mobileControls.id = 'super-espo-mobile-controls';
-        // FIX freeze-after-jump: gestiamo TUTTI gli eventi di rilascio
-        // (up/leave/cancel) altrimenti su iOS/Android il pointercancel lascia
-        // il tasto incollato a true e il personaggio non salta più.
-        const _bind = (key) =>
-            `onpointerdown="window.espoCustomKeys.${key}=true" ` +
-            `onpointerup="window.espoCustomKeys.${key}=false" ` +
-            `onpointerleave="window.espoCustomKeys.${key}=false" ` +
-            `onpointercancel="window.espoCustomKeys.${key}=false" ` +
-            `onlostpointercapture="window.espoCustomKeys.${key}=false"`;
-        mobileControls.innerHTML = `
-            <div style="display:flex; gap:10px;">
-                <button ${_bind('left')}>◀</button>
-                <button ${_bind('down')}>▼</button>
-                <button ${_bind('right')}>▶</button>
-            </div>
-            <button ${_bind('up')}>▲</button>
-        `;
-        canvasWrapper.appendChild(mobileControls);
+        // I controlli touch sono forniti dal virtual pad globale di arcade.php, che
+        // imposta window.espoCustomKeys (up/down/left/right + JUMP/FIRE). Niente pad
+        // legacy: su mobile comparivano due set di controlli sovrapposti.
 
         const overlay = document.createElement('div');
         overlay.id = 'super-espo-overlay';
