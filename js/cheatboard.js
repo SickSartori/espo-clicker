@@ -39,18 +39,23 @@
             color: #d7e0d7; font-family: 'Consolas','Monaco',monospace;
             display: flex; flex-direction: column; box-sizing: border-box;
         }
+        #cheatboard-container.cb-right { left: auto; right: 0; border-right: none; border-left: 1px solid #1f2a1f; box-shadow: -10px 0 50px rgba(0,0,0,0.6); transform: translateX(100%); }
         #cheatboard-container.open { transform: translateX(0); }
         #cheatboard-container * { box-sizing: border-box; }
 
         #cheatboard-handle {
-            position: absolute; top: 120px; right: -40px; width: 40px; height: 40px;
-            background: #0d100d; color: #00ff9d; border: 1px solid #1f2a1f; border-left: none;
-            border-radius: 0 8px 8px 0; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; font-size: 1.2rem; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
+            position: fixed; top: 120px; left: 0; width: 40px; height: 44px;
+            background: #0d100d; color: #00ff9d; border: 1px solid #1f2a1f;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            cursor: grab; z-index: 100000; touch-action: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: background 0.2s, color 0.2s;
+            -webkit-user-select: none; user-select: none;
         }
-        #cheatboard-handle:hover { background: #16201a; right: -45px; color: #fff; }
-        #cheatboard-container.open #cheatboard-handle { opacity: 0; pointer-events: none; right: 0; }
+        #cheatboard-handle:hover { background: #16201a; color: #fff; }
+        #cheatboard-handle.dragging { cursor: grabbing; opacity: 0.9; transition: none; }
+        #cheatboard-handle.cb-dock-left { border-left: none; border-radius: 0 8px 8px 0; }
+        #cheatboard-handle.cb-dock-right { border-right: none; border-radius: 8px 0 0 8px; }
+        #cheatboard-handle.cb-hidden { opacity: 0; pointer-events: none; }
 
         #cheatboard-header {
             display: flex; align-items: center; gap: 8px; padding: 11px 12px;
@@ -155,7 +160,6 @@
 
         @media only screen and (max-width: 768px) {
             #cheatboard-container { width: 94%; max-width: none; }
-            #cheatboard-handle { top: calc(140px + env(safe-area-inset-top)); right: -35px; width: 35px; }
             .cb-tab i { display: none; }
             .cb-tab { font-size: 0.7rem; }
             .cb-row { flex-wrap: wrap; gap: 6px; }
@@ -178,8 +182,6 @@
     const container = document.createElement('div');
     container.id = 'cheatboard-container';
     container.innerHTML = `
-        <div id="cheatboard-handle"><i class="fa-solid fa-terminal"></i></div>
-
         <div id="cheatboard-header">
             <span id="cheatboard-title"><i class="fa-solid fa-terminal"></i> Admin Console</span>
             <div id="cb-search"><i class="fa-solid fa-magnifying-glass"></i><input id="cb-search-input" placeholder="cerca…" aria-label="cerca cheat"></div>
@@ -639,11 +641,82 @@
     tabs.forEach(t => t.addEventListener('click', () => activate(t.getAttribute('data-tab'))));
     $('cb-search-input').addEventListener('input', e => filter(e.target.value));
 
-    // --- 11. Toggle / Hotkey ---
-    const togglePanel = () => { container.classList.toggle('open'); if (container.classList.contains('open')) updateDash(); };
-    $('cheatboard-handle').addEventListener('click', togglePanel);
+    // --- 11. Handle trascinabile (aggancio Sx/Dx) + Toggle + Login gate ---
+    const handle = document.createElement('div');
+    handle.id = 'cheatboard-handle';
+    handle.setAttribute('role', 'button');
+    handle.setAttribute('tabindex', '0');
+    handle.setAttribute('aria-label', 'Apri Admin Console (trascina per spostare)');
+    handle.innerHTML = '<i class="fa-solid fa-terminal"></i>';
+    document.body.appendChild(handle);
+
+    const loadPos = () => { try { const p = JSON.parse(localStorage.getItem('cheatboardHandlePos')); if (p && (p.side === 'left' || p.side === 'right') && typeof p.top === 'number') return p; } catch (e) { } return { side: 'left', top: 120 }; };
+    let handlePos = loadPos();
+    const savePos = () => { try { localStorage.setItem('cheatboardHandlePos', JSON.stringify(handlePos)); } catch (e) { } };
+    function applyHandlePos() {
+        const max = Math.max(0, window.innerHeight - handle.offsetHeight);
+        if (handlePos.top > max) handlePos.top = max;
+        handle.classList.toggle('cb-dock-left', handlePos.side === 'left');
+        handle.classList.toggle('cb-dock-right', handlePos.side === 'right');
+        handle.style.top = handlePos.top + 'px';
+        handle.style.left = handlePos.side === 'left' ? '0px' : 'auto';
+        handle.style.right = handlePos.side === 'right' ? '0px' : 'auto';
+        container.classList.toggle('cb-right', handlePos.side === 'right');
+    }
+
+    const togglePanel = () => {
+        const willOpen = !container.classList.contains('open');
+        container.classList.toggle('open', willOpen);
+        handle.classList.toggle('cb-hidden', willOpen);
+        if (willOpen) updateDash();
+    };
+
+    // Drag: distingue click (apre) da trascinamento (sposta e si aggancia al bordo)
+    let dragging = false, moved = false, sx = 0, sy = 0, hw = 40, hh = 44;
+    handle.addEventListener('pointerdown', (e) => {
+        if (e.button && e.button !== 0) return;
+        dragging = true; moved = false; sx = e.clientX; sy = e.clientY;
+        const r = handle.getBoundingClientRect(); hw = r.width; hh = r.height;
+        try { handle.setPointerCapture(e.pointerId); } catch (_) { }
+        handle.classList.add('dragging');
+        e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        if (!moved && (Math.abs(e.clientX - sx) > 4 || Math.abs(e.clientY - sy) > 4)) moved = true;
+        if (moved) {
+            const x = Math.max(0, Math.min(window.innerWidth - hw, e.clientX - hw / 2));
+            const y = Math.max(0, Math.min(window.innerHeight - hh, e.clientY - hh / 2));
+            handle.classList.remove('cb-dock-left', 'cb-dock-right');
+            handle.style.left = x + 'px'; handle.style.right = 'auto'; handle.style.top = y + 'px';
+        }
+    });
+    const endDrag = (e) => {
+        if (!dragging) return;
+        dragging = false; handle.classList.remove('dragging');
+        try { handle.releasePointerCapture(e.pointerId); } catch (_) { }
+        if (moved) {
+            handlePos = { side: (e.clientX < window.innerWidth / 2) ? 'left' : 'right', top: Math.max(0, Math.min(window.innerHeight - hh, e.clientY - hh / 2)) };
+            applyHandlePos(); savePos();
+        } else {
+            togglePanel();
+        }
+    };
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', () => { dragging = false; handle.classList.remove('dragging'); applyHandlePos(); });
+    handle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanel(); } });
+
     $('cheatboard-close').addEventListener('click', togglePanel);
     document.addEventListener('keydown', (e) => { if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) togglePanel(); });
+    window.addEventListener('resize', applyHandlePos);
+
+    // Login gate: niente cheatboard finché non c'è una sessione utente attiva
+    function applyLoginGate() {
+        const logged = !!sessionStorage.getItem('espooUser');
+        container.style.display = logged ? '' : 'none';
+        handle.style.display = logged ? '' : 'none';
+        if (!logged) { container.classList.remove('open'); handle.classList.remove('cb-hidden'); }
+    }
 
     // --- 12. Wiring ---
     const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
@@ -670,7 +743,9 @@
     // --- 13. Init ---
     activate('risorse');
     updateDebugUI();
+    applyHandlePos();
+    applyLoginGate();
     updateDash();
-    setInterval(updateDash, 400);
+    setInterval(() => { applyLoginGate(); if (container.classList.contains('open')) updateDash(); }, 400);
 
 })();
