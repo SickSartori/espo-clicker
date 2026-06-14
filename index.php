@@ -3,7 +3,7 @@ require_once("php/check_language.php");
 require_once("php/check_version.php");
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="<?php echo $lang; ?>">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -321,6 +321,9 @@ require_once("php/check_version.php");
 		     (loadThemeCSS in ui-functions.js). Senza questo gli aggiornamenti
 		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
 		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
+		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
+		     Letta dall'overlay i18n nel bundle (js/i18n.js) per applicare EN sui dati. -->
+		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
 		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>
 
 		<!-- ============================================================ -->
@@ -349,7 +352,7 @@ require_once("php/check_version.php");
 		<?php
 // Uso la stessa variabile usata nella libreria check_version.php
 if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
-	echo '<script src="js/cheatboard.js" defer></script>';
+	echo '<script src="js/cheatboard.js?v=' . time() . '" defer></script>'; // dev: sempre fresco
 	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 }
 ?>
