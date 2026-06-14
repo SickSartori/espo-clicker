@@ -710,9 +710,13 @@
     document.addEventListener('keydown', (e) => { if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) togglePanel(); });
     window.addEventListener('resize', applyHandlePos);
 
-    // Login gate: niente cheatboard finché non c'è una sessione utente attiva
+    // Login gate: cheatboard visibile SOLO se c'è sessione utente E il modale di login è chiuso.
+    // (Guardare solo espooUser non basta: può essere presente mentre il login è ancora mostrato
+    //  — es. ri-login per token scaduto o password mancante — e la cheatboard apparirebbe sopra.)
     function applyLoginGate() {
-        const logged = !!sessionStorage.getItem('espooUser');
+        const lm = document.getElementById('login-modal');
+        const loginShowing = lm && getComputedStyle(lm).display !== 'none';
+        const logged = !!sessionStorage.getItem('espooUser') && !loginShowing;
         container.style.display = logged ? '' : 'none';
         handle.style.display = logged ? '' : 'none';
         if (!logged) { container.classList.remove('open'); handle.classList.remove('cb-hidden'); }
