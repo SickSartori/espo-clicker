@@ -25,8 +25,8 @@ dump.rdb
 code
 assets/packs
 
-# Sourcemap dev (non servono in produzione)
-dist/*.map
+# Build output legacy (rigenerato da `npm run build` in locale e in CI prima del deploy)
+/dist/
 
 # Vite v3 dev output (decideremo se committare a fine migrazione)
 dist-v3/
