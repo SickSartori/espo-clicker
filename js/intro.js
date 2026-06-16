@@ -151,11 +151,74 @@
       return;
     }
 
-    // ---- FULL timeline (esteso nei task 2-3) ----
-    doFlash();
-    showLogo(welcomeText());
-    at(300, doReveal);
-    at(1600, finish);
+    // ---- FULL timeline (~4,6s) ----
+    var con = el('div', 'intro-con');
+    stage.appendChild(con);
+
+    var cmd = '$ espo deploy --user "' + username + '"';
+    var ci = 0;
+    var typeInt = setInterval(function () {
+      ci++;
+      con.innerHTML = '<div><span class="cy">' + cmd.slice(0, ci) + '</span><span class="intro-cursor"></span></div>';
+      if (ci >= cmd.length) clearInterval(typeInt);
+    }, 34);
+    intervals.push(typeInt);
+
+    function addLine(html) { con.appendChild(el('div', null, html)); }
+
+    at(700, function () { addLine('<span class="ok">[OK]</span> <span class="mu">auth token verified</span>'); });
+    at(1050, function () { addLine('<span class="cy">[..]</span> <span class="mu">mounting workspace</span>'); });
+    at(1350, function () {
+      var d = el('div', null, '<span class="mu">compiling bug-core</span><div class="intro-pbar"><div class="intro-pfill"></div></div>');
+      con.appendChild(d);
+      var pf = d.querySelector('.intro-pfill');
+      at(40, function () { if (pf) pf.style.width = '100%'; });
+    });
+
+    // GLITCH
+    at(1650, function () {
+      con.innerHTML = '';
+      overlay.classList.add('intro-glitching');
+      stage.appendChild(el('div', 'intro-err',
+        '<div class="h">[!!] SYSTEM INTEGRITY :: 0xBUG</div>' +
+        '<div class="l">SEGFAULT at 0x00E5P0<br>NULLPTR :: espo.core.js<br>STACK OVERFLOW // bugs++</div>'));
+      sfx('sound-error');
+      var words = ['SEGFAULT', '0xBUG', 'NULL', 'PANIC', 'bugs++', '0xDEAD'];
+      glitchInt = setInterval(function () {
+        var s = el('span', 'intro-glitch-word', words[Math.floor(Math.random() * words.length)]);
+        s.style.color = Math.random() < 0.5 ? '#ff3d5c' : '#00d9ff';
+        s.style.fontSize = (12 + Math.random() * 9) + 'px';
+        s.style.left = (Math.random() * 80 + 5) + '%';
+        s.style.top = (Math.random() * 80 + 5) + '%';
+        stage.appendChild(s);
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 190);
+      }, 90);
+    });
+
+    // DEBUG PASS / SCANNER
+    at(2550, function () {
+      overlay.classList.remove('intro-glitching');
+      if (glitchInt) { clearInterval(glitchInt); glitchInt = null; }
+      var gw = stage.querySelectorAll('.intro-glitch-word');
+      for (var i = 0; i < gw.length; i++) { if (gw[i].parentNode) gw[i].parentNode.removeChild(gw[i]); }
+      scan.classList.add('go');
+      at(30, function () { scan.style.top = 'calc(100% + 8px)'; });
+    });
+    at(3050, function () {
+      stage.innerHTML = '<div class="intro-con" style="text-align:center"><span class="ok" style="font-size:16px;font-weight:700;letter-spacing:1px">[OK] ALL BUGS FIXED</span></div>';
+      sfx('sound-achievement');
+    });
+
+    // REVEAL logo + HUD + avvio musica
+    at(3450, function () {
+      doFlash();
+      showLogo(welcomeText());
+      sfx('sound-prestige');
+      doReveal();
+    });
+
+    // HANDOFF
+    at(4500, finish);
   }
 
   window.EspoIntro = { play: play };
