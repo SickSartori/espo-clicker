@@ -40,7 +40,33 @@
     return o;
   }
 
-  function startRain() { return function () {}; }
+  function startRain(canvas, reduced) {
+    var ctx = canvas && canvas.getContext && canvas.getContext('2d');
+    if (!ctx) return function () {};
+    canvas.width = canvas.clientWidth || canvas.offsetWidth || window.innerWidth;
+    canvas.height = canvas.clientHeight || canvas.offsetHeight || window.innerHeight;
+    var cols = Math.max(8, Math.floor(canvas.width / 14));
+    var drops = [];
+    for (var i = 0; i < cols; i++) drops[i] = Math.random() * canvas.height;
+    var raf = null, stopped = false;
+    function frame() {
+      if (stopped) return;
+      ctx.fillStyle = 'rgba(5,8,16,0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '13px monospace';
+      for (var i = 0; i < cols; i++) {
+        var ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+        ctx.fillStyle = Math.random() < 0.07 ? 'rgba(0,217,255,0.5)' : 'rgba(0,140,170,0.16)';
+        ctx.fillText(ch, i * 14, drops[i]);
+        if (drops[i] > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        else drops[i] += reduced ? 6 : 14;
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    if (reduced) { ctx.fillStyle = '#050810'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    else { frame(); }
+    return function stop() { stopped = true; if (raf) cancelAnimationFrame(raf); };
+  }
 
   function play(opts) {
     opts = opts || {};
