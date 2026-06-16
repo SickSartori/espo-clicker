@@ -34,6 +34,17 @@ const JS_FILES = [
   'js/data/achievements.js',
   'js/data/events.js',
   'js/data/texts.js',
+
+  // i18n: overlay EN. Popolano window.gameData.i18n.en, poi i18n.js applica la
+  // lingua attiva (window.APP_LANG) PRIMA del render. 'it' resta il default inline.
+  'js/data-en/texts.js',
+  'js/data-en/teams.js',
+  'js/data-en/upgrades.js',
+  'js/data-en/skins.js',
+  'js/data-en/achievements.js',
+  'js/data-en/events.js',
+  'js/i18n.js',
+
   'js/data/gamestate.js', // dipende da tutti i file sopra (window.gameData.*)
 
 

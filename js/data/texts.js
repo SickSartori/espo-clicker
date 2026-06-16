@@ -45,7 +45,18 @@ window.gameData.texts = {
         noItemsBuy: "Nessun oggetto da comprare al momento.",
         noItemsLock: "Nessun oggetto bloccato in vista.",
         noItemsPurchased: "Ancora nessun acquisto effettuato.",
-        nothingToShow: "Niente da mostrare."
+        nothingToShow: "Niente da mostrare.",
+        defaultPlayer: "Giocatore",
+        initPrivateAssets: "Inizializzazione asset privati...",
+        readNews: "Leggi le novità dell'aggiornamento",
+        newsLabel: "Novità",
+        newsLoadError: "Impossibile caricare le novità.",
+        audioOn: "Attiva audio",
+        audioOff: "Disattiva audio"
+    },
+    rarities: {
+        common: "COMUNE", rare: "RARA", epic: "EPICA",
+        legendary: "LEGGENDARIA", divine: "DIVINA", christmas: "FESTIVA"
     },
     toasts: {
         welcome: "Benvenuto",
@@ -75,7 +86,16 @@ window.gameData.texts = {
         audioReset: "Audio ripristinato ai valori default",
         passChanged: "Password Aggiornata!",
         nameChanged: "Nome Aggiornato!",
-        arcadeWelcome: "Benvenuto nella Sala Server (Arcade)!"
+        arcadeWelcome: "Benvenuto nella Sala Server (Arcade)!",
+        memoryWarn: "⚠️ Memoria quasi piena",
+        sessionExpired24h: "⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.",
+        cloudConflict: "⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.",
+        sessionReload: "⚠️ Sessione scaduta! Ricarica la pagina per salvare.",
+        skinNeedFormat: "⚠️ Devi eseguire almeno 1 Formattazione per sbloccare questa skin!",
+        luckyBug: "🍀 BUG FORTUNATO! +{amount} bug!",
+        frenzy: "⚡ FRENESIA! Click ×7 per 15 secondi!",
+        dailyBonus: "🎁 Bonus giornaliero · Giorno {streak} · +{amount} bug!",
+        milestone: "🏆 {name}: {amount} unità!"
     },
     dialogs: {
         logout: "Logout?",
@@ -84,7 +104,53 @@ window.gameData.texts = {
         audioResetConfirm: "Vuoi ripristinare i volumi predefiniti consigliati?",
         enterPass: "Inserisci la password nell'area critica.",
         fillFields: "Compila entrambi i campi.",
-        confirmPass: "Conferma password attuale:"
+        confirmPass: "Conferma password attuale:",
+        accountDeleted: "Account eliminato. Addio!",
+        progressReset: "Progressi resettati con successo."
+    },
+    reformat: {
+        prep: "PREPARAZIONE FORMATTAZIONE",
+        loadingData: "Caricamento dati in corso...",
+        restoring: "RIPRISTINO UNIVERSO IN CORSO..."
+    },
+    system: {
+        storageBlocked: '⚠️ Il tuo browser blocca il salvataggio locale. I progressi <strong>non verranno salvati</strong>. Su Edge: <em>Impostazioni → Privacy → Prevenzione tracciamento → disattiva per questo sito</em>. Su Safari: <em>disattiva "Impedisci tracciamento cross-site"</em>. '
+    },
+    leaderboard: {
+        loading: "Caricamento...",
+        empty: "Nessun punteggio. Sii il primo!",
+        error: "Impossibile caricare la classifica.",
+        levelAbbr: "LIV.",
+        formatTitle: "Formattazioni (NG+)"
+    },
+    stats: {
+        promoProgress: "Progresso Promozione",
+        goal: "Obiettivo:",
+        economy: "Economia Aziendale",
+        bugsNow: "Bug Attuali",
+        runTotal: "Totale Run",
+        careerTotal: "Totale Carriera",
+        offline: "Offline",
+        performance: "Performance & Tech",
+        multiplier: "Moltiplicatore",
+        multiverse: "Multiverso (NG+)",
+        universesDestroyed: "Universi Distrutti",
+        quantumEnergy: "Energia Quantica",
+        profile: "Profilo & Visuals",
+        playtime: "Tempo di Gioco",
+        totalClicks: "Click Totali",
+        comboRecord: "Combo Record",
+        promotions: "Promozioni"
+    },
+    v2: {
+        title: "BENVENUTO NELLA V2.0",
+        thanks: "Grazie per aver giocato alla prima versione di <b>Espo Clicker</b>!",
+        intro: "Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.",
+        skinsSafe: "LE TUE SKIN SONO SALVE",
+        wardrobeIntact: "Il tuo guardaroba è intatto.",
+        veteranBonus: "BONUS VETERANO",
+        credited: "Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!",
+        discover: "SCOPRI LE NOVITÀ"
     },
     format: {
         suffixes: [

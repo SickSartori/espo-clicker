@@ -155,6 +155,7 @@
         try { return localStorage.getItem('espo_main_bugs') || null; } catch { return null; }
     }
     let _prevPendingVal = 0;
+    let _walletPrimed = false; // primo updateWallet stabilisce la baseline senza popup
 
     function _showScorePopup(amount) {
         const wallet = document.getElementById('fs-wallet');
@@ -203,7 +204,11 @@
         if (pendBox) pendBox.classList.toggle('has-pending', (parseFloat(pendStr) || 0) > 0);
 
         const curPending = parseFloat(pendStr) || 0;
-        if (curPending > _prevPendingVal && _prevPendingVal >= 0) {
+        if (!_walletPrimed) {
+            // Primo giro: stabilisce la baseline (niente popup "fantasma" per pending
+            // residuo da una sessione precedente).
+            _walletPrimed = true;
+        } else if (curPending > _prevPendingVal && _prevPendingVal >= 0) {
             const delta = curPending - _prevPendingVal;
             _showScorePopup(delta);
             _flashWallet();
@@ -423,8 +428,8 @@
             const stillLoading = window.ArcadeLoader && window.ArcadeLoader.isLoading && window.ArcadeLoader.isLoading();
             if (descEl) {
                 descEl.textContent = stillLoading
-                    ? 'Caricamento in corso, riprova tra un istante…'
-                    : 'Gioco non disponibile (connessione assente?). Riprova piu\' tardi.';
+                    ? ((window.ARCADE_TXT && window.ARCADE_TXT.loading) || 'Caricamento in corso, riprova tra un istante…')
+                    : ((window.ARCADE_TXT && window.ARCADE_TXT.gameUnavailable) || 'Gioco non disponibile (connessione assente?). Riprova piu\' tardi.');
                 descEl.style.color = '#ff8a8a';
             }
             return;
@@ -783,7 +788,7 @@ window.showArcadeGameOver = function (opts) {
     }
 
     var sLabel = document.createElement('div');
-    sLabel.textContent = 'PUNTEGGIO';
+    sLabel.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.score) || 'PUNTEGGIO';
     sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:11px;color:#9aa8b5;letter-spacing:3px;margin-bottom:6px;";
     wrap.appendChild(sLabel);
 
@@ -801,7 +806,7 @@ window.showArcadeGameOver = function (opts) {
 
     if (isNewRecord) {
         var recDiv = document.createElement('div');
-        recDiv.textContent = '★ NUOVO RECORD! ★';
+        recDiv.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.record) || '★ NUOVO RECORD! ★';
         recDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.65rem;color:#ffce15;animation:arcadeGoRecordShine 1s ease-in-out infinite,arcadeGoFadeUp 0.4s ease 1.2s forwards;opacity:0;margin-bottom:12px;";
         wrap.appendChild(recDiv);
     }
@@ -823,7 +828,9 @@ window.showArcadeGameOver = function (opts) {
 
     // Etichetta + barra: ritorno automatico al menu se non si clicca RESTART.
     var retLabel = document.createElement('div');
-    retLabel.textContent = onRetry ? '▸ o torna al menu… ◂' : '▸ ritorno al menu ◂';
+    retLabel.textContent = onRetry
+        ? ((window.ARCADE_TXT && window.ARCADE_TXT.returnRetry) || '▸ o torna al menu… ◂')
+        : ((window.ARCADE_TXT && window.ARCADE_TXT.returnMenu) || '▸ ritorno al menu ◂');
     retLabel.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:0.95rem;color:#9aa8b5;letter-spacing:1px;margin-top:16px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;";
     wrap.appendChild(retLabel);
 

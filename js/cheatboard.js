@@ -27,6 +27,48 @@
         { id: 'sistema',  label: 'Sistema',  icon: 'fa-screwdriver-wrench', color: '#ff5566' }
     ];
 
+    // --- i18n cheat (dev-only): overlay EN via window.APP_LANG. Mappa frasi IT->EN
+    //     applicata all'HTML del pannello e ai toast. 'it' = default (nessuna mappa).
+    //     Le valute (Bug/Token/Q-bits) restano invariate anche in EN. ---
+    const CB_EN = (window.APP_LANG === 'en');
+    const CB_MAP = !CB_EN ? [] : [
+        ['>Risorse<', '>Resources<'], ['>Eventi<', '>Events<'], ['>Scenari<', '>Scenarios<'], ['>Sistema<', '>System<'],
+        ['>Livello<', '>Level<'], ['>Gain ora<', '>Gain/h<'], ['>Soglia<', '>Threshold<'], ['>Prossimo prestige<', '>Next prestige<'],
+        ['>Controllo<', '>Control<'], ['>Sblocchi<', '>Unlocks<'],
+        ['Aggiungi valute', 'Add currencies'], ['Aggiungi Bug', 'Add Bugs'], ['Aggiungi Token', 'Add Tokens'], ['Aggiungi Q-bits', 'Add Q-bits'],
+        ['Imposta valore esatto', 'Set exact value'], ['Imposta Score', 'Set Score'], ['Imposta Token', 'Set Tokens'], ['Imposta Q-bits', 'Set Q-bits'],
+        ['Aggiungi Click', 'Add Clicks'], ['Azzera Bonus BPS', 'Reset BPS Bonus'], ['Risorse casuali (Chaos)', 'Random resources (Chaos)'],
+        ['Livello & Formattazione', 'Level & Format'], ['Vai al Livello', 'Go to Level'], ['Imposta Formattazioni', 'Set Formats'],
+        ['Scorciatoie progressione', 'Progression shortcuts'], ['Rendi Prestige pronto', 'Make Prestige ready'], ['Lab al massimo', 'Max out Lab'],
+        ['Pronto Formattazione (NG+)', 'Format ready (NG+)'], ['Aggiungi 1 Formattazione', 'Add 1 Format'],
+        ['Errore 404', 'Error 404'], ['Video meme', 'Meme videos'], ['Attiva Espo Fury', 'Activate Espo Fury'], ['Azzera Cooldown', 'Reset Cooldown'],
+        ['Ferma evento in corso', 'Stop current event'],
+        ['Carica uno stato di test', 'Load a test state'], ['Nuovo giocatore', 'New player'], ['Stato pulito, early game', 'Clean state, early game'],
+        ['Pronto 1° Prestige', 'Ready for 1st Prestige'], ['Score appena sopra soglia · Liv 0', 'Score just above threshold · Lv 0'],
+        ['≈ Liv 5 · team e token medi', '≈ Lv 5 · medium teams & tokens'], ['Endgame / pre-Formattazione', 'Endgame / pre-Format'],
+        ['Liv 25 · Q-bits · NG+ ready', 'Lv 25 · Q-bits · NG+ ready'], ['Punto bilanciamento', 'Balance point'],
+        ['Liv 3 "Medio" · score 0, osserva il ritmo', 'Lv 3 "Medium" · score 0, watch the pace'],
+        ['Sblocca Negozio', 'Unlock Shop'], ['Blocca Negozio', 'Lock Shop'], ['Sblocca Skin', 'Unlock Skins'], ['Blocca Skin', 'Lock Skins'],
+        ['Sblocca Obiettivi', 'Unlock Achievements'], ['Blocca Obiettivi', 'Lock Achievements'], ['+100 a tutti i Team', '+100 to all Teams'],
+        ['Onnipotenza', 'Omnipotence'], ['Stampa Stato', 'Print State'], ['Salva Ora', 'Save Now'], ['Zona pericolosa', 'Danger zone'],
+        ['Test Migrazione V2', 'Test V2 Migration'], ['RESET TOTALE', 'FULL RESET'],
+        ['cerca cheat', 'search cheats'], ['cerca…', 'search…'], ['Apri Admin Console (trascina per spostare)', 'Open Admin Console (drag to move)'],
+        ['Aggiunti ', 'Added '], ['Score impostato a ', 'Score set to '], ['Token impostati a ', 'Tokens set to '], ['Q-bits impostati a ', 'Q-bits set to '],
+        ['Bonus BPS azzerato', 'BPS Bonus reset'], ['Bonus BPS +', 'BPS Bonus +'], ['BPS è 0, impossibile saltare', 'BPS is 0, cannot skip'],
+        ['Salto +1h (+', 'Skip +1h (+'], ['Salto +1h', 'Skip +1h'], ['Sei al Livello ', 'You are at Level '], ['Formattazioni impostate a ', 'Formats set to '],
+        ['Formattazioni +1', 'Formats +1'], ['Prestige pronto (soglia ', 'Prestige ready (threshold '], ['(soglia ', '(threshold '], [', prestige pronto)', ', prestige ready)'], ['Requisiti NG+ soddisfatti! Vai nel Lab', 'NG+ requirements met! Go to the Lab'],
+        ['BSOD forzato (x', 'BSOD forced (x'], ['Matrix forzato (x', 'Matrix forced (x'], ['Britney Espears attivata', 'Britney Espears activated'],
+        ['Golden Bug generato', 'Golden Bug spawned'], ['Cooldown azzerati', 'Cooldowns reset'], ['Espo Fury attivata', 'Espo Fury activated'],
+        ['activateCrunchTime non disponibile', 'activateCrunchTime not available'], ['Nessun evento attivo', 'No active event'], ['Scenario caricato: ', 'Scenario loaded: '],
+        ['Negozio sbloccato', 'Shop unlocked'], ['Negozio bloccato', 'Shop locked'], ['+100 a tutti i team', '+100 to all teams'],
+        ['GOD MODE attivata', 'GOD MODE activated'], ['Tutte le skin sbloccate', 'All skins unlocked'], ['Skin bloccate', 'Skins locked'],
+        ['Tutti gli obiettivi sbloccati', 'All achievements unlocked'], ['Tutti gli obiettivi bloccati', 'All achievements locked'],
+        ['Stato stampato in console (F12)', 'State printed to console (F12)'], ['Salvataggio forzato', 'Forced save'], ['saveGame non disponibile', 'saveGame not available'],
+        ['Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.', 'Simulate V2 migration? Creates a fake V1 save and reloads.'],
+        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Cancella tutto senza password e ricarica.', 'Wipes everything without a password and reloads.']
+    ].sort((a, b) => b[0].length - a[0].length);
+    const cbT = (s) => { if (!CB_EN || s == null) return s; for (let i = 0; i < CB_MAP.length; i++) s = s.split(CB_MAP[i][0]).join(CB_MAP[i][1]); return s; };
+
     // --- 1. Stili ---
     const styles = `
         #cheatboard-container {
@@ -181,7 +223,7 @@
 
     const container = document.createElement('div');
     container.id = 'cheatboard-container';
-    container.innerHTML = `
+    container.innerHTML = cbT(`
         <div id="cheatboard-header">
             <span id="cheatboard-title"><i class="fa-solid fa-terminal"></i> Admin Console</span>
             <div id="cb-search"><i class="fa-solid fa-magnifying-glass"></i><input id="cb-search-input" placeholder="cerca…" aria-label="cerca cheat"></div>
@@ -302,7 +344,7 @@
             </section>
 
         </div>
-    `;
+    `);
     document.body.appendChild(container);
 
     // --- 3. Helper ---
@@ -318,7 +360,7 @@
         if (s < 86400) return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
         return Math.floor(s / 86400) + 'g ' + Math.floor((s % 86400) / 3600) + 'h';
     };
-    const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast('<i class="fa-solid fa-terminal"></i> ' + msg, 'info'); };
+    const toast = (msg) => { if (window.EspooClicker) window.EspooClicker.showToast('<i class="fa-solid fa-terminal"></i> ' + cbT(msg), 'info'); };
     const updateGame = () => { if (typeof updateUI === 'function') updateUI(); };
     const refreshUI = () => {
         if (typeof recalculateCPS === 'function') recalculateCPS();
@@ -575,13 +617,13 @@
     }
     async function forceSave() { if (window.EspooClicker && window.EspooClicker.saveGame) { await window.EspooClicker.saveGame(); toast('Salvataggio forzato'); } else toast('saveGame non disponibile'); }
     function forceV2() {
-        if (!confirm('Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.')) return;
+        if (!confirm(cbT('Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.'))) return;
         const fake = { version: { major: 1, minor: 4, stage: 'stable' }, user: { username: gameState.user.username }, skins: { unlocked: gameState.skins.unlocked, current: gameState.skins.current }, score: '1000000000000000', totalScore: '1000000000000000', lifetimeScore: '1000000000000000', totalClicks: 50000 };
         localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(fake)));
         gameState.isDeleting = true; location.reload();
     }
     async function hardReset() {
-        if (!confirm('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto senza password e ricarica.')) return;
+        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto senza password e ricarica.'))) return;
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
         localStorage.removeItem('espotoolClickerSaveV9');
@@ -646,7 +688,7 @@
     handle.id = 'cheatboard-handle';
     handle.setAttribute('role', 'button');
     handle.setAttribute('tabindex', '0');
-    handle.setAttribute('aria-label', 'Apri Admin Console (trascina per spostare)');
+    handle.setAttribute('aria-label', cbT('Apri Admin Console (trascina per spostare)'));
     handle.innerHTML = '<i class="fa-solid fa-terminal"></i>';
     document.body.appendChild(handle);
 

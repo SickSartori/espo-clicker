@@ -76,7 +76,7 @@ require_once("php/check_version.php");
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
 	</head>
 	<body>
-		<a href="#center-column" class="v3-skip-link">Salta al contenuto principale</a>
+		<a href="#center-column" class="v3-skip-link"><?php echo $labels["idx_skip_content"]; ?></a>
 		<canvas id="matrix-canvas" aria-hidden="true"></canvas>
 
 		<div id="game-loader">
@@ -114,8 +114,8 @@ require_once("php/check_version.php");
 		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
 			<div class="prestige-anim-container" id="prestige-anim-container">
 				<i class="fa-solid fa-certificate fa-flip prestige-anim-icon"></i>
-				<h1 class="prestige-anim-title">Promozione in Corso</h1>
-				<p class="prestige-anim-subtitle fa-fade">Ristrutturazione Aziendale del Database...</p>
+				<h1 class="prestige-anim-title"><?php echo $labels["idx_promo_title"]; ?></h1>
+				<p class="prestige-anim-subtitle fa-fade"><?php echo $labels["idx_promo_subtitle"]; ?></p>
 
 				<div class="prestige-progress-track">
 					<div id="prestige-progress-bar" class="prestige-progress-fill"></div>
@@ -137,7 +137,7 @@ require_once("php/check_version.php");
 		<div id="offline-modal" class="modal-backdrop modal_backdrop_none">
 			<div class="modal-content offline_modal_content">
 				<h2>
-					💤 <?php echo $labels["offline_titolo"]; ?>
+					<i class="fa-solid fa-bed"></i> <?php echo $labels["offline_titolo"]; ?>
 				</h2>
 				<div class="offline_content">
 					<p class="offline_content_sottotitolo">
@@ -156,7 +156,7 @@ require_once("php/check_version.php");
 						</span>
 					</div>
 					<button id="btn-claim-offline" class="buy-btn offline_content_button">
-						💰 <?php echo $labels["offline_guadagni"]; ?>
+						<i class="fa-solid fa-sack-dollar"></i> <?php echo $labels["offline_guadagni"]; ?>
 					</button>
 				</div>
 			</div>
@@ -166,7 +166,7 @@ require_once("php/check_version.php");
 		<?php include 'includes/modals_arcade.php'; ?>
 		<?php include 'includes/modals_help.php'; ?>
 
-		<nav id="game-navbar" aria-label="Menu principale">
+		<nav id="game-navbar" aria-label="<?php echo $labels["idx_main_menu_aria"]; ?>">
 			<div class="nav-group left">
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
 					<i class="nav-icon" data-lucide="book-open"></i>
@@ -225,13 +225,15 @@ require_once("php/check_version.php");
 			</div>
 		</nav>
 
-		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>">
-			<i class="fa-solid fa-volume-high"></i>
+		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>" aria-label="<?php echo $labels["index_muta_audio"]; ?>">
+			<span class="qm-icon"><i class="fa-solid fa-volume-high"></i></span>
+			<!-- Etichetta sblocco audio (.is-blocked). TODO i18n: "Attiva audio" -> $labels. -->
+			<span class="qm-hint" aria-hidden="true">Attiva audio</span>
 		</button>
 
 		<div id="game-container"><h1 style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;">Espò Clicker</h1>
-			<div id="left-column" class="game-column" role="region" aria-label="Potenziamenti click e automazione">
-				<div class="tabs-header" role="tablist" aria-label="Categorie negozio">
+			<div id="left-column" class="game-column" role="region" aria-label="<?php echo $labels["idx_upgrades_aria"]; ?>">
+				<div class="tabs-header" role="tablist" aria-label="<?php echo $labels["idx_shop_cat_aria"]; ?>">
 					<button class="tab-btn active" data-target="upgrade-store" id="tab-click" role="tab" aria-selected="true" aria-controls="upgrade-store">
 						<i data-lucide="mouse-pointer-2"></i>
 						<?php echo $labels["game_container_click_titolo"]; ?>
@@ -250,7 +252,7 @@ require_once("php/check_version.php");
 				</div>
 				
 				<div id="global-filter-section">
-					<select id="global-filter-select" aria-label="Filtro negozio">
+					<select id="global-filter-select" aria-label="<?php echo $labels["idx_shop_filter_aria"]; ?>">
 						<option value="available"><?php echo $labels["game_container_da_comprare"]; ?></option>
 						<option value="locked"><?php echo $labels["game_container_in_arrivo"]; ?></option>
 						<option value="purchased"><?php echo $labels["game_container_gia_presi"]; ?></option>
@@ -282,7 +284,7 @@ require_once("php/check_version.php");
 		<div id="crunch-overlay"></div>
 		<div id="fire-particles-container"></div>
 
-		<div id="mobile-nav-bar" role="navigation" aria-label="Navigazione mobile">
+		<div id="mobile-nav-bar" role="navigation" aria-label="<?php echo $labels['idx_mobile_nav_aria']; ?>">
 			<button class="mobile-nav-btn" data-target="left-column">
 				<i class="fa-solid fa-bolt"></i>
 				<span><?php echo $labels["mobile_tab_upgrade"]; ?></span>
@@ -324,7 +326,15 @@ require_once("php/check_version.php");
 		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
 		     Letta dall'overlay i18n nel bundle (js/i18n.js) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
-		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<?php
+		// Cache-bust del bundle: in dev (localhost) usa filemtime → ogni rebuild
+		// (node build.js) viene servito fresco senza dover bumpare la versione.
+		// In produzione resta $cacheVer (prodVersion) per cache HTTP/SW stabile.
+		$bundleVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SERVER['HTTP_HOST'] ?? ''))
+			? (@filemtime(__DIR__ . '/dist/game.bundle.min.js') ?: $cacheVer)
+			: $cacheVer;
+		?>
+		<script src="dist/game.bundle.min.js?v=<?php echo $bundleVer; ?>" defer></script>
 
 		<!-- ============================================================ -->
 		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
@@ -351,7 +361,7 @@ require_once("php/check_version.php");
 	
 		<?php
 // Uso la stessa variabile usata nella libreria check_version.php
-if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
+if (isset($config['instanceName']) && $config['instanceName'] === 'dev' && ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? '')) {
 	echo '<script src="js/cheatboard.js?v=' . time() . '" defer></script>'; // dev: sempre fresco
 	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 }
@@ -388,7 +398,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 					sw.postMessage('SKIP_WAITING');
 				} else {
 					// Game UI attiva → chiedi consenso per non interrompere
-					if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
+					if (confirm(<?php echo json_encode($labels["idx_sw_update"], JSON_UNESCAPED_UNICODE); ?>)) {
 						sw.postMessage('SKIP_WAITING');
 					}
 				}
@@ -469,7 +479,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 				showRow();
 				document.addEventListener('click', (e) => {
 					if (!e.target.closest('#pwa-install-btn')) return;
-					alert('Per installare l\'app: tocca l\'icona "Condividi" in Safari e poi "Aggiungi a schermata Home".');
+					alert(<?php echo json_encode($labels["idx_pwa_install"], JSON_UNESCAPED_UNICODE); ?>);
 				});
 			} else {
 				// Android / Desktop Chrome/Edge

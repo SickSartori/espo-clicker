@@ -5,7 +5,7 @@
 				<i data-lucide="zap" aria-hidden="true"></i>
 				<?php echo $labels["col_center_moltiplicatore_label"]; ?>
 			</span>
-            <span id="display-career-bonus" class="header-value" style="color: #f1c40f;" aria-label="Moltiplicatore">x1.00</span>
+            <span id="display-career-bonus" class="header-value" style="color: #f1c40f;" aria-label="<?php echo $labels['col_center_mult_aria']; ?>">x1.00</span>
         </div>
         <div class="header-main-score">
             <span class="header-label-main">
@@ -38,7 +38,7 @@
             <img id="manager-photo-clicked" src="assets/image/skins/espo-click.webp" alt="" draggable="false">
             <img id="manager-photo-normal" src="assets/image/skins/espo.webp" alt="" draggable="false">
         </button>
-        <div id="cps-display" aria-label="Bug per secondo">BPS: 0.0</div>
+        <div id="cps-display" aria-label="<?php echo $labels['col_center_bps_aria']; ?>">BPS: 0.0</div>
         <button id="skill-crunchTime" class="skill-btn" style="display: none;">
             <?php echo $labels["col_center_espo_fury_titolo"]; ?>
             <div class="skill-timer">

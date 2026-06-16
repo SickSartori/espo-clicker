@@ -23,22 +23,22 @@
             <div id="arcade-game-selector" class="arcade-split-layout">
 
                 <div class="arcade-menu-list">
-                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-desc="Mangia i bug, evita i muri. Un classico intramontabile." onclick="if(window.initSnakeGame) window.initSnakeGame()">
+                    <div class="arcade-menu-item active" data-game="snake" data-title="SNAKE PROTOCOL" data-color="#2ecc71" data-desc="<?php echo $labels['arcade_desc_snake']; ?>" onclick="if(window.initSnakeGame) window.initSnakeGame()">
                         <span class="item-num">01</span><span>SNAKE PROTOCOL</span>
                     </div>
-                    <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-desc="Naviga nello spazio e distruggi gli sciami di bug alieni." onclick="if(window.initSpaceGame) window.initSpaceGame()">
+                    <div class="arcade-menu-item" data-game="space" data-title="SPACE IMPACT" data-color="#e74c3c" data-desc="<?php echo $labels['arcade_desc_space']; ?>" onclick="if(window.initSpaceGame) window.initSpaceGame()">
                         <span class="item-num">02</span><span>SPACE IMPACT</span>
                     </div>
-                    <div class="arcade-menu-item" data-game="asteroids" data-title="ESPO-ROIDS" data-color="#e67e22" data-desc="Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!" onclick="if(window.startAsteroidsGame) window.startAsteroidsGame()">
+                    <div class="arcade-menu-item" data-game="asteroids" data-title="ESPO-ROIDS" data-color="#e67e22" data-desc="<?php echo $labels['arcade_desc_asteroids']; ?>" onclick="if(window.startAsteroidsGame) window.startAsteroidsGame()">
                         <span class="item-num">03</span><span>ESPO-ROIDS</span>
                     </div>
-                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPO" data-color="#9b59b6" data-desc="Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!" onclick="if(window.startSuperEspoGame) window.startSuperEspoGame()">
+                    <div class="arcade-menu-item" data-game="superespo" data-title="SUPER ESPO" data-color="#9b59b6" data-desc="<?php echo $labels['arcade_desc_superespo']; ?>" onclick="if(window.startSuperEspoGame) window.startSuperEspoGame()">
                         <span class="item-num">04</span><span>SUPER ESPO</span>
                     </div>
-                    <div class="arcade-menu-item" data-game="invaders" data-title="BUG INVADERS" data-color="#2ecc71" data-desc="Difendi i bunker, abbatti lo sciame di alieni-bug prima che ti raggiunga." onclick="if(window.startInvadersGame) window.startInvadersGame()">
+                    <div class="arcade-menu-item" data-game="invaders" data-title="BUG INVADERS" data-color="#2ecc71" data-desc="<?php echo $labels['arcade_desc_invaders']; ?>" onclick="if(window.startInvadersGame) window.startInvadersGame()">
                         <span class="item-num">05</span><span>BUG INVADERS</span>
                     </div>
-                    <div class="arcade-menu-item" data-game="centipede" data-title="BUG CRAWLER" data-color="#f472b6" data-desc="Distruggi il centopiedi-bug nel campo dei funghi prima che ti raggiunga al suolo." onclick="if(window.startCentipedeGame) window.startCentipedeGame()">
+                    <div class="arcade-menu-item" data-game="centipede" data-title="BUG CRAWLER" data-color="#f472b6" data-desc="<?php echo $labels['arcade_desc_centipede']; ?>" onclick="if(window.startCentipedeGame) window.startCentipedeGame()">
                         <span class="item-num">06</span><span>BUG CRAWLER</span>
                     </div>
                     <div class="arcade-menu-item locked">
@@ -50,7 +50,7 @@
                     <div class="preview-content">
                         <h3 id="preview-title" style="color: #2ecc71;">SNAKE PROTOCOL</h3>
                         <div class="preview-separator">════════════════</div>
-                        <p id="preview-desc">Mangia i bug, evita i muri. Un classico intramontabile.</p>
+                        <p id="preview-desc"><?php echo $labels['arcade_desc_snake']; ?></p>
 
                         <div class="preview-stats">
                             ★ HI-SCORE: <span id="preview-highscore">0</span>
@@ -69,11 +69,11 @@
                 <div id="asteroids-overlay" class="arcade-overlay">
                     <h2 style="color: #e67e22; font-size: 2.5rem; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 10px #e67e22;">ESPO-ROIDS</h2>
                     <p style="color: #fff; margin-bottom: 20px; font-size: 1rem;">
-                        Tasti Direzionali: <span style="color:#e67e22">Ruota / Accelera</span><br>
-                        Spazio: <span style="color:#e67e22">Spara</span>
+                        <?php echo $labels['arcade_keys_dir']; ?> <span style="color:#e67e22"><?php echo $labels['arcade_rotate']; ?></span><br>
+                        <?php echo $labels['arcade_space_key']; ?> <span style="color:#e67e22"><?php echo $labels['arcade_fire']; ?></span>
                     </p>
-                    <button class="arcade-btn" onclick="window.startAsteroidsRun()">AVVIA MISSIONE</button>
-                    <button class="arcade-btn secondary" onclick="window.exitAsteroidsGame()" style="margin-top: 10px;">ESCI</button>
+                    <button class="arcade-btn" onclick="window.startAsteroidsRun()"><?php echo $labels['arcade_start_mission']; ?></button>
+                    <button class="arcade-btn secondary" onclick="window.exitAsteroidsGame()" style="margin-top: 10px;"><?php echo $labels['arcade_exit']; ?></button>
                 </div>
             </div>
 

@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (versionDisplayBtn) {
     versionDisplayBtn.style.pointerEvents = 'auto'; // Abilita i click
     versionDisplayBtn.style.cursor = 'pointer';
-    versionDisplayBtn.title = "Leggi le novità dell'aggiornamento";
+    versionDisplayBtn.title = gameData.texts.ui.readNews;
     
     versionDisplayBtn.addEventListener('click', () => {
         const Game = getGameAPI();
@@ -793,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Aggiorna solo il nome utente nell'header
             const displayUser = document.getElementById('display-username-large');
             if (displayUser) {
-                displayUser.textContent = user.username || "Giocatore";
+                displayUser.textContent = user.username || gameData.texts.ui.defaultPlayer;
             }
         }
         // -------------------------------------
@@ -828,6 +828,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!Game) return;
         const gameState = Game.getGameState();
         const userSettings = gameState.user;
+
+        // Selettore lingua: riflette APP_LANG e, al cambio, riscrive il cookie e ricarica.
+        const langSelect = document.getElementById('lang-select');
+        if (langSelect) {
+            langSelect.value = window.APP_LANG || 'it';
+            langSelect.onchange = function () {
+                const lang = this.value === 'en' ? 'en' : 'it';
+                document.cookie = 'user_default_language=' + lang + ';path=/;max-age=' + (60 * 60 * 24 * 365);
+                location.reload();
+            };
+        }
 
         // Aggiornamento UI esistente (Username e Slider)
         if (currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
@@ -1057,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', async () => {
         const password = document.getElementById('danger-zone-password').value;
         if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
-        if (!confirm("SEI SICURO? Questa azione è irreversibile e cancellerà tutto.")) return;
+        if (!confirm(gameData.texts.dialogs.deleteConfirm)) return;
 
         const Game = getGameAPI();
         try {
@@ -1071,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.getGameState().isDeleting = true;
 
 
-                alert("Account eliminato. Addio!");
+                alert(gameData.texts.dialogs.accountDeleted);
                 sessionStorage.clear();
                 localStorage.clear(); // Pulisce tutto il browser
                 if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
@@ -1088,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetProgressBtn.addEventListener('click', async () => {
             const password = document.getElementById('danger-zone-password').value;
             if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
-            if (!confirm("ATTENZIONE: Questo resetterà tutti i progressi al punto di partenza (Hard Reset). I token Lab e le Skin verranno persi. Continuare?")) return;
+            if (!confirm(gameData.texts.dialogs.resetConfirm)) return;
 
             const Game = getGameAPI();
             try {
@@ -1101,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Evita che il salvataggio automatico sovrascriva il reset
                     Game.getGameState().isDeleting = true;
 
-                    alert("Progressi resettati con successo.");
+                    alert(gameData.texts.dialogs.progressReset);
 
                     if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
                         try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }

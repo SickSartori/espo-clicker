@@ -738,7 +738,9 @@ function updateSkinsUI() {
     const unlockedList = gameState.skins.unlocked;
     const currentSkin = gameState.skins.current;
 
-    const rarityMap = {
+    // Etichette rarità: da gameData.texts.rarities (tradotte via overlay i18n),
+    // con fallback IT hardcoded se il dizionario non è disponibile.
+    const rarityMap = (gameData.texts && gameData.texts.rarities) || {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
         'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
     };
@@ -813,7 +815,7 @@ function updateSkinsUI() {
 
         skinsArray.push({
             id: key, data, isUnlocked, isEquipped, isBuyable, canAfford,
-            rarityLabel: rarityMap[data.rarity] || 'COMUNE',
+            rarityLabel: rarityMap[data.rarity] || rarityMap.common || 'COMUNE',
             requirement, baseText, imgSource,
             color: rColors[data.rarity] || rColors['common'],
             glow: rGlows[data.rarity] || rGlows['common']
@@ -1362,19 +1364,19 @@ function showV2MigrationModal(onConfirm) {
     overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
     overlay.innerHTML = `
         <div class="modal-content" style="max-width:480px; text-align:center; animation: popIn 0.3s ease-out; padding: 10px">
-            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">BENVENUTO NELLA V2.0</h2>
+            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">${gameData.texts.v2.title}</h2>
             <div style="text-align:left; font-size:0.95rem; color:#bdc3c7; margin-bottom:20px;">
-                Grazie per aver giocato alla prima versione di <b>Espo Clicker</b>!<br><br>
-                Per introdurre il <b>New Game+</b>, la Sala Arcade e riequilibrare la classifica, abbiamo effettuato un <b>Riallineamento Quantico</b> dei server.<br><br>
+                ${gameData.texts.v2.thanks}<br><br>
+                ${gameData.texts.v2.intro}<br><br>
                 <div style="background:rgba(46,204,113,0.1); border-left:4px solid #2ecc71; padding:10px; margin-bottom:10px; border-radius:4px;">
-                    <b style="color:#2ecc71;">&#10003; LE TUE SKIN SONO SALVE</b><br>Il tuo guardaroba è intatto.
+                    <b style="color:#2ecc71;">&#10003; ${gameData.texts.v2.skinsSafe}</b><br>${gameData.texts.v2.wardrobeIntact}
                 </div>
                 <div style="background:rgba(155,89,182,0.1); border-left:4px solid #9b59b6; padding:10px; border-radius:4px;">
-                    <b style="color:#9b59b6;">&#10003; BONUS VETERANO</b><br>Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!
+                    <b style="color:#9b59b6;">&#10003; ${gameData.texts.v2.veteranBonus}</b><br>${gameData.texts.v2.credited}
                 </div>
             </div>
             <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="v2-migration-confirm">
-                <i class="fa-solid fa-meteor" style="margin-right: 2px;"></i> SCOPRI LE NOVITÀ
+                <i class="fa-solid fa-meteor" style="margin-right: 2px;"></i> ${gameData.texts.v2.discover}
             </button>
         </div>`;
     document.body.appendChild(overlay);
@@ -2269,9 +2271,9 @@ function updateStatsUI() {
                     <div class="stat-progress-info">
                         <span>
                             <i class="fa-solid fa-rocket" style="color: #2ecc71; margin-right: 6px;"></i>
-                            Progresso Promozione
+                            ${gameData.texts.stats.promoProgress}
                             <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
-                                (Obiettivo: <span id="st-threshold" class="simple-tooltip" data-tooltip=""></span>)
+                                (${gameData.texts.stats.goal} <span id="st-threshold" class="simple-tooltip" data-tooltip=""></span>)
                             </span>
                         </span>
                         <span id="st-progress-pct" style="font-size: 1.1rem; font-weight: 800;"></span>
@@ -2284,22 +2286,22 @@ function updateStatsUI() {
 
             <!-- Economia -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> Economia Aziendale</div>
+                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> ${gameData.texts.stats.economy}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> Bug Attuali</span>
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.bugsNow}</span>
                         <span id="st-score" class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> Totale Run</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.runTotal}</span>
                         <span id="st-total" class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Totale Carriera</span>
+                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.careerTotal}</span>
                         <span id="st-lifetime" class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Offline</span>
+                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.offline}</span>
                         <span id="st-offline" class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="">
                             <span id="st-offline-val"></span>
                             <span id="st-offline-pct" style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;"></span>
@@ -2310,7 +2312,7 @@ function updateStatsUI() {
 
             <!-- Performance -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> Performance & Tech</div>
+                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> ${gameData.texts.stats.performance}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-gauge-high" style="color: #e67e22; margin-right: 4px; font-size: 0.65rem;"></i> BPS</span>
@@ -2324,7 +2326,7 @@ function updateStatsUI() {
                         </span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> Moltiplicatore</span>
+                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.multiplier}</span>
                         <span id="st-mult" class="stat-value" style="color: #f1c40f;"></span>
                     </div>
                     <div class="stat-box">
@@ -2336,14 +2338,14 @@ function updateStatsUI() {
 
             <!-- Multiverso (NG+) -->
             <div id="st-multiverse" class="stats-section" style="border-color: rgba(155, 89, 182, 0.3); display: none;">
-                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> Multiverso (NG+)</div>
+                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> ${gameData.texts.stats.multiverse}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Universi Distrutti</span>
+                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.universesDestroyed}</span>
                         <span id="st-formats" class="stat-value" style="color: #e74c3c;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Energia Quantica</span>
+                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.quantumEnergy}</span>
                         <span id="st-qbits" class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);"></span>
                     </div>
                 </div>
@@ -2351,26 +2353,26 @@ function updateStatsUI() {
 
             <!-- Profilo -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> Profilo & Visuals</div>
+                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> ${gameData.texts.stats.profile}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
                         <span id="st-skin" class="stat-value" style="text-transform: capitalize; color: #9b59b6;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> Tempo di Gioco</span>
+                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.playtime}</span>
                         <span id="st-playtime" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> Click Totali</span>
+                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.totalClicks}</span>
                         <span id="st-clicks" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-fire" style="color: #ff4757; margin-right: 4px; font-size: 0.65rem;"></i> Combo Record</span>
+                        <span class="stat-label"><i class="fa-solid fa-fire" style="color: #ff4757; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.comboRecord}</span>
                         <span id="st-combo" class="stat-value" style="color: #ff4757;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> Promozioni</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.promotions}</span>
                         <span id="st-resets" class="stat-value"></span>
                     </div>
                 </div>

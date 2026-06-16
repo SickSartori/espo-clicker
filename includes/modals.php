@@ -63,6 +63,22 @@
 			<?php echo $labels["modals_opzioni_titolo"]; ?>
 		</h2>
         <div class="settings-content">
+            <!-- Selettore lingua (IT/EN). Label bilingue per restare leggibile in entrambe le lingue. -->
+            <div class="settings-group">
+                <h3 class="group-title">
+                    <i class="fa-solid fa-language"></i> Lingua / Language
+                </h3>
+                <div class="slider-row" style="margin-top: 15px;">
+                    <span class="slider-icon"><i class="fa-solid fa-globe"></i></span>
+                    <div class="slider-wrapper" style="width: 100%;">
+                        <select id="lang-select" class="clean-input" style="width: 100%; padding: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid #4a6582; color: white; border-radius: 4px;">
+                            <option value="it"<?php echo ($lang === 'it') ? ' selected' : ''; ?>>Italiano</option>
+                            <option value="en"<?php echo ($lang === 'en') ? ' selected' : ''; ?>>English</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="settings-group">
                 <h3 class="group-title">
 					<?php echo $labels["modals_opzioni_contenuto_audio"]; ?>
@@ -72,13 +88,13 @@
                     <i class="fa-solid fa-compact-disc"></i>
                 </span>
                 <div class="slider-wrapper" style="width: 100%;">
-                    <label><?php echo "Musica di Sfondo"; // O usa una variabile $labels se preferisci ?></label>
+                    <label><?php echo $labels["opt_bg_music"]; ?></label>
                     
                     <select id="bg-music-select" class="clean-input" style="width: 100%; padding: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid #4a6582; color: white; border-radius: 4px;">
                     </select>
                     
                     <div id="bg-music-lock-msg" style="display:none; font-size: 0.7rem; color: #e74c3c; margin-top: 4px;">
-                        <i class="fa-solid fa-lock"></i> Bloccato dalla Skin attuale
+                        <i class="fa-solid fa-lock"></i> <?php echo $labels["opt_music_locked"]; ?>
                     </div>
                 </div>
             </div>
@@ -142,7 +158,7 @@
 
             <div id="pwa-install-row" style="display:none; margin-bottom: 10px;">
                 <button id="pwa-install-btn" class="buy-btn ghost-btn" style="width:100%; justify-content:center; gap:8px;">
-                    <i class="fa-solid fa-download"></i> Installa App
+                    <i class="fa-solid fa-download"></i> <?php echo $labels["opt_install_app"]; ?>
                 </button>
             </div>
 
@@ -162,18 +178,18 @@
         
         <div class="profile-header-section minimal">
             <div class="profile-user-info">
-                <h2 id="display-username-large">Giocatore</h2>
+                <h2 id="display-username-large"><?php echo $labels["account_default_name"]; ?></h2>
             </div>
         </div>
 
         <div class="settings-content profile-body">
             
             <div class="form-section">
-                <label class="section-label">Modifica Nome</label>
+                <label class="section-label"><?php echo $labels["account_edit_name"]; ?></label>
                 <div class="input-group-modern clean-input">
-                    <input type="text" id="new-username-input" placeholder="Nuovo nome utente..." />
+                    <input type="text" id="new-username-input" placeholder="<?php echo $labels["account_new_name_ph"]; ?>" />
                     <button id="change-username-btn" class="action-btn-clean">
-                        <i class="fa-solid fa-floppy-disk"></i> SALVA
+                        <i class="fa-solid fa-floppy-disk"></i> <?php echo $labels["account_save"]; ?>
                     </button>
                 </div>
             </div>
@@ -181,27 +197,27 @@
             <hr class="profile-divider">
 
             <div class="form-section">
-                <label class="section-label">Sicurezza</label>
+                <label class="section-label"><?php echo $labels["account_security"]; ?></label>
                 <div class="input-stack">
                     <div class="input-group-modern clean-input">
-                        <input type="password" id="old-password-input" placeholder="Password Attuale">
+                        <input type="password" id="old-password-input" placeholder="<?php echo $labels["account_old_pass_ph"]; ?>">
                     </div>
                     <div class="input-group-modern clean-input">
-                        <input type="password" id="new-password-input" placeholder="Nuova Password">
+                        <input type="password" id="new-password-input" placeholder="<?php echo $labels["account_new_pass_ph"]; ?>">
                         <button class="toggle-pass-btn icon-only" data-target="new-password-input">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                     <button id="change-password-btn" class="buy-btn ghost-btn full-width">
-                        Aggiorna Password
+                        <?php echo $labels["account_update_pass"]; ?>
                     </button>
                 </div>
             </div>
 
             <div class="danger-zone-minimal">
-                <div class="danger-title">Area Critica</div>
+                <div class="danger-title"><?php echo $labels["account_critical"]; ?></div>
                 <div class="input-group-modern clean-input danger-border">
-                    <input type="password" id="danger-zone-password" placeholder="Password per confermare" />
+                    <input type="password" id="danger-zone-password" placeholder="<?php echo $labels["account_confirm_pass_ph"]; ?>" />
                 </div>
 
                 <div class="danger-actions-grid">
@@ -212,7 +228,7 @@
                         <i class="fa-solid fa-rotate-left"></i> Reset
                     </button>
                     <button id="delete-save-btn" class="danger-action-btn red">
-                        <i class="fa-solid fa-trash"></i> Elimina
+                        <i class="fa-solid fa-trash"></i> <?php echo $labels["account_delete"]; ?>
                     </button>
                 </div>
             </div>
@@ -270,7 +286,7 @@
         <button class="modal-close-btn" id="cancel-prestige-btn" style="z-index: 10;">&times;</button>
         
         <h2 style="background: #1f1905; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3); padding: 20px; margin: 0;">
-            <i class="fa-solid fa-certificate"></i> Promozione Aziendale
+            <i class="fa-solid fa-certificate"></i> <?php echo $labels["prestige_titolo"]; ?>
         </h2>
         
         <div class="settings-content" style="padding: 30px 25px;">
@@ -284,22 +300,22 @@
                 line-height: 1.5; 
                 padding: 12px; 
                 border-radius: 8px;">
-                <i class="fa-solid fa-file-signature" style="color: #f1c40f;"></i> Firma il contratto per diventare <b>Senior</b>.<br><br>
-                <span style="color:#bdc3c7; font-weight:normal; font-size: 0.85rem;">Perderai Bug, Teams e Upgrades, ma sbloccherai il Laboratorio per la ricerca avanzata.</span>
+                <i class="fa-solid fa-file-signature" style="color: #f1c40f;"></i> <?php echo $labels["prestige_sign"]; ?><br><br>
+                <span style="color:#bdc3c7; font-weight:normal; font-size: 0.85rem;"><?php echo $labels["prestige_warning"]; ?></span>
             </p>
 
             <div style="background: #110f08; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #4a3e12;">
                 <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
-                    OTTERRAI SUBITO
+                    <?php echo $labels["prestige_gain"]; ?>
                 </div>
                 <div style="font-size: 3.5rem;font-family: var(--font-heading); font-weight: 900; color: #3498db; text-shadow: 0 0 20px rgba(52, 152, 219, 0.5); line-height: 1;" id="contract-gain-token">
                     +0
                 </div>
                 <div style="color: #3498db; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; margin-top: 5px;">
-                    Token Laboratorio
+                    <?php echo $labels["prestige_token"]; ?>
                 </div>
                 <div id="contract-gain-bonus" style="font-size: 0.9rem; color: #95a5a6; margin-top: 15px; border-top: 1px solid #2a2305; padding-top: 15px;">
-                    Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x1.00</span>
+                    <?php echo $labels["prestige_new_mult"]; ?> <span style="color: #f1c40f; font-weight: bold;">x1.00</span>
                 </div>
             </div>
 
@@ -315,7 +331,7 @@
                 border: none;
                 text-transform: uppercase;
                 letter-spacing: 1px;">
-                <i class="fa-solid fa-pen-nib"></i> Firma Contratto
+                <i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?>
             </button>
         </div>
     </div>
@@ -325,7 +341,7 @@
     <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #9b59b6; box-shadow: 0 0 30px rgba(155,89,182,0.6);">
         <button class="modal-close-btn">&times;</button>
         <h2 style="background: #1a0f2e; color: #9b59b6; border-bottom: 1px solid rgba(155, 89, 182, 0.3); padding: 20px;">
-            <i class="fa-solid fa-infinity fa-spin"></i> Riavvio Sistema (NG+)
+            <i class="fa-solid fa-infinity fa-spin"></i> <?php echo $labels["format_titolo"]; ?>
 		</h2>
         <div class="settings-content" style="padding: 30px 25px;">    
             <p style="
@@ -338,28 +354,28 @@
                 line-height: 1.5; 
                 padding: 12px; 
                 border-radius: 8px;">
-                <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> ATTENZIONE: Questa azione distruggerà l'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br><br>Conserverai Skin, Obiettivi e Statistiche globali.
+                <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> <?php echo $labels["format_warning"]; ?>
             </p>
 
             <div style="background: #110a1f; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #4a235a;">
                 <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
-					OTTERRAI SUBITO
+					<?php echo $labels["format_gain"]; ?>
 				</div>
                 <div style="font-size: 3rem; font-weight: 900; color: #9b59b6; text-shadow: 0 0 20px rgba(155, 89, 182, 0.4); line-height: 1;">
                     <span id="format-gain-qbit">+0</span>
                 </div>
                 <div style="color: #9b59b6; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">
-					Quantum Bits
+					<?php echo $labels["format_qbits"]; ?>
 				</div>
             </div>
 
-            <button id="btn-confirm-format" class="buy-btn quantum-btn" aria-label="Made in Heaven: formatta l'universo e ricomincia da capo (New Game Plus)" style="
+            <button id="btn-confirm-format" class="buy-btn quantum-btn" aria-label="<?php echo $labels['prestige_madeheaven_aria']; ?>" style="
                 width: 100%;
                 height: 55px;
                 font-size: 1.2rem;
                 border-radius: 8px;">
                 <i class="fa-solid fa-meteor"></i> MADE IN HEAVEN
-                <span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.85; margin-top:2px;">Formatta l'universo &middot; NG+</span>
+                <span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.85; margin-top:2px;"><?php echo $labels["format_subtitle"]; ?></span>
             </button>
         </div>
     </div>
@@ -375,18 +391,18 @@
 
         <div class="skins-controls-bar">
             <div class="skins-filters">
-                <button class="skin-filter-btn active" data-filter="all">Tutte</button>
-                <button class="skin-filter-btn" data-filter="unlocked">Sbloccate</button>
-                <button class="skin-filter-btn" data-filter="locked">Bloccate</button>
+                <button class="skin-filter-btn active" data-filter="all"><?php echo $labels["skins_filter_all"]; ?></button>
+                <button class="skin-filter-btn" data-filter="unlocked"><?php echo $labels["skins_filter_unlocked"]; ?></button>
+                <button class="skin-filter-btn" data-filter="locked"><?php echo $labels["skins_filter_locked"]; ?></button>
 
                 <select id="skin-rarity-filter" class="clean-input skin-select-filter">
-                    <option value="all">Tutte le Rarità</option>
-                    <option value="common">Comune</option>
-                    <option value="rare">Rara</option>
-                    <option value="epic">Epica</option>
-                    <option value="legendary">Leggendaria</option>
-                    <option value="divine">Divina</option>
-                    <option value="christmas">Festiva</option>
+                    <option value="all"><?php echo $labels["skins_rarity_all"]; ?></option>
+                    <option value="common"><?php echo $labels["skins_rarity_common"]; ?></option>
+                    <option value="rare"><?php echo $labels["skins_rarity_rare"]; ?></option>
+                    <option value="epic"><?php echo $labels["skins_rarity_epic"]; ?></option>
+                    <option value="legendary"><?php echo $labels["skins_rarity_legendary"]; ?></option>
+                    <option value="divine"><?php echo $labels["skins_rarity_divine"]; ?></option>
+                    <option value="christmas"><?php echo $labels["skins_rarity_christmas"]; ?></option>
                 </select>
             </div>
         </div>
@@ -400,11 +416,11 @@
     <div class="modal-content" style="max-width: 700px; border-top: 4px solid #f1c40f;">
         <button class="modal-close-btn">&times;</button>
         <h2 style="background: #1a1a1a; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3);">
-            <i class="fa-solid fa-bullhorn"></i> Novità dell'Aggiornamento
+            <i class="fa-solid fa-bullhorn"></i> <?php echo $labels["news_titolo"]; ?>
         </h2>
         <div class="settings-content" id="release-notes-content" style="padding: 20px 30px; font-family: 'Inter', sans-serif;">
             <div style="text-align: center; color: #7f8c8d; margin-top: 20px;">
-                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br>Caricamento novità...
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br><?php echo $labels["news_loading"]; ?>
             </div>
         </div>
     </div>

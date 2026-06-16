@@ -149,9 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'background:#c0392b', 'color:#fff', 'text-align:center',
                 'padding:10px 16px', 'font-size:13px', 'line-height:1.5'
             ].join(';');
-            banner.innerHTML = '⚠️ Il tuo browser blocca il salvataggio locale. I progressi <strong>non verranno salvati</strong>. ' +
-                'Su Edge: <em>Impostazioni → Privacy → Prevenzione tracciamento → disattiva per questo sito</em>. ' +
-                'Su Safari: <em>disattiva "Impedisci tracciamento cross-site"</em>. ' +
+            banner.innerHTML = gameData.texts.system.storageBlocked +
                 '<button onclick="this.parentElement.remove()" style="margin-left:12px;background:rgba(255,255,255,0.2);border:1px solid #fff;color:#fff;padding:2px 8px;cursor:pointer;border-radius:3px;">✕</button>';
             document.body.prepend(banner);
         }
@@ -184,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const free = (est.quota || 0) - (est.usage || 0);
                 if (free > 0 && free < compressed.length * 4) {
                     console.warn('[SaveGuard] Storage quasi pieno:', free, 'bytes liberi');
-                    if (window.EspooClicker) window.EspooClicker.showToast('⚠️ Memoria quasi piena', 'warning');
+                    if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.memoryWarn, 'warning');
                 }
             } catch (_) { /* ignore */ }
         }
@@ -212,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window._tokenExpiredNotified) {
                 window._tokenExpiredNotified = true;
                 currentSaveToken = null;
-                if (window.EspooClicker) window.EspooClicker.showToast("⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.", "error");
+                if (window.EspooClicker) window.EspooClicker.showToast(gameData.texts.toasts.sessionExpired24h, "error");
                 if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
             }
         }
@@ -253,15 +251,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             currentSaveToken = null;
                             if (!window._tokenExpiredNotified) {
                                 window._tokenExpiredNotified = true;
-                                window.EspooClicker.showToast("⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.", "error");
+                                window.EspooClicker.showToast(gameData.texts.toasts.sessionExpired24h, "error");
                                 if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
                             }
                         } else if (data.status === 'conflict') {
                             console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
-                            window.EspooClicker.showToast("⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.", "error");
+                            window.EspooClicker.showToast(gameData.texts.toasts.cloudConflict, "error");
                         } else if (data.status === 'warning') {
                             console.warn(`[Save✗ WARNING] ${data.message}`);
-                            window.EspooClicker.showToast("⚠️ Sessione scaduta! Ricarica la pagina per salvare.", "error");
+                            window.EspooClicker.showToast(gameData.texts.toasts.sessionReload, "error");
                         } else {
                             console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
                         }
@@ -630,12 +628,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Applicazione Effetti passivi speciali al caricamento
-        if (gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased)
-            if (window.goldenBugChance) window.goldenBugChance *= 2;
-
-        if (gameState.prestigeUpgrades.ticketPremium && gameState.prestigeUpgrades.ticketPremium.purchased)
-            if (window.goldenBugSpawnTime) window.goldenBugSpawnTime *= 0.5;
+        // I passivi 'hacking' (goldenBugChance x2) e 'ticketPremium' (goldenBugSpawnTime x0.5)
+        // sono GIÀ applicati da reapplyAllEffects() qui sopra (effetti trigger:'passive').
+        // Rimossa la riapplicazione manuale che raddoppiava l'effetto a ogni reload.
 
         if (bps.lt(0)) bps = new Decimal(0);
 
@@ -1200,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.CDN || !window.CDN.enabled || !window.CDN.prefetch) {
                 return Promise.resolve();
             }
-            loaderUI.setStatus('Inizializzazione asset privati...');
+            loaderUI.setStatus(gameData.texts.ui.initPrivateAssets);
             const paths = [];
             // Audio
             if (gameData.assets && gameData.assets.sounds) {
@@ -1481,6 +1476,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Single source of truth: sincronizza l'icona con lo stato finale del volume
                 updateMuteButton();
+
+                // Micro-animazione "pop" sull'icona al toggle (re-trigger via reflow).
+                muteBtn.classList.remove('qm-pop');
+                void muteBtn.offsetWidth;
+                muteBtn.classList.add('qm-pop');
             });
         }
 
@@ -1667,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const vDisplay = document.getElementById('version-display');
 
         if (vDisplay && window.GAME_VERSION) {
-            vDisplay.innerHTML = `<i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i>Novità ${window.GAME_VERSION.toString()}`;
+            vDisplay.innerHTML = `<i class="fa-solid fa-bullhorn" style="margin-right: 6px;"></i>${gameData.texts.ui.newsLabel} ${window.GAME_VERSION.toString()}`;
             
             if (window.GAME_VERSION.stage === 'beta') vDisplay.style.color = '#f39c12';
             if (window.GAME_VERSION.stage === 'stable') vDisplay.style.color = '#2ecc71';
@@ -1690,10 +1690,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('quick-mute-btn');
         if (!btn) return;
         const muted = !gameState || !gameState.user || gameState.user.masterVolume <= 0;
-        btn.innerHTML = muted
-            ? '<i class="fa-solid fa-volume-xmark"></i>'
-            : '<i class="fa-solid fa-volume-high"></i>';
+        const icon = btn.querySelector('.qm-icon i');
+        if (icon) icon.className = muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+        btn.classList.toggle('is-muted', muted);
         btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        btn.setAttribute('aria-label', muted ? gameData.texts.ui.audioOn : gameData.texts.ui.audioOff);
     }
 
     // --------- API GLOBALE ---------
@@ -1740,7 +1741,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Carica e formatta il Markdown
         try {
-            const response = await fetch('release-notes.md?v=' + Date.now());
+            const _rnLang = (window.APP_LANG === 'en') ? 'en' : 'it';
+            const response = await fetch('release-notes_' + _rnLang + '.md?v=' + Date.now());
             if (!response.ok) throw new Error("File non trovato");
             const mdText = await response.text();
 
@@ -1748,7 +1750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             window.shouldShowReleaseNotesOnLoad = false; 
         } catch (e) {
-            content.innerHTML = '<p style="color: #e74c3c; text-align: center;">Impossibile caricare le novità.</p>';
+            content.innerHTML = '<p style="color: #e74c3c; text-align: center;">' + gameData.texts.ui.newsLoadError + '</p>';
         }
     },
         tryStartAudio: () => {

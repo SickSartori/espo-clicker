@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Funzione per caricare e mostrare la classifica
         async function loadLeaderboard() {
-            leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Caricamento...</span></div>';
+            leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + window.gameData.texts.leaderboard.loading + '</span></div>';
 
             try {
                 // Forza salvataggio e ATTENDI la risposta del server prima di caricare
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const scores = await response.json();
 
                 if (scores.length === 0) {
-                    leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">Nessun punteggio. Sii il primo!</span></div>';
+                    leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + window.gameData.texts.leaderboard.empty + '</span></div>';
                     return;
                 }
 
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Gestione Livello
                     let level = entry.prestigeLevel || 0;
-                    let prestigeBadge = `<span class="level-badge">LIV. ${level}</span>`;
+                    let prestigeBadge = `<span class="level-badge">${window.gameData.texts.leaderboard.levelAbbr} ${level}</span>`;
 
                     // ---  GESTIONE FOTO PROFILO (SKIN) ---
                     let skinId = entry.equippedSkin || 'default';
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let formattazioni = entry.totalFormattazioni ? parseInt(entry.totalFormattazioni) : 0;
                     let formatBadge = '';
                     if (formattazioni > 0) {
-                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="Formattazioni (NG+)"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
+                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="${window.gameData.texts.leaderboard.formatTitle}"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
                     }
 
                     if (entry.username === currentUsername) {
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Impossibile caricare la classifica:', error);
-                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">Impossibile caricare la classifica.</span></div>';
+                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">' + window.gameData.texts.leaderboard.error + '</span></div>';
             }
         }
 
