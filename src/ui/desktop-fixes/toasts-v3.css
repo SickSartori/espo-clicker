@@ -34,7 +34,20 @@
     align-items: unset !important;
   }
 
-  /* === Toast: position absolute basato su --slot-index === */
+  /* Eventi video (rick-rolling): la HUD d'angolo (score/cps) si sposta in alto a
+     destra, quindi il toast top-right ci finiva sopra. Lo centriamo in alto.
+     transition:none è FONDAMENTALE: il container eredita 'transition: all' e viene
+     ritoccato di continuo dal sistema toast → la transizione su top/transform si
+     riavviava in eterno e i valori non si stabilizzavano mai (restavano allo start).
+     Azzerandola, top/transform si applicano subito. left funzionava già perché
+     auto→50% non è animabile (salto istantaneo). */
+  body.rick-rolling #toast-container {
+    transition: none !important;
+    top: 20px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
   body #toast-container .toast {
     position: absolute !important;
     top: calc(var(--slot-index, 0) * 46px) !important;
