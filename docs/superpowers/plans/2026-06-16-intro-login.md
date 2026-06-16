@@ -15,7 +15,7 @@
 Il progetto **non ha un framework di unit test JS** (nessun jest/vitest/mocha; gli unici script npm sono `build*`). Introdurre jsdom+canvas-mock per testare un'animazione sarebbe infrastruttura non correlata → **fuori scope**, coerente con il fatto che il codebase non ne ha.
 
 **Verifica di ogni task = due gate concreti:**
-1. **Build gate:** `npm run build` deve completare senza errori (esbuild fallisce su JS rotto).
+1. **Build gate:** `npm run build` deve completare senza errori (esbuild fallisce su JS rotto). **Nota:** `dist/` è **gitignored** (rigenerato in CI prima del deploy) → la build serve solo perché il preview rifletta le modifiche; **NON** fare `git add` di `dist/`. Si committano solo i sorgenti.
 2. **Behavioral gate:** controllo nel **preview harness `espo-harness` (porta 8765)** con `preview_eval` (gli screenshot sono inaffidabili col game-loop attivo → usare controlli geometrici/di stato). Ogni task elenca i `preview_eval` attesi con il risultato atteso.
 
 Assicurarsi che il server preview sia attivo (`preview_list` / `preview_start`) e, dopo ogni build, ricaricare con `preview_eval: window.location.reload()`.
@@ -328,7 +328,7 @@ Atteso: `{reveal:1, complete:1, overlay:false}` (callback chiamati una volta, ov
 - [ ] **Step 7: Commit**
 
 ```bash
-git add css/intro.css js/intro.js css/main.css build.js dist/game.bundle.min.js dist/styles.bundle.min.css
+git add css/intro.css js/intro.js css/main.css build.js
 git commit -m "feat(intro): scaffold overlay intro login->gioco + path minimale/reduced
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -400,7 +400,7 @@ Atteso: `false` (overlay rimosso → nessun rAF orfano).
 - [ ] **Step 4: Commit**
 
 ```bash
-git add js/intro.js dist/game.bundle.min.js
+git add js/intro.js
 git commit -m "feat(intro): pioggia matrix su canvas con stop pulito
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -529,7 +529,7 @@ Atteso: tutti `:true`.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add js/intro.js dist/game.bundle.min.js
+git add js/intro.js
 git commit -m "feat(intro): timeline completa deploy->glitch->fixed->logo + SFX
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -599,7 +599,7 @@ Atteso: stringa che inizia con `BENTORNATO, MARIO` (o `WELCOME, MARIO`). Nota: i
 - [ ] **Step 5: Commit**
 
 ```bash
-git add js/data/texts.js js/data-en/texts.js dist/game.bundle.min.js
+git add js/data/texts.js js/data-en/texts.js
 git commit -m "feat(intro): chiave i18n ui.introWelcome (IT/EN)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -712,7 +712,7 @@ Atteso: `false` (l'intro NON parte al refresh; solo `initializeGame` gestisce la
 - [ ] **Step 5: Commit**
 
 ```bash
-git add js/modals.js dist/game.bundle.min.js
+git add js/modals.js
 git commit -m "feat(intro): aggancio in handleLogin (musica onReveal, modali onComplete, no toast)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
