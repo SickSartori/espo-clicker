@@ -1174,6 +1174,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 closeModal(loginModal);
+
+                // L'intro cinematica parte solo su login esplicito (no F5/re-auth).
+                // In quel caso azzera la musica (duck 0) PRIMA di startGameRoutines/
+                // updateAmbientVolume: cosi' la canzone di sfondo NON parte durante
+                // l'intro. Viene riavviata a fine intro (onComplete).
+                const _willPlayIntro = !hadSession && window.EspoIntro && typeof window.EspoIntro.play === 'function';
+                if (_willPlayIntro && typeof setMusicDuck === 'function') setMusicDuck(0);
+
                 Game.startGameRoutines();
 
                 // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
@@ -1215,11 +1223,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                if (!hadSession && window.EspoIntro && typeof window.EspoIntro.play === 'function') {
+                if (_willPlayIntro) {
                     window.EspoIntro.play({
                         username: u,
-                        onReveal: () => { if (typeof setMusicDuck === 'function') setMusicDuck(0.3); Game.tryStartAudio(); },
-                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); runPostLogin(); }
+                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); Game.tryStartAudio(); runPostLogin(); }
                     });
                 } else {
                     // Fallback difensivo: comportamento ~ a prima dell'intro
