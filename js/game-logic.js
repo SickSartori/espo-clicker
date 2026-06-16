@@ -225,6 +225,7 @@ function reapplyAllEffects() {
 const AudioManager = {
     _sounds: {},        // Cache Howl instances: { 'sound-click': Howl, ... }
     _currentMusic: null, // ID della traccia musicale attualmente in play
+    _musicDuck: 1,       // Moltiplicatore volume SOLO musica (1=pieno). Abbassato durante l'intro.
     _audioUnlocked: false,
     _pendingPlay: new Set(), // Tracce con play accodato ma non ancora confermato da Howler
     _ambienceTimer: null,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
@@ -329,7 +330,15 @@ const AudioManager = {
         if (master <= 0) return 0;
         const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
         const custom = this.getCustomVolume(id);
-        return Math.max(0, Math.min(1, master * channel * custom * (mult || 1)));
+        const duck = (type === 'music') ? this._musicDuck : 1;
+        return Math.max(0, Math.min(1, master * channel * custom * duck * (mult || 1)));
+    },
+
+    // Duck musica (0..1): abbassa SOLO le tracce musicali (es. durante l'intro,
+    // così non copre gli SFX/il reveal); setMusicDuck(1) ripristina con re-fade.
+    setMusicDuck(factor) {
+        this._musicDuck = (typeof factor === 'number') ? Math.max(0, Math.min(1, factor)) : 1;
+        this.updateAmbience();
     },
 
     play(id, type = 'sfx') {
@@ -740,6 +749,7 @@ const FX = {
 function playSound(id, type) { AudioManager.play(id, type); }
 function setBgMusicVolume() { AudioManager.updateAmbience(); }
 function updateAmbientVolume() { AudioManager.updateAmbience(); }
+function setMusicDuck(factor) { if (typeof AudioManager !== 'undefined') AudioManager.setMusicDuck(factor); }
 function getCustomVolume(id) { return AudioManager.getCustomVolume(id); }
 
 // --------- FUNZIONI DI ACQUISTO ---------

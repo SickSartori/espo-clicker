@@ -1218,8 +1218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!hadSession && window.EspoIntro && typeof window.EspoIntro.play === 'function') {
                     window.EspoIntro.play({
                         username: u,
-                        onReveal: () => Game.tryStartAudio(),
-                        onComplete: runPostLogin
+                        onReveal: () => { if (typeof setMusicDuck === 'function') setMusicDuck(0.3); Game.tryStartAudio(); },
+                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); runPostLogin(); }
                     });
                 } else {
                     // Fallback difensivo: comportamento ~ a prima dell'intro
