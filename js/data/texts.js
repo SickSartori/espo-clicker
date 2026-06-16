@@ -52,7 +52,8 @@ window.gameData.texts = {
         newsLabel: "Novità",
         newsLoadError: "Impossibile caricare le novità.",
         audioOn: "Attiva audio",
-        audioOff: "Disattiva audio"
+        audioOff: "Disattiva audio",
+        introWelcome: "BENTORNATO"
     },
     rarities: {
         common: "COMUNE", rare: "RARA", epic: "EPICA",

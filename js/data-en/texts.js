@@ -55,7 +55,8 @@ window.gameData.i18n.en.texts = {
         newsLabel: "What's New",
         newsLoadError: "Couldn't load the news.",
         audioOn: "Enable audio",
-        audioOff: "Mute audio"
+        audioOff: "Mute audio",
+        introWelcome: "WELCOME"
     },
     toasts: {
         welcome: "Welcome",
