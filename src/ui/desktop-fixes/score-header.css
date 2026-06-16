@@ -338,7 +338,7 @@
     pointer-events: none;
     font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
   }
-  #event-hud:not(:empty) { display: flex; }
+  #event-hud:not(:empty) { display: flex; animation: v3-event-hud-in 320ms cubic-bezier(0.16, 1, 0.3, 1); }
   #event-hud #score-display,
   #event-hud #cps-display {
     position: static !important;
@@ -385,6 +385,36 @@
     text-shadow: none !important;
     opacity: 0.95 !important;
   }
+  /* Moltiplicatore evento attivo: badge sotto i wallet, con divisore. Tenuto
+     visibile per tutta la durata (il toast invece sparisce dopo 8s). Accent rosso
+     v3 = "boost", non giallo. */
+  #event-hud #event-multiplier-display {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 6px 0 0 0 !important;
+    padding: 4px 0 0 0 !important;
+    background: none !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 217, 255, 0.14) !important;
+    border-radius: 0 !important;
+    text-align: right !important;
+    font-family: inherit !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: none !important;
+    color: #ff5566 !important;
+    -webkit-text-fill-color: #ff5566 !important;
+    text-shadow: 0 0 10px rgba(255, 85, 102, 0.45) !important;
+  }
+}
+
+@keyframes v3-event-hud-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

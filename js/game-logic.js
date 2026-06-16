@@ -1264,7 +1264,7 @@ function moveHudIntoEvent() {
     let hud = document.getElementById('event-hud');
     if (!hud) { hud = document.createElement('div'); hud.id = 'event-hud'; document.body.appendChild(hud); }
     _eventHudStash = [];
-    ['score-display', 'cps-display'].forEach(function (id) {
+    ['score-display', 'cps-display', 'event-multiplier-display'].forEach(function (id) {
         const el = document.getElementById(id);
         if (el) { _eventHudStash.push({ el: el, parent: el.parentNode, next: el.nextSibling }); hud.appendChild(el); }
     });
@@ -1522,10 +1522,16 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
     const emDisplay = document.getElementById('event-multiplier-display');
     if (emDisplay) {
-        emDisplay.textContent = config.toast.replace('{mult}', bonusMult);
-        // Per video event il banner laterale è soppresso (info già nel toast).
-        // Per altri eventi (bluescreen/matrix/superStar) resta visibile.
-        emDisplay.style.display = (config.type === 'video') ? 'none' : 'block';
+        if (config.type === 'video') {
+            // Video: il moltiplicatore entra nel pannello #event-hud (moveHudIntoEvent)
+            // come badge compatto "xN" e resta visibile tutta la durata dell'evento.
+            emDisplay.textContent = '×' + bonusMult;
+            emDisplay.style.display = '';
+        } else {
+            // css_mode (bluescreen/matrix/superStar): banner classico col testo evento.
+            emDisplay.textContent = config.toast.replace('{mult}', bonusMult);
+            emDisplay.style.display = 'block';
+        }
     }
 
     // Toast video event: durata estesa (8s) per compensare l'assenza del banner.
