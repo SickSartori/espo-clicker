@@ -1,6 +1,6 @@
 {
   "name": "espo-clicker",
-  "version": "3.0.12",
+  "version": "3.0.13",
   "private": true,
   "scripts": {
     "build": "node build.js && npm run build:v3",

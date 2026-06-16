@@ -66,8 +66,7 @@ const STATIC_PATTERNS = [
     /fonts\.gstatic/,
     /cdnjs\.cloudflare/,
     /cdn\.jsdelivr/,
-    /fontawesome/,
-    /concat\.php\?bundle=/ // Fallback per concat.php (deprecato)
+    /fontawesome/
 ];
 
 // ============================================================
