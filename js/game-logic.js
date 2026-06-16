@@ -306,21 +306,14 @@ const AudioManager = {
     },
 
     _showAudioPrompt() {
-        if (this._promptEl) return;
-        const el = document.createElement('div');
-        el.id = 'audio-unlock-prompt';
-        el.innerHTML = '<i class="fas fa-volume-up"></i><span>Clicca per attivare l\'audio</span>';
-        document.body.appendChild(el);
-        this._promptEl = el;
-        requestAnimationFrame(() => el.classList.add('visible'));
+        // Stato "bloccato" integrato nel bottone mute (pillola + anello pulsante).
+        const btn = document.getElementById('quick-mute-btn');
+        if (btn) btn.classList.add('is-blocked');
     },
 
     _hideAudioPrompt() {
-        if (!this._promptEl) return;
-        const el = this._promptEl;
-        this._promptEl = null;
-        el.classList.remove('visible');
-        setTimeout(() => el.remove(), 400);
+        const btn = document.getElementById('quick-mute-btn');
+        if (btn) btn.classList.remove('is-blocked');
     },
 
     getCustomVolume(id) {
@@ -766,7 +759,7 @@ function buySkin(skinId) {
     // Skin post-formattazione: richiede almeno 1 formattazione
     if (data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1) {
         playSound('sound-error');
-        window.EspooClicker.showToast('⚠️ Devi eseguire almeno 1 Formattazione per sbloccare questa skin!', 'error');
+        window.EspooClicker.showToast(gameData.texts.toasts.skinNeedFormat, 'error');
         return;
     }
 
@@ -996,9 +989,23 @@ function checkBuildingMilestone(teamKey, oldCount, newCount) {
     const teamData = gameData.teams[teamKey];
     const name = (teamData && teamData.name) ? teamData.name : teamKey;
     if (window.EspooClicker && window.EspooClicker.showToast) {
-        window.EspooClicker.showToast('🏆 ' + name + ': ' + reached + ' unità!', 'reward');
+        window.EspooClicker.showToast(gameData.texts.toasts.milestone.replace('{name}', name).replace('{amount}', reached), 'reward');
     }
     if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(0, 217, 255, 0.10)', 0.18);
+}
+
+// --- SOFTCAP BONUS PERMANENTE (durabilità) ---
+// Il bonus resta INVARIATO fino a SOFTCAP_KNEE (early/mid game intatti, ~primi
+// 11 livelli), poi applica rendimenti decrescenti (√): evita lo snowball che
+// rendeva i livelli alti istantanei. Tarabili: KNEE = dove inizia il
+// rallentamento (in "punti bonus", cioè bonus-1); COEFF = ripidità oltre.
+// Verificato con balance-sim.js (modalità wrap06).
+const PRESTIGE_BONUS_SOFTCAP_KNEE = new Decimal(80);
+const PRESTIGE_BONUS_SOFTCAP_COEFF = new Decimal(0.6);
+function applyBonusSoftcap(x) {
+    if (x.lte(PRESTIGE_BONUS_SOFTCAP_KNEE)) return x;
+    const excess = x.minus(PRESTIGE_BONUS_SOFTCAP_KNEE);
+    return PRESTIGE_BONUS_SOFTCAP_KNEE.add(PRESTIGE_BONUS_SOFTCAP_COEFF.mul(excess.sqrt()));
 }
 
 function calculatePrestigeBonus() {
@@ -1007,7 +1014,9 @@ function calculatePrestigeBonus() {
 
     let synergyBonus = window.prestigeSynergyFactor.mul(lifetime);
 
-    let calculatedBonus = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+    // Somma grezza (base + sinergia + achievement), poi softcap per la durabilità.
+    let rawBonus = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
+    let calculatedBonus = new Decimal(1).add(applyBonusSoftcap(rawBonus));
 
     prestigeBonus = calculatedBonus;
 }
@@ -1037,6 +1046,12 @@ function recalculateCPS() {
             // Somma al totale
             baseCPS = baseCPS.add(teamBPS.mul(teamState.count));
         }
+    }
+
+    // Upgrade "Click Automatico" (flag autoClickQA): aggiunge BPS pari al numero di
+    // Assistenti QA posseduti. Sommato a baseCPS → scala coi moltiplicatori come i team.
+    if (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa) {
+        baseCPS = baseCPS.add(new Decimal(gameState.teams.assistenteQa.count || 0));
     }
 
     bps = baseCPS.mul(prestigeBonus)
@@ -1675,9 +1690,13 @@ function resolveBug(event) {
 
 
 function calculatePrestigeGained() {
-    if (gameState.totalScore.lt(getPrestigeThreshold())) return new Decimal(0);
+    const threshold = getPrestigeThreshold();
+    if (gameState.totalScore.lt(threshold)) return new Decimal(0);
     let base = new Decimal(250000);
-    return gameState.totalScore.div(base).sqrt().floor();
+    // Cap anti-grind: il totalScore "utile" al reward non supera 4x la soglia,
+    // così una singola run-maratona non front-carica un bonus permanente enorme.
+    let effectiveScore = Decimal.min(gameState.totalScore, threshold.mul(4));
+    return effectiveScore.div(base).sqrt().floor();
 }
 
 function openPrestigeContract() {
@@ -1718,7 +1737,9 @@ function openPrestigeContract() {
 
     // synergy = count * 0.001 * lifetime
     let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
-    let totalMultiplier = new Decimal(1).add(baseBonus).add(synergyBonus).add(achievementsBPSBonus);
+    // Stesso softcap di calculatePrestigeBonus: l'anteprima deve mostrare il moltiplicatore reale.
+    let rawMultiplier = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
+    let totalMultiplier = new Decimal(1).add(applyBonusSoftcap(rawMultiplier));
 
     if (bonusDisplay) {
         bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
@@ -1953,14 +1974,14 @@ function executeFormattingSequence() {
 
         prepOverlay.innerHTML = `
             <div id="format-text-phase" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
-                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">PREPARAZIONE FORMATTAZIONE</h1>
-                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">Caricamento dati in corso...</p>
+                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">${gameData.texts.reformat.prep}</h1>
+                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">${gameData.texts.reformat.loadingData}</p>
             </div>
             
             <div id="format-video-phase" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:transparent;">
                 <div style="position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:70%; z-index:100001;">
                     <div style="color:#fff; font-family:'Courier New', monospace; font-size:1.2rem; font-weight:bold; margin-bottom:10px; text-align:center; text-shadow:2px 2px 4px #000;">
-                        RIPRISTINO UNIVERSO IN CORSO...
+                        ${gameData.texts.reformat.restoring}
                     </div>
                     <div style="width:100%; height:20px; background:rgba(0,0,0,0.7); border:2px solid #9b59b6; border-radius:10px; overflow:hidden;">
                         <div id="format-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #8e44ad, #d2b4de); box-shadow:0 0 10px #9b59b6; transition: width 22s linear;"></div>
@@ -2287,14 +2308,14 @@ function clickGoldenBug() {
     let toastMsg;
     if (bugType === 'lucky') {
         bonus = bonus.mul(8); // jackpot
-        toastMsg = '🍀 BUG FORTUNATO! +' + formatNumber(bonus) + ' bug!';
+        toastMsg = gameData.texts.toasts.luckyBug.replace('{amount}', formatNumber(bonus));
     } else if (bugType === 'frenzy') {
         bonus = bonus.mul(2); // piccolo bonus immediato
         // Buff temporaneo: click ×7 per 15s (gestito in calculateClickValue)
         window.goldenFrenzyMult = new Decimal(7);
         window.goldenFrenzyEnd = Date.now() + 15000;
         if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(231,76,60,0.15)', 0.25);
-        toastMsg = '⚡ FRENESIA! Click ×7 per 15 secondi!';
+        toastMsg = gameData.texts.toasts.frenzy;
     } else {
         toastMsg = gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus));
     }
@@ -2368,7 +2389,7 @@ function claimDailyBonus() {
     if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
     if (typeof updateUI === 'function') updateUI();
 
-    const msg = '🎁 Bonus giornaliero · Giorno ' + streak + ' · +' + formatNumber(reward) + ' bug!';
+    const msg = gameData.texts.toasts.dailyBonus.replace('{streak}', streak).replace('{amount}', formatNumber(reward));
     if (window.EspooClicker && window.EspooClicker.showToast) {
         window.EspooClicker.showToast(msg, 'reward');
     }
