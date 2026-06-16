@@ -280,6 +280,28 @@
     color: transparent;
     text-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
   }
+
+  /* =====================================================================
+     VIDEO EVENT (rick-rolling) — sopra 1024px la testata NON è display:none
+     (resta nel DOM solo per ospitare lo score riposizionato in alto a destra),
+     quindi il suo "chrome" v3 trapelava sul video: la linea orizzontale
+     (::after pulse + ::before scanline), lo sfondo/bordo/blur, e la label
+     "BUG RISOLTI". Qui li azzeriamo lasciando solo lo score.
+     ===================================================================== */
+  body.rick-rolling .column-header-center {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  body.rick-rolling .column-header-center::before,
+  body.rick-rolling .column-header-center::after {
+    display: none !important;
+  }
+  body.rick-rolling .header-main-score .header-label-main {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
