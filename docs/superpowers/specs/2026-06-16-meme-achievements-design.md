@@ -73,7 +73,7 @@ Ordine, id e dettagli completi. Tutti con `season` assente.
 | 15 | `bazinga` | score | 73e6 | true | — |
 | 16 | `catchEmAll` | custom | 151 | false | — |
 | 17 | `imagination` | custom | 5 | false | — |
-| 18 | `moneyMoneyMoney` | score | 1e9 | false | — |
+| 18 | `moneyMoneyMoney` | score | 1e10 | false | — |
 
 ### Testi e condizioni
 
@@ -173,10 +173,10 @@ Ordine, id e dettagli completi. Tutti con `season` assente.
 - `condition: () => gameState.skins.unlocked.length >= 5`
 
 **18. `moneyMoneyMoney`** — SpongeBob (Mr. Krabs)
-- IT: name `Money Money Money`, desc `Guadagna 1 Miliardo di Bug nel corso della vita (lifetime).`, flavor `Mr. Krabs ha sentito l'odore dei soldi.`
-- EN: desc `Earn 1 Billion lifetime bugs.`, flavor `Mr. Krabs smells money.` (name invariato)
-- type `score`, target `new Decimal(1000000000)`
-- `condition: () => gameState.lifetimeScore.gte(1000000000)`
+- IT: name `Money Money Money`, desc `Guadagna 10 Miliardi di Bug nel corso della vita (lifetime).`, flavor `Mr. Krabs ha sentito l'odore dei soldi.`
+- EN: desc `Earn 10 Billion lifetime bugs.`, flavor `Mr. Krabs smells money.` (name invariato)
+- type `score`, target `new Decimal(10000000000)`
+- `condition: () => gameState.lifetimeScore.gte(10000000000)` (distinto da `miliardario` = `totalScore` ≥ 1B: contatore diverso e soglia 10×)
 
 ## Note tecniche
 
@@ -204,7 +204,7 @@ Per ciascun gruppo di condizioni, usare la cheatboard per portare lo stato alla 
 - **Q-bits:** "Imposta Q-bits" a 50 (#11).
 - **Team:** sommare ≥250 unità tra i team (#9).
 
-_Franchise (13-18):_ 1ª Promozione/reset → #13; 100 Golden Bug → #14 (+10.000 Bug); 73 Milioni di Bug totali → #15; 151 unità di uno stesso Team → #16; 5 skin sbloccate → #17; `lifetimeScore` ≥ 1e9 → #18.
+_Franchise (13-18):_ 1ª Promozione/reset → #13; 100 Golden Bug → #14 (+10.000 Bug); 73 Milioni di Bug totali → #15; 151 unità di uno stesso Team → #16; 5 skin sbloccate → #17; `lifetimeScore` ≥ 1e10 → #18.
 - **i18n:** ricaricare con `APP_LANG='en'` (cookie lingua = en) e verificare nomi/desc/flavor EN; con IT verificare i testi inline.
 
 ## Criteri di accettazione
