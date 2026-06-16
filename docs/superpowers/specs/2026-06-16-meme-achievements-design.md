@@ -6,11 +6,11 @@
 
 ## Obiettivo
 
-Aggiungere **12 nuovi achievement** a tema meme/nerd/cultura pop, in linea con il tono già presente nel gioco (es. "Hello World!", "Inception", "Rick Roll Patch", "Made in Heaven", "Time Lord"). Devono integrarsi col sistema achievement esistente e con la struttura i18n (testo IT inline di default + overlay EN).
+Aggiungere **18 nuovi achievement** a tema meme/nerd/cultura pop, in linea con il tono già presente nel gioco (es. "Hello World!", "Inception", "Rick Roll Patch", "Made in Heaven", "Time Lord"). Sei sono dedicati a franchise specifici richiesti dal proprietario: **Super Mario, Big Bang Theory, Pokémon, SpongeBob**. Devono integrarsi col sistema achievement esistente e con la struttura i18n (testo IT inline di default + overlay EN).
 
 ## Vincoli e decisioni (dal proprietario)
 
-- **Quantità:** ~10-12 → **12**.
+- **Quantità:** **18** (12 di base + 6 a tema franchise: Super Mario, Big Bang Theory, Pokémon, SpongeBob).
 - **Ricompense:** *per lo più cosmetici + qualche Bug*. Nessun moltiplicatore globale / prestige / skin → **nessun impatto sul bilanciamento appena tarato** (softcap bonus permanente, vedi `applyBonusSoftcap`).
 - **Approccio scelto: "A — Solo dati".** Tutte le condizioni usano statistiche **già tracciate** in `gameState`. Nessuna modifica al motore, nessun nuovo campo di stato, nessuna migrazione del salvataggio.
 - **i18n:** ogni achievement ha testo IT inline + voce EN nell'overlay (nome solo se diverso, come da convenzione esistente).
@@ -50,7 +50,7 @@ Aggiungere **12 nuovi achievement** a tema meme/nerd/cultura pop, in linea con i
 
 **Campi `gameState` disponibili per le condizioni** (verificati in `js/data/gamestate.js`): `totalClicks`, `totalScore` (Decimal), `totalGoldenBugsClicked`, `longestCombo`, `totalPlayTime`, `totalResets`, `totalFormattazioni`, `qBits` (Decimal), `teams.<id>.count`, `clickUpgrades.<id>.purchased`, ecc. Inoltre la variabile globale `bps` (Decimal) è leggibile nelle condizioni.
 
-## I 12 nuovi achievement
+## I 18 nuovi achievement
 
 Ordine, id e dettagli completi. Tutti con `season` assente.
 
@@ -68,6 +68,12 @@ Ordine, id e dettagli completi. Tutti con `season` assente.
 | 10 | `groundhogDay` | custom | 10 | false | — |
 | 11 | `quantumLeap` | custom | 50 | false | — |
 | 12 | `bugClicker` | click | 100000 | false | bugs 50000 |
+| 13 | `marioCastle` | custom | 1 | false | — |
+| 14 | `oneUp` | custom | 100 | false | bugs 10000 |
+| 15 | `bazinga` | score | 73e6 | true | — |
+| 16 | `catchEmAll` | custom | 151 | false | — |
+| 17 | `imagination` | custom | 5 | false | — |
+| 18 | `moneyMoneyMoney` | score | 1e9 | false | — |
 
 ### Testi e condizioni
 
@@ -134,6 +140,44 @@ Ordine, id e dettagli completi. Tutti con `season` assente.
 - `reward: { type: 'bugs', value: new Decimal(50000) }`
 - `condition: () => gameState.totalClicks >= 100000`
 
+### Aggiunte a tema franchise (13-18)
+
+**13. `marioCastle`** — Super Mario
+- IT: name `La Principessa è in un Altro Castello`, desc `Esegui la tua prima Promozione (reset).`, flavor `Grazie per aver giocato! Adesso però si ricomincia.`
+- EN: name `Our Princess Is in Another Castle!`, desc `Perform your first Promotion (reset).`, flavor `Thank you for playing! But now we start over.`
+- type `custom`, target `1`
+- `condition: () => gameState.totalResets >= 1` (distinto da `groundhogDay` = 10 reset e da `madeInHeaven` = 1 formattazione)
+
+**14. `oneUp`** — Super Mario
+- IT: name `1-UP!`, desc `Clicca 100 Golden Bug.`, flavor `Cento monete dorate, una vita in più.`
+- EN: desc `Click 100 Golden Bugs.`, flavor `A hundred golden coins, one extra life.` (name invariato)
+- type `custom`, target `100`, reward `{ type: 'bugs', value: new Decimal(10000) }`
+- `condition: () => gameState.totalGoldenBugsClicked >= 100` (progressione di `shinyHunter` = 1 Golden Bug)
+
+**15. `bazinga`** — Big Bang Theory
+- IT: name `Bazinga!`, desc `Accumula 73 Milioni di Bug totali.`, flavor `73: il 21º numero primo, e il migliore di tutti. Bazinga.`
+- EN: desc `Rack up 73 Million total bugs.`, flavor `73: the 21st prime, and the best number of all. Bazinga.` (name invariato)
+- type `score`, target `new Decimal(73000000)`, isSecret `true`
+- `condition: () => gameState.totalScore.gte(73000000)`
+
+**16. `catchEmAll`** — Pokémon
+- IT: name `Acchiappali Tutti!`, desc `Possiedi 151 unità di uno stesso Team.`, flavor `Erano solo 151, ai bei vecchi tempi.`
+- EN: name `Gotta Catch 'Em All!`, desc `Own 151 units of a single Team.`, flavor `There were only 151 of them, back in the day.`
+- type `custom`, target `151`
+- `condition: () => Object.values(gameState.teams).some(t => (t.count || 0) >= 151)` (affianca `shinyHunter`, già a tema Pokémon)
+
+**17. `imagination`** — SpongeBob
+- IT: name `Imagination`, desc `Sblocca 5 skin diverse.`, flavor `🌈 Im-ma-gi-na-zio-ne.`
+- EN: desc `Unlock 5 different skins.`, flavor `🌈 Im-ag-in-a-tion.` (name invariato)
+- type `custom`, target `5`
+- `condition: () => gameState.skins.unlocked.length >= 5`
+
+**18. `moneyMoneyMoney`** — SpongeBob (Mr. Krabs)
+- IT: name `Money Money Money`, desc `Guadagna 1 Miliardo di Bug nel corso della vita (lifetime).`, flavor `Mr. Krabs ha sentito l'odore dei soldi.`
+- EN: desc `Earn 1 Billion lifetime bugs.`, flavor `Mr. Krabs smells money.` (name invariato)
+- type `score`, target `new Decimal(1000000000)`
+- `condition: () => gameState.lifetimeScore.gte(1000000000)`
+
 ## Note tecniche
 
 - **Barra di progresso:** i tipi numerici (`click`, `score`) usano `target` per la barra come gli achievement esistenti. I `custom` (incl. quelli su `bps`, golden bug, combo, reset, Q-bit, somma team) si sbloccano in modo binario, come `fullStack`/`errore404`/`madeInHeaven` oggi. Accettato.
@@ -143,8 +187,8 @@ Ordine, id e dettagli completi. Tutti con `season` assente.
 
 ## File toccati
 
-1. `js/data/achievements.js` — +12 voci (IT + logica: type/target/isSecret/reward/condition).
-2. `js/data-en/achievements.js` — +12 voci overlay EN (name se diverso, desc, flavor).
+1. `js/data/achievements.js` — +18 voci (IT + logica: type/target/isSecret/reward/condition).
+2. `js/data-en/achievements.js` — +18 voci overlay EN (name se diverso, desc, flavor).
 3. Rebuild del bundle (`npm run build`) **non** committato (dist ora fuori da git; rigenerato in CI).
 
 ## Verifica (via cheatboard dev)
@@ -159,12 +203,14 @@ Per ciascun gruppo di condizioni, usare la cheatboard per portare lo stato alla 
 - **Reset:** "Vai al Livello"/Promozioni fino a 10 (#10).
 - **Q-bits:** "Imposta Q-bits" a 50 (#11).
 - **Team:** sommare ≥250 unità tra i team (#9).
+
+_Franchise (13-18):_ 1ª Promozione/reset → #13; 100 Golden Bug → #14 (+10.000 Bug); 73 Milioni di Bug totali → #15; 151 unità di uno stesso Team → #16; 5 skin sbloccate → #17; `lifetimeScore` ≥ 1e9 → #18.
 - **i18n:** ricaricare con `APP_LANG='en'` (cookie lingua = en) e verificare nomi/desc/flavor EN; con IT verificare i testi inline.
 
 ## Criteri di accettazione
 
-- 12 achievement presenti, sbloccabili alle condizioni indicate, senza errori in console.
-- 3 ricompense in Bug (#3, #4, #12) accreditate alla riscossione; gli altri 9 puramente cosmetici.
-- Segreti (#1, #2, #5) nascosti finché non sbloccati.
+- 18 achievement presenti, sbloccabili alle condizioni indicate, senza errori in console.
+- 4 ricompense in Bug (#3, #4, #12, #14) accreditate alla riscossione; gli altri 14 puramente cosmetici.
+- Segreti (#1, #2, #5, #15) nascosti finché non sbloccati.
 - Testi corretti in IT e in EN.
 - Nessuna regressione su achievement esistenti, bilanciamento, o salvataggi.
