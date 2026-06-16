@@ -155,7 +155,7 @@
     var con = el('div', 'intro-con');
     stage.appendChild(con);
 
-    var cmd = '$ espo deploy --user "' + username + '"';
+    var cmd = '$ espo deploy --user "' + escHtml(username) + '"';
     var ci = 0;
     var typeInt = setInterval(function () {
       ci++;
@@ -202,7 +202,8 @@
       var gw = stage.querySelectorAll('.intro-glitch-word');
       for (var i = 0; i < gw.length; i++) { if (gw[i].parentNode) gw[i].parentNode.removeChild(gw[i]); }
       scan.classList.add('go');
-      at(30, function () { scan.style.top = 'calc(100% + 8px)'; });
+      void scan.offsetWidth;
+      scan.style.top = 'calc(100% + 8px)';
     });
     at(3050, function () {
       stage.innerHTML = '<div class="intro-con" style="text-align:center"><span class="ok" style="font-size:16px;font-weight:700;letter-spacing:1px">[OK] ALL BUGS FIXED</span></div>';
