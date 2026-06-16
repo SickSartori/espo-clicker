@@ -61,13 +61,16 @@
         const canvasWrapper = document.createElement('div');
         canvasWrapper.style.position = 'relative';
         canvasWrapper.style.width = canvasWidth + 'px';
-        canvasWrapper.style.height = '400px';
         canvasWrapper.className = 'crt-turn-on crt-effect';
 
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
         canvas.width = canvasWidth;
         canvas.height = 540;
+        // Il wrapper deve essere alto quanto il canvas: prima era fisso a 400px mentre
+        // il canvas è 540 → gli ultimi ~140px di campo (muri/cibo/serpente) restavano
+        // fuori dall'area visibile pur essendo giocabili.
+        canvasWrapper.style.height = canvas.height + 'px';
         ctx = canvas.getContext('2d');
         canvasWrapper.appendChild(canvas);
 

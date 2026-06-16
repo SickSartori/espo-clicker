@@ -128,6 +128,12 @@
         isRunning = false;
         cancelAnimationFrame(gameInterval);
 
+        // Rimuove i listener globali e riarma il flag init: alla prossima entrata init()
+        // li riaggancia (prima restavano attaccati a window per sempre dopo l'uscita).
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        window.asteroidsInitialized = false;
+
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
 

@@ -130,6 +130,11 @@
         isRunning = false;
         if (rafId) cancelAnimationFrame(rafId);
 
+        // Rimuove i listener globali e riarma il flag init (prima restavano attaccati).
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        window.invadersInitialized = false;
+
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
         if (gameContainer) {
