@@ -13,7 +13,28 @@
   function prefersReduced() {
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
-  function sfx(id) { try { if (typeof playSound === 'function') playSound(id); } catch (e) {} }
+  // Livelli FISSI di design degli SFX intro (master*sfx*livello), indipendenti dal
+  // mixer per-suono (audioCustom): cosi' sono coerenti per tutti e non escono troppo
+  // alti quando audioCustom non e' impostato (che darebbe volume pieno).
+  var SFX_LEVEL = {
+    'sound-intro-typing': 0.26,
+    'sound-intro-glitch': 0.32,
+    'sound-intro-scan':   0.26,
+    'sound-intro-fixed':  0.30,
+    'sound-intro-reveal': 0.38
+  };
+  function sfx(id) {
+    try {
+      if (typeof AudioManager === 'undefined' || typeof gameState === 'undefined') return;
+      var h = AudioManager._sounds[id];
+      if (!h) return;
+      var base = (gameState.user.masterVolume || 0) * (gameState.user.sfxVolume || 0);
+      var v = Math.max(0, Math.min(1, base * (SFX_LEVEL[id] != null ? SFX_LEVEL[id] : 0.3)));
+      if (v < 0.01) return;
+      h.volume(v);
+      h.play();
+    } catch (e) {}
+  }
   function el(tag, cls, html) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
