@@ -302,6 +302,60 @@
   body.rick-rolling .header-main-score .header-label-main {
     display: none !important;
   }
+
+  /* --- HUD "wallet" durante i video event ---
+     Prima: score = "quadro giallo" (testo giallo + bordo bianco 2px, Rajdhani) e
+     BPS con sfondo trasparente (illeggibile sul video), distanti ~100px.
+     Ora: due pillole coerenti (dark glass per leggibilità sul video, bordo ciano
+     sottile, mono, tabular-nums), accent solo sul valore (oro per lo score, ciano
+     per i BPS), impilate e allineate in alto a destra. */
+  body.rick-rolling #game-container #score-display,
+  body.rick-rolling #game-container #cps-display {
+    position: fixed !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    transition: none !important;
+    margin: 0 !important;
+    min-width: 128px !important;
+    box-sizing: border-box !important;
+    text-align: right !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-variant-numeric: tabular-nums !important;
+    background: rgba(10, 15, 28, 0.82) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(0, 217, 255, 0.16) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  }
+  body.rick-rolling #game-container #score-display {
+    top: 20px !important;
+    padding: 7px 14px !important;
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.01em !important;
+    color: #fbbf24 !important;
+    -webkit-text-fill-color: #fbbf24 !important;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.28) !important;
+  }
+  body.rick-rolling #game-container #cps-display {
+    /* top negativo voluto: #cps-display ha un containing block (antenato con
+       transform) più in basso dello score, quindi un top piccolo lo distanzierebbe
+       (~95px). -12px lo porta subito sotto lo score, ~11-15px di gap (verificato a
+       1440 e 1920). */
+    top: -12px !important;
+    padding: 6px 14px !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    color: #00d9ff !important;
+    -webkit-text-fill-color: #00d9ff !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
