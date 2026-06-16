@@ -209,5 +209,187 @@ window.gameData.achievements = {
         isSecret: false,
         reward: { type: 'multiplier', value: 1.15 },
         condition: () => gameState.teams.architetturaInfinito.count >= 100
+    },
+
+    // ===== ACHIEVEMENT MEME (nerd & cultura pop) — v3.0 =====
+    theAnswer: {
+        name: 'La Risposta a Tutto',
+        desc: 'Effettua 42 click manuali.',
+        flavor: 'Quarantadue. La Domanda, però, resta sconosciuta.',
+        type: 'click',
+        target: 42,
+        isSecret: true,
+        reward: null,
+        condition: () => gameState.totalClicks >= 42
+    },
+    over9000: {
+        name: 'È OLTRE 9000!',
+        desc: 'Supera i 9.000 Bug al secondo (BPS).',
+        flavor: 'COSA?! NOVEMILA?!',
+        type: 'custom',
+        target: 9000,
+        isSecret: true,
+        reward: null,
+        condition: () => bps.gt(9000)
+    },
+    leetHaxor: {
+        name: 'L33T H4X0R',
+        desc: 'Raggiungi 1.337 click manuali.',
+        flavor: "Sei ufficialmente d'élite. 0wn3d.",
+        type: 'click',
+        target: 1337,
+        isSecret: false,
+        reward: { type: 'bugs', value: new Decimal(1337) },
+        condition: () => gameState.totalClicks >= 1337
+    },
+    shinyHunter: {
+        name: 'Cromatico!',
+        desc: 'Clicca il tuo primo Golden Bug.',
+        flavor: 'Le probabilità? Trascurabili. La gloria? Eterna.',
+        type: 'custom',
+        target: 1,
+        isSecret: false,
+        reward: { type: 'bugs', value: new Decimal(5000) },
+        condition: () => gameState.totalGoldenBugsClicked >= 1
+    },
+    comboBreaker: {
+        name: 'C-C-COMBO BREAKER!',
+        desc: 'Raggiungi una combo di 50 click.',
+        flavor: 'Una voce metallica urla in lontananza.',
+        type: 'custom',
+        target: 50,
+        isSecret: true,
+        reward: null,
+        condition: () => (gameState.longestCombo || 0) >= 50
+    },
+    doge: {
+        name: 'Such Bug, Much Wow',
+        desc: 'Accumula 1 Milione di Bug totali.',
+        flavor: 'wow. very click. so debug. much bug.',
+        type: 'score',
+        target: new Decimal(1000000),
+        isSecret: false,
+        reward: null,
+        condition: () => gameState.totalScore.gte(1000000)
+    },
+    stonks: {
+        name: 'STONKS',
+        desc: 'Accumula 100 Milioni di Bug totali.',
+        flavor: '↗ Solo crescita. Non chiedere come.',
+        type: 'score',
+        target: new Decimal(100000000),
+        isSecret: false,
+        reward: null,
+        condition: () => gameState.totalScore.gte(100000000)
+    },
+    gottaGoFast: {
+        name: 'Gotta Go Fast',
+        desc: 'Supera i 1.000 Bug al secondo (BPS).',
+        flavor: 'Un riccio blu annuisce con approvazione.',
+        type: 'custom',
+        target: 1000,
+        isSecret: false,
+        reward: null,
+        condition: () => bps.gt(1000)
+    },
+    shutUpTakeMoney: {
+        name: 'Zitto e Prendi i Miei Soldi',
+        desc: 'Possiedi 250 unità Team totali.',
+        flavor: "Non m'importa se funziona. Lo voglio.",
+        type: 'custom',
+        target: 250,
+        isSecret: false,
+        reward: null,
+        condition: () => Object.values(gameState.teams).reduce((s, t) => s + (t.count || 0), 0) >= 250
+    },
+    groundhogDay: {
+        name: 'Ricomincio da Capo',
+        desc: 'Esegui 10 Promozioni (reset).',
+        flavor: 'Ancora? Ancora. ANCORA.',
+        type: 'custom',
+        target: 10,
+        isSecret: false,
+        reward: null,
+        condition: () => (gameState.totalResets || 0) >= 10
+    },
+    quantumLeap: {
+        name: 'Quantum Leap',
+        desc: 'Accumula 50 Q-bits.',
+        flavor: 'Oh boy.',
+        type: 'custom',
+        target: 50,
+        isSecret: false,
+        reward: null,
+        condition: () => gameState.qBits.gte(50)
+    },
+    bugClicker: {
+        name: 'Bug Clicker',
+        desc: 'Raggiungi 100.000 click manuali.',
+        flavor: 'Un omaggio al nonno di tutti i clicker.',
+        type: 'click',
+        target: 100000,
+        isSecret: false,
+        reward: { type: 'bugs', value: new Decimal(50000) },
+        condition: () => gameState.totalClicks >= 100000
+    },
+    marioCastle: {
+        name: 'La Principessa è in un Altro Castello',
+        desc: 'Esegui la tua prima Promozione (reset).',
+        flavor: 'Grazie per aver giocato! Adesso però si ricomincia.',
+        type: 'custom',
+        target: 1,
+        isSecret: false,
+        reward: null,
+        condition: () => (gameState.totalResets || 0) >= 1
+    },
+    oneUp: {
+        name: '1-UP!',
+        desc: 'Clicca 100 Golden Bug.',
+        flavor: 'Cento monete dorate, una vita in più.',
+        type: 'custom',
+        target: 100,
+        isSecret: false,
+        reward: { type: 'bugs', value: new Decimal(10000) },
+        condition: () => gameState.totalGoldenBugsClicked >= 100
+    },
+    bazinga: {
+        name: 'Bazinga!',
+        desc: 'Accumula 73 Milioni di Bug totali.',
+        flavor: '73: il 21º numero primo, e il migliore di tutti. Bazinga.',
+        type: 'score',
+        target: new Decimal(73000000),
+        isSecret: true,
+        reward: null,
+        condition: () => gameState.totalScore.gte(73000000)
+    },
+    catchEmAll: {
+        name: 'Acchiappali Tutti!',
+        desc: 'Possiedi 151 unità di uno stesso Team.',
+        flavor: 'Erano solo 151, ai bei vecchi tempi.',
+        type: 'custom',
+        target: 151,
+        isSecret: false,
+        reward: null,
+        condition: () => Object.values(gameState.teams).some(t => (t.count || 0) >= 151)
+    },
+    imagination: {
+        name: 'Imagination',
+        desc: 'Sblocca 5 skin diverse.',
+        flavor: '🌈 Im-ma-gi-na-zio-ne.',
+        type: 'custom',
+        target: 5,
+        isSecret: false,
+        reward: null,
+        condition: () => (gameState.skins.unlocked || []).length >= 5
+    },
+    moneyMoneyMoney: {
+        name: 'Money Money Money',
+        desc: 'Guadagna 10 Miliardi di Bug nel corso della vita (lifetime).',
+        flavor: "Mr. Krabs ha sentito l'odore dei soldi.",
+        type: 'score',
+        target: new Decimal(10000000000),
+        isSecret: false,
+        reward: null,
+        condition: () => gameState.lifetimeScore.gte(10000000000)
     }
 }
