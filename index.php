@@ -49,10 +49,17 @@ require_once("php/check_version.php");
 		<!-- ============================================================ -->
 
 		<!-- Bundle Core + UI + all styles -->
-		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $cacheVer; ?>">
+		<!-- Cache-bust come il JS bundle: in dev (localhost) filemtime → CSS fresca a
+		     ogni `node build.js` senza bumpare la versione; in prod resta $cacheVer (deploy). -->
+		<?php
+		$isLocalHost = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SERVER['HTTP_HOST'] ?? ''));
+		$stylesVer = $isLocalHost ? (@filemtime(__DIR__ . '/dist/styles.bundle.min.css') ?: $cacheVer) : $cacheVer;
+		$mobileVer = $isLocalHost ? (@filemtime(__DIR__ . '/dist/styles.mobile.min.css') ?: $cacheVer) : $cacheVer;
+		?>
+		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $stylesVer; ?>">
 
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
-		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $mobileVer; ?>" media="(max-width: 768px)">
 
 		<!-- V3 styles (tokens, primitives, skip-link a11y). Solo se build V3 presente.
 		     Cache buster via filemtime() — ogni rebuild Vite invalida cache SW automaticamente. -->
