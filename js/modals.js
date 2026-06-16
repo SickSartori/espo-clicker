@@ -1143,6 +1143,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const p = loginPasswordInput.value;
         if (!u || !p) return;
 
+        // L'intro cinematica parte SOLO al login esplicito dell'utente: NON
+        // sull'auto-login da sessione salvata (F5, initModalBindings ->
+        // loginButton.click()) ne' sul re-auth da token scaduto
+        // (_showLoginForTokenExpiry -> handleLogin()). Entrambi richiamano
+        // handleLogin() con una sessione gia' presente in sessionStorage.
+        const hadSession = !!sessionStorage.getItem('espooUser');
+
         loginButton.disabled = true;
         try {
             const res = await fetch('php/login_register.php', {
@@ -1208,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                if (window.EspoIntro && typeof window.EspoIntro.play === 'function') {
+                if (!hadSession && window.EspoIntro && typeof window.EspoIntro.play === 'function') {
                     window.EspoIntro.play({
                         username: u,
                         onReveal: () => Game.tryStartAudio(),
