@@ -154,6 +154,7 @@
     // ---- FULL timeline (~6s) ----
     var con = el('div', 'intro-con');
     stage.appendChild(con);
+    sfx('sound-intro-typing');
 
     var cmd = '$ espo deploy --user "' + escHtml(username) + '"';
     var ci = 0;
@@ -178,6 +179,7 @@
     // GLITCH
     at(1650, function () {
       con.innerHTML = '';
+      try { if (typeof AudioManager !== 'undefined') AudioManager.stop('sound-intro-typing', 120); } catch (e) {}
       overlay.classList.add('intro-glitching');
       stage.appendChild(el('div', 'intro-err',
         '<div class="h">[!!] SYSTEM INTEGRITY :: 0xBUG</div>' +

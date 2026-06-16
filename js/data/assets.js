@@ -246,6 +246,14 @@ window.gameData.assets = {
             category: 'eventi',
             defaultVol: 0.8
         },
+        'intro-typing': {
+            id: 'sound-intro-typing',
+            file: 'intro-typing.mp3',
+            name: 'Intro Typing',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.45
+        },
         'intro-glitch': {
             id: 'sound-intro-glitch',
             file: 'intro-glitch.mp3',
