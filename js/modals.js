@@ -1191,25 +1191,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Sincronizza anche l'icona del quick-mute col volume caricato dal salvataggio
                 if (typeof Game.updateMuteButton === 'function') Game.updateMuteButton();
 
-                // 3. INFINE fai partire l'audio (ora che i volumi sono corretti)
-                Game.tryStartAudio();
-
-                Game.showToast(gameData.texts.toasts.welcome + " " + u);
-
-                // --- CONTROLLO MODALI POST-LOGIN (Migrazione V2 o Release Notes) ---
-                if (window.triggerV2MigrationModal) {
-                    setTimeout(() => {
+                // --- INTRO CINEMATICA (login -> gioco) ---
+                // L'audio (musica) parte al beat "reveal" via onReveal; i modali
+                // post-login (V2 / release notes) partono a fine intro via onComplete.
+                // Il toast "Benvenuto" e' rimosso: lo dice gia' l'intro.
+                const runPostLogin = () => {
+                    if (window.triggerV2MigrationModal) {
                         showV2MigrationModal(() => {
                             window.triggerV2MigrationModal = false;
                             if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
                                 Game.openReleaseNotes();
                             }
                         });
-                    }, 500);
-                } else if (window.shouldShowReleaseNotesOnLoad) {
-                    setTimeout(() => {
+                    } else if (window.shouldShowReleaseNotesOnLoad) {
                         if (Game.openReleaseNotes) Game.openReleaseNotes();
-                    }, 500);
+                    }
+                };
+
+                if (window.EspoIntro && typeof window.EspoIntro.play === 'function') {
+                    window.EspoIntro.play({
+                        username: u,
+                        onReveal: () => Game.tryStartAudio(),
+                        onComplete: runPostLogin
+                    });
+                } else {
+                    // Fallback difensivo: comportamento ~ a prima dell'intro
+                    Game.tryStartAudio();
+                    runPostLogin();
                 }
             } else {
                 alert(data.message);
