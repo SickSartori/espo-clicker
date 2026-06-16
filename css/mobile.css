@@ -417,19 +417,14 @@
         padding-right: 5px;
     }
 
-    /* Mute in alto a sinistra */
+    /* Mute: bottom-left sopra la nav mobile, con safe-area */
     #quick-mute-btn {
-        top: auto;
-        bottom: auto;
-        position: fixed;
-        bottom: 85px;
-        left: 15px;
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+        bottom: calc(85px + env(safe-area-inset-bottom, 0px));
+        left: calc(14px + env(safe-area-inset-left, 0px));
+        font-size: 1.05rem;
         background-color: rgba(21, 27, 34, 0.9);
-        border: 1px solid #4a6582;
-        opacity: 0.8;
+        border-color: #4a6582;
+        opacity: 0.92;
         z-index: 1900;
     }
 
@@ -1040,8 +1035,9 @@ button img {
         align-items: flex-end;
     }
 
-    /* Login: mantieni centrato, non bottom-sheet */
-    html body div#login-modal.modal-backdrop {
+    /* Login + Offline ("Bentornato"): dialog centrati, non bottom-sheet */
+    html body div#login-modal.modal-backdrop,
+    html body div#offline-modal.modal-backdrop {
         align-items: center;
     }
 
@@ -1058,8 +1054,9 @@ button img {
         overflow: hidden; /* Impedisce scrollbar sul contenitore, scrollano solo le aree interne */
     }
 
-    /* Login: altezza automatica, non full-screen */
-    html body div#login-modal div.modal-content {
+    /* Login + Offline: altezza automatica, non full-screen */
+    html body div#login-modal div.modal-content,
+    html body div#offline-modal div.modal-content {
         height: auto;
         max-height: 90dvh;
         border-radius: 16px;
