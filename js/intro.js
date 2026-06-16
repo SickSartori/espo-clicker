@@ -20,6 +20,9 @@
     if (html != null) n.innerHTML = html;
     return n;
   }
+  function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
   function buildOverlay() {
     var o = el('div');
@@ -98,7 +101,7 @@
     function welcomeText() {
       var t = null;
       try { t = gameData.texts.ui.introWelcome; } catch (e) {}
-      return (t || 'BENTORNATO') + ', ' + String(username).toUpperCase();
+      return (t || 'BENTORNATO') + ', ' + escHtml(String(username).toUpperCase());
     }
     function showLogo(sub) {
       stage.innerHTML = '';
@@ -113,9 +116,6 @@
       at(40, function () { logo.classList.add('in'); });
       brackets.forEach(function (b) { b.classList.add('in'); });
     }
-
-    // expose for verification/debug
-    play._finish = finish;
 
     if (reduced) {
       doFlash();

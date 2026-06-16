@@ -48,7 +48,7 @@
 #login-intro .intro-scan { position:absolute; left:0; right:0; top:-8px; height:4px; background: var(--v3-accent-cyan,#00d9ff); box-shadow: 0 0 20px 5px rgba(0,217,255,0.8); opacity:0; z-index:7; }
 #login-intro .intro-scan.go { opacity:1; transition: top 0.85s linear; }
 
-#login-intro .intro-brk { position:absolute; width:40px; height:40px; border:2px solid var(--v3-accent-red,#ff3d5c); opacity:0; z-index:6; transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+#login-intro .intro-brk { position:absolute; width:40px; height:40px; border:2px solid var(--v3-accent-red,#ff3d5c); opacity:0; z-index:6; transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1); }
 #login-intro .intro-brk.tl{top:24px;left:24px;border-right:0;border-bottom:0;transform:translate(-12px,-12px)}
 #login-intro .intro-brk.tr{top:24px;right:24px;border-left:0;border-bottom:0;transform:translate(12px,-12px)}
 #login-intro .intro-brk.bl{bottom:24px;left:24px;border-right:0;border-top:0;transform:translate(-12px,12px)}
