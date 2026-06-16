@@ -52,7 +52,4 @@ jobs:
             .github/**
             node_modules/**
             **/*.map
-            code.md
-            game-meta.md
-            release-notes.md
-            super-midu-bros-main/**
+            docs/**
