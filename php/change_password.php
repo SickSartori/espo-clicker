@@ -5,8 +5,8 @@ $data = getJsonInput();
 $user = authenticate($conn, $data['username'], $data['oldPassword']);
 
 $newPassword = $data['newPassword'] ?? '';
-if (strlen($newPassword) < 4) {
-    echo json_encode(["status" => "error", "message" => "La password deve avere almeno 4 caratteri."]);
+if (strlen($newPassword) < 8) {
+    echo json_encode(["status" => "error", "message" => "La password deve avere almeno 8 caratteri."]);
     exit;
 }
 
