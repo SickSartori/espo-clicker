@@ -14,3 +14,6 @@
 @import './skins.css';
 @import './skins-modern.css';
 @import './podio.css';
+
+/* Intro login -> gioco */
+@import './intro.css';

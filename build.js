@@ -57,6 +57,9 @@ const JS_FILES = [
   // Arcade lazy loader
   'js/arcade-loader.js',
 
+  // Intro login -> gioco (window.EspoIntro)
+  'js/intro.js',
+
   // Main (deve essere ultimo)
   'js/script.js',
 ];

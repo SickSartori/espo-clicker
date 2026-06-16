@@ -1,0 +1,72 @@
+/* ===================================================================
+   Intro Login -> Gioco ("Debug -> Deploy")
+   Overlay cinematico mostrato da js/intro.js dopo il login esplicito.
+   =================================================================== */
+#login-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--v3-bg-void, #050810);
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+#login-intro.intro-out { opacity: 0; }
+
+#login-intro .intro-rain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.85; }
+#login-intro .intro-stage {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 24px; z-index: 4;
+}
+#login-intro .intro-con { width: 100%; max-width: 460px; text-align: left; font-size: 14px; line-height: 1.8; color: #9fb3c8; }
+#login-intro .intro-con .ok { color: #3ef2a1; }
+#login-intro .intro-con .cy { color: var(--v3-accent-cyan, #00d9ff); }
+#login-intro .intro-con .rd { color: var(--v3-accent-red, #ff3d5c); }
+#login-intro .intro-con .mu { color: #5b6b7e; }
+#login-intro .intro-cursor {
+  display: inline-block; width: 9px; height: 16px;
+  background: var(--v3-accent-cyan, #00d9ff); vertical-align: -2px;
+  animation: intro-blink 1s steps(1) infinite;
+}
+@keyframes intro-blink { 50% { opacity: 0; } }
+#login-intro .intro-pbar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin: 4px 0; }
+#login-intro .intro-pfill { height: 100%; width: 0; background: linear-gradient(90deg, var(--v3-accent-cyan, #00d9ff), #3ef2a1); transition: width 0.9s linear; }
+
+#login-intro.intro-glitching .intro-stage { animation: intro-jit 0.22s steps(2) infinite; }
+@keyframes intro-jit {
+  0%{transform:translate(0,0)}20%{transform:translate(-3px,1px)}40%{transform:translate(2px,-2px)}
+  60%{transform:translate(-2px,2px)}80%{transform:translate(3px,0)}100%{transform:translate(1px,1px)}
+}
+#login-intro .intro-err { border: 1px solid rgba(255,61,92,0.5); background: rgba(255,61,92,0.07); border-radius: 6px; padding: 16px 20px; text-align: left; }
+#login-intro .intro-err .h { color: var(--v3-accent-red,#ff3d5c); font-weight:700; font-size:15px; letter-spacing:1px; margin-bottom:8px; }
+#login-intro .intro-err .l { color:#ff9aa9; font-size:13px; line-height:1.9; opacity:0.85; }
+#login-intro.intro-glitching .intro-err { text-shadow: 2px 0 rgba(255,61,92,0.7), -2px 0 rgba(0,217,255,0.7); }
+#login-intro .intro-glitch-word { position:absolute; opacity:0.5; z-index:2; pointer-events:none; }
+
+#login-intro .intro-scan { position:absolute; left:0; right:0; top:-8px; height:4px; background: var(--v3-accent-cyan,#00d9ff); box-shadow: 0 0 20px 5px rgba(0,217,255,0.8); opacity:0; z-index:7; }
+#login-intro .intro-scan.go { opacity:1; transition: top 0.85s linear; }
+
+#login-intro .intro-brk { position:absolute; width:40px; height:40px; border:2px solid var(--v3-accent-red,#ff3d5c); opacity:0; z-index:6; transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+#login-intro .intro-brk.tl{top:24px;left:24px;border-right:0;border-bottom:0;transform:translate(-12px,-12px)}
+#login-intro .intro-brk.tr{top:24px;right:24px;border-left:0;border-bottom:0;transform:translate(12px,-12px)}
+#login-intro .intro-brk.bl{bottom:24px;left:24px;border-right:0;border-top:0;transform:translate(-12px,12px)}
+#login-intro .intro-brk.br{bottom:24px;right:24px;border-left:0;border-top:0;transform:translate(12px,12px)}
+#login-intro .intro-brk.in{opacity:0.9;transform:translate(0,0)}
+
+#login-intro .intro-logo { opacity:0; transform: scale(0.82); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.56,0.64,1); display:flex; flex-direction:column; align-items:center; gap:14px; }
+#login-intro .intro-logo.in { opacity:1; transform: scale(1); }
+#login-intro .intro-logo img { width: min(46vw, 320px); height:auto; filter: drop-shadow(0 0 26px rgba(0,217,255,0.5)); }
+#login-intro .intro-sub { font-size: clamp(13px, 1.6vw, 16px); letter-spacing: 6px; color: var(--v3-accent-cyan,#00d9ff); text-transform: uppercase; text-shadow: 0 0 12px rgba(0,217,255,0.5); }
+
+#login-intro .intro-flash { position:absolute; inset:0; background:#eaffff; opacity:0; transition: opacity 0.14s ease; pointer-events:none; z-index:9; }
+
+#login-intro .intro-skip { position:absolute; right:20px; bottom:18px; z-index:10; font-family: var(--v3-font-mono,'JetBrains Mono',monospace); font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#7f93a8; background:rgba(255,255,255,0.04); border:1px solid rgba(0,217,255,0.2); border-radius:6px; padding:8px 14px; cursor:pointer; opacity:0; transition: opacity 0.4s ease, color 0.15s, border-color 0.15s; }
+#login-intro .intro-skip.show { opacity:1; }
+#login-intro .intro-skip:hover { color:#fff; border-color: var(--v3-accent-cyan,#00d9ff); }
+
+@media (prefers-reduced-motion: reduce) {
+  #login-intro.intro-glitching .intro-stage { animation: none; }
+  #login-intro .intro-cursor { animation: none; }
+}
