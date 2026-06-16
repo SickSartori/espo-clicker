@@ -1254,9 +1254,34 @@ function resumeCrunchTimeEffects() {
 }
 
 
+// --- HUD video event: durante i video event score+BPS vengono spostati in un
+// contenitore a livello body (#event-hud) cosi' il layout e' relativo al viewport
+// (immune ai transform intermittenti degli antenati che li clippavano/scollegavano).
+// Solo desktop (>1024): su mobile resta il layout dedicato. Ripristinati a fine evento.
+let _eventHudStash = null;
+function moveHudIntoEvent() {
+    if (_eventHudStash || window.innerWidth <= 1024) return;
+    let hud = document.getElementById('event-hud');
+    if (!hud) { hud = document.createElement('div'); hud.id = 'event-hud'; document.body.appendChild(hud); }
+    _eventHudStash = [];
+    ['score-display', 'cps-display'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) { _eventHudStash.push({ el: el, parent: el.parentNode, next: el.nextSibling }); hud.appendChild(el); }
+    });
+}
+function restoreEventHud() {
+    if (!_eventHudStash) return;
+    _eventHudStash.forEach(function (r) {
+        if (r.next && r.next.parentNode === r.parent) r.parent.insertBefore(r.el, r.next);
+        else r.parent.appendChild(r.el);
+    });
+    _eventHudStash = null;
+}
+
 const EventHandlers = {
     video: (config, eventKey) => {
         document.body.classList.add('rick-rolling');
+        moveHudIntoEvent();
 
         // 1. Reset e nascondi altri video
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
@@ -1412,6 +1437,7 @@ const EventHandlers = {
                 clickOverlay.style.display = 'none'; // Nascondi overlay
 
                 document.body.classList.remove('rick-rolling');
+                restoreEventHud();
 
                 // Ripristino Audio Ambiente
                 if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
@@ -1550,6 +1576,7 @@ function stopBluescreenEffect() {
     document.body.classList.remove('bluescreen-active');
     document.body.classList.remove('matrix-active');
     document.body.classList.remove('rick-rolling');
+    restoreEventHud();
 
     if (typeof stopMatrixEffect === 'function') stopMatrixEffect();
 

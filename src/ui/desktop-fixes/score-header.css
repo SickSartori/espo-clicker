@@ -303,58 +303,87 @@
     display: none !important;
   }
 
-  /* --- HUD "wallet" durante i video event ---
-     Prima: score = "quadro giallo" (testo giallo + bordo bianco 2px, Rajdhani) e
-     BPS con sfondo trasparente (illeggibile sul video), distanti ~100px.
-     Ora: due pillole coerenti (dark glass per leggibilità sul video, bordo ciano
-     sottile, mono, tabular-nums), accent solo sul valore (oro per lo score, ciano
-     per i BPS), impilate e allineate in alto a destra. */
-  body.rick-rolling #game-container #score-display,
-  body.rick-rolling #game-container #cps-display {
-    position: fixed !important;
-    right: 20px !important;
-    left: auto !important;
-    bottom: auto !important;
+  /* Sfondo dinamico della skin (skin-ambient.css su #clicker-section): durante i
+     video event diventava un riquadro colorato (dorato per le skin legendary/divine
+     come Rick) che leggeva come "box giallo". Spento: nell'evento il video e' il
+     protagonista. */
+  body.rick-rolling #clicker-section {
+    background: none !important;
+    animation: none !important;
+  }
+
+  /* --- HUD video event: PANNELLO UNICO in alto a destra ---
+     Score+BPS vengono spostati via JS (moveHudIntoEvent) dentro #event-hud, un
+     contenitore fisso a livello body -> layout sempre relativo al viewport (immune
+     ai transform intermittenti degli antenati che prima clippavano/scollegavano il
+     BPS). Un solo riquadro dark-glass v3, valori neutri: score bianco-ghiaccio,
+     BPS ciano. Niente piu' oro/giallo. */
+  #event-hud {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10020;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+    min-width: 130px;
+    padding: 9px 16px;
+    background: rgba(10, 15, 28, 0.82);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  }
+  #event-hud:not(:empty) { display: flex; }
+  #event-hud #score-display,
+  #event-hud #cps-display {
+    position: static !important;
+    inset: auto !important;
     transform: none !important;
     transition: none !important;
     margin: 0 !important;
-    min-width: 128px !important;
-    box-sizing: border-box !important;
+    min-width: 0 !important;
+    width: auto !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     text-align: right !important;
-    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-family: inherit !important;
     font-variant-numeric: tabular-nums !important;
-    background: rgba(10, 15, 28, 0.82) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(0, 217, 255, 0.16) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
   }
-  body.rick-rolling #game-container #score-display {
-    top: 20px !important;
-    padding: 7px 14px !important;
-    font-size: 1.6rem !important;
+  #event-hud #score-display::before {
+    content: 'BUG';
+    display: block;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: rgba(0, 217, 255, 0.7);
+    margin-bottom: 1px;
+  }
+  #event-hud #score-display {
+    font-size: 1.55rem !important;
     font-weight: 800 !important;
     line-height: 1.15 !important;
     letter-spacing: -0.01em !important;
-    color: #fbbf24 !important;
-    -webkit-text-fill-color: #fbbf24 !important;
-    text-shadow: 0 0 12px rgba(251, 191, 36, 0.28) !important;
+    color: #f1f5f9 !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5) !important;
   }
-  body.rick-rolling #game-container #cps-display {
-    /* top negativo voluto: #cps-display ha un containing block (antenato con
-       transform) più in basso dello score, quindi un top piccolo lo distanzierebbe
-       (~95px). -12px lo porta subito sotto lo score, ~11-15px di gap (verificato a
-       1440 e 1920). */
-    top: -12px !important;
-    padding: 6px 14px !important;
-    font-size: 0.92rem !important;
+  #event-hud #cps-display {
+    font-size: 0.82rem !important;
     font-weight: 600 !important;
-    line-height: 1.2 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.3px !important;
     color: #00d9ff !important;
     -webkit-text-fill-color: #00d9ff !important;
     text-shadow: none !important;
-    opacity: 1 !important;
+    opacity: 0.95 !important;
   }
 }
 
