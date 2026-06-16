@@ -140,7 +140,7 @@
       stage.appendChild(logo);
       void logo.offsetWidth;
       at(40, function () { logo.classList.add('in'); });
-      brackets.forEach(function (b) { b.classList.add('in'); });
+      brackets.forEach(function (b, i) { at(i * 70, function () { b.classList.add('in'); }); });
     }
 
     if (reduced) {
