@@ -1,7 +1,7 @@
 /* ===================================================================
    Intro Login -> Gioco ("Debug -> Deploy")
    window.EspoIntro.play({ username, onReveal, onComplete, reducedMotion })
-   Overlay cinematico ~4,6s mostrato dopo il login esplicito (modals.js).
+   Overlay cinematico ~6s mostrato dopo il login esplicito (modals.js).
    Stile in css/intro.css. Audio via playSound() (game-logic.js).
    =================================================================== */
 (function () {
@@ -151,7 +151,7 @@
       return;
     }
 
-    // ---- FULL timeline (~4,6s) ----
+    // ---- FULL timeline (~6s) ----
     var con = el('div', 'intro-con');
     stage.appendChild(con);
 
@@ -215,8 +215,8 @@
       doReveal();
     });
 
-    // HANDOFF
-    at(4500, finish);
+    // HANDOFF — logo tenuto ~2s prima della dissolvenza
+    at(5500, finish);
   }
 
   window.EspoIntro = { play: play };
