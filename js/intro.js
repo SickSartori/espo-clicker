@@ -182,6 +182,7 @@
       stage.appendChild(el('div', 'intro-err',
         '<div class="h">[!!] SYSTEM INTEGRITY :: 0xBUG</div>' +
         '<div class="l">SEGFAULT at 0x00E5P0<br>NULLPTR :: espo.core.js<br>STACK OVERFLOW // bugs++</div>'));
+      sfx('sound-intro-glitch');
       var words = ['SEGFAULT', '0xBUG', 'NULL', 'PANIC', 'bugs++', '0xDEAD'];
       glitchInt = setInterval(function () {
         var s = el('span', 'intro-glitch-word', words[Math.floor(Math.random() * words.length)]);
@@ -203,15 +204,18 @@
       scan.classList.add('go');
       void scan.offsetWidth;
       scan.style.top = 'calc(100% + 8px)';
+      sfx('sound-intro-scan');
     });
     at(3050, function () {
       stage.innerHTML = '<div class="intro-con" style="text-align:center"><span class="ok" style="font-size:16px;font-weight:700;letter-spacing:1px">[OK] ALL BUGS FIXED</span></div>';
+      sfx('sound-intro-fixed');
     });
 
     // REVEAL logo + HUD + avvio musica
     at(3450, function () {
       doFlash();
       showLogo(welcomeText());
+      sfx('sound-intro-reveal');
       doReveal();
     });
 

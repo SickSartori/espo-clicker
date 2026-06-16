@@ -246,6 +246,38 @@ window.gameData.assets = {
             category: 'eventi',
             defaultVol: 0.8
         },
+        'intro-glitch': {
+            id: 'sound-intro-glitch',
+            file: 'intro-glitch.mp3',
+            name: 'Intro Glitch',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.55
+        },
+        'intro-scan': {
+            id: 'sound-intro-scan',
+            file: 'intro-scan.mp3',
+            name: 'Intro Scanner',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.45
+        },
+        'intro-fixed': {
+            id: 'sound-intro-fixed',
+            file: 'intro-fixed.mp3',
+            name: 'Intro Fixed',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.5
+        },
+        'intro-reveal': {
+            id: 'sound-intro-reveal',
+            file: 'intro-reveal.mp3',
+            name: 'Intro Reveal',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.6
+        },
     },
 
     videos: {
