@@ -80,6 +80,51 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 
 ---
 
+### 🎬 Cinematic Boot Intro
+
+* **💻 "Debug → Deploy" Sequence:** Logging in now triggers a short hacker-style intro — Matrix-style code rain, a command typed on screen in real time, a glitch and finally the logo reveal.
+* **🎧 Custom Audio:** Dedicated sound effects (glitch, scanner, "fixed", reveal) and background music that kicks in at just the right moment, at the end of the intro.
+* **⚡ Only When It Matters:** The intro plays only on an actual login — no sequence on refresh or automatic re-entry, so it never slows you down.
+
+---
+
+### 🌍 Play in Italian or English
+
+* **🗣️ Language Selector:** You can now choose the game's language (Italian / English) right from your profile.
+* **🌐 Translated Everywhere:** Interface, options, arcade and even these release notes follow your chosen language.
+
+---
+
+### 🏆 18 New Achievements (meme & nerd themed)
+
+* **😎 Pop Culture:** A fresh wave of goals winks at web and gaming classics — "The Answer to Everything" (42 clicks), "IT'S OVER 9000!", "STONKS", "Gotta Go Fast", "L33T H4X0R" and many more.
+* **🎮 Franchise Tributes:** Six achievements hide nods to legendary sagas. Can you track them all down?
+* **🇮🇹🇬🇧 Bilingual:** All the new goals are available in both Italian and English.
+
+---
+
+### 📊 Reworked Video Event HUD
+
+* **🖤 Elegant Panel:** During video events, your score and Bugs per second now live in a single dark, elegant panel — clean and readable (no more yellow box).
+* **✖️ Multiplier Badge:** When an event multiplies your earnings, a clearly visible xN badge stays on screen for the whole duration of the event.
+
+---
+
+### 🎄 Refined Christmas Theme
+
+* **❄️ One Snow, Nicer:** A single snow system, softer and more natural, now present on mobile too.
+* **🎀 Festive Decorations:** Colored lights along the border, frost in the corners and a renewed background behind Espo.
+* **🟥 Warmer Menus:** The side columns (upgrades and teams) now have red/gold accents that stand out from the green, for a more coherent Christmas look.
+
+---
+
+### 🤖 Auto-Click & Smoother Progression
+
+* **🖱️ New Upgrade — Auto-Click:** Unlocks automatic Bugs per second based on your number of QA Assistants: less repetitive clicking, more strategy.
+* **⚖️ Rebalanced Curve:** Late-game progression has been softened with more balanced returns and less "grind", for a more enjoyable endgame.
+
+---
+
 ### 🛠️ Lots of Little Refinements
 
 * **📍 LED Indicators Removed:** Removed the pulsing dots next to the multiplier and tokens, for a cleaner look.
@@ -87,6 +132,8 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 * **📏 Score & Header:** Main score highlighted better, multiplier and token values more discreet.
 * **🎨 Visual Consistency:** All themes (Christmas, 8-bit, Super, Default) have been revised for consistency with the new UI.
 * **⚡ Performance:** Optimized animations, lighter transitions, a smoother experience everywhere.
+* **🕹️ More Stable Arcade:** Fixed various small minigame bugs for cleaner sessions.
+* **🔒 Safer Accounts:** Stronger passwords and extra server-side protections.
 
 ---
 

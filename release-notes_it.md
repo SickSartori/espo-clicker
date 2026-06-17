@@ -80,6 +80,51 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 
 ---
 
+### 🎬 Intro Cinematica all'Avvio
+
+* **💻 Sequenza "Debug → Deploy":** Al login parte una breve intro a tema hacker — pioggia di codice stile Matrix, un comando digitato a schermo in tempo reale, un glitch e infine il reveal del logo.
+* **🎧 Audio su Misura:** Effetti sonori dedicati (glitch, scanner, "fixed", reveal) e musica di sottofondo che entra al momento giusto, alla fine dell'intro.
+* **⚡ Solo Quando Serve:** L'intro parte solo al login vero e proprio — niente sequenza al refresh o al rientro automatico, così non rallenta mai.
+
+---
+
+### 🌍 Gioca in Italiano o in Inglese
+
+* **🗣️ Selettore Lingua:** Ora puoi scegliere la lingua del gioco (Italiano / English) direttamente dal tuo profilo.
+* **🌐 Tradotto Ovunque:** Interfaccia, opzioni, sala giochi e persino queste note di rilascio seguono la lingua scelta.
+
+---
+
+### 🏆 18 Nuovi Achievement (a tema meme & nerd)
+
+* **😎 Cultura Pop:** Una nuova ondata di obiettivi strizza l'occhio ai grandi classici del web e del gaming — "La Risposta a Tutto" (42 click), "È OLTRE 9000!", "STONKS", "Gotta Go Fast", "L33T H4X0R" e molti altri.
+* **🎮 Omaggi ai Franchise:** Sei achievement nascondono citazioni a saghe leggendarie. Riuscirai a scovarli tutti?
+* **🇮🇹🇬🇧 Bilingue:** Tutti i nuovi obiettivi sono disponibili sia in Italiano che in Inglese.
+
+---
+
+### 📊 HUD Eventi Video Rinnovata
+
+* **🖤 Pannello Elegante:** Durante gli eventi video, punteggio e Bug al secondo vivono ora in un unico pannello scuro ed elegante, pulito e leggibile (niente più riquadro giallo).
+* **✖️ Badge Moltiplicatore:** Quando un evento moltiplica i tuoi guadagni, un badge xN ben visibile resta a schermo per tutta la durata dell'evento.
+
+---
+
+### 🎄 Tema Natalizio Rifinito
+
+* **❄️ Una Neve, Più Bella:** Un unico sistema di neve, più morbido e naturale, ora presente anche su mobile.
+* **🎀 Decori Festosi:** Lucine colorate sul bordo, brina agli angoli e uno sfondo rinnovato dietro a Espo.
+* **🟥 Menu più Caldi:** Le colonne laterali (potenziamenti e team) hanno ora accenti rosso/oro che staccano dal verde, per un look natalizio più coerente.
+
+---
+
+### 🤖 Click Automatico & Progressione più Morbida
+
+* **🖱️ Nuovo Potenziamento — Click Automatico:** Sblocca i Bug al secondo automatici in base al numero di Assistenti QA: meno click ripetitivi, più strategia.
+* **⚖️ Curva Ribilanciata:** La progressione di fine partita è stata ammorbidita con rendimenti più equilibrati e meno "grind", per un endgame più piacevole.
+
+---
+
 ### 🛠️ Tante Piccole Rifiniture
 
 * **📍 Indicatori LED Rimossi:** Tolte le palline pulsanti accanto a moltiplicatore e token, per un look più pulito.
@@ -87,6 +132,8 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 * **📏 Score & Header:** Score principale evidenziato meglio, valori moltiplicatore e token più discreti.
 * **🎨 Coerenza Visiva:** Tutti i temi (Christmas, 8-bit, Super, Default) sono stati rivisti per coerenza con la nuova UI.
 * **⚡ Performance:** Animazioni ottimizzate, transizioni più leggere, esperienza più fluida ovunque.
+* **🕹️ Sala Giochi più Stabile:** Corretti vari piccoli bug dei minigiochi per sessioni più pulite.
+* **🔒 Account più Sicuri:** Password più robuste e protezioni extra lato server.
 
 ---
 
