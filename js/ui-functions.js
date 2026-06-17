@@ -1427,6 +1427,13 @@ let lastToastMsg = "";
 let lastToastTime = 0;
 
 function showToast(message, type = 'info', duration) {
+    // Niente toast PRIMA del login: altrimenti compaiono sopra la schermata di accesso.
+    // In certi casi loadGame al boot emette toast su save locale (migrazione/backup/
+    // file corrotto) mentre l'utente è ancora al login: qui li sopprimiamo, tanto
+    // post-login il caricamento cloud è comunque autoritativo. (Gli errori di login
+    // usano alert(), non toast, quindi non si perde nulla di necessario.)
+    if (!sessionStorage.getItem('espooUser')) return;
+
     // Anti-spam: stesso messaggio entro 2s → skip
     const now = Date.now();
     if (message === lastToastMsg && (now - lastToastTime < 2000)) return;

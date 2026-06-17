@@ -155,6 +155,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })();
 
+    // --- RETE DI SICUREZZA SYNC CLOUD: avviso visibile se i progressi non vengono
+    //     salvati sul cloud per troppo tempo (es. token scaduto / conflitto). Puramente
+    //     additivo: non cambia la logica di salvataggio, segnala soltanto. ---
+    let lastCloudSaveOkAt = Date.now();
+    const CLOUD_STALE_MS = 90 * 1000; // avvisa solo dopo 90s di fallimenti (niente flicker)
+
+    function markCloudSaved() {
+        lastCloudSaveOkAt = Date.now();
+        _setCloudBadge(false);
+    }
+    function markCloudUnsynced(reason) {
+        // Solo se loggati e il cloud è fermo da un po' (evita flash su blip transitori).
+        if (!gameState || !gameState.user || !gameState.user.username) return;
+        if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
+        _setCloudBadge(true, reason);
+    }
+    function _setCloudBadge(show, reason) {
+        let badge = document.getElementById('cloud-sync-badge');
+        if (!show) { if (badge) badge.style.display = 'none'; return; }
+        const isEn = window.APP_LANG === 'en';
+        const label = isEn ? '⚠ Progress not synced — tap to retry'
+                           : '⚠ Progressi non salvati — tocca per riprovare';
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'cloud-sync-badge';
+            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;background:rgba(192,57,43,0.95);color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);cursor:pointer;max-width:90vw;text-align:center;';
+            badge.addEventListener('click', () => {
+                if (typeof window._silentTokenRefresh === 'function') window._silentTokenRefresh();
+                else if (typeof window._showLoginForTokenExpiry === 'function') window._showLoginForTokenExpiry();
+            });
+            document.body.appendChild(badge);
+        }
+        badge.textContent = label;
+        badge.title = reason ? ('cloud: ' + reason) : '';
+        badge.style.display = 'block';
+    }
+
     async function saveGame() {
         if (gameState.isDeleting) return;
 
@@ -205,7 +242,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // SALVATAGGIO CLOUD SICURO
+        // --- CLOUD: refresh PROATTIVO del token prima della scadenza (24h) ---
+        // Rete di sicurezza: per un idle game tenuto aperto a lungo il token scadeva in
+        // sessione e i salvataggi cloud morivano in silenzio (classifica ferma). Se manca
+        // poco alla scadenza lo rinnoviamo in modo silenzioso, senza interrompere il gioco.
+        // Fail-safe: se il refresh fallisce, sotto resta il controllo reattivo invariato.
+        const TOKEN_REFRESH_MARGIN = 30 * 60 * 1000; // 30 min prima della scadenza
+        if (tokenExpiresAt && currentSaveToken && !window._tokenRefreshing &&
+            Date.now() > tokenExpiresAt - TOKEN_REFRESH_MARGIN &&
+            typeof window._silentTokenRefresh === 'function') {
+            window._silentTokenRefresh();
+        }
+
+        // SALVATAGGIO CLOUD SICURO — scadenza effettiva (fallback se il refresh non basta)
         if (tokenExpiresAt && Date.now() > tokenExpiresAt) {
             if (!window._tokenExpiredNotified) {
                 window._tokenExpiredNotified = true;
@@ -246,9 +295,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(data => {
                         if (data.status === 'success') {
                             console.log(`[Save✓] score=${scoreToSend} prestige=${prestigeToSend} format=${savePayload.totalFormattazioni}`);
+                            markCloudSaved();
                         } else if (data.status === 'token_expired') {
                             console.warn(`[Save✗ TOKEN EXPIRED] ${data.message}`);
                             currentSaveToken = null;
+                            markCloudUnsynced('token');
                             if (!window._tokenExpiredNotified) {
                                 window._tokenExpiredNotified = true;
                                 window.EspooClicker.showToast(gameData.texts.toasts.sessionExpired24h, "error");
@@ -256,15 +307,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         } else if (data.status === 'conflict') {
                             console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
+                            markCloudUnsynced('conflict');
                             window.EspooClicker.showToast(gameData.texts.toasts.cloudConflict, "error");
                         } else if (data.status === 'warning') {
                             console.warn(`[Save✗ WARNING] ${data.message}`);
+                            markCloudUnsynced('warning');
                             window.EspooClicker.showToast(gameData.texts.toasts.sessionReload, "error");
                         } else {
                             console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
+                            markCloudUnsynced('error');
                         }
                     })
-                    .catch(err => console.warn("[Save✗ NETWORK]", err));
+                    .catch(err => { console.warn("[Save✗ NETWORK]", err); markCloudUnsynced('network'); });
             } catch (e) {
                 console.error("[Save✗ HASH]", e);
             }
@@ -348,6 +402,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
+    // Release notes: true se il salvataggio è di una versione PRECEDENTE (major.minor)
+    // a quella corrente → vanno mostrate le novità. Helper unico usato sia dal load
+    // locale (loadGame) sia da quello cloud (loadCloudData) per non duplicare il confronto.
+    function shouldShowReleaseNotesFor(savedVersion) {
+        if (!savedVersion || !window.GAME_VERSION) return false;
+        const oldMajor = savedVersion.major || 0;
+        const oldMinor = savedVersion.minor || 0;
+        return oldMajor < window.GAME_VERSION.major ||
+            (oldMajor === window.GAME_VERSION.major && oldMinor < window.GAME_VERSION.minor);
+    }
+
     async function loadGame() {
         // Carica da IndexedDB V9
         let savedState = await SaveDB.loadFromIndexedDB();
@@ -395,21 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     parsedState = savedState;
                 }
 
-                // 1. PRIMA COSA: Salviamo il flag per le Release Notes
-                let showRN = false;
-                if (parsedState && parsedState.version && window.GAME_VERSION) {
-                    const oldMajor = parsedState.version.major || 0;
-                    const oldMinor = parsedState.version.minor || 0;
-                    const currMajor = window.GAME_VERSION.major;
-                    const currMinor = window.GAME_VERSION.minor;
-
-                    if (oldMajor < currMajor || (oldMajor === currMajor && oldMinor < currMinor)) {
-                        showRN = true;
-                    }
-                }
-
-                // Imposta la variabile per le RN in modo coerente per tutto il gioco
-                if (showRN) {
+                // 1. PRIMA COSA: flag Release Notes dal confronto versione del save LOCALE
+                if (parsedState && shouldShowReleaseNotesFor(parsedState.version)) {
                     window.shouldShowReleaseNotesOnLoad = true;
                 }
 
@@ -1927,6 +1979,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // 6. Uniamo i dati (Merge)
+                    // Flag Release Notes PRIMA del merge: subito dopo gameState.version
+                    // eredita quella (vecchia) del cloud. Senza questo il messaggio novità
+                    // non compariva al login da cloud (device nuovo / cache pulita).
+                    const cloudShowRN = shouldShowReleaseNotesFor(cloudState.version);
                     deepMerge(gameState, cloudState);
 
                     // 6. Ripristino oggetti Decimali
@@ -1964,6 +2020,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const currentSessionUser = sessionStorage.getItem('espooUser');
                     if (currentSessionUser && gameState.user.username !== currentSessionUser)
                         gameState.user.username = currentSessionUser;
+
+                    // Allinea la versione del save alla corrente + flag novità.
+                    // (Il merge sopra lasciava la versione VECCHIA ereditata dal cloud, così
+                    // il messaggio non compariva al login o appariva in ritardo a un F5.)
+                    if (window.GAME_VERSION) {
+                        gameState.version = {
+                            major: window.GAME_VERSION.major,
+                            minor: window.GAME_VERSION.minor,
+                            stage: window.GAME_VERSION.stage
+                        };
+                    }
+                    if (cloudShowRN) window.shouldShowReleaseNotesOnLoad = true;
 
                     // Ricalcoli logica
                     calculatePrestigeBonus();

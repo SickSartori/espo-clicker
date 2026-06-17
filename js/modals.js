@@ -1006,6 +1006,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Refresh SILENZIOSO del token (rete di sicurezza, chiamato da saveGame poco prima
+    // della scadenza 24h). A differenza di _showLoginForTokenExpiry NON ricarica il cloud
+    // né riapre modali: chiede solo un nuovo token riusando le credenziali di sessione.
+    // Fail-safe: in caso di errore resta attivo il controllo reattivo alla scadenza.
+    window._silentTokenRefresh = async () => {
+        const u = sessionStorage.getItem('espooUser');
+        const p = sessionStorage.getItem('espooPass');
+        if (!u || !p || window._tokenRefreshing) return;
+        const Game = getGameAPI();
+        if (!Game || typeof Game.setSaveToken !== 'function') return;
+        window._tokenRefreshing = true;
+        try {
+            const res = await fetch('php/refresh_token.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            if (data.status === 'success' && data.save_token) {
+                Game.setSaveToken(data.save_token, data.token_expires_at);
+                window._tokenExpiredNotified = false;
+            }
+        } catch (e) {
+            // silenzioso: il fallback reattivo coprirà l'eventuale scadenza
+        } finally {
+            window._tokenRefreshing = false;
+        }
+    };
+
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
