@@ -1576,14 +1576,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. GESTIONE MOUSE (Nativa)
             clickerButton.addEventListener('click', (e) => {
-                tryStart();
+                // tryStart (sblocco audio) è best-effort: un suo throw NON deve
+                // impedire resolveBug, che conta il click.
+                try { tryStart(); } catch (err) { console.warn('[click] tryStart best-effort:', err); }
                 resolveBug(e);
             });
 
             // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
             clickerButton.addEventListener('touchstart', (e) => {
                 e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
-                tryStart();
+                try { tryStart(); } catch (err) { console.warn('[click] tryStart best-effort:', err); }
                 
                 const touch = e.touches[0];
                 

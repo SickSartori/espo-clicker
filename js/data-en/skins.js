@@ -50,7 +50,7 @@ window.gameData.i18n.en.skins = {
     },
     esposion: {
         desc: "The longer the combo, the bigger the blast.",
-        unlockHint: "Reach a 75-click combo."
+        unlockHint: "Reach a 150-click combo."
     },
 
     // --- LEGENDARY ---

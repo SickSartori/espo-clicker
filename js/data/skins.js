@@ -114,7 +114,7 @@ window.gameData.skins = {
         img: "skins/espo.webp",
         imgClick: "skins/espo-click.webp",
         rarity: "epic",
-        unlockHint: "Raggiungi una combo di 75 click.",
+        unlockHint: "Raggiungi una combo di 150 click.",
         comboExplode: true
     },
 

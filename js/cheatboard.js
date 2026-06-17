@@ -52,6 +52,7 @@
         ['Sblocca Obiettivi', 'Unlock Achievements'], ['Blocca Obiettivi', 'Lock Achievements'], ['+100 a tutti i Team', '+100 to all Teams'],
         ['Onnipotenza', 'Omnipotence'], ['Stampa Stato', 'Print State'], ['Salva Ora', 'Save Now'], ['Zona pericolosa', 'Danger zone'],
         ['Test Migrazione V2', 'Test V2 Migration'], ['RESET TOTALE', 'FULL RESET'],
+        ['Combo (test)', 'Combo (testing)'], ['Moltiplicatore Combo: ', 'Combo Multiplier: '],
         ['cerca cheat', 'search cheats'], ['cerca…', 'search…'], ['Apri Admin Console (trascina per spostare)', 'Open Admin Console (drag to move)'],
         ['Aggiunti ', 'Added '], ['Score impostato a ', 'Score set to '], ['Token impostati a ', 'Tokens set to '], ['Q-bits impostati a ', 'Q-bits set to '],
         ['Bonus BPS azzerato', 'BPS Bonus reset'], ['Bonus BPS +', 'BPS Bonus +'], ['BPS è 0, impossibile saltare', 'BPS is 0, cannot skip'],
@@ -338,6 +339,10 @@
                     <div class="cb-row"><button id="cb-save" class="cb-btn cyan"><i class="fa-solid fa-cloud-arrow-up"></i> Salva Ora</button></div>
                 </div>
                 <div class="cb-group">
+                    <div class="cb-gt">Combo (test)</div>
+                    <div class="cb-row"><button id="cb-combo-mult" class="cb-btn cyan"><i class="fa-solid fa-gauge-high"></i> Moltiplicatore Combo: <span id="cb-combo-mult-label">×1</span></button></div>
+                </div>
+                <div class="cb-group">
                     <div class="cb-gt">Zona pericolosa</div>
                     <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
                 </div>
@@ -608,6 +613,19 @@
         b.classList.toggle('red', !window.DEBUG_MODE);
     }
     function debugToggle() { window.DEBUG_MODE = !window.DEBUG_MODE; updateDebugUI(); toast('Debug Log: ' + (window.DEBUG_MODE ? 'ON' : 'OFF')); }
+    function updateComboMultUI() {
+        const l = $('cb-combo-mult-label'), b = $('cb-combo-mult'); if (!l || !b) return;
+        const m = window.cheatComboMult || 1;
+        l.textContent = '×' + m;
+        b.classList.toggle('matrix', m > 1);
+        b.classList.toggle('cyan', m <= 1);
+    }
+    function comboMultCycle() {
+        const m = window.cheatComboMult || 1;
+        window.cheatComboMult = (m >= 3) ? 1 : m + 1;
+        updateComboMultUI();
+        toast('Moltiplicatore Combo: ×' + window.cheatComboMult);
+    }
     function logState() {
         const c = window._console || console;
         c.log('--- GAME STATE ---', JSON.parse(JSON.stringify(gameState)));
@@ -784,11 +802,13 @@
     on('cb-unlock-shop', unlockShop); on('cb-lock-shop', lockShop); on('cb-unlock-skins', unlockSkins); on('cb-lock-skins', lockSkins); on('cb-unlock-ach', unlockAch); on('cb-lock-ach', lockAch); on('cb-army', army100);
     on('cb-god', godMode);
     on('cb-debug', debugToggle); on('cb-log', logState); on('cb-save', forceSave);
+    on('cb-combo-mult', comboMultCycle);
     on('cb-v2', forceV2); on('cb-hardreset', hardReset);
 
     // --- 13. Init ---
     activate('risorse');
     updateDebugUI();
+    updateComboMultUI();
     applyHandlePos();
     applyLoginGate();
     updateDash();

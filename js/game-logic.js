@@ -608,7 +608,7 @@ const FX = {
     // Combo tracker
     _comboCount: 0,
     _comboTimer: null,
-    _comboThreshold: 250, // ms tra click per mantenere combo
+    _comboThreshold: 350, // ms tra click per mantenere combo (margine ampio = combo più facili)
 
     registerClick() {
         // Durante eventi video il combo overlay copre il video — lo sopprimiamo
@@ -623,7 +623,9 @@ const FX = {
             return 0;
         }
 
-        this._comboCount++;
+        // +1 normalmente; il cheat di test (cheatboard, max ×3) fa salire la combo
+        // più in fretta per provare le fasi alte / lo sblocco senza 150+ click.
+        this._comboCount += (window.cheatComboMult || 1);
 
         // Record combo più lunga (statistica lifetime, persiste su prestige/format)
         if (typeof gameState !== 'undefined' && gameState &&
@@ -1676,18 +1678,25 @@ function resolveBug(event) {
     const isSuperTheme = document.body.classList.contains('theme-super');
     const isFuryActive = (typeof crunchTimeEndTime !== 'undefined' && crunchTimeEndTime > Date.now());
 
-    if (isSuperTheme && isFuryActive) {
-        if (window.EspooClicker && window.EspooClicker.playSound) {
-            window.EspooClicker.playSound('sound-fireball');
+    // Audio + FX combo sono BEST-EFFORT: un loro errore non deve MAI impedire il
+    // conteggio del click (score/totalClicks più sotto). Isolati con try/catch così
+    // un raro throw (stato Howler, GSAP, skin dinamica) non "fa sparire" il click.
+    try {
+        if (isSuperTheme && isFuryActive) {
+            if (window.EspooClicker && window.EspooClicker.playSound) {
+                window.EspooClicker.playSound('sound-fireball');
+            }
+        } else {
+            AudioManager.playClickEffect();
         }
-    } else {
-        AudioManager.playClickEffect();
-    }
+    } catch (err) { console.warn('[click] audio best-effort fallito:', err); }
 
     // FX v3.0: registra combo PRIMA, così il bonus combo si applica a questo click.
     // (haptic, shake progressivo e combo counter sono gestiti qui dentro)
     let comboCount = 0;
-    if (typeof FX !== 'undefined') comboCount = FX.registerClick();
+    try {
+        if (typeof FX !== 'undefined') comboCount = FX.registerClick();
+    } catch (err) { console.warn('[click] FX.registerClick best-effort fallito:', err); comboCount = 0; }
 
     let currentClickValue = calculateClickValue();
 
@@ -1706,6 +1715,10 @@ function resolveBug(event) {
     gameState.totalScore = gameState.totalScore.add(currentClickValue);
     gameState.lifetimeScore = gameState.lifetimeScore.add(currentClickValue);
     gameState.totalClicks++;
+    // Display reattivo: il numero segue il click subito (rAF-throttle), bypassando il
+    // count-up GSAP che — riavviato ogni 100ms dal loop UI — restava indietro (lag).
+    window._lastClickAt = Date.now();
+    if (typeof bumpScoreDisplay === 'function') bumpScoreDisplay();
 
     if (typeof showClickFeedback === 'function') showClickFeedback(event);
 

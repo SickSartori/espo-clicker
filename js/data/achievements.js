@@ -264,13 +264,13 @@ window.gameData.achievements = {
     },
     esposionUnlock: {
         name: 'Esposion!',
-        desc: 'Raggiungi una combo di 75 click.',
+        desc: 'Raggiungi una combo di 150 click.',
         flavor: 'Tieni il ritmo finché Espo non regge più la pressione.',
         type: 'custom',
-        target: 75,
+        target: 150,
         isSecret: false,
         reward: { type: 'skin', id: 'esposion' },
-        condition: () => (gameState.longestCombo || 0) >= 75
+        condition: () => (gameState.longestCombo || 0) >= 150
     },
     doge: {
         name: 'Such Bug, Much Wow',

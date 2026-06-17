@@ -1125,7 +1125,7 @@ function showClickFeedback(event) {
     // accumulavano senza limite saturando main-thread e renderer -> freeze. Backstop:
     // se ce ne sono gia' troppi a schermo salta tutto. Il punteggio e' gia' stato
     // aggiunto in resolveBug, quindi il click conta comunque.
-    if (feedbackContainer.childElementCount > 80) return;
+    if (feedbackContainer.childElementCount > 28) return; // era 80: troppi nodi animati saturavano il renderer (freeze + combo persa)
 
     // --- SUPER STAR MODE ---
     if (document.body.classList.contains('super-star-active')) {
@@ -1268,7 +1268,15 @@ function showClickFeedback(event) {
     }
 
     // --- POSIZIONAMENTO ---
-    const rect = feedbackContainer.getBoundingClientRect();
+    // PERF: getBoundingClientRect forza un reflow sincrono; a raffica (con decine di +N
+    // animati e append/remove continui) è una delle "task lunghe" che bucano il frame.
+    // Lo cachiamo ~500ms: il container non si sposta mentre clicchi.
+    const _rectNow = Date.now();
+    if (!feedbackContainer._rectCache || _rectNow - (feedbackContainer._rectCacheT || 0) > 500) {
+        feedbackContainer._rectCache = feedbackContainer.getBoundingClientRect();
+        feedbackContainer._rectCacheT = _rectNow;
+    }
+    const rect = feedbackContainer._rectCache;
     let startX, startY;
 
     if (event && event.clientX && event.clientY) {
@@ -1325,7 +1333,10 @@ function showClickFeedback(event) {
         // PERF: le particelle (6-12 elementi+tween a click) sono il costo dominante;
         // durante i clic a raffica le saltiamo quando il contenitore e' gia' carico,
         // tenendo comunque il +N. Evita l'accumulo che causava il freeze.
-        if (feedbackContainer.childElementCount <= 40) {
+        // Le particelle (6-12 nodi+tween a click) sono il costo dominante: spawniamo
+        // SOLO a contenitore leggero (era <=40). Sopra, teniamo il +N e saltiamo le
+        // particelle — così non si arriva mai a saturare il renderer durante lo spam.
+        if (feedbackContainer.childElementCount <= 14) {
             const combo = FX._comboCount || 0;
             const count = combo >= 20 ? 12 : combo >= 10 ? 10 : 6;
             FX.particleBurst(px, py, count);
@@ -1666,6 +1677,23 @@ function calculateVisualBPS() {
 
 const scoreAnimState = { value: 0 };
 let _scoreTween = null;
+let _scoreFastRaf = null;
+
+// Aggiornamento reattivo del solo #score-display durante il click attivo: scrive il
+// valore reale (rAF-throttle, max 1 write/frame) bypassando il count-up GSAP, che
+// inseguendo un bersaglio che salta ogni 100ms restava indietro (lag percepito).
+// Il count-up resta per l'income passivo (BPS), quando non si clicca.
+function bumpScoreDisplay() {
+    if (typeof gameState === 'undefined' || !gameState.score) return;
+    if (_scoreFastRaf) return;
+    _scoreFastRaf = requestAnimationFrame(() => {
+        _scoreFastRaf = null;
+        if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
+        const n = gameState.score.toNumber();
+        scoreAnimState.value = isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
+        if (typeof setTextIfChanged === 'function') setTextIfChanged('score-display', formatNumber(gameState.score));
+    });
+}
 
 // Oltre questa soglia i JS Number perdono la precisione intera (2^53): animare con
 // GSAP un Number verso un Decimal enorme produce lag e valori spuri (es. il contatore
@@ -1687,18 +1715,28 @@ function updateScoreBoard(totalBPS) {
         if (Math.abs(scoreAnimState.value - scoreNum) > scoreNum * 0.5)
             scoreAnimState.value = scoreNum;
 
-        // Kill tween precedente per evitare stacking durante rapid clicks
-        if (_scoreTween) _scoreTween.kill();
-
-        // GSAP anima il valore "visuale" (Number) verso il valore reale (Number)
-        _scoreTween = gsap.to(scoreAnimState, {
-            duration: 0.2,
-            value: scoreNum,
-            ease: "power1.out",
-            onUpdate: () => {
-                setTextIfChanged('score-display', formatNumber(Math.trunc(scoreAnimState.value)));
-            }
-        });
+        // Durante il click attivo NON animiamo: il count-up inseguirebbe un bersaglio
+        // che salta ogni 100ms e resterebbe indietro (lag). bumpScoreDisplay ha già
+        // scritto il valore reale; qui sincronizziamo. Il count-up resta per l'income
+        // passivo (BPS), quando non si clicca da un po'.
+        const activeClicking = (Date.now() - (window._lastClickAt || 0)) < 250;
+        if (activeClicking) {
+            if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
+            scoreAnimState.value = scoreNum;
+            setTextIfChanged('score-display', formatNumber(gameState.score));
+        } else {
+            // Kill tween precedente per evitare stacking
+            if (_scoreTween) _scoreTween.kill();
+            // GSAP anima il valore "visuale" (Number) verso il valore reale (Number)
+            _scoreTween = gsap.to(scoreAnimState, {
+                duration: 0.2,
+                value: scoreNum,
+                ease: "power1.out",
+                onUpdate: () => {
+                    setTextIfChanged('score-display', formatNumber(Math.trunc(scoreAnimState.value)));
+                }
+            });
+        }
     }
 
     const scoreEl = getEl('score-display');

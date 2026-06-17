@@ -30,7 +30,7 @@ window.gameData.i18n.en.achievements = {
     leetHaxor: { desc: "Reach 1,337 manual clicks.", flavor: "You're officially elite. 0wn3d." },
     shinyHunter: { name: "Shiny!", desc: "Click your first Golden Bug.", flavor: "The odds? Negligible. The glory? Eternal." },
     comboBreaker: { desc: "Reach a 50-click combo.", flavor: "A metallic voice screams in the distance." },
-    esposionUnlock: { name: "Esposion!", desc: "Reach a 75-click combo.", flavor: "Keep the rhythm until Espo can't take the pressure." },
+    esposionUnlock: { name: "Esposion!", desc: "Reach a 150-click combo.", flavor: "Keep the rhythm until Espo can't take the pressure." },
     doge: { desc: "Rack up 1 Million total bugs.", flavor: "wow. very click. so debug. much bug." },
     stonks: { desc: "Rack up 100 Million total bugs.", flavor: "↗ Only up. Don't ask how." },
     gottaGoFast: { desc: "Exceed 1,000 Bugs per second (BPS).", flavor: "A blue hedgehog nods in approval." },
