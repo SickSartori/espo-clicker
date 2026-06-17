@@ -2091,6 +2091,8 @@ let christmasAudioInitialized = false;
 const VFXManager = {
     intervals: {},
     frames: {},
+    _revealed: false,       // gioco visibile (post login + intro)?
+    _pendingVfx: null,      // VFX ambientale skin in attesa del reveal
 
     stopAll() {
         // Ferma i loop
@@ -2098,6 +2100,11 @@ const VFXManager = {
         for (let key in this.frames) cancelAnimationFrame(this.frames[key]);
         this.intervals = {};
         this.frames = {};
+
+        // Azzera anche la coda VFX pre-reveal: applySkinVisuals chiama stopAll()
+        // e poi start() solo se la skin ha un vfx. Senza questo, una skin con neve
+        // in coda resterebbe pendente anche dopo lo switch a una skin senza vfx.
+        this._pendingVfx = null;
 
         // Pulisce il DOM
         const snow = document.getElementById('snow-container');
@@ -2114,12 +2121,31 @@ const VFXManager = {
     },
 
     start(effectType) {
-        // Non stoppiamo tutto se stiamo per attivare qualcosa, 
+        // Non stoppiamo tutto se stiamo per attivare qualcosa,
         // lo farà applySkinVisuals per gestire layer combinati.
+
+        // Gating: i VFX ambientali della skin (neve/fuoco/matrix) NON devono
+        // comparire sulla schermata di login né durante l'intro cinematica.
+        // Finché il gioco non è rivelato (releaseAmbientVfx, a fine intro/login)
+        // mettiamo in coda l'ultimo VFX richiesto e lo avviamo a reveal avvenuto.
+        if (!this._revealed) {
+            this._pendingVfx = effectType;
+            return;
+        }
 
         if (effectType === 'snow') this.spawnSnow();
         if (effectType === 'fire') this.spawnFire();
         if (effectType === 'matrix') this.spawnMatrix();
+    },
+
+    // Chiamata a fine login/intro: sblocca i VFX ambientali e avvia quello in coda.
+    releaseAmbientVfx() {
+        this._revealed = true;
+        if (this._pendingVfx) {
+            const fx = this._pendingVfx;
+            this._pendingVfx = null;
+            this.start(fx);
+        }
     },
 
     spawnSnow() {
@@ -2158,6 +2184,12 @@ const VFXManager = {
         // La logica esistente di startMatrixEffect in ui-functions.js
         if (typeof startMatrixEffect === 'function') startMatrixEffect();
     }
+};
+
+// Reveal del gioco (post login + intro): sblocca i VFX ambientali della skin
+// messi in coda durante login/intro. Esposto su window per modals.js.
+window.releaseAmbientVfx = function () {
+    if (typeof VFXManager !== 'undefined') VFXManager.releaseAmbientVfx();
 };
 
 function applySkinVisuals(skinId, forcePlayMusic = false) {

@@ -1289,11 +1289,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (_willPlayIntro) {
                     window.EspoIntro.play({
                         username: u,
-                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); Game.tryStartAudio(); runPostLogin(); }
+                        // releaseAmbientVfx: la neve/VFX skin parte SOLO ora, a intro
+                        // finita (non sul login né durante l'intro).
+                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); Game.tryStartAudio(); if (typeof window.releaseAmbientVfx === 'function') window.releaseAmbientVfx(); runPostLogin(); }
                     });
                 } else {
-                    // Fallback difensivo: comportamento ~ a prima dell'intro
+                    // Fallback difensivo: comportamento ~ a prima dell'intro.
+                    // Niente intro (F5/re-auth): il gioco è già visibile → VFX subito.
                     Game.tryStartAudio();
+                    if (typeof window.releaseAmbientVfx === 'function') window.releaseAmbientVfx();
                     runPostLogin();
                 }
             } else {
