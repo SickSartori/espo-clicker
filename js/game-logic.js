@@ -375,6 +375,12 @@ const AudioManager = {
     },
 
     playClickEffect() {
+        // PERF: cap a ~40/sec. Sui clic a raffica si accumulavano decine di suoni
+        // concorrenti (glitch audio + costo main-thread); a quel ritmo non sono
+        // comunque distinguibili.
+        const _nowSnd = performance.now();
+        if (_nowSnd - (this._lastClickSound || 0) < 25) return;
+        this._lastClickSound = _nowSnd;
         let soundId = 'sound-click';
 
         if (document.body.classList.contains('super-star-active')) {
@@ -633,24 +639,32 @@ const FX = {
         // Haptic su ogni click
         this.vibrate(10);
 
-        // Effetti progressivi in base al combo
-        if (this._comboCount >= 20) {
-            this.shake(6, 0.15);
-            this.flash('rgba(255,71,87,0.12)', 0.1);
-            this.vibrate([15, 10, 15]);
-        } else if (this._comboCount >= 10) {
-            this.shake(3, 0.1);
-            this.vibrate(12);
-        }
+        // PERF: effetti visivi del combo (shake/flash/glow/contatore) throttlati a
+        // ~ogni 50ms. Sui clic a raffica animarli a ogni click accumulava tween GSAP
+        // e causava jank/freeze; il contatore combo resta comunque esatto.
+        const _nowFx = performance.now();
+        if (_nowFx - (this._lastComboFx || 0) >= 50) {
+            this._lastComboFx = _nowFx;
 
-        // Glow ring ogni 10 combo
-        if (this._comboCount > 0 && this._comboCount % 10 === 0) {
-            this.glowRing('#ff4757');
-        }
+            // Effetti progressivi in base al combo
+            if (this._comboCount >= 20) {
+                this.shake(6, 0.15);
+                this.flash('rgba(255,71,87,0.12)', 0.1);
+                this.vibrate([15, 10, 15]);
+            } else if (this._comboCount >= 10) {
+                this.shake(3, 0.1);
+                this.vibrate(12);
+            }
 
-        // Mostra combo counter visivo da 5+
-        if (this._comboCount >= 5) {
-            this._showComboDisplay(this._comboCount);
+            // Glow ring ogni 10 combo
+            if (this._comboCount > 0 && this._comboCount % 10 === 0) {
+                this.glowRing('#ff4757');
+            }
+
+            // Mostra combo counter visivo da 5+
+            if (this._comboCount >= 5) {
+                this._showComboDisplay(this._comboCount);
+            }
         }
 
         return this._comboCount;

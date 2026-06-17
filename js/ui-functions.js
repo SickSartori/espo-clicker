@@ -1121,6 +1121,12 @@ function showClickFeedback(event) {
     const feedbackContainer = document.getElementById('click-feedback-container');
     if (!feedbackContainer) return;
 
+    // PERF (clic a raffica): gli effetti decorativi (+N, particelle, tween GSAP) si
+    // accumulavano senza limite saturando main-thread e renderer -> freeze. Backstop:
+    // se ce ne sono gia' troppi a schermo salta tutto. Il punteggio e' gia' stato
+    // aggiunto in resolveBug, quindi il click conta comunque.
+    if (feedbackContainer.childElementCount > 80) return;
+
     // --- SUPER STAR MODE ---
     if (document.body.classList.contains('super-star-active')) {
         const feedbackContainer = document.getElementById('click-feedback-container');
@@ -1316,9 +1322,14 @@ function showClickFeedback(event) {
     const px = startX + randomOffsetX;
     const py = startY + randomOffsetY;
     if (typeof FX !== 'undefined' && typeof gsap !== 'undefined') {
-        const combo = FX._comboCount || 0;
-        const count = combo >= 20 ? 12 : combo >= 10 ? 10 : 6;
-        FX.particleBurst(px, py, count);
+        // PERF: le particelle (6-12 elementi+tween a click) sono il costo dominante;
+        // durante i clic a raffica le saltiamo quando il contenitore e' gia' carico,
+        // tenendo comunque il +N. Evita l'accumulo che causava il freeze.
+        if (feedbackContainer.childElementCount <= 40) {
+            const combo = FX._comboCount || 0;
+            const count = combo >= 20 ? 12 : combo >= 10 ? 10 : 6;
+            FX.particleBurst(px, py, count);
+        }
     } else {
         const sparkCount = 3 + Math.floor(Math.random() * 3);
         for (let i = 0; i < sparkCount; i++) {
