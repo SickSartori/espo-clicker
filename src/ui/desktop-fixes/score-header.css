@@ -426,55 +426,87 @@
 }
 
 /* =====================================================================
-   DESKTOP STRETTO (769-1100px) — buco breakpoint tablet.
-   A finestra ridotta la colonna centrale si stringe e le 3 sezioni HUD
-   (MULT . BUGS FIXED . TOKENS) si accavallavano: il contatore e'
-   absolute-centered e non "conosce" la larghezza dei box laterali, quindi
-   ci finiva sopra. Qui esce dal centering assoluto e diventa item flex →
-   le 3 sezioni condividono la riga senza sovrapporsi, con font/padding
-   compatti. Sopra i 1100px torna il layout HUD pieno (centrato).
+   DESKTOP STRETTO (769-1100px) — layout HUD a DUE righe.
+   A finestra ridotta la colonna centrale e' molto stretta (~320px @ 800px):
+   le 3 sezioni in fila singola schiacciavano lo score (hero) a ~110px e, con
+   due box laterali di larghezza diversa (MOLT vs TOKEN+Q-BITS) e lo spazio
+   distribuito a space-between, lo score finiva pure scentrato (~33px a sx).
+   Soluzione: griglia 2 righe → riga 1 lo SCORE a tutta larghezza (centrato,
+   protagonista), riga 2 i due wallet bilanciati 50/50. Sopra i 1100px torna
+   il layout HUD pieno (score absolute-centered).
    ===================================================================== */
 @media (min-width: 769px) and (max-width: 1100px) {
   html body .column-header-center {
-    gap: 6px;
-    padding: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "score score"
+      "mult  wallet";
+    align-items: stretch;
+    gap: 5px 10px;
+    padding: 6px 12px;
+    height: auto;
+    min-height: 88px;
   }
 
-  html body #header-left-panel,
-  html body #header-right-panel {
-    padding: 6px 8px;
-    min-width: 0;
-    flex: 0 1 auto;
-  }
-
+  /* Riga 1 — SCORE hero: esce dal centering assoluto e occupa tutta la riga */
   html body .header-main-score {
+    grid-area: score;
     position: relative;
     left: auto;
     top: auto;
     transform: none;
     max-width: none;
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 0 6px;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
   }
-
-  /* Parentesi decorative [ ] rimosse: allargavano la label centrale di ~30px */
+  html body .header-main-score .header-label-main {
+    gap: 6px;
+    font-size: 0.56rem;
+    margin-bottom: 2px;
+  }
+  /* Parentesi decorative [ ] rimosse: allargavano la label centrale */
   html body .header-main-score .header-label-main::before,
   html body .header-main-score .header-label-main::after {
     content: '';
   }
-
-  html body .header-main-score .header-label-main {
-    gap: 5px;
-    font-size: 0.6rem;
+  html body #score-display {
+    font-size: clamp(1.3rem, 2.9vw, 1.7rem);
   }
 
-  html body #score-display {
-    font-size: clamp(0.9rem, 1.5vw, 1.4rem);
+  /* Riga 2 — due wallet bilanciati, stessa larghezza (50/50) */
+  html body #header-left-panel,
+  html body #header-right-panel {
+    max-width: none;
+    min-width: 0;
+    flex: none;
+    justify-self: stretch;
+    padding: 5px 12px;
+  }
+  html body #header-left-panel {
+    grid-area: mult;
+    align-items: center;   /* centra l'unica stat MOLT */
+    text-align: center;
+  }
+  html body #header-right-panel {
+    grid-area: wallet;
+    margin-left: 0;        /* annulla il margin-left:auto legacy */
+  }
+  /* TOKEN + Q-BITS distribuiti nello spazio del box wallet */
+  html body #header-right-panel > div {
+    width: 100%;
+    gap: 16px !important;
+    justify-content: space-evenly !important;
   }
 
   html body #header-left-panel .header-value,
   html body #header-right-panel .header-value {
-    font-size: 1rem;
+    font-size: 1.05rem;
+  }
+  html body .header-stat-box .header-label {
+    font-size: 0.54rem;
+    white-space: nowrap;   /* evita il wrap "Q-/BITS" che sbilanciava i box */
   }
 }
