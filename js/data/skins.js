@@ -108,6 +108,15 @@ window.gameData.skins = {
         requiresFormatting: true,
         unlockHint: "Esegui almeno 1 Formattazione e acquista con 30 Token."
     },
+    esposion: {
+        name: "Esposion",
+        desc: "Più tieni il combo, più esplode.",
+        img: "skins/espo.webp",
+        imgClick: "skins/espo-click.webp",
+        rarity: "epic",
+        unlockHint: "Raggiungi una combo di 75 click.",
+        comboExplode: true
+    },
 
     // --- LEGENDARY ---
     rick: {

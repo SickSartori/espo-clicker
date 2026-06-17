@@ -262,6 +262,16 @@ window.gameData.achievements = {
         reward: null,
         condition: () => (gameState.longestCombo || 0) >= 50
     },
+    esposionUnlock: {
+        name: 'Esposion!',
+        desc: 'Raggiungi una combo di 75 click.',
+        flavor: 'Tieni il ritmo finché Espo non regge più la pressione.',
+        type: 'custom',
+        target: 75,
+        isSecret: false,
+        reward: { type: 'skin', id: 'esposion' },
+        condition: () => (gameState.longestCombo || 0) >= 75
+    },
     doge: {
         name: 'Such Bug, Much Wow',
         desc: 'Accumula 1 Milione di Bug totali.',

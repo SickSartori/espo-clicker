@@ -1,0 +1,68 @@
+/* ===================================================================
+   Esposion — skin dinamica. Effetti per fase sul #clicker-btn.
+   Le classi .esposion-active / .esposion-p1..10 / .esposion-detonate
+   sono gestite da js/esposion.js. Lo shake alle fasi alte arriva già
+   dal sistema combo (game-logic.js). Qui: glow di calore crescente
+   sulla figura, flash di swap/detonazione, pop finale.
+   =================================================================== */
+
+#clicker-btn.esposion-active {
+    position: relative;
+}
+
+/* Glow di calore: drop-shadow segue la silhouette del PNG.
+   Intensita' via custom property impostata dalla classe di fase. */
+#clicker-btn.esposion-active #manager-photo-normal,
+#clicker-btn.esposion-active #manager-photo-clicked {
+    filter: drop-shadow(0 0 var(--ez-blur, 0px) var(--ez-color, transparent));
+    transition: filter 0.25s ease;
+    will-change: filter;
+}
+
+#clicker-btn.esposion-p1  { --ez-blur: 3px;  --ez-color: rgba(255, 150, 60, 0.30); }
+#clicker-btn.esposion-p2  { --ez-blur: 5px;  --ez-color: rgba(255, 140, 52, 0.38); }
+#clicker-btn.esposion-p3  { --ez-blur: 7px;  --ez-color: rgba(255, 122, 46, 0.46); }
+#clicker-btn.esposion-p4  { --ez-blur: 9px;  --ez-color: rgba(255, 110, 42, 0.54); }
+#clicker-btn.esposion-p5  { --ez-blur: 12px; --ez-color: rgba(255, 96, 36, 0.62); }
+#clicker-btn.esposion-p6  { --ez-blur: 15px; --ez-color: rgba(255, 82, 32, 0.70); }
+#clicker-btn.esposion-p7  { --ez-blur: 18px; --ez-color: rgba(255, 72, 30, 0.78); }
+#clicker-btn.esposion-p8  { --ez-blur: 22px; --ez-color: rgba(255, 64, 28, 0.86); }
+#clicker-btn.esposion-p9  { --ez-blur: 27px; --ez-color: rgba(255, 56, 26, 0.94); }
+#clicker-btn.esposion-p10 { --ez-blur: 34px; --ez-color: rgba(255, 90, 44, 1.00); }
+
+/* Flash overlay (swap d'art + detonazione). Appeso da JS dentro #clicker-btn. */
+.esposion-flash {
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 170, 60, 0.70) 32%,
+        rgba(255, 90, 30, 0.28) 58%,
+        transparent 74%);
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    transition: opacity 0.13s ease;
+    z-index: 6;
+}
+
+/* Detonazione fase 10: flash ampio e pop (sovrascrive l'opacity inline). */
+#clicker-btn.esposion-detonate .esposion-flash {
+    animation: esposion-boom 0.5s ease-out;
+}
+@keyframes esposion-boom {
+    0%   { opacity: 0;   transform: scale(0.55); }
+    22%  { opacity: 1;   transform: scale(1.15); }
+    100% { opacity: 0;   transform: scale(1.55); }
+}
+
+/* Accessibilita': niente flash/pulsazioni, solo lo swap d'art e un glow tenue. */
+@media (prefers-reduced-motion: reduce) {
+    #clicker-btn.esposion-active #manager-photo-normal,
+    #clicker-btn.esposion-active #manager-photo-clicked {
+        transition: none;
+    }
+    .esposion-flash { display: none; }
+    #clicker-btn.esposion-detonate .esposion-flash { animation: none; }
+}

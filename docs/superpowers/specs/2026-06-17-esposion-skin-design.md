@@ -2,7 +2,7 @@
 
 - **Data:** 2026-06-17
 - **Branch:** develop-v3
-- **Stato:** design approvato (decisioni cardine confermate), pronto per il piano d'implementazione
+- **Stato:** implementato e verificato in preview (2026-06-17) — skin, modulo FX, CSS, SFX, sblocco combo 75
 
 ## Concept
 
@@ -49,14 +49,14 @@ Note:
 - **Guardie**: tutto attivo solo se la skin corrente è `esposion`. Su cambio skin (`applySkinVisuals`) e su `visibilitychange`/blur → cleanup completo (stop particelle, reset fase, rimozione classi).
 - **Soppressione video-event**: già coperta — il combo si azzera durante i video-event (`rick-rolling`), quindi la fase scende a 0 da sola.
 
-## Asset immagini
+## Asset immagini — GENERATI (2026-06-17)
 
-Servono **3 nuovi art** (la fase 0 riusa `espo.webp`):
-- `skins/esposion-crepato.webp`
-- `skins/esposion-carbonizzato.webp`
-- `skins/esposion-detona.webp`
+**6 file** in `assets/image/skins/` (la fase 0 riusa `espo.webp` / `espo-click.webp`):
+- `esposion-crepato.webp` + `esposion-crepato-click.webp`
+- `esposion-carbonizzato.webp` + `esposion-carbonizzato-click.webp`
+- `esposion-boom.webp` + `esposion-boom-click.webp`
 
-Generati in img2img con `espo.webp` come reference (stessa persona/posa/inquadratura, sfondo trasparente 512×512). Prompt completi: vedi sezione "Prompt" in fondo. Il "premuto" resta un transform CSS → niente varianti `-click` da generare.
+Generati via Magnific/Freepik MCP in img2img: reference `espo.webp` (posa normale) e `espo-click.webp` (posa eccitata "click"), poi `remove_background` → resize 512×512 → webp (Pillow). Stessa persona/inquadratura, sfondo trasparente, escalation crepato→carbonizzato→boom. Prompt completi: vedi sezione "Prompt" in fondo. Master Magnific conservati sull'account; i temp locali sono stati rimossi.
 
 ## Audio (SFX)
 
@@ -102,7 +102,6 @@ Il combo è già un moltiplicatore di click (+1%/combo, cap +100% a combo 106). 
 ## Fuori scope (YAGNI)
 
 - Nessun bonus di gameplay.
-- Nessuna variante `-click` per fase (transform CSS).
 - Niente musica dedicata (solo SFX); l'ambience resta quella corrente.
 - Niente nuove fasi oltre le 10.
 

@@ -286,6 +286,39 @@ window.gameData.assets = {
             category: 'effetti',
             defaultVol: 0.6
         },
+        'esposion-tick': {
+            id: 'sound-esposion-tick',
+            file: 'esposion-tick.mp3',
+            name: 'Esposion Tick',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.4
+        },
+        'esposion-charge': {
+            id: 'sound-esposion-charge',
+            file: 'esposion-charge.mp3',
+            name: 'Esposion Charge',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.5
+        },
+        'esposion-boom': {
+            id: 'sound-esposion-boom',
+            file: 'esposion-boom.mp3',
+            name: 'Esposion Boom',
+            type: 'sfx',
+            category: 'effetti',
+            defaultVol: 0.6
+        },
+        'esposion-crackle': {
+            id: 'sound-esposion-crackle',
+            file: 'esposion-crackle.mp3',
+            name: 'Esposion Crackle',
+            type: 'sfx',
+            category: 'effetti',
+            loop: true,
+            defaultVol: 0.35
+        },
     },
 
     videos: {

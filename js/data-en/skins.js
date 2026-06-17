@@ -48,6 +48,10 @@ window.gameData.i18n.en.skins = {
         desc: "Tofu delivery, but with code.",
         unlockHint: "Perform at least 1 Format and buy for 30 Token."
     },
+    esposion: {
+        desc: "The longer the combo, the bigger the blast.",
+        unlockHint: "Reach a 75-click combo."
+    },
 
     // --- LEGENDARY ---
     rick: {

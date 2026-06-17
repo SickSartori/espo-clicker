@@ -618,6 +618,7 @@ const FX = {
             this._comboCount = 0;
             clearTimeout(this._comboTimer);
             this._hideComboDisplay();
+            if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.decay();
             this.vibrate(10);
             return 0;
         }
@@ -634,6 +635,7 @@ const FX = {
         this._comboTimer = setTimeout(() => {
             this._comboCount = 0;
             this._hideComboDisplay();
+            if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.decay();
         }, this._comboThreshold);
 
         // Haptic su ogni click
@@ -666,6 +668,9 @@ const FX = {
                 this._showComboDisplay(this._comboCount);
             }
         }
+
+        // Esposion: la skin dinamica reagisce al combo (solo estetico).
+        if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.update(this._comboCount);
 
         return this._comboCount;
     },

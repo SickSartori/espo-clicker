@@ -60,6 +60,9 @@ const JS_FILES = [
   // Intro login -> gioco (window.EspoIntro)
   'js/intro.js',
 
+  // Esposion: skin dinamica combo->esplosione (window.EsposionFX)
+  'js/esposion.js',
+
   // Main (deve essere ultimo)
   'js/script.js',
 ];

@@ -2245,6 +2245,11 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
     applyClasses(photoNormal, skinData.img);
     applyClasses(photoClicked, skinData.imgClick);
+
+    // Esposion: attiva/disattiva la skin dinamica (effetti combo->esplosione).
+    if (typeof EsposionFX !== 'undefined') {
+        if (skinId === 'esposion') EsposionFX.start(); else EsposionFX.stop();
+    }
 }
 
 
