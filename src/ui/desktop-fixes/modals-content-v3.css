@@ -147,6 +147,32 @@
     box-shadow: 0 4px 18px rgba(245, 158, 11, 0.5);
   }
 
+  /* --- Tooltip "Sblocca: <skin>" del bottone claim ---
+     Il bottone usa [data-tooltip] (css/components.css) che mette il tooltip
+     SOPRA (bottom:100%). Ma .trophy-row ha overflow:hidden e gli obiettivi
+     riscattabili sono ordinati in cima alla lista → il tooltip veniva tagliato
+     dal bordo superiore della riga. Lo spostiamo a SINISTRA del bottone,
+     centrato in verticale: resta dentro la riga (niente clip) e la freccia
+     punta al premio. */
+  html body #achievements-modal #achievement-list .trophy-claim-btn[data-tooltip]:hover::after {
+    bottom: auto;
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    margin: 0 10px 0 0;
+  }
+  html body #achievements-modal #achievement-list .trophy-claim-btn[data-tooltip]:hover::before {
+    bottom: auto;
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    margin: 0 -2px 0 0;
+    border: 6px solid transparent;
+    border-left-color: #f1c40f;
+  }
+
   /* ════════════════════════════════════════════════
      STATS — stat boxes v3
      ════════════════════════════════════════════════ */
