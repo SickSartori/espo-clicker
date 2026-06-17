@@ -1339,22 +1339,50 @@ function showClickFeedback(event) {
 
 // --- MINI MARKDOWN PARSER (Sostituisce Marked.js ~20KB) ---
 function simpleMarkdown(md) {
-    return md
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px 0;">')
-        .replace(/^### (.+)$/gm, '<h3 style="margin:14px 0 6px;color:#e0e0e0;">$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2 style="margin:18px 0 8px;">$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1 style="margin:0 0 10px;">$1</h1>')
-        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    // Parser a blocchi. Niente <br> a tappeto (prima ogni \n diventava <br>:
+    // spaziatura doppia e incoerente sopra ai margini dei blocchi). Qui generiamo
+    // HTML semantico e lasciamo gestire lo spazio ai margini di ogni blocco.
+    const esc = (s) => s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    const inline = (s) => esc(s)
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;">$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;">$1</code>')
-        .replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>[\s\S]*?<\/li>)/g, (m) => m)
-        .replace(/(<li>.*?<\/li>\n?)+/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$&</ul>')
-        .replace(/<\/ul>\s*<ul[^>]*>/g, '')
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/\n\n/g, '<br>')
-        .replace(/\n/g, '<br>');
+        .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;">$1</code>');
+
+    const lines = md.replace(/\r\n/g, '\n').split('\n');
+    let out = '';
+    let inList = false;
+    const closeList = () => { if (inList) { out += '</ul>'; inList = false; } };
+
+    for (const raw of lines) {
+        const line = raw.trim();
+        if (!line) { closeList(); continue; }   // riga vuota = solo separatore di blocchi
+
+        let m;
+        if (line === '---') {
+            closeList();
+            out += '<hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);margin:14px 0;">';
+        } else if ((m = line.match(/^###\s+(.+)$/))) {
+            closeList();
+            out += '<h3 style="margin:16px 0 8px;font-size:1.1rem;color:#2ecc71;">' + inline(m[1]) + '</h3>';
+        } else if ((m = line.match(/^##\s+(.+)$/))) {
+            closeList();
+            out += '<h2 style="margin:20px 0 10px;font-size:1.3rem;color:#3498db;">' + inline(m[1]) + '</h2>';
+        } else if ((m = line.match(/^#\s+(.+)$/))) {
+            closeList();
+            out += '<h1 style="margin:0 0 14px;font-size:1.6rem;color:#f1c40f;text-align:center;border-bottom:1px solid rgba(241,196,15,0.3);padding-bottom:10px;">' + inline(m[1]) + '</h1>';
+        } else if ((m = line.match(/^[*\-]\s+(.+)$/))) {
+            if (!inList) { out += '<ul style="margin:0 0 12px;padding-left:20px;">'; inList = true; }
+            out += '<li style="margin:0 0 6px;line-height:1.55;">' + inline(m[1]) + '</li>';
+        } else {
+            closeList();
+            out += '<p style="margin:0 0 10px;line-height:1.6;">' + inline(line) + '</p>';
+        }
+    }
+    closeList();
+    return out;
 }
 
 // --- MODALE V2 MIGRATION (Sostituisce SweetAlert2) ---
