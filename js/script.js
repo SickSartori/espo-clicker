@@ -171,19 +171,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
         _setCloudBadge(true, reason);
     }
+    let _cloudBadgeReason = null;
     function _setCloudBadge(show, reason) {
         let badge = document.getElementById('cloud-sync-badge');
         if (!show) { if (badge) badge.style.display = 'none'; return; }
+        _cloudBadgeReason = reason || null;
         const isEn = window.APP_LANG === 'en';
-        const label = isEn ? '⚠ Progress not synced — tap to retry'
-                           : '⚠ Progressi non salvati — tocca per riprovare';
+        const isConflict = reason === 'conflict';
+        const label = isConflict
+            ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
+                    : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
+            : (isEn ? '⚠ Progress not synced — tap to retry'
+                    : '⚠ Progressi non salvati — tocca per riprovare');
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'cloud-sync-badge';
             badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;background:rgba(192,57,43,0.95);color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);cursor:pointer;max-width:90vw;text-align:center;';
             badge.addEventListener('click', () => {
-                if (typeof window._silentTokenRefresh === 'function') window._silentTokenRefresh();
-                else if (typeof window._showLoginForTokenExpiry === 'function') window._showLoginForTokenExpiry();
+                // Azione giusta per motivo: conflitto → adotta il cloud autoritativo;
+                // altrimenti (token/rete) → rinnova il token e ritenta.
+                if (_cloudBadgeReason === 'conflict' && typeof window._resyncFromCloud === 'function') {
+                    window._resyncFromCloud();
+                } else if (typeof window._silentTokenRefresh === 'function') {
+                    window._silentTokenRefresh();
+                } else if (typeof window._showLoginForTokenExpiry === 'function') {
+                    window._showLoginForTokenExpiry();
+                }
             });
             document.body.appendChild(badge);
         }
@@ -1831,7 +1844,7 @@ document.addEventListener('DOMContentLoaded', () => {
         executePrestige: executePrestige,
 
 
-        loadCloudData: (cloudJSON) => {
+        loadCloudData: (cloudJSON, opts) => {
             if (cloudJSON) {
                 try {
                     // 1. Parsing e Decompressione Preliminare
@@ -1852,7 +1865,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // --- 2. PROTEZIONE ANTI-ROLLBACK ---
-                    if (gameState && gameState.lifetimeScore) {
+                    // Recovery da conflitto (opts.force): salta il guard. Il server ha già
+                    // stabilito che il cloud è autoritativo (Format>Prestige>Score); il
+                    // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
+                    // prestige/format, e senza questo by-pass il client resterebbe bloccato.
+                    if (!(opts && opts.force) && gameState && gameState.lifetimeScore) {
                         const localScore = new Decimal(gameState.lifetimeScore);
                         const cloudTotal = new Decimal(cloudState.lifetimeScore || 0);
 

@@ -1035,6 +1035,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Recovery da CONFLITTO cloud: il server ha rifiutato il salvataggio perché il DB è
+    // più avanti (Format>Prestige>Score). Rifacciamo il fetch del save cloud e lo
+    // adottiamo in modo AUTORITATIVO (force) — il confronto solo-lifetimeScore del load
+    // normale non basta a risolvere il conflitto. Così il client si riallinea e i
+    // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
+    window._resyncFromCloud = async () => {
+        const u = sessionStorage.getItem('espooUser');
+        const p = sessionStorage.getItem('espooPass');
+        if (!u || !p || window._resyncing) return;
+        const Game = getGameAPI();
+        if (!Game || typeof Game.loadCloudData !== 'function') return;
+        window._resyncing = true;
+        try {
+            const res = await fetch('php/login_register.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
+                window._tokenExpiredNotified = false;
+                if (data.save_data) {
+                    Game.loadCloudData(data.save_data, { force: true });
+                    if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
+                }
+            }
+        } catch (e) {
+            // riprova al prossimo salvataggio / tap sul badge
+        } finally {
+            window._resyncing = false;
+        }
+    };
+
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
         if (confirm(gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
