@@ -50,11 +50,11 @@ require_once("php/check_version.php");
 
 		<!-- Bundle Core + UI + all styles -->
 		<!-- Cache-bust come il JS bundle: in dev (localhost) filemtime → CSS fresca a
-		     ogni `node build.js` senza bumpare la versione; in prod resta $cacheVer (deploy). -->
+		     ogni `node build.js` senza bumpare la versione, in dev e in prod (come il bundle V3). -->
 		<?php
-		$isLocalHost = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SERVER['HTTP_HOST'] ?? ''));
-		$stylesVer = $isLocalHost ? (@filemtime(__DIR__ . '/dist/styles.bundle.min.css') ?: $cacheVer) : $cacheVer;
-		$mobileVer = $isLocalHost ? (@filemtime(__DIR__ . '/dist/styles.mobile.min.css') ?: $cacheVer) : $cacheVer;
+		// $cacheVer resta solo come fallback se il file non esiste (build non ancora eseguita).
+		$stylesVer = assetVer(__DIR__ . '/dist/styles.bundle.min.css', $cacheVer);
+		$mobileVer = assetVer(__DIR__ . '/dist/styles.mobile.min.css', $cacheVer);
 		?>
 		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $stylesVer; ?>">
 
@@ -80,7 +80,7 @@ require_once("php/check_version.php");
 		<link rel="preload" as="image" href="assets/image/skins/espo.webp" fetchpriority="high">
 		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high" imagesrcset="assets/image/skins/espo-click.webp" imagesizes="(max-width: 768px) 120px, 240px">
 
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	</head>
 	<body>
 		<a href="#center-column" class="v3-skip-link"><?php echo $labels["idx_skip_content"]; ?></a>
@@ -334,12 +334,10 @@ require_once("php/check_version.php");
 		     Letta dall'overlay i18n nel bundle (js/i18n.js) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
 		<?php
-		// Cache-bust del bundle: in dev (localhost) usa filemtime → ogni rebuild
+		// Cache-bust del bundle via filemtime (dev E prod) → ogni rebuild
 		// (node build.js) viene servito fresco senza dover bumpare la versione.
-		// In produzione resta $cacheVer (prodVersion) per cache HTTP/SW stabile.
-		$bundleVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SERVER['HTTP_HOST'] ?? ''))
-			? (@filemtime(__DIR__ . '/dist/game.bundle.min.js') ?: $cacheVer)
-			: $cacheVer;
+		// $cacheVer resta solo come fallback se il file non esiste (build non fatta).
+		$bundleVer = assetVer(__DIR__ . '/dist/game.bundle.min.js', $cacheVer);
 		?>
 		<script src="dist/game.bundle.min.js?v=<?php echo $bundleVer; ?>" defer></script>
 

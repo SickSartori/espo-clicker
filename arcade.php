@@ -26,11 +26,11 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Press+Start+2P&display=swap">
 
     <!-- Stesso bundle del gioco principale (FA, base CSS) -->
-    <link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $cacheVer; ?>">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
+    <link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo assetVer(__DIR__ . '/dist/styles.bundle.min.css', $cacheVer); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Decimal (break_eternity) — locale per reward calc -->
-    <script src="dist/break_eternity.min.js?v=<?php echo $cacheVer; ?>"></script>
+    <script src="dist/break_eternity.min.js?v=<?php echo assetVer(__DIR__ . '/dist/break_eternity.min.js', $cacheVer); ?>"></script>
 
     <link rel="stylesheet" href="css/arcade-fullscreen.css?v=<?php echo $arcadeAssetVer; ?>">
 </head>

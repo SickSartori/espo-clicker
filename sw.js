@@ -16,10 +16,9 @@ const PRECACHE_ASSETS = [
     './index.php',
     './manifest.json',
 
-    // Bundle minificati (cache immutable 1 anno via .htaccess)
-    './dist/game.bundle.min.js',
-    './dist/styles.bundle.min.css',
-    './dist/styles.mobile.min.css',
+    // NB: i bundle dist/*.min.{js,css} NON sono pre-cachati qui: la pagina li richiede
+    // con ?v=<filemtime>, mentre questi URL (senza query) non verrebbero mai trovati da
+    // caches.match. Vengono cachati on-demand in DYNAMIC_CACHE al primo fetch reale.
 
     // Solo asset above-the-fold critici
     './assets/image/skins/espo.webp',

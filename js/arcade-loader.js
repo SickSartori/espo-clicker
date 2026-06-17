@@ -116,7 +116,7 @@
             _loading = true;
             console.log('[ArcadeLoader] Caricamento assets Arcade in corso...');
 
-            _promise = Promise.all(ARCADE_CSS.map(loadCSS))
+            _promise = Promise.all(ARCADE_CSS.map(function (href) { return loadCSS(href + '?v=' + _v); }))
                 .then(function () {
                     // I 5 giochi canvas si caricano subito, in parallelo, SENZA dipendere da Phaser.
                     var canvas = CANVAS_GAMES.map(loadScript);

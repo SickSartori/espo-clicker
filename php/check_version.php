@@ -13,4 +13,8 @@
 		if(isset($config['prodVersion']))
 			$cacheVer =  $config['prodVersion'];
 	}
+
+	// assetVer(): cache-bust via filemtime() -> ogni build invalida cache HTTP/SW
+	// senza dover bumpare la versione manuale. Fallback su $cacheVer se il file manca.
+	function assetVer($absPath, $fallback) { return @filemtime($absPath) ?: $fallback; }
 ?>
