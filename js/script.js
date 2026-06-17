@@ -320,12 +320,31 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         } else if (data.status === 'conflict') {
                             console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
-                            markCloudUnsynced('conflict');
-                            window.EspooClicker.showToast(gameData.texts.toasts.cloudConflict, "error");
+                            // Auto-recovery SILENZIOSA: il cloud è più avanti (anti-rollback
+                            // Format>Prestige>Score) quindi lo adottiamo come autoritativo da
+                            // solo, senza chiedere nulla (prima serviva tap sul badge / reload).
+                            // Throttle 15s = niente loop se due dispositivi salvano in contesa;
+                            // se l'auto-resync è già in corso o appena fatto, mostro il badge.
+                            const _nowCf = Date.now();
+                            if (typeof window._resyncFromCloud === 'function' && !window._resyncing &&
+                                _nowCf - (window._lastAutoResyncAt || 0) > 15000) {
+                                window._lastAutoResyncAt = _nowCf;
+                                console.log('[Cloud] Conflitto → auto-resync dal cloud (autoritativo)…');
+                                window._resyncFromCloud();
+                            } else {
+                                markCloudUnsynced('conflict');
+                            }
                         } else if (data.status === 'warning') {
                             console.warn(`[Save✗ WARNING] ${data.message}`);
-                            markCloudUnsynced('warning');
-                            window.EspooClicker.showToast(gameData.texts.toasts.sessionReload, "error");
+                            // Hash/integrità: il token client non combacia col server. Auto:
+                            // rinnovo il token in silenzio e ritento al prossimo save (niente
+                            // "ricarica la pagina"). Fallback badge se il refresh è già in corso.
+                            if (typeof window._silentTokenRefresh === 'function' && !window._tokenRefreshing) {
+                                console.log('[Cloud] Integrità token → auto-refresh silenzioso…');
+                                window._silentTokenRefresh();
+                            } else {
+                                markCloudUnsynced('warning');
+                            }
                         } else {
                             console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
                             markCloudUnsynced('error');
