@@ -82,9 +82,8 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 
 ### 🎬 Intro Cinematica all'Avvio
 
-* **💻 Sequenza "Debug → Deploy":** Al login parte una breve intro a tema hacker — pioggia di codice stile Matrix, un comando digitato a schermo in tempo reale, un glitch e infine il reveal del logo.
-* **🎧 Audio su Misura:** Effetti sonori dedicati (glitch, scanner, "fixed", reveal) e musica di sottofondo che entra al momento giusto, alla fine dell'intro.
-* **⚡ Solo Quando Serve:** L'intro parte solo al login vero e proprio — niente sequenza al refresh o al rientro automatico, così non rallenta mai.
+* **💻 Benvenuto in Stile:** Una breve intro cinematica a tema hacker accompagna il login, con effetti sonori dedicati e musica che entra al momento giusto.
+* **⚡ Solo Quando Serve:** Parte solo al login vero e proprio — niente sequenza al refresh o al rientro automatico, così non rallenta mai.
 
 ---
 
@@ -97,9 +96,9 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 
 ### 🏆 18 Nuovi Achievement (a tema meme & nerd)
 
-* **😎 Cultura Pop:** Una nuova ondata di obiettivi strizza l'occhio ai grandi classici del web e del gaming — "La Risposta a Tutto" (42 click), "È OLTRE 9000!", "STONKS", "Gotta Go Fast", "L33T H4X0R" e molti altri.
-* **🎮 Omaggi ai Franchise:** Sei achievement nascondono citazioni a saghe leggendarie. Riuscirai a scovarli tutti?
-* **🇮🇹🇬🇧 Bilingue:** Tutti i nuovi obiettivi sono disponibili sia in Italiano che in Inglese.
+* **😎 Cultura Pop:** Una nuova ondata di obiettivi strizza l'occhio ai grandi classici del web e del gaming, con qualche omaggio a saghe leggendarie.
+* **🔍 Tutti da Scoprire:** Niente spoiler — li sblocchi giocando!
+* **🇮🇹🇬🇧 Bilingue:** Disponibili sia in Italiano che in Inglese.
 
 ---
 

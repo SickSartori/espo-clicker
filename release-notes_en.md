@@ -82,9 +82,8 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 
 ### 🎬 Cinematic Boot Intro
 
-* **💻 "Debug → Deploy" Sequence:** Logging in now triggers a short hacker-style intro — Matrix-style code rain, a command typed on screen in real time, a glitch and finally the logo reveal.
-* **🎧 Custom Audio:** Dedicated sound effects (glitch, scanner, "fixed", reveal) and background music that kicks in at just the right moment, at the end of the intro.
-* **⚡ Only When It Matters:** The intro plays only on an actual login — no sequence on refresh or automatic re-entry, so it never slows you down.
+* **💻 Welcome in Style:** A short hacker-style cinematic intro greets your login, with dedicated sound effects and music that kicks in at just the right moment.
+* **⚡ Only When It Matters:** It plays only on an actual login — no sequence on refresh or automatic re-entry, so it never slows you down.
 
 ---
 
@@ -97,9 +96,9 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 
 ### 🏆 18 New Achievements (meme & nerd themed)
 
-* **😎 Pop Culture:** A fresh wave of goals winks at web and gaming classics — "The Answer to Everything" (42 clicks), "IT'S OVER 9000!", "STONKS", "Gotta Go Fast", "L33T H4X0R" and many more.
-* **🎮 Franchise Tributes:** Six achievements hide nods to legendary sagas. Can you track them all down?
-* **🇮🇹🇬🇧 Bilingual:** All the new goals are available in both Italian and English.
+* **😎 Pop Culture:** A fresh wave of goals winking at web and gaming classics, with a few nods to legendary sagas.
+* **🔍 All to Discover:** No spoilers — unlock them by playing!
+* **🇮🇹🇬🇧 Bilingual:** Available in both Italian and English.
 
 ---
 
