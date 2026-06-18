@@ -206,7 +206,7 @@ input:checked+.modern-slider:before {
     overflow: visible;
 }
 
-/* Dot indicator (nascosto su desktop, visibile su mobile via mobile-simplified.css) */
+/* Dot indicator (nascosto su desktop, visibile su mobile) */
 .carousel-dots {
     display: none;
 }

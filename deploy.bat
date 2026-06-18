@@ -452,7 +452,7 @@ REM  UTILITY
 REM ================================================================
 
 :open_releasenotes
-start "" "release-notes.md"
+start "" "release-notes_it.md"
 goto menu
 
 :open_browser
