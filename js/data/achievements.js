@@ -401,5 +401,47 @@ window.gameData.achievements = {
         isSecret: false,
         reward: null,
         condition: () => gameState.lifetimeScore.gte(10000000000)
+    },
+
+    // ===== SBLOCCO SKIN v3.0 (Carmaespòn/Pablo/Leon ecc. comprate; queste guadagnate) =====
+    pazienteZero: {
+        name: 'Paziente Zero',
+        desc: 'Raggiungi 250.000 click manuali.',
+        flavor: 'Un click ti ha contagiato. Ora il contagio sei tu.',
+        type: 'click',
+        target: 250000,
+        isSecret: false,
+        reward: { type: 'skin', id: 'clicker' },
+        condition: () => gameState.totalClicks >= 250000
+    },
+    rpdElite: {
+        name: 'R.P.D. Elite',
+        desc: 'Clicca 250 Golden Bug.',
+        flavor: 'Polizia di Espoon City. Bug, fermi tutti.',
+        type: 'custom',
+        target: 250,
+        isSecret: false,
+        reward: { type: 'skin', id: 'leon' },
+        condition: () => gameState.totalGoldenBugsClicked >= 250
+    },
+    esposaUnlock: {
+        name: 'Finché Codice non ci Separi',
+        desc: 'Gioca per 24 ore totali.',
+        flavor: 'Un impegno serio. Col codice.',
+        type: 'time',
+        target: 86400,
+        isSecret: false,
+        reward: { type: 'skin', id: 'esposa' },
+        condition: () => gameState.totalPlayTime >= 86400
+    },
+    collezionista: {
+        name: 'Collezionista',
+        desc: 'Sblocca 15 skin diverse.',
+        flavor: 'La festa comincia quando le hai tutte.',
+        type: 'custom',
+        target: 15,
+        isSecret: false,
+        reward: { type: 'skin', id: 'mariachi' },
+        condition: () => (gameState.skins.unlocked || []).length >= 15
     }
 }

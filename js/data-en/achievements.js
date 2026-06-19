@@ -43,5 +43,9 @@ window.gameData.i18n.en.achievements = {
     bazinga: { desc: "Rack up 73 Million total bugs.", flavor: "73: the 21st prime, and the best number of all. Bazinga." },
     catchEmAll: { name: "Gotta Catch 'Em All!", desc: "Own 151 units of a single Team.", flavor: "There were only 151 of them, back in the day." },
     imagination: { desc: "Unlock 5 different skins.", flavor: "🌈 Im-ag-in-a-tion." },
-    moneyMoneyMoney: { desc: "Earn 10 Billion lifetime bugs.", flavor: "Mr. Krabs smells money." }
+    moneyMoneyMoney: { desc: "Earn 10 Billion lifetime bugs.", flavor: "Mr. Krabs smells money." },
+    pazienteZero: { name: "Patient Zero", desc: "Reach 250,000 manual clicks.", flavor: "A click infected you. Now you are the infection." },
+    rpdElite: { name: "R.P.D. Elite", desc: "Click 250 Golden Bugs.", flavor: "Espoon City Police. Freeze, bugs." },
+    esposaUnlock: { name: "Till Code Do Us Part", desc: "Play for 24 hours total.", flavor: "A serious commitment. To code." },
+    collezionista: { name: "Collector", desc: "Unlock 15 different skins.", flavor: "The party starts when you've got them all." }
 };

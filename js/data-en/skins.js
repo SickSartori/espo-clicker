@@ -34,6 +34,16 @@ window.gameData.i18n.en.skins = {
         desc: "My Espo at Portia"
     },
 
+    clown: {
+        name: "Espoclown",
+        desc: "Every crash is a show."
+    },
+    mariachi: {
+        name: "Espariachi",
+        desc: "Ay ay ay, sing and compile.",
+        unlockHint: "Unlock the 'Collector' achievement (15 skins)."
+    },
+
     // --- EPIC ---
     king: {
         desc: "The King of Bugs."
@@ -51,6 +61,17 @@ window.gameData.i18n.en.skins = {
     esposion: {
         desc: "The longer the combo, the bigger the blast.",
         unlockHint: "Reach a 150-click combo."
+    },
+
+    pablo: {
+        name: "Pablo Espobar",
+        desc: "Plata o plomo... or pull request.",
+        unlockHint: "Perform at least 1 Format and buy for 35 Token."
+    },
+    esposa: {
+        name: "Espòsa",
+        desc: "Till code do us part.",
+        unlockHint: "Play for 24 hours total."
     },
 
     // --- LEGENDARY ---
@@ -76,6 +97,21 @@ window.gameData.i18n.en.skins = {
     },
     superespo: {
         desc: "It's-a Me, Espò!"
+    },
+
+    carmaespon: {
+        name: "Carmaespòn",
+        desc: "Nobody brakes at the red light."
+    },
+    leon: {
+        name: "Leon S. Espedy",
+        desc: "Where's everyone going? Bingo?",
+        unlockHint: "Unlock the 'R.P.D. Elite' achievement (250 Golden Bugs)."
+    },
+    clicker: {
+        name: "Espoclicker",
+        desc: "A click infected you. Now you're the clicker.",
+        unlockHint: "Unlock the 'Patient Zero' achievement (250,000 clicks)."
     },
 
     // --- DIVINE ---

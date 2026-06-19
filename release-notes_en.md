@@ -33,6 +33,15 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 
 ---
 
+### 🆕 7 New Skins to Collect
+
+* **👕 Seven Fresh Looks:** Seven brand-new characters join the Wardrobe, each with its own animated "click" variant.
+* **🎭 Pop Tributes:** Nods to movies, video games and nerd-culture icons... but no spoilers: unlock them to find out!
+* **⭐ Various Rarities:** Ranging from Rare to Legendary, nicely spread across the tiers.
+* **🔓 Unlocks for Every Taste:** Some are bought with Lab Tokens, others earned through new themed achievements.
+
+---
+
 ### 🪟 Refreshed Modals
 
 * **🔧 Stable Windows:** Fixed the "flicker" on open: modals now appear with a smooth transition and no jumps.

@@ -33,6 +33,15 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 
 ---
 
+### 🆕 7 Nuove Skin da Collezionare
+
+* **👕 Sette Look Inediti:** Sette nuovi personaggi entrano nel Guardaroba, ognuno con la sua variante "click" animata.
+* **🎭 Omaggi Pop:** Strizzano l'occhio a cinema, videogiochi e icone della cultura nerd... ma niente spoiler: scoprili sbloccandoli!
+* **⭐ Varie Rarità:** Spaziano da Rare a Legendary, ben distribuite tra le categorie.
+* **🔓 Sblocchi per Tutti i Gusti:** Alcune si comprano con i Token Lab, altre si guadagnano con nuovi obiettivi a tema.
+
+---
+
 ### 🪟 Modali Rinnovati
 
 * **🔧 Finestre Stabili:** Risolto il "lampeggio" all'apertura: ora i modali compaiono con una transizione fluida e senza salti.

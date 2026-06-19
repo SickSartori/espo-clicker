@@ -73,6 +73,23 @@ window.gameData.skins = {
         cost: new Decimal(10)
     },
 
+    clown: {
+        name: "Espoclown",
+        desc: "Ogni crash è uno spettacolo.",
+        img: "skins/espoclown.webp",
+        imgClick: "skins/espoclown-click.webp",
+        rarity: "rare",
+        cost: new Decimal(12)
+    },
+    mariachi: {
+        name: "Espariachi",
+        desc: "Ay ay ay, canta e compila.",
+        img: "skins/espoachi.webp",
+        imgClick: "skins/espoachi-click.webp",
+        rarity: "rare",
+        unlockHint: "Sblocca l'obiettivo 'Collezionista' (15 skin)."
+    },
+
     // --- EPIC ---
     king: {
         name: "Espo of Empires",
@@ -116,6 +133,25 @@ window.gameData.skins = {
         rarity: "epic",
         unlockHint: "Raggiungi una combo di 150 click.",
         comboExplode: true
+    },
+
+    pablo: {
+        name: "Pablo Espobar",
+        desc: "Plata o plomo... o pull request.",
+        img: "skins/pabloespobar.webp",
+        imgClick: "skins/pabloespobar-click.webp",
+        rarity: "epic",
+        cost: new Decimal(35),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 35 Token."
+    },
+    esposa: {
+        name: "Espòsa",
+        desc: "Finché codice non ci separi.",
+        img: "skins/esposa.webp",
+        imgClick: "skins/esposa-click.webp",
+        rarity: "epic",
+        unlockHint: "Gioca per 24 ore totali."
     },
 
     // --- LEGENDARY ---
@@ -188,6 +224,36 @@ window.gameData.skins = {
             goldenBugIcon: 'fa-question',
             goldenBugColor: '#ffffff'
         }
+    },
+
+    carmaespon: {
+        name: "Carmaespòn",
+        desc: "Al semaforo non frena nessuno.",
+        img: "skins/carmaespon.webp",
+        imgClick: "skins/carmaespon-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(60),
+        themeConfig: {
+            specialMusic: 'sound-fury-music',
+            goldenBugIcon: 'fa-fire',
+            goldenBugColor: '#e74c3c'
+        }
+    },
+    leon: {
+        name: "Leon S. Espedy",
+        desc: "Dove stanno andando tutti i bug? Al bingo?",
+        img: "skins/leonsespedy.webp",
+        imgClick: "skins/leonsespedy-click.webp",
+        rarity: "legendary",
+        unlockHint: "Sblocca l'obiettivo 'R.P.D. Elite' (250 Golden Bug)."
+    },
+    clicker: {
+        name: "Espoclicker",
+        desc: "Un click ti ha contagiato. Ora il clicker sei tu.",
+        img: "skins/espoclicker.webp",
+        imgClick: "skins/espoclicker-click.webp",
+        rarity: "legendary",
+        unlockHint: "Sblocca l'obiettivo 'Paziente Zero' (250.000 click)."
     },
 
     // --- DIVINE ---

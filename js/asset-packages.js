@@ -93,6 +93,10 @@ window.ASSET_PACKAGES = {
             'skins/esponese-click.webp',
             'skins/espocorno.webp',
             'skins/espocorno-click.webp',
+            'skins/espoclown.webp',
+            'skins/espoclown-click.webp',
+            'skins/espoachi.webp',
+            'skins/espoachi-click.webp',
         ],
         // Dimensione stimata: ~297 KB
     },
@@ -115,6 +119,10 @@ window.ASSET_PACKAGES = {
             'skins/espokiss-click.webp',
             'skins/esportia.webp',       // ~345 KB
             'skins/esportia-click.webp', // ~292 KB
+            'skins/pabloespobar.webp',
+            'skins/pabloespobar-click.webp',
+            'skins/esposa.webp',
+            'skins/esposa-click.webp',
         ],
         // Dimensione stimata: ~643 KB
     },
@@ -139,6 +147,12 @@ window.ASSET_PACKAGES = {
             'skins/britney-espoars-click.webp',
             'skins/super-espo.webp',
             'skins/super-espo-click.webp',
+            'skins/carmaespon.webp',
+            'skins/carmaespon-click.webp',
+            'skins/leonsespedy.webp',
+            'skins/leonsespedy-click.webp',
+            'skins/espoclicker.webp',
+            'skins/espoclicker-click.webp',
         ],
         // Dimensione stimata: ~955 KB
     },
