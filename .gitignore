@@ -42,3 +42,4 @@ coverage/
 
 # Credenziali R2 (NON committare mai)
 php/r2-config.php
+presentation
