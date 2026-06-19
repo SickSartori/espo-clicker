@@ -2,8 +2,8 @@ window.gameData.assets = {
     sounds: {
         'bg-music': {
             id: 'sound-bg-music',
-            file: 'bg-music.mp3',
-            name: 'Musica V1',
+            file: 'assets/sounds/music/bg-music.mp3',
+            name: 'V1.0 · Genesi',
             type: 'music',
             category: 'ambiente',
             loop: true,
@@ -11,8 +11,8 @@ window.gameData.assets = {
         },
         'bg-music-v2': {
             id: 'sound-bg-music-v2',
-            file: 'bg-music-v2.mp3',
-            name: 'Musica V2',
+            file: 'assets/sounds/music/bg-music-v2.mp3',
+            name: 'V2.0 · Evoluzione',
             type: 'music',
             category: 'ambiente',
             loop: true,
@@ -20,8 +20,17 @@ window.gameData.assets = {
         },
         'bg-music-v3': {
             id: 'sound-bg-music-v3',
-            file: 'bg-music-v3.mp3',
-            name: 'Musica V3',
+            file: 'assets/sounds/music/bg-music-v3.mp3',
+            name: 'V3.0 · Nuova Era',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.3
+        },
+        'bg-music-jazz': {
+            id: 'sound-bg-music-jazz',
+            file: 'assets/sounds/music/bg-music-jazz.mp3',
+            name: 'Jazz · After Hours',
             type: 'music',
             category: 'ambiente',
             loop: true,
@@ -29,7 +38,7 @@ window.gameData.assets = {
         },
         'bg-music-super': {
             id: 'sound-bg-music-super',
-            file: 'bg-music-super.mp3',
+            file: 'assets/sounds/music/bg-music-super.mp3',
             name: 'Super Espò',
             type: 'music',
             category: 'ambiente',
@@ -38,7 +47,7 @@ window.gameData.assets = {
         },
         'bg-music-divine': {
             id: 'sound-bg-music-divine',
-            file: 'bg-music-divine.mp3',
+            file: 'assets/sounds/music/bg-music-divine.mp3',
             name: 'Espò Divino',
             type: 'music',
             category: 'ambiente',
@@ -47,7 +56,7 @@ window.gameData.assets = {
         },
         'bg-music-espory': {
             id: 'sound-bg-music-espory',
-            file: 'bg-music-espory.mp3',
+            file: 'assets/sounds/music/bg-music-espory.mp3',
             name: 'Freddy Espory',
             type: 'music',
             category: 'ambiente',
@@ -90,7 +99,7 @@ window.gameData.assets = {
         },
         'snowball': {
             id: 'sound-snowball',
-            file: 'nonsnowball.mp3',
+            file: 'assets/sounds/music/nonsnowball.mp3',
             name: 'Natale',
             type: 'music',
             category: 'ambiente',
@@ -99,7 +108,7 @@ window.gameData.assets = {
         },
         'bluescreen': {
             id: 'sound-bluescreen',
-            file: 'bluescreen.mp3',
+            file: 'assets/sounds/music/bluescreen.mp3',
             name: 'Loop 404',
             type: 'music',
             category: 'ambiente',
@@ -108,7 +117,7 @@ window.gameData.assets = {
         },
         'matrix': {
             id: 'sound-matrix',
-            file: 'matrix.mp3',
+            file: 'assets/sounds/music/matrix.mp3',
             name: 'Matrix Theme',
             type: 'music',
             category: 'ambiente',
@@ -117,7 +126,7 @@ window.gameData.assets = {
         },
         'star': {
             id: 'sound-star',
-            file: 'star.mp3',
+            file: 'assets/sounds/music/star.mp3',
             name: 'Super Star',
             type: 'music',
             category: 'ambiente',
@@ -126,7 +135,7 @@ window.gameData.assets = {
         },
         'fury-theme': {
             id: 'sound-fury-music',
-            file: 'fury-theme.mp3',
+            file: 'assets/sounds/music/fury-theme.mp3',
             name: 'Musica Fury',
             type: 'music',
             category: 'ambiente',
@@ -135,7 +144,7 @@ window.gameData.assets = {
         },
         'merry': {
             id: 'sound-merry',
-            file: 'merry-christmas.mp3',
+            file: 'assets/sounds/events/merry-christmas.mp3',
             name: 'Jingle Natale',
             type: 'sfx',
             category: 'eventi',
@@ -143,7 +152,7 @@ window.gameData.assets = {
         },
         'golden': {
             id: 'sound-golden',
-            file: 'golden.mp3',
+            file: 'assets/sounds/events/golden.mp3',
             name: 'Golden Bug',
             type: 'sfx',
             category: 'eventi',
@@ -151,7 +160,7 @@ window.gameData.assets = {
         },
         'click': {
             id: 'sound-click',
-            file: 'click.mp3',
+            file: 'assets/sounds/sfx/click.mp3',
             name: 'Click',
             type: 'sfx',
             category: 'effetti',
@@ -159,7 +168,7 @@ window.gameData.assets = {
         },
         'buy': {
             id: 'sound-buy',
-            file: 'buy.mp3',
+            file: 'assets/sounds/sfx/buy.mp3',
             name: 'Shop',
             type: 'sfx',
             category: 'effetti',
@@ -167,7 +176,7 @@ window.gameData.assets = {
         },
         'achievement': {
             id: 'sound-achievement',
-            file: 'achievement.mp3',
+            file: 'assets/sounds/sfx/achievement.mp3',
             name: 'Obiettivo',
             type: 'sfx',
             category: 'effetti',
@@ -175,7 +184,7 @@ window.gameData.assets = {
         },
         'error': {
             id: 'sound-error',
-            file: 'error.mp3',
+            file: 'assets/sounds/sfx/error.mp3',
             name: 'Errore',
             type: 'sfx',
             category: 'effetti',
@@ -183,7 +192,7 @@ window.gameData.assets = {
         },
         'prestige': {
             id: 'sound-prestige',
-            file: 'prestige.mp3',
+            file: 'assets/sounds/sfx/prestige.mp3',
             name: 'Prestigio',
             type: 'sfx',
             category: 'effetti',
@@ -191,7 +200,7 @@ window.gameData.assets = {
         },
         'hover': {
             id: 'sound-hover',
-            file: 'hover.mp3',
+            file: 'assets/sounds/sfx/hover.mp3',
             name: 'Hover',
             type: 'sfx',
             category: 'effetti',
@@ -199,7 +208,7 @@ window.gameData.assets = {
         },
         'bg-bit': {
             id: 'sound-bg-bit',
-            file: 'bg-music-bit.mp3',
+            file: 'assets/sounds/music/bg-music-bit.mp3',
             name: '8-Bit World',
             type: 'music',
             category: 'ambiente',
@@ -232,7 +241,7 @@ window.gameData.assets = {
         },
         'fireball': {
             id: 'sound-fireball',
-            file: 'fireball.mp3',
+            file: 'assets/sounds/sfx/fireball.mp3',
             name: 'Fireball',
             type: 'sfx',
             category: 'effetti',
@@ -240,7 +249,7 @@ window.gameData.assets = {
         },
         'pucci': {
             id: 'sound-pucci',
-            file: 'pucci-made-in-heaven.mp3',
+            file: 'assets/sounds/events/pucci-made-in-heaven.mp3',
             name: 'Made in Heaven',
             type: 'sfx',
             category: 'eventi',
@@ -248,7 +257,7 @@ window.gameData.assets = {
         },
         'intro-typing': {
             id: 'sound-intro-typing',
-            file: 'intro-typing.mp3',
+            file: 'assets/sounds/intro/intro-typing.mp3',
             name: 'Intro Typing',
             type: 'sfx',
             category: 'effetti',
@@ -256,7 +265,7 @@ window.gameData.assets = {
         },
         'intro-glitch': {
             id: 'sound-intro-glitch',
-            file: 'intro-glitch.mp3',
+            file: 'assets/sounds/intro/intro-glitch.mp3',
             name: 'Intro Glitch',
             type: 'sfx',
             category: 'effetti',
@@ -264,7 +273,7 @@ window.gameData.assets = {
         },
         'intro-scan': {
             id: 'sound-intro-scan',
-            file: 'intro-scan.mp3',
+            file: 'assets/sounds/intro/intro-scan.mp3',
             name: 'Intro Scanner',
             type: 'sfx',
             category: 'effetti',
@@ -272,7 +281,7 @@ window.gameData.assets = {
         },
         'intro-fixed': {
             id: 'sound-intro-fixed',
-            file: 'intro-fixed.mp3',
+            file: 'assets/sounds/intro/intro-fixed.mp3',
             name: 'Intro Fixed',
             type: 'sfx',
             category: 'effetti',
@@ -280,7 +289,7 @@ window.gameData.assets = {
         },
         'intro-reveal': {
             id: 'sound-intro-reveal',
-            file: 'intro-reveal.mp3',
+            file: 'assets/sounds/intro/intro-reveal.mp3',
             name: 'Intro Reveal',
             type: 'sfx',
             category: 'effetti',
@@ -288,7 +297,7 @@ window.gameData.assets = {
         },
         'esposion-tick': {
             id: 'sound-esposion-tick',
-            file: 'esposion-tick.mp3',
+            file: 'assets/sounds/esposion/esposion-tick.mp3',
             name: 'Esposion Tick',
             type: 'sfx',
             category: 'effetti',
@@ -296,7 +305,7 @@ window.gameData.assets = {
         },
         'esposion-charge': {
             id: 'sound-esposion-charge',
-            file: 'esposion-charge.mp3',
+            file: 'assets/sounds/esposion/esposion-charge.mp3',
             name: 'Esposion Charge',
             type: 'sfx',
             category: 'effetti',
@@ -304,7 +313,7 @@ window.gameData.assets = {
         },
         'esposion-boom': {
             id: 'sound-esposion-boom',
-            file: 'esposion-boom.mp3',
+            file: 'assets/sounds/esposion/esposion-boom.mp3',
             name: 'Esposion Boom',
             type: 'sfx',
             category: 'effetti',
@@ -312,7 +321,7 @@ window.gameData.assets = {
         },
         'esposion-crackle': {
             id: 'sound-esposion-crackle',
-            file: 'esposion-crackle.mp3',
+            file: 'assets/sounds/esposion/esposion-crackle.mp3',
             name: 'Esposion Crackle',
             type: 'sfx',
             category: 'effetti',
