@@ -6,7 +6,7 @@ REM ================================================================
 REM  ESPOOO CLICKER - Deploy Manager v3.0
 REM ================================================================
 REM Branch flow:
-REM   develop -> lavoro locale, test rapidi
+REM   develop-v3 -> lavoro locale, test rapidi
 REM   test    -> server test (deploy auto via test.yml)
 REM   main    -> produzione (deploy manuale via main.yml)
 REM ================================================================
@@ -32,7 +32,7 @@ echo ================================================================
 echo.
 echo  [QUICK ACTIONS]
 echo    1. RELEASE PATCH         (bump + cache + build) [CONSIGLIATO]
-echo    2. BUILD + COMMIT + PUSH (-^> develop)
+echo    2. BUILD + COMMIT + PUSH (-^> develop-v3)
 echo    3. Build veloce          (no version bump)
 echo.
 echo  [VERSIONAMENTO]
@@ -41,7 +41,7 @@ echo    5. Bump MINOR            (es: 3.0 -^> 3.1)
 echo    6. Solo CACHE BUMP       (no build)
 echo.
 echo  [GIT DEPLOY]
-echo    7. develop -^> test       (auto-deploy test via FTP)
+echo    7. develop-v3 -^> test    (auto-deploy test via FTP)
 echo    8. test    -^> main       (release ufficiale + tag)
 echo    9. Stato Git             (status + branch + log)
 echo.
@@ -200,7 +200,7 @@ REM ================================================================
 cls
 echo.
 echo ================================================================
-echo  BUILD + COMMIT + PUSH -^> develop
+echo  BUILD + COMMIT + PUSH -^> develop-v3
 echo ================================================================
 echo.
 
@@ -230,8 +230,8 @@ if !ERRORLEVEL! NEQ 0 (
 )
 echo.
 
-echo  STEP 4/4: Push origin develop...
-call git push origin develop
+echo  STEP 4/4: Push origin develop-v3...
+call git push origin develop-v3
 if !ERRORLEVEL! NEQ 0 (
     echo  [ERR] Push fallito.
     pause
@@ -248,23 +248,23 @@ goto menu
 cls
 echo.
 echo ================================================================
-echo  PROMUOVI develop -^> test
+echo  PROMUOVI develop-v3 -^> test
 echo ================================================================
 echo.
-echo  Forza test = develop. Workflow test.yml partirà su GitHub.
+echo  Forza test = develop-v3. Workflow test.yml partirà su GitHub.
 echo.
-set /p confirm="  Confermi push develop -^> test? (s/N): "
+set /p confirm="  Confermi push develop-v3 -^> test? (s/N): "
 if /i "!confirm!" NEQ "s" goto menu
 
 echo.
 echo  Sync locale...
-call git checkout develop
-call git pull origin develop
+call git checkout develop-v3
+call git pull origin develop-v3
 if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Pull fallito & pause & goto menu )
 
 echo.
-echo  Force push test = develop...
-call git push --force origin develop:test
+echo  Force push test = develop-v3...
+call git push --force origin develop-v3:test
 if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Push fallito & pause & goto menu )
 
 echo.
@@ -297,7 +297,7 @@ echo  Creo tag v!version!...
 call git tag -a "v!version!" -m "Release v!version!"
 call git push origin main
 call git push origin "v!version!"
-call git checkout develop
+call git checkout develop-v3
 
 echo.
 echo  [OK] Release v!version! pubblicata su main
