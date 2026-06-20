@@ -61,7 +61,7 @@ function getInitialGameState() {
             sfxVolume: 1.0,
             musicVolume: 0.5,
             audioCustom: {},
-            bgMusicSelection: 'sound-bg-music'
+            bgMusicSelection: 'sound-bg-music-v3'
         }
     };
 

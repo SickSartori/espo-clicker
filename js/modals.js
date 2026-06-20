@@ -1238,6 +1238,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 closeModal(loginModal);
 
+                // Sblocca il contesto audio sfruttando il gesto di login: così gli SFX
+                // dell'intro e la musica partono senza dover premere "Attiva audio".
+                if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
+                    Howler.ctx.resume().catch(() => {});
+                }
+
                 // L'intro cinematica parte solo su login esplicito (no F5/re-auth).
                 // In quel caso azzera la musica (duck 0) PRIMA di startGameRoutines/
                 // updateAmbientVolume: cosi' la canzone di sfondo NON parte durante

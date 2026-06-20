@@ -445,6 +445,20 @@ document.addEventListener('DOMContentLoaded', () => {
             (oldMajor === window.GAME_VERSION.major && oldMinor < window.GAME_VERSION.minor);
     }
 
+    // Onboarding audio "primo avvio nuova versione": eseguito UNA volta quando il
+    // save è di una versione precedente (stesso criterio delle release notes).
+    // Forza l'audio udibile anche se l'utente aveva mutato e imposta la musica di
+    // sfondo V3 come traccia attiva (sovrascrive la scelta precedente, una volta).
+    // Da qui in poi ogni modifica dell'utente viene salvata normalmente.
+    function applyV3AudioOnboarding() {
+        if (!gameState || !gameState.user) return;
+        const u = gameState.user;
+        if (!(u.masterVolume > 0)) u.masterVolume = gameState.lastVolume || 0.8;
+        if (!(u.musicVolume > 0)) u.musicVolume = 0.5;
+        if (!(u.sfxVolume > 0)) u.sfxVolume = 1.0;
+        u.bgMusicSelection = 'sound-bg-music-v3';
+    }
+
     async function loadGame() {
         // Carica da IndexedDB V9
         let savedState = await SaveDB.loadFromIndexedDB();
@@ -493,7 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 1. PRIMA COSA: flag Release Notes dal confronto versione del save LOCALE
-                if (parsedState && shouldShowReleaseNotesFor(parsedState.version)) {
+                const localShowRN = !!(parsedState && shouldShowReleaseNotesFor(parsedState.version));
+                if (localShowRN) {
                     window.shouldShowReleaseNotesOnLoad = true;
                 }
 
@@ -598,6 +613,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         stage: window.GAME_VERSION.stage
                     };
                 }
+
+                // Onboarding audio one-time al primo avvio di una nuova versione (save locale).
+                if (localShowRN) applyV3AudioOnboarding();
 
                 // Inizializza Enhancements
                 if (!gameState.buildingEnhancements) gameState.buildingEnhancements = {};
@@ -2069,7 +2087,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             stage: window.GAME_VERSION.stage
                         };
                     }
-                    if (cloudShowRN) window.shouldShowReleaseNotesOnLoad = true;
+                    if (cloudShowRN) {
+                        window.shouldShowReleaseNotesOnLoad = true;
+                        // Primo avvio nuova versione (save cloud, autoritativo): audio ON + musica V3, una volta.
+                        applyV3AudioOnboarding();
+                    }
 
                     // Ricalcoli logica
                     calculatePrestigeBonus();

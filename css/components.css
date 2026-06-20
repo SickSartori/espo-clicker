@@ -101,6 +101,22 @@ body .buy-btn.owned {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Bottone "Mixer Audio & Video": deve restare ghost. Senza l'id, il look
+   veniva sovrascritto da .buy-btn:not(:disabled) (bordo/ombra verdi) e dal
+   background pieno di .buy-btn, che hanno specificità maggiore di .ghost-btn. */
+#open-advanced-audio-btn.ghost-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+}
+
+#open-advanced-audio-btn.ghost-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: none;
+    transform: none;
+}
+
 /*
  * Classi Outline Bottone
  */
