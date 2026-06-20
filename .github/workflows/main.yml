@@ -72,3 +72,24 @@ jobs:
             node_modules/**
             **/*.map
             docs/**
+            src/**
+            scripts/**
+            assets/sounds/music/**
+            assets/video/**
+            music/songs/**
+            package.json
+            package-lock.json
+            build.js
+            bump-version.js
+            balance-sim.js
+            check-achievements.js
+            vite.config.ts
+            tsconfig.json
+            .lighthouserc.json
+            deploy.bat
+            r2-fix-sounds-structure.bat
+            README.md
+            ui.md
+            php/config.example.php
+            php/r2-config.example.php
+            php/r2-cors-policy.json

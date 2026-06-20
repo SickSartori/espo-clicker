@@ -34,6 +34,10 @@ jobs:
       - name: 🔧 Set config to DEV
         run: |
           sed -i 's/"instanceName" => "production"/"instanceName" => "dev"/' php/config.php
+          # Cheatboard SEMPRE attiva in test: svuota prodHost cosi' HTTP_HOST != prodHost
+          # e' sempre vero (il test gira sullo stesso dominio della prod).
+          sed -i 's/"prodHost" => "[^"]*"/"prodHost" => ""/' php/config.php
+          grep "prodHost" php/config.php
 
       # Step 2: Caricamento FTP
       # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
@@ -53,3 +57,24 @@ jobs:
             node_modules/**
             **/*.map
             docs/**
+            src/**
+            scripts/**
+            assets/sounds/music/**
+            assets/video/**
+            music/songs/**
+            package.json
+            package-lock.json
+            build.js
+            bump-version.js
+            balance-sim.js
+            check-achievements.js
+            vite.config.ts
+            tsconfig.json
+            .lighthouserc.json
+            deploy.bat
+            r2-fix-sounds-structure.bat
+            README.md
+            ui.md
+            php/config.example.php
+            php/r2-config.example.php
+            php/r2-cors-policy.json
