@@ -3,6 +3,17 @@
 > Stato: **pianificazione** (2026-06-20). Documento di riferimento — nessuna implementazione ancora avviata.
 > Scopo: portare il gameplay legacy (`js/*`, globali `window.*`) ai moduli V3 (`src/*.ts`, ESM via Vite) **mantenendo il gioco funzionante a ogni passo**.
 
+## In parole povere: cosa ci guadagniamo
+
+- **Meno bug per i giocatori.** Con TypeScript il codice viene "controllato" mentre lo scrivi: tanti errori saltano fuori subito, non quando un giocatore ci sbatte contro.
+- **Modifiche più facili e sicure.** Oggi tutto è collegato da variabili globali condivise (`window.*`): toccare una cosa può romperne un'altra a sorpresa. Con i moduli ognuno ha confini chiari → cambi una parte senza far crollare il resto.
+- **Gioco più leggero e veloce a caricare.** Adesso il browser scarica DUE pacchetti di codice (vecchio + nuovo) in parallelo. A fine migrazione ne resta UNO solo, più piccolo e ottimizzato: carica solo ciò che serve, quando serve.
+- **Salvataggi più al sicuro.** Il nuovo sistema di salvataggio ha test automatici (anti-rollback, migrazioni) → molto meno rischio che un giocatore perda i progressi.
+- **Più fluido.** I calcoli pesanti (guadagni offline, salvataggio) girano su "thread separati" (worker) → il gioco non si impunta mentre li esegue.
+- **Meno fatica a mantenerlo.** Un solo sistema di build invece di due e codice ordinato e tipizzato → aggiungere nuove feature diventa più rapido e con meno sorprese; i test automatici fanno da rete ("sistemo A senza rompere B").
+
+> Nota onesta: questi vantaggi arrivano **progressivamente** e in pieno solo a fine percorso. Durante la migrazione i due sistemi convivono (per un po' c'è anche un filo di codice in più), ma il gioco resta sempre funzionante perché si va a piccoli passi con verifica.
+
 ## 1. Stato reale (verificato, non assunto)
 
 `src/main.ts` pubblica `window.EspoV3 = { crypto, save, migrations, bignum, loop, workers, fx, ui }` ed esegue 3 side-effect: `installGlobalDecimal()` (solo se `window.Decimal` non esiste), `autoInitClickerParallax()`, `autoInitLucide()`.
