@@ -14,7 +14,7 @@ global.IS_XMAS_TIME = false;
 global.gameState = null;
 global.bps = new Decimal(0);
 
-const root = __dirname;
+const root = path.join(__dirname, '..'); // spostato in scripts/: i dati stanno nella root del progetto
 const loadFile = (rel) => { (0, eval)(fs.readFileSync(path.join(root, rel), 'utf8')); };
 loadFile('js/data/achievements.js');
 loadFile('js/data-en/achievements.js');

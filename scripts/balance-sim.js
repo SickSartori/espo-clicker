@@ -20,8 +20,8 @@
 global.window = { gameData: {} };
 function Decimal(v) { this.n = Number(v); }
 global.Decimal = Decimal;
-require('./js/data/teams.js');
-require('./js/data/upgrades.js');
+require('../js/data/teams.js');
+require('../js/data/upgrades.js');
 
 const D = (x) => (x && typeof x === 'object' && 'n' in x) ? x.n : Number(x);
 const TEAMS = global.window.gameData.teams;
