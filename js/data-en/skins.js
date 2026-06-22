@@ -12,7 +12,8 @@ window.gameData.i18n.en.skins = {
     },
     christmas: {
         name: "Espo Claus",
-        desc: "Let's squash these bugs under the tree."
+        desc: "Let's squash these bugs under the tree.",
+        unlockHint: IS_XMAS_TIME ? "Redeem the 'Merry Christmas' achievement!" : "Available in the Shop for 5 Tokens."
     },
 
     // --- RARE ---
