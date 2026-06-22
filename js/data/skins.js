@@ -21,6 +21,14 @@ window.gameData.skins = {
             goldenBugColor: '#f1c40f'
         }
     },
+    espo3: {
+        name: "Espò 3.0",
+        desc: "Aggiornamento installato: stesso Espò, ora al neon.",
+        img: "skins/espo3.webp",
+        imgClick: "skins/espo3-click.webp",
+        rarity: "common",
+        cost: new Decimal(0)
+    },
     christmas: {
         name: "Espo Natale",
         desc: "Risolviamo questi bug sotto l'albero.",

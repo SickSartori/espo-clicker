@@ -65,6 +65,8 @@ window.ASSET_PACKAGES = {
         priority: 1,
         trigger: { type: 'afterBoot', delay: 3000 },
         images: [
+            'skins/espo3.webp',
+            'skins/espo3-click.webp',
             'skins/espobit.webp',
             'skins/espobit-click.webp',
             'skins/espobit-matrix.webp',
