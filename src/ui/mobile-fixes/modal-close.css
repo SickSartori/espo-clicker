@@ -11,7 +11,7 @@
    ===================================================================== */
 
 @media (max-width: 768px) {
-  html body .modal-content > .modal-close-btn {
+  html body .modal-content .modal-close-btn {
     /* override mobile.css:1037 */
     position: absolute;
     top: 10px;
@@ -34,7 +34,7 @@
                 transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  html body .modal-content > .modal-close-btn::after {
+  html body .modal-content .modal-close-btn::after {
     content: '\00d7'; /* × */
     font-family: system-ui, -apple-system, sans-serif;
     font-size: 1.6rem;
@@ -43,14 +43,14 @@
     line-height: 1;
   }
 
-  html body .modal-content > .modal-close-btn:hover,
-  html body .modal-content > .modal-close-btn:focus-visible {
+  html body .modal-content .modal-close-btn:hover,
+  html body .modal-content .modal-close-btn:focus-visible {
     background: rgba(231, 76, 60, 0.55);
     transform: scale(1.05);
     outline: none;
   }
 
-  html body .modal-content > .modal-close-btn:active {
+  html body .modal-content .modal-close-btn:active {
     transform: scale(0.95);
   }
 
@@ -62,7 +62,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html body .modal-content > .modal-close-btn {
+  html body .modal-content .modal-close-btn {
     transition: none !important;
   }
 }
