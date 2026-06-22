@@ -105,15 +105,15 @@
             overlay.innerHTML = `
                 <div class="super-espo-loader">
                     <div class="loader-spinner"></div>
-                    <div class="loader-text">CONNESSIONE…</div>
-                    <div class="loader-sub">Collegamento al server CDN</div>
+                    <div class="loader-text">${(window.ARCADE_TXT && window.ARCADE_TXT.connecting) || 'CONNESSIONE…'}</div>
+                    <div class="loader-sub">${(window.ARCADE_TXT && window.ARCADE_TXT.connectingSub) || 'Collegamento al server CDN'}</div>
                 </div>`;
             overlay.style.display = 'flex';
         } else if (phase === 'loading') {
             overlay.innerHTML = `
                 <div class="super-espo-loader">
                     <div class="loader-spinner"></div>
-                    <div class="loader-text">CARICAMENTO…</div>
+                    <div class="loader-text">${(window.ARCADE_TXT && window.ARCADE_TXT.loadingPhase) || 'CARICAMENTO…'}</div>
                     <div class="loader-bar"><div class="loader-bar-fill" id="super-espo-loader-fill"></div></div>
                     <div class="loader-sub" id="super-espo-loader-percent">0%</div>
                 </div>`;
@@ -1032,7 +1032,7 @@
             showPopupScore(this, player.x, player.y - 50, '🔥 FIRE ESPO! 🔥', '#ff6347', 1100);
             showFireHint(this);
             if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast('🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco', 'reward');
+                window.EspooClicker.showToast((window.ARCADE_TXT && window.ARCADE_TXT.fireFlower) || '🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco', 'reward');
             }
         } catch (err) {
             console.error('[super-espo] collectFireFlower fail:', err);

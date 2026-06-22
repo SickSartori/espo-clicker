@@ -77,8 +77,8 @@
             </button>
             <span class="topbar-game-label" style="color:#e67e22">ESPO-ROIDS</span>
             <div class="arcade-stats-box" id="asteroids-score-ui">
-                <span class="stat">PUNTI: <span class="val-score">0</span></span>
-                <span class="stat">ONDATA: <span class="val-hp">1</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA'}: <span class="val-hp">1</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
         `;
@@ -443,8 +443,8 @@
 
         if (el) {
             el.innerHTML = `
-                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
-                <span class="stat">ONDATA: <span class="val-hp" style="color:#e67e22">${level}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">${score}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA'}: <span class="val-hp" style="color:#e67e22">${level}</span></span>
                 <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
             `;
         }

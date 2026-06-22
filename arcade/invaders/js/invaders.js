@@ -83,8 +83,8 @@
             </button>
             <span class="topbar-game-label" style="color:#2ecc71">BUG INVADERS</span>
             <div class="arcade-stats-box" id="invaders-score-ui">
-                <span class="stat">PUNTI: <span class="val-score">0</span></span>
-                <span class="stat">VITE: <span class="val-hp">3</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.lives) || 'VITE'}: <span class="val-hp">3</span></span>
                 <span class="stat">WAVE: <span class="val-wave">1</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
@@ -515,8 +515,8 @@
         const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.invaders) ? gs.arcadeHighScores.invaders : 0;
         if (el) {
             el.innerHTML = `
-                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
-                <span class="stat">VITE: <span class="val-hp" style="color:#ff3d5c">${lives}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">${score}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.lives) || 'VITE'}: <span class="val-hp" style="color:#ff3d5c">${lives}</span></span>
                 <span class="stat">WAVE: <span class="val-wave" style="color:#2ecc71">${wave}</span></span>
                 <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
             `;

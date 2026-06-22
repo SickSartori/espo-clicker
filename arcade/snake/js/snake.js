@@ -315,7 +315,7 @@
 
         // Score label
         var sLabel = document.createElement('div');
-        sLabel.textContent = 'PUNTEGGIO';
+        sLabel.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.score) || 'PUNTEGGIO';
         sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.5rem;color:#5a6a7a;letter-spacing:3px;margin-bottom:6px;";
         wrap.appendChild(sLabel);
 
@@ -337,7 +337,7 @@
         // New record
         if (isNewRecord) {
             var recDiv = document.createElement('div');
-            recDiv.textContent = '★ NUOVO RECORD! ★';
+            recDiv.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.record) || '★ NUOVO RECORD! ★';
             recDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.65rem;color:#ffce15;animation:arcadeGoRecordShine 1s ease-in-out infinite,arcadeGoFadeUp 0.4s ease 1.2s forwards;opacity:0;margin-bottom:14px;";
             wrap.appendChild(recDiv);
         }

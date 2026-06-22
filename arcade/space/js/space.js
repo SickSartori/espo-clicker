@@ -97,8 +97,8 @@
             </button>
             <span class="topbar-game-label" style="color:#e74c3c">SPACE IMPACT</span>
             <div class="arcade-stats-box" id="space-score-ui">
-                <span class="stat">PUNTI: <span class="val-score">0</span></span>
-                <span class="stat">VITA: <span class="val-hp">3</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.life) || 'VITA'}: <span class="val-hp">3</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
         `;
@@ -404,8 +404,8 @@
         if (el) {
             const hpColor = lives > 1 ? '#f1c40f' : '#e74c3c';
             el.innerHTML = `
-                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
-                <span class="stat">VITA: <span class="val-hp" style="color:${hpColor}">${lives}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">${score}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.life) || 'VITA'}: <span class="val-hp" style="color:${hpColor}">${lives}</span></span>
                 <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
             `;
         }
