@@ -146,7 +146,8 @@ window.gameData.texts = {
         playtime: "Tempo di Gioco",
         totalClicks: "Click Totali",
         comboRecord: "Combo Record",
-        promotions: "Promozioni"
+        promotions: "Promozioni",
+        goldenBugs: "Golden Bug"
     },
     v2: {
         title: "BENVENUTO NELLA V2.0",

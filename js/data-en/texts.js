@@ -145,7 +145,8 @@ window.gameData.i18n.en.texts = {
         playtime: "Play Time",
         totalClicks: "Total Clicks",
         comboRecord: "Best Combo",
-        promotions: "Promotions"
+        promotions: "Promotions",
+        goldenBugs: "Golden Bugs"
     },
     v2: {
         title: "WELCOME TO V2.0",
