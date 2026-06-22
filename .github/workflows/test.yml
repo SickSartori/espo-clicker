@@ -70,6 +70,7 @@ jobs:
             tsconfig.json
             .lighthouserc.json
             deploy.bat
+            deploy-ui.bat
             README.md
             php/config.example.php
             php/r2-config.example.php
