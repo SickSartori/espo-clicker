@@ -425,9 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Categorie
         const categories = {
-            'ambiente': { title: 'Musica & Ambiente', icon: 'fa-music', items: [] },
-            'eventi': { title: 'Video & Eventi', icon: 'fa-film', items: [] },
-            'effetti': { title: 'Effetti Sonori', icon: 'fa-volume-high', items: [] }
+            'ambiente': { title: gameData.texts.ui.audioCatAmbiente, icon: 'fa-music', items: [] },
+            'eventi': { title: gameData.texts.ui.audioCatEventi, icon: 'fa-film', items: [] },
+            'effetti': { title: gameData.texts.ui.audioCatEffetti, icon: 'fa-volume-high', items: [] }
         };
 
         const allAssets = { ...assets.sounds, ...assets.videos };

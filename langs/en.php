@@ -169,6 +169,7 @@
 
 	$labels["arcade_page_title"] = "Espò Arcade — Arcade";
 	$labels["arcade_actions"] = "ACTIONS";
+	$labels["arcade_play"] = "PLAY";
 	$labels["arcade_ctrl_up"] = "Up (W)";
 	$labels["arcade_ctrl_left"] = "Left (A)";
 	$labels["arcade_ctrl_down"] = "Down (S)";

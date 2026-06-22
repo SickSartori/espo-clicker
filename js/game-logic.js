@@ -1817,7 +1817,7 @@ function openPrestigeContract() {
     let totalMultiplier = new Decimal(1).add(applyBonusSoftcap(rawMultiplier));
 
     if (bonusDisplay) {
-        bonusDisplay.innerHTML = `Nuovo Moltiplicatore: <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
+        bonusDisplay.innerHTML = `${gameData.texts.ui.newMultiplier} <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
     }
 
     const modal = document.getElementById('prestige-modal');

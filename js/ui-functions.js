@@ -427,7 +427,7 @@ function renderStoreSection(config) {
                 txt = status.costText;
             } else {
                 const val = status.currentCost || data.cost || 0;
-                txt = `Costo: ${formatNumber(val)}`;
+                txt = `${gameData.texts.ui.cost}: ${formatNumber(val)}`;
             }
             if (costDisplay.textContent !== txt) costDisplay.textContent = txt;
         }
@@ -448,7 +448,7 @@ function renderStoreSection(config) {
 
         // Stati UI
         if (status.isMaxed || (status.purchased && !data.isCounted && config.type !== 'building')) {
-            const label = status.isMaxed ? "MAX" : "Posseduto";
+            const label = status.isMaxed ? "MAX" : gameData.texts.ui.owned;
             if (btn.textContent !== label) btn.textContent = label;
             btn.className = "buy-btn owned";
             btn.disabled = true;
@@ -457,7 +457,7 @@ function renderStoreSection(config) {
             if (progressContainer) progressContainer.style.display = 'none';
 
         } else if (status.unlocked) {
-            const label = status.label || "Compra";
+            const label = status.label || gameData.texts.ui.buy;
             if (btn.textContent !== label) btn.textContent = label;
 
             const newClass = `buy-btn ${config.btnClass || ''}`;
@@ -577,7 +577,7 @@ function refreshAllStores() {
                 isMaxed: isMaxed,
                 canAfford: gameState.prestigePoints.gte(actualCost), // Usa actualCost
                 label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
-                costText: `Costo: ${formatNumber(actualCost)} Token`, // Usa actualCost
+                costText: `${gameData.texts.ui.cost}: ${formatNumber(actualCost)} Token`, // Usa actualCost
                 currentCost: actualCost, // Usa actualCost
                 progress: 100
             };
@@ -623,9 +623,9 @@ function refreshAllStores() {
             }
             const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
-            let prefix = "Costo";
-            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
-            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
+            let prefix = gameData.texts.ui.cost;
+            if (isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (${amountToBuy}x)`;
 
             return {
                 unlocked: true,
@@ -633,7 +633,7 @@ function refreshAllStores() {
                 canAfford: gameState.score.gte(currentCost),
                 label: gameData.texts.ui.buy,
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
-                bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
+                bpsText: `+${formatNumber(totalUnitBPS)} ${gameData.texts.ui.bpsEach}`,
                 currentCost: currentCost
             };
         }
@@ -657,7 +657,7 @@ function refreshAllStores() {
                     isMaxed: false,
                     canAfford: gameState.qBits.gte(data.cost),
                     label: state.purchased ? gameData.texts.ui.owned : gameData.texts.ui.buy.toUpperCase(),
-                    costText: `Costo: ${formatNumber(data.cost)} qBit`,
+                    costText: `${gameData.texts.ui.cost}: ${formatNumber(data.cost)} qBit`,
                     currentCost: data.cost,
                     progress: 100
                 };
@@ -1865,8 +1865,8 @@ function updateStoreButtons() {
 
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
-            let prefix = isMax && amountToBuy > 1 ? `Costo (+${formatNumber(amountToBuy)})` :
-                (!isMax && amountToBuy > 1) ? `Costo (${amountToBuy}x)` : "Costo";
+            let prefix = isMax && amountToBuy > 1 ? `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})` :
+                (!isMax && amountToBuy > 1) ? `${gameData.texts.ui.cost} (${amountToBuy}x)` : gameData.texts.ui.cost;
             const costText = `${prefix}: ${formatNumber(currentCost)}`;
             if (costEl.textContent !== costText) costEl.textContent = costText;
         }

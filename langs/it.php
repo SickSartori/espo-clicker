@@ -169,6 +169,7 @@
 
 	$labels["arcade_page_title"] = "Espò Arcade — Sala Giochi";
 	$labels["arcade_actions"] = "AZIONI";
+	$labels["arcade_play"] = "GIOCA";
 	$labels["arcade_ctrl_up"] = "Su (W)";
 	$labels["arcade_ctrl_left"] = "Sinistra (A)";
 	$labels["arcade_ctrl_down"] = "Giù (S)";

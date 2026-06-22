@@ -56,7 +56,12 @@ window.gameData.i18n.en.texts = {
         newsLoadError: "Couldn't load the news.",
         audioOn: "Enable audio",
         audioOff: "Mute audio",
-        introWelcome: "WELCOME"
+        introWelcome: "WELCOME",
+        bpsEach: "BPS ea.",
+        newMultiplier: "New Multiplier:",
+        audioCatAmbiente: "Music & Ambient",
+        audioCatEventi: "Video & Events",
+        audioCatEffetti: "Sound Effects"
     },
     toasts: {
         welcome: "Welcome",

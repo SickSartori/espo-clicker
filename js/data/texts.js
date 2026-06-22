@@ -53,7 +53,12 @@ window.gameData.texts = {
         newsLoadError: "Impossibile caricare le novità.",
         audioOn: "Attiva audio",
         audioOff: "Disattiva audio",
-        introWelcome: "BENTORNATO"
+        introWelcome: "BENTORNATO",
+        bpsEach: "BPS cad.",
+        newMultiplier: "Nuovo Moltiplicatore:",
+        audioCatAmbiente: "Musica & Ambiente",
+        audioCatEventi: "Video & Eventi",
+        audioCatEffetti: "Effetti Sonori"
     },
     rarities: {
         common: "COMUNE", rare: "RARA", epic: "EPICA",

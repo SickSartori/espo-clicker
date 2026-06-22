@@ -114,7 +114,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
                             </div>
 
                             <button id="arcade-play-btn" class="arcade-btn" onclick="if(window.launchArcadeGame) window.launchArcadeGame()">
-                                <i class="fa-solid fa-play"></i> GIOCA
+                                <i class="fa-solid fa-play"></i> <?php echo $labels['arcade_play']; ?>
                             </button>
                         </div>
                     </div>
