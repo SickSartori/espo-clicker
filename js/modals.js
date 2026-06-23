@@ -741,10 +741,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     { scale: 0.97, opacity: 0 },
                     { scale: 1, opacity: 1, duration: 0.26, ease: "power2.out", clearProps: 'transform,opacity' }
                 );
-                gsap.fromTo(modal,
-                    { opacity: 0 },
-                    { opacity: 1, duration: 0.22, ease: "power1.out", clearProps: 'opacity' }
-                );
+                // Login: la scena fullscreen compare OPACA dal primo frame, così durante
+                // l'entrata non traspare ciò che sta dietro (gioco / canvas Matrix verde).
+                // Solo l'HUD (.modal-content) viene animato. Gli altri modali mantengono il fade.
+                if (modal.id === 'login-modal') {
+                    modal.style.opacity = 1;
+                } else {
+                    gsap.fromTo(modal,
+                        { opacity: 0 },
+                        { opacity: 1, duration: 0.22, ease: "power1.out", clearProps: 'opacity' }
+                    );
+                }
             } else if (content) {
                 modal.style.opacity = 1;
             }
