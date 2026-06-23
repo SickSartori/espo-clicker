@@ -186,6 +186,7 @@
 	$labels["arcade_hint_crouch"] = "Crouch";
 	$labels["arcade_hint_fireball"] = "Fireball";
 	$labels["arcade_hint_space"] = "SPACE";
+	$labels["arcade_hint_stuck"] = "Go right and jump to clear the obstacle";
 	$labels["arcade_connecting"] = "CONNECTING…";
 	$labels["arcade_connecting_sub"] = "Connecting to the CDN server";
 	$labels["arcade_loading_phase"] = "LOADING…";
