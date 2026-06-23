@@ -253,7 +253,10 @@ window.gameData.skins = {
         img: "skins/leonsespedy.webp",
         imgClick: "skins/leonsespedy-click.webp",
         rarity: "legendary",
-        unlockHint: "Sblocca l'obiettivo 'R.P.D. Elite' (250 Golden Bug)."
+        unlockHint: "Sblocca l'obiettivo 'R.P.D. Elite' (250 Golden Bug).",
+        themeConfig: {
+            specialMusic: 'sound-bg-espedy'
+        }
     },
     clicker: {
         name: "Espoclicker",
