@@ -157,10 +157,12 @@
      prestige/quantum); se nascosti, resta solo il punteggio. ---------------- */
   html body .column-header-center {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* Spacer 1fr ai lati -> la coppia di pannelli (moltiplicatore | token+q-bit)
+       resta CENTRATA sotto il punteggio, a prescindere dalla loro larghezza. */
+    grid-template-columns: 1fr auto auto 1fr;
     grid-template-areas:
-      "score score"
-      "left  right";
+      "score score score score"
+      ".     left  right .";
     align-items: center;
     gap: 6px 8px;
     height: auto;
@@ -177,8 +179,8 @@
     text-align: center;
   }
 
-  html body #header-left-panel  { grid-area: left;  justify-self: end; }
-  html body #header-right-panel { grid-area: right; justify-self: start; }
+  html body #header-left-panel  { grid-area: left; }
+  html body #header-right-panel { grid-area: right; }
 }
 
 @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
