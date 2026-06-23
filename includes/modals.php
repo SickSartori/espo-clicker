@@ -1,37 +1,62 @@
 <div id="login-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 380px; border-top: 4px solid #3498db;">
-        <div style="text-align: center; padding: 30px 20px 10px 20px;">
-            <div style="font-size: 3.5rem; color: #3498db; margin-bottom: 15px; text-shadow: 0 0 20px rgba(52, 152, 219, 0.4);">
-                <img src="assets/image/logo.svg" class="login-logo" alt="Espòòò Clicker Logo">
-            </div>
-            <p style="color: #95a5a6; font-size: 0.9rem; margin: 0;">
-				<?php echo $labels["modals_login_label"]; ?>
-            </p>
+
+    <!-- Layer 1: debug data-stream (riempito da modals.js, width-based) -->
+    <div class="login-stream" id="login-stream" aria-hidden="true"></div>
+    <!-- Layer 2: hex grid + scanline + vignette (puro CSS) -->
+    <div class="login-fx" aria-hidden="true"></div>
+
+    <!-- Layer 3: HUD (.modal-content così GSAP anima scale/opacity all'apertura) -->
+    <div class="modal-content login-hud">
+        <span class="login-corner tl" aria-hidden="true"></span>
+        <span class="login-corner tr" aria-hidden="true"></span>
+        <span class="login-corner bl" aria-hidden="true"></span>
+        <span class="login-corner br" aria-hidden="true"></span>
+
+        <div class="login-bar" aria-hidden="true">
+            <span>[ secure channel ]</span>
+            <span><span class="login-dot">&#9679;</span> online</span>
         </div>
-        <div class="settings-content" style="padding: 20px 30px 40px 30px;">
-            <div class="input-stack">
-                <div class="input-group-modern">
-                    <div class="input-icon">
-						<i class="fa-solid fa-user"></i>
-					</div>
-                    <input type="text" id="login-username-input" placeholder="<?php echo $labels["modals_login_username_placeholder"]; ?>" />
-                </div>
-                <div class="input-group-modern">
-                    <div class="input-icon">
-						<i class="fa-solid fa-lock"></i>
-					</div>
-                    <input type="password" id="login-password-input" placeholder="<?php echo $labels["modals_login_password_placeholder"]; ?>" />
-                    <button class="toggle-pass-btn icon-only" data-target="login-password-input" tabindex="-1">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                </div>
+
+        <div class="login-logo-wrap">
+            <img src="assets/image/logo.svg" class="login-logo" alt="Espòòò Clicker Logo">
+        </div>
+
+        <p class="login-tagline">
+            <span class="login-pp" aria-hidden="true">&gt;</span><?php echo $labels["modals_login_label"]; ?><span class="login-caret" aria-hidden="true"></span>
+        </p>
+
+        <div class="input-stack">
+            <div class="input-group-modern">
+                <div class="input-icon">
+					<i class="fa-solid fa-user"></i>
+				</div>
+                <input type="text" id="login-username-input" placeholder="<?php echo $labels["modals_login_username_placeholder"]; ?>" autocomplete="username" />
             </div>
-            <button id="login-btn" class="buy-btn save-btn" style="margin-top: 25px; height: 50px; font-size: 1rem; gap: 10px;">
-                <i class="fa-solid fa-rocket"></i>
-				<?php echo $labels["modals_login_submit"]; ?>
-            </button>    
+            <div class="input-group-modern">
+                <div class="input-icon">
+					<i class="fa-solid fa-lock"></i>
+				</div>
+                <input type="password" id="login-password-input" placeholder="<?php echo $labels["modals_login_password_placeholder"]; ?>" autocomplete="current-password" />
+                <button class="toggle-pass-btn icon-only" data-target="login-password-input" tabindex="-1" aria-label="Toggle password">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+        </div>
+
+        <button id="login-btn" class="buy-btn save-btn login-submit">
+            <i class="fa-solid fa-rocket"></i>
+			<?php echo $labels["modals_login_submit"]; ?>
+        </button>
+
+        <div class="login-foot">
+            <span class="login-stat"><span class="login-dot warn">&#9679;</span> cloud link: standby</span>
+            <a href="https://github.com/SickSartori/espo-clicker" target="_blank" rel="noopener" title="<?php echo $labels["index_github_title"]; ?>">
+                <i class="fa-brands fa-github"></i> GitHub
+            </a>
         </div>
     </div>
+
+    <div class="login-build" aria-hidden="true">espòò clicker · v3.0</div>
 </div>
 
 <div id="achievements-modal" class="modal-backdrop" style="display: none;">

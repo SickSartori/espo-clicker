@@ -647,6 +647,72 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     function getGameAPI() { return window.EspooClicker || null; }
+
+    // ==========================================
+    // LOGIN — debug data-stream (scena fullscreen)
+    // Generato via JS perché il numero di colonne dipende dalla larghezza
+    // viewport; righe a tema (token tecnici neutri, leggibili in IT/EN).
+    // ==========================================
+    const LOGIN_STREAM_LINES = [
+        { t: "> boot espoo_clicker v3.0.0" },
+        { t: "> mount /cloud/save .......... OK", c: "ok" },
+        { t: "> init audio_mixer ........... OK", c: "ok" },
+        { t: "> load skins[42] ............. OK", c: "ok" },
+        { t: "> spawn espo_unit#0427" },
+        { t: "> achievement_engine ........ READY", c: "ok" },
+        { t: "> bps_calc: 0x1A2F mov eax,ebx" },
+        { t: "> render_pipeline ........... 60fps" },
+        { t: "> minigames/arcade .......... loaded", c: "ok" },
+        { t: "> [auth] awaiting credentials", c: "hot" },
+        { t: "> cloud_sync: STANDBY" },
+        { t: "> [WARN] save_token: null", c: "warn" },
+        { t: "> golden_bug.spawn(t=37.4s)" },
+        { t: "> multiplier x2 .............. armed", c: "ok" },
+        { t: "> net: ping 24ms ............ OK", c: "ok" },
+        { t: "> heap 18.4MB / gc clean" },
+        { t: "> 0xDEAD clic_per_secondo++" },
+        { t: "> espo.idle_loop ............ tick" },
+        { t: "> [auth] handshake ready", c: "hot" },
+        { t: "> entropy seed 0x7F3A2C" }
+    ];
+
+    function buildLoginStream() {
+        const stream = document.getElementById('login-stream');
+        if (!stream) return;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const w = window.innerWidth || 1280;
+        const cols = Math.max(2, Math.min(6, Math.floor(w / 260)));
+        const colW = w / cols;
+        const n = LOGIN_STREAM_LINES.length;
+        let out = '';
+        for (let i = 0; i < cols; i++) {
+            const dur = 34 + (i % 4) * 9;
+            const op = (0.08 + (i % 3) * 0.03).toFixed(2);
+            const left = Math.round(i * colW + colW * 0.10);
+            const startIdx = (i * 5) % n;
+            let lines = '';
+            for (let rep = 0; rep < 2; rep++) {
+                for (let k = 0; k < n; k++) {
+                    const ln = LOGIN_STREAM_LINES[(startIdx + k) % n];
+                    lines += '<span class="ln' + (ln.c ? ' ' + ln.c : '') + '">' + ln.t + '</span>';
+                }
+            }
+            out += '<div class="ds-col" style="left:' + left + 'px;opacity:' + op
+                + ';animation-duration:' + dur + 's;animation-delay:' + (-(i * 7)) + 's;'
+                + (reduce ? 'animation:none;' : '') + '">' + lines + '</div>';
+        }
+        stream.innerHTML = out;
+    }
+
+    // Rigenera le colonne al resize (debounce) solo se il login è visibile
+    let _loginStreamTimer = null;
+    window.addEventListener('resize', () => {
+        const lm = document.getElementById('login-modal');
+        if (!lm || getComputedStyle(lm).display === 'none') return;
+        clearTimeout(_loginStreamTimer);
+        _loginStreamTimer = setTimeout(buildLoginStream, 200);
+    });
+
     function openModal(modal) {
         if (modal) {
             const content = modal.querySelector('.modal-content');
@@ -665,6 +731,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.style.transform = '';
                 content.style.opacity = '';
             }
+
+            // Login: genera il debug data-stream della scena fullscreen
+            if (modal.id === 'login-modal') buildLoginStream();
 
             // Animazione "finestra": fade + leggero scale (subito, no rAF)
             if (content && typeof gsap !== 'undefined') {
