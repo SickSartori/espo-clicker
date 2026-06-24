@@ -783,7 +783,14 @@
     }
 
     // --- 12. Wiring ---
-    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+    // Ogni azione della console marca la sessione come "cheattata": da qui in poi i
+    // salvataggi restano SOLO LOCALI (vedi saveGame in script.js + _resyncFromCloud in
+    // modals.js). Senza questo, caricare uno Scenario o usare un cheat spingeva lo stato
+    // al cloud, dove l'anti-rollback del server (Format > Prestige > Score) lo rifiutava
+    // come "conflict" e il client si riallineava d'autorità al cloud reale, ANNULLANDO lo
+    // scenario caricato al primo salvataggio/acquisto. I cheat non devono comunque finire
+    // in leaderboard. Il flag si azzera da solo al reload della pagina.
+    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', () => { window.cheatNoCloudSync = true; fn(); }); };
     // Risorse
     on('cb-add-bugs', addBugs); on('cb-add-tokens', addTokens); on('cb-add-qbits', addQbits);
     on('cb-set-score-btn', setScore); on('cb-set-tokens-btn', setTokens); on('cb-set-qbits-btn', setQbits);

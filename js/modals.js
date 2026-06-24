@@ -1117,6 +1117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // normale non basta a risolvere il conflitto. Così il client si riallinea e i
     // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
     window._resyncFromCloud = async () => {
+        // DEV (Admin Console): se lo stato è stato alterato da un cheat NON riallinearlo al
+        // cloud — annullerebbe lo scenario/cheat caricato. Coerente con saveGame, che in quel
+        // caso salta del tutto il push (quindi non genera nemmeno il conflitto che porta qui).
+        if (window.cheatNoCloudSync) return;
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
         if (!u || !p || window._resyncing) return;

@@ -276,7 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
             }
         }
-        if (gameState.user.username && currentUserPassword && currentSaveToken) {
+        if (window.cheatNoCloudSync) {
+            // DEV (Admin Console): lo stato è stato alterato da un cheat/scenario, quindi NON
+            // va sincronizzato col cloud. L'anti-rollback del server (Format > Prestige > Score)
+            // lo rifiuterebbe come "conflict" e il client si riallineerebbe d'autorità al cloud
+            // reale, CANCELLANDO lo scenario caricato (era questo il bug: caricavi l'Endgame e al
+            // primo salvataggio/acquisto tornava lo stato precedente). I cheat non devono nemmeno
+            // finire in leaderboard. Il salvataggio LOCALE (IndexedDB/localStorage) è già avvenuto.
+            console.warn('[Save] Admin Console attiva → salvataggio solo locale (no cloud).');
+        } else if (gameState.user.username && currentUserPassword && currentSaveToken) {
             try {
                 let rawScore = new Decimal(gameState.lifetimeScore);
                 if (rawScore.lt(0)) rawScore = new Decimal(0);
