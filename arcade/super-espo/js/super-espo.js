@@ -75,6 +75,7 @@
         if (espoGame) { espoGame.destroy(true); espoGame = null; }
         // Reset state singletons (texture refs distrutti col game)
         fireHintText = null;
+        stuckHintText = null;
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
         if (gameContainer) { gameContainer.innerHTML = ''; gameContainer.style.display = 'none'; }
@@ -105,15 +106,15 @@
             overlay.innerHTML = `
                 <div class="super-espo-loader">
                     <div class="loader-spinner"></div>
-                    <div class="loader-text">CONNESSIONE…</div>
-                    <div class="loader-sub">Collegamento al server CDN</div>
+                    <div class="loader-text">${(window.ARCADE_TXT && window.ARCADE_TXT.connecting) || 'CONNESSIONE…'}</div>
+                    <div class="loader-sub">${(window.ARCADE_TXT && window.ARCADE_TXT.connectingSub) || 'Collegamento al server CDN'}</div>
                 </div>`;
             overlay.style.display = 'flex';
         } else if (phase === 'loading') {
             overlay.innerHTML = `
                 <div class="super-espo-loader">
                     <div class="loader-spinner"></div>
-                    <div class="loader-text">CARICAMENTO…</div>
+                    <div class="loader-text">${(window.ARCADE_TXT && window.ARCADE_TXT.loadingPhase) || 'CARICAMENTO…'}</div>
                     <div class="loader-bar"><div class="loader-bar-fill" id="super-espo-loader-fill"></div></div>
                     <div class="loader-sub" id="super-espo-loader-percent">0%</div>
                 </div>`;
@@ -276,6 +277,25 @@
     let lastGroundedTime = -1e9;
     let lastJumpPressTime = -1e9;
 
+    // ---- Watchdog anti soft-lock --------------------------------------------
+    // Se Espò resta fermo contro un ostacolo (o incollato al bordo sinistro della
+    // camera tenendo SINISTRA) senza avanzare per qualche secondo, mostriamo un
+    // hint direzionale. Rete di sicurezza per la segnalazione "bloccato dal blocco".
+    const STUCK_HINT_MS = 3000;  // fermo per 3s in stato bloccato → mostra hint
+    let lastProgressTime = 0;    // ultimo istante (ms) in cui maxDist è aumentato
+    // "Calcio dal bordo": quando salti incollato al bordo sinistro o contro un muro,
+    // il salto ti proietta in avanti e sopprime la SINISTRA FINO ALL'ATTERRAGGIO, così
+    // lo slancio porta Espò oltre l'ostacolo invece di farlo rimbalzare sul posto
+    // (anti soft-lock meccanico — segnalazione "bloccato dal blocco tenendo sinistra").
+    let backKicking = false;     // true mentre un calcio-dal-bordo è in volo
+
+    // ---- Stomp grace --------------------------------------------------------
+    // Subito dopo aver schiacciato un nemico (rimbalzo verso l'alto), un contatto
+    // ravvicinato con un SECONDO nemico (es. due affiancati) non deve uccidere:
+    // si rimbalza e si potrà schiacciare il secondo ricadendoci sopra.
+    const STOMP_GRACE_MS = 150;
+    let stompGraceUntil = 0;     // timestamp (ms) fino a cui il contatto laterale in salita è ignorato
+
     // ---- Super Star (invincibility power-up) -------------------------------
     const STAR_DROP_CHANCE  = 0.18;  // 18% per blocco mistero
     const STAR_DURATION_MS  = 12000; // 12 secondi di invincibilità
@@ -363,6 +383,7 @@
 
         this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1000);
         this.physics.world.checkCollision.down = false;
+        this.physics.world.checkCollision.up = false; // niente "soffitto del cielo": si può saltare oltre il bordo alto
 
         this.anims.create({ key: 'goomba-walk', frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
         this.anims.create({ key: 'goomba-dead', frames: [{ key: 'goomba', frame: 2 }] });
@@ -488,6 +509,7 @@
         lastTierIndex = 0;
         camScrollMax = -1e9; // reset camera runner (si riaggancia al primo frame)
         currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
+        lastProgressTime = 0; stuckHintText = null; backKicking = false; stompGraceUntil = 0; // reset watchdog anti soft-lock
         invincibleUntil = 0; // reset stato stella ad ogni nuova partita
         playerForm = 'small';   // parte piccolo (cresce col fungo)
         firePowerDownUntil = 0;
@@ -593,8 +615,17 @@
             if (player.alpha !== 1) player.setAlpha(1);
         }
 
+        // Seed del watchdog: `time` è un timestamp performance.now() grande, quindi
+        // lastProgressTime=0 renderebbe (time - lastProgressTime) sempre >> soglia (hint
+        // immediato). Lo agganciamo al primo frame così il debounce di 3s parte davvero.
+        if (lastProgressTime === 0) lastProgressTime = time;
+
         let distScore = Math.floor(Math.max(0, player.x - 100) / 10);
-        if (distScore > maxDist) maxDist = distScore;
+        if (distScore > maxDist) {
+            maxDist = distScore;
+            lastProgressTime = time;   // avanzamento → resetta il watchdog anti soft-lock
+            hideStuckHint();
+        }
         currentScore = maxDist + bonusScore;
 
         let newLevel = Math.floor(currentScore / 1000) + 1;
@@ -636,7 +667,14 @@
         }
 
         const dt = Math.min(delta || 16.7, 50) / 1000; // secondi (cap anti-salti)
-        let isGrounded = player.body.blocked.down || player.body.touching.down || player.body.onFloor();
+        // "A terra" SOLO da contatto reale col suolo = blocked.down (collisione con un
+        // corpo immovable: platforms/blocks). NON usare touching.down: Phaser lo setta
+        // anche durante l'OVERLAP con una moneta presa IN CADUTA (getOverlapY, corpo che
+        // scende dentro un altro), creando un falso "a terra" che ri-armava il coyote-time
+        // → DOPPIO SALTO premendo salto nell'istante in cui si raccoglie una moneta.
+        // onFloor() === blocked.down (i bordi del mondo non bloccano: checkCollision.down=false).
+        let isGrounded = player.body.blocked.down;
+        if (isGrounded) backKicking = false; // il calcio-dal-bordo finisce all'atterraggio
 
         // Crouch possibile solo da grande (grown/fire); small non si abbassa.
         const crouching = downDown && isGrounded && playerForm !== 'small';
@@ -667,6 +705,9 @@
         let vx = player.body.velocity.x;
         let dir = 0;
         if (!crouching) { if (leftDown) dir = -1; else if (rightDown) dir = 1; }
+        // Durante il calcio-dal-bordo ignora la SINISTRA: la spinta in avanti del
+        // salto non deve essere annullata dal controllo aereo (anti soft-lock).
+        if (backKicking && dir < 0) dir = 0;
 
         if (dir !== 0) {
             const turning = (dir > 0 && vx < 0) || (dir < 0 && vx > 0);
@@ -692,11 +733,22 @@
         const canCoyote = (time - lastGroundedTime) <= COYOTE_MS;
         const jumpBuffered = (time - lastJumpPressTime) <= JUMP_BUFFER_MS;
 
-        // Salta sempre se a terra (o coyote) + input bufferizzato: niente altri vincoli
-        // (es. spingere contro un muro NON deve impedire il salto). Il doppio salto è
+        // Salta se a terra (o coyote) + input bufferizzato. Spingere contro un muro NON
+        // impedisce il salto. Vincolo velocity.y >= 0: non si può accatastare un salto
+        // mentre si sta GIÀ salendo (es. dopo il rimbalzo di uno stomp con coyote ancora
+        // attivo) → niente doppio salto da nessun rimbalzo. Il doppio salto è inoltre
         // evitato consumando coyote/buffer qui sotto.
-        if (jumpBuffered && canCoyote && !crouching) {
+        if (jumpBuffered && canCoyote && !crouching && player.body.velocity.y >= 0) {
             player.setVelocityY(-JUMP_VEL);
+            // Anti soft-lock: SOLO se sei davvero incastrato — incollato al bordo sinistro
+            // della camera (atBackLimit) E fermo da STUCK_HINT_MS senza avanzare — il salto
+            // ti PROIETTA in avanti (sopprimendo la SINISTRA fino all'atterraggio) per
+            // superare l'ostacolo. Gating sul "fermo da un po'" (stesso dell'hint): così un
+            // salto normale mentre vai INDIETRO non viene dirottato in avanti.
+            if (atBackLimit && (time - lastProgressTime) > STUCK_HINT_MS) {
+                player.setVelocityX(maxSpeed);
+                backKicking = true;
+            }
             lastJumpPressTime = -1e9; // consuma il buffer
             lastGroundedTime = -1e9;  // niente doppio salto
             playSoundEffect(this, 'snd-jump');
@@ -709,6 +761,16 @@
         // → il salto si sente come un platform vero, non come gravità lenta.
         if (!isGrounded && player.body.velocity.y > 0) {
             player.body.velocity.y += EXTRA_FALL * dt;
+        }
+
+        // ---- Watchdog anti soft-lock: Espò fermo a terra contro un muro (blocked.right)
+        // o incollato al bordo sinistro della camera (atBackLimit) senza avanzare per
+        // qualche secondo → hint direzionale. Le scale ora sono sempre salibili; questo
+        // copre ogni residuo (es. chi tiene SINISTRA contro il bordo). Niente assist
+        // fisico: guida soltanto, non tocca la posizione del player.
+        if (!player.isDead && isGrounded && (atBackLimit || player.body.blocked.right)
+            && (time - lastProgressTime) > STUCK_HINT_MS) {
+            showStuckHint(this);
         }
 
         // ---- ANIMAZIONI per forma corrente (small/grown/fire) ----
@@ -892,12 +954,17 @@
         return kind;
     }
 
-    // Scalinata di blocchi solidi (hardblock), ascendente o discendente.
+    // Scalinata di blocchi solidi (hardblock), SEMPRE ascendente nel verso di corsa
+    // (gradino basso a sinistra → alto a destra). Una scalinata "discendente" avrebbe
+    // la colonna più alta a sinistra: per chi corre verso destra è un muro di 2-4
+    // blocchi (64-128px, al limite del salto da ~160px) che, se ti trovi sul bordo
+    // sinistro della camera tenendo SINISTRA, manda Espò in soft-lock (vedi segnalazione
+    // "bloccato dal blocco"). Ascendente = salibile gradino per gradino, sempre.
     function buildStairs(scene, x, width, top) {
         const bs = 32; // blocco 16px * scala 2
         const maxSteps = Math.max(2, Math.min(4, Math.floor(width / 52)));
         const steps = Phaser.Math.Between(2, maxSteps);
-        const ascending = Math.random() > 0.5;
+        const ascending = true;
         const startX = x - (steps * bs) / 2 + bs / 2;
         for (let s = 0; s < steps; s++) {
             const h = ascending ? (s + 1) : (steps - s);
@@ -1032,7 +1099,7 @@
             showPopupScore(this, player.x, player.y - 50, '🔥 FIRE ESPO! 🔥', '#ff6347', 1100);
             showFireHint(this);
             if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast('🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco', 'reward');
+                window.EspooClicker.showToast((window.ARCADE_TXT && window.ARCADE_TXT.fireFlower) || '🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco', 'reward');
             }
         } catch (err) {
             console.error('[super-espo] collectFireFlower fail:', err);
@@ -1082,6 +1149,27 @@
         if (fireHintText && fireHintText.destroy) {
             fireHintText.destroy();
             fireHintText = null;
+        }
+    }
+
+    // ---- Stuck Hint UI (anti soft-lock) ----------------------------------
+    // Banner pulsante, fisso a schermo, che resta finché Espò non riprende ad
+    // avanzare (poi viene nascosto dal tracciamento di maxDist in update()).
+    let stuckHintText = null;
+    function showStuckHint(scene) {
+        if (stuckHintText && stuckHintText.scene) return; // già visibile
+        const msg = (window.ARCADE_TXT && window.ARCADE_TXT.hint && window.ARCADE_TXT.hint.stuck)
+            || 'Vai a destra e salta per superare l\'ostacolo';
+        stuckHintText = scene.add.text(scene.cameras.main.centerX, 150, '→  ' + msg, {
+            fontFamily: 'Rajdhani, sans-serif', fontSize: '20px', color: '#ffe066',
+            stroke: '#000', strokeThickness: 5, fontStyle: 'bold', align: 'center'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
+        scene.tweens.add({ targets: stuckHintText, alpha: 0.4, duration: 500, yoyo: true, repeat: -1 });
+    }
+    function hideStuckHint() {
+        if (stuckHintText && stuckHintText.destroy) {
+            stuckHintText.destroy();
+            stuckHintText = null;
         }
     }
 
@@ -1324,6 +1412,11 @@
         // Iframes post-powerdown: ignora il contatto col nemico
         if (inPowerDownIframes) return;
 
+        // Stomp grace: appena schiacciato un nemico, mentre si rimbalza in SU, ignora il
+        // contatto ravvicinato con un secondo nemico → niente morte istantanea con 2
+        // nemici affiancati. Ricadendoci sopra (vy>0) lo si schiaccia normalmente.
+        if (this.time.now < stompGraceUntil && player.body.velocity.y < 0) return;
+
         // ---- GUSCIO KOOPA (kind 'shell') --------------------------------
         if (enemy.kind === 'shell') {
             if (enemy.shellState === 'moving') {
@@ -1332,6 +1425,7 @@
                 if (stomped) {
                     stopShell(this, enemy);
                     player.setVelocityY(-300);
+                    stompGraceUntil = this.time.now + STOMP_GRACE_MS;
                     bonusScore += STOMP_SCORE;
                     showPopupScore(this, enemy.x, enemy.y - 16, '+' + STOMP_SCORE, '#fff');
                     playSoundEffect(this, 'snd-stomp');
@@ -1354,6 +1448,7 @@
             bonusScore += STOMP_SCORE;
             showPopupScore(this, enemy.x, enemy.y - 18, '+' + STOMP_SCORE, '#ffffff');
             player.setVelocityY(-300);
+            stompGraceUntil = this.time.now + STOMP_GRACE_MS;
             playSoundEffect(this, 'snd-stomp');
             if (enemy.kind === 'koopa') {
                 // Koopa schiacciato → guscio FERMO che resta calciabile (come in Mario)
@@ -1484,6 +1579,7 @@
         player.isDead = true;
         playerForm = 'small';
         hideFireHint();
+        hideStuckHint();
         if (fireballs && fireballs.clear) fireballs.clear(true, true);
 
         player.setTint(0xff0000);

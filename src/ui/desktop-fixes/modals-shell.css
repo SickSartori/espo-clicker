@@ -76,6 +76,27 @@
     position: relative;
   }
 
+  /* Dialog Impostazioni: su laptop bassi il contenuto superava max-height:90vh
+     e veniva TAGLIATO (modal-content è overflow:hidden) senza possibilità di
+     scroll. Rendo scrollabile il corpo .settings-content (l'header h2 resta
+     fisso sopra). Stesso comportamento già attivo su mobile (mobile.css:1067). */
+  html body #settings-modal > .modal-content {
+    overflow: hidden; /* il corpo scrolla, non l'intero modale */
+  }
+  html body #settings-modal .settings-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  /* .settings-content è flex-column: senza questo i gruppi (figli flex) si
+     COMPRIMONO per stare nell'altezza disponibile invece di andare in overflow,
+     quindi il contenuto si schiaccia e non scrolla. flex-shrink:0 = altezza
+     naturale -> il corpo va in overflow -> scrolla davvero. */
+  html body #settings-modal .settings-content > * {
+    flex-shrink: 0;
+  }
+
   /* Top accent stripe (sottile barra cyan in cima) */
   html body .modal-backdrop:not(#arcade-modal) > .modal-content::before {
     content: '';

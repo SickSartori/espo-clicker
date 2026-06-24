@@ -56,7 +56,12 @@ window.gameData.i18n.en.texts = {
         newsLoadError: "Couldn't load the news.",
         audioOn: "Enable audio",
         audioOff: "Mute audio",
-        introWelcome: "WELCOME"
+        introWelcome: "WELCOME",
+        bpsEach: "BPS ea.",
+        newMultiplier: "New Multiplier:",
+        audioCatAmbiente: "Music & Ambient",
+        audioCatEventi: "Video & Events",
+        audioCatEffetti: "Sound Effects"
     },
     toasts: {
         welcome: "Welcome",
@@ -140,7 +145,8 @@ window.gameData.i18n.en.texts = {
         playtime: "Play Time",
         totalClicks: "Total Clicks",
         comboRecord: "Best Combo",
-        promotions: "Promotions"
+        promotions: "Promotions",
+        goldenBugs: "Golden Bugs"
     },
     v2: {
         title: "WELCOME TO V2.0",

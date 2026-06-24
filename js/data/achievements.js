@@ -178,6 +178,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: true, // Nascosto finché non lo fai
         reward: { type: 'multiplier', value: 1.10 }, // +10% Produzione Globale
+        getCurrent: () => gameState.totalFormattazioni || 0,
         condition: () => gameState.totalFormattazioni >= 1
     },
     timeLord: {
@@ -188,6 +189,7 @@ window.gameData.achievements = {
         target: 5,
         isSecret: true, // Nascosto finché non lo fai
         reward: { type: 'multiplier', value: 1.25 }, // +25% Produzione Globale
+        getCurrent: () => gameState.totalFormattazioni || 0,
         condition: () => gameState.totalFormattazioni >= 5
     },
     coscienzaEspansa: {
@@ -230,6 +232,7 @@ window.gameData.achievements = {
         target: 9000,
         isSecret: true,
         reward: null,
+        getCurrent: () => bps,
         condition: () => bps.gt(9000)
     },
     leetHaxor: {
@@ -250,6 +253,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(5000) },
+        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
         condition: () => gameState.totalGoldenBugsClicked >= 1
     },
     comboBreaker: {
@@ -260,6 +264,7 @@ window.gameData.achievements = {
         target: 50,
         isSecret: true,
         reward: null,
+        getCurrent: () => gameState.longestCombo || 0,
         condition: () => (gameState.longestCombo || 0) >= 50
     },
     esposionUnlock: {
@@ -270,6 +275,7 @@ window.gameData.achievements = {
         target: 150,
         isSecret: false,
         reward: { type: 'skin', id: 'esposion' },
+        getCurrent: () => gameState.longestCombo || 0,
         condition: () => (gameState.longestCombo || 0) >= 150
     },
     doge: {
@@ -300,6 +306,7 @@ window.gameData.achievements = {
         target: 1000,
         isSecret: false,
         reward: null,
+        getCurrent: () => bps,
         condition: () => bps.gt(1000)
     },
     shutUpTakeMoney: {
@@ -310,6 +317,7 @@ window.gameData.achievements = {
         target: 250,
         isSecret: false,
         reward: null,
+        getCurrent: () => Object.values(gameState.teams).reduce((s, t) => s + (t.count || 0), 0),
         condition: () => Object.values(gameState.teams).reduce((s, t) => s + (t.count || 0), 0) >= 250
     },
     groundhogDay: {
@@ -320,6 +328,7 @@ window.gameData.achievements = {
         target: 10,
         isSecret: false,
         reward: null,
+        getCurrent: () => gameState.totalResets || 0,
         condition: () => (gameState.totalResets || 0) >= 10
     },
     quantumLeap: {
@@ -330,6 +339,7 @@ window.gameData.achievements = {
         target: 50,
         isSecret: false,
         reward: null,
+        getCurrent: () => gameState.qBits,
         condition: () => gameState.qBits.gte(50)
     },
     bugClicker: {
@@ -350,6 +360,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: null,
+        getCurrent: () => gameState.totalResets || 0,
         condition: () => (gameState.totalResets || 0) >= 1
     },
     oneUp: {
@@ -360,6 +371,7 @@ window.gameData.achievements = {
         target: 100,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(10000) },
+        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
         condition: () => gameState.totalGoldenBugsClicked >= 100
     },
     bazinga: {
@@ -380,6 +392,7 @@ window.gameData.achievements = {
         target: 151,
         isSecret: false,
         reward: null,
+        getCurrent: () => Object.values(gameState.teams).reduce((m, t) => Math.max(m, t.count || 0), 0),
         condition: () => Object.values(gameState.teams).some(t => (t.count || 0) >= 151)
     },
     imagination: {
@@ -390,6 +403,7 @@ window.gameData.achievements = {
         target: 5,
         isSecret: false,
         reward: null,
+        getCurrent: () => (gameState.skins.unlocked || []).length,
         condition: () => (gameState.skins.unlocked || []).length >= 5
     },
     moneyMoneyMoney: {
@@ -422,6 +436,7 @@ window.gameData.achievements = {
         target: 250,
         isSecret: false,
         reward: { type: 'skin', id: 'leon' },
+        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
         condition: () => gameState.totalGoldenBugsClicked >= 250
     },
     esposaUnlock: {
@@ -442,6 +457,7 @@ window.gameData.achievements = {
         target: 15,
         isSecret: false,
         reward: { type: 'skin', id: 'mariachi' },
+        getCurrent: () => (gameState.skins.unlocked || []).length,
         condition: () => (gameState.skins.unlocked || []).length >= 15
     }
 }

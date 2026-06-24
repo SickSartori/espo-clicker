@@ -142,6 +142,15 @@ window.gameData.assets = {
             loop: true,
             defaultVol: 0.2
         },
+        'espedy-theme': {
+            id: 'sound-bg-espedy',
+            file: 'assets/sounds/music/bg-espedy.mp3',
+            name: 'Tema Leon Espedy',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.3
+        },
         'merry': {
             id: 'sound-merry',
             file: 'assets/sounds/events/merry-christmas.mp3',

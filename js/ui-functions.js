@@ -427,7 +427,7 @@ function renderStoreSection(config) {
                 txt = status.costText;
             } else {
                 const val = status.currentCost || data.cost || 0;
-                txt = `Costo: ${formatNumber(val)}`;
+                txt = `${gameData.texts.ui.cost}: ${formatNumber(val)}`;
             }
             if (costDisplay.textContent !== txt) costDisplay.textContent = txt;
         }
@@ -448,7 +448,7 @@ function renderStoreSection(config) {
 
         // Stati UI
         if (status.isMaxed || (status.purchased && !data.isCounted && config.type !== 'building')) {
-            const label = status.isMaxed ? "MAX" : "Posseduto";
+            const label = status.isMaxed ? "MAX" : gameData.texts.ui.owned;
             if (btn.textContent !== label) btn.textContent = label;
             btn.className = "buy-btn owned";
             btn.disabled = true;
@@ -457,7 +457,7 @@ function renderStoreSection(config) {
             if (progressContainer) progressContainer.style.display = 'none';
 
         } else if (status.unlocked) {
-            const label = status.label || "Compra";
+            const label = status.label || gameData.texts.ui.buy;
             if (btn.textContent !== label) btn.textContent = label;
 
             const newClass = `buy-btn ${config.btnClass || ''}`;
@@ -577,7 +577,7 @@ function refreshAllStores() {
                 isMaxed: isMaxed,
                 canAfford: gameState.prestigePoints.gte(actualCost), // Usa actualCost
                 label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
-                costText: `Costo: ${formatNumber(actualCost)} Token`, // Usa actualCost
+                costText: `${gameData.texts.ui.cost}: ${formatNumber(actualCost)} Token`, // Usa actualCost
                 currentCost: actualCost, // Usa actualCost
                 progress: 100
             };
@@ -623,9 +623,9 @@ function refreshAllStores() {
             }
             const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
 
-            let prefix = "Costo";
-            if (isMax && amountToBuy > 1) prefix = `Costo (+${formatNumber(amountToBuy)})`;
-            else if (!isMax && amountToBuy > 1) prefix = `Costo (${amountToBuy}x)`;
+            let prefix = gameData.texts.ui.cost;
+            if (isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (${amountToBuy}x)`;
 
             return {
                 unlocked: true,
@@ -633,7 +633,7 @@ function refreshAllStores() {
                 canAfford: gameState.score.gte(currentCost),
                 label: gameData.texts.ui.buy,
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
-                bpsText: `+${formatNumber(totalUnitBPS)} BPS cad.`,
+                bpsText: `+${formatNumber(totalUnitBPS)} ${gameData.texts.ui.bpsEach}`,
                 currentCost: currentCost
             };
         }
@@ -657,7 +657,7 @@ function refreshAllStores() {
                     isMaxed: false,
                     canAfford: gameState.qBits.gte(data.cost),
                     label: state.purchased ? gameData.texts.ui.owned : gameData.texts.ui.buy.toUpperCase(),
-                    costText: `Costo: ${formatNumber(data.cost)} qBit`,
+                    costText: `${gameData.texts.ui.cost}: ${formatNumber(data.cost)} qBit`,
                     currentCost: data.cost,
                     progress: 100
                 };
@@ -904,6 +904,11 @@ function showSkinPreview(skinId) {
                 <div class="preview-cost format"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
                 <div class="preview-cost-value"><i class="fa-solid fa-flask"></i> ${skin.data.cost} Token</div>
                 <button class="preview-btn disabled-btn" disabled><i class="fa-solid fa-lock"></i> FORMATTA PRIMA</button>`;
+        } else if (skin.data.cost && typeof skin.data.cost.lte === 'function' && skin.data.cost.lte(0)) {
+            // Skin gratuita (cost 0): claim diretto, niente "0 Token"
+            actionHtml = `
+                <div class="preview-cost-value afford"><i class="fa-solid fa-gift"></i> GRATIS</div>
+                <button class="preview-btn buy-btn" onclick="buySkin('${skin.id}'); closeSkinPreview();">OTTIENI GRATIS</button>`;
         } else {
             const costClass = skin.canAfford ? 'afford' : 'noafford';
             const btnClass = skin.canAfford ? 'buy-btn' : 'disabled-btn';
@@ -1000,7 +1005,12 @@ function updateAchievementsUI() {
 
         // Calcolo Progresso
         if (!isUnlocked) {
-            if (data.type === 'click') currentVal = gameState.totalClicks;
+            // Sorgente del valore mostrato. Un achievement può dichiarare la propria
+            // via getCurrent(): indispensabile per i type:'custom' (Golden Bug, combo,
+            // formattazioni, reset, BPS, Q-bit, skin…) che altrimenti restano
+            // hardcoded a 0 nella card, pur avendo lo stato corretto.
+            if (typeof data.getCurrent === 'function') currentVal = data.getCurrent();
+            else if (data.type === 'click') currentVal = gameState.totalClicks;
             else if (data.type === 'score') currentVal = gameState.totalScore;
             else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
             else if (data.type === 'time') currentVal = gameState.totalPlayTime;
@@ -1865,8 +1875,8 @@ function updateStoreButtons() {
 
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
-            let prefix = isMax && amountToBuy > 1 ? `Costo (+${formatNumber(amountToBuy)})` :
-                (!isMax && amountToBuy > 1) ? `Costo (${amountToBuy}x)` : "Costo";
+            let prefix = isMax && amountToBuy > 1 ? `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})` :
+                (!isMax && amountToBuy > 1) ? `${gameData.texts.ui.cost} (${amountToBuy}x)` : gameData.texts.ui.cost;
             const costText = `${prefix}: ${formatNumber(currentCost)}`;
             if (costEl.textContent !== costText) costEl.textContent = costText;
         }
@@ -2496,6 +2506,10 @@ function updateStatsUI() {
                         <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.promotions}</span>
                         <span id="st-resets" class="stat-value"></span>
                     </div>
+                    <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.goldenBugs}</span>
+                        <span id="st-golden" class="stat-value" style="color: #f1c40f;"></span>
+                    </div>
                 </div>
             </div>
 
@@ -2546,4 +2560,5 @@ function updateStatsUI() {
     _set('st-clicks', formatNumber(gameState.totalClicks));
     _set('st-combo', 'x' + formatNumber(gameState.longestCombo || 0));
     _set('st-resets', formatNumber(gameState.totalResets));
+    _set('st-golden', formatNumber(gameState.totalGoldenBugsClicked || 0));
 }

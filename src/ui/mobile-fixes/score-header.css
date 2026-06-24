@@ -145,6 +145,42 @@
   @supports (-webkit-background-clip: text) or (background-clip: text) {
     html body .column-header-center #score-display { color: transparent; }
   }
+
+  /* ---------------- Wallet: moltiplicatore / token / q-bit su UNA riga
+     SOTTO il punteggio, invece che stretti ai lati (illeggibili su mobile).
+     NB: .header-main-score era position:absolute (hack di centratura desktop:
+     height:80% + top:50% + transform), quindi fuori dal flusso → i pannelli
+     non andavano mai a capo. Lo rimetto nel flusso e uso una griglia esplicita:
+       riga 1: punteggio (full width)
+       riga 2: [moltiplicatore] [token + q-bit]
+     I pannelli laterali restano gestiti da updateHUD() (visibili solo dopo
+     prestige/quantum); se nascosti, resta solo il punteggio. ---------------- */
+  html body .column-header-center {
+    display: grid;
+    /* Spacer 1fr ai lati -> la coppia di pannelli (moltiplicatore | token+q-bit)
+       resta CENTRATA sotto il punteggio, a prescindere dalla loro larghezza. */
+    grid-template-columns: 1fr auto auto 1fr;
+    grid-template-areas:
+      "score score score score"
+      ".     left  right .";
+    align-items: center;
+    gap: 6px 8px;
+    height: auto;
+  }
+
+  html body .column-header-center .header-main-score {
+    grid-area: score;
+    position: static;   /* annulla l'absolute desktop */
+    height: auto;
+    top: auto;
+    left: auto;
+    transform: none;
+    max-width: 100%;    /* annulla calc(100% - 232px) */
+    text-align: center;
+  }
+
+  html body #header-left-panel  { grid-area: left; }
+  html body #header-right-panel { grid-area: right; }
 }
 
 @media (max-width: 768px) and (prefers-reduced-motion: reduce) {

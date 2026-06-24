@@ -126,6 +126,14 @@ export function renderLucideIcons(): void {
         'class': 'lucide-icon',
       },
     });
+    // Lucide copia `data-lucide` anche sull'<svg> generato: senza marcarlo come
+    // processato, ogni render successivo lo ri-matcha e SOSTITUISCE il nodo. Il
+    // MutationObserver vede il nodo nuovo e ri-renderizza -> loop ~a ogni frame,
+    // l'icona viene staccata di continuo e i click sopra l'icona non scattano
+    // (mousedown e mouseup su nodi diversi). Strip = render idempotente.
+    document
+      .querySelectorAll('svg[data-lucide]')
+      .forEach((el) => el.removeAttribute('data-lucide'));
   } catch (e) {
     console.warn('[lucide] render failed', e);
   }

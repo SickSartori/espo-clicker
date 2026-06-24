@@ -43,9 +43,9 @@
     right: 10px;
     bottom: auto;
     left: auto;
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
+    width: 44px;  /* coerente con gli altri modali (touch target 44px) */
+    height: 44px;
+    min-height: 44px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
@@ -131,6 +131,12 @@
      ------------------------------------------------------------------- */
   html body #achievements-modal #achievement-list .trophy-row {
     min-height: 64px;
+    /* #achievement-list è un flex-column: senza flex-shrink:0 l'algoritmo flex
+       comprime le righe fino a min-height (64px) e l'azione — che la griglia
+       manda su una seconda riga (grid-column 1/-1) — deborda sotto, finendo
+       sopra al titolo della riga successiva. Con shrink:0 la riga cresce fino
+       a contenere icona + contenuto + azione. */
+    flex-shrink: 0;
     padding: 10px 12px;
     gap: 10px;
     display: grid;
@@ -164,6 +170,8 @@
      ------------------------------------------------------------------- */
   html body #achievements-modal #achievement-list .trophy-action {
     grid-column: 1 / -1; /* full width sotto il titolo */
+    width: 100%;        /* override del width:120px desktop -> barra/bottone pieni */
+    min-width: 0;
     margin-top: 4px;
   }
 

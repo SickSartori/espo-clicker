@@ -60,17 +60,18 @@
         // Canvas wrapper
         const canvasWrapper = document.createElement('div');
         canvasWrapper.style.position = 'relative';
-        canvasWrapper.style.width = canvasWidth + 'px';
         canvasWrapper.className = 'crt-turn-on crt-effect';
 
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
         canvas.width = canvasWidth;
         canvas.height = 540;
-        // Il wrapper deve essere alto quanto il canvas: prima era fisso a 400px mentre
-        // il canvas è 540 → gli ultimi ~140px di campo (muri/cibo/serpente) restavano
-        // fuori dall'area visibile pur essendo giocabili.
-        canvasWrapper.style.height = canvas.height + 'px';
+        // NON fissare width/height inline sul wrapper: lo lasciamo al layout flex condiviso
+        // (.crt-effect = width:100% + flex:1) come gli altri giochi, così il canvas SCALA
+        // sempre per stare nel contenitore (CSS max-width/height:100%) e si adatta al
+        // ridimensionamento finestra/rotazione/barra-indirizzi. Con le dimensioni inline
+        // rigide, dopo un resize più stretto il wrapper restava largo e il contenitore
+        // (overflow:hidden) tagliava i lati → "non si vede tutto il campo, sparisce lo snake".
         ctx = canvas.getContext('2d');
         canvasWrapper.appendChild(canvas);
 
@@ -315,7 +316,7 @@
 
         // Score label
         var sLabel = document.createElement('div');
-        sLabel.textContent = 'PUNTEGGIO';
+        sLabel.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.score) || 'PUNTEGGIO';
         sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.5rem;color:#5a6a7a;letter-spacing:3px;margin-bottom:6px;";
         wrap.appendChild(sLabel);
 
@@ -337,7 +338,7 @@
         // New record
         if (isNewRecord) {
             var recDiv = document.createElement('div');
-            recDiv.textContent = '★ NUOVO RECORD! ★';
+            recDiv.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.record) || '★ NUOVO RECORD! ★';
             recDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.65rem;color:#ffce15;animation:arcadeGoRecordShine 1s ease-in-out infinite,arcadeGoFadeUp 0.4s ease 1.2s forwards;opacity:0;margin-bottom:14px;";
             wrap.appendChild(recDiv);
         }

@@ -7,6 +7,7 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;   /* mobile: viewport VISIBILE (esclude barra indirizzi/toolbar) */
             background: #050709;
             color: #fff;
             font-family: 'Rajdhani', sans-serif;
@@ -16,7 +17,14 @@
         /* Layout fullscreen arcade */
         #arcade-fullscreen {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            /* Niente bottom:0: su mobile un fixed inset:0 si estende DIETRO la toolbar
+               (usa il viewport grande) e il fondo del gioco resta nascosto. Con height
+               100dvh il contenitore segue il viewport VISIBILE → niente canvas tagliato. */
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             background:

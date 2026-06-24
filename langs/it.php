@@ -169,6 +169,27 @@
 
 	$labels["arcade_page_title"] = "Espò Arcade — Sala Giochi";
 	$labels["arcade_actions"] = "AZIONI";
+	$labels["arcade_play"] = "GIOCA";
+	$labels["arcade_hud_points"] = "PUNTI";
+	$labels["arcade_hud_life"] = "VITA";
+	$labels["arcade_hud_lives"] = "VITE";
+	$labels["arcade_hud_wave"] = "ONDATA";
+	$labels["arcade_fire_flower"] = "🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco";
+	$labels["arcade_hint_move"] = "Muovi";
+	$labels["arcade_hint_move_snake"] = "Muovi il serpente";
+	$labels["arcade_hint_move_ship"] = "Muovi la nave";
+	$labels["arcade_hint_fire"] = "Spara";
+	$labels["arcade_hint_rotate"] = "Ruota";
+	$labels["arcade_hint_thrust"] = "Spinta";
+	$labels["arcade_hint_run"] = "Corri";
+	$labels["arcade_hint_jump"] = "Salta";
+	$labels["arcade_hint_crouch"] = "Abbassati";
+	$labels["arcade_hint_fireball"] = "Palla di fuoco";
+	$labels["arcade_hint_space"] = "SPAZIO";
+	$labels["arcade_hint_stuck"] = "Vai a destra e salta per superare l'ostacolo";
+	$labels["arcade_connecting"] = "CONNESSIONE…";
+	$labels["arcade_connecting_sub"] = "Collegamento al server CDN";
+	$labels["arcade_loading_phase"] = "CARICAMENTO…";
 	$labels["arcade_ctrl_up"] = "Su (W)";
 	$labels["arcade_ctrl_left"] = "Sinistra (A)";
 	$labels["arcade_ctrl_down"] = "Giù (S)";

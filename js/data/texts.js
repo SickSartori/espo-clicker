@@ -53,7 +53,12 @@ window.gameData.texts = {
         newsLoadError: "Impossibile caricare le novità.",
         audioOn: "Attiva audio",
         audioOff: "Disattiva audio",
-        introWelcome: "BENTORNATO"
+        introWelcome: "BENTORNATO",
+        bpsEach: "BPS cad.",
+        newMultiplier: "Nuovo Moltiplicatore:",
+        audioCatAmbiente: "Musica & Ambiente",
+        audioCatEventi: "Video & Eventi",
+        audioCatEffetti: "Effetti Sonori"
     },
     rarities: {
         common: "COMUNE", rare: "RARA", epic: "EPICA",
@@ -141,7 +146,8 @@ window.gameData.texts = {
         playtime: "Tempo di Gioco",
         totalClicks: "Click Totali",
         comboRecord: "Combo Record",
-        promotions: "Promozioni"
+        promotions: "Promozioni",
+        goldenBugs: "Golden Bug"
     },
     v2: {
         title: "BENVENUTO NELLA V2.0",

@@ -75,6 +75,14 @@
     filter: none;
 }
 
+/* Icona e label sono decorative: il bersaglio del click resta sempre il
+   <button>. Cosi' un'eventuale sostituzione del nodo icona (re-render) non puo'
+   mangiare il click quando il puntatore e' sopra l'icona. */
+.nav-item .nav-icon,
+.nav-item .nav-label {
+    pointer-events: none;
+}
+
 .nav-special-btn .nav-icon {
     margin: 0;
     margin-right: 6px;

@@ -368,13 +368,15 @@
     };
 
     // Legenda comandi da TASTIERA per la tabella desktop (a sinistra).
+    const _h = (window.ARCADE_TXT && window.ARCADE_TXT.hint) || {};
+    const _sp = _h.space || 'SPAZIO';
     const GAME_LEGEND = {
-        snake:     [['◀ ▲ ▶ ▼', 'Muovi il serpente']],
-        space:     [['◀ ▶ ▲ ▼', 'Muovi la nave'], ['SPAZIO', 'Spara']],
-        asteroids: [['◀ ▶', 'Ruota'], ['▲', 'Spinta'], ['SPAZIO', 'Spara']],
-        superespo: [['◀ ▶', 'Corri'], ['▲', 'Salta'], ['▼', 'Abbassati'], ['X / F', 'Palla di fuoco']],
-        invaders:  [['◀ ▶', 'Muovi'], ['SPAZIO', 'Spara']],
-        centipede: [['◀ ▲ ▶ ▼', 'Muovi'], ['SPAZIO', 'Spara']]
+        snake:     [['◀ ▲ ▶ ▼', _h.moveSnake || 'Muovi il serpente']],
+        space:     [['◀ ▶ ▲ ▼', _h.moveShip || 'Muovi la nave'], [_sp, _h.fire || 'Spara']],
+        asteroids: [['◀ ▶', _h.rotate || 'Ruota'], ['▲', _h.thrust || 'Spinta'], [_sp, _h.fire || 'Spara']],
+        superespo: [['◀ ▶', _h.run || 'Corri'], ['▲', _h.jump || 'Salta'], ['▼', _h.crouch || 'Abbassati'], ['X / F', _h.fireball || 'Palla di fuoco']],
+        invaders:  [['◀ ▶', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
+        centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']]
     };
 
     // Popola/aggiorna la tabella comandi (desktop). La visibilità è gestita via CSS
