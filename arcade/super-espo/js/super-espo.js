@@ -1399,8 +1399,10 @@
             flower.anims.play('fire-flower-spin');
         }
 
-        // Emersione lenta dal blocco
-        scene.tweens.add({ targets: flower, y: y - 30, duration: 500, ease: 'Power2' });
+        // Emersione: sale dal blocco e si POSA sopra (non più flottante). y = block.y - 20,
+        // quindi il tetto del blocco è a y+4; con metà fiore (~13px a scala 1.6) il centro
+        // a riposo va a ~y-9 perché il bordo inferiore appoggi sul blocco.
+        scene.tweens.add({ targets: flower, y: y - 10, duration: 500, ease: 'Power2' });
 
         // Pulsazione scale per attirare attenzione
         scene.tweens.add({
