@@ -289,6 +289,13 @@
     // (anti soft-lock meccanico — segnalazione "bloccato dal blocco tenendo sinistra").
     let backKicking = false;     // true mentre un calcio-dal-bordo è in volo
 
+    // ---- Stomp grace --------------------------------------------------------
+    // Subito dopo aver schiacciato un nemico (rimbalzo verso l'alto), un contatto
+    // ravvicinato con un SECONDO nemico (es. due affiancati) non deve uccidere:
+    // si rimbalza e si potrà schiacciare il secondo ricadendoci sopra.
+    const STOMP_GRACE_MS = 150;
+    let stompGraceUntil = 0;     // timestamp (ms) fino a cui il contatto laterale in salita è ignorato
+
     // ---- Super Star (invincibility power-up) -------------------------------
     const STAR_DROP_CHANCE  = 0.18;  // 18% per blocco mistero
     const STAR_DURATION_MS  = 12000; // 12 secondi di invincibilità
@@ -376,6 +383,7 @@
 
         this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1000);
         this.physics.world.checkCollision.down = false;
+        this.physics.world.checkCollision.up = false; // niente "soffitto del cielo": si può saltare oltre il bordo alto
 
         this.anims.create({ key: 'goomba-walk', frames: this.anims.generateFrameNumbers('goomba', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
         this.anims.create({ key: 'goomba-dead', frames: [{ key: 'goomba', frame: 2 }] });
@@ -501,7 +509,7 @@
         lastTierIndex = 0;
         camScrollMax = -1e9; // reset camera runner (si riaggancia al primo frame)
         currentScore = 0; maxDist = 0; bonusScore = 0; currentLevel = 1;
-        lastProgressTime = 0; stuckHintText = null; backKicking = false; // reset watchdog anti soft-lock
+        lastProgressTime = 0; stuckHintText = null; backKicking = false; stompGraceUntil = 0; // reset watchdog anti soft-lock
         invincibleUntil = 0; // reset stato stella ad ogni nuova partita
         playerForm = 'small';   // parte piccolo (cresce col fungo)
         firePowerDownUntil = 0;
@@ -732,15 +740,12 @@
         // evitato consumando coyote/buffer qui sotto.
         if (jumpBuffered && canCoyote && !crouching && player.body.velocity.y >= 0) {
             player.setVelocityY(-JUMP_VEL);
-            // Anti soft-lock: se sei incollato al bordo sinistro della camera, o premi
-            // contro un muro, il salto ti PROIETTA in avanti (e sopprime la SINISTRA fino
-            // all'atterraggio) → superi sempre l'ostacolo invece di rimbalzare sul posto.
-            // (segnalazione: "bloccato dal blocco tenendo premuta la freccia sinistra").
-            // SOLO al bordo sinistro della camera (vero soft-lock). NON su blocked.right:
-            // farebbe scattare la spinta in avanti su OGNI salto a contatto con un muro
-            // (tubi/scale/mattoni in corsa normale), togliendo il controllo aereo. Le scale
-            // ora sono salibili, quindi i muri a terra non servono il calcio.
-            if (atBackLimit) {
+            // Anti soft-lock: SOLO se sei davvero incastrato — incollato al bordo sinistro
+            // della camera (atBackLimit) E fermo da STUCK_HINT_MS senza avanzare — il salto
+            // ti PROIETTA in avanti (sopprimendo la SINISTRA fino all'atterraggio) per
+            // superare l'ostacolo. Gating sul "fermo da un po'" (stesso dell'hint): così un
+            // salto normale mentre vai INDIETRO non viene dirottato in avanti.
+            if (atBackLimit && (time - lastProgressTime) > STUCK_HINT_MS) {
                 player.setVelocityX(maxSpeed);
                 backKicking = true;
             }
@@ -1407,6 +1412,11 @@
         // Iframes post-powerdown: ignora il contatto col nemico
         if (inPowerDownIframes) return;
 
+        // Stomp grace: appena schiacciato un nemico, mentre si rimbalza in SU, ignora il
+        // contatto ravvicinato con un secondo nemico → niente morte istantanea con 2
+        // nemici affiancati. Ricadendoci sopra (vy>0) lo si schiaccia normalmente.
+        if (this.time.now < stompGraceUntil && player.body.velocity.y < 0) return;
+
         // ---- GUSCIO KOOPA (kind 'shell') --------------------------------
         if (enemy.kind === 'shell') {
             if (enemy.shellState === 'moving') {
@@ -1415,6 +1425,7 @@
                 if (stomped) {
                     stopShell(this, enemy);
                     player.setVelocityY(-300);
+                    stompGraceUntil = this.time.now + STOMP_GRACE_MS;
                     bonusScore += STOMP_SCORE;
                     showPopupScore(this, enemy.x, enemy.y - 16, '+' + STOMP_SCORE, '#fff');
                     playSoundEffect(this, 'snd-stomp');
@@ -1437,6 +1448,7 @@
             bonusScore += STOMP_SCORE;
             showPopupScore(this, enemy.x, enemy.y - 18, '+' + STOMP_SCORE, '#ffffff');
             player.setVelocityY(-300);
+            stompGraceUntil = this.time.now + STOMP_GRACE_MS;
             playSoundEffect(this, 'snd-stomp');
             if (enemy.kind === 'koopa') {
                 // Koopa schiacciato → guscio FERMO che resta calciabile (come in Mario)
