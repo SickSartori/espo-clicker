@@ -371,9 +371,21 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev' && ($_SE
 	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
 }
 ?>
-		<!-- PWA Service Worker: auto-update + auto-reload -->
+		<?php
+		// DEV/TEST (instanceName=dev): NIENTE service worker. Evita che la cache
+		// stale del SW serva CSS/JS vecchi dopo ogni rebuild (causa #1 di "non
+		// vedo le modifiche" in sviluppo). In produzione il SW resta attivo.
+		$swIsDev = isset($config['instanceName']) && $config['instanceName'] === 'dev'
+			&& ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? '');
+		?>
+		<!-- PWA Service Worker: auto-update + auto-reload (solo produzione) -->
 		<script>
 		if ('serviceWorker' in navigator) {
+		<?php if ($swIsDev): ?>
+			// DEV/TEST: disinstalla eventuali SW e svuota le cache → codice sempre fresco.
+			navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(function(){});
+			if (self.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(function(){});
+		<?php else: ?>
 			// Cattura se c'era già un controller PRIMA della registrazione.
 			// Se non c'era (prima installazione), non ricaricare quando il SW
 			// prende il controllo: la pagina è già stata caricata fresca.
@@ -450,6 +462,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev' && ($_SE
 				if (!_swHadController) return;
 				_doReload();
 			});
+		<?php endif; ?>
 		}
 		</script>
 		<!-- PWA Install Prompt -->
