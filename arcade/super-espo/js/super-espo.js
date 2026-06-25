@@ -566,7 +566,9 @@
         // Fireball collisions
         this.physics.add.collider(fireballs, platforms, fireballHitGround, null, this);
         this.physics.add.collider(fireballs, blocks, fireballHitGround, null, this);
-        this.physics.add.collider(fireballs, enemyBlockers);
+        // NIENTE collider fireballs↔enemyBlockers: quei rettangoli invisibili ai bordi
+        // servono SOLO a tenere i nemici/power-up sulla piattaforma. Coi fireball facevano
+        // da "muro invisibile" che li bloccava al bordo invece di farli cadere giù.
         this.physics.add.overlap(fireballs, enemies, fireballHitEnemy, null, this);
     }
 
@@ -1286,8 +1288,17 @@
     }
 
     function fireballHitGround(fb) {
-        // bounce gestito da physics. Solo despawn se fuori camera.
-        if (!fb) return;
+        // Sul PAVIMENTO (blocked.down) rimbalza: lo gestisce la physics, e oltre il bordo
+        // la palla cade nel vuoto. Contro un MURO/gradino verticale (blocked.left/right)
+        // invece ESPLODE come in Mario, così non resta incastrata a rimbalzare sul posto
+        // al piede della parete (segnalazione: "le fireball non cadono / restano sul bordo").
+        if (!fb || !fb.body) return;
+        if (fb.body.blocked.left || fb.body.blocked.right) {
+            spawnExplosion(this, fb.x, fb.y);
+            if (fb.destroy) fb.destroy();
+            return;
+        }
+        // Despawn quando esce dalla vista orizzontalmente
         if (fb.x < this.cameras.main.scrollX - 100 || fb.x > this.cameras.main.scrollX + this.cameras.main.width + 100) {
             if (fb.destroy) fb.destroy();
         }
