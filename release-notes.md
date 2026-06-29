@@ -1,5 +1,14 @@
 # 💥 Espòòò Clicker - Release Notes Ufficiali 💥
 
+## Versione 2.1: Audio Ripristinato & Rifiniture
+
+Un aggiornamento di manutenzione mirato: il problema più fastidioso segnalato dopo il lancio della 2.0 era l'audio muto in alcune sessioni. Ora è risolto alla radice.
+
+* **🔊 Audio di nuovo al 100%:** Effetti, musiche ed eventi sonori ora vengono serviti correttamente dalla CDN globale (Cloudflare R2). Niente più suoni mancanti o silenzi improvvisi: click, shop, achievement, fireball, Made in Heaven e tutte le tracce ambientali tornano a suonare come dovrebbero.
+* **⚡ Caricamento più affidabile:** Allineata la struttura degli asset audio tra server e CDN, così il precaricamento al boot non spreca più richieste su file inesistenti.
+
+---
+
 ## Versione 2.0: Formattazione, Nuovi Orizzonti e Arcade 2.0!
 
 Questo non è un semplice aggiornamento, è un vero e proprio salto generazionale. La Versione 2.0 (che include anche i contenuti inediti delle patch 1.2 e 1.3) introduce il "New Game Plus", spinge l'endgame verso numeri inimmaginabili, espande la sala giochi Arcade e rinnova completamente la gestione estetica, strutturale e prestazionale del gioco.
