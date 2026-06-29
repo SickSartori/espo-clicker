@@ -33,6 +33,7 @@
 	$labels["navbar_classifica"] = "Classifica";
 	$labels["navbar_promozione"] = "Promozione";
 	$labels["navbar_opzioni"] = "Opzioni";
+	$labels["navbar_account_title"] = "Account e Amici";
 
 	// GAME CONTAINER
 	$labels["game_container_click_titolo"] = " Click";
@@ -222,6 +223,11 @@
 	$labels["account_critical"] = "Area Critica";
 	$labels["account_confirm_pass_ph"] = "Password per confermare";
 	$labels["account_delete"] = "Elimina";
+	$labels["account_logout"] = "Esci dall'account";
+	$labels["hub_tab_account"] = "Account";
+	$labels["hub_tab_amici"] = "Amici";
+	$labels["hub_amici_soon_title"] = "Amici in arrivo";
+	$labels["hub_amici_soon_desc"] = "Presto potrai aggiungere amici, scambiare emoji, vedere le loro statistiche e l'armadietto skin, e sfidarli in classifica.";
 	$labels["opt_bg_music"] = "Musica di Sfondo";
 	$labels["opt_music_locked"] = "Bloccato dalla Skin attuale";
 	$labels["opt_install_app"] = "Installa App";

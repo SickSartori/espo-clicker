@@ -71,7 +71,7 @@
 
 /* --- NUOVO STILE PROFILO MODERNO --- */
 /* Specificità aumentata */
-#account-modal .profile-modern-modal {
+#user-hub-modal .profile-modern-modal {
     background: #1e293b;
     border: 1px solid #334155;
     overflow: hidden;
@@ -251,6 +251,161 @@
 .danger-action-btn.red:hover {
     background: rgba(239, 68, 68, 0.2);
     border-color: #ef4444;
+}
+
+/* ===== HUB NOME-UTENTE (Account + Amici) ===== */
+
+/* Zona pericolosa a 2 colonne (logout estratto in alto) */
+.danger-actions-grid.two {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Area Critica collassabile (chiusa di default: va aperta per accedere) */
+.danger-collapsible > summary.danger-title {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    margin-bottom: 0;
+}
+
+.danger-collapsible > summary.danger-title::-webkit-details-marker {
+    display: none;
+}
+
+.danger-collapsible > summary.danger-title::marker {
+    content: '';
+}
+
+.danger-chevron {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+
+.danger-collapsible[open] .danger-chevron {
+    transform: rotate(180deg);
+}
+
+.danger-collapsible-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+/* Quando chiuso il corpo va nascosto: un display:flex esplicito sovrascriverebbe
+   il nascondimento nativo dello UA di <details>, quindi lo forziamo via. */
+.danger-collapsible:not([open]) > .danger-collapsible-body {
+    display: none !important;
+}
+
+/* Bottone Logout in evidenza, separato dalla zona pericolosa */
+#user-hub-modal .hub-logout-btn {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 20px 0;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    font-weight: 700;
+}
+
+#user-hub-modal .hub-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: #ef4444;
+    color: #fff;
+}
+
+#user-hub-modal .full-width {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Tabs (underline) */
+.hub-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 14px 25px 0;
+}
+
+.hub-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.hub-tab:hover {
+    color: #e2e8f0;
+}
+
+.hub-tab.active {
+    color: #fff;
+    border-bottom-color: #3498db;
+}
+
+/* Placeholder "Amici in arrivo" (Fase 1) */
+.hub-soon {
+    text-align: center;
+    padding: 30px 20px 40px;
+    color: #94a3b8;
+}
+
+.hub-soon-icon {
+    font-size: 2.6rem;
+    color: #3498db;
+    opacity: 0.7;
+    margin-bottom: 14px;
+}
+
+.hub-soon h3 {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+}
+
+.hub-soon p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+/* Badge notifiche sul bottone nome-utente in navbar (riservato alla Fase 4) */
+#open-user-hub-btn {
+    position: relative;
+}
+
+.user-hub-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 0 0 2px #0d1117;
+}
+
+.user-hub-badge[hidden] {
+    display: none;
 }
 
 /* --- STILI CONTRATTO PRESTIGIO --- */

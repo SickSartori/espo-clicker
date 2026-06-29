@@ -93,14 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
     const openHelpBtn = document.getElementById('open-help-btn');
     const openSkinsBtn = document.getElementById('open-skins-btn');
-    const openAccountBtn = document.getElementById('open-account-btn'); // Dentro Settings
+    const openUserHubBtn = document.getElementById('open-user-hub-btn'); // Nuovo menu nome-utente (navbar)
 
     // Modali
     const achievementsModal = document.getElementById('achievements-modal');
     const statsModal = document.getElementById('stats-modal');
     const settingsModal = document.getElementById('settings-modal');
     const leaderboardModal = document.getElementById('leaderboard-modal');
-    const accountModal = document.getElementById('account-modal');
+    const userHubModal = document.getElementById('user-hub-modal');
     const loginModal = document.getElementById('login-modal');
     const helpModal = document.getElementById('help-modal');
     const skinsModal = document.getElementById('skins-modal');
@@ -856,25 +856,51 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(leaderboardModal);
     });
 
-    // RIFERIMENTO BOTTONE CAMBIO SKIN RAPIDO
-    if (openAccountBtn) openAccountBtn.addEventListener('click', () => {
-        closeModal(settingsModal);
+    // Aggiorna il nome utente mostrato nella navbar e nell'header dell'hub
+    function setAccountIdentity(name) {
+        const fallback = (window.gameData && gameData.texts && gameData.texts.ui && gameData.texts.ui.defaultPlayer) || 'Giocatore';
+        const n = name || fallback;
+        const navLabel = document.getElementById('navbar-username-label');
+        if (navLabel) navLabel.textContent = n;
+        const big = document.getElementById('display-username-large');
+        if (big) big.textContent = n;
+    }
 
-        // --- LOGICA AGGIORNAMENTO PROFILO ---
+    // Attiva una tab dell'hub nome-utente (account | amici)
+    function setHubTab(target) {
+        if (!userHubModal) return;
+        userHubModal.querySelectorAll('.hub-tab').forEach(t => {
+            const on = t.getAttribute('data-hubtab') === target;
+            t.classList.toggle('active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        userHubModal.querySelectorAll('.hub-pane').forEach(p => {
+            const on = p.getAttribute('data-hubpane') === target;
+            p.classList.toggle('active', on);
+            p.style.display = on ? '' : 'none';
+        });
+    }
+
+    if (userHubModal) {
+        userHubModal.querySelectorAll('.hub-tab').forEach(tab => {
+            tab.addEventListener('click', () => setHubTab(tab.getAttribute('data-hubtab')));
+        });
+    }
+
+    // Apertura del menu nome-utente dalla navbar
+    if (openUserHubBtn) openUserHubBtn.addEventListener('click', () => {
         const Game = getGameAPI();
         if (Game) {
-            const state = Game.getGameState();
-            const user = state.user;
-
-            // Aggiorna solo il nome utente nell'header
-            const displayUser = document.getElementById('display-username-large');
-            if (displayUser) {
-                displayUser.textContent = user.username || gameData.texts.ui.defaultPlayer;
-            }
+            const user = Game.getGameState().user;
+            setAccountIdentity(user && user.username);
         }
-        // -------------------------------------
-
-        openModal(accountModal);
+        setHubTab('account'); // ogni apertura riparte dalla tab Account
+        // Area Critica sempre richiusa all'apertura: va aperta apposta per accedere
+        const dz = userHubModal && userHubModal.querySelector('.danger-collapsible');
+        if (dz) dz.removeAttribute('open');
+        const dzPass = document.getElementById('danger-zone-password');
+        if (dzPass) dzPass.value = '';
+        openModal(userHubModal);
     });
 
     allModals.forEach(modal => {
@@ -1199,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'success') {
                 Game.getGameState().user.username = newName;
                 sessionStorage.setItem('espooUser', newName);
-                if (currentUsernameDisplay) currentUsernameDisplay.textContent = newName;
+                setAccountIdentity(newName);
                 Game.showToast(gameData.texts.toasts.nameChanged, "success");
                 Game.saveGame();
             } else {
@@ -1317,6 +1343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 closeModal(loginModal);
+                setAccountIdentity(u); // popola il nome utente nella navbar (anche su auto-login F5)
 
                 // Sblocca il contesto audio sfruttando il gesto di login: così gli SFX
                 // dell'intro e la musica partono senza dover premere "Attiva audio".

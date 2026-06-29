@@ -24,4 +24,9 @@
 	// Nomi tabelle corretti
 	$table_users = 'users_' . $config['instanceName'];
 	$table_leaderboard = 'leaderboard_' . $config['instanceName'];
+
+	// Social (amici / chat emoji / profili pubblici) — stesso schema dev/prod
+	$table_friends   = 'friends_'   . $config['instanceName'];
+	$table_fmessages = 'fmessages_' . $config['instanceName'];
+	$table_profiles  = 'profiles_'  . $config['instanceName'];
 ?>

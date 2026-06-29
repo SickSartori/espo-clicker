@@ -115,6 +115,46 @@ $stmtLb->bind_param("ssisi", $user['username'], $rawScore, $prestigeInt, $rawEqu
 $stmtLb->execute();
 
 $conn->commit();
+
+// --- PROFILO PUBBLICO (best-effort) ---
+// Snapshot delle statistiche "ricche" + armadietto skin per la feature Amici.
+// Fuori dalla transazione del save core e in try/catch: se la tabella non esiste
+// (es. ambiente non ancora migrato) o qualcosa va storto, il salvataggio NON fallisce.
+// La v2.0 non invia 'profile' → questo blocco viene semplicemente saltato.
+if (isset($data['profile']) && is_array($data['profile'])) {
+    try {
+        $p = $data['profile'];
+        $pClicks = (int)($p['totalClicks'] ?? 0);
+        $pPlay   = (int)($p['totalPlayTime'] ?? 0);
+        $pCombo  = (int)($p['longestCombo'] ?? 0);
+        $pGolden = (int)($p['totalGolden'] ?? 0);
+        $unlocked = (isset($p['skinsUnlocked']) && is_array($p['skinsUnlocked']))
+            ? array_values(array_filter($p['skinsUnlocked'], 'is_string'))
+            : [];
+        $pSkinsJson  = json_encode($unlocked);
+        $pSkinsCount = count($unlocked);
+
+        $stmtP = $conn->prepare("
+            INSERT INTO $table_profiles
+                (user_id, total_clicks, total_playtime, longest_combo, total_golden, skins_unlocked, skins_count, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE
+                total_clicks   = VALUES(total_clicks),
+                total_playtime = VALUES(total_playtime),
+                longest_combo  = VALUES(longest_combo),
+                total_golden   = VALUES(total_golden),
+                skins_unlocked = VALUES(skins_unlocked),
+                skins_count    = VALUES(skins_count),
+                updated_at     = NOW()
+        ");
+        $stmtP->bind_param("iiiiisi", $user['id'], $pClicks, $pPlay, $pCombo, $pGolden, $pSkinsJson, $pSkinsCount);
+        $stmtP->execute();
+        $stmtP->close();
+    } catch (\Throwable $e) {
+        // best-effort: profilo non aggiornato, il salvataggio resta valido.
+    }
+}
+
 echo json_encode(["status" => "success", "message" => "Saved and Verified"]);
 $conn->close();
 ?>

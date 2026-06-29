@@ -347,7 +347,7 @@
     filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.7));
   }
 
-  html body div#account-modal.modal-backdrop > .modal-content::before {
+  html body div#user-hub-modal.modal-backdrop > .modal-content::before {
     background: linear-gradient(90deg, transparent, #00d9ff 20%, #a855f7 80%, transparent);
   }
 

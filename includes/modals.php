@@ -168,19 +168,6 @@
                 </button>
             </div>
 
-            <div class="account-preview-card">
-                <div class="acc-details">
-                    <small>
-						<?php echo $labels["modals_opzioni_account_utente_connesso"]; ?>
-					</small>
-                    <div id="current-username-display" class="acc-name">...</div>
-                </div>
-                <button id="open-account-btn" class="buy-btn ghost-btn">
-                    <i class="fa-solid fa-user-gear"></i>
-					<?php echo $labels["modals_opzioni_account_utente_gestisci"]; ?>
-                </button>
-            </div>
-
             <div id="pwa-install-row" style="display:none; margin-bottom: 10px;">
                 <button id="pwa-install-btn" class="buy-btn ghost-btn" style="width:100%; justify-content:center; gap:8px;">
                     <i class="fa-solid fa-download"></i> <?php echo $labels["opt_install_app"]; ?>
@@ -197,18 +184,31 @@
     </div>
 </div>
 
-<div id="account-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content profile-modern-modal">
+<div id="user-hub-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content profile-modern-modal user-hub-modal">
         <button class="modal-close-btn">&times;</button>
-        
+
         <div class="profile-header-section minimal">
             <div class="profile-user-info">
                 <h2 id="display-username-large"><?php echo $labels["account_default_name"]; ?></h2>
             </div>
         </div>
 
-        <div class="settings-content profile-body">
-            
+        <div class="hub-tabs" role="tablist">
+            <button class="hub-tab active" data-hubtab="account" role="tab" aria-selected="true">
+                <i class="fa-solid fa-user-gear"></i> <span><?php echo $labels["hub_tab_account"]; ?></span>
+            </button>
+            <button class="hub-tab" data-hubtab="amici" role="tab" aria-selected="false">
+                <i class="fa-solid fa-user-group"></i> <span><?php echo $labels["hub_tab_amici"]; ?></span>
+            </button>
+        </div>
+
+        <div class="settings-content profile-body hub-pane active" data-hubpane="account">
+
+            <button id="logout-btn" class="buy-btn ghost-btn hub-logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> <?php echo $labels["account_logout"]; ?>
+            </button>
+
             <div class="form-section">
                 <label class="section-label"><?php echo $labels["account_edit_name"]; ?></label>
                 <div class="input-group-modern clean-input">
@@ -239,26 +239,34 @@
                 </div>
             </div>
 
-            <div class="danger-zone-minimal">
-                <div class="danger-title"><?php echo $labels["account_critical"]; ?></div>
-                <div class="input-group-modern clean-input danger-border">
-                    <input type="password" id="danger-zone-password" placeholder="<?php echo $labels["account_confirm_pass_ph"]; ?>" />
-                </div>
+            <details class="danger-zone-minimal danger-collapsible">
+                <summary class="danger-title"><?php echo $labels["account_critical"]; ?><i class="fa-solid fa-chevron-down danger-chevron"></i></summary>
+                <div class="danger-collapsible-body">
+                    <div class="input-group-modern clean-input danger-border">
+                        <input type="password" id="danger-zone-password" placeholder="<?php echo $labels["account_confirm_pass_ph"]; ?>" />
+                    </div>
 
-                <div class="danger-actions-grid">
-                    <button id="logout-btn" class="danger-action-btn soft">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </button>
-                    <button id="reset-progress-btn" class="danger-action-btn orange">
-                        <i class="fa-solid fa-rotate-left"></i> Reset
-                    </button>
-                    <button id="delete-save-btn" class="danger-action-btn red">
-                        <i class="fa-solid fa-trash"></i> <?php echo $labels["account_delete"]; ?>
-                    </button>
+                    <div class="danger-actions-grid two">
+                        <button id="reset-progress-btn" class="danger-action-btn orange">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                        <button id="delete-save-btn" class="danger-action-btn red">
+                            <i class="fa-solid fa-trash"></i> <?php echo $labels["account_delete"]; ?>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </details>
 
         </div>
+
+        <div class="settings-content profile-body hub-pane" data-hubpane="amici" style="display:none;">
+            <div class="hub-soon">
+                <i class="fa-solid fa-user-group hub-soon-icon"></i>
+                <h3><?php echo $labels["hub_amici_soon_title"]; ?></h3>
+                <p><?php echo $labels["hub_amici_soon_desc"]; ?></p>
+            </div>
+        </div>
+
     </div>
 </div>
 

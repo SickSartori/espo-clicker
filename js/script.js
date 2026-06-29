@@ -303,6 +303,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     prestige: prestigeToSend,
                     equippedSkin: gameState.skins.current,
                     totalFormattazioni: gameState.totalFormattazioni || 0,
+                    // Snapshot pubblico per la feature Amici (statistiche + armadietto skin).
+                    // Inviato in chiaro perché saveData è compresso e non leggibile lato server.
+                    profile: {
+                        totalClicks: Math.floor(gameState.totalClicks || 0),
+                        totalPlayTime: Math.floor(gameState.totalPlayTime || 0),
+                        longestCombo: Math.floor(gameState.longestCombo || 0),
+                        totalGolden: Math.floor(gameState.totalGoldenBugsClicked || 0),
+                        skinsUnlocked: (gameState.skins && Array.isArray(gameState.skins.unlocked)) ? gameState.skins.unlocked : []
+                    },
                     hash: signature
                 };
 

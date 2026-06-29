@@ -324,9 +324,9 @@
   }
 
   /* ════════════════════════════════════════════════
-     ACCOUNT modal — profile cards
+     USER HUB modal (Account + Amici) — profile cards
      ════════════════════════════════════════════════ */
-  html body #account-modal .modal-content {
+  html body #user-hub-modal .modal-content {
     max-width: 600px;
   }
 
