@@ -209,6 +209,62 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFriends();
         }
 
+        // ---- Chat emoji (polling ~3s; Realtime innestabile sopra) ----
+        const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
+        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1;
+
+        function renderChatBubbles(messages) {
+            const log = document.getElementById('fp-chat-log');
+            if (!log) return;
+            if (!messages.length) {
+                log.innerHTML = `<div class="fp-chat-empty">${T().chatEmpty || 'Invia la prima emoji!'}</div>`;
+                return;
+            }
+            log.innerHTML = messages.map(m => `<div class="fp-bubble ${m.mine ? 'mine' : 'theirs'}">${escapeHTML(m.emoji)}</div>`).join('');
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function loadChat(friendId, silent) {
+            const data = await sb('friends-messages', { friendId: friendId });
+            if (!data || data.status !== 'success') return;
+            const msgs = data.messages || [];
+            if (silent && msgs.length === _chatLastCount) return; // niente di nuovo → no re-render (no flicker)
+            _chatLastCount = msgs.length;
+            renderChatBubbles(msgs);
+        }
+
+        async function sendEmoji(emoji) {
+            if (!_chatFriendId) return;
+            const log = document.getElementById('fp-chat-log');
+            if (log) { // append ottimistico
+                const empty = log.querySelector('.fp-chat-empty');
+                if (empty) log.innerHTML = '';
+                log.insertAdjacentHTML('beforeend', `<div class="fp-bubble mine">${escapeHTML(emoji)}</div>`);
+                log.scrollTop = log.scrollHeight;
+                _chatLastCount = -1;
+            }
+            const data = await sb('friends-send-emoji', { friendId: _chatFriendId, emoji: emoji });
+            if (!data || data.status !== 'success') toast((data && data.message) || '', 'error');
+            loadChat(_chatFriendId, false);
+        }
+
+        function startChat(friendId) {
+            _chatFriendId = friendId;
+            _chatLastCount = -1;
+            const pal = document.querySelector('#friend-profile-panel .fp-chat-palette');
+            if (pal) pal.innerHTML = CHAT_EMOJI.map(e => `<button class="fp-emoji-btn" data-emoji="${e}">${e}</button>`).join('');
+            loadChat(friendId, false);
+            clearInterval(_chatTimer);
+            _chatTimer = setInterval(() => loadChat(friendId, true), 3000);
+        }
+
+        function stopChat() {
+            clearInterval(_chatTimer);
+            _chatTimer = null;
+            _chatFriendId = null;
+            _chatLastCount = -1;
+        }
+
         // ---- Pannello profilo amico ----
         async function openProfile(id) {
             friendsView.style.display = 'none';
@@ -252,10 +308,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="fp-stat"><span>${combo}</span><label>${T().stCombo || ''}</label></div>
                 </div>
                 <div class="fp-locker-title">${T().locker || 'Armadietto'} <span class="cnt">${p.skinsCount != null ? p.skinsCount : unlocked.length}</span></div>
-                <div class="fp-locker">${locker}</div>`;
+                <div class="fp-locker">${locker}</div>
+                <div class="fp-chat">
+                    <div class="fp-chat-title">${T().chat || 'Chat'}</div>
+                    <div class="fp-chat-log" id="fp-chat-log"></div>
+                    <div class="fp-chat-palette"></div>
+                </div>`;
+            startChat(p.id);
         }
 
         function closeProfile() {
+            stopChat();
             profilePanel.style.display = 'none';
             profilePanel.innerHTML = '';
             if (friendsView) friendsView.style.display = '';
@@ -283,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (back) { closeProfile(); return; }
             const rem = e.target.closest('[data-remove]');
             if (rem) { removeFriend(rem.getAttribute('data-remove')); return; }
+            const emo = e.target.closest('.fp-emoji-btn[data-emoji]');
+            if (emo) { sendEmoji(emo.getAttribute('data-emoji')); return; }
         });
 
         // Testi statici (placeholder + stato vuoto) dalla lingua attiva

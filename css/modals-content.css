@@ -806,6 +806,84 @@
     box-shadow: 0 0 12px rgba(52, 152, 219, 0.2);
 }
 
+/* ===== Chat emoji nel profilo amico ===== */
+.fp-chat {
+    margin-top: 18px;
+    border-top: 1px solid #334155;
+    padding-top: 14px;
+}
+
+.fp-chat-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+
+.fp-chat-log {
+    min-height: 56px;
+    max-height: 160px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px;
+    margin-bottom: 12px;
+}
+
+.fp-chat-empty {
+    color: #64748b;
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 16px 8px;
+}
+
+.fp-bubble {
+    align-self: flex-start;
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 7px 11px;
+    border-radius: 14px 14px 14px 4px;
+    background: rgba(255, 255, 255, 0.06);
+    animation: bubbleIn 0.18s ease;
+}
+
+.fp-bubble.mine {
+    align-self: flex-end;
+    border-radius: 14px 14px 4px 14px;
+    background: rgba(52, 152, 219, 0.18);
+}
+
+@keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(4px) scale(0.9); }
+    to   { opacity: 1; transform: none; }
+}
+
+.fp-chat-palette {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+.fp-emoji-btn {
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 6px 0;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.fp-emoji-btn:hover {
+    background: rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+    transform: scale(1.12);
+}
+
 /* --- STILI CONTRATTO PRESTIGIO --- */
 #prestige-modal .contract-modal {
     background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);

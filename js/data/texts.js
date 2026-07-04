@@ -146,6 +146,8 @@ window.gameData.texts = {
         outgoing: "Richieste inviate",
         yourFriends: "I tuoi amici",
         suggestions: "Suggeriti",
+        chat: "Chat",
+        chatEmpty: "Rompi il ghiaccio con un'emoji!",
         emptyTitle: "Ancora nessun amico",
         emptyDesc: "Cerca qualcuno qui sopra per iniziare.",
         online: "Online",

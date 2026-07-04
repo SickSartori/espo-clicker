@@ -145,6 +145,8 @@ window.gameData.i18n.en.texts = {
         outgoing: "Requests sent",
         yourFriends: "Your friends",
         suggestions: "Suggested",
+        chat: "Chat",
+        chatEmpty: "Break the ice with an emoji!",
         emptyTitle: "No friends yet",
         emptyDesc: "Search someone above to get started.",
         online: "Online",
