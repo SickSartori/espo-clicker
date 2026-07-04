@@ -770,6 +770,42 @@
     background: #0b1220;
 }
 
+/* ===== Toggle Globale | Amici nella Classifica ===== */
+.lb-scope-toggle {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px 4px;
+}
+
+.lb-scope-btn {
+    flex: 1;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.lb-scope-btn:hover {
+    color: #e2e8f0;
+    border-color: rgba(52, 152, 219, 0.4);
+}
+
+.lb-scope-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(52, 152, 219, 0.1));
+    border-color: #3498db;
+    box-shadow: 0 0 12px rgba(52, 152, 219, 0.2);
+}
+
 /* --- STILI CONTRATTO PRESTIGIO --- */
 #prestige-modal .contract-modal {
     background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);

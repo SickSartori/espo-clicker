@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
         const leaderboardModal = document.getElementById('leaderboard-modal');
         const leaderboardList = document.getElementById('leaderboard-list');
+        let currentScope = 'global'; // 'global' | 'friends'
 
         // Apertura modale
         openLeaderboardBtn.addEventListener('click', () => {
@@ -19,8 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardModal.style.display = 'flex';
         });
 
+        // Toggle Globale | Amici
+        document.querySelectorAll('#leaderboard-modal .lb-scope-btn').forEach(btn => {
+            btn.addEventListener('click', () => loadLeaderboard(btn.getAttribute('data-scope')));
+        });
+
         // Funzione per caricare e mostrare la classifica
-        async function loadLeaderboard() {
+        async function loadLeaderboard(scope) {
+            if (scope) currentScope = scope;
+            scope = currentScope;
+            // Aggiorna lo stato attivo del toggle Globale|Amici
+            document.querySelectorAll('#leaderboard-modal .lb-scope-btn').forEach(b =>
+                b.classList.toggle('active', b.getAttribute('data-scope') === scope));
+
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + window.gameData.texts.leaderboard.loading + '</span></div>';
 
             try {
@@ -31,14 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     await new Promise(r => setTimeout(r, 200));
                 }
 
-                const response = await window.EspoBackend.call('get-leaderboard', {});
+                const isFriends = scope === 'friends';
+                const slug = isFriends ? 'friends-leaderboard' : 'get-leaderboard';
+                const payload = (isFriends && Game.getSaveToken) ? { save_token: Game.getSaveToken() } : {};
+                const response = await window.EspoBackend.call(slug, payload);
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
                 }
                 const scores = await response.json();
 
                 if (scores.length === 0) {
-                    leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + window.gameData.texts.leaderboard.empty + '</span></div>';
+                    const emptyMsg = (scope === 'friends')
+                        ? (window.gameData.texts.leaderboard.emptyFriends || window.gameData.texts.leaderboard.empty)
+                        : window.gameData.texts.leaderboard.empty;
+                    leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + emptyMsg + '</span></div>';
                     return;
                 }
 

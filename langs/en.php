@@ -34,6 +34,8 @@
 	$labels["navbar_promozione"] = "Promotion";
 	$labels["navbar_opzioni"] = "Options";
 	$labels["navbar_account_title"] = "Account & Friends";
+	$labels["lb_scope_global"] = "Global";
+	$labels["lb_scope_friends"] = "Friends";
 
 	// GAME CONTAINER
 	$labels["game_container_click_titolo"] = " Click";

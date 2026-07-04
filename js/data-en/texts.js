@@ -124,6 +124,7 @@ window.gameData.i18n.en.texts = {
     leaderboard: {
         loading: "Loading...",
         empty: "No scores yet. Be the first!",
+        emptyFriends: "No friends on the leaderboard yet. Add some!",
         error: "Couldn't load the leaderboard.",
         levelAbbr: "LVL",
         formatTitle: "Formats (NG+)"

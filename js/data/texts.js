@@ -125,6 +125,7 @@ window.gameData.texts = {
     leaderboard: {
         loading: "Caricamento...",
         empty: "Nessun punteggio. Sii il primo!",
+        emptyFriends: "Nessun amico in classifica. Aggiungine qualcuno!",
         error: "Impossibile caricare la classifica.",
         levelAbbr: "LIV.",
         formatTitle: "Formattazioni (NG+)"

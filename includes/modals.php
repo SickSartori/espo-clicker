@@ -324,6 +324,14 @@
 			<i class="fa-solid fa-medal"></i>
 			<?php echo $labels["modals_classifica_titolo"]; ?>
 		</h2>
+        <div class="lb-scope-toggle" role="tablist">
+            <button class="lb-scope-btn active" data-scope="global" role="tab">
+                <i class="fa-solid fa-globe"></i> <?php echo $labels["lb_scope_global"]; ?>
+            </button>
+            <button class="lb-scope-btn" data-scope="friends" role="tab">
+                <i class="fa-solid fa-user-group"></i> <?php echo $labels["lb_scope_friends"]; ?>
+            </button>
+        </div>
         <div id="leaderboard-list"></div>
     </div>
 </div>
