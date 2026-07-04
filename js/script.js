@@ -296,8 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const signature = await generateHash(dataString);
 
                 const savePayload = {
-                    username: gameState.user.username,
-                    password: currentUserPassword,
+                    save_token: currentSaveToken,
                     saveData: compressed,
                     score: scoreToSend,
                     prestige: prestigeToSend,
@@ -315,12 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hash: signature
                 };
 
-                await fetch('php/save_progress.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    keepalive: true,
-                    body: JSON.stringify(savePayload)
-                })
+                await window.EspoBackend.call('save-progress', savePayload, { keepalive: true })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
@@ -1830,6 +1824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formatNumber: formatNumber,
         setPassword: (pwd) => { currentUserPassword = pwd; },
         getPassword: () => currentUserPassword,
+        getSaveToken: () => currentSaveToken,
         setSaveToken: (token, expiresAt) => {
             currentSaveToken = token;
             if (expiresAt) tokenExpiresAt = expiresAt * 1000;
@@ -1904,7 +1899,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cloudJSON) {
                 try {
                     // 1. Parsing e Decompressione Preliminare
-                    let cloudDataRaw = JSON.parse(cloudJSON);
+                    // cloudJSON può arrivare in forme diverse:
+                    //  - stringa compressa lz-string GREZZA → Supabase: la colonna jsonb è
+                    //    auto-parsata da supabase-js, quindi ricevi già il valore (single-encoded).
+                    //  - stringa JSON che racchiude la compressa → legacy PHP (json_encode = double-encoded).
+                    //  - oggetto stato → salvataggio legacy non compresso.
+                    let cloudDataRaw = cloudJSON;
+                    if (typeof cloudJSON === 'string') {
+                        try { cloudDataRaw = JSON.parse(cloudJSON); }
+                        catch (_) { cloudDataRaw = cloudJSON; } // già stringa grezza (Supabase)
+                    }
                     let cloudState;
 
                     if (typeof cloudDataRaw === 'string') {

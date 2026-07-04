@@ -14,6 +14,10 @@ const JS_FILES = [
   // LZ-String (bundlato localmente, era su CDN)
   'node_modules/lz-string/libs/lz-string.min.js',
 
+  // Backend cloud (Supabase): config UNICO dev/prod + helper EspoBackend.call.
+  // Deve stare prima di modals/podio/script che lo usano.
+  'js/backend-config.js',
+
   // Save system V9
   'js/save-db.js',
   'js/error-handler.js',

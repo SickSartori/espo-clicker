@@ -369,13 +369,8 @@ require_once("php/check_version.php");
 		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
 		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
 	
-		<?php
-// Uso la stessa variabile usata nella libreria check_version.php
-if (isset($config['instanceName']) && $config['instanceName'] === 'dev' && ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? '')) {
-	echo '<script src="js/cheatboard.js?v=' . time() . '" defer></script>'; // dev: sempre fresco
-	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-}
-?>
+		<!-- Cheatboard/Admin Console: ora caricata da js/backend-config.js
+		     (gattata su EspoBackend.env === 'dev'), non più da PHP qui. -->
 		<?php
 		// DEV/TEST (instanceName=dev): NIENTE service worker. Evita che la cache
 		// stale del SW serva CSS/JS vecchi dopo ogni rebuild (causa #1 di "non

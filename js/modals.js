@@ -1120,11 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!Game || typeof Game.setSaveToken !== 'function') return;
         window._tokenRefreshing = true;
         try {
-            const res = await fetch('php/refresh_token.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
+            const res = await window.EspoBackend.call('refresh-token', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success' && data.save_token) {
                 Game.setSaveToken(data.save_token, data.token_expires_at);
@@ -1154,11 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!Game || typeof Game.loadCloudData !== 'function') return;
         window._resyncing = true;
         try {
-            const res = await fetch('php/login_register.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
+            const res = await window.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success') {
                 if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
@@ -1195,10 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!oldPass || !newPass) { alert(gameData.texts.dialogs.fillFields); return; }
 
         try {
-            const res = await fetch('php/change_password.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: Game.getGameState().user.username, oldPassword: oldPass, newPassword: newPass })
-            });
+            const res = await window.EspoBackend.call('change-password', { save_token: Game.getSaveToken(), oldPassword: oldPass, newPassword: newPass });
             const data = await res.json();
             if (data.status === 'success') {
                 Game.showToast(gameData.texts.toasts.passChanged, "success");
@@ -1217,10 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newName || !password) return;
 
         try {
-            const res = await fetch('php/change_username.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: Game.getGameState().user.username, password: password, newUsername: newName })
-            });
+            const res = await window.EspoBackend.call('change-username', { save_token: Game.getSaveToken(), password: password, newUsername: newName });
             const data = await res.json();
             if (data.status === 'success') {
                 Game.getGameState().user.username = newName;
@@ -1241,10 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const Game = getGameAPI();
         try {
-            const res = await fetch('php/delete_user.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
-            });
+            const res = await window.EspoBackend.call('delete-user', { save_token: Game.getSaveToken(), password: password });
             const data = await res.json();
             if (data.status === 'success') {
                 // Impedisci il salvataggio automatico alla chiusura
@@ -1272,10 +1255,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const Game = getGameAPI();
             try {
-                const res = await fetch('php/reset_progress.php', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: Game.getGameState().user.username, password: password })
-                });
+                const res = await window.EspoBackend.call('reset-progress', { save_token: Game.getSaveToken(), password: password });
                 const data = await res.json();
                 if (data.status === 'success') {
                     // Evita che il salvataggio automatico sovrascriva il reset
@@ -1321,9 +1301,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginButton.disabled = true;
         try {
-            const res = await fetch('php/login_register.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p })
-            });
+            const res = await window.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success') {
                 sessionStorage.setItem('espooUser', u);

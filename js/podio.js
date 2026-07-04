@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await new Promise(r => setTimeout(r, 200));
                 }
 
-                const response = await fetch('php/get_leaderboard.php?nocache=' + Date.now());
+                const response = await window.EspoBackend.call('get-leaderboard', {});
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
                 }
