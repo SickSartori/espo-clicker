@@ -136,40 +136,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        async function doSearch() {
+        // Riga risultato ricerca / suggerimento, con azione in base alla relazione
+        function searchRowHTML(u, relation) {
+            const sv = skinVisual(u.equippedSkin);
+            const on = onlineLabel(u.lastSeenSecondsAgo);
+            let action;
+            if (relation === 'accepted') action = `<span class="friend-pending-tag ok">${T().alreadyFriends || 'Già amici'}</span>`;
+            else if (relation === 'pending_out') action = `<span class="friend-pending-tag">${T().pending || 'in attesa'}</span>`;
+            else if (relation === 'pending_in') action = `<button class="friend-mini-btn accept" data-act="accept" data-id="${escapeHTML(u.id)}" title="${T().accept || ''}"><i class="fa-solid fa-check"></i></button>`;
+            else action = `<button class="friend-add-btn" data-add="${escapeHTML(u.id)}"><i class="fa-solid fa-user-plus"></i> ${T().add || 'Aggiungi'}</button>`;
+            return `
+                <div class="friend-row search">
+                    <img src="${sv.img}" class="friend-avatar" style="border-color:${sv.border}" alt="">
+                    <div class="friend-info">
+                        <span class="friend-name">${escapeHTML(u.username)}</span>
+                        ${statusHTML(on)}
+                    </div>
+                    <div class="friend-actions">${action}</div>
+                </div>`;
+        }
+
+        // Ricerca per nome PARZIALE (>=2 caratteri). Con query vuota → suggerimenti
+        // (utenti non ancora amici). allowSuggestions=true consente la modalità vuota.
+        async function doSearch(allowSuggestions) {
             const q = (searchInput.value || '').trim();
-            if (!q) { searchResult.innerHTML = ''; return; }
-            searchResult.innerHTML = `<div class="friends-loading">${T().searching || 'Cerco…'}</div>`;
+            if (!q && !allowSuggestions) { searchResult.innerHTML = ''; return; }
+            searchResult.innerHTML = `<div class="friends-loading">${(q ? T().searching : T().loading) || '…'}</div>`;
 
             const data = await sb('friends-search', { query: q });
+            // Scarta risposte stantie: se nel frattempo il campo è cambiato, ignora
+            if ((searchInput.value || '').trim() !== q) return;
+
             if (data.status !== 'success') {
                 searchResult.innerHTML = `<div class="friends-error">${escapeHTML(data.message || '')}</div>`;
                 return;
             }
-            if (!data.found) {
-                searchResult.innerHTML = `<div class="friends-noresult">${data.self ? (T().selfSearch || '🙂') : (T().notFound || 'Nessun utente.')}</div>`;
+            const results = data.results || [];
+            if (!results.length) {
+                searchResult.innerHTML = q ? `<div class="friends-noresult">${T().notFound || 'Nessun utente.'}</div>` : '';
                 return;
             }
+            let html = '';
+            if (data.mode === 'suggestions') html += `<div class="friends-section-title">${T().suggestions || 'Suggeriti'}</div>`;
+            html += results.map(r => searchRowHTML(r.user, r.relation)).join('');
+            searchResult.innerHTML = html;
+        }
 
-            const u = data.user, sv = skinVisual(u.equippedSkin);
-            let action;
-            if (data.relation === 'accepted') action = `<span class="friend-pending-tag ok">${T().alreadyFriends || 'Già amici'}</span>`;
-            else if (data.relation === 'pending_out') action = `<span class="friend-pending-tag">${T().pending || 'in attesa'}</span>`;
-            else if (data.relation === 'pending_in') action = `<button class="friend-mini-btn accept" data-act="accept" data-id="${escapeHTML(u.id)}"><i class="fa-solid fa-check"></i></button>`;
-            else action = `<button class="friend-add-btn" data-add="${escapeHTML(u.id)}"><i class="fa-solid fa-user-plus"></i> ${T().add || 'Aggiungi'}</button>`;
-
-            searchResult.innerHTML = `
-                <div class="friend-row search">
-                    <img src="${sv.img}" class="friend-avatar" style="border-color:${sv.border}" alt="">
-                    <div class="friend-info"><span class="friend-name">${escapeHTML(u.username)}</span></div>
-                    <div class="friend-actions">${action}</div>
-                </div>`;
+        // Dopo una mutazione: riaggiorna il box ricerca solo se sta mostrando qualcosa
+        function refreshSearch() {
+            if (searchResult.innerHTML.trim()) doSearch(true);
         }
 
         async function sendRequest(id) {
             const data = await sb('friends-request', { targetId: id });
             toast(data.message || '', data.status === 'success' ? 'success' : 'error');
-            searchResult.innerHTML = ''; searchInput.value = '';
+            refreshSearch();   // la persona aggiunta passa a "in attesa" nella lista
             loadFriends();
         }
 
@@ -177,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await sb('friends-respond', { requesterId: id, action: action });
             if (data.status === 'success') toast(action === 'accept' ? (T().accepted || '') : (T().rejected || ''), 'success');
             else toast(data.message || '', 'error');
+            refreshSearch();
             loadFriends();
         }
 
@@ -240,8 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ---- Eventi (delega su tutta la pane) ----
-        if (searchBtn) searchBtn.addEventListener('click', doSearch);
-        if (searchInput) searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
+        let _searchTimer = null;
+        if (searchInput) {
+            // Ricerca live mentre si digita (debounce)
+            searchInput.addEventListener('input', () => { clearTimeout(_searchTimer); _searchTimer = setTimeout(() => doSearch(true), 280); });
+            // Al focus, se vuoto, mostra i suggerimenti
+            searchInput.addEventListener('focus', () => { if (!(searchInput.value || '').trim()) doSearch(true); });
+            searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(_searchTimer); doSearch(true); } });
+        }
+        if (searchBtn) searchBtn.addEventListener('click', () => { clearTimeout(_searchTimer); doSearch(true); });
 
         pane.addEventListener('click', (e) => {
             const add = e.target.closest('[data-add]');
@@ -269,7 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Carica la lista quando si apre la tab Amici
         const amiciTab = hub.querySelector('.hub-tab[data-hubtab="amici"]');
-        if (amiciTab) amiciTab.addEventListener('click', () => { applyStaticTexts(); loadFriends(); });
+        if (amiciTab) amiciTab.addEventListener('click', () => {
+            applyStaticTexts();
+            if (searchInput) searchInput.value = '';
+            if (searchResult) searchResult.innerHTML = '';
+            loadFriends();
+        });
 
         window.EspoSocial = { reload: loadFriends };
     }

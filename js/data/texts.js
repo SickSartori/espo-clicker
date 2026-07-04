@@ -144,6 +144,7 @@ window.gameData.texts = {
         incoming: "Richieste ricevute",
         outgoing: "Richieste inviate",
         yourFriends: "I tuoi amici",
+        suggestions: "Suggeriti",
         emptyTitle: "Ancora nessun amico",
         emptyDesc: "Cerca qualcuno qui sopra per iniziare.",
         online: "Online",

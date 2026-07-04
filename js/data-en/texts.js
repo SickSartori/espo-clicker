@@ -143,6 +143,7 @@ window.gameData.i18n.en.texts = {
         incoming: "Requests received",
         outgoing: "Requests sent",
         yourFriends: "Your friends",
+        suggestions: "Suggested",
         emptyTitle: "No friends yet",
         emptyDesc: "Search someone above to get started.",
         online: "Online",
