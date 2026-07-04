@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const listBox      = document.getElementById('friends-list');
         const emptyBox     = document.getElementById('friends-empty');
         const profilePanel = document.getElementById('friend-profile-panel');
+        const badgeEl      = document.getElementById('user-hub-badge');
 
         const T = () => (window.gameData && gameData.texts && gameData.texts.social) || {};
 
@@ -58,6 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function toast(msg, type) { if (msg && Game.showToast) Game.showToast(msg, type || 'info'); }
+
+        // Badge navbar: messaggi non letti + richieste in arrivo
+        async function updateBadge() {
+            const token = (typeof Game.getSaveToken === 'function') ? Game.getSaveToken() : null;
+            if (!token || !badgeEl) return;
+            const data = await sb('friends-poll', {});
+            if (!data || data.status !== 'success') return;
+            const total = (data.unseenMessages || 0) + (data.pendingRequests || 0);
+            if (total > 0) { badgeEl.textContent = total > 9 ? '9+' : String(total); badgeEl.hidden = false; }
+            else { badgeEl.hidden = true; }
+        }
 
         // Chiamata a una Edge Function con il token di sessione iniettato
         async function sb(slug, payload) {
@@ -134,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 listBox.innerHTML = '';
                 emptyBox.style.display = (reqHTML ? 'none' : '');
             }
+            updateBadge();
         }
 
         // Riga risultato ricerca / suggerimento, con azione in base alla relazione
@@ -248,12 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
             loadChat(_chatFriendId, false);
         }
 
-        function startChat(friendId) {
+        async function startChat(friendId) {
             _chatFriendId = friendId;
             _chatLastCount = -1;
             const pal = document.querySelector('#friend-profile-panel .fp-chat-palette');
             if (pal) pal.innerHTML = CHAT_EMOJI.map(e => `<button class="fp-emoji-btn" data-emoji="${e}">${e}</button>`).join('');
-            loadChat(friendId, false);
+            await loadChat(friendId, false); // marca come letti i messaggi in arrivo
+            updateBadge();                   // → il badge cala
             clearInterval(_chatTimer);
             _chatTimer = setInterval(() => loadChat(friendId, true), 3000);
         }
@@ -370,7 +384,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFriends();
         });
 
-        window.EspoSocial = { reload: loadFriends };
+        window.EspoSocial = { reload: loadFriends, refreshBadge: updateBadge };
+        setTimeout(updateBadge, 3000);   // primo controllo poco dopo il login
+        setInterval(updateBadge, 45000); // poi ogni 45s
     }
 
     if (window.EspooClicker) initSocial();
