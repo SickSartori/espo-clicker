@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ---- Chat emoji (polling ~3s; Realtime innestabile sopra) ----
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
-        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1;
+        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null;
 
         function renderChatBubbles(messages) {
             const log = document.getElementById('fp-chat-log');
@@ -279,6 +279,20 @@ document.addEventListener('DOMContentLoaded', () => {
             _chatLastCount = -1;
         }
 
+        // Sotto-tab del profilo amico: Statistiche | Armadietto | Chat
+        function setFpTab(target) {
+            profilePanel.querySelectorAll('.fp-tab').forEach(t =>
+                t.classList.toggle('active', t.getAttribute('data-fptab') === target));
+            profilePanel.querySelectorAll('.fp-pane').forEach(p => {
+                const on = p.getAttribute('data-fppane') === target;
+                p.classList.toggle('active', on);
+                p.style.display = on ? '' : 'none';
+            });
+            // La chat "legge" (marca seen) e fa polling SOLO quando apri la sua tab
+            if (target === 'chat') startChat(_profileFriendId);
+            else stopChat();
+        }
+
         // ---- Pannello profilo amico ----
         async function openProfile(id) {
             friendsView.style.display = 'none';
@@ -313,26 +327,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="fp-name">${escapeHTML(p.username)}</div>
                     ${statusHTML(on)}
                 </div>
-                <div class="fp-stats">
-                    <div class="fp-stat"><span>${fmt(p.score)}</span><label>${T().stScore || ''}</label></div>
-                    <div class="fp-stat"><span>${p.prestige || 0}</span><label>${T().stPrestige || ''}</label></div>
-                    <div class="fp-stat"><span>${p.totalFormattazioni || 0}</span><label>NG+</label></div>
-                    <div class="fp-stat"><span>${fmt(p.totalClicks)}</span><label>${T().stClicks || ''}</label></div>
-                    <div class="fp-stat"><span>${playH}</span><label>${T().stPlaytime || ''}</label></div>
-                    <div class="fp-stat"><span>${combo}</span><label>${T().stCombo || ''}</label></div>
+                <div class="fp-tabs" role="tablist">
+                    <button class="fp-tab active" data-fptab="stats"><i class="fa-solid fa-chart-simple"></i> ${T().tabStats || 'Statistiche'}</button>
+                    <button class="fp-tab" data-fptab="locker"><i class="fa-solid fa-shirt"></i> ${T().tabLocker || 'Armadietto'}</button>
+                    <button class="fp-tab" data-fptab="chat"><i class="fa-solid fa-comment-dots"></i> ${T().tabChat || 'Chat'}</button>
                 </div>
-                <div class="fp-locker-title">${T().locker || 'Armadietto'} <span class="cnt">${p.skinsCount != null ? p.skinsCount : unlocked.length}</span></div>
-                <div class="fp-locker">${locker}</div>
-                <div class="fp-chat">
-                    <div class="fp-chat-title">${T().chat || 'Chat'}</div>
-                    <div class="fp-chat-log" id="fp-chat-log"></div>
-                    <div class="fp-chat-palette"></div>
+                <div class="fp-pane active" data-fppane="stats">
+                    <div class="fp-stats">
+                        <div class="fp-stat"><span>${fmt(p.score)}</span><label>${T().stScore || ''}</label></div>
+                        <div class="fp-stat"><span>${p.prestige || 0}</span><label>${T().stPrestige || ''}</label></div>
+                        <div class="fp-stat"><span>${p.totalFormattazioni || 0}</span><label>NG+</label></div>
+                        <div class="fp-stat"><span>${fmt(p.totalClicks)}</span><label>${T().stClicks || ''}</label></div>
+                        <div class="fp-stat"><span>${playH}</span><label>${T().stPlaytime || ''}</label></div>
+                        <div class="fp-stat"><span>${combo}</span><label>${T().stCombo || ''}</label></div>
+                    </div>
+                </div>
+                <div class="fp-pane" data-fppane="locker" style="display:none">
+                    <div class="fp-locker-title">${T().locker || 'Armadietto'} <span class="cnt">${p.skinsCount != null ? p.skinsCount : unlocked.length}</span></div>
+                    <div class="fp-locker">${locker}</div>
+                </div>
+                <div class="fp-pane" data-fppane="chat" style="display:none">
+                    <div class="fp-chat">
+                        <div class="fp-chat-log" id="fp-chat-log"></div>
+                        <div class="fp-chat-palette"></div>
+                    </div>
                 </div>`;
-            startChat(p.id);
+            _profileFriendId = p.id;
+            setFpTab('stats');
         }
 
         function closeProfile() {
             stopChat();
+            _profileFriendId = null;
             profilePanel.style.display = 'none';
             profilePanel.innerHTML = '';
             if (friendsView) friendsView.style.display = '';
@@ -356,6 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mini) { respond(mini.getAttribute('data-id'), mini.getAttribute('data-act')); return; }
             const open = e.target.closest('[data-open]');
             if (open) { openProfile(open.getAttribute('data-open')); return; }
+            const fptab = e.target.closest('.fp-tab[data-fptab]');
+            if (fptab) { setFpTab(fptab.getAttribute('data-fptab')); return; }
             const back = e.target.closest('.fp-back');
             if (back) { closeProfile(); return; }
             const rem = e.target.closest('[data-remove]');

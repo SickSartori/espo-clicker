@@ -701,11 +701,46 @@
     font-size: 1.15rem;
 }
 
+/* Sotto-tab del profilo amico */
+.fp-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 2px 0 14px;
+    border-bottom: 1px solid #334155;
+}
+
+.fp-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+}
+
+.fp-tab i { font-size: 0.8rem; }
+
+.fp-tab:hover { color: #e2e8f0; }
+
+.fp-tab.active {
+    color: #fff;
+    border-bottom-color: #3498db;
+}
+
 .fp-stats {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
-    margin-bottom: 18px;
+    margin-bottom: 4px;
 }
 
 .fp-stat {
@@ -808,9 +843,7 @@
 
 /* ===== Chat emoji nel profilo amico ===== */
 .fp-chat {
-    margin-top: 18px;
-    border-top: 1px solid #334155;
-    padding-top: 14px;
+    margin-top: 2px;
 }
 
 .fp-chat-title {
