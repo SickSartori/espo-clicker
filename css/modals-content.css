@@ -408,6 +408,368 @@
     display: none;
 }
 
+/* ===== UI AMICI (tab Amici dell'hub) ===== */
+.friends-add-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.friends-search-input {
+    flex: 1;
+    padding: 9px 12px;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid #475569;
+    border-radius: 8px;
+}
+
+.friends-search-btn {
+    flex: 0 0 auto;
+    width: 42px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: filter 0.2s;
+}
+
+.friends-search-btn:hover {
+    filter: brightness(1.1);
+}
+
+.friends-section-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.friends-section-title .cnt {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 0.68rem;
+}
+
+.friend-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 8px;
+}
+
+.friend-row.search {
+    border-color: rgba(52, 152, 219, 0.35);
+    background: rgba(52, 152, 219, 0.06);
+}
+
+.friend-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #475569;
+    flex-shrink: 0;
+    background: #0b1220;
+}
+
+.friend-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.friend-name {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friend-status {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.friend-status.on {
+    color: #22c55e;
+}
+
+.friend-status.on i {
+    font-size: 0.55rem;
+    animation: friendPulse 2s infinite;
+}
+
+@keyframes friendPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.friend-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.friend-add-btn {
+    border: 1px solid rgba(52, 152, 219, 0.4);
+    background: rgba(52, 152, 219, 0.12);
+    color: #5dade2;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.friend-add-btn:hover {
+    background: rgba(52, 152, 219, 0.25);
+    color: #fff;
+}
+
+.friend-mini-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.friend-mini-btn.accept {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+.friend-mini-btn.accept:hover {
+    background: rgba(34, 197, 94, 0.25);
+    color: #fff;
+}
+
+.friend-mini-btn.reject {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.friend-mini-btn.reject:hover {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fff;
+}
+
+.friend-open-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.friend-open-btn:hover {
+    color: #3498db;
+}
+
+.friend-pending-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.friend-pending-tag.ok {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+}
+
+.friends-loading,
+.friends-error,
+.friends-noresult {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.friends-error {
+    color: #f87171;
+}
+
+.friends-empty {
+    padding: 24px 20px 10px;
+}
+
+/* --- Pannello profilo amico --- */
+.fp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.fp-back {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    transition: color 0.2s;
+}
+
+.fp-back:hover {
+    color: #fff;
+}
+
+.fp-remove {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fp-remove:hover {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fff;
+}
+
+.fp-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 16px;
+}
+
+.fp-avatar {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #475569;
+    background: #0b1220;
+}
+
+.fp-name {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.15rem;
+}
+
+.fp-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.fp-stat {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.fp-stat span {
+    color: #f1f5f9;
+    font-weight: 800;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    text-align: center;
+    word-break: break-word;
+}
+
+.fp-stat label {
+    color: #94a3b8;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.fp-locker-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fp-locker-title .cnt {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+
+.fp-locker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.locker-skin img {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #475569;
+    background: #0b1220;
+}
+
 /* --- STILI CONTRATTO PRESTIGIO --- */
 #prestige-modal .contract-modal {
     background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);

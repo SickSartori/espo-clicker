@@ -58,6 +58,9 @@ const JS_FILES = [
   'js/modals.js',
   'js/podio.js',
 
+  // Social: UI Amici (tab del menu nome-utente) — usa EspoBackend + EspooClicker
+  'js/social.js',
+
   // Arcade lazy loader
   'js/arcade-loader.js',
 

@@ -260,11 +260,24 @@
         </div>
 
         <div class="settings-content profile-body hub-pane" data-hubpane="amici" style="display:none;">
-            <div class="hub-soon">
-                <i class="fa-solid fa-user-group hub-soon-icon"></i>
-                <h3><?php echo $labels["hub_amici_soon_title"]; ?></h3>
-                <p><?php echo $labels["hub_amici_soon_desc"]; ?></p>
+            <div id="friends-view">
+                <div class="friends-add-bar">
+                    <input type="text" id="friend-search-input" class="clean-input friends-search-input" maxlength="20" autocomplete="off" />
+                    <button id="friend-search-btn" class="friends-search-btn" aria-label="Cerca">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <div id="friend-search-result"></div>
+                <div id="friends-requests"></div>
+                <div class="friends-section-title" id="friends-list-title" style="display:none;"></div>
+                <div id="friends-list"></div>
+                <div id="friends-empty" class="hub-soon friends-empty" style="display:none;">
+                    <i class="fa-solid fa-user-group hub-soon-icon"></i>
+                    <h3 class="fe-title"></h3>
+                    <p class="fe-desc"></p>
+                </div>
             </div>
+            <div id="friend-profile-panel" class="friend-profile-panel" style="display:none;"></div>
         </div>
 
     </div>
