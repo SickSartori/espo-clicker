@@ -412,12 +412,12 @@
 .friends-add-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 6px;
+    margin-bottom: 12px;
     background: rgba(0, 0, 0, 0.28);
     border: 1px solid #475569;
-    border-radius: 10px;
-    padding: 0 8px 0 13px;
+    border-radius: 9px;
+    padding: 0 6px 0 11px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -429,15 +429,17 @@
 .friends-search-lead {
     flex: 0 0 auto;
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
-.friends-search-input {
+/* .friends-add-bar per battere la regola generica input[type=text]{height:45px} */
+.friends-add-bar .friends-search-input {
     flex: 1;
     min-width: 0;
-    padding: 11px 0;
+    height: auto;
+    padding: 7px 0;
     color: #f1f5f9;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     background: transparent;
     border: none;
     outline: none;
@@ -447,13 +449,13 @@
 
 .friends-search-clear {
     flex: 0 0 auto;
-    width: 26px;
-    height: 26px;
+    width: 23px;
+    height: 23px;
     border: none;
     border-radius: 50%;
     background: transparent;
     color: #64748b;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -464,6 +466,11 @@
 .friends-search-clear:hover {
     color: #fff;
     background: rgba(255, 255, 255, 0.08);
+}
+
+/* display:flex sopra sovrascriverebbe l'attributo hidden → riportiamo il none */
+.friends-search-clear[hidden] {
+    display: none;
 }
 
 .friends-section-title {
