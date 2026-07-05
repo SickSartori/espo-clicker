@@ -172,6 +172,11 @@ function loadThemeCSS(themeFile, onReady) {
 }
 
 function formatTime(totalSeconds) {
+    // F5 strangler (fetta 3): logica pura in EspoV3.format, etichette (d/h/m/s,
+    // localizzate) iniettate da gameData. Fallback legacy sotto.
+    const v3fmt = window.EspoV3 && window.EspoV3.format;
+    if (v3fmt && v3fmt.formatTime) return v3fmt.formatTime(totalSeconds, gameData.texts.format.time);
+
     totalSeconds = Math.floor(totalSeconds);
     const days = Math.floor(totalSeconds / (3600 * 24));
     totalSeconds %= (3600 * 24);

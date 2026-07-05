@@ -28,6 +28,7 @@ import { autoInitClickerParallax, enableClickerParallax } from './ui/interaction
 import { autoInitLucide, renderLucideIcons } from './ui/icons/lucide-init';
 import { applyLanguage, deepOverlay, overlayById, I18N_COLLECTIONS } from './core/i18n/overlay';
 import { formatNumber, formatFullNumber } from './ui/format/number-format';
+import { formatTime } from './ui/format/time-format';
 import { createThemeCssLoader, ThemeCssLoader } from './ui/theme/css-loader';
 import { createToastQueue, ToastQueue } from './ui/toast/queue';
 import { createAssetManager, AssetManager } from './core/assets/manager';
@@ -61,7 +62,7 @@ const EspoV3 = {
   bignum: { Decimal, gt, gte, eq },
   loop: { Scheduler },
   i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
-  format: { formatNumber, formatFullNumber },
+  format: { formatNumber, formatFullNumber, formatTime },
   theme: { createCssLoader: createThemeCssLoader, ThemeCssLoader },
   toast: { createQueue: createToastQueue, ToastQueue },
   assets: { createManager: createAssetManager, AssetManager },
