@@ -20,6 +20,9 @@ Thumbs.db
 *.sql
 *.sqlite
 dump.rdb
+# Eccezione: sql/ contiene lo SCHEMA Supabase (codice, va versionato).
+# I dump/backup con dati utente NON vanno messi in sql/.
+!sql/*.sql
 
 # Artefatti generati / non deployati
 code
