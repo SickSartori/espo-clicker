@@ -52,6 +52,13 @@ import {
   maxAffordableTeams,
   milestoneReached,
 } from './game/economy';
+import {
+  prestigeGained,
+  applyTokenDuplicator,
+  prestigeStartingBugs,
+  prestigeTeamCarryover,
+  formatQbitsEarned,
+} from './game/prestige';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
@@ -96,6 +103,13 @@ const EspoV3 = {
     teamBulkCost,
     maxAffordableTeams,
     milestoneReached,
+  },
+  prestige: {
+    prestigeGained,
+    applyTokenDuplicator,
+    prestigeStartingBugs,
+    prestigeTeamCarryover,
+    formatQbitsEarned,
   },
   rules: {
     anyClickUpgradeAvailable,

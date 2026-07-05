@@ -1883,6 +1883,17 @@ function resolveBug(event) {
 
 
 function calculatePrestigeGained() {
+    // F6 strangler (fetta 3): formula in EspoV3.prestige col Decimal della
+    // pagina iniettato → bit-identico. Il Replicatore di Token NON è incluso
+    // (come nel legacy: lo applicano i call-site). Fallback sotto.
+    const v3p = window.EspoV3 && window.EspoV3.prestige;
+    if (v3p) {
+        return v3p.prestigeGained(Decimal, {
+            totalScore: gameState.totalScore,
+            threshold: getPrestigeThreshold(),
+        });
+    }
+
     const threshold = getPrestigeThreshold();
     if (gameState.totalScore.lt(threshold)) return new Decimal(0);
     let base = new Decimal(250000);
@@ -1909,8 +1920,13 @@ function openPrestigeContract() {
     }
 
     // Applica visivamente il bonus del Replicatore di Token
+    // F6 strangler (fetta 3): formula unica in EspoV3.prestige, fallback inline
     let finalGained = gained;
-    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+    const _v3pd = window.EspoV3 && window.EspoV3.prestige;
+    const _dupOn = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
+    if (_v3pd) {
+        finalGained = _v3pd.applyTokenDuplicator(finalGained, _dupOn);
+    } else if (_dupOn) {
         finalGained = finalGained.mul(1.20).floor(); // +20% Token
     }
 
@@ -2002,7 +2018,12 @@ async function executePrestige() {
     }
 
     // Applica realmente il bonus del Replicatore di Token
-    if (gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased) {
+    // F6 strangler (fetta 3): stessa formula unica di EspoV3.prestige
+    const _v3pd2 = window.EspoV3 && window.EspoV3.prestige;
+    const _dupOn2 = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
+    if (_v3pd2) {
+        gained = _v3pd2.applyTokenDuplicator(gained, _dupOn2);
+    } else if (_dupOn2) {
         gained = gained.mul(1.20).floor(); // +20% Token
     }
 
@@ -2055,6 +2076,36 @@ async function executePrestige() {
     newState.totalResets = newResets;
     newState.lastSaveTimestamp = Date.now();
 
+    // F6 strangler (fetta 3): bug iniziali e carryover team calcolati in
+    // EspoV3.prestige (puri, testati); qui restano lettura flag e applicazione
+    // allo stato nuovo. Fallback legacy nel ramo else.
+    const v3p = window.EspoV3 && window.EspoV3.prestige;
+    if (v3p) {
+        const fastStartOn = !!(gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased);
+        newState.score = v3p.prestigeStartingBugs(Decimal, {
+            paracaduteLevel: (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count) || 0,
+            fastStart: fastStartOn,
+        });
+
+        if (newState.teams) {
+            const previous = {};
+            for (const k in gameState.teams) previous[k] = gameState.teams[k].count;
+            const initial = {};
+            for (const k in newState.teams) initial[k] = newState.teams[k].count;
+            const counts = v3p.prestigeTeamCarryover({
+                keepTeams: !!(gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased),
+                deadlineLevel: (gameState.prestigeUpgrades.deadlineStretta && gameState.prestigeUpgrades.deadlineStretta.count) || 0,
+                ereditaLevel: (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count) || 0,
+                accelerazione: !!(newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased),
+                fastStart: fastStartOn,
+                previous: previous,
+                initial: initial,
+            });
+            for (const k in counts) {
+                if (newState.teams[k]) newState.teams[k].count = counts[k];
+            }
+        }
+    } else {
     // --- PARACADUTE & FAST START (Bonus Bug Iniziali) ---
     let startBonusBugs = new Decimal(0);
     if (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count > 0) {
@@ -2065,7 +2116,6 @@ async function executePrestige() {
     }
     newState.score = startBonusBugs;
 
-    // --- LOGICA EREDITÀ & KEEP TEAMS ---
     // --- LOGICA EREDITÀ & KEEP TEAMS ---
     if (newState.teams) {
         // 1. Keep Teams (Mantieni 5 livelli SOLO dei team base)
@@ -2097,6 +2147,7 @@ async function executePrestige() {
             }
         }
     }
+    } // fine fallback legacy
 
     // Applicazione Nuovo Stato
     gameState = newState;
@@ -2199,10 +2250,18 @@ function executeFormattingSequence() {
     }
 
     // Calcolo QBits da salvare
-    const tokenDiv = gameState.prestigePoints.div(10000);
-    let bonusQbits = new Decimal(0);
-    if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
-    let qBitsEarned = new Decimal(1).add(bonusQbits);
+    // F6 strangler (fetta 3): formula in EspoV3.prestige (1 garantito +
+    // sqrt(token/10k) floored). Fallback legacy nel ramo else.
+    const v3pq = window.EspoV3 && window.EspoV3.prestige;
+    let qBitsEarned;
+    if (v3pq) {
+        qBitsEarned = v3pq.formatQbitsEarned(Decimal, gameState.prestigePoints);
+    } else {
+        const tokenDiv = gameState.prestigePoints.div(10000);
+        let bonusQbits = new Decimal(0);
+        if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
+        qBitsEarned = new Decimal(1).add(bonusQbits);
+    }
 
     // Salvataggio Dati Super-Persistenti
     const superPersistentData = {
