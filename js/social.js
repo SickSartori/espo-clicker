@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ---- Chat emoji (polling ~3s; Realtime innestabile sopra) ----
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
         // Frasi preimpostate (whitelist lato server, come le emoji). ò = ò per matchare esattamente.
-        const CHAT_PRESETS = ["Espòòòò", "Ciao!", "GG!", "Ben fatto!", "Bravo!", "Aiutooo!"];
+        const CHAT_PRESETS = ["Espòòòò", "Ciao!", "GG!", "Ben fatto!", "Bravo!", "Aiutooo!", "Ci sto!", "A dopo!", "Grande!", "Nooo!", "Buona fortuna!", "Top!"];
         let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null;
 
         // "ora" / "5m" / "3h" / "gg/mm" — quando è stato mandato
@@ -347,8 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="fp-hero">
                     <img src="${sv.img}" class="fp-avatar" style="border-color:${sv.border}" alt="">
-                    <div class="fp-name">${escapeHTML(p.username)}</div>
-                    ${statusHTML(on)}
+                    <div class="fp-hero-info">
+                        <div class="fp-name">${escapeHTML(p.username)}</div>
+                        ${statusHTML(on)}
+                    </div>
                 </div>
                 <div class="fp-tabs" role="tablist">
                     <button class="fp-tab active" data-fptab="stats"><i class="fa-solid fa-chart-simple"></i> ${T().tabStats || 'Statistiche'}</button>
@@ -389,14 +391,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ---- Eventi (delega su tutta la pane) ----
+        const searchClear = document.getElementById('friend-search-clear');
+        function toggleClear() { if (searchClear) searchClear.hidden = !(searchInput && (searchInput.value || '').trim()); }
         let _searchTimer = null;
         if (searchInput) {
             // Ricerca live mentre si digita (debounce)
-            searchInput.addEventListener('input', () => { clearTimeout(_searchTimer); _searchTimer = setTimeout(() => doSearch(true), 280); });
+            searchInput.addEventListener('input', () => { toggleClear(); clearTimeout(_searchTimer); _searchTimer = setTimeout(() => doSearch(true), 280); });
             // Al focus, se vuoto, mostra i suggerimenti
             searchInput.addEventListener('focus', () => { if (!(searchInput.value || '').trim()) doSearch(true); });
             searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(_searchTimer); doSearch(true); } });
         }
+        if (searchClear) searchClear.addEventListener('click', () => { searchInput.value = ''; toggleClear(); searchInput.focus(); doSearch(true); });
         if (searchBtn) searchBtn.addEventListener('click', () => { clearTimeout(_searchTimer); doSearch(true); });
 
         pane.addEventListener('click', (e) => {
@@ -434,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amiciTab) amiciTab.addEventListener('click', () => {
             applyStaticTexts();
             if (searchInput) searchInput.value = '';
+            if (searchClear) searchClear.hidden = true;
             if (searchResult) searchResult.innerHTML = '';
             loadFriends();
         });

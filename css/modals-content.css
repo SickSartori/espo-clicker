@@ -411,34 +411,59 @@
 /* ===== UI AMICI (tab Amici dell'hub) ===== */
 .friends-add-bar {
     display: flex;
+    align-items: center;
     gap: 8px;
     margin-bottom: 14px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid #475569;
+    border-radius: 10px;
+    padding: 0 8px 0 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.friends-add-bar:focus-within {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.12);
+}
+
+.friends-search-lead {
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 0.9rem;
 }
 
 .friends-search-input {
     flex: 1;
-    padding: 9px 12px;
+    min-width: 0;
+    padding: 11px 0;
     color: #f1f5f9;
     font-size: 0.9rem;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid #475569;
-    border-radius: 8px;
-}
-
-.friends-search-btn {
-    flex: 0 0 auto;
-    width: 42px;
+    background: transparent;
     border: none;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: filter 0.2s;
+    outline: none;
 }
 
-.friends-search-btn:hover {
-    filter: brightness(1.1);
+.friends-search-input::placeholder { color: #64748b; }
+
+.friends-search-clear {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+
+.friends-search-clear:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .friends-section-title {
@@ -680,10 +705,25 @@
 
 .fp-hero {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    gap: 14px;
+    padding: 2px 2px 12px;
+}
+
+.fp-hero-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 3px;
-    padding: 2px 0 10px;
+    min-width: 0;
+}
+
+.fp-hero-info .fp-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .fp-avatar {

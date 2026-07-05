@@ -262,9 +262,10 @@
         <div class="settings-content profile-body hub-pane" data-hubpane="amici" style="display:none;">
             <div id="friends-view">
                 <div class="friends-add-bar">
-                    <input type="text" id="friend-search-input" class="clean-input friends-search-input" maxlength="20" autocomplete="off" />
-                    <button id="friend-search-btn" class="friends-search-btn" aria-label="Cerca">
-                        <i class="fa-solid fa-magnifying-glass"></i>
+                    <i class="fa-solid fa-magnifying-glass friends-search-lead"></i>
+                    <input type="text" id="friend-search-input" class="friends-search-input" maxlength="20" autocomplete="off" />
+                    <button id="friend-search-clear" class="friends-search-clear" aria-label="Pulisci" hidden>
+                        <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div id="friend-search-result"></div>
