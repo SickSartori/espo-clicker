@@ -224,7 +224,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ---- Chat emoji (polling ~3s; Realtime innestabile sopra) ----
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
+        // Frasi preimpostate (whitelist lato server, come le emoji). ò = ò per matchare esattamente.
+        const CHAT_PRESETS = ["Espòòòò", "Ciao!", "GG!", "Ben fatto!", "Bravo!", "Aiutooo!"];
         let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null;
+
+        // "ora" / "5m" / "3h" / "gg/mm" — quando è stato mandato
+        function msgTime(iso) {
+            const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+            if (s < 60) return 'ora';
+            if (s < 3600) return Math.floor(s / 60) + 'm';
+            if (s < 86400) return Math.floor(s / 3600) + 'h';
+            const d = new Date(iso);
+            return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2);
+        }
+
+        function chatMsgHTML(m) {
+            const isPreset = CHAT_PRESETS.indexOf(m.emoji) !== -1;
+            const time = m.created_at ? msgTime(m.created_at) : '';
+            return `<div class="fp-msg ${m.mine ? 'mine' : 'theirs'}">` +
+                `<div class="fp-bubble ${isPreset ? 'preset' : ''}">${escapeHTML(m.emoji)}</div>` +
+                `<span class="fp-time">${escapeHTML(time)}</span>` +
+                `</div>`;
+        }
 
         function renderChatBubbles(messages) {
             const log = document.getElementById('fp-chat-log');
@@ -233,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 log.innerHTML = `<div class="fp-chat-empty">${T().chatEmpty || 'Invia la prima emoji!'}</div>`;
                 return;
             }
-            log.innerHTML = messages.map(m => `<div class="fp-bubble ${m.mine ? 'mine' : 'theirs'}">${escapeHTML(m.emoji)}</div>`).join('');
+            log.innerHTML = messages.map(chatMsgHTML).join('');
             log.scrollTop = log.scrollHeight;
         }
 
@@ -252,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (log) { // append ottimistico
                 const empty = log.querySelector('.fp-chat-empty');
                 if (empty) log.innerHTML = '';
-                log.insertAdjacentHTML('beforeend', `<div class="fp-bubble mine">${escapeHTML(emoji)}</div>`);
+                log.insertAdjacentHTML('beforeend', chatMsgHTML({ emoji: emoji, mine: true, created_at: new Date().toISOString() }));
                 log.scrollTop = log.scrollHeight;
                 _chatLastCount = -1;
             }
@@ -264,6 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
         async function startChat(friendId) {
             _chatFriendId = friendId;
             _chatLastCount = -1;
+            const presetBox = document.querySelector('#friend-profile-panel .fp-chat-presets');
+            if (presetBox) presetBox.innerHTML = CHAT_PRESETS.map(p => `<button class="fp-preset-btn" data-preset="${escapeHTML(p)}">${escapeHTML(p)}</button>`).join('');
             const pal = document.querySelector('#friend-profile-panel .fp-chat-palette');
             if (pal) pal.innerHTML = CHAT_EMOJI.map(e => `<button class="fp-emoji-btn" data-emoji="${e}">${e}</button>`).join('');
             await loadChat(friendId, false); // marca come letti i messaggi in arrivo
@@ -349,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="fp-pane" data-fppane="chat" style="display:none">
                     <div class="fp-chat">
                         <div class="fp-chat-log" id="fp-chat-log"></div>
+                        <div class="fp-chat-presets"></div>
                         <div class="fp-chat-palette"></div>
                     </div>
                 </div>`;
@@ -390,6 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rem) { removeFriend(rem.getAttribute('data-remove')); return; }
             const emo = e.target.closest('.fp-emoji-btn[data-emoji]');
             if (emo) { sendEmoji(emo.getAttribute('data-emoji')); return; }
+            const pre = e.target.closest('.fp-preset-btn[data-preset]');
+            if (pre) { sendEmoji(pre.getAttribute('data-preset')); return; }
         });
 
         // Testi statici (placeholder + stato vuoto) dalla lingua attiva

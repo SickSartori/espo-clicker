@@ -682,23 +682,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 6px 0 16px;
+    gap: 3px;
+    padding: 2px 0 10px;
 }
 
 .fp-avatar {
-    width: 74px;
-    height: 74px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #475569;
+    border: 2px solid #475569;
     background: #0b1220;
 }
 
 .fp-name {
     color: #fff;
     font-weight: 800;
-    font-size: 1.15rem;
+    font-size: 1rem;
 }
 
 /* Sotto-tab del profilo amico */
@@ -873,8 +873,16 @@
     padding: 16px 8px;
 }
 
+.fp-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+}
+
+.fp-msg.mine { align-self: flex-end; align-items: flex-end; }
+.fp-msg.theirs { align-self: flex-start; align-items: flex-start; }
+
 .fp-bubble {
-    align-self: flex-start;
     font-size: 1.5rem;
     line-height: 1;
     padding: 7px 11px;
@@ -883,15 +891,58 @@
     animation: bubbleIn 0.18s ease;
 }
 
-.fp-bubble.mine {
-    align-self: flex-end;
+.fp-msg.mine .fp-bubble {
     border-radius: 14px 14px 4px 14px;
     background: rgba(52, 152, 219, 0.18);
+}
+
+.fp-bubble.preset {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    padding: 8px 13px;
+}
+
+.fp-time {
+    font-size: 0.6rem;
+    color: #64748b;
+    margin: 3px 4px 0;
 }
 
 @keyframes bubbleIn {
     from { opacity: 0; transform: translateY(4px) scale(0.9); }
     to   { opacity: 1; transform: none; }
+}
+
+.fp-chat-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.fp-preset-btn {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: none;
+    padding: 6px 10px;
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 999px;
+    color: #7fc2ec;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.fp-preset-btn:hover {
+    background: rgba(52, 152, 219, 0.25);
+    color: #fff;
+    border-color: #3498db;
+}
+
+/* Batte l'uppercase !important del layer v3 (specificità più alta) → mostra "Espòòòò" fedele */
+html body #user-hub-modal .fp-chat-presets .fp-preset-btn {
+    text-transform: none !important;
 }
 
 .fp-chat-palette {
