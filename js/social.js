@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ---- Chat emoji (polling ~3s; Realtime innestabile sopra) ----
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
         // Frasi preimpostate (whitelist lato server, come le emoji). ò = ò per matchare esattamente.
-        const CHAT_PRESETS = ["Espòòòò", "Ciao!", "GG!", "Ben fatto!", "Bravo!", "Aiutooo!", "Ci sto!", "A dopo!", "Grande!", "Nooo!", "Buona fortuna!", "Top!"];
+        const CHAT_PRESETS = ["Espòòòò", "Ciao!", "Ben fatto!", "Bravo!", "Aiutooo!", "Grande!", "Nooo!", "Buona fortuna!"];
         let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null;
 
         // "ora" / "5m" / "3h" / "gg/mm" — quando è stato mandato
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function chatMsgHTML(m) {
-            const isPreset = CHAT_PRESETS.indexOf(m.emoji) !== -1;
+            const isPreset = CHAT_EMOJI.indexOf(m.emoji) === -1; // testo (preset) se non è un'emoji della palette
             const time = m.created_at ? msgTime(m.created_at) : '';
             return `<div class="fp-msg ${m.mine ? 'mine' : 'theirs'}">` +
                 `<div class="fp-bubble ${isPreset ? 'preset' : ''}">${escapeHTML(m.emoji)}</div>` +
