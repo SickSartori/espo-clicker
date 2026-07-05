@@ -1590,8 +1590,27 @@ function _dismissToast(toast, slot) {
 }
 
 function checkTabNotifications() {
+    // F5 strangler (fetta 4): i predicati di disponibilità vivono in
+    // EspoV3.rules (puri, big-number via stringa); qui restano il mapping dei
+    // dati, i costi scalati (formule game-logic, F6) e il DOM. Fallback legacy
+    // nei rami else.
+    const v3rules = window.EspoV3 && window.EspoV3.rules;
+
     // Click Tab
     let clickNotify = false;
+    if (v3rules) {
+        clickNotify = v3rules.anyClickUpgradeAvailable(
+            gameState.totalClicks,
+            String(gameState.score),
+            Object.keys(gameData.clickUpgrades)
+                .filter(k => gameState.clickUpgrades[k])
+                .map(k => ({
+                    purchased: !!gameState.clickUpgrades[k].purchased,
+                    requiredClicks: gameData.clickUpgrades[k].requiredClicks,
+                    cost: gameData.clickUpgrades[k].cost,
+                }))
+        );
+    } else
     for (const key in gameData.clickUpgrades) {
         const data = gameData.clickUpgrades[key];
         const state = gameState.clickUpgrades[key];
@@ -1606,6 +1625,20 @@ function checkTabNotifications() {
 
     // Auto Tab
     let autoNotify = false;
+    if (v3rules) {
+        autoNotify = v3rules.anyEnhancementAvailable(
+            String(gameState.score),
+            Object.keys(gameData.buildingEnhancements)
+                .filter(k => gameState.buildingEnhancements[k] && gameData.buildingEnhancements[k]
+                    && gameState.teams[gameData.buildingEnhancements[k].targetTeam])
+                .map(k => ({
+                    purchased: !!gameState.buildingEnhancements[k].purchased,
+                    requiredCount: gameData.buildingEnhancements[k].requiredCount,
+                    teamCount: gameState.teams[gameData.buildingEnhancements[k].targetTeam].count,
+                    cost: gameData.buildingEnhancements[k].cost,
+                }))
+        );
+    } else
     for (const key in gameData.buildingEnhancements) {
         const data = gameData.buildingEnhancements[key];
         const state = gameState.buildingEnhancements[key];
@@ -1628,6 +1661,24 @@ function checkTabNotifications() {
     // Prestige Tab
     let prestigeNotify = false;
     if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0)) {
+        if (v3rules) {
+            prestigeNotify = v3rules.anyPrestigeUpgradeAvailable(
+                true, // gate già valutato sopra
+                String(gameState.prestigePoints),
+                Object.keys(gameData.prestigeUpgrades).map(k => {
+                    const d = gameData.prestigeUpgrades[k];
+                    const s = gameState.prestigeUpgrades[k];
+                    return d.isCounted
+                        ? {
+                            counted: true, count: s.count, maxLevel: d.maxLevel,
+                            // costo scalato = formula game-logic (F6): resta qui
+                            cost: String((typeof calculatePrestigeUpgradeCost === 'function')
+                                ? calculatePrestigeUpgradeCost(k) : d.baseCost),
+                        }
+                        : { counted: false, purchased: !!s.purchased, cost: d.baseCost };
+                })
+            );
+        } else
         for (const key in gameData.prestigeUpgrades) {
             const data = gameData.prestigeUpgrades[key];
             const state = gameState.prestigeUpgrades[key];
@@ -1718,6 +1769,19 @@ const VISUAL_BPS_CACHE_MS = 150; // Ricalcola max ogni 150ms
 function calculateVisualBPS() {
     const now = Date.now();
     if (_cachedVisualBPS && (now - _lastVisualBPSCalc) < VISUAL_BPS_CACHE_MS) {
+        return _cachedVisualBPS;
+    }
+
+    // F5 strangler (fetta 4): somma pura in EspoV3.rules (big-number via
+    // stringa); la cache 150ms resta qui sopra. Fallback legacy sotto.
+    const v3rules = window.EspoV3 && window.EspoV3.rules;
+    if (v3rules) {
+        _cachedVisualBPS = new Decimal(v3rules.visualBps(
+            String(bps),
+            clickHistory.map(c => ({ time: c.time, value: String(c.value) })),
+            now
+        ));
+        _lastVisualBPSCalc = now;
         return _cachedVisualBPS;
     }
 
@@ -2030,17 +2094,35 @@ function updateTabsVisibility() {
     if (tabPrestige) {
         const _pp = gameState.prestigePoints || new Decimal(0);
         const _lpp = gameState.lifetimePrestigePoints || new Decimal(0);
+        // F5 strangler (fetta 4): predicato in EspoV3.rules, fallback legacy inline
+        const _v3r = window.EspoV3 && window.EspoV3.rules;
+        if (_v3r) {
+            if (_v3r.isPrestigeTabVisible({
+                totalResets: gameState.totalResets,
+                prestigePoints: String(_pp),
+                lifetimePrestigePoints: String(_lpp),
+                totalFormattazioni: gameState.totalFormattazioni || 0,
+            })) tabPrestige.classList.remove("tab_promozione");
+        } else {
         // totalFormattazioni>0 incluso: il format azzera resets/punti ma la promozione
         // è già sbloccata, quindi il tab deve restare visibile dopo una formattazione.
         const show = gameState.totalResets > 0 || _pp.gt(0) || _lpp.gt(0) || (gameState.totalFormattazioni || 0) > 0;
         if (show) tabPrestige.classList.remove("tab_promozione");
+        }
     }
 
     const tabQuantum = getEl('tab-quantum');
     const headerQbit = getEl('header-qbit-container');
 
     // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
-    const isQuantumUnlocked = gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+    const _v3rq = window.EspoV3 && window.EspoV3.rules;
+    const isQuantumUnlocked = _v3rq
+        ? _v3rq.isQuantumUnlocked({
+            totalResets: gameState.totalResets,
+            totalFormattazioni: gameState.totalFormattazioni,
+            qBits: String(gameState.qBits),
+        })
+        : (gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0));
 
     if (tabQuantum) {
         tabQuantum.style.display = isQuantumUnlocked ? 'flex' : 'none';
@@ -2387,7 +2469,20 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
 function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
+    // F5 strangler (fetta 4): predicato in EspoV3.rules, fallback legacy nel ramo else
     let hasClaimable = false;
+    const v3rules = window.EspoV3 && window.EspoV3.rules;
+    if (v3rules) {
+        hasClaimable = v3rules.anyClaimableAchievement(
+            Object.keys(gameData.achievements)
+                .filter(k => gameState.achievements[k])
+                .map(k => ({
+                    unlocked: !!gameState.achievements[k].unlocked,
+                    claimed: !!gameState.achievements[k].claimed,
+                    hasReward: !!gameData.achievements[k].reward,
+                }))
+        );
+    } else
     for (const key in gameData.achievements) {
         const state = gameState.achievements[key];
         const data = gameData.achievements[key];

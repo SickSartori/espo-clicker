@@ -31,6 +31,15 @@ import { formatNumber, formatFullNumber } from './ui/format/number-format';
 import { formatTime } from './ui/format/time-format';
 import { createThemeCssLoader, ThemeCssLoader } from './ui/theme/css-loader';
 import { createToastQueue, ToastQueue } from './ui/toast/queue';
+import {
+  anyClickUpgradeAvailable,
+  anyEnhancementAvailable,
+  anyPrestigeUpgradeAvailable,
+  anyClaimableAchievement,
+  isPrestigeTabVisible,
+  isQuantumUnlocked,
+  visualBps,
+} from './ui/rules/progression';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
@@ -64,6 +73,15 @@ const EspoV3 = {
   i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
   format: { formatNumber, formatFullNumber, formatTime },
   theme: { createCssLoader: createThemeCssLoader, ThemeCssLoader },
+  rules: {
+    anyClickUpgradeAvailable,
+    anyEnhancementAvailable,
+    anyPrestigeUpgradeAvailable,
+    anyClaimableAchievement,
+    isPrestigeTabVisible,
+    isQuantumUnlocked,
+    visualBps,
+  },
   toast: { createQueue: createToastQueue, ToastQueue },
   assets: { createManager: createAssetManager, AssetManager },
   workers: {
