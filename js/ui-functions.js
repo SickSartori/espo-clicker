@@ -113,7 +113,28 @@ const loadedThemes = new Set();
 // Callback in coda per i temi il cui CSS è ancora in volo (evita link duplicati)
 const pendingThemeLoads = {};
 
+// F5 strangler (fetta 2): dedup, coalescing e failsafe vivono in EspoV3.theme
+// (puro, testato); qui resta solo l'iniezione DOM del <link>. Fallback legacy
+// nel corpo di loadThemeCSS se la build v3 manca.
+const _v3themeLoader = (window.EspoV3 && window.EspoV3.theme)
+    ? window.EspoV3.theme.createCssLoader({
+        inject: (href, onDone) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = onDone;
+            link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe, meglio di un equip bloccato
+            document.head.appendChild(link);
+        },
+        cacheVer: () => window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now()),
+        onLog: (m) => console.log(m),
+        onWarn: (m, e) => console.warn(m, e),
+    })
+    : null;
+
 function loadThemeCSS(themeFile, onReady) {
+    if (_v3themeLoader) return _v3themeLoader.load(themeFile, onReady);
+
     if (!themeFile || loadedThemes.has(themeFile)) {
         if (onReady) onReady();
         return;
@@ -1469,7 +1490,20 @@ const TOAST_SLOTS = new Array(MAX_VISIBLE_TOASTS).fill(false); // false = libero
 let lastToastMsg = "";
 let lastToastTime = 0;
 
+// F5 strangler (fetta 2): gate, anti-spam, coda e slot vivono in EspoV3.toast
+// (puro, testato); qui restano il rendering DOM (createToastDOM) e l'exit
+// animation. Fallback legacy nei corpi di showToast/_dismissToast.
+const _v3toastQueue = (window.EspoV3 && window.EspoV3.toast)
+    ? window.EspoV3.toast.createQueue({
+        maxVisible: MAX_VISIBLE_TOASTS,
+        render: (t, slot) => createToastDOM(t.message, t.type, t.duration, slot),
+        canShow: () => !!sessionStorage.getItem('espooUser'),
+    })
+    : null;
+
 function showToast(message, type = 'info', duration) {
+    if (_v3toastQueue) return _v3toastQueue.push(message, type, duration);
+
     // Niente toast PRIMA del login: altrimenti compaiono sopra la schermata di accesso.
     // In certi casi loadGame al boot emette toast su save locale (migrazione/backup/
     // file corrotto) mentre l'utente è ancora al login: qui li sopprimiamo, tanto
@@ -1544,6 +1578,7 @@ function _dismissToast(toast, slot) {
     // Libera slot DOPO exit anim (350ms)
     setTimeout(() => {
         if (toast.parentNode) toast.remove();
+        if (_v3toastQueue) { _v3toastQueue.releaseSlot(slot); return; }
         TOAST_SLOTS[slot] = false;
         processToastQueue();
     }, 360);
