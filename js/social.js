@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const emptyBox     = document.getElementById('friends-empty');
         const profilePanel = document.getElementById('friend-profile-panel');
         const badgeEl      = document.getElementById('user-hub-badge');
+        const hubAmiciBadge = document.getElementById('hub-amici-badge');
 
         const T = () => (window.gameData && gameData.texts && gameData.texts.social) || {};
 
@@ -60,15 +61,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function toast(msg, type) { if (msg && Game.showToast) Game.showToast(msg, type || 'info'); }
 
-        // Badge navbar: messaggi non letti + richieste in arrivo
+        function setBadge(el, n) {
+            if (!el) return;
+            if (n > 0) { el.textContent = n > 9 ? '9+' : String(n); el.hidden = false; }
+            else { el.hidden = true; }
+        }
+
+        // La lista amici è a schermo? (hub aperto, tab Amici attiva, nessun profilo aperto)
+        function amiciListVisible() {
+            if (!hub || getComputedStyle(hub).display === 'none') return false;
+            if (!pane || getComputedStyle(pane).display === 'none') return false;
+            return !profilePanel || getComputedStyle(profilePanel).display === 'none';
+        }
+
+        // Badge a cascata: navbar + tab Amici (stesso totale = messaggi + richieste).
+        // Se il totale cambia mentre stai guardando la lista, la ricarico così i
+        // badge per-amico compaiono/spariscono senza dover riaprire la tab.
         async function updateBadge() {
             const token = (typeof Game.getSaveToken === 'function') ? Game.getSaveToken() : null;
-            if (!token || !badgeEl) return;
+            if (!token) return;
             const data = await sb('friends-poll', {});
             if (!data || data.status !== 'success') return;
             const total = (data.unseenMessages || 0) + (data.pendingRequests || 0);
-            if (total > 0) { badgeEl.textContent = total > 9 ? '9+' : String(total); badgeEl.hidden = false; }
-            else { badgeEl.hidden = true; }
+            setBadge(badgeEl, total);
+            setBadge(hubAmiciBadge, total);
+            if (total !== _lastBadgeTotal) {
+                const prev = _lastBadgeTotal;
+                _lastBadgeTotal = total;
+                if (prev !== -1 && amiciListVisible()) loadFriends();
+            }
         }
 
         // Chiamata a una Edge Function con il token di sessione iniettato
@@ -92,8 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const sv = skinVisual(f.equippedSkin);
             const on = onlineLabel(f.lastSeenSecondsAgo);
             let actions = '';
+            const unseen = (context === 'friend' && f.unseen > 0) ? f.unseen : 0;
             if (context === 'friend') {
-                actions = `<button class="friend-open-btn" data-open="${escapeHTML(f.id)}" aria-label="${T().back || ''}"><i class="fa-solid fa-chevron-right"></i></button>`;
+                const badge = unseen ? `<span class="friend-unseen" title="${T().chat || ''}">${unseen > 9 ? '9+' : unseen}</span>` : '';
+                actions = badge + `<button class="friend-open-btn" data-open="${escapeHTML(f.id)}" aria-label="${T().back || ''}"><i class="fa-solid fa-chevron-right"></i></button>`;
             } else if (context === 'incoming') {
                 actions =
                     `<button class="friend-mini-btn accept" data-act="accept" data-id="${escapeHTML(f.id)}" title="${T().accept || ''}"><i class="fa-solid fa-check"></i></button>` +
@@ -102,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 actions = `<span class="friend-pending-tag">${T().pending || 'in attesa'}</span>`;
             }
             return `
-                <div class="friend-row">
+                <div class="friend-row${unseen ? ' has-unseen' : ''}">
                     <img src="${sv.img}" class="friend-avatar" style="border-color:${sv.border}" alt="">
                     <div class="friend-info">
                         <span class="friend-name">${escapeHTML(f.username)}</span>
@@ -127,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let reqHTML = '';
             if (data.incoming && data.incoming.length) {
-                reqHTML += `<div class="friends-section-title">${T().incoming || 'Richieste ricevute'} <span class="cnt">${data.incoming.length}</span></div>`;
+                reqHTML += `<div class="friends-section-title">${T().incoming || 'Richieste ricevute'} <span class="cnt alert">${data.incoming.length}</span></div>`;
                 reqHTML += data.incoming.map(f => friendRowHTML(f, 'incoming')).join('');
             }
             if (data.outgoing && data.outgoing.length) {
@@ -137,6 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
             requestsBox.innerHTML = reqHTML;
 
             const friends = data.friends || [];
+            _friendsById = {};
+            friends.forEach(f => { _friendsById[f.id] = f; });
             if (friends.length) {
                 listTitle.style.display = '';
                 listTitle.innerHTML = `${T().yourFriends || 'I tuoi amici'} <span class="cnt">${friends.length}</span>`;
@@ -226,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
         // Frasi preimpostate (whitelist lato server, come le emoji). ò = ò per matchare esattamente.
         const CHAT_PRESETS = ["Espòòòò", "Ciao!", "Ben fatto!", "Bravo!", "Aiutooo!", "Grande!", "Nooo!", "Buona fortuna!"];
-        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null;
+        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null, _friendsById = {}, _lastBadgeTotal = -1, _badgeTimer = null;
 
         // "ora" / "5m" / "3h" / "gg/mm" — quando è stato mandato
         function msgTime(iso) {
@@ -312,8 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.style.display = on ? '' : 'none';
             });
             // La chat "legge" (marca seen) e fa polling SOLO quando apri la sua tab
-            if (target === 'chat') startChat(_profileFriendId);
-            else stopChat();
+            if (target === 'chat') {
+                const cb = profilePanel.querySelector('.fp-tab[data-fptab="chat"] .fp-tab-badge');
+                if (cb) cb.remove();   // aperta la chat, il badge sulla sotto-tab non serve più
+                startChat(_profileFriendId);
+            } else stopChat();
         }
 
         // ---- Pannello profilo amico ----
@@ -331,6 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const p = data.profile, sv = skinVisual(p.equippedSkin), on = onlineLabel(p.lastSeenSecondsAgo);
+            const stashed = _friendsById[id];
+            const preUnseen = (stashed && stashed.unseen > 0) ? stashed.unseen : 0;
             const fmt = (v) => (v === null || v === undefined) ? '—' : (Game.formatNumber ? Game.formatNumber(v) : v);
             const playH = (p.totalPlayTime != null) ? (p.totalPlayTime / 3600000).toFixed(1) + 'h' : '—';
             const combo = (p.longestCombo != null) ? p.longestCombo : '—';
@@ -355,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="fp-tabs" role="tablist">
                     <button class="fp-tab active" data-fptab="stats"><i class="fa-solid fa-chart-simple"></i> ${T().tabStats || 'Statistiche'}</button>
                     <button class="fp-tab" data-fptab="locker"><i class="fa-solid fa-shirt"></i> ${T().tabLocker || 'Armadietto'}</button>
-                    <button class="fp-tab" data-fptab="chat"><i class="fa-solid fa-comment-dots"></i> ${T().tabChat || 'Chat'}</button>
+                    <button class="fp-tab" data-fptab="chat"><i class="fa-solid fa-comment-dots"></i> ${T().tabChat || 'Chat'}${preUnseen ? `<span class="fp-tab-badge">${preUnseen > 9 ? '9+' : preUnseen}</span>` : ''}</button>
                 </div>
                 <div class="fp-pane active" data-fppane="stats">
                     <div class="fp-stats">
@@ -379,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>`;
             _profileFriendId = p.id;
-            setFpTab('stats');
+            setFpTab(preUnseen ? 'chat' : 'stats');
         }
 
         function closeProfile() {
@@ -414,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fptab = e.target.closest('.fp-tab[data-fptab]');
             if (fptab) { setFpTab(fptab.getAttribute('data-fptab')); return; }
             const back = e.target.closest('.fp-back');
-            if (back) { closeProfile(); return; }
+            if (back) { loadFriends(); return; }   // ricarica: i badge per-amico riflettono i messaggi ora letti
             const rem = e.target.closest('[data-remove]');
             if (rem) { removeFriend(rem.getAttribute('data-remove')); return; }
             const emo = e.target.closest('.fp-emoji-btn[data-emoji]');
@@ -445,8 +475,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         window.EspoSocial = { reload: loadFriends, refreshBadge: updateBadge };
-        setTimeout(updateBadge, 3000);   // primo controllo poco dopo il login
-        setInterval(updateBadge, 45000); // poi ogni 45s
+        // Polling adattivo: ~15s mentre l'hub è aperto (lista sotto gli occhi),
+        // 45s in background. Un solo timer che si ripianifica in base a cosa è visibile.
+        function badgeLoop() {
+            updateBadge().finally(() => {
+                const open = hub && getComputedStyle(hub).display !== 'none';
+                _badgeTimer = setTimeout(badgeLoop, open ? 15000 : 45000);
+            });
+        }
+        setTimeout(badgeLoop, 3000);   // primo controllo poco dopo il login
     }
 
     if (window.EspooClicker) initSocial();

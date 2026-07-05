@@ -408,6 +408,60 @@
     display: none;
 }
 
+/* === Cascata notifiche: badge che guidano dal navbar al singolo amico/chat === */
+/* L1 — badge rosso sulla tab "Amici" dell'hub (stesso totale del badge navbar) */
+.hub-tab-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+}
+.hub-tab-badge[hidden] { display: none; }
+
+/* L2a — conteggio richieste in arrivo: rosso (azione richiesta), non blu informativo */
+.friends-section-title .cnt.alert {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+}
+
+/* L2b — riga amico con messaggi non letti: evidenziata + contatore rosso */
+.friend-row.has-unseen {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.06);
+}
+.friend-unseen {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+}
+
+/* L3 — badge sulla sotto-tab "Chat" del profilo amico */
+.fp-tab-badge {
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 800;
+    line-height: 15px;
+    text-align: center;
+}
+
 /* ===== UI AMICI (tab Amici dell'hub) ===== */
 .friends-add-bar {
     display: flex;

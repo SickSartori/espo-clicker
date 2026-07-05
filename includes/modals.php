@@ -200,6 +200,7 @@
             </button>
             <button class="hub-tab" data-hubtab="amici" role="tab" aria-selected="false">
                 <i class="fa-solid fa-user-group"></i> <span><?php echo $labels["hub_tab_amici"]; ?></span>
+                <span class="hub-tab-badge" id="hub-amici-badge" hidden></span>
             </button>
         </div>
 
