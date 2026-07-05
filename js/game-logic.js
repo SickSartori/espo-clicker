@@ -1195,12 +1195,15 @@ function activateCrunchTime() {
     }
 
     // 2. Attivazione Logica
+    // F6 strangler (fetta 4): durata e cooldown in EspoV3.events, fallback inline.
     crunchTimeMultiplier = new Decimal(7);
     const overclockActive = gameState.superUpgrades && gameState.superUpgrades.overclock && gameState.superUpgrades.overclock.purchased;
-    const furyDuration = overclockActive ? 60000 : 30000;
-    crunchTimeEndTime = now + furyDuration;
     const reteContattiLevel = (gameState.prestigeUpgrades.reteContatti && gameState.prestigeUpgrades.reteContatti.count) || 0;
-    crunchTimeCooldownEnd = crunchTimeEndTime + Math.max(60000, 300000 - (reteContattiLevel * 30000));
+    const v3ev = window.EspoV3 && window.EspoV3.events;
+    const furyDuration = v3ev ? v3ev.crunchDuration(!!overclockActive) : (overclockActive ? 60000 : 30000);
+    crunchTimeEndTime = now + furyDuration;
+    const cooldownFromEnd = v3ev ? v3ev.crunchCooldownFromEnd(reteContattiLevel) : Math.max(60000, 300000 - (reteContattiLevel * 30000));
+    crunchTimeCooldownEnd = crunchTimeEndTime + cooldownFromEnd;
 
     gameState.crunchTimeEndTime = crunchTimeEndTime;
     gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
@@ -2552,12 +2555,32 @@ function clickGoldenBug() {
     const currentClickValue = calculateClickValue();
     const bugType = window._goldenBugType || 'standard';
 
+    // F6 strangler (fetta 4): reward e buff in EspoV3.events col Decimal della
+    // pagina → bit-identico. Qui restano toast/FX/timer. Fallback legacy sotto.
+    let bonus, toastMsg;
+    const v3ev = window.EspoV3 && window.EspoV3.events;
+    if (v3ev) {
+        const res = v3ev.goldenBugReward(Decimal, {
+            bps: bps, clickValue: currentClickValue,
+            globalMult: window.goldenBugMult, bugType: bugType,
+        });
+        bonus = res.bonus;
+        if (bugType === 'lucky') {
+            toastMsg = gameData.texts.toasts.luckyBug.replace('{amount}', formatNumber(bonus));
+        } else if (res.frenzy) {
+            window.goldenFrenzyMult = new Decimal(res.frenzy.mult);
+            window.goldenFrenzyEnd = Date.now() + res.frenzy.durationMs;
+            if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(231,76,60,0.15)', 0.25);
+            toastMsg = gameData.texts.toasts.frenzy;
+        } else {
+            toastMsg = gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus));
+        }
+    } else {
     // Formula base: (BPS * 30 + Click * 10 + 10) * Multiplier
-    let bonus = bps.mul(30).add(currentClickValue.mul(10)).add(10);
+    bonus = bps.mul(30).add(currentClickValue.mul(10)).add(10);
     bonus = bonus.mul(window.goldenBugMult);
 
     // Varietà bug: modifica ricompensa / attiva buff
-    let toastMsg;
     if (bugType === 'lucky') {
         bonus = bonus.mul(8); // jackpot
         toastMsg = gameData.texts.toasts.luckyBug.replace('{amount}', formatNumber(bonus));
@@ -2570,6 +2593,7 @@ function clickGoldenBug() {
         toastMsg = gameData.texts.toasts.frenzy;
     } else {
         toastMsg = gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus));
+    }
     }
 
     gameState.score = gameState.score.add(bonus);
@@ -2617,18 +2641,26 @@ function claimDailyBonus() {
     const today = _dailyDateStr(0);
     if (data.lastDate === today) return; // già riscosso oggi
 
-    // Streak: +1 se ieri, altrimenti riparte da 1
-    let streak = 1;
-    if (data.lastDate === _dailyDateStr(-1)) streak = (data.streak || 0) + 1;
+    // F6 strangler (fetta 4): streak e ricompensa in EspoV3.events, fallback sotto.
+    let streak, reward;
+    const v3ev = window.EspoV3 && window.EspoV3.events;
+    if (v3ev) {
+        streak = v3ev.dailyStreak(data.lastDate, today, _dailyDateStr(-1), data.streak);
+        reward = v3ev.dailyReward(Decimal, { bps: bps, baseClickValue: gameState.baseClickValue, streak: streak });
+    } else {
+        // Streak: +1 se ieri, altrimenti riparte da 1
+        streak = 1;
+        if (data.lastDate === _dailyDateStr(-1)) streak = (data.streak || 0) + 1;
 
-    // Ricompensa = "secondi di produzione" (scala con lo streak, cap 7gg)
-    // + un pavimento per i neogiocatori con BPS bassi.
-    const cap = Math.min(streak, 7);
-    const secs = 600 + cap * 200; // 800s (g1) → 2000s (g7+)
-    let reward = bps.mul(secs);
-    const floor = gameState.baseClickValue.mul(50 * cap + 50);
-    if (reward.lt(floor)) reward = floor;
-    if (reward.lt(50)) reward = new Decimal(50);
+        // Ricompensa = "secondi di produzione" (scala con lo streak, cap 7gg)
+        // + un pavimento per i neogiocatori con BPS bassi.
+        const cap = Math.min(streak, 7);
+        const secs = 600 + cap * 200; // 800s (g1) → 2000s (g7+)
+        reward = bps.mul(secs);
+        const floor = gameState.baseClickValue.mul(50 * cap + 50);
+        if (reward.lt(floor)) reward = floor;
+        if (reward.lt(50)) reward = new Decimal(50);
+    }
 
     gameState.score = gameState.score.add(reward);
     gameState.totalScore = gameState.totalScore.add(reward);

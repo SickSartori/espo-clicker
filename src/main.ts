@@ -59,6 +59,13 @@ import {
   prestigeTeamCarryover,
   formatQbitsEarned,
 } from './game/prestige';
+import {
+  goldenBugReward,
+  dailyStreak,
+  dailyReward,
+  crunchDuration,
+  crunchCooldownFromEnd,
+} from './game/events';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
@@ -110,6 +117,13 @@ const EspoV3 = {
     prestigeStartingBugs,
     prestigeTeamCarryover,
     formatQbitsEarned,
+  },
+  events: {
+    goldenBugReward,
+    dailyStreak,
+    dailyReward,
+    crunchDuration,
+    crunchCooldownFromEnd,
   },
   rules: {
     anyClickUpgradeAvailable,
