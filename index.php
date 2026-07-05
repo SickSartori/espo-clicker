@@ -327,6 +327,30 @@ require_once("php/check_version.php");
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
 
 		<!-- ============================================================ -->
+		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
+		<!-- Espone window.EspoV3 con i moduli TS migrati progressivamente -->
+		<!-- Caricato solo se dist-v3/ esiste (build:v3 eseguita)         -->
+		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
+		<!--                                                              -->
+		<!-- ORDINE (Fase 0 migrazione): defer e module eseguono in ordine -->
+		<!-- di documento, quindi qui — DOPO la CDN break_infinity, PRIMA  -->
+		<!-- del bundle legacy — vale il contratto:                        -->
+		<!--  1. window.Decimal = break_infinity (CDN); se la CDN fallisce  -->
+		<!--     installGlobalDecimal() installa break_eternity (fallback)  -->
+		<!--  2. window.EspoV3 è GIÀ pronto quando il legacy esegue → le    -->
+		<!--     deleghe `window.EspoV3?.x ?? legacy` sono sync e sicure    -->
+		<!-- Se dist-v3/ manca il tag non viene emesso → il legacy usa i   -->
+		<!-- propri fallback. Niente eventi "ready" asincroni.             -->
+		<!-- ============================================================ -->
+		<?php
+		$v3JsPath = __DIR__ . '/dist-v3/game.modules.js';
+		if (file_exists($v3JsPath)):
+			$v3JsVer = filemtime($v3JsPath);
+		?>
+		<script type="module" src="dist-v3/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
+		<?php endif; ?>
+
+		<!-- ============================================================ -->
 		<!-- GAME BUNDLE (esbuild minificato)                            -->
 		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
 		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
@@ -346,20 +370,6 @@ require_once("php/check_version.php");
 		?>
 		<script src="dist/game.bundle.min.js?v=<?php echo $bundleVer; ?>" defer></script>
 
-		<!-- ============================================================ -->
-		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
-		<!-- Espone window.EspoV3 con i moduli TS migrati progressivamente -->
-		<!-- Caricato solo se dist-v3/ esiste (build:v3 eseguita)         -->
-		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
-		<!-- ============================================================ -->
-		<?php
-		$v3JsPath = __DIR__ . '/dist-v3/game.modules.js';
-		if (file_exists($v3JsPath)):
-			$v3JsVer = filemtime($v3JsPath);
-		?>
-		<script type="module" src="dist-v3/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
-		<?php endif; ?>
-		
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->
 		<!-- Carica Phaser + CSS + JS arcade solo all'apertura Arcade   -->

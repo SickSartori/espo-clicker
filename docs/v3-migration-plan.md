@@ -1,6 +1,6 @@
 # Piano di migrazione a V3 (strangler)
 
-> Stato: **pianificazione** (2026-06-20). Documento di riferimento — nessuna implementazione ancora avviata.
+> Stato: **Fase 0 + Fase 1 (delega) FATTE** (2026-07-05). Fase 0: `game.modules.js` caricato prima del bundle legacy (dopo la CDN break_infinity) → `EspoV3` garantito al boot legacy, Decimal deterministico (break_infinity; break_eternity solo fallback se CDN giù). Fase 1: `window.SaveDB` delega a `EspoV3.save` con fallback legacy in `js/save-db.js` — verificata parità round-trip e lettura incrociata nei due sensi in preview. Baseline test: 65 verdi. **Resta di F1:** rimozione dell'implementazione legacy in save-db.js dopo un ciclo di deploy verificato su test/prod.
 > Scopo: portare il gameplay legacy (`js/*`, globali `window.*`) ai moduli V3 (`src/*.ts`, ESM via Vite) **mantenendo il gioco funzionante a ogni passo**.
 
 ## In parole povere: cosa ci guadagniamo
