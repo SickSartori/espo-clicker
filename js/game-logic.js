@@ -63,6 +63,18 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const state = gameState.prestigeUpgrades[upgradeKey];
 
+    // F6 strangler (fetta 1): formula in EspoV3.economy col Decimal della PAGINA
+    // iniettato → risultato bit-identico al legacy per costruzione. Fallback sotto.
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) {
+        return v3e.prestigeUpgradeCost(Decimal, {
+            isCounted: !!data.isCounted,
+            baseCost: data.baseCost,
+            count: (state && state.count) || 0,
+            qDiscount: !!(gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased),
+        });
+    }
+
     if (!data.isCounted) {
         return data.baseCost;
     }
@@ -88,6 +100,10 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
  * Formula: SogliaBase * (Moltiplicatore ^ Resets)
  */
 function getPrestigeThreshold() {
+    // F6 strangler (fetta 1): vedi calculatePrestigeUpgradeCost
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) return v3e.prestigeThreshold(Decimal, gameState.totalResets || 0);
+
     const baseThreshold = new Decimal("50000000"); // 50 Milioni
     const resets = gameState.totalResets || 0;
 
@@ -1040,6 +1056,20 @@ function applyBonusSoftcap(x) {
 }
 
 function calculatePrestigeBonus() {
+    // F6 strangler (fetta 1): stessa formula in EspoV3.economy, costanti di
+    // bilanciamento iniettate da qui (unica fonte). Fallback legacy sotto.
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) {
+        prestigeBonus = v3e.computePrestigeBonus(Decimal, {
+            lifetimePrestigePoints: gameState.lifetimePrestigePoints,
+            synergyFactor: window.prestigeSynergyFactor,
+            achievementsBonus: achievementsBPSBonus,
+            softcapKnee: PRESTIGE_BONUS_SOFTCAP_KNEE,
+            softcapCoeff: PRESTIGE_BONUS_SOFTCAP_COEFF,
+        });
+        return;
+    }
+
     let lifetime = gameState.lifetimePrestigePoints;
     let baseBonus = lifetime.mul(0.01);
 
@@ -1053,6 +1083,33 @@ function calculatePrestigeBonus() {
 }
 
 function recalculateCPS() {
+    // F6 strangler (fetta 1): la formula vive in EspoV3.economy; qui restano il
+    // mapping (nell'ORDINE di iterazione legacy: la sequenza di add è contratto
+    // di parità float) e l'assegnazione al global bps. Fallback legacy sotto.
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) {
+        const teams = [];
+        for (const key in gameState.teams) {
+            const teamState = gameState.teams[key];
+            const teamData = gameData.teams[key];
+            if (!teamData || !(teamState.count > 0)) continue;
+            const multipliers = [];
+            for (const upgKey in gameState.buildingEnhancements) {
+                const upgState = gameState.buildingEnhancements[upgKey];
+                const upgData = gameData.buildingEnhancements[upgKey];
+                if (upgState.purchased && upgData && upgData.targetTeam === key) {
+                    multipliers.push(upgData.multiplier);
+                }
+            }
+            teams.push({ cpsPerUnit: teamData.cpsPerUnit, count: teamState.count, multipliers: multipliers });
+        }
+        const autoQA = (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa)
+            ? (gameState.teams.assistenteQa.count || 0) : 0;
+        bps = v3e.computeBps(Decimal, teams, autoQA,
+            [prestigeBonus, clickCPSBonus, bluescreenMultiplier, crunchTimeMultiplier]);
+        return;
+    }
+
     let baseCPS = new Decimal(0);
 
     for (const key in gameState.teams) {
@@ -1636,6 +1693,23 @@ function stopBluescreenEffect() {
 
 // CALCOLO CENTRALIZZATO DEL VALORE CLICK
 function calculateClickValue() {
+    // F6 strangler (fetta 1): formula in EspoV3.economy, Decimal della pagina
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) {
+        return v3e.computeClickValue(Decimal, {
+            baseClickValue: gameState.baseClickValue,
+            clickGlobalMult: window.clickGlobalMult || 1,
+            prestigeBonus: prestigeBonus,
+            bluescreenMultiplier: bluescreenMultiplier,
+            crunchTimeMultiplier: crunchTimeMultiplier,
+            bionicHand: !!window.gameFlags.bionicHand,
+            divineClick: !!window.gameFlags.divineClick,
+            bps: bps,
+            goldenFrenzyActive: !!(window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd),
+            goldenFrenzyMult: window.goldenFrenzyMult || 1,
+        });
+    }
+
     let val = gameState.baseClickValue
         .mul(window.clickGlobalMult || 1)
         .mul(prestigeBonus)
@@ -1655,6 +1729,18 @@ function calculateClickValue() {
     return val;
 }
 function calculateRawClickValue() {
+    // F6 strangler (fetta 1): formula in EspoV3.economy, Decimal della pagina
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) {
+        return v3e.computeRawClickValue(Decimal, {
+            baseClickValue: gameState.baseClickValue,
+            clickGlobalMult: window.clickGlobalMult || 1,
+            bionicHand: !!window.gameFlags.bionicHand,
+            divineClick: !!window.gameFlags.divineClick,
+            bps: bps,
+        });
+    }
+
     // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
     let val = gameState.baseClickValue.mul(window.clickGlobalMult || 1);
 

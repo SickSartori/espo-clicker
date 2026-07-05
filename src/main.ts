@@ -40,6 +40,15 @@ import {
   isQuantumUnlocked,
   visualBps,
 } from './ui/rules/progression';
+import {
+  applyBonusSoftcap,
+  computePrestigeBonus,
+  computeBps,
+  computeClickValue,
+  computeRawClickValue,
+  prestigeUpgradeCost,
+  prestigeThreshold,
+} from './game/economy';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
@@ -73,6 +82,15 @@ const EspoV3 = {
   i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
   format: { formatNumber, formatFullNumber, formatTime },
   theme: { createCssLoader: createThemeCssLoader, ThemeCssLoader },
+  economy: {
+    applyBonusSoftcap,
+    computePrestigeBonus,
+    computeBps,
+    computeClickValue,
+    computeRawClickValue,
+    prestigeUpgradeCost,
+    prestigeThreshold,
+  },
   rules: {
     anyClickUpgradeAvailable,
     anyEnhancementAvailable,
