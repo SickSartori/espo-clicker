@@ -33,6 +33,12 @@ function setTextIfChanged(elementId, newText) {
 // ---------  FUNZIONI DI FORMATTORE ---------
 
 function formatNumber(num) {
+    // F5 strangler (fetta 1): formattazione pura in EspoV3.format — parsing via
+    // stringa, nessuna dipendenza Decimal, suffissi iniettati da gameData
+    // (localizzati). Fallback legacy sotto se la build v3 manca.
+    const v3fmt = window.EspoV3 && window.EspoV3.format;
+    if (v3fmt) return v3fmt.formatNumber(num, gameData.texts.format.suffixes);
+
     if (num === undefined || num === null) return "0";
 
     let decimal;
@@ -85,6 +91,11 @@ function formatNumber(num) {
 }
 
 function formatFullNumber(num) {
+    // F5 strangler (fetta 1): vedi formatNumber. Il floor V3 è in stringa
+    // (esatto anche oltre 2^53), stessa semantica di Decimal.floor().
+    const v3fmt = window.EspoV3 && window.EspoV3.format;
+    if (v3fmt) return v3fmt.formatFullNumber(num, gameData.texts.format.suffixes);
+
     if (num === undefined || num === null) return "0";
     let decimal = new Decimal(num).floor();
 

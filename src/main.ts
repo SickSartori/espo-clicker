@@ -27,6 +27,7 @@ import { Decimal, installGlobalDecimal, gt, gte, eq } from './core/bignum';
 import { autoInitClickerParallax, enableClickerParallax } from './ui/interactions/clicker-parallax';
 import { autoInitLucide, renderLucideIcons } from './ui/icons/lucide-init';
 import { applyLanguage, deepOverlay, overlayById, I18N_COLLECTIONS } from './core/i18n/overlay';
+import { formatNumber, formatFullNumber } from './ui/format/number-format';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
@@ -58,6 +59,7 @@ const EspoV3 = {
   bignum: { Decimal, gt, gte, eq },
   loop: { Scheduler },
   i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
+  format: { formatNumber, formatFullNumber },
   assets: { createManager: createAssetManager, AssetManager },
   workers: {
     computeOffline: computeOfflineAsync,
