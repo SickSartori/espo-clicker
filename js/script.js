@@ -863,16 +863,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastSlowTick = 0;
 
     // --------- LOOP DI GIOCO CORRETTO ---------
-    function gameLoop() {
+    // forcedDtSeconds: F3b — quando la logica gira sullo Scheduler V3 il delta
+    // arriva da lì (tick fissi da 1/30s, catch-up deterministico fino a 2s,
+    // vedi startGameRoutines). Senza argomento = percorso legacy rAF.
+    function gameLoop(forcedDtSeconds) {
         const now = Date.now();
-        let deltaTime = (now - lastFrameTime) / 1000;
-        lastFrameTime = now;
+        let deltaTime;
+        if (typeof forcedDtSeconds === 'number') {
+            deltaTime = forcedDtSeconds;
+            lastFrameTime = now; // coerente se si tornasse al fallback legacy
+        } else {
+            deltaTime = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
 
-        // Se il delta time è maggiore di 2 secondi, il gioco era in background.
-        // Ignoriamo questo grosso salto temporale qui, perché verrà gestito 
-        // dal checkOfflineProgress() che si attiva al caricamento o al focus.
-        if (deltaTime > 2) {
-            deltaTime = 0.1; // Fallback per far ripartire il loop dolcemente
+            // Se il delta time è maggiore di 2 secondi, il gioco era in background.
+            // Ignoriamo questo grosso salto temporale qui, perché verrà gestito
+            // dal checkOfflineProgress() che si attiva al caricamento o al focus.
+            if (deltaTime > 2) {
+                deltaTime = 0.1; // Fallback per far ripartire il loop dolcemente
+            }
         }
 
         // Calcolo Score (Veloce - Ogni frame)
@@ -961,17 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (uiLoopInterval) clearInterval(uiLoopInterval);
         if (saveInterval) clearInterval(saveInterval);
 
-        // LOGICA (30 FPS)
-        function startGameLoop() {
-            gameLoop();
-            requestAnimationFrame(startGameLoop);
-        }
-
-        // Avvio
-        requestAnimationFrame(startGameLoop);
-
-        // GRAFICA (10 FPS)
-        uiLoopInterval = setInterval(() => {
+        // GRAFICA (10 FPS) — corpo condiviso tra Scheduler V3 e fallback legacy
+        const uiTick = () => {
             updateUI();
             if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
 
@@ -992,11 +992,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.remove('modal-open');
             }
             // ---------------------------
+        };
 
-        }, 100);
+        // F3b strangler: logica (30hz), grafica (10hz) e auto-save (30s) girano
+        // sullo Scheduler V3 — clock UNICO (niente drift fra timer), catch-up
+        // deterministico a tick fissi, pausa automatica a tab nascosta (il rAF
+        // legacy in background si fermava comunque; in più qui si fermano anche
+        // updateUI/autosave: meno CPU e niente push cloud a vuoto da background).
+        // maxDeltaMs=2000 replica la semantica legacy "gap fino a 2s accreditati
+        // per intero"; oltre ci pensa checkOfflineProgress (modale offline).
+        // Fallback legacy identico all'originale se la build v3 manca.
+        const v3loop = window.EspoV3 && window.EspoV3.loop;
+        if (v3loop && v3loop.Scheduler) {
+            const sched = new v3loop.Scheduler({ maxDeltaMs: 2000 });
+            sched.registerTick((deltaMs) => gameLoop(deltaMs / 1000), 30); // LOGICA (30hz)
+            sched.every(100, uiTick);                                     // GRAFICA (10hz)
+            sched.every(30000, () => saveGame());                         // Auto-save (30s)
+            sched.start();
+            window._espoScheduler = sched; // handle per debug/cheatboard
+        } else {
+            // LOGICA (30 FPS)
+            function startGameLoop() {
+                gameLoop();
+                requestAnimationFrame(startGameLoop);
+            }
 
-        // Auto-save (ogni 30s)
-        saveInterval = setInterval(saveGame, 30000);
+            // Avvio
+            requestAnimationFrame(startGameLoop);
+
+            // GRAFICA (10 FPS)
+            uiLoopInterval = setInterval(uiTick, 100);
+
+            // Auto-save (ogni 30s)
+            saveInterval = setInterval(saveGame, 30000);
+        }
 
 
         scheduleGoldenBug();
