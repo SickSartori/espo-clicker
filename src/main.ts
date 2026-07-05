@@ -48,6 +48,9 @@ import {
   computeRawClickValue,
   prestigeUpgradeCost,
   prestigeThreshold,
+  teamBulkCost,
+  maxAffordableTeams,
+  milestoneReached,
 } from './game/economy';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 
@@ -90,6 +93,9 @@ const EspoV3 = {
     computeRawClickValue,
     prestigeUpgradeCost,
     prestigeThreshold,
+    teamBulkCost,
+    maxAffordableTeams,
+    milestoneReached,
   },
   rules: {
     anyClickUpgradeAvailable,

@@ -908,7 +908,27 @@ function buySuperUpgrade(upgradeKey) {
 // --------- FUNZIONI DI GIOCO PRINCIPALI ---------
 // --------- FUNZIONI MATEMATICHE (DECIMAL) ---------
 
+// Input comune alle formule costo team V3: r derivato dai global di scaling,
+// livello Outsourcing per lo sconto. Usato dalle deleghe F6 (fetta 2).
+function _teamCostInput(teamKey) {
+    let r = 1.05;
+    if (window.costScalingBase)
+        r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
+    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
+    return {
+        baseCost: gameData.teams[teamKey].baseCost,
+        count: gameState.teams[teamKey].count,
+        r: r,
+        outsourcingLevel: (outsourcingState && outsourcingState.count) || 0,
+    };
+}
+
 function calculateBulkCost(teamKey, amount) {
+    // F6 strangler (fetta 2): serie geometrica + sconto outsourcing in
+    // EspoV3.economy, col Decimal della pagina → bit-identico. Fallback sotto.
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) return v3e.teamBulkCost(Decimal, _teamCostInput(teamKey), amount);
+
     const data = gameData.teams[teamKey];
     const state = gameState.teams[teamKey];
     let r = 1.05;
@@ -945,6 +965,10 @@ function calculateBulkCost(teamKey, amount) {
 }*/
 
 function calculateMaxAffordable(teamKey) {
+    // F6 strangler (fetta 2): formula log + raffinamento in EspoV3.economy
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    if (v3e) return v3e.maxAffordableTeams(Decimal, _teamCostInput(teamKey), gameState.score);
+
     const state = gameState.teams[teamKey];
     const data = gameData.teams[teamKey];
 
@@ -1020,16 +1044,24 @@ function buyTeam(teamKey) {
 // Pop "traguardo" quando un team supera una soglia di unità possedute.
 // Riempie il vuoto del mid-game con un feedback gratificante (toast + flash).
 function checkBuildingMilestone(teamKey, oldCount, newCount) {
-    const milestones = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
-    let reached = 0;
-    for (const m of milestones) {
-        if (oldCount < m && newCount >= m) reached = m; // tiene il più alto attraversato
-    }
-    // Oltre 1000: un pop ogni 250 unità
-    if (newCount >= 1000) {
-        const step = 250;
-        const newTier = Math.floor(newCount / step) * step;
-        if (newTier > Math.floor(oldCount / step) * step && newTier > reached) reached = newTier;
+    // F6 strangler (fetta 2): il calcolo della soglia attraversata vive in
+    // EspoV3.economy (puro, testato); qui restano toast e flash DOM. Fallback sotto.
+    const v3e = window.EspoV3 && window.EspoV3.economy;
+    let reached;
+    if (v3e) {
+        reached = v3e.milestoneReached(oldCount, newCount);
+    } else {
+        const milestones = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
+        reached = 0;
+        for (const m of milestones) {
+            if (oldCount < m && newCount >= m) reached = m; // tiene il più alto attraversato
+        }
+        // Oltre 1000: un pop ogni 250 unità
+        if (newCount >= 1000) {
+            const step = 250;
+            const newTier = Math.floor(newCount / step) * step;
+            if (newTier > Math.floor(oldCount / step) * step && newTier > reached) reached = newTier;
+        }
     }
     if (reached <= 0) return;
 

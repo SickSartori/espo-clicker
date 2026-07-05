@@ -8,6 +8,9 @@ import {
   computeRawClickValue,
   prestigeUpgradeCost,
   prestigeThreshold,
+  teamBulkCost,
+  maxAffordableTeams,
+  milestoneReached,
   type DecimalCtor,
 } from './economy';
 
@@ -124,6 +127,86 @@ describe('prestigeUpgradeCost', () => {
   it('sconto quantico 15%', () => {
     // 10 * 1.5^2 * 0.85 = 19.125 → floor 19
     expect(prestigeUpgradeCost(D, { isCounted: true, baseCost: 10, count: 2, qDiscount: true }).toString()).toBe('19');
+  });
+});
+
+describe('teamBulkCost', () => {
+  const base = { baseCost: 100, count: 0, r: 1.05, outsourcingLevel: 0 };
+
+  it('singola unità: base × r^count, floored, min 1', () => {
+    expect(teamBulkCost(D, base, 1).toString()).toBe('100');
+    // count 10 → 100 × 1.05^10 = 162.88 → floor 162
+    expect(teamBulkCost(D, { ...base, count: 10 }, 1).toString()).toBe('162');
+  });
+
+  it('sconto outsourcing: -5%/livello, cap -25%', () => {
+    // lvl 2 → ×0.90 → 90
+    expect(teamBulkCost(D, { ...base, outsourcingLevel: 2 }, 1).toString()).toBe('90');
+    // lvl 10 → cap 0.75 → 75
+    expect(teamBulkCost(D, { ...base, outsourcingLevel: 10 }, 1).toString()).toBe('75');
+  });
+
+  it('bulk: serie geometrica floored', () => {
+    // 10 unità da 0: 100 × (1.05^10-1)/0.05 = 1257.78 → floor 1257
+    expect(teamBulkCost(D, base, 10).toString()).toBe('1257');
+  });
+
+  it('bulk con r=1 degenera in costo × quantità', () => {
+    expect(teamBulkCost(D, { ...base, r: 1 }, 10).toString()).toBe('1000');
+  });
+
+  it('guardie min: mai sotto 1 (singolo) o amount (bulk)', () => {
+    const cheap = { baseCost: 0.4, count: 0, r: 1.05, outsourcingLevel: 0 };
+    expect(teamBulkCost(D, cheap, 1).toString()).toBe('1'); // floor(0.4)=0 → max 1
+    expect(Number(teamBulkCost(D, cheap, 5).toString())).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('maxAffordableTeams', () => {
+  const base = { baseCost: 100, count: 0, r: 1.05, outsourcingLevel: 0 };
+
+  it('score sotto il costo singolo → 0', () => {
+    expect(maxAffordableTeams(D, base, 99)).toBe(0);
+  });
+
+  it('garanzia: l\'n restituito è sempre acquistabile (cost(n) ≤ score)', () => {
+    // NB: il legacy NON garantisce che n+1 sia inacquistabile — la formula log
+    // può sottostimare di 1 (es. score=1257 → 9 pur potendo 10) e il refine-loop
+    // corregge solo verso il basso. Replichiamo quel comportamento tale e quale
+    // (parità col legacy, non "fix"); la garanzia reale è solo cost(n) ≤ score.
+    for (const score of ['100', '500', '1257', '1258', '99999']) {
+      const n = maxAffordableTeams(D, base, score);
+      const scoreD = new D(score);
+      if (n > 0) expect(teamBulkCost(D, base, n).lte(scoreD)).toBe(true);
+    }
+  });
+
+  it('sottostima nota del legacy su score = costo esatto di 10 unità', () => {
+    // score = bulkCost(10) = 1257 → il legacy ritorna 9 (floor di 9.994)
+    expect(maxAffordableTeams(D, base, '1257')).toBe(9);
+  });
+
+  it('r≈1 → divisione semplice', () => {
+    expect(maxAffordableTeams(D, { ...base, r: 1 }, '1050')).toBe(10);
+  });
+});
+
+describe('milestoneReached', () => {
+  it('soglia attraversata → la più alta', () => {
+    expect(milestoneReached(8, 12)).toBe(10);
+    expect(milestoneReached(8, 60)).toBe(50);   // attraversa 10,25,50 → 50
+    expect(milestoneReached(99, 100)).toBe(100);
+  });
+
+  it('nessuna soglia → 0', () => {
+    expect(milestoneReached(10, 12)).toBe(0); // 10 già raggiunta prima
+    expect(milestoneReached(11, 24)).toBe(0);
+  });
+
+  it('oltre 1000: tier ogni 250', () => {
+    expect(milestoneReached(1100, 1260)).toBe(1250);
+    expect(milestoneReached(1250, 1490)).toBe(0);  // 1250 già passata, 1500 no
+    expect(milestoneReached(990, 1010)).toBe(1000);
   });
 });
 
