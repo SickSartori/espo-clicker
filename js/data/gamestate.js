@@ -27,6 +27,10 @@ var gameState;
 function getInitialGameState() {
     const state = {
         version: { major: window.GAME_VERSION.major, minor: window.GAME_VERSION.minor, stage: window.GAME_VERSION.stage },
+        // Schema del SAVE (≠ version del GIOCO): consumato dal framework migrazioni
+        // V3 (EspoV3.migrations, detectSchemaVersion). I save senza questo campo
+        // sono trattati come schema 1 e migrati via gate legacy version.major.
+        schemaVersion: 2,
         arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0 },
         score: new Decimal(0),
         baseClickValue: new Decimal(1),

@@ -1930,10 +1930,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
                     // prestige/format, e senza questo by-pass il client resterebbe bloccato.
                     if (!(opts && opts.force) && gameState && gameState.lifetimeScore) {
-                        const localScore = new Decimal(gameState.lifetimeScore);
-                        const cloudTotal = new Decimal(cloudState.lifetimeScore || 0);
+                        // F2 strangler: delega a EspoV3 la STESSA gerarchia del server
+                        // (Format > Prestige > Score, EF Supabase save-progress) → client e
+                        // server decidono allo stesso modo anche nei casi limite in cui
+                        // il solo lifetimeScore darebbe il verdetto opposto (es. cloud
+                        // formattato di recente con lifetime più basso). Fallback: il
+                        // vecchio confronto solo-score se la build v3 manca.
+                        const v3ar = window.EspoV3 && window.EspoV3.save && window.EspoV3.save.antiRollback;
+                        let keepLocal;
+                        if (v3ar) {
+                            keepLocal = v3ar.decide({
+                                totalFormattazioni: gameState.totalFormattazioni || 0,
+                                lifetimePrestigePoints: String(gameState.lifetimePrestigePoints || 0),
+                                lifetimeScore: String(gameState.lifetimeScore || 0),
+                            }, {
+                                totalFormattazioni: cloudState.totalFormattazioni || 0,
+                                lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
+                                lifetimeScore: cloudState.lifetimeScore || 0,
+                            }) !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
+                        } else {
+                            keepLocal = new Decimal(gameState.lifetimeScore).gte(new Decimal(cloudState.lifetimeScore || 0));
+                        }
 
-                        if (localScore.gte(cloudTotal)) {
+                        if (keepLocal) {
                             console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
 
                             const currentSessionUser = sessionStorage.getItem('espooUser');
@@ -1960,13 +1979,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cloudMajor < 2 && currentMajor >= 2) {
                         console.log("☁️ Migrazione Cloud V1 -> V2 rilevata!");
 
-                        // A. Salva le uniche cose che vogliamo mantenere dal cloud
-                        const savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
-                        const currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
-                        const masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
+                        // F2 strangler: il calcolo del salvage (skin, volume, contatori
+                        // storici, premio veterano) è delegato al framework migrazioni V3
+                        // (puro, testato). Qui restano orchestrazione e side-effect (reset,
+                        // iniezione nello stato live, save, UI). Il GATE resta su
+                        // version.major: i save legacy non hanno il campo schemaVersion,
+                        // quindi lo passiamo esplicito (=1) al framework.
+                        const v3mig = window.EspoV3 && window.EspoV3.migrations;
+                        let savedSkins, currentSkin, masterVol, cloudLifetime, cloudTotal;
+                        if (v3mig) {
+                            const migrated = v3mig.migrate(Object.assign({}, cloudState, { schemaVersion: 1 }));
+                            const m = migrated.state;
+                            savedSkins = m.skins.unlocked;
+                            currentSkin = m.skins.current;
+                            masterVol = m.user.masterVolume;
+                            cloudLifetime = m.lifetimeScore;
+                            cloudTotal = m.totalScore;
+                            cloudIsVeteran = !!(migrated.report && migrated.report.veteranReward);
+                        } else {
+                        // A. (fallback legacy) Salva le uniche cose che vogliamo mantenere dal cloud
+                        savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
+                        currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
+                        masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
                         // Mantieni i contatori storici per non triggerare l'anti-rollback lato server
-                        const cloudLifetime = cloudState.lifetimeScore || 0;
-                        const cloudTotal = cloudState.totalScore || 0;
+                        cloudLifetime = cloudState.lifetimeScore || 0;
+                        cloudTotal = cloudState.totalScore || 0;
+                        }
 
                         // B. Reset e genera stato pulito
                         if (typeof resetGameToDefault === 'function') resetGameToDefault();
