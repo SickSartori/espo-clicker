@@ -22,7 +22,7 @@ import {
 import { migrate, detectSchemaVersion } from './core/migrations';
 import { CURRENT_SCHEMA_VERSION } from './types/save';
 import { Scheduler } from './core/loop';
-import { computeOfflineAsync, encodeSaveAsync, decodeSaveAsync, terminateWorkers } from './workers/client';
+import { computeOfflineAsync, encodeSaveAsync, encodeSaveStringAsync, decodeSaveAsync, terminateWorkers } from './workers/client';
 import { Decimal, installGlobalDecimal, gt, gte, eq } from './core/bignum';
 import { autoInitClickerParallax, enableClickerParallax } from './ui/interactions/clicker-parallax';
 import { autoInitLucide, renderLucideIcons } from './ui/icons/lucide-init';
@@ -58,6 +58,7 @@ const EspoV3 = {
   workers: {
     computeOffline: computeOfflineAsync,
     encodeSave: encodeSaveAsync,
+    encodeSaveString: encodeSaveStringAsync,
     decodeSave: decodeSaveAsync,
     terminate: terminateWorkers,
   },

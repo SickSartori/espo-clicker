@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encodeSave, decodeSave } from './codec';
+import { encodeSave, encodeSaveString, decodeSave } from './codec';
 
 describe('codec', () => {
   it('round-trip preserva oggetto', () => {
@@ -22,6 +22,12 @@ describe('codec', () => {
 
   it('decode payload corrotto → null (no throw)', () => {
     expect(decodeSave('garbage non compresso')).toBeNull();
+  });
+
+  it('encodeSaveString(JSON.stringify(x)) ≡ encodeSave(x)', () => {
+    const data = { score: '1.5e+310', teams: { dev: 3 }, msg: 'Espoooo 🐛' };
+    expect(encodeSaveString(JSON.stringify(data))).toBe(encodeSave(data));
+    expect(decodeSave(encodeSaveString(JSON.stringify(data)))).toEqual(data);
   });
 
   it('compressione riduce JSON ripetitivo', () => {

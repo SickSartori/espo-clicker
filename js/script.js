@@ -223,7 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
         const stateJSON = JSON.stringify(gameState);
-        const compressed = LZString.compressToUTF16(stateJSON);
+        // F3 strangler: la compressione (la parte costosa, ~50KB+) va nel worker
+        // V3 quando c'è — il main thread non si impunta durante l'autosave. La
+        // SERIALIZZAZIONE resta qui sopra: i Decimal devono serializzarsi con la
+        // semantica del main thread. Stessa stringa in ingresso → payload
+        // identico byte-per-byte al percorso sync (fallback).
+        let compressed;
+        const v3workers = window.EspoV3 && window.EspoV3.workers;
+        if (v3workers && v3workers.encodeSaveString) {
+            try { compressed = await v3workers.encodeSaveString(stateJSON); }
+            catch (_) { compressed = LZString.compressToUTF16(stateJSON); }
+        } else {
+            compressed = LZString.compressToUTF16(stateJSON);
+        }
 
         // Quota guard: warn se spazio residuo < 2x dimensione save
         if (navigator.storage && navigator.storage.estimate) {
@@ -238,7 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            await SaveDB.saveToIndexedDB(gameState);
+            // F3: con V3 attivo scriviamo in IndexedDB lo STESSO payload già
+            // compresso dal worker (unico snapshot per IDB/localStorage/cloud)
+            // invece di far ricomprimere gameState a SaveDB → una compressione
+            // in meno per save e niente drift tra le tre destinazioni.
+            if (window.EspoV3 && window.EspoV3.save) {
+                await window.EspoV3.save.db.write(compressed);
+            } else {
+                await SaveDB.saveToIndexedDB(gameState);
+            }
         } catch (e) {
             // Filtra errori transienti tipici durante navigate/unload o tab inattivo:
             // AbortError (tx abortita), InvalidStateError (db chiuso) — il save
@@ -399,14 +419,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (efficiency > 1.0) efficiency = 1.0; // Cap a 100%
 
-            // Guadagno Potenziale
-            const rawEarned = bps.mul(effectiveSeconds);
-            const realEarned = rawEarned.mul(efficiency);
+            // Mostra il modale o nasconde il backdrop — usato da entrambi i percorsi
+            const finish = (realEarned) => {
+                if (realEarned.gt(0)) {
+                    showOfflineModal(realEarned, efficiency);
+                    return;
+                }
+                if (modal) modal.classList.add("modal_backdrop_none");
+            };
 
-            if (realEarned.gt(0)) {
-                showOfflineModal(realEarned, efficiency);
+            // F3 strangler: calcolo nel worker V3 (bps come STRINGA: a endgame
+            // supera il range double, come number diventerebbe Infinity). Il
+            // gating (>60s, cap 12h, efficienza) resta qui: al worker passiamo
+            // già i secondi effettivi → stessa formula del legacy
+            // bps.mul(sec).mul(eff). Fallback sync se worker assente/rotto.
+            const v3w = window.EspoV3 && window.EspoV3.workers;
+            if (v3w && v3w.computeOffline) {
+                v3w.computeOffline({
+                    bps: String(bps),
+                    awayMs: effectiveSeconds * 1000,
+                    maxSeconds: maxOfflineSeconds,
+                    efficiency: efficiency,
+                })
+                    .then(res => finish(new Decimal(res.earned)))
+                    .catch(() => finish(bps.mul(effectiveSeconds).mul(efficiency)));
                 return;
             }
+
+            // Guadagno Potenziale (fallback legacy sync)
+            finish(bps.mul(effectiveSeconds).mul(efficiency));
+            return;
         }
         if (modal) modal.classList.add("modal_backdrop_none");
     }

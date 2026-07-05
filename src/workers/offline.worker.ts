@@ -10,9 +10,14 @@
  *   worker → main:  { type: 'error',   error: string }
  */
 
+import Decimal from 'break_eternity.js';
+
 export interface OfflineInput {
-  /** Bug per secondo correnti. */
-  bps: number;
+  /**
+   * Bug per secondo correnti. Stringa per i big number del gioco (oltre 1e308
+   * un `number` diventa Infinity — a endgame bps supera il range double).
+   */
+  bps: number | string;
   /** Millisecondi di assenza. */
   awayMs: number;
   /** Cap massimo di secondi accreditabili (default 8h). */
@@ -22,8 +27,8 @@ export interface OfflineInput {
 }
 
 export interface OfflineResult {
-  /** Guadagno totale accreditato. */
-  earned: number;
+  /** Guadagno totale accreditato — stringa Decimal (big-number safe). */
+  earned: string;
   /** Secondi effettivi conteggiati (clamped). */
   effectiveSeconds: number;
   /** Efficienza usata. */
@@ -34,8 +39,12 @@ export function computeOffline(input: OfflineInput): OfflineResult {
   const maxSec = input.maxSeconds ?? 8 * 3600;
   const eff = input.efficiency ?? 0.3;
   const seconds = Math.min(Math.max(0, input.awayMs / 1000), maxSec);
-  const earned = Math.max(0, input.bps) * seconds * eff;
-  return { earned, effectiveSeconds: seconds, efficiency: eff };
+  // Stessa formula del legacy (bps.mul(sec).mul(eff)). NON bit-identico al
+  // calcolo inline break_infinity della pagina: break_eternity sopra 9e15 lavora
+  // in log10 → differenza relativa ~1e-13 sull'ultima cifra della mantissa.
+  // Irrilevante per il gameplay (il guadagno offline è mostrato arrotondato).
+  const earned = new Decimal(input.bps).max(0).mul(seconds).mul(eff);
+  return { earned: earned.toString(), effectiveSeconds: seconds, efficiency: eff };
 }
 
 // === Worker entry point ===

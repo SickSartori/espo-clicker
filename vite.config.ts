@@ -6,6 +6,10 @@ import { resolve } from 'node:path';
 // durante migrazione strangler. Quando tutto migrato, dist/ viene eliminato e build.js droppato.
 export default defineConfig({
   root: '.',
+  // Base RELATIVA: il bundle vive sotto /dist-v3/ ma il mount point cambia per
+  // ambiente (root Altervista vs /test/ vs localhost). Con base assoluta ('/')
+  // Vite emetteva new Worker(new URL('/assets/x.worker.js')) → 404 ovunque.
+  base: '',
   publicDir: false, // assets serviti da PHP, no copia
   resolve: {
     alias: {
