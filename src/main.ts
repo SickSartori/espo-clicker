@@ -26,6 +26,8 @@ import { computeOfflineAsync, encodeSaveAsync, encodeSaveStringAsync, decodeSave
 import { Decimal, installGlobalDecimal, gt, gte, eq } from './core/bignum';
 import { autoInitClickerParallax, enableClickerParallax } from './ui/interactions/clicker-parallax';
 import { autoInitLucide, renderLucideIcons } from './ui/icons/lucide-init';
+import { applyLanguage, deepOverlay, overlayById, I18N_COLLECTIONS } from './core/i18n/overlay';
+import { createAssetManager, AssetManager } from './core/assets/manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
@@ -55,6 +57,8 @@ const EspoV3 = {
   migrations: { migrate },
   bignum: { Decimal, gt, gte, eq },
   loop: { Scheduler },
+  i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
+  assets: { createManager: createAssetManager, AssetManager },
   workers: {
     computeOffline: computeOfflineAsync,
     encodeSave: encodeSaveAsync,

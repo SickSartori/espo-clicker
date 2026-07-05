@@ -36,6 +36,12 @@
     var COLLECTIONS = ['teams', 'clickUpgrades', 'prestigeUpgrades', 'buildingEnhancements', 'superUpgrades', 'skins', 'achievements', 'events'];
 
     window.applyLanguage = function (lang) {
+        // F4 strangler: la logica di merge vive in EspoV3.i18n (pura, testata,
+        // stessa semantica: array sostituiti interi, id assenti saltati).
+        // Fallback legacy sotto se la build v3 manca.
+        const v3i18n = window.EspoV3 && window.EspoV3.i18n;
+        if (v3i18n) return v3i18n.applyLanguage(window.gameData, lang);
+
         const gd = window.gameData;
         const dict = gd.i18n && gd.i18n[lang];
         if (!dict) return; // lingua default (it) o dizionario assente → niente da fare

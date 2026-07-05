@@ -199,7 +199,40 @@
 
     // ─────────────────────────────────────────────────────────
     // API Pubblica: window.AssetManager
+    // F4 strangler: la logica (retry+backoff, semaforo concorrenza, stato
+    // pacchetti, piano progressivo) vive in EspoV3.assets (pura, testata).
+    // Qui restano: rilevamento host, CustomEvent e bootstrap DOM. L'API
+    // pubblica è identica. Fallback legacy (implementazioni sopra) se la
+    // build v3 manca.
     // ─────────────────────────────────────────────────────────
+    var _v3assets = window.EspoV3 && window.EspoV3.assets;
+    if (_v3assets) {
+        var _mgr = _v3assets.createManager({
+            getPackages: function () { return window.ASSET_PACKAGES; },
+            imgBase: IMG_BASE,
+            maxConcurrent: MAX_CONCURRENT,
+            maxRetries: MAX_RETRIES,
+            retryDelayMs: RETRY_DELAY_MS,
+            onPackageLoaded: function (name, pkg) { _emitLoaded(name, pkg); },
+            onLog: function (m) { console.log(m); },
+            onWarn: function (m) { console.warn(m); },
+        });
+        window.AssetManager = {
+            isLoaded: function (name) { return _mgr.isLoaded(name); },
+            isLoading: function (name) { return _mgr.isLoading(name); },
+            load: function (name) { return _mgr.load(name); },
+            loadMultiple: function (names) { return _mgr.loadMultiple(names); },
+            status: function () { return _mgr.status(); },
+            notifyBootDone: function () {
+                if (_bootDone) return;
+                _bootDone = true;
+                console.log('[AssetManager] 🚀 Boot completato — avvio caricamento progressivo.');
+                _mgr.progressivePlan(IS_ALTERVISTA).forEach(function (item) {
+                    setTimeout(function () { _mgr.load(item.name); }, item.delay);
+                });
+            },
+        };
+    } else {
     window.AssetManager = {
 
         /**
@@ -268,14 +301,15 @@
             _startProgressiveLoad();
         },
     };
+    } // fine fallback legacy
 
     // ─────────────────────────────────────────────────────────
-    // Bootstrap automatico
+    // Bootstrap automatico (condiviso: usa l'API pubblica, qualunque ramo)
     // ─────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
 
         // 1. Carica immediatamente il pacchetto CORE
-        _loadPackage('CORE');
+        window.AssetManager.load('CORE');
 
         // 2. Ascolta l'evento di boot completato del gioco.
         //    Se il gioco non lo emette esplicitamente,
