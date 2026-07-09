@@ -66,7 +66,8 @@
         ['Tutti gli obiettivi sbloccati', 'All achievements unlocked'], ['Tutti gli obiettivi bloccati', 'All achievements locked'],
         ['Stato stampato in console (F12)', 'State printed to console (F12)'], ['Salvataggio forzato', 'Forced save'], ['saveGame non disponibile', 'saveGame not available'],
         ['Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.', 'Simulate V2 migration? Creates a fake V1 save and reloads.'],
-        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Cancella tutto e ricarica (fa anche logout).', 'Wipes everything and reloads (also logs out).']
+        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Azzera progressi locali E cloud e ricarica (resti loggato).', 'Wipes local AND cloud progress and reloads (you stay logged in).'],
+        ['Reset cloud fallito: ', 'Cloud reset failed: '], ['Reset cloud fallito (rete). Riprova.', 'Cloud reset failed (network). Retry.']
     ].sort((a, b) => b[0].length - a[0].length);
     const cbT = (s) => { if (!CB_EN || s == null) return s; for (let i = 0; i < CB_MAP.length; i++) s = s.split(CB_MAP[i][0]).join(CB_MAP[i][1]); return s; };
 
@@ -641,20 +642,40 @@
         gameState.isDeleting = true; location.reload();
     }
     async function hardReset() {
-        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto e ricarica (fa anche logout).'))) return;
+        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nAzzera progressi locali E cloud e ricarica (resti loggato).'))) return;
+
+        // Se sei loggato, il wipe SOLO locale è vano: al reload l'auto-login
+        // ripristina dal cloud ("non resetta i progressi"). Quindi azzeriamo ANCHE
+        // il cloud con l'EF ufficiale reset-progress — come la Danger Zone — ma
+        // prendendo la password dalla SESSIONE (niente prompt = "senza password").
+        // NON si fa logout: si resta loggati e al reload si ricarica il cloud VUOTO.
+        const token = (window.EspooClicker && typeof window.EspooClicker.getSaveToken === 'function')
+            ? window.EspooClicker.getSaveToken() : null;
+        const pass = sessionStorage.getItem('espooPass');
+        const user = sessionStorage.getItem('espooUser');
+        if (user && token && pass && window.EspoBackend) {
+            try {
+                const res = await window.EspoBackend.call('reset-progress', { save_token: token, password: pass });
+                const data = await res.json();
+                if (!data || data.status !== 'success') {
+                    // Non ricaricare: il cloud non è stato azzerato → i progressi
+                    // tornerebbero. Meglio dirlo che fingere un reset riuscito.
+                    alert(cbT('Reset cloud fallito: ') + ((data && (data.message || data.status)) || '?'));
+                    return;
+                }
+            } catch (e) {
+                console.warn('[hardReset] reset cloud fallito:', e);
+                alert(cbT('Reset cloud fallito (rete). Riprova.'));
+                return;
+            }
+        }
+
+        // Cloud azzerato (o utente non loggato) → wipe locale e reload. Niente
+        // logout: la sessione resta, al reload l'auto-login ricarica lo stato fresco.
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
         localStorage.removeItem('espotoolClickerSaveV9');
         localStorage.removeItem('espotoolClickerSaveV9_Backup');
-
-        // LOGOUT prima del reload: senza, con una sessione attiva l'auto-login al
-        // reload ripristina tutto dal cloud e il wipe locale è vano ("il reset non
-        // funziona"). Sloggando, la pagina riparte dal login pulito. Il reset del
-        // salvataggio CLOUD (account) resta nella Danger Zone (EF reset-progress,
-        // con password): qui è un reset DEV locale, niente chiamate di rete che
-        // ritarderebbero il reload.
-        sessionStorage.removeItem('espooUser');
-        sessionStorage.removeItem('espooPass');
         location.reload();
     }
 
