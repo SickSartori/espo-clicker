@@ -67,4 +67,26 @@ test.describe('Cheatboard hardReset', () => {
     expect(after.totalClicks).toBe(0);
     expect(after.lifetime).toBe('0');
   });
+
+  test('cheat: saveGame NON blocca più il push cloud (classifica si aggiorna in dev)', async ({ page }) => {
+    await bootWithSession(page);
+    await seedRichState(page);
+
+    // Simula una sessione post-cheat e osserva quale ramo prende saveGame.
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      w.cheatNoCloudSync = true; // come dopo un'azione della cheatboard
+      const warns: string[] = [];
+      const orig = console.warn;
+      console.warn = (...a: unknown[]) => { warns.push(a.map(String).join(' ')); (orig as any)(...a); };
+      try { await w.EspooClicker.saveGame(); } finally { console.warn = orig; }
+      return { warns };
+    });
+
+    // FIX: il guard #1 (push-block "Admin Console → solo locale") è rimosso →
+    // saveGame prosegue verso il path cloud. Con l'utente fittizio senza token
+    // arriva al gate auth ([Save SKIP]) invece di corto-circuitare sul cheat.
+    expect(r.warns.some((x) => x.includes('Admin Console attiva')), 'guard #1 ancora presente').toBe(false);
+    expect(r.warns.some((x) => /\[Save (SKIP|✓|✗)/.test(x)), 'saveGame non ha raggiunto il path cloud').toBe(true);
+  });
 });

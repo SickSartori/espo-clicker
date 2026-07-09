@@ -296,15 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window._showLoginForTokenExpiry) window._showLoginForTokenExpiry();
             }
         }
-        if (window.cheatNoCloudSync) {
-            // DEV (Admin Console): lo stato è stato alterato da un cheat/scenario, quindi NON
-            // va sincronizzato col cloud. L'anti-rollback del server (Format > Prestige > Score)
-            // lo rifiuterebbe come "conflict" e il client si riallineerebbe d'autorità al cloud
-            // reale, CANCELLANDO lo scenario caricato (era questo il bug: caricavi l'Endgame e al
-            // primo salvataggio/acquisto tornava lo stato precedente). I cheat non devono nemmeno
-            // finire in leaderboard. Il salvataggio LOCALE (IndexedDB/localStorage) è già avvenuto.
-            console.warn('[Save] Admin Console attiva → salvataggio solo locale (no cloud).');
-        } else if (gameState.user.username && currentUserPassword && currentSaveToken) {
+        // DEV: dopo un cheat i salvataggi sincronizzano COMUNQUE col cloud, così in dev la
+        // classifica riflette lo stato accelerato durante i test (la cheatboard è dev-only →
+        // in prod questo non esiste). Il vecchio guard "solo locale" è stato rimosso: a
+        // impedire il revert dello scenario Endgame ci pensa il guard in _resyncFromCloud
+        // (modals.js), che su cheatNoCloudSync NON si riallinea al cloud. Quindi: cheat che
+        // ALZA → push accettato → classifica aggiornata; scenario che ABBASSA → push rifiutato
+        // dall'anti-rollback ma NIENTE revert. Il save LOCALE è già avvenuto sopra.
+        if (gameState.user.username && currentUserPassword && currentSaveToken) {
             try {
                 let rawScore = new Decimal(gameState.lifetimeScore);
                 if (rawScore.lt(0)) rawScore = new Decimal(0);
