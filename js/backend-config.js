@@ -25,15 +25,15 @@
 
     // >>> AMBIENTE ATTIVO <<< — auto-rilevato dall'URL, così UN SOLO build
     // funziona in entrambe le posizioni senza flip manuale né rebuild:
-    //   - localhost / 127.0.0.1 (MAMP)           → dev
-    //   - path che contiene /test/ (Altervista)  → dev
-    //   - qualsiasi altra cosa (root prod)       → production
+    //   - localhost / 127.0.0.1 / *.local / *.test (MAMP, Laragon) → dev
+    //   - path che contiene /test/ (Altervista)                    → dev
+    //   - qualsiasi altra cosa (root prod)                         → production
     // La cheatboard (dev-only) segue automaticamente: mai attiva in produzione.
     function detectEnv() {
         try {
             var h = location.hostname || '';
             var p = location.pathname || '';
-            if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.slice(-6) === '.local') return 'dev';
+            if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.slice(-6) === '.local' || h.slice(-5) === '.test') return 'dev';
             if (p.indexOf('/test/') !== -1) return 'dev';
         } catch (e) { /* contesto senza location: default prod */ }
         return 'production';
