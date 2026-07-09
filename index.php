@@ -50,7 +50,7 @@ require_once("php/check_version.php");
 
 		<!-- Bundle Core + UI + all styles -->
 		<!-- Cache-bust come il JS bundle: in dev (localhost) filemtime → CSS fresca a
-		     ogni `node build.js` senza bumpare la versione, in dev e in prod (come il bundle V3). -->
+		     ogni `npm run build` (vite) senza bumpare la versione, in dev e in prod (come il bundle V3). -->
 		<?php
 		// $cacheVer resta solo come fallback se il file non esiste (build non ancora eseguita).
 		$stylesVer = assetVer(__DIR__ . '/dist/styles.bundle.min.css', $cacheVer);
@@ -365,7 +365,7 @@ require_once("php/check_version.php");
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
 		<?php
 		// Cache-bust del bundle via filemtime (dev E prod) → ogni rebuild
-		// (node build.js) viene servito fresco senza dover bumpare la versione.
+		// (npm run build = vite build) viene servito fresco senza bumpare la versione.
 		// $cacheVer resta solo come fallback se il file non esiste (build non fatta).
 		$bundleVer = assetVer(__DIR__ . '/dist/game.bundle.min.js', $cacheVer);
 		?>

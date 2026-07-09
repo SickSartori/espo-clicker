@@ -117,7 +117,7 @@ EspoV3 = {
 1. Codice TS nuovo si registra su `window.EspoV3.*`.
 2. Codice JS legacy può chiamare `window.EspoV3.crypto.sha256()` invece delle funzioni inline.
 3. Quando un modulo è completamente migrato (no più chiamate dal legacy) → cancellare il vecchio.
-4. A fine migrazione: cancella `dist/`, droppa `build.js`, `dist-v3/` diventa entry unico.
+4. F7 (fatto): `build.js` eliminato → `vite build` è l'unico build tool (plugin `scripts/vite-plugin-legacy.ts` concatena il legacy in `dist/game.bundle.min.js`); CDN break_infinity sostituita da self-host. Resta F8: rimozione dei fallback legacy morti per snellire il bundle.
 
 ## A11y migliorato
 

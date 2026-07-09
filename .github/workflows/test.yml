@@ -64,7 +64,6 @@ jobs:
             music/songs/**
             package.json
             package-lock.json
-            build.js
             bump-version.js
             vite.config.ts
             tsconfig.json
