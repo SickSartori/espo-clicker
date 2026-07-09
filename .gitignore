@@ -39,6 +39,12 @@ coverage/
 .vite/
 *.tsbuildinfo
 
+# Playwright E2E (output generati, non versionare)
+test-results/
+playwright-report/
+.playwright/
+blob-report/
+
 # Tool interni (non deployare)
 .superpowers
 .claude

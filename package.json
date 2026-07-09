@@ -13,6 +13,8 @@
     "dev:v3": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit",
     "budget": "node scripts/bundle-budget.js",
     "lighthouse": "lhci autorun",
@@ -25,6 +27,7 @@
     "release:major": "node bump-version.js major && npm run build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@types/node": "^25.6.0",
     "esbuild": "^0.24.0",
     "jsdom": "^29.1.1",
