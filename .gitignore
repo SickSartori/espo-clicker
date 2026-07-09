@@ -49,6 +49,19 @@ blob-report/
 .superpowers
 .claude
 
+# Skill agent installate in locale (`skills add`, ripristinabili dal lock) + relativo lock.
+# Sono un aiuto di sviluppo, non fanno parte del gioco.
+.agents/
+skills-lock.json
+
+# Config MCP di progetto: locale per ora. Se vuoi condividerla nel repo (server
+# Supabase per il team) togli questa riga e committa .mcp.json (contiene solo il
+# project_ref pubblico, l'accesso passa dall'OAuth).
+.mcp.json
+
+# Bozza release notes non ancora pubblicata
+docs/release-notes-v3.0-beta2.md
+
 # Credenziali R2 (NON committare mai)
 php/r2-config.php
 presentation
