@@ -66,7 +66,7 @@
         ['Tutti gli obiettivi sbloccati', 'All achievements unlocked'], ['Tutti gli obiettivi bloccati', 'All achievements locked'],
         ['Stato stampato in console (F12)', 'State printed to console (F12)'], ['Salvataggio forzato', 'Forced save'], ['saveGame non disponibile', 'saveGame not available'],
         ['Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.', 'Simulate V2 migration? Creates a fake V1 save and reloads.'],
-        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Cancella tutto senza password e ricarica.', 'Wipes everything without a password and reloads.']
+        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Cancella tutto e ricarica (fa anche logout).', 'Wipes everything and reloads (also logs out).']
     ].sort((a, b) => b[0].length - a[0].length);
     const cbT = (s) => { if (!CB_EN || s == null) return s; for (let i = 0; i < CB_MAP.length; i++) s = s.split(CB_MAP[i][0]).join(CB_MAP[i][1]); return s; };
 
@@ -641,11 +641,20 @@
         gameState.isDeleting = true; location.reload();
     }
     async function hardReset() {
-        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto senza password e ricarica.'))) return;
+        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto e ricarica (fa anche logout).'))) return;
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
         localStorage.removeItem('espotoolClickerSaveV9');
         localStorage.removeItem('espotoolClickerSaveV9_Backup');
+
+        // LOGOUT prima del reload: senza, con una sessione attiva l'auto-login al
+        // reload ripristina tutto dal cloud e il wipe locale è vano ("il reset non
+        // funziona"). Sloggando, la pagina riparte dal login pulito. Il reset del
+        // salvataggio CLOUD (account) resta nella Danger Zone (EF reset-progress,
+        // con password): qui è un reset DEV locale, niente chiamate di rete che
+        // ritarderebbero il reload.
+        sessionStorage.removeItem('espooUser');
+        sessionStorage.removeItem('espooPass');
         location.reload();
     }
 
