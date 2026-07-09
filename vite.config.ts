@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
+import legacyBundle from './scripts/vite-plugin-legacy.js';
 
-// Vite v3 dual-build setup.
-// Output: dist-v3/game.modules.js (ESM) — caricato in parallelo a dist/game.bundle.min.js
-// durante migrazione strangler. Quando tutto migrato, dist/ viene eliminato e build.js droppato.
+// Vite: build UNICO (F7). Produce dist-v3/game.modules.js (ESM, V3) e — tramite
+// il plugin legacyBundle (closeBundle) — dist/game.bundle.min.js (legacy classic
+// script) + CSS legacy + vendor. Ha sostituito il vecchio build.js.
 export default defineConfig({
+  // Il plugin legacy emette il bundle legacy dopo il build V3.
+  plugins: [legacyBundle()],
   root: '.',
   // Base RELATIVA: il bundle vive sotto /dist-v3/ ma il mount point cambia per
   // ambiente (root Altervista vs /test/ vs localhost). Con base assoluta ('/')
