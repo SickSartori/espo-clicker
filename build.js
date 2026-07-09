@@ -140,15 +140,21 @@ const buildCSS = async () => {
 // ============================================================
 // Run
 // ============================================================
-// break_eternity.js: usato da arcade.php, va copiato in dist/ (non è generato dal bundle)
+// break_eternity.js: usato da arcade.php + worker offline.
+// break_infinity.js: motore Decimal del gioco (self-hosted al posto della CDN, F7).
+// Entrambi vanno copiati in dist/ (non generati dal bundle).
 const copyVendor = () => {
-  const src = 'node_modules/break_eternity.js/dist/break_eternity.min.js';
-  const dest = 'dist/break_eternity.min.js';
-  if (!fs.existsSync(src)) {
-    console.error('File mancante:', src, '— esegui `npm ci`');
-    process.exit(1);
+  const vendors = [
+    ['node_modules/break_eternity.js/dist/break_eternity.min.js', 'dist/break_eternity.min.js'],
+    ['node_modules/break_infinity.js/dist/break_infinity.min.js', 'dist/break_infinity.min.js'],
+  ];
+  for (const [src, dest] of vendors) {
+    if (!fs.existsSync(src)) {
+      console.error('File mancante:', src, '— esegui `npm ci`');
+      process.exit(1);
+    }
+    fs.copyFileSync(src, dest);
   }
-  fs.copyFileSync(src, dest);
 };
 
 const run = async () => {

@@ -321,7 +321,8 @@ require_once("php/check_version.php");
 		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
 		<!-- ============================================================ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
+		<?php $biVer = assetVer(__DIR__ . '/dist/break_infinity.min.js', $cacheVer); ?>
+		<script src="dist/break_infinity.min.js?v=<?php echo $biVer; ?>" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
