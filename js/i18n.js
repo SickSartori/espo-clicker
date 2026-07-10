@@ -8,45 +8,11 @@
     'use strict';
     window.gameData = window.gameData || {};
 
-    // Merge profondo dei soli campi presenti nel dizionario (texts: ui/toasts annidati, array inclusi).
-    function deepOverlay(target, src) {
-        if (!target || !src) return;
-        for (const k in src) {
-            const v = src[k];
-            if (v && typeof v === 'object' && !Array.isArray(v)) {
-                if (!target[k] || typeof target[k] !== 'object') target[k] = {};
-                deepOverlay(target[k], v);
-            } else {
-                target[k] = v;
-            }
-        }
-    }
-
-    // Overlay per-id su collezioni del tipo { id: { name, desc, ... } }.
-    // Sovrascrive solo i campi forniti; gli id assenti restano in italiano (default).
-    function overlayById(target, src) {
-        if (!target || !src) return;
-        for (const id in src) {
-            if (!target[id]) continue;
-            const fields = src[id];
-            for (const f in fields) target[id][f] = fields[f];
-        }
-    }
-
-    var COLLECTIONS = ['teams', 'clickUpgrades', 'prestigeUpgrades', 'buildingEnhancements', 'superUpgrades', 'skins', 'achievements', 'events'];
-
+    // F4 strangler → F8: il merge (deepOverlay dei texts + overlayById per-collezione,
+    // array sostituiti interi, id assenti saltati) vive in EspoV3.i18n (puro, testato).
+    // Il fallback legacy inline è stato rimosso: EspoV3 è un requisito hard (vedi save-db.js).
     window.applyLanguage = function (lang) {
-        // F4 strangler: la logica di merge vive in EspoV3.i18n (pura, testata,
-        // stessa semantica: array sostituiti interi, id assenti saltati).
-        // Fallback legacy sotto se la build v3 manca.
-        const v3i18n = window.EspoV3 && window.EspoV3.i18n;
-        if (v3i18n) return v3i18n.applyLanguage(window.gameData, lang);
-
-        const gd = window.gameData;
-        const dict = gd.i18n && gd.i18n[lang];
-        if (!dict) return; // lingua default (it) o dizionario assente → niente da fare
-        if (dict.texts) deepOverlay(gd.texts, dict.texts);
-        COLLECTIONS.forEach(function (t) { if (dict[t]) overlayById(gd[t], dict[t]); });
+        return window.EspoV3.i18n.applyLanguage(window.gameData, lang);
     };
 
     // Applica subito: il bundle gira prima del render (initializeGame in script.js).
