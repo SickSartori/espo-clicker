@@ -228,14 +228,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // SERIALIZZAZIONE resta qui sopra: i Decimal devono serializzarsi con la
         // semantica del main thread. Stessa stringa in ingresso → payload
         // identico byte-per-byte al percorso sync (fallback).
+        // F3 → F8: la compressione (parte costosa, ~50KB+) va nel worker V3. Il
+        // catch ripiega sincrono su LZString se il worker fallisce a RUNTIME
+        // (404/errore): resilienza, non fallback "EspoV3 assente" (rimosso in F8).
         let compressed;
-        const v3workers = window.EspoV3 && window.EspoV3.workers;
-        if (v3workers && v3workers.encodeSaveString) {
-            try { compressed = await v3workers.encodeSaveString(stateJSON); }
-            catch (_) { compressed = LZString.compressToUTF16(stateJSON); }
-        } else {
-            compressed = LZString.compressToUTF16(stateJSON);
-        }
+        try { compressed = await window.EspoV3.workers.encodeSaveString(stateJSON); }
+        catch (_) { compressed = LZString.compressToUTF16(stateJSON); }
 
         // Quota guard: warn se spazio residuo < 2x dimensione save
         if (navigator.storage && navigator.storage.estimate) {
@@ -250,15 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // F3: con V3 attivo scriviamo in IndexedDB lo STESSO payload già
-            // compresso dal worker (unico snapshot per IDB/localStorage/cloud)
-            // invece di far ricomprimere gameState a SaveDB → una compressione
-            // in meno per save e niente drift tra le tre destinazioni.
-            if (window.EspoV3 && window.EspoV3.save) {
-                await window.EspoV3.save.db.write(compressed);
-            } else {
-                await SaveDB.saveToIndexedDB(gameState);
-            }
+            // F3 → F8: scrive in IndexedDB lo STESSO payload già compresso dal
+            // worker (unico snapshot per IDB/localStorage/cloud) invece di far
+            // ricomprimere gameState → una compressione in meno e niente drift.
+            await window.EspoV3.save.db.write(compressed);
         } catch (e) {
             // Filtra errori transienti tipici durante navigate/unload o tab inattivo:
             // AbortError (tx abortita), InvalidStateError (db chiuso) — il save
@@ -427,26 +420,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (modal) modal.classList.add("modal_backdrop_none");
             };
 
-            // F3 strangler: calcolo nel worker V3 (bps come STRINGA: a endgame
-            // supera il range double, come number diventerebbe Infinity). Il
-            // gating (>60s, cap 12h, efficienza) resta qui: al worker passiamo
-            // già i secondi effettivi → stessa formula del legacy
-            // bps.mul(sec).mul(eff). Fallback sync se worker assente/rotto.
-            const v3w = window.EspoV3 && window.EspoV3.workers;
-            if (v3w && v3w.computeOffline) {
-                v3w.computeOffline({
-                    bps: String(bps),
-                    awayMs: effectiveSeconds * 1000,
-                    maxSeconds: maxOfflineSeconds,
-                    efficiency: efficiency,
-                })
-                    .then(res => finish(new Decimal(res.earned)))
-                    .catch(() => finish(bps.mul(effectiveSeconds).mul(efficiency)));
-                return;
-            }
-
-            // Guadagno Potenziale (fallback legacy sync)
-            finish(bps.mul(effectiveSeconds).mul(efficiency));
+            // F3 → F8: calcolo nel worker V3 (bps come STRINGA: a endgame supera
+            // il range double, come number diventerebbe Infinity). Il gating
+            // (>60s, cap 12h, efficienza) resta qui: al worker passiamo già i
+            // secondi effettivi → stessa formula bps.mul(sec).mul(eff). Il .catch
+            // ripiega sul calcolo sincrono se il worker fallisce a runtime.
+            window.EspoV3.workers.computeOffline({
+                bps: String(bps),
+                awayMs: effectiveSeconds * 1000,
+                maxSeconds: maxOfflineSeconds,
+                efficiency: efficiency,
+            })
+                .then(res => finish(new Decimal(res.earned)))
+                .catch(() => finish(bps.mul(effectiveSeconds).mul(efficiency)));
             return;
         }
         if (modal) modal.classList.add("modal_backdrop_none");
@@ -952,9 +938,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --------- 11. INIZIALIZZAZIONE ---------
-    let gameLoopInterval = null;
-    let uiLoopInterval = null;
-    let saveInterval = null;
     let gameRoutinesStarted = false;   // guardia: avvia i cicli UNA sola volta
 
     function startGameRoutines() {
@@ -964,12 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameRoutinesStarted) return;
         gameRoutinesStarted = true;
 
-        // STOP preventivo: Se esistono già intervalli attivi, cancellali
-        if (gameLoopInterval) clearInterval(gameLoopInterval);
-        if (uiLoopInterval) clearInterval(uiLoopInterval);
-        if (saveInterval) clearInterval(saveInterval);
-
-        // GRAFICA (10 FPS) — corpo condiviso tra Scheduler V3 e fallback legacy
+        // GRAFICA (10 FPS)
         const uiTick = () => {
             updateUI();
             if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
@@ -993,38 +971,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------------------------
         };
 
-        // F3b strangler: logica (30hz), grafica (10hz) e auto-save (30s) girano
-        // sullo Scheduler V3 — clock UNICO (niente drift fra timer), catch-up
-        // deterministico a tick fissi, pausa automatica a tab nascosta (il rAF
-        // legacy in background si fermava comunque; in più qui si fermano anche
+        // F3b → F8: logica (30hz), grafica (10hz) e auto-save (30s) girano sullo
+        // Scheduler V3 — clock UNICO (niente drift fra timer), catch-up
+        // deterministico a tick fissi, pausa automatica a tab nascosta (si fermano
         // updateUI/autosave: meno CPU e niente push cloud a vuoto da background).
-        // maxDeltaMs=2000 replica la semantica legacy "gap fino a 2s accreditati
-        // per intero"; oltre ci pensa checkOfflineProgress (modale offline).
-        // Fallback legacy identico all'originale se la build v3 manca.
-        const v3loop = window.EspoV3 && window.EspoV3.loop;
-        if (v3loop && v3loop.Scheduler) {
-            const sched = new v3loop.Scheduler({ maxDeltaMs: 2000 });
-            sched.registerTick((deltaMs) => gameLoop(deltaMs / 1000), 30); // LOGICA (30hz)
-            sched.every(100, uiTick);                                     // GRAFICA (10hz)
-            sched.every(30000, () => saveGame());                         // Auto-save (30s)
-            sched.start();
-            window._espoScheduler = sched; // handle per debug/cheatboard
-        } else {
-            // LOGICA (30 FPS)
-            function startGameLoop() {
-                gameLoop();
-                requestAnimationFrame(startGameLoop);
-            }
-
-            // Avvio
-            requestAnimationFrame(startGameLoop);
-
-            // GRAFICA (10 FPS)
-            uiLoopInterval = setInterval(uiTick, 100);
-
-            // Auto-save (ogni 30s)
-            saveInterval = setInterval(saveGame, 30000);
-        }
+        // maxDeltaMs=2000 replica la semantica "gap fino a 2s accreditati per
+        // intero"; oltre ci pensa checkOfflineProgress (modale offline).
+        const sched = new window.EspoV3.loop.Scheduler({ maxDeltaMs: 2000 });
+        sched.registerTick((deltaMs) => gameLoop(deltaMs / 1000), 30); // LOGICA (30hz)
+        sched.every(100, uiTick);                                       // GRAFICA (10hz)
+        sched.every(30000, () => saveGame());                          // Auto-save (30s)
+        sched.start();
+        window._espoScheduler = sched; // handle per debug/cheatboard
 
 
         scheduleGoldenBug();
@@ -2000,27 +1958,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
                     // prestige/format, e senza questo by-pass il client resterebbe bloccato.
                     if (!(opts && opts.force) && gameState && gameState.lifetimeScore) {
-                        // F2 strangler: delega a EspoV3 la STESSA gerarchia del server
+                        // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
                         // (Format > Prestige > Score, EF Supabase save-progress) → client e
-                        // server decidono allo stesso modo anche nei casi limite in cui
-                        // il solo lifetimeScore darebbe il verdetto opposto (es. cloud
-                        // formattato di recente con lifetime più basso). Fallback: il
-                        // vecchio confronto solo-score se la build v3 manca.
-                        const v3ar = window.EspoV3 && window.EspoV3.save && window.EspoV3.save.antiRollback;
-                        let keepLocal;
-                        if (v3ar) {
-                            keepLocal = v3ar.decide({
-                                totalFormattazioni: gameState.totalFormattazioni || 0,
-                                lifetimePrestigePoints: String(gameState.lifetimePrestigePoints || 0),
-                                lifetimeScore: String(gameState.lifetimeScore || 0),
-                            }, {
-                                totalFormattazioni: cloudState.totalFormattazioni || 0,
-                                lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
-                                lifetimeScore: cloudState.lifetimeScore || 0,
-                            }) !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
-                        } else {
-                            keepLocal = new Decimal(gameState.lifetimeScore).gte(new Decimal(cloudState.lifetimeScore || 0));
-                        }
+                        // server decidono allo stesso modo anche nei casi limite in cui il
+                        // solo lifetimeScore darebbe il verdetto opposto (es. cloud
+                        // formattato di recente con lifetime più basso).
+                        const keepLocal = window.EspoV3.save.antiRollback.decide({
+                            totalFormattazioni: gameState.totalFormattazioni || 0,
+                            lifetimePrestigePoints: String(gameState.lifetimePrestigePoints || 0),
+                            lifetimeScore: String(gameState.lifetimeScore || 0),
+                        }, {
+                            totalFormattazioni: cloudState.totalFormattazioni || 0,
+                            lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
+                            lifetimeScore: cloudState.lifetimeScore || 0,
+                        }) !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
 
                         if (keepLocal) {
                             console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
@@ -2055,26 +2006,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         // iniezione nello stato live, save, UI). Il GATE resta su
                         // version.major: i save legacy non hanno il campo schemaVersion,
                         // quindi lo passiamo esplicito (=1) al framework.
-                        const v3mig = window.EspoV3 && window.EspoV3.migrations;
-                        let savedSkins, currentSkin, masterVol, cloudLifetime, cloudTotal;
-                        if (v3mig) {
-                            const migrated = v3mig.migrate(Object.assign({}, cloudState, { schemaVersion: 1 }));
-                            const m = migrated.state;
-                            savedSkins = m.skins.unlocked;
-                            currentSkin = m.skins.current;
-                            masterVol = m.user.masterVolume;
-                            cloudLifetime = m.lifetimeScore;
-                            cloudTotal = m.totalScore;
-                            cloudIsVeteran = !!(migrated.report && migrated.report.veteranReward);
-                        } else {
-                        // A. (fallback legacy) Salva le uniche cose che vogliamo mantenere dal cloud
-                        savedSkins = cloudState.skins ? cloudState.skins.unlocked : ['default'];
-                        currentSkin = cloudState.skins ? cloudState.skins.current : 'default';
-                        masterVol = (cloudState.user && cloudState.user.masterVolume !== undefined) ? cloudState.user.masterVolume : 0.8;
-                        // Mantieni i contatori storici per non triggerare l'anti-rollback lato server
-                        cloudLifetime = cloudState.lifetimeScore || 0;
-                        cloudTotal = cloudState.totalScore || 0;
-                        }
+                        const migrated = window.EspoV3.migrations.migrate(Object.assign({}, cloudState, { schemaVersion: 1 }));
+                        const m = migrated.state;
+                        const savedSkins = m.skins.unlocked;
+                        const currentSkin = m.skins.current;
+                        const masterVol = m.user.masterVolume;
+                        const cloudLifetime = m.lifetimeScore;
+                        const cloudTotal = m.totalScore;
+                        cloudIsVeteran = !!(migrated.report && migrated.report.veteranReward);
 
                         // B. Reset e genera stato pulito
                         if (typeof resetGameToDefault === 'function') resetGameToDefault();
