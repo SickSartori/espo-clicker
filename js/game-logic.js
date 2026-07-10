@@ -62,37 +62,13 @@ function grantReward(reward) {
 function calculatePrestigeUpgradeCost(upgradeKey) {
     const data = gameData.prestigeUpgrades[upgradeKey];
     const state = gameState.prestigeUpgrades[upgradeKey];
-
-    // F6 strangler (fetta 1): formula in EspoV3.economy col Decimal della PAGINA
-    // iniettato → risultato bit-identico al legacy per costruzione. Fallback sotto.
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) {
-        return v3e.prestigeUpgradeCost(Decimal, {
-            isCounted: !!data.isCounted,
-            baseCost: data.baseCost,
-            count: (state && state.count) || 0,
-            qDiscount: !!(gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased),
-        });
-    }
-
-    if (!data.isCounted) {
-        return data.baseCost;
-    }
-
-    const growthFactor = new Decimal(1.5);
-    const currentLevel = state.count || 0;
-
-    let rawCost = data.baseCost.mul(growthFactor.pow(currentLevel));
-
-    // --- NUOVO: SCONTO QUANTICO (15%) ---
-    if (gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased) {
-        rawCost = rawCost.mul(0.85);
-    }
-
-    if (rawCost.gte(100)) {
-        return new Decimal(rawCost.toPrecision(3));
-    }
-    return rawCost.floor();
+    // F6 -> F8: formula in EspoV3.economy col Decimal della pagina (bit-identico).
+    return window.EspoV3.economy.prestigeUpgradeCost(Decimal, {
+        isCounted: !!data.isCounted,
+        baseCost: data.baseCost,
+        count: (state && state.count) || 0,
+        qDiscount: !!(gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased),
+    });
 }
 
 /**
@@ -100,23 +76,8 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
  * Formula: SogliaBase * (Moltiplicatore ^ Resets)
  */
 function getPrestigeThreshold() {
-    // F6 strangler (fetta 1): vedi calculatePrestigeUpgradeCost
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) return v3e.prestigeThreshold(Decimal, gameState.totalResets || 0);
-
-    const baseThreshold = new Decimal("50000000"); // 50 Milioni
-    const resets = gameState.totalResets || 0;
-
-    // Fattore di crescita (sostituisci il 5 con il valore che hai scelto per ottenere 110M)
-    const growthFactor = new Decimal(3.0);
-
-    // Calcolo grezzo
-    let rawThreshold = baseThreshold.mul(growthFactor.pow(resets));
-
-    // Trasforma in notazione a 3 cifre (es. "1.11e8") e lo riconverte in Decimal
-    let cleanThreshold = new Decimal(rawThreshold.toPrecision(3));
-
-    return cleanThreshold;
+    // F6 -> F8: soglia base * 3^resets in EspoV3.economy (bit-identico).
+    return window.EspoV3.economy.prestigeThreshold(Decimal, gameState.totalResets || 0);
 }
 
 function checkEventConflict(newEventName) {
@@ -926,40 +887,8 @@ function _teamCostInput(teamKey) {
 }
 
 function calculateBulkCost(teamKey, amount) {
-    // F6 strangler (fetta 2): serie geometrica + sconto outsourcing in
-    // EspoV3.economy, col Decimal della pagina → bit-identico. Fallback sotto.
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) return v3e.teamBulkCost(Decimal, _teamCostInput(teamKey), amount);
-
-    const data = gameData.teams[teamKey];
-    const state = gameState.teams[teamKey];
-    let r = 1.05;
-
-    if (window.costScalingBase)
-        r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
-
-    let decR = new Decimal(r);
-    let discountedBaseCost = data.baseCost;
-
-    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
-    if (outsourcingState && outsourcingState.count > 0) {
-        const discount = 1 - (0.05 * outsourcingState.count);
-        discountedBaseCost = discountedBaseCost.mul(Math.max(0.75, discount));
-    }
-
-    let currentSingleCost = discountedBaseCost.mul(decR.pow(state.count)).floor();
-
-    if (amount === 1) {
-        return Decimal.max(1, currentSingleCost);
-    } else {
-        let num = decR.pow(amount).minus(1);
-        let den = decR.minus(1);
-
-        if (decR.eq(1)) return currentSingleCost.mul(amount);
-
-        let totalCost = currentSingleCost.mul(num).div(den).floor();
-        return Decimal.max(amount, totalCost);
-    }
+    // F6 -> F8: serie geometrica + sconto outsourcing in EspoV3.economy (bit-identico).
+    return window.EspoV3.economy.teamBulkCost(Decimal, _teamCostInput(teamKey), amount);
 }
 
 /*function calculateTeamCost(teamKey) {
@@ -967,52 +896,8 @@ function calculateBulkCost(teamKey, amount) {
 }*/
 
 function calculateMaxAffordable(teamKey) {
-    // F6 strangler (fetta 2): formula log + raffinamento in EspoV3.economy
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) return v3e.maxAffordableTeams(Decimal, _teamCostInput(teamKey), gameState.score);
-
-    const state = gameState.teams[teamKey];
-    const data = gameData.teams[teamKey];
-
-    let r = 1.05;
-    if (window.costScalingBase) r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
-    let decR = new Decimal(r);
-
-    let discountedBase = data.baseCost;
-    // Applica lo sconto Outsourcing come fa calculateBulkCost, altrimenti il "MAX"
-    // sovrastima il costo e sottostima le unita' acquistabili (fino a ~25%).
-    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
-    if (outsourcingState && outsourcingState.count > 0) {
-        const discount = 1 - (0.05 * outsourcingState.count);
-        discountedBase = discountedBase.mul(Math.max(0.75, discount));
-    }
-    let currentSingleCost = discountedBase.mul(decR.pow(state.count)).floor();
-
-    if (gameState.score.lt(currentSingleCost)) return 0;
-
-    if (Math.abs(r - 1) < 0.0000001) {
-        return gameState.score.div(currentSingleCost).floor().toNumber();
-    }
-
-    let part1 = gameState.score.mul(decR.minus(1));
-    let part2 = part1.div(currentSingleCost);
-    let part3 = part2.add(1);
-
-    let logNum = new Decimal(part3.ln());
-    let logDen = new Decimal(decR.ln());
-    let maxAmount = logNum.div(logDen).floor();
-
-    if (maxAmount.lt(10000)) {
-        let num = maxAmount.toNumber();
-        let cost = calculateBulkCost(teamKey, num);
-        while (num > 0 && cost.gt(gameState.score)) {
-            num--;
-            cost = calculateBulkCost(teamKey, num);
-        }
-        return num;
-    }
-
-    return maxAmount.toNumber();
+    // F6 -> F8: formula log + raffinamento in EspoV3.economy.
+    return window.EspoV3.economy.maxAffordableTeams(Decimal, _teamCostInput(teamKey), gameState.score);
 }
 
 function buyTeam(teamKey) {
@@ -1046,25 +931,10 @@ function buyTeam(teamKey) {
 // Pop "traguardo" quando un team supera una soglia di unità possedute.
 // Riempie il vuoto del mid-game con un feedback gratificante (toast + flash).
 function checkBuildingMilestone(teamKey, oldCount, newCount) {
-    // F6 strangler (fetta 2): il calcolo della soglia attraversata vive in
-    // EspoV3.economy (puro, testato); qui restano toast e flash DOM. Fallback sotto.
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    let reached;
-    if (v3e) {
-        reached = v3e.milestoneReached(oldCount, newCount);
-    } else {
-        const milestones = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
-        reached = 0;
-        for (const m of milestones) {
-            if (oldCount < m && newCount >= m) reached = m; // tiene il più alto attraversato
-        }
-        // Oltre 1000: un pop ogni 250 unità
-        if (newCount >= 1000) {
-            const step = 250;
-            const newTier = Math.floor(newCount / step) * step;
-            if (newTier > Math.floor(oldCount / step) * step && newTier > reached) reached = newTier;
-        }
-    }
+    // F6 -> F8: la soglia attraversata vive in EspoV3.economy (puro, testato);
+    // qui restano toast e flash DOM.
+    const reached = window.EspoV3.economy.milestoneReached(oldCount, newCount);
+
     if (reached <= 0) return;
 
     const teamData = gameData.teams[teamKey];
@@ -1090,96 +960,39 @@ function applyBonusSoftcap(x) {
 }
 
 function calculatePrestigeBonus() {
-    // F6 strangler (fetta 1): stessa formula in EspoV3.economy, costanti di
-    // bilanciamento iniettate da qui (unica fonte). Fallback legacy sotto.
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) {
-        prestigeBonus = v3e.computePrestigeBonus(Decimal, {
-            lifetimePrestigePoints: gameState.lifetimePrestigePoints,
-            synergyFactor: window.prestigeSynergyFactor,
-            achievementsBonus: achievementsBPSBonus,
-            softcapKnee: PRESTIGE_BONUS_SOFTCAP_KNEE,
-            softcapCoeff: PRESTIGE_BONUS_SOFTCAP_COEFF,
-        });
-        return;
-    }
-
-    let lifetime = gameState.lifetimePrestigePoints;
-    let baseBonus = lifetime.mul(0.01);
-
-    let synergyBonus = window.prestigeSynergyFactor.mul(lifetime);
-
-    // Somma grezza (base + sinergia + achievement), poi softcap per la durabilità.
-    let rawBonus = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
-    let calculatedBonus = new Decimal(1).add(applyBonusSoftcap(rawBonus));
-
-    prestigeBonus = calculatedBonus;
+    // F6 -> F8: formula in EspoV3.economy, costanti di bilanciamento iniettate da qui.
+    prestigeBonus = window.EspoV3.economy.computePrestigeBonus(Decimal, {
+        lifetimePrestigePoints: gameState.lifetimePrestigePoints,
+        synergyFactor: window.prestigeSynergyFactor,
+        achievementsBonus: achievementsBPSBonus,
+        softcapKnee: PRESTIGE_BONUS_SOFTCAP_KNEE,
+        softcapCoeff: PRESTIGE_BONUS_SOFTCAP_COEFF,
+    });
 }
 
 function recalculateCPS() {
-    // F6 strangler (fetta 1): la formula vive in EspoV3.economy; qui restano il
-    // mapping (nell'ORDINE di iterazione legacy: la sequenza di add è contratto
-    // di parità float) e l'assegnazione al global bps. Fallback legacy sotto.
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) {
-        const teams = [];
-        for (const key in gameState.teams) {
-            const teamState = gameState.teams[key];
-            const teamData = gameData.teams[key];
-            if (!teamData || !(teamState.count > 0)) continue;
-            const multipliers = [];
-            for (const upgKey in gameState.buildingEnhancements) {
-                const upgState = gameState.buildingEnhancements[upgKey];
-                const upgData = gameData.buildingEnhancements[upgKey];
-                if (upgState.purchased && upgData && upgData.targetTeam === key) {
-                    multipliers.push(upgData.multiplier);
-                }
-            }
-            teams.push({ cpsPerUnit: teamData.cpsPerUnit, count: teamState.count, multipliers: multipliers });
-        }
-        const autoQA = (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa)
-            ? (gameState.teams.assistenteQa.count || 0) : 0;
-        bps = v3e.computeBps(Decimal, teams, autoQA,
-            [prestigeBonus, clickCPSBonus, bluescreenMultiplier, crunchTimeMultiplier]);
-        return;
-    }
-
-    let baseCPS = new Decimal(0);
-
+    // F6 -> F8: la formula vive in EspoV3.economy; qui resta il mapping (nell'ORDINE
+    // di iterazione legacy: la sequenza di add e contratto di parita float) e
+    // l'assegnazione al global bps.
+    const teams = [];
     for (const key in gameState.teams) {
         const teamState = gameState.teams[key];
-        const teamData = gameData.teams[key]; // Recupera dati statici
-
-        if (!teamData) continue;
-
-        if (teamState.count > 0) {
-            let teamBPS = new Decimal(teamData.cpsPerUnit);
-
-            // Applica potenziamenti al singolo team
-            for (const upgKey in gameState.buildingEnhancements) {
-                const upgState = gameState.buildingEnhancements[upgKey];
-                const upgData = gameData.buildingEnhancements[upgKey];
-
-                if (upgState.purchased && upgData && upgData.targetTeam === key) {
-                    teamBPS = teamBPS.mul(upgData.multiplier);
-                }
+        const teamData = gameData.teams[key];
+        if (!teamData || !(teamState.count > 0)) continue;
+        const multipliers = [];
+        for (const upgKey in gameState.buildingEnhancements) {
+            const upgState = gameState.buildingEnhancements[upgKey];
+            const upgData = gameData.buildingEnhancements[upgKey];
+            if (upgState.purchased && upgData && upgData.targetTeam === key) {
+                multipliers.push(upgData.multiplier);
             }
-
-            // Somma al totale
-            baseCPS = baseCPS.add(teamBPS.mul(teamState.count));
         }
+        teams.push({ cpsPerUnit: teamData.cpsPerUnit, count: teamState.count, multipliers: multipliers });
     }
-
-    // Upgrade "Click Automatico" (flag autoClickQA): aggiunge BPS pari al numero di
-    // Assistenti QA posseduti. Sommato a baseCPS → scala coi moltiplicatori come i team.
-    if (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa) {
-        baseCPS = baseCPS.add(new Decimal(gameState.teams.assistenteQa.count || 0));
-    }
-
-    bps = baseCPS.mul(prestigeBonus)
-        .mul(clickCPSBonus)
-        .mul(bluescreenMultiplier)
-        .mul(crunchTimeMultiplier);
+    const autoQA = (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa)
+        ? (gameState.teams.assistenteQa.count || 0) : 0;
+    bps = window.EspoV3.economy.computeBps(Decimal, teams, autoQA,
+        [prestigeBonus, clickCPSBonus, bluescreenMultiplier, crunchTimeMultiplier]);
 }
 
 // 1. CRUNCH TIME
@@ -1730,65 +1543,29 @@ function stopBluescreenEffect() {
 
 // CALCOLO CENTRALIZZATO DEL VALORE CLICK
 function calculateClickValue() {
-    // F6 strangler (fetta 1): formula in EspoV3.economy, Decimal della pagina
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) {
-        return v3e.computeClickValue(Decimal, {
-            baseClickValue: gameState.baseClickValue,
-            clickGlobalMult: window.clickGlobalMult || 1,
-            prestigeBonus: prestigeBonus,
-            bluescreenMultiplier: bluescreenMultiplier,
-            crunchTimeMultiplier: crunchTimeMultiplier,
-            bionicHand: !!window.gameFlags.bionicHand,
-            divineClick: !!window.gameFlags.divineClick,
-            bps: bps,
-            goldenFrenzyActive: !!(window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd),
-            goldenFrenzyMult: window.goldenFrenzyMult || 1,
-        });
-    }
-
-    let val = gameState.baseClickValue
-        .mul(window.clickGlobalMult || 1)
-        .mul(prestigeBonus)
-        .mul(bluescreenMultiplier)
-        .mul(crunchTimeMultiplier);
-
-    if (window.gameFlags.bionicHand) {
-        let percent = window.gameFlags.divineClick ? 0.02 : 0.01;
-        val = val.add(bps.mul(percent));
-    }
-
-    // Golden Bug "Frenzy": buff temporaneo al valore del click
-    if (window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd) {
-        val = val.mul(window.goldenFrenzyMult || 1);
-    }
-
-    return val;
+    // F6 -> F8: formula in EspoV3.economy, Decimal della pagina.
+    return window.EspoV3.economy.computeClickValue(Decimal, {
+        baseClickValue: gameState.baseClickValue,
+        clickGlobalMult: window.clickGlobalMult || 1,
+        prestigeBonus: prestigeBonus,
+        bluescreenMultiplier: bluescreenMultiplier,
+        crunchTimeMultiplier: crunchTimeMultiplier,
+        bionicHand: !!window.gameFlags.bionicHand,
+        divineClick: !!window.gameFlags.divineClick,
+        bps: bps,
+        goldenFrenzyActive: !!(window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd),
+        goldenFrenzyMult: window.goldenFrenzyMult || 1,
+    });
 }
 function calculateRawClickValue() {
-    // F6 strangler (fetta 1): formula in EspoV3.economy, Decimal della pagina
-    const v3e = window.EspoV3 && window.EspoV3.economy;
-    if (v3e) {
-        return v3e.computeRawClickValue(Decimal, {
-            baseClickValue: gameState.baseClickValue,
-            clickGlobalMult: window.clickGlobalMult || 1,
-            bionicHand: !!window.gameFlags.bionicHand,
-            divineClick: !!window.gameFlags.divineClick,
-            bps: bps,
-        });
-    }
-
-    // Prendi il valore base (Upgrade + Base) e i moltiplicatori passivi interni (es. Doppio Click)
-    let val = gameState.baseClickValue.mul(window.clickGlobalMult || 1);
-
-    // Aggiungi Mano Bionica (Se attiva)
-    if (window.gameFlags.bionicHand) {
-        let percent = 0.01;
-        if (window.gameFlags.divineClick) percent = 0.02;
-        val = val.add(bps.mul(percent));
-    }
-
-    return val;
+    // F6 -> F8: formula in EspoV3.economy, Decimal della pagina.
+    return window.EspoV3.economy.computeRawClickValue(Decimal, {
+        baseClickValue: gameState.baseClickValue,
+        clickGlobalMult: window.clickGlobalMult || 1,
+        bionicHand: !!window.gameFlags.bionicHand,
+        divineClick: !!window.gameFlags.divineClick,
+        bps: bps,
+    });
 }
 
 function resolveBug(event) {
