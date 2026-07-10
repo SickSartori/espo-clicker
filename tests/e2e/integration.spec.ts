@@ -7,6 +7,10 @@ import { bootGame, seedRichState } from './helpers';
  *    reload → loadGame ricostruisce lo stato). Prova F1/F3a nel percorso vero.
  *  - il click REALE sul bug (handler resolveBug bound su #clicker-btn), non la
  *    funzione pura: conta il click e accredita lo score.
+ *  - i percorsi UI delegati (format/i18n/theme/toast/rules) col SOLO ramo V3
+ *    (EspoV3 attivo): è la rete che sostituisce parity.spec quando la F8 rimuove
+ *    i fallback legacy — parity confronta V3 vs legacy, questo verifica che il
+ *    ramo V3 da solo produca l'output atteso.
  */
 test.describe('Integrazione gameplay', () => {
   test('round-trip salvataggio: stato persiste dopo reload (via EspoV3.save)', async ({ page }) => {
@@ -109,5 +113,82 @@ test.describe('Integrazione gameplay', () => {
     expect(r.clickCounted).toBe(true);
     expect(r.scoreIncreased).toBe(true);
     expect(Number(r.gained)).toBeGreaterThan(0);
+  });
+
+  test('percorsi UI delegati (format/i18n/theme/toast/rules) reggono col solo ramo V3', async ({ page }) => {
+    await bootGame(page);
+    await seedRichState(page);
+    // Lo scheduler agganciato implica che i tab/overlay esistono nel DOM.
+    await page.waitForFunction(
+      () => !!document.getElementById('tab-click') && !!document.getElementById('toast-container'),
+      undefined,
+      { timeout: 15_000 },
+    );
+
+    const r = await page.evaluate(() => {
+      const w = window as any;
+      const D = w.Decimal;
+      const out: Record<string, unknown> = {};
+
+      // --- format (F5.1 / F5.3) — output esatto già blindato da parity ---
+      out.fmt999 = w.formatNumber(new D('999'));
+      out.fmt15M = String(w.formatNumber(new D('1500000')));
+      out.fmtFull = w.formatFullNumber(new D('1234567'));
+      out.fmtTime = w.formatTime(90061);
+      out.fmtTimeShort = w.formatTime(1);
+
+      // --- i18n (F4): il merge deve mutare i testi e non lanciare ---
+      let i18nThrew = false, i18nChanged = false;
+      try {
+        const it0 = JSON.stringify(w.gameData.texts);
+        w.applyLanguage('en');
+        const en = JSON.stringify(w.gameData.texts);
+        w.applyLanguage('it'); // ripristina la lingua base per i probe DOM sotto
+        i18nChanged = en !== it0;
+      } catch (_) { i18nThrew = true; }
+      out.i18nThrew = i18nThrew;
+      out.i18nChanged = i18nChanged;
+
+      // --- theme (F5.2): un tema non ancora caricato inietta un <link> ---
+      const sel = 'link[href*="christmas-theme.css"]';
+      const themeBefore = document.querySelectorAll(sel).length;
+      w.loadThemeCSS('christmas-theme.css');
+      out.themeInjected = document.querySelectorAll(sel).length > themeBefore;
+
+      // --- toast (F5.2): compare un .toast nel container (canShow = utente loggato) ---
+      const toastBefore = document.querySelectorAll('#toast-container .toast').length;
+      w.showToast('E2E integration', 'info', 500);
+      out.toastAdded = document.querySelectorAll('#toast-container .toast').length > toastBefore;
+
+      // --- rules DOM (F5.4): girano senza lanciare e lasciano il DOM sano ---
+      let rulesThrew = false;
+      try {
+        w.checkTabNotifications();
+        w.updateTabsVisibility();
+        w.checkOverlayNotifications();
+      } catch (_) { rulesThrew = true; }
+      out.rulesOk = !rulesThrew;
+      out.tabClickClass = document.getElementById('tab-click')?.className ?? null;
+
+      return out;
+    });
+
+    // format: valori esatti (parity li garantiva V3==legacy)
+    expect(r.fmt999).toBe('999');
+    expect(r.fmt15M).toContain('M');
+    expect(r.fmt15M).toContain('1,50');
+    expect(r.fmtFull).toBe('1.234.567');
+    expect(typeof r.fmtTime).toBe('string');
+    expect((r.fmtTime as string).length).toBeGreaterThan(0);
+    expect(r.fmtTime).not.toBe(r.fmtTimeShort);
+    // i18n
+    expect(r.i18nThrew).toBe(false);
+    expect(r.i18nChanged).toBe(true);
+    // theme + toast
+    expect(r.themeInjected).toBe(true);
+    expect(r.toastAdded).toBe(true);
+    // rules DOM
+    expect(r.rulesOk).toBe(true);
+    expect(typeof r.tabClickClass).toBe('string');
   });
 });
