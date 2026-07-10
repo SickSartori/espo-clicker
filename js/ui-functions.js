@@ -790,6 +790,8 @@ function updateSkinsUI() {
         'legendary': 'rgba(241,196,15,0.3)', 'divine': 'rgba(255,238,144,0.4)', 'christmas': 'rgba(231,76,60,0.3)'
     };
 
+    const T = (gameData.texts && gameData.texts.ui) || {};
+
     const skinToAchievement = {};
     for (const achKey in gameData.achievements) {
         const ach = gameData.achievements[achKey];
@@ -846,12 +848,19 @@ function updateSkinsUI() {
                 baseText = gameData.texts.ui.skinLocked;
             }
         }
+        // Le skin ottenibili dallo shop (comprabili, gratis, o dietro formattazione)
+        // rivelano l'arte reale; solo quelle da obiettivo restano "mistero" (hidden.webp).
+        const isFree = isBuyable && data.cost && typeof data.cost.lte === 'function' && data.cost.lte(0);
+        const needsFormat = isBuyable && data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        // NON possedute → SEMPRE silhouette-mistero + lucchetto, anche le comprabili:
+        // così non si spoilera l'arte. Le info stanno nel chip (gratis/prezzo/formatta/obiettivo).
         const imgSource = isUnlocked
             ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
             : 'assets/image/ui/hidden.webp';
 
         skinsArray.push({
-            id: key, data, isUnlocked, isEquipped, isBuyable, canAfford,
+            id: key, data, isUnlocked, isEquipped, isBuyable, canAfford, isFree, needsFormat,
+            isSilhouette: !isUnlocked, showLock: !isUnlocked,
             rarityLabel: rarityMap[data.rarity] || rarityMap.common || 'COMUNE',
             requirement, baseText, imgSource,
             color: rColors[data.rarity] || rColors['common'],
@@ -873,10 +882,17 @@ function updateSkinsUI() {
     }
 
     grid.innerHTML = skinsArray.map(skin => {
-        let stateClass = '';
+        let stateClass;
         if (skin.isEquipped) stateClass = 'equipped';
         else if (skin.isUnlocked) stateClass = 'unlocked';
-        else stateClass = 'locked';
+        else if (skin.isBuyable) {
+            stateClass = 'buyable';
+            if (skin.needsFormat) stateClass += ' format';
+            else if (!skin.canAfford) stateClass += ' noafford';
+        } else {
+            stateClass = 'locked';
+        }
+        if (skin.isSilhouette) stateClass += ' silhouette';
 
         // Mostra sempre il nome skin (anche quando bloccata)
         const nameHtml = skin.data.name || '???';
@@ -895,6 +911,30 @@ function updateSkinsUI() {
             quickEquipHtml = `<button class="skin-equip-toggle" title="Equipaggia subito" onclick="event.stopPropagation();equipSkin('${skin.id}')"><i class="fa-solid fa-circle-play"></i></button>`;
         }
 
+        // Chip di stato (in basso a sx sull'arte): prezzo / gratis / formatta / obiettivo / in uso.
+        // Comunica a colpo d'occhio cosa puoi fare, senza dover aprire il preview.
+        let chipHtml = '';
+        if (skin.isEquipped) {
+            chipHtml = `<div class="skin-status-chip inuse"><i class="fa-solid fa-check"></i>${T.equipped || 'IN USO'}</div>`;
+        } else if (skin.isUnlocked) {
+            chipHtml = '';
+        } else if (skin.isFree) {
+            // Riscatto 1-tap direttamente dalla card (niente preview)
+            chipHtml = `<button class="skin-status-chip free" title="${T.skinRedeemTip || 'Riscatta gratis'}" onclick="event.stopPropagation();buySkin('${skin.id}')"><i class="fa-solid fa-gift"></i>${T.skinFree || 'GRATIS'}</button>`;
+        } else if (skin.needsFormat) {
+            chipHtml = `<div class="skin-status-chip format"><i class="fa-solid fa-rotate"></i>${T.skinFormat || 'FORMATTA'} · ${skin.data.cost}</div>`;
+        } else if (skin.isBuyable) {
+            const affCls = skin.canAfford ? 'afford' : 'noafford';
+            chipHtml = `<div class="skin-status-chip price ${affCls}"><i class="fa-solid fa-flask"></i>${skin.data.cost}</div>`;
+        } else {
+            chipHtml = `<div class="skin-status-chip objective"><i class="fa-solid fa-bullseye"></i>${T.skinObjective || 'OBIETTIVO'}</div>`;
+        }
+
+        // Requisito in hover: solo per le skin da obiettivo (mistero) che hanno un hint.
+        const reqHoverHtml = (!skin.isUnlocked && !skin.isBuyable && skin.requirement)
+            ? `<div class="skin-req-hover"><i class="fa-solid fa-circle-info"></i><span>${skin.requirement}</span></div>`
+            : '';
+
         return `
             <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
                  style="--r-color:${skin.color};--r-glow:${skin.glow};"
@@ -905,8 +945,10 @@ function updateSkinsUI() {
                 <div class="skin-rarity-badge">${skin.rarityLabel}</div>
                 ${quickEquipHtml}
                 <div class="skin-img-wrap">
-                    <img src="${skin.imgSource}" alt="${skin.data.name}" loading="lazy">
-                    ${!skin.isUnlocked ? '<div class="skin-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                    <img src="${skin.imgSource}" alt="${skin.data.name}" loading="lazy"${skin.isSilhouette ? ' class="is-silhouette"' : ''}>
+                    ${skin.showLock ? '<div class="skin-lock-overlay"><i class="fa-solid fa-lock"></i></div>' : ''}
+                    ${chipHtml}
+                    ${reqHoverHtml}
                 </div>
                 <div class="skin-name-display">${nameHtml}</div>
             </div>

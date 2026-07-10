@@ -1250,11 +1250,177 @@ html body #skins-modal .skin-card-v3 .skin-equip-toggle i {
   cursor: pointer;
 }
 
+/* ──────────────────────────────────────────────
+   STATUS CHIP — stato skin a colpo d'occhio sulla card
+   (prezzo / gratis / formatta / obiettivo / in uso)
+   ────────────────────────────────────────────── */
+html body #skins-modal .skin-card-v3 .skin-status-chip {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 12px);
+  padding: 3px 7px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+  box-sizing: border-box;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 200ms ease;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip i {
+  font-size: 0.62rem;
+  flex-shrink: 0;
+}
+
+/* GRATIS — verde pieno, cliccabile (riscatto 1-tap dalla card) */
+html body #skins-modal .skin-card-v3 button.skin-status-chip {
+  cursor: pointer;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.8);
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free:active {
+  transform: scale(0.94);
+}
+
+/* PREZZO — verde se puoi permettertela, rosso se token insufficienti */
+html body #skins-modal .skin-card-v3 .skin-status-chip.price.afford {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.7);
+  color: #4ade9f;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.price.noafford {
+  background: rgba(255, 61, 92, 0.16);
+  border-color: rgba(255, 61, 92, 0.7);
+  color: #ff92a5;
+}
+
+/* FORMATTA — viola (skin post-formattazione) */
+html body #skins-modal .skin-card-v3 .skin-status-chip.format {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.7);
+  color: #cba6f5;
+}
+
+/* OBIETTIVO — ambra (si sblocca giocando, non si compra) */
+html body #skins-modal .skin-card-v3 .skin-status-chip.objective {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.7);
+  color: #fbbf24;
+}
+
+/* IN USO — verde pieno */
+html body #skins-modal .skin-card-v3 .skin-status-chip.inuse {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border-color: #10b981;
+  color: #fff;
+}
+
+/* Buyable: NON desaturata come le locked; dim leggero solo se non affordable */
+html body #skins-modal .skin-card-v3.buyable {
+  opacity: 1;
+  filter: none;
+}
+html body #skins-modal .skin-card-v3.buyable.noafford {
+  opacity: 0.9;
+}
+html body #skins-modal .skin-card-v3.buyable.noafford:hover {
+  opacity: 1;
+}
+
+/* Requisito in hover — slide-up sopra l'arte, solo card OBIETTIVO (desktop) */
+html body #skins-modal .skin-card-v3 .skin-req-hover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 9px 9px;
+  font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif);
+  font-size: 0.64rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #fff;
+  background: linear-gradient(0deg, rgba(6, 10, 20, 0.97) 55%, rgba(6, 10, 20, 0) 100%);
+  transform: translateY(101%);
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms ease;
+  z-index: 6;
+  pointer-events: none;
+}
+html body #skins-modal .skin-card-v3 .skin-req-hover i {
+  color: var(--v3-tier-legendary, #f59e0b);
+  margin-top: 1px;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+}
+html body #skins-modal .skin-card-v3:hover .skin-req-hover,
+html body #skins-modal .skin-card-v3:focus-visible .skin-req-hover {
+  transform: translateY(0);
+  opacity: 1;
+}
+/* Su card OBIETTIVO in hover: piena leggibilità del requisito */
+html body #skins-modal .skin-card-v3.locked:hover {
+  opacity: 1;
+  filter: saturate(0.7);
+}
+
+/* Sagoma-mistero SCURA: multiply toglie il fondo bianco (mostra lo "stage" sotto),
+   la figura resta scura. Lo stage è una luce soffusa dietro la testa così la sagoma
+   nera si stacca dal buio senza formare un "quadrato". */
+html body #skins-modal .skin-card-v3.silhouette .skin-img-wrap {
+  background:
+    radial-gradient(ellipse 72% 64% at 50% 33%,
+      rgba(170, 182, 200, 0.34) 0%,
+      rgba(58, 72, 100, 0.22) 44%,
+      rgba(10, 15, 28, 0.9) 100%) !important;
+}
+html body #skins-modal .skin-card-v3 .skin-img-wrap img.is-silhouette {
+  mix-blend-mode: multiply;
+  opacity: 0.95;
+  object-position: center 14% !important;
+}
+/* Niente più scrim scuro pieno del lucchetto (era il "quadrato più scuro"):
+   resta solo l'icona centrata. */
+html body #skins-modal .skin-card-v3 .skin-lock-overlay {
+  background: transparent;
+  backdrop-filter: none;
+}
+/* Lucchetto ben visibile sopra arte B&N/silhouette (icona sibling → NON sfocata) */
+html body #skins-modal .skin-card-v3 .skin-lock-overlay i {
+  font-size: 2.6rem;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.65);
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .skin-card-v3,
   .skin-action-btn,
   .skin-img-wrap img,
+  .skin-status-chip,
+  .skin-req-hover,
   .skin-card-v3.equipped {
     animation: none !important;
     transition: none !important;

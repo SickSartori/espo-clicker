@@ -203,7 +203,7 @@ require_once("php/check_version.php");
 					</span>
 				</button>
 				<button id="open-skins-btn" class="nav-item" title="<?php echo $labels["navbar_skin"]; ?>">
-					<i class="nav-icon" data-lucide="palette"></i>
+					<i class="nav-icon" data-lucide="shirt"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_skin"]; ?>
 					</span>

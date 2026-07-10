@@ -4,7 +4,7 @@ window.gameData.i18n = window.gameData.i18n || {};
 window.gameData.i18n.en = window.gameData.i18n.en || {};
 window.gameData.i18n.en.skins = {
     default: {
-        name: "Classic",
+        name: "Espòòò",
         desc: "The unmistakable original."
     },
     espobit: {

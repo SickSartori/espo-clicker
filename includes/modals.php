@@ -441,7 +441,7 @@
     <div class="modal-content skins-modal-v3" style="max-width: 1320px; width: 95%;">
         <button class="modal-close-btn">&times;</button>
         <h2>
-            <i data-lucide="palette"></i>
+            <i data-lucide="shirt"></i>
             <?php echo $labels["modals_guardaroba_titolo"]; ?>
         </h2>
 

@@ -813,8 +813,10 @@ function buySkin(skinId) {
     if (gameState.prestigePoints.gte(data.cost)) {
         gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
         gameState.skins.unlocked.push(skinId);
+        const _isFreeSkin = typeof data.cost.lte === 'function' && data.cost.lte(0);
+        const _skinToast = (_isFreeSkin && gameData.texts.toasts.skinClaimed) ? gameData.texts.toasts.skinClaimed : gameData.texts.toasts.skinBought;
         playSound('sound-buy');
-        window.EspooClicker.showToast(gameData.texts.toasts.skinBought.replace('{name}', data.name), 'success');
+        window.EspooClicker.showToast(_skinToast.replace('{name}', data.name), 'success');
         window.EspooClicker.saveGame();
         if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
         if (typeof updateSkinsUI === 'function') updateSkinsUI();

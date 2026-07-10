@@ -1,6 +1,6 @@
 window.gameData.skins = {
     default: {
-        name: "Classico",
+        name: "Espòòò",
         desc: "L'originale inconfondibile.",
         img: "skins/espo.webp",
         imgClick: "skins/espo-click.webp",
