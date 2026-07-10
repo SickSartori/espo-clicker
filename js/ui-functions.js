@@ -33,163 +33,39 @@ function setTextIfChanged(elementId, newText) {
 // ---------  FUNZIONI DI FORMATTORE ---------
 
 function formatNumber(num) {
-    // F5 strangler (fetta 1): formattazione pura in EspoV3.format — parsing via
-    // stringa, nessuna dipendenza Decimal, suffissi iniettati da gameData
-    // (localizzati). Fallback legacy sotto se la build v3 manca.
-    const v3fmt = window.EspoV3 && window.EspoV3.format;
-    if (v3fmt) return v3fmt.formatNumber(num, gameData.texts.format.suffixes);
-
-    if (num === undefined || num === null) return "0";
-
-    let decimal;
-    if (num instanceof Decimal) {
-        decimal = num;
-    } else {
-        try { decimal = new Decimal(num); }
-        catch (e) {
-            try { decimal = new Decimal(String(num)); }
-            catch (e2) { return "0"; }
-        }
-    }
-
-    // Per i numeri piccoli standard
-    if (decimal.abs().lt(1000)) {
-        let val = decimal.toNumber();
-        if (Number.isInteger(val)) return val.toLocaleString('it-IT');
-        return val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // 4. Gestione Suffissi (k, M, B, T...)
-    /*const suffixes = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",				// 0 -> 999Dc
-                      "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",				// 1Ud -> 999Vg
-                      "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",	// 1Uvg -> 999Tg
-                      "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];*/	// 1Utg -> 999Qag
-
-    // Recupero universale e sicuro per Break_infinity
-    let exponent = decimal.exponent !== undefined ? decimal.exponent : decimal.e;
-    let mantissa = decimal.mantissa !== undefined ? decimal.mantissa : decimal.m;
-    let suffixIndex = Math.floor(exponent / 3);
-
-    // 5. Caso: Suffisso Disponibile
-    if (suffixIndex > 0 && suffixIndex < gameData.texts.format.suffixes.length) {
-        let power = exponent % 3;
-        let scaled = mantissa * Math.pow(10, power);
-
-        // Evita che 999.999 diventi "1000,00" forzando lo scatto al suffisso successivo
-        if (scaled >= 999.995) {
-            scaled /= 1000;
-            suffixIndex++;
-        }
-
-        // Ulteriore controllo nel caso il "salto" sondi oltre la lunghezza dell'array
-        if (suffixIndex < gameData.texts.format.suffixes.length)
-            return scaled.toFixed(2).replace('.', ',') + " " + gameData.texts.format.suffixes[suffixIndex];
-    }
-
-    // Se andiamo oltre il Qag, usa la notazione scientifica pulita
-    return decimal.toExponential(2).replace('.', ',');
+    // F5 -> F8: formattazione pura in EspoV3.format (suffissi localizzati da gameData).
+    return window.EspoV3.format.formatNumber(num, gameData.texts.format.suffixes);
 }
 
 function formatFullNumber(num) {
-    // F5 strangler (fetta 1): vedi formatNumber. Il floor V3 è in stringa
-    // (esatto anche oltre 2^53), stessa semantica di Decimal.floor().
-    const v3fmt = window.EspoV3 && window.EspoV3.format;
-    if (v3fmt) return v3fmt.formatFullNumber(num, gameData.texts.format.suffixes);
-
-    if (num === undefined || num === null) return "0";
-    let decimal = new Decimal(num).floor();
-
-    // Evita che la RegExp distrugga la stringa se il numero è in notazione scientifica
-    if (decimal.gte(1e21))
-        return formatNumber(decimal);
-
-    let str = decimal.toFixed(0);
-    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    // F5 -> F8: floor + separatori in EspoV3.format (esatto anche oltre 2^53).
+    return window.EspoV3.format.formatFullNumber(num, gameData.texts.format.suffixes);
 }
 
-// --- LAZY LOAD CSS ---
-const loadedThemes = new Set();
-
-// Callback in coda per i temi il cui CSS è ancora in volo (evita link duplicati)
-const pendingThemeLoads = {};
-
-// F5 strangler (fetta 2): dedup, coalescing e failsafe vivono in EspoV3.theme
-// (puro, testato); qui resta solo l'iniezione DOM del <link>. Fallback legacy
-// nel corpo di loadThemeCSS se la build v3 manca.
-const _v3themeLoader = (window.EspoV3 && window.EspoV3.theme)
-    ? window.EspoV3.theme.createCssLoader({
-        inject: (href, onDone) => {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = href;
-            link.onload = onDone;
-            link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe, meglio di un equip bloccato
-            document.head.appendChild(link);
-        },
-        cacheVer: () => window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now()),
-        onLog: (m) => console.log(m),
-        onWarn: (m, e) => console.warn(m, e),
-    })
-    : null;
+// --- LAZY LOAD CSS (F5 -> F8) ---
+// dedup, coalescing e failsafe vivono in EspoV3.theme (puro, testato); qui resta
+// solo l'iniezione DOM del <link>. Il fallback legacy inline e stato rimosso.
+const _v3themeLoader = window.EspoV3.theme.createCssLoader({
+    inject: (href, onDone) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.onload = onDone;
+        link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe
+        document.head.appendChild(link);
+    },
+    cacheVer: () => window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now()),
+    onLog: (m) => console.log(m),
+    onWarn: (m, e) => console.warn(m, e),
+});
 
 function loadThemeCSS(themeFile, onReady) {
-    if (_v3themeLoader) return _v3themeLoader.load(themeFile, onReady);
-
-    if (!themeFile || loadedThemes.has(themeFile)) {
-        if (onReady) onReady();
-        return;
-    }
-    if (pendingThemeLoads[themeFile]) {
-        if (onReady) pendingThemeLoads[themeFile].push(onReady);
-        return;
-    }
-    pendingThemeLoads[themeFile] = onReady ? [onReady] : [];
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-
-    // Cache buster: preferisce il cacheVer PHP (es. "2.0.0") iniettato in index.php
-    // per matchare le altre risorse e invalidare correttamente quando si bumpa
-    // prodVersion. Fallback a GAME_VERSION.major (granularità grossolana).
-    const v = window.CACHE_VER
-        || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now());
-    link.href = `css/${themeFile}?v=${v}`;
-
-    let done = false;
-    const finish = () => {
-        if (done) return;
-        done = true;
-        loadedThemes.add(themeFile);
-        const cbs = pendingThemeLoads[themeFile] || [];
-        delete pendingThemeLoads[themeFile];
-        cbs.forEach(cb => { try { cb(); } catch (e) { console.warn('[Tema] callback equip fallita', e); } });
-        console.log(`[Tema] Caricato dinamicamente: ${themeFile}`);
-    };
-    link.onload = finish;
-    link.onerror = finish; // CSS irraggiungibile: applica comunque la classe, meglio di un equip bloccato
-    setTimeout(finish, 2500); // failsafe: onload sui <link> non è garantito ovunque
-    document.head.appendChild(link);
+    return _v3themeLoader.load(themeFile, onReady);
 }
 
 function formatTime(totalSeconds) {
-    // F5 strangler (fetta 3): logica pura in EspoV3.format, etichette (d/h/m/s,
-    // localizzate) iniettate da gameData. Fallback legacy sotto.
-    const v3fmt = window.EspoV3 && window.EspoV3.format;
-    if (v3fmt && v3fmt.formatTime) return v3fmt.formatTime(totalSeconds, gameData.texts.format.time);
-
-    totalSeconds = Math.floor(totalSeconds);
-    const days = Math.floor(totalSeconds / (3600 * 24));
-    totalSeconds %= (3600 * 24);
-    const hours = Math.floor(totalSeconds / 3600);
-    totalSeconds %= 3600;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    let timeString = "";
-    if (days > 0) timeString += `${days}${gameData.texts.format.time.d} `;
-    if (hours > 0 || days > 0) timeString += `${hours}${gameData.texts.format.time.h} `;
-    if (minutes > 0 || hours > 0 || days > 0) timeString += `${minutes}${gameData.texts.format.time.m} `;
-    timeString += `${seconds}${gameData.texts.format.time.s}`;
-    return timeString;
+    // F5 -> F8: logica pura in EspoV3.format, etichette (d/h/m/s) da gameData.
+    return window.EspoV3.format.formatTime(totalSeconds, gameData.texts.format.time);
 }
 
 
@@ -1530,59 +1406,19 @@ function showV2MigrationModal(onConfirm) {
     });
 }
 
-// === TOAST SYSTEM v3 — slot-based, no shift on add/remove ===
-const toastQueue = [];                     // Coda messaggi in attesa
-const MAX_VISIBLE_TOASTS = 5;              // Limite slot visibili
-const TOAST_SLOTS = new Array(MAX_VISIBLE_TOASTS).fill(false); // false = libero
-let lastToastMsg = "";
-let lastToastTime = 0;
+// === TOAST SYSTEM v3 — slot-based (F5 -> F8: coda/slot in EspoV3.toast) ===
+const MAX_VISIBLE_TOASTS = 5;
 
-// F5 strangler (fetta 2): gate, anti-spam, coda e slot vivono in EspoV3.toast
-// (puro, testato); qui restano il rendering DOM (createToastDOM) e l'exit
-// animation. Fallback legacy nei corpi di showToast/_dismissToast.
-const _v3toastQueue = (window.EspoV3 && window.EspoV3.toast)
-    ? window.EspoV3.toast.createQueue({
-        maxVisible: MAX_VISIBLE_TOASTS,
-        render: (t, slot) => createToastDOM(t.message, t.type, t.duration, slot),
-        canShow: () => !!sessionStorage.getItem('espooUser'),
-    })
-    : null;
+// gate, anti-spam, coda e slot vivono in EspoV3.toast (puro, testato); qui resta
+// il rendering DOM (createToastDOM) e l'exit animation. Fallback legacy rimosso.
+const _v3toastQueue = window.EspoV3.toast.createQueue({
+    maxVisible: MAX_VISIBLE_TOASTS,
+    render: (t, slot) => createToastDOM(t.message, t.type, t.duration, slot),
+    canShow: () => !!sessionStorage.getItem('espooUser'),
+});
 
 function showToast(message, type = 'info', duration) {
-    if (_v3toastQueue) return _v3toastQueue.push(message, type, duration);
-
-    // Niente toast PRIMA del login: altrimenti compaiono sopra la schermata di accesso.
-    // In certi casi loadGame al boot emette toast su save locale (migrazione/backup/
-    // file corrotto) mentre l'utente è ancora al login: qui li sopprimiamo, tanto
-    // post-login il caricamento cloud è comunque autoritativo. (Gli errori di login
-    // usano alert(), non toast, quindi non si perde nulla di necessario.)
-    if (!sessionStorage.getItem('espooUser')) return;
-
-    // Anti-spam: stesso messaggio entro 2s → skip
-    const now = Date.now();
-    if (message === lastToastMsg && (now - lastToastTime < 2000)) return;
-    lastToastMsg = message;
-    lastToastTime = now;
-
-    toastQueue.push({ message, type, duration: duration || 3500 });
-    processToastQueue();
-}
-
-function _findFreeSlot() {
-    for (let i = 0; i < TOAST_SLOTS.length; i++) {
-        if (!TOAST_SLOTS[i]) return i;
-    }
-    return -1;
-}
-
-function processToastQueue() {
-    if (toastQueue.length === 0) return;
-    const slot = _findFreeSlot();
-    if (slot === -1) return; // tutti slot pieni, aspetta libero
-
-    const data = toastQueue.shift();
-    TOAST_SLOTS[slot] = true;
-    createToastDOM(data.message, data.type, data.duration, slot);
+    return _v3toastQueue.push(message, type, duration);
 }
 
 function createToastDOM(message, type, duration, slot) {
@@ -1622,79 +1458,48 @@ function _dismissToast(toast, slot) {
 
     toast.classList.add('toast-leaving');
 
-    // Libera slot DOPO exit anim (350ms)
+    // Libera lo slot DOPO l'exit animation (~350ms)
     setTimeout(() => {
         if (toast.parentNode) toast.remove();
-        if (_v3toastQueue) { _v3toastQueue.releaseSlot(slot); return; }
-        TOAST_SLOTS[slot] = false;
-        processToastQueue();
+        _v3toastQueue.releaseSlot(slot);
     }, 360);
 }
 
 function checkTabNotifications() {
-    // F5 strangler (fetta 4): i predicati di disponibilità vivono in
-    // EspoV3.rules (puri, big-number via stringa); qui restano il mapping dei
-    // dati, i costi scalati (formule game-logic, F6) e il DOM. Fallback legacy
-    // nei rami else.
-    const v3rules = window.EspoV3 && window.EspoV3.rules;
+    // F5 -> F8: i predicati di disponibilita vivono in EspoV3.rules (puri,
+    // big-number via stringa); qui restano il mapping dei dati, i costi scalati
+    // (formule game-logic, F6) e il DOM.
+    const rules = window.EspoV3.rules;
 
     // Click Tab
-    let clickNotify = false;
-    if (v3rules) {
-        clickNotify = v3rules.anyClickUpgradeAvailable(
-            gameState.totalClicks,
-            String(gameState.score),
-            Object.keys(gameData.clickUpgrades)
-                .filter(k => gameState.clickUpgrades[k])
-                .map(k => ({
-                    purchased: !!gameState.clickUpgrades[k].purchased,
-                    requiredClicks: gameData.clickUpgrades[k].requiredClicks,
-                    cost: gameData.clickUpgrades[k].cost,
-                }))
-        );
-    } else
-    for (const key in gameData.clickUpgrades) {
-        const data = gameData.clickUpgrades[key];
-        const state = gameState.clickUpgrades[key];
-        if (!state) continue;
-        if (!state.purchased && gameState.totalClicks >= data.requiredClicks && gameState.score.gte(data.cost)) {
-            clickNotify = true; break;
-        }
-    }
+    const clickNotify = rules.anyClickUpgradeAvailable(
+        gameState.totalClicks,
+        String(gameState.score),
+        Object.keys(gameData.clickUpgrades)
+            .filter(k => gameState.clickUpgrades[k])
+            .map(k => ({
+                purchased: !!gameState.clickUpgrades[k].purchased,
+                requiredClicks: gameData.clickUpgrades[k].requiredClicks,
+                cost: gameData.clickUpgrades[k].cost,
+            }))
+    );
 
     const tabClick = document.getElementById('tab-click');
     if (tabClick) clickNotify && !tabClick.classList.contains('active') ? tabClick.classList.add('notify') : tabClick.classList.remove('notify');
 
     // Auto Tab
-    let autoNotify = false;
-    if (v3rules) {
-        autoNotify = v3rules.anyEnhancementAvailable(
-            String(gameState.score),
-            Object.keys(gameData.buildingEnhancements)
-                .filter(k => gameState.buildingEnhancements[k] && gameData.buildingEnhancements[k]
-                    && gameState.teams[gameData.buildingEnhancements[k].targetTeam])
-                .map(k => ({
-                    purchased: !!gameState.buildingEnhancements[k].purchased,
-                    requiredCount: gameData.buildingEnhancements[k].requiredCount,
-                    teamCount: gameState.teams[gameData.buildingEnhancements[k].targetTeam].count,
-                    cost: gameData.buildingEnhancements[k].cost,
-                }))
-        );
-    } else
-    for (const key in gameData.buildingEnhancements) {
-        const data = gameData.buildingEnhancements[key];
-        const state = gameState.buildingEnhancements[key];
-
-        // Se manca lo stato o i dati, salta
-        if (!state || !data) continue;
-
-        const targetTeam = gameState.teams[data.targetTeam];
-
-        if (targetTeam && !state.purchased && targetTeam.count >= data.requiredCount && gameState.score.gte(data.cost)) {
-            autoNotify = true;
-            break;
-        }
-    }
+    const autoNotify = rules.anyEnhancementAvailable(
+        String(gameState.score),
+        Object.keys(gameData.buildingEnhancements)
+            .filter(k => gameState.buildingEnhancements[k] && gameData.buildingEnhancements[k]
+                && gameState.teams[gameData.buildingEnhancements[k].targetTeam])
+            .map(k => ({
+                purchased: !!gameState.buildingEnhancements[k].purchased,
+                requiredCount: gameData.buildingEnhancements[k].requiredCount,
+                teamCount: gameState.teams[gameData.buildingEnhancements[k].targetTeam].count,
+                cost: gameData.buildingEnhancements[k].cost,
+            }))
+    );
 
     const tabAuto = document.getElementById('tab-auto');
     if (tabAuto)
@@ -1703,42 +1508,22 @@ function checkTabNotifications() {
     // Prestige Tab
     let prestigeNotify = false;
     if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0)) {
-        if (v3rules) {
-            prestigeNotify = v3rules.anyPrestigeUpgradeAvailable(
-                true, // gate già valutato sopra
-                String(gameState.prestigePoints),
-                Object.keys(gameData.prestigeUpgrades).map(k => {
-                    const d = gameData.prestigeUpgrades[k];
-                    const s = gameState.prestigeUpgrades[k];
-                    return d.isCounted
-                        ? {
-                            counted: true, count: s.count, maxLevel: d.maxLevel,
-                            // costo scalato = formula game-logic (F6): resta qui
-                            cost: String((typeof calculatePrestigeUpgradeCost === 'function')
-                                ? calculatePrestigeUpgradeCost(k) : d.baseCost),
-                        }
-                        : { counted: false, purchased: !!s.purchased, cost: d.baseCost };
-                })
-            );
-        } else
-        for (const key in gameData.prestigeUpgrades) {
-            const data = gameData.prestigeUpgrades[key];
-            const state = gameState.prestigeUpgrades[key];
-
-            if (data.isCounted) {
-                const scaledCost = (typeof calculatePrestigeUpgradeCost === 'function')
-                    ? calculatePrestigeUpgradeCost(key) : data.baseCost;
-                if (!(data.maxLevel && state.count >= data.maxLevel) && gameState.prestigePoints.gte(scaledCost))
-                    prestigeNotify = true;
-            }
-            else {
-                if (!state.purchased && gameState.prestigePoints.gte(data.baseCost))
-                    prestigeNotify = true;
-            }
-
-            if (prestigeNotify)
-                break;
-        }
+        prestigeNotify = rules.anyPrestigeUpgradeAvailable(
+            true, // gate gia valutato sopra
+            String(gameState.prestigePoints),
+            Object.keys(gameData.prestigeUpgrades).map(k => {
+                const d = gameData.prestigeUpgrades[k];
+                const st = gameState.prestigeUpgrades[k];
+                return d.isCounted
+                    ? {
+                        counted: true, count: st.count, maxLevel: d.maxLevel,
+                        // costo scalato = formula game-logic (F6): resta qui
+                        cost: String((typeof calculatePrestigeUpgradeCost === 'function')
+                            ? calculatePrestigeUpgradeCost(k) : d.baseCost),
+                    }
+                    : { counted: false, purchased: !!st.purchased, cost: d.baseCost };
+            })
+        );
     }
 
     let tabPrestige = document.getElementById('tab-prestige');
@@ -1747,16 +1532,11 @@ function checkTabNotifications() {
 
     // --- AGGIORNAMENTO TITOLO BROWSER ---
     let title = "Espòòò Clicker";
-
-    // Controlliamo se abbiamo raggiunto il PRESTIGE_THRESHOLD
     const canPrestige = gameState.totalScore.gte(getPrestigeThreshold());
-
     if (canPrestige)
         title = gameData.texts.ui.promotionReadyTitle + " - " + title;
     else
-        // Mostra i bug correnti
         title = formatNumber(gameState.score) + " " + gameData.texts.ui.bugsTitle + " - " + title;
-
     if (document.title !== title)
         document.title = title;
 }
@@ -1814,30 +1594,12 @@ function calculateVisualBPS() {
         return _cachedVisualBPS;
     }
 
-    // F5 strangler (fetta 4): somma pura in EspoV3.rules (big-number via
-    // stringa); la cache 150ms resta qui sopra. Fallback legacy sotto.
-    const v3rules = window.EspoV3 && window.EspoV3.rules;
-    if (v3rules) {
-        _cachedVisualBPS = new Decimal(v3rules.visualBps(
-            String(bps),
-            clickHistory.map(c => ({ time: c.time, value: String(c.value) })),
-            now
-        ));
-        _lastVisualBPSCalc = now;
-        return _cachedVisualBPS;
-    }
-
-    let active = new Decimal(0);
-    // Itera dalla fine (i click recenti sono in fondo) e esci appena trovi uno vecchio
-    for (let i = clickHistory.length - 1; i >= 0; i--) {
-        if (now - clickHistory[i].time < 1000) {
-            active = active.add(clickHistory[i].value);
-        } else {
-            break; // I precedenti sono ancora più vecchi, esci
-        }
-    }
-
-    _cachedVisualBPS = bps.add(active);
+    // F5 -> F8: somma pura in EspoV3.rules (big-number via stringa); cache 150ms sopra.
+    _cachedVisualBPS = new Decimal(window.EspoV3.rules.visualBps(
+        String(bps),
+        clickHistory.map(c => ({ time: c.time, value: String(c.value) })),
+        now
+    ));
     _lastVisualBPSCalc = now;
     return _cachedVisualBPS;
 }
@@ -2136,35 +1898,24 @@ function updateTabsVisibility() {
     if (tabPrestige) {
         const _pp = gameState.prestigePoints || new Decimal(0);
         const _lpp = gameState.lifetimePrestigePoints || new Decimal(0);
-        // F5 strangler (fetta 4): predicato in EspoV3.rules, fallback legacy inline
-        const _v3r = window.EspoV3 && window.EspoV3.rules;
-        if (_v3r) {
-            if (_v3r.isPrestigeTabVisible({
-                totalResets: gameState.totalResets,
-                prestigePoints: String(_pp),
-                lifetimePrestigePoints: String(_lpp),
-                totalFormattazioni: gameState.totalFormattazioni || 0,
-            })) tabPrestige.classList.remove("tab_promozione");
-        } else {
-        // totalFormattazioni>0 incluso: il format azzera resets/punti ma la promozione
-        // è già sbloccata, quindi il tab deve restare visibile dopo una formattazione.
-        const show = gameState.totalResets > 0 || _pp.gt(0) || _lpp.gt(0) || (gameState.totalFormattazioni || 0) > 0;
-        if (show) tabPrestige.classList.remove("tab_promozione");
-        }
+        // F5 -> F8: predicato in EspoV3.rules
+        if (window.EspoV3.rules.isPrestigeTabVisible({
+            totalResets: gameState.totalResets,
+            prestigePoints: String(_pp),
+            lifetimePrestigePoints: String(_lpp),
+            totalFormattazioni: gameState.totalFormattazioni || 0,
+        })) tabPrestige.classList.remove("tab_promozione");
     }
 
     const tabQuantum = getEl('tab-quantum');
     const headerQbit = getEl('header-qbit-container');
 
     // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
-    const _v3rq = window.EspoV3 && window.EspoV3.rules;
-    const isQuantumUnlocked = _v3rq
-        ? _v3rq.isQuantumUnlocked({
-            totalResets: gameState.totalResets,
-            totalFormattazioni: gameState.totalFormattazioni,
-            qBits: String(gameState.qBits),
-        })
-        : (gameState.totalResets >= 20 || gameState.totalFormattazioni > 0 || gameState.qBits.gt(0));
+    const isQuantumUnlocked = window.EspoV3.rules.isQuantumUnlocked({
+        totalResets: gameState.totalResets,
+        totalFormattazioni: gameState.totalFormattazioni,
+        qBits: String(gameState.qBits),
+    });
 
     if (tabQuantum) {
         tabQuantum.style.display = isQuantumUnlocked ? 'flex' : 'none';
@@ -2511,30 +2262,16 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
 
 function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
-    // F5 strangler (fetta 4): predicato in EspoV3.rules, fallback legacy nel ramo else
-    let hasClaimable = false;
-    const v3rules = window.EspoV3 && window.EspoV3.rules;
-    if (v3rules) {
-        hasClaimable = v3rules.anyClaimableAchievement(
-            Object.keys(gameData.achievements)
-                .filter(k => gameState.achievements[k])
-                .map(k => ({
-                    unlocked: !!gameState.achievements[k].unlocked,
-                    claimed: !!gameState.achievements[k].claimed,
-                    hasReward: !!gameData.achievements[k].reward,
-                }))
-        );
-    } else
-    for (const key in gameData.achievements) {
-        const state = gameState.achievements[key];
-        const data = gameData.achievements[key];
-
-        // Se è sbloccato, non ancora reclamato, e ha un premio definito
-        if (state && state.unlocked && !state.claimed && data.reward) {
-            hasClaimable = true;
-            break;
-        }
-    }
+    // F5 -> F8: predicato in EspoV3.rules
+    const hasClaimable = window.EspoV3.rules.anyClaimableAchievement(
+        Object.keys(gameData.achievements)
+            .filter(k => gameState.achievements[k])
+            .map(k => ({
+                unlocked: !!gameState.achievements[k].unlocked,
+                claimed: !!gameState.achievements[k].claimed,
+                hasReward: !!gameData.achievements[k].reward,
+            }))
+    );
 
     const achBtn = document.getElementById('open-achievements-btn');
     if (achBtn) {
