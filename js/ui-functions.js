@@ -54,6 +54,7 @@ const _v3themeLoader = window.EspoV3.theme.createCssLoader({
         link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe
         document.head.appendChild(link);
     },
+    cssBase: 'styles/themes/', // reorg D1: i temi lazy vivono in styles/themes (ex css/)
     cacheVer: () => window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now()),
     onLog: (m) => console.log(m),
     onWarn: (m, e) => console.warn(m, e),
