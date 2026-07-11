@@ -49,14 +49,7 @@ src/
     client.ts                      # promise wrapper main → worker
   ui/
     theme/
-      tokens.css                   # design tokens (colori, spacing, motion)
-      reset.css                    # modern reset opt-in [data-v3]
-      primitives.css               # v3-card, v3-btn, v3-glass, v3-bento
-      themes/
-        8bit.css                   # token override
-        super.css                  # token override
-        christmas.css              # token override
-      index.css
+      css-loader.ts                # carica/applica i temi runtime (lazy) da styles/themes/
     animations/
       index.ts                     # Motion One wrapper (clickBounce, fadeInUp, ticker)
     particles/
@@ -66,6 +59,8 @@ scripts/
 .lighthouserc.json                 # Lighthouse CI assertions (a11y >= 0.9)
 .github/workflows/quality.yml      # typecheck + test + build + budget on PR
 ```
+
+NB: tutto il CSS (legacy + v3) vive in `styles/` alla radice del repo: `styles/{main.css,mobile.css,base/,themes/,arcade/,v3/}` (reorg filone D, 2026-07-11).
 
 ## Test coverage
 
