@@ -32,7 +32,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
     <!-- Decimal (break_eternity) — locale per reward calc -->
     <script src="dist/break_eternity.min.js?v=<?php echo assetVer(__DIR__ . '/dist/break_eternity.min.js', $cacheVer); ?>"></script>
 
-    <link rel="stylesheet" href="css/arcade-fullscreen.css?v=<?php echo $arcadeAssetVer; ?>">
+    <link rel="stylesheet" href="styles/arcade/arcade-fullscreen.css?v=<?php echo $arcadeAssetVer; ?>">
 </head>
 <body>
 
