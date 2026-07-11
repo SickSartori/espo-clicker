@@ -62,7 +62,8 @@ Radice: solo config + entry (`index.php`, `package.json`, `vite.config.ts`, `tsc
 | `js/version-config.js` | `src/lib/version.ts` | |
 | `js/error-handler.js` | `src/app/error-handler.ts` | |
 | `js/script.js` | `src/app/{boot,save-flow,cloud-sync,offline}.ts` | **per ultimo** (god-object) |
-| `css/*` + `src/ui/theme/*` | `styles/{base,themes,mobile}` | **filone D**, unifica + deduplica |
+| `css/*` (22 file: entry main/mobile, 15 partial, 3 temi lazy, arcade) | `styles/{main.css,mobile.css,base/,themes/,arcade/}` | **filone D** |
+| `src/ui/theme/*.css` + `src/ui/desktop-fixes/` (20) + `src/ui/mobile-fixes/` (5) + `src/ui/icons/lucide-style.css` | `styles/v3/{,themes/,desktop/,mobile/}` | **filone D**; i temi legacy (completi, lazy) e v3 (override token) sono meccanismi DIVERSI → si co-locano, NON si cancellano |
 | `assets/image|sounds|video` | `assets/{img,audio,video}` | **filone E** |
 | periferici (`cheatboard`, `podio`, `social`, `arcade-loader`, `intro`, `esposion`) | `legacy/` | fuori scope, invariati |
 
@@ -75,7 +76,7 @@ Ordine per dipendenza e rischio. Ogni filone è un **ciclo suo** (spec breve se 
 - **A — Fondamenta stato**: `gamestate.js` → `src/state/store.ts` + `interop.ts`. Sblocca tutto il resto.
 - **B — Dati**: `data/` + `data-en/` → `src/data/` (moduli che esportano i dati). Lo store espone `gameData`.
 - **C — Logica & UI (de-monolite + unificazione JS)**: `game-logic` → `src/game/*`; `ui-functions` → `src/ui/*`; `modals` → `src/ui/modals/*`; `save-db`/`i18n`/`asset-manager` → `src/state`+`src/lib`; **`script.js` → `src/app/` per ultimo**. È il filone più grosso: a sotto-fette per file/dominio.
-- **D — CSS unificato**: `css/` + `src/ui/theme/` → `styles/{base,themes,mobile}`, rimozione temi duplicati. Aggiornare `loadThemeCSS` (path), build CSS nel plugin/Vite, `sw.js`.
+- **D — CSS unificato** (*anticipato: primo filone in esecuzione, è l'unico indipendente dai filoni JS — decisione utente 2026-07-11*): `css/` + tutto il CSS sotto `src/ui/` → `styles/` (layout sopra). Move-only: nessuna riscrittura di regole; i tre bundle di output devono restare identici. Aggiornare `loadThemeCSS` (cssBase), `arcade.php`, build CSS nel plugin/Vite, import in `main.ts`/`index.css`, `sw.js` (bump versione cache). Piano: `docs/superpowers/plans/2026-07-11-css-reorg-filone-d.md`.
 - **E — Asset + mappa**: `assets/` → `img/audio/video`; scrivere **`ARCHITECTURE.md`** (mappa cartelle + grafo dipendenze principali + "dove aggiungo una feature X").
 - **Chiusura**: rimozione `interop.ts` + concat legacy del core → un solo bundle ESM per il core; i periferici restano in un mini-bundle classic separato.
 
@@ -143,7 +144,7 @@ export function installInterop() {
 
 ## 9. Timing & sequenza
 
-Avvio **dopo** la validazione del deploy test di F8. Ordine: **A → B → C (a sotto-fette) → D → E → chiusura**. Indipendente dalla migrazione hosting Cloudflare — anzi la semplifica (un bundle ESM è più facile da servire su Pages). Non bloccante: procedibile a fette nel tempo.
+Avvio **dopo** la validazione del deploy test di F8. Ordine di esecuzione: **D (anticipato, indipendente) → A → B → C (a sotto-fette) → E → chiusura**. Indipendente dalla migrazione hosting Cloudflare — anzi la semplifica (un bundle ESM è più facile da servire su Pages). Non bloccante: procedibile a fette nel tempo.
 
 ## 10. Definizione di "fatto"
 

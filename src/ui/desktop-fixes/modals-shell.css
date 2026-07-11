@@ -213,7 +213,7 @@
   }
 
   /* ── Buttons inside modals: cyan/accent ── */
-  html body .modal-backdrop:not(#arcade-modal) > .modal-content button:not(.modal-close-btn):not(.skin-card-v3 *):not(.skin-action-btn):not(.skin-filter-btn) {
+  html body .modal-backdrop:not(#arcade-modal) > .modal-content button:not(.modal-close-btn):not(.skin-card-v3 *):not(.skin-filter-btn) {
     font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
     letter-spacing: 1px;
     text-transform: uppercase;

@@ -51,8 +51,7 @@ body {
 button,
 .buy-btn,
 #clicker-btn,
-.mobile-nav-btn,
-.carousel-item {
+.mobile-nav-btn {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
@@ -72,21 +71,6 @@ button,
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
-}
-
-.carousel-item {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform-style: preserve-3d;
-    transform-style: preserve-3d;
-    will-change: transform, opacity, filter;
-    transform: translateZ(0);
-}
-
-.carousel-item img {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    transform: translateZ(0);
 }
 
 .click-feedback,

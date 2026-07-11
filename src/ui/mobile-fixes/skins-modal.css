@@ -115,95 +115,14 @@
     font-size: 0.78rem;
   }
 
-  /* Toggle Vista Card/Carosello: nascosto su mobile, forziamo Card grid */
-  html body #skins-modal .skins-toggle-wrapper {
-    display: none !important;
-  }
-
   /* -------------------------------------------------------------------
-     4. Forza vista CARD GRID su mobile (no carousel 3D).
-     Un solo skin alla volta = navigazione lenta su touch.
-     Grid 3-col scroll verticale = vista d'insieme.
+     4. Vista CARD GRID su mobile — la griglia unificata
+     (#skins-grid-modern.skins-unified-grid) è ora gestita interamente da
+     skins-modal-v3.css. Resta solo questo vecchio hide, oggi INERTE:
+     sovrascritto dal display:grid !important a specificità maggiore del v3.
      ------------------------------------------------------------------- */
   html body #skins-modal #skins-grid-modern {
     display: none !important;
-  }
-
-  html body #skins-modal #skins-grid-legacy {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 10px;
-    padding: 12px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    flex: 1 1 auto;
-    min-height: 0;
-    /* spazio per CTA equipaggia sticky bottom */
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  }
-
-  /* Cards skin più compatte */
-  html body #skins-modal #skins-grid-legacy .skin-card,
-  html body #skins-modal #skins-grid-legacy [class*="skin-item"] {
-    border-radius: 12px;
-    padding: 8px;
-    min-height: 0;
-  }
-
-  html body #skins-modal #skins-grid-legacy .skin-card img,
-  html body #skins-modal #skins-grid-legacy [class*="skin-item"] img {
-    border-radius: 10px;
-    aspect-ratio: 1;
-    object-fit: cover;
-    width: 100%;
-    height: auto;
-  }
-
-  /* -------------------------------------------------------------------
-     5. Equipped indicator — bordo verde + check angolo.
-     ------------------------------------------------------------------- */
-  html body #skins-modal .skin-card.equipped,
-  html body #skins-modal [class*="skin-item"].equipped {
-    border: 2px solid #2ecc71 !important;
-    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
-    position: relative;
-  }
-
-  html body #skins-modal .skin-card.equipped::before,
-  html body #skins-modal [class*="skin-item"].equipped::before {
-    content: '\2713'; /* ✓ */
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #2ecc71;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Locked overlay */
-  html body #skins-modal .skin-card.locked,
-  html body #skins-modal [class*="skin-item"].locked {
-    opacity: 0.55;
-    filter: grayscale(0.6);
-  }
-}
-
-/* =====================================================================
-   Estensione: tablet portrait — 4 colonne invece di auto-fit.
-   ===================================================================== */
-@media (min-width: 480px) and (max-width: 768px) {
-  html body #skins-modal #skins-grid-legacy {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 
