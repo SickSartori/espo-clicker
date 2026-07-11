@@ -79,9 +79,9 @@ async function buildLegacyCSS(isDev: boolean): Promise<void> {
     external: ['*.webp', '*.png', '*.svg', '*.woff2', '*.woff', '*.ttf', 'assets/*'],
     logLevel: 'silent' as const,
   };
-  await esbuild.build({ entryPoints: ['css/main.css'], outfile: 'dist/styles.bundle.min.css', ...shared });
-  const mobileCss = fs.readFileSync('css/mobile.css', 'utf8');
-  await esbuild.build({ stdin: { contents: mobileCss, loader: 'css', resolveDir: 'css' }, outfile: 'dist/styles.mobile.min.css', ...shared });
+  await esbuild.build({ entryPoints: ['styles/main.css'], outfile: 'dist/styles.bundle.min.css', ...shared });
+  const mobileCss = fs.readFileSync('styles/mobile.css', 'utf8');
+  await esbuild.build({ stdin: { contents: mobileCss, loader: 'css', resolveDir: 'styles' }, outfile: 'dist/styles.mobile.min.css', ...shared });
 }
 
 function copyVendors(): void {
