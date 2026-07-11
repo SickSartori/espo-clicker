@@ -21,10 +21,9 @@
   }
 })();
 
-async function saveToIndexedDB(data) {
-  const v3 = window.EspoV3.save;
-  return v3.db.write(v3.encode(data)); // reject su errore tx (contratto invariato)
-}
+// NB: nessun saveToIndexedDB qui — dalla F8 il save scrive direttamente
+// `window.EspoV3.save.db.write(payload)` in script.js (payload già compresso dal
+// worker, unico snapshot per IDB/localStorage/cloud). SaveDB espone solo load/clear.
 
 async function loadFromIndexedDB() {
   const v3 = window.EspoV3.save;
@@ -37,4 +36,4 @@ async function clearIndexedDB() {
 }
 
 // Esposizione globale (concatenazione, no ES modules)
-window.SaveDB = { saveToIndexedDB, loadFromIndexedDB, clearIndexedDB };
+window.SaveDB = { loadFromIndexedDB, clearIndexedDB };

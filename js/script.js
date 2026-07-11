@@ -223,14 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
         const stateJSON = JSON.stringify(gameState);
-        // F3 strangler: la compressione (la parte costosa, ~50KB+) va nel worker
-        // V3 quando c'è — il main thread non si impunta durante l'autosave. La
-        // SERIALIZZAZIONE resta qui sopra: i Decimal devono serializzarsi con la
-        // semantica del main thread. Stessa stringa in ingresso → payload
-        // identico byte-per-byte al percorso sync (fallback).
-        // F3 → F8: la compressione (parte costosa, ~50KB+) va nel worker V3. Il
-        // catch ripiega sincrono su LZString se il worker fallisce a RUNTIME
-        // (404/errore): resilienza, non fallback "EspoV3 assente" (rimosso in F8).
+        // F3 → F8: la compressione (parte costosa, ~50KB+) va nel worker V3 così il
+        // main thread non si impunta durante l'autosave. La SERIALIZZAZIONE resta
+        // qui sopra (i Decimal vanno serializzati con la semantica del main thread).
+        // Il catch ripiega sincrono su LZString se il worker fallisce a RUNTIME
+        // (404/errore): resilienza runtime, non fallback "EspoV3 assente" (via in F8).
         let compressed;
         try { compressed = await window.EspoV3.workers.encodeSaveString(stateJSON); }
         catch (_) { compressed = LZString.compressToUTF16(stateJSON); }
@@ -847,16 +844,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFrameTime = Date.now();
     let lastSlowTick = 0;
 
-    // --------- LOOP DI GIOCO CORRETTO ---------
-    // forcedDtSeconds: F3b — quando la logica gira sullo Scheduler V3 il delta
-    // arriva da lì (tick fissi da 1/30s, catch-up deterministico fino a 2s,
-    // vedi startGameRoutines). Senza argomento = percorso legacy rAF.
+    // --------- LOOP DI GIOCO ---------
+    // forcedDtSeconds: il delta arriva dallo Scheduler V3 (tick fissi 1/30s,
+    // catch-up deterministico fino a 2s, vedi startGameRoutines). Il ramo else
+    // (auto-timing dal clock, con clamp >2s) è difensivo: oggi lo scheduler passa
+    // sempre il dt.
     function gameLoop(forcedDtSeconds) {
         const now = Date.now();
         let deltaTime;
         if (typeof forcedDtSeconds === 'number') {
             deltaTime = forcedDtSeconds;
-            lastFrameTime = now; // coerente se si tornasse al fallback legacy
+            lastFrameTime = now; // tiene lastFrameTime allineato per il ramo difensivo
         } else {
             deltaTime = (now - lastFrameTime) / 1000;
             lastFrameTime = now;
