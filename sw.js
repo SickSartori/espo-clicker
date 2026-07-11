@@ -1,5 +1,5 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v3.0.14
+// ESPO CLICKER - Service Worker v3.0.15
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
