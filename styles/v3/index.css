@@ -8,39 +8,39 @@
 @import './tokens-v3.css';
 @import './reset.css';
 @import './primitives.css';
-@import '../icons/lucide-style.css';
+@import './lucide.css';
 @import './themes/8bit.css';
 @import './themes/super.css';
 @import './themes/christmas.css';
 
 /* Mobile fixes — override su mobile.css legacy */
-@import '../mobile-fixes/modal-close.css';
-@import '../mobile-fixes/skins-modal.css';
-@import '../mobile-fixes/achievements-modal.css';
-@import '../mobile-fixes/score-header.css';
-@import '../mobile-fixes/clicker-button.css';
+@import './mobile/modal-close.css';
+@import './mobile/skins-modal.css';
+@import './mobile/achievements-modal.css';
+@import './mobile/score-header.css';
+@import './mobile/clicker-button.css';
 
 /* Desktop refresh — HUD/FUI cyberpunk-tech identity (>= 769px) */
-@import '../desktop-fixes/background.css';
-@import '../desktop-fixes/layout-shell.css';
-@import '../desktop-fixes/skin-ambient.css';
-@import '../desktop-fixes/signature-effects.css';
-@import '../desktop-fixes/header-navbar.css';
-@import '../desktop-fixes/score-header.css';
-@import '../desktop-fixes/clicker-button.css';
-@import '../desktop-fixes/clicker-3d.css';
-@import '../desktop-fixes/tabs.css';
-@import '../desktop-fixes/cards.css';
-@import '../desktop-fixes/skins-modal-v3.css';
-@import '../desktop-fixes/modals-shell.css';
-@import '../desktop-fixes/modals-content-v3.css';
-@import '../desktop-fixes/golden-bug-v3.css';
-@import '../desktop-fixes/toasts-v3.css';
-@import '../desktop-fixes/fury-flames-v3.css';
-@import '../desktop-fixes/login-modal-v3.css';
-@import '../desktop-fixes/settings-modal-v3.css';
-@import '../desktop-fixes/account-modal-v3.css';
-@import '../desktop-fixes/super-theme-v3.css';
+@import './desktop/background.css';
+@import './desktop/layout-shell.css';
+@import './desktop/skin-ambient.css';
+@import './desktop/signature-effects.css';
+@import './desktop/header-navbar.css';
+@import './desktop/score-header.css';
+@import './desktop/clicker-button.css';
+@import './desktop/clicker-3d.css';
+@import './desktop/tabs.css';
+@import './desktop/cards.css';
+@import './desktop/skins-modal-v3.css';
+@import './desktop/modals-shell.css';
+@import './desktop/modals-content-v3.css';
+@import './desktop/golden-bug-v3.css';
+@import './desktop/toasts-v3.css';
+@import './desktop/fury-flames-v3.css';
+@import './desktop/login-modal-v3.css';
+@import './desktop/settings-modal-v3.css';
+@import './desktop/account-modal-v3.css';
+@import './desktop/super-theme-v3.css';
 
 /* =====================================================================
    Stili globali a11y critici (non scoped [data-v3]).
