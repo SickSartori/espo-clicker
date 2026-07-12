@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { store, STORE_KEYS } from './store';
 
 describe('state/store (reorg filone A)', () => {
-  it('espone esattamente le 11 chiavi condivise storiche di gamestate.js', () => {
+  it('espone le 12 chiavi condivise (11 runtime storiche + gameData, filone B)', () => {
     expect([...STORE_KEYS].sort()).toEqual(
       [
         'achievementsBPSBonus', 'bluescreenMultiplier', 'bps', 'clickCPSBonus',
         'clickHistory', 'crunchTimeCooldownEnd', 'crunchTimeEndTime',
-        'crunchTimeMultiplier', 'gameState', 'isBluescreenActive', 'prestigeBonus',
+        'crunchTimeMultiplier', 'gameData', 'gameState', 'isBluescreenActive', 'prestigeBonus',
       ].sort(),
     );
   });

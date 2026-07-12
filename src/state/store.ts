@@ -18,6 +18,8 @@ const D: any =
 
 export interface SharedStore {
   gameState: Record<string, any> | undefined;
+  /** Dati di gioco (filone B): riferimento all'oggetto di src/data — via accessor = window.gameData. */
+  gameData: Record<string, any> | undefined;
   bps: any;
   prestigeBonus: any;
   clickCPSBonus: any;
@@ -32,6 +34,7 @@ export interface SharedStore {
 
 export const store: SharedStore = {
   gameState: undefined,
+  gameData: undefined,
   bps: new D(0),
   prestigeBonus: new D(1),
   clickCPSBonus: new D(1),
@@ -44,5 +47,5 @@ export const store: SharedStore = {
   achievementsBPSBonus: new D(0),
 };
 
-/** Le 11 chiavi condivise (contratto con interop e col legacy). */
+/** Le chiavi condivise (contratto con interop e col legacy): 11 runtime + gameData. */
 export const STORE_KEYS = Object.keys(store) as Array<keyof SharedStore>;

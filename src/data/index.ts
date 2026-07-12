@@ -16,6 +16,7 @@ import { achievements } from './achievements';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
 import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
+import { store } from '../state/store';
 
 export const gameData: Record<string, any> = {
   texts,
@@ -38,6 +39,9 @@ export function installGameData(): void {
   (window as any).isChristmasSeason = isChristmasSeason;
   (window as any).isSeasonActive = isSeasonActive;
   (window as any).IS_XMAS_TIME = IS_XMAS_TIME;
+  // store.gameData = stessa referenza; l'assegnazione window sotto passa
+  // dall'accessor interop (12ª chiave) → idempotente, ordine-indipendente.
+  store.gameData = gameData;
   (window as any).gameData = gameData;
   (window as any).ASSET_PACKAGES = ASSET_PACKAGES;
 }
