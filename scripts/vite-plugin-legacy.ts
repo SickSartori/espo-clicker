@@ -15,9 +15,6 @@ import type { Plugin } from 'vite';
 // ============================================================
 const JS_FILES: readonly string[] = [
   'node_modules/lz-string/libs/lz-string.min.js',
-  'js/save-db.js',
-  'js/asset-manager.js',
-  'js/i18n.js',
   'js/data/gamestate.js',
   'js/ui-functions.js',
   'js/game-logic.js',

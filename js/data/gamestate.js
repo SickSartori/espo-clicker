@@ -1,3 +1,17 @@
+// Guard di contratto (ex js/save-db.js, F8 → qui dal reorg C-thin): la build
+// V3 è un requisito HARD. gamestate.js è ora il PRIMO file bundlato che
+// dipende da EspoV3/gameData: segnala UNA volta e in chiaro l'assenza dei
+// moduli invece di far esplodere TypeError criptici sparsi. Non lancia.
+(function () {
+  var req = ['save', 'economy', 'prestige', 'events', 'format', 'theme',
+    'toast', 'rules', 'i18n', 'assets', 'workers', 'loop', 'migrations', 'state'];
+  var missing = !window.EspoV3 ? ['(nessun modulo)'] : req.filter(function (k) { return !window.EspoV3[k]; });
+  if (missing.length) {
+    console.error('[EspoV3] build V3 mancante o incompleta — moduli assenti: ' +
+      missing.join(', ') + '. Il legacy non ha fallback: esegui `npm run build`.');
+  }
+})();
+
 // --- STATO GLOBALE CONDIVISO (reorg filone A, 2026-07-12) ---
 // Le 11 variabili runtime (gameState, bps, prestigeBonus, clickCPSBonus,
 // isBluescreenActive, bluescreenMultiplier, crunchTimeMultiplier,

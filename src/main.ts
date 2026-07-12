@@ -73,6 +73,9 @@ import { installGameData } from './data/index';
 import { installVersion } from './lib/version';
 import { installErrorHandler } from './app/error-handler';
 import { installBackend } from './lib/backend-config';
+import { installSaveDb } from './state/save-db';
+import { installI18n } from './lib/i18n';
+import { installAssetManager } from './lib/asset-manager';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
@@ -92,6 +95,9 @@ installGameData();
 installVersion();
 installErrorHandler();
 installBackend();
+installSaveDb();
+installI18n();
+installAssetManager();
 
 // Bind 3D parallax sul clicker (auto-skip se reduced-motion o mobile)
 autoInitClickerParallax();
