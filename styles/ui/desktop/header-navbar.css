@@ -110,6 +110,22 @@
     transform: translateY(0) scale(0.97);
   }
 
+  /* Stato FORMATTA! — viola quantico, vince sul verde base */
+  html body #game-navbar #open-prestige-hub-btn.format-ready {
+    background: linear-gradient(135deg, #9b59b6 0%, #71368a 100%);
+    border: 1px solid rgba(210, 180, 222, 0.7);
+    box-shadow:
+      0 4px 16px rgba(155, 89, 182, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  html body #game-navbar #open-prestige-hub-btn.format-ready:hover {
+    box-shadow:
+      0 8px 24px rgba(155, 89, 182, 0.65),
+      0 0 32px rgba(155, 89, 182, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
   @keyframes v3-prestige-shimmer {
     0%   { transform: translateX(-100%); }
     50%  { transform: translateX(150%); }

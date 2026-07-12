@@ -228,6 +228,20 @@
         box-shadow: 0 0 15px #2ecc71;
     }
 
+    /* Stato "Formatta": il base mobile è GIÀ viola → si distingue con
+       bordo bianco + glow pulsante forte (lo span testo è nascosto come
+       per promotion-ready: nel quadrato 44px resta l'icona meteora) */
+    .nav-special-btn.format-ready span {
+        display: none;
+    }
+
+    .nav-special-btn.format-ready {
+        background: linear-gradient(135deg, #a55eea, #8e44ad);
+        border-color: #fff;
+        box-shadow: 0 0 15px #9b59b6;
+        animation: formatGlow 1.5s infinite alternate;
+    }
+
     body:not(.mobile-view-center) #golden-bug.visible {
         display: none;
     }

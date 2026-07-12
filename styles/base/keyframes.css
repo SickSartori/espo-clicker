@@ -291,6 +291,18 @@
     }
 }
 
+@keyframes formatGlow {
+    from {
+        box-shadow: 0 0 5px rgba(155, 89, 182, 0.45);
+        transform: scale(1);
+    }
+
+    to {
+        box-shadow: 0 0 20px rgba(155, 89, 182, 0.9);
+        transform: scale(1.05);
+    }
+}
+
 @keyframes risingHeat {
     0% {
         background-position: 0% 100%;

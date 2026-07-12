@@ -2023,21 +2023,36 @@ function updatePrestigeVisuals() {
         label = prestigeBtn.querySelector('span');
     }
 
-    if (canPrestige) {
+    // Formattazione eseguibile: priorità massima (l'azione più grossa vince).
+    // resets >= 20 implica Quantum sbloccato (ramo OR della regola).
+    const canFormat = resets >= 20;
+
+    if (canFormat) {
+        // STATO: FORMATTA! (viola)
+        if (!prestigeBtn.classList.contains('format-ready')) {
+            prestigeBtn.classList.remove('promotion-ready');
+            prestigeBtn.classList.add('format-ready');
+            prestigeBtn.style.cursor = "pointer";
+            icon.className = 'nav-icon fa-solid fa-meteor';
+            label.textContent = gameData.texts.ui.formatReady;
+        }
+    } else if (canPrestige) {
         // STATO: PRONTA!
-        if (!prestigeBtn.classList.contains('promotion-ready')) {
+        if (!prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
+            prestigeBtn.classList.remove('format-ready');
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
             icon.className = 'nav-icon fa-solid fa-circle-check';
             label.textContent = gameData.texts.ui.promoReady;
         }
     } else {
-        // STATO: IN PROGRESS (Percentuale)
-        if (prestigeBtn.classList.contains('promotion-ready')) {
+        // STATO: IN PROGRESS (percentuale) — il click apre comunque l'hub
+        if (prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
             prestigeBtn.classList.remove('promotion-ready');
-            prestigeBtn.style.cursor = "default"; // Non cliccabile se non pronta
+            prestigeBtn.classList.remove('format-ready');
             icon.className = 'nav-icon fa-solid fa-rocket';
         }
+        prestigeBtn.style.cursor = "pointer";
 
         // Calcolo percentuale sicuro
         let progress = 0;
