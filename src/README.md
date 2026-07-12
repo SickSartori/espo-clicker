@@ -29,8 +29,11 @@ src/
   main.ts                          # entry: espone window.EspoV3
   types/
     save.ts                        # SaveStateV1, V2, AnySaveState
+  data/
+    index.ts                       # assembla gameData + installGameData() su window (pre-bundle)
+    en/                            # overlay lingua EN
   state/
-    store.ts                       # store mutabile delle 11 var runtime condivise (ex gamestate.js)
+    store.ts                       # store mutabile: 11 var runtime condivise (ex gamestate.js) + gameData
     interop.ts                     # accessor window.* per il legacy (TEMP, via a fine filone C)
   core/
     crypto.ts                      # sha256, hmacSha256, randomHex (Web Crypto)
