@@ -20,8 +20,6 @@ const JS_FILES: readonly string[] = [
   'js/error-handler.js',
   'js/version-config.js',
   'js/asset-manager.js',
-  'js/data/core.js',
-  'js/data/achievements.js',
   'js/i18n.js',
   'js/data/gamestate.js',
   'js/ui-functions.js',

@@ -1,4 +1,13 @@
-window.gameData.achievements = {
+import { Decimal } from './decimal';
+import { IS_XMAS_TIME } from './season';
+import { store } from '../state/store';
+
+// Le condition leggevano i globali bare del bundle (gameState, bps): in ESM
+// non risolvono su window -> helper sullo store (filone A), stessa semantica.
+const gs = (): any => store.gameState;
+const bpsNow = (): any => store.bps;
+
+export const achievements: Record<string, any> = {
     primoClick: {
         name: 'Hello World!',
         desc: 'Effettua il tuo primo click manuale.',
@@ -7,7 +16,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: null,
-        condition: () => gameState.totalClicks >= 1
+        condition: () => gs().totalClicks >= 1
     },
     primoTeam: {
         name: 'Inception',
@@ -17,7 +26,7 @@ window.gameData.achievements = {
         target: 10,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(5000) },
-        condition: () => gameState.teams.assistenteQa.count >= 10
+        condition: () => gs().teams.assistenteQa.count >= 10
     },
     jiraWarrior: {
         name: 'Ticketing System',
@@ -27,7 +36,7 @@ window.gameData.achievements = {
         target: 25,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(2000) },
-        condition: () => gameState.teams.jiraTicket.count >= 25
+        condition: () => gs().teams.jiraTicket.count >= 25
     },
     clickMaster: {
         name: 'Rick Roll Patch',
@@ -36,7 +45,7 @@ window.gameData.achievements = {
         target: 10000,
         isSecret: false,
         reward: { type: 'skin', id: 'rick' },
-        condition: () => gameState.totalClicks >= 10000
+        condition: () => gs().totalClicks >= 10000
     },
     codeMonkey: {
         name: 'Code Monkey',
@@ -45,7 +54,7 @@ window.gameData.achievements = {
         target: new Decimal(50000),
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(10000) },
-        condition: () => gameState.totalScore.gte(50000)
+        condition: () => gs().totalScore.gte(50000)
     },
     automationFirst: {
         name: 'Automation First',
@@ -55,7 +64,7 @@ window.gameData.achievements = {
         target: 10,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(15000) },
-        condition: () => gameState.teams.teamQa.count >= 10
+        condition: () => gs().teams.teamQa.count >= 10
     },
     clickGod: {
         name: 'Hardcoded Solution',
@@ -64,7 +73,7 @@ window.gameData.achievements = {
         target: new Decimal(2000),
         isSecret: false,
         reward: { type: 'skin', id: 'gladiator' },
-        condition: () => gameState.totalClicks >= 2000
+        condition: () => gs().totalClicks >= 2000
     },
     clickDictator: {
         name: 'Dittatore del Mouse',
@@ -73,7 +82,7 @@ window.gameData.achievements = {
         target: new Decimal(20000),
         isSecret: false,
         reward: { type: 'skin', id: 'dictator' },
-        condition: () => gameState.totalClicks >= 20000
+        condition: () => gs().totalClicks >= 20000
     },
     middleManagement: {
         name: 'Middle Management',
@@ -83,7 +92,7 @@ window.gameData.achievements = {
         target: 100,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(50000) },
-        condition: () => gameState.teams.assistenteQa.count >= 100
+        condition: () => gs().teams.assistenteQa.count >= 100
     },
     fullStack: {
         name: 'Full Stack Agency',
@@ -92,7 +101,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'skin', id: 'unicorn' },
-        condition: () => { for (const key in gameState.teams) { if (gameState.teams[key].count === 0) return false; } return true; }
+        condition: () => { for (const key in gs().teams) { if (gs().teams[key].count === 0) return false; } return true; }
     },
     milionario: {
         name: 'Tech Lead',
@@ -101,7 +110,7 @@ window.gameData.achievements = {
         target: new Decimal(10000000),
         isSecret: false,
         reward: { type: 'prestige', value: new Decimal(5) },
-        condition: () => gameState.totalScore.gte(10000000)
+        condition: () => gs().totalScore.gte(10000000)
     },
     geishaUnlock: {
         name: 'Zen Master',
@@ -110,7 +119,7 @@ window.gameData.achievements = {
         target: 14400,
         isSecret: false,
         reward: { type: 'skin', id: 'geisha' },
-        condition: () => gameState.totalPlayTime >= 14400
+        condition: () => gs().totalPlayTime >= 14400
     },
     miliardario: {
         name: 'System Architect',
@@ -119,7 +128,7 @@ window.gameData.achievements = {
         target: new Decimal(1000000000),
         isSecret: false,
         reward: { type: 'prestige', value: new Decimal(10) },
-        condition: () => gameState.totalScore.gte(1000000000)
+        condition: () => gs().totalScore.gte(1000000000)
     },
     errore404: {
         name: 'Page Not Found',
@@ -128,7 +137,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(500000) },
-        condition: () => gameState.lastBluescreenTimestamp > 0
+        condition: () => gs().lastBluescreenTimestamp > 0
     },
     hacker: {
         name: 'White Hat',
@@ -137,7 +146,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'skin', id: 'ricardo' },
-        condition: () => gameState.clickUpgrades.hacking && gameState.clickUpgrades.hacking.purchased
+        condition: () => gs().clickUpgrades.hacking && gs().clickUpgrades.hacking.purchased
     },
     waifuUnlock: {
         name: 'AI Supremacy',
@@ -147,7 +156,7 @@ window.gameData.achievements = {
         target: 100,
         isSecret: false,
         reward: { type: 'prestige', value: new Decimal(5) },
-        condition: () => gameState.teams.aiDebugger.count >= 100
+        condition: () => gs().teams.aiDebugger.count >= 100
     },
     divinitaMouse: {
         name: 'Divinità del Mouse',
@@ -156,7 +165,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'skin', id: 'jesus' },
-        condition: () => gameState.clickUpgrades.clickDivino && gameState.clickUpgrades.clickDivino.purchased
+        condition: () => gs().clickUpgrades.clickDivino && gs().clickUpgrades.clickDivino.purchased
     },
     natale: {
         name: 'Buon Natale',
@@ -178,8 +187,8 @@ window.gameData.achievements = {
         target: 1,
         isSecret: true, // Nascosto finché non lo fai
         reward: { type: 'multiplier', value: 1.10 }, // +10% Produzione Globale
-        getCurrent: () => gameState.totalFormattazioni || 0,
-        condition: () => gameState.totalFormattazioni >= 1
+        getCurrent: () => gs().totalFormattazioni || 0,
+        condition: () => gs().totalFormattazioni >= 1
     },
     timeLord: {
         name: 'Signore del Tempo',
@@ -189,8 +198,8 @@ window.gameData.achievements = {
         target: 5,
         isSecret: true, // Nascosto finché non lo fai
         reward: { type: 'multiplier', value: 1.25 }, // +25% Produzione Globale
-        getCurrent: () => gameState.totalFormattazioni || 0,
-        condition: () => gameState.totalFormattazioni >= 5
+        getCurrent: () => gs().totalFormattazioni || 0,
+        condition: () => gs().totalFormattazioni >= 5
     },
     coscienzaEspansa: {
         name: 'Coscienza Espansa',
@@ -200,7 +209,7 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'prestige', value: new Decimal(25) },
-        condition: () => gameState.teams.singolaritaCosciente.count >= 1
+        condition: () => gs().teams.singolaritaCosciente.count >= 1
     },
     dioCodice: {
         name: 'Dio del Codice',
@@ -210,7 +219,7 @@ window.gameData.achievements = {
         target: 100,
         isSecret: false,
         reward: { type: 'multiplier', value: 1.15 },
-        condition: () => gameState.teams.architetturaInfinito.count >= 100
+        condition: () => gs().teams.architetturaInfinito.count >= 100
     },
 
     // ===== ACHIEVEMENT MEME (nerd & cultura pop) — v3.0 =====
@@ -222,7 +231,7 @@ window.gameData.achievements = {
         target: 42,
         isSecret: true,
         reward: null,
-        condition: () => gameState.totalClicks >= 42
+        condition: () => gs().totalClicks >= 42
     },
     over9000: {
         name: 'È OLTRE 9000!',
@@ -232,8 +241,8 @@ window.gameData.achievements = {
         target: 9000,
         isSecret: true,
         reward: null,
-        getCurrent: () => bps,
-        condition: () => bps.gt(9000)
+        getCurrent: () => bpsNow(),
+        condition: () => bpsNow().gt(9000)
     },
     leetHaxor: {
         name: 'L33T H4X0R',
@@ -243,7 +252,7 @@ window.gameData.achievements = {
         target: 1337,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(1337) },
-        condition: () => gameState.totalClicks >= 1337
+        condition: () => gs().totalClicks >= 1337
     },
     shinyHunter: {
         name: 'Cromatico!',
@@ -253,8 +262,8 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(5000) },
-        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
-        condition: () => gameState.totalGoldenBugsClicked >= 1
+        getCurrent: () => gs().totalGoldenBugsClicked || 0,
+        condition: () => gs().totalGoldenBugsClicked >= 1
     },
     comboBreaker: {
         name: 'C-C-COMBO BREAKER!',
@@ -264,8 +273,8 @@ window.gameData.achievements = {
         target: 50,
         isSecret: true,
         reward: null,
-        getCurrent: () => gameState.longestCombo || 0,
-        condition: () => (gameState.longestCombo || 0) >= 50
+        getCurrent: () => gs().longestCombo || 0,
+        condition: () => (gs().longestCombo || 0) >= 50
     },
     esposionUnlock: {
         name: 'Esposion!',
@@ -275,8 +284,8 @@ window.gameData.achievements = {
         target: 150,
         isSecret: false,
         reward: { type: 'skin', id: 'esposion' },
-        getCurrent: () => gameState.longestCombo || 0,
-        condition: () => (gameState.longestCombo || 0) >= 150
+        getCurrent: () => gs().longestCombo || 0,
+        condition: () => (gs().longestCombo || 0) >= 150
     },
     doge: {
         name: 'Such Bug, Much Wow',
@@ -286,7 +295,7 @@ window.gameData.achievements = {
         target: new Decimal(1000000),
         isSecret: false,
         reward: null,
-        condition: () => gameState.totalScore.gte(1000000)
+        condition: () => gs().totalScore.gte(1000000)
     },
     stonks: {
         name: 'STONKS',
@@ -296,7 +305,7 @@ window.gameData.achievements = {
         target: new Decimal(100000000),
         isSecret: false,
         reward: null,
-        condition: () => gameState.totalScore.gte(100000000)
+        condition: () => gs().totalScore.gte(100000000)
     },
     gottaGoFast: {
         name: 'Gotta Go Fast',
@@ -306,8 +315,8 @@ window.gameData.achievements = {
         target: 1000,
         isSecret: false,
         reward: null,
-        getCurrent: () => bps,
-        condition: () => bps.gt(1000)
+        getCurrent: () => bpsNow(),
+        condition: () => bpsNow().gt(1000)
     },
     shutUpTakeMoney: {
         name: 'Zitto e Prendi i Miei Soldi',
@@ -317,8 +326,8 @@ window.gameData.achievements = {
         target: 250,
         isSecret: false,
         reward: null,
-        getCurrent: () => Object.values(gameState.teams).reduce((s, t) => s + (t.count || 0), 0),
-        condition: () => Object.values(gameState.teams).reduce((s, t) => s + (t.count || 0), 0) >= 250
+        getCurrent: () => Object.values(gs().teams).reduce((s: number, t: any) => s + (t.count || 0), 0),
+        condition: () => Object.values(gs().teams).reduce((s: number, t: any) => s + (t.count || 0), 0) >= 250
     },
     groundhogDay: {
         name: 'Ricomincio da Capo',
@@ -328,8 +337,8 @@ window.gameData.achievements = {
         target: 10,
         isSecret: false,
         reward: null,
-        getCurrent: () => gameState.totalResets || 0,
-        condition: () => (gameState.totalResets || 0) >= 10
+        getCurrent: () => gs().totalResets || 0,
+        condition: () => (gs().totalResets || 0) >= 10
     },
     quantumLeap: {
         name: 'Quantum Leap',
@@ -339,8 +348,8 @@ window.gameData.achievements = {
         target: 50,
         isSecret: false,
         reward: null,
-        getCurrent: () => gameState.qBits,
-        condition: () => gameState.qBits.gte(50)
+        getCurrent: () => gs().qBits,
+        condition: () => gs().qBits.gte(50)
     },
     bugClicker: {
         name: 'Bug Clicker',
@@ -350,7 +359,7 @@ window.gameData.achievements = {
         target: 100000,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(50000) },
-        condition: () => gameState.totalClicks >= 100000
+        condition: () => gs().totalClicks >= 100000
     },
     marioCastle: {
         name: 'La Principessa è in un Altro Castello',
@@ -360,8 +369,8 @@ window.gameData.achievements = {
         target: 1,
         isSecret: false,
         reward: null,
-        getCurrent: () => gameState.totalResets || 0,
-        condition: () => (gameState.totalResets || 0) >= 1
+        getCurrent: () => gs().totalResets || 0,
+        condition: () => (gs().totalResets || 0) >= 1
     },
     oneUp: {
         name: '1-UP!',
@@ -371,8 +380,8 @@ window.gameData.achievements = {
         target: 100,
         isSecret: false,
         reward: { type: 'bugs', value: new Decimal(10000) },
-        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
-        condition: () => gameState.totalGoldenBugsClicked >= 100
+        getCurrent: () => gs().totalGoldenBugsClicked || 0,
+        condition: () => gs().totalGoldenBugsClicked >= 100
     },
     bazinga: {
         name: 'Bazinga!',
@@ -382,7 +391,7 @@ window.gameData.achievements = {
         target: new Decimal(73000000),
         isSecret: true,
         reward: null,
-        condition: () => gameState.totalScore.gte(73000000)
+        condition: () => gs().totalScore.gte(73000000)
     },
     catchEmAll: {
         name: 'Acchiappali Tutti!',
@@ -392,8 +401,8 @@ window.gameData.achievements = {
         target: 151,
         isSecret: false,
         reward: null,
-        getCurrent: () => Object.values(gameState.teams).reduce((m, t) => Math.max(m, t.count || 0), 0),
-        condition: () => Object.values(gameState.teams).some(t => (t.count || 0) >= 151)
+        getCurrent: () => Object.values(gs().teams).reduce((m: number, t: any) => Math.max(m, t.count || 0), 0),
+        condition: () => Object.values(gs().teams).some((t: any) => (t.count || 0) >= 151)
     },
     imagination: {
         name: 'Imagination',
@@ -403,8 +412,8 @@ window.gameData.achievements = {
         target: 5,
         isSecret: false,
         reward: null,
-        getCurrent: () => (gameState.skins.unlocked || []).length,
-        condition: () => (gameState.skins.unlocked || []).length >= 5
+        getCurrent: () => (gs().skins.unlocked || []).length,
+        condition: () => (gs().skins.unlocked || []).length >= 5
     },
     moneyMoneyMoney: {
         name: 'Money Money Money',
@@ -414,7 +423,7 @@ window.gameData.achievements = {
         target: new Decimal(10000000000),
         isSecret: false,
         reward: null,
-        condition: () => gameState.lifetimeScore.gte(10000000000)
+        condition: () => gs().lifetimeScore.gte(10000000000)
     },
 
     // ===== SBLOCCO SKIN v3.0 (Carmaespòn/Pablo/Leon ecc. comprate; queste guadagnate) =====
@@ -426,7 +435,7 @@ window.gameData.achievements = {
         target: 250000,
         isSecret: false,
         reward: { type: 'skin', id: 'clicker' },
-        condition: () => gameState.totalClicks >= 250000
+        condition: () => gs().totalClicks >= 250000
     },
     rpdElite: {
         name: 'R.P.D. Elite',
@@ -436,8 +445,8 @@ window.gameData.achievements = {
         target: 250,
         isSecret: false,
         reward: { type: 'skin', id: 'leon' },
-        getCurrent: () => gameState.totalGoldenBugsClicked || 0,
-        condition: () => gameState.totalGoldenBugsClicked >= 250
+        getCurrent: () => gs().totalGoldenBugsClicked || 0,
+        condition: () => gs().totalGoldenBugsClicked >= 250
     },
     esposaUnlock: {
         name: 'Finché Codice non ci Separi',
@@ -447,7 +456,7 @@ window.gameData.achievements = {
         target: 86400,
         isSecret: false,
         reward: { type: 'skin', id: 'esposa' },
-        condition: () => gameState.totalPlayTime >= 86400
+        condition: () => gs().totalPlayTime >= 86400
     },
     collezionista: {
         name: 'Collezionista',
@@ -457,7 +466,7 @@ window.gameData.achievements = {
         target: 15,
         isSecret: false,
         reward: { type: 'skin', id: 'mariachi' },
-        getCurrent: () => (gameState.skins.unlocked || []).length,
-        condition: () => (gameState.skins.unlocked || []).length >= 15
+        getCurrent: () => (gs().skins.unlocked || []).length,
+        condition: () => (gs().skins.unlocked || []).length >= 15
     }
 };

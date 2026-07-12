@@ -3,6 +3,24 @@ import { gameData } from './index';
 import { en } from './en/index';
 import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
 
+describe('data/achievements via store (reorg B4)', () => {
+  it('ogni achievement ha una condition funzione', () => {
+    expect(Object.keys(gameData.achievements).length).toBeGreaterThan(20);
+    for (const [id, a] of Object.entries<any>(gameData.achievements)) {
+      expect(typeof a.condition, `condition mancante: ${id}`).toBe('function');
+    }
+  });
+  it('le condition leggono lo stato dallo store (non da globali bare)', async () => {
+    const { store } = await import('../state/store');
+    store.gameState = { totalClicks: 5, teams: {}, totalScore: { gte: () => false }, totalPlayTime: 0 } as any;
+    const runnable = Object.values<any>(gameData.achievements).filter((a) => {
+      try { a.condition(); return true; } catch { return false; }
+    });
+    expect(runnable.length).toBeGreaterThan(0);
+    store.gameState = undefined; // ripristino
+  });
+});
+
 describe('data/season (fix B2)', () => {
   it('IS_XMAS_TIME coerente con isChristmasSeason e isSeasonActive', () => {
     expect(IS_XMAS_TIME).toBe(isChristmasSeason());

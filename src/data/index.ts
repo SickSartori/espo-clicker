@@ -12,6 +12,7 @@ import { assets } from './assets';
 import { teams } from './teams';
 import { skins } from './skins';
 import { clickUpgrades, prestigeUpgrades, buildingEnhancements, superUpgrades } from './upgrades';
+import { achievements } from './achievements';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
 import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
@@ -26,6 +27,7 @@ export const gameData: Record<string, any> = {
   prestigeUpgrades,
   buildingEnhancements,
   superUpgrades,
+  achievements,
   i18n: { en },
 };
 
