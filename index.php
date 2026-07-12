@@ -361,7 +361,7 @@ require_once("php/check_version.php");
 		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
 		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
 		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
-		     Letta dall'overlay i18n nel bundle (js/i18n.js) per applicare EN sui dati. -->
+		     Letta dal bridge i18n del modulo V3 (src/lib/i18n.ts) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
 		<?php
 		// Cache-bust del bundle via filemtime (dev E prod) → ogni rebuild
@@ -380,7 +380,7 @@ require_once("php/check_version.php");
 		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
 		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
 	
-		<!-- Cheatboard/Admin Console: ora caricata da js/backend-config.js
+		<!-- Cheatboard/Admin Console: ora caricata da src/lib/backend-config.ts (modulo V3)
 		     (gattata su EspoBackend.env === 'dev'), non più da PHP qui. -->
 		<?php
 		// DEV/TEST (instanceName=dev): NIENTE service worker. Evita che la cache

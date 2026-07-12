@@ -120,7 +120,7 @@ EspoV3 = {
 2. Codice JS legacy può chiamare `window.EspoV3.crypto.sha256()` invece delle funzioni inline.
 3. Quando un modulo è completamente migrato (no più chiamate dal legacy) → cancellare il vecchio.
 4. F7 (fatto): `build.js` eliminato → `vite build` è l'unico build tool (plugin `scripts/vite-plugin-legacy.ts` concatena il legacy in `dist/game.bundle.min.js`); CDN break_infinity sostituita da self-host.
-5. F8 (fatto): rimossi i fallback legacy morti dietro le deleghe EspoV3 (save-db, i18n, asset-manager, script, ui-functions, game-logic). EspoV3 è ora un requisito **hard** — guard di boot in `js/save-db.js` che segnala moduli mancanti; niente più `EspoV3?.x ?? legacy`. **Migrazione strangler CONCLUSA.**
+5. F8 (fatto): rimossi i fallback legacy morti dietro le deleghe EspoV3 (save-db, i18n, asset-manager, script, ui-functions, game-logic). EspoV3 è ora un requisito **hard** — guard di boot in `js/data/gamestate.js` (spostata in C-thin) che segnala moduli mancanti; niente più `EspoV3?.x ?? legacy`. **Migrazione strangler CONCLUSA.**
 
 ## A11y migliorato
 

@@ -41,13 +41,14 @@ pkg.version = newVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 console.log('✓ package.json');
 
-// Update version-config.js
-const versionConfigPath = path.join(__dirname, 'js', 'version-config.js');
+// Update src/lib/version.ts (ex js/version-config.js — reorg C-thin: la prima
+// occorrenza di major:/minor: nel file è GAME_VERSION, come nel legacy)
+const versionConfigPath = path.join(__dirname, 'src', 'lib', 'version.ts');
 let versionConfig = fs.readFileSync(versionConfigPath, 'utf8');
 versionConfig = versionConfig.replace(/major: \d+/, `major: ${newMajor}`);
 versionConfig = versionConfig.replace(/minor: \d+/, `minor: ${newMinor}`);
 fs.writeFileSync(versionConfigPath, versionConfig);
-console.log('✓ version-config.js');
+console.log('✓ src/lib/version.ts');
 
 // Update sw.js
 const swPath = path.join(__dirname, 'sw.js');

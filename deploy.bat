@@ -96,7 +96,7 @@ echo  Bumpa patch + invalida cache + build legacy + v3 in 1 step.
 echo.
 echo  Files aggiornati:
 echo    * package.json
-echo    * js/version-config.js
+echo    * src/lib/version.ts
 echo    * sw.js (CACHE_VERSION)
 echo    * php/config.php (devVersion + prodVersion)
 echo.
