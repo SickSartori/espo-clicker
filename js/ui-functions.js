@@ -1983,6 +1983,18 @@ function updateTabsVisibility() {
     }
 }
 
+// Swap REALE dell'icona del bottone prestigio: al boot Lucide sostituisce
+// l'<i data-lucide="zap"> con un <svg>, e su SVGElement `className` è un
+// accessor di sola lettura → assegnargli una stringa è un no-op silenzioso
+// (l'icona non cambiava mai). Rimpiazziamo il nodo con un <i> Font Awesome
+// fresco; la classe .nav-icon resta così i querySelector successivi funzionano.
+function swapPrestigeIcon(oldIcon, className) {
+    const fresh = document.createElement('i');
+    fresh.className = className;
+    oldIcon.replaceWith(fresh);
+    return fresh;
+}
+
 function updatePrestigeVisuals() {
     const prestigeBtn = document.getElementById('open-prestige-hub-btn');
     if (!prestigeBtn) return;
@@ -2033,7 +2045,7 @@ function updatePrestigeVisuals() {
             prestigeBtn.classList.remove('promotion-ready');
             prestigeBtn.classList.add('format-ready');
             prestigeBtn.style.cursor = "pointer";
-            icon.className = 'nav-icon fa-solid fa-meteor';
+            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-meteor');
             label.textContent = gameData.texts.ui.formatReady;
         }
     } else if (canPrestige) {
@@ -2042,7 +2054,7 @@ function updatePrestigeVisuals() {
             prestigeBtn.classList.remove('format-ready');
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
-            icon.className = 'nav-icon fa-solid fa-circle-check';
+            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-circle-check');
             label.textContent = gameData.texts.ui.promoReady;
         }
     } else {
@@ -2050,7 +2062,7 @@ function updatePrestigeVisuals() {
         if (prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
             prestigeBtn.classList.remove('promotion-ready');
             prestigeBtn.classList.remove('format-ready');
-            icon.className = 'nav-icon fa-solid fa-rocket';
+            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-rocket');
         }
         prestigeBtn.style.cursor = "pointer";
 

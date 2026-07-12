@@ -230,12 +230,15 @@
 
     /* Stato "Formatta": il base mobile è GIÀ viola → si distingue con
        bordo bianco + glow pulsante forte (lo span testo è nascosto come
-       per promotion-ready: nel quadrato 44px resta l'icona meteora) */
-    .nav-special-btn.format-ready span {
+       per promotion-ready: nel quadrato 44px resta l'icona meteora).
+       Selettore ID-qualificato: pareggia la specificità di navbar.css
+       (#game-navbar .nav-group ...) e vince per ordine, perché il bundle
+       mobile carica DOPO quello base. */
+    #game-navbar .nav-group .nav-special-btn.format-ready span {
         display: none;
     }
 
-    .nav-special-btn.format-ready {
+    #game-navbar .nav-group .nav-special-btn.format-ready {
         background: linear-gradient(135deg, #a55eea, #8e44ad);
         border-color: #fff;
         box-shadow: 0 0 15px #9b59b6;
