@@ -1729,7 +1729,7 @@ function updateWallets() {
     setTextIfChanged('qbit-wallet-amount', formatNumber(gameState.qBits));
     setTextIfChanged('header-qbit-display', formatNumber(gameState.qBits));
 
-    // Aggiorna Q-Bits in attesa nel bottone di formattazione
+    // Aggiorna i wallet bug replicati (elementi .bug-wallet-amount sparsi nella UI)
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
         if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
     });
