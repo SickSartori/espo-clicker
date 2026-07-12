@@ -6,13 +6,13 @@
 
 **Architecture:** Il markup PHP server-rendered aggiunge `#prestige-hub-modal` in `includes/modals.php` riusando gli id di conferma esistenti (`#btn-confirm-prestige`, `#btn-confirm-format`) così i listener attuali — incluso il trucco video Big Bang sul gesto umano — restano intatti. `openPrestigeContract()` diventa `openPrestigeHub()`; una nuova `renderPrestigeHubCards()` (ui-functions.js) imposta gli stati delle card ed è richiamata dal loop UI (via `updateWallets`) solo a modal aperto. Spec: `docs/superpowers/specs/2026-07-12-prestige-hub-design.md`.
 
-**Tech Stack:** PHP legacy include + vanilla JS (bundle concatenato `dist/game.bundle.min.js` via `scripts/vite-plugin-legacy.ts`), CSS in `styles/` (legacy + `styles/v3/`), build `npm run build`, FontAwesome 6.4.0, GSAP, break_eternity Decimal.
+**Tech Stack:** PHP legacy include + vanilla JS (bundle concatenato `dist/game.bundle.min.js` via `scripts/vite-plugin-legacy.ts`), CSS in `styles/` (legacy + `styles/ui/`), build `npm run build`, FontAwesome 6.4.0, GSAP, break_eternity Decimal.
 
 ## Global Constraints
 
 - **Branch condiviso `develop-v3` con un'altra sessione attiva**: stageare SOLO i file elencati dal task (`git add <path> <path>`), MAI `git add -A`/`-u`. Prima di ogni commit: `git status --porcelain` e verificare che in staging ci siano solo i propri file. Se altri file risultano modificati, non toccarli.
 - **Commit: solo titolo** — niente body, niente Co-Authored-By (convenzione repo).
-- **i18n doppio canale, doppia lingua**: ogni stringa nuova va in `langs/it.php` E `langs/en.php` (markup PHP), oppure in `js/data/texts.js` E `js/data-en/texts.js` (stringhe JS).
+- **i18n doppio canale, doppia lingua**: ogni stringa nuova va in `langs/it.php` E `langs/en.php` (markup PHP), oppure in `src/data/texts.ts` E `src/data/en/texts.ts` (stringhe JS).
 - `dist/` e `dist-v3/` sono generati (gitignored): mai editarli; dopo modifiche a `js/`, `styles/`, `src/` eseguire `npm run build`.
 - **Formule e soglie INVARIATE**: guadagno Token (`EspoV3.prestige`), guadagno Q-Bit `1 + floor(sqrt(prestigePoints/10000))`, soglia 20 promozioni. Zero cambi di bilanciamento.
 - **Il gioco deve restare giocabile a ogni commit** (per questo lo swap markup+JS è un task atomico: gli id riusati non possono esistere due volte nel DOM).
@@ -25,9 +25,9 @@
 | File | Azione | Responsabilità |
 |---|---|---|
 | `langs/it.php`, `langs/en.php` | Modify | 3 label nuove (`hub_titolo`, `hub_counter_label`, `hub_promo_locked_btn`); in T5 rimozione 5 label morte `quantum_reboot_*`/`quantum_energy`/`quantum_start_format`/`quantum_requires` |
-| `js/data/texts.js`, `js/data-en/texts.js` | Modify | `ui.formatReady`; in T5 rimozione `toasts.prestigeNeedMore`/`prestigeNeedComplete` |
-| `styles/v3/prestige-hub.css` | Create | TUTTO lo stile hub: stati card (senza media query) + layout desktop (≥769px) + layout mobile (≤768px). File unico per feature, precedente: `styles/v3/lucide.css` |
-| `styles/v3/index.css` | Modify | `@import './prestige-hub.css'` |
+| `src/data/texts.ts`, `src/data/en/texts.ts` | Modify | `ui.formatReady`; in T5 rimozione `toasts.prestigeNeedMore`/`prestigeNeedComplete` |
+| `styles/ui/prestige-hub.css` | Create | TUTTO lo stile hub: stati card (senza media query) + layout desktop (≥769px) + layout mobile (≤768px). File unico per feature, precedente: `styles/ui/lucide.css` |
+| `styles/ui/index.css` | Modify | `@import './prestige-hub.css'` |
 | `includes/modals.php` | Modify | + `#prestige-hub-modal`; − `#prestige-modal`, − `#format-modal` |
 | `includes/tab_quantum.php` | Modify | − blocco reboot (righe 9–22): resta header + wallet + store meta-tech |
 | `js/game-logic.js` | Modify | `openPrestigeContract()` → `openPrestigeHub()`; `executePrestige()` chiude l'id nuovo |
@@ -37,11 +37,11 @@
 | `styles/base/navbar.css` | Modify | stato `.format-ready` legacy |
 | `styles/base/keyframes.css` | Modify | `@keyframes formatGlow` |
 | `styles/mobile.css` | Modify | stato `.format-ready` mobile (base già viola → bordo bianco + glow) |
-| `styles/v3/desktop/header-navbar.css` | Modify | stato `.format-ready` v3 desktop |
-| `styles/base/modals-content.css`, `styles/v3/desktop/modals-shell.css`, `styles/v3/desktop/modals-content-v3.css` | Modify (T5) | − regole morte `#prestige-modal`/`#format-modal` |
+| `styles/ui/desktop/header-navbar.css` | Modify | stato `.format-ready` v3 desktop |
+| `styles/base/modals-content.css`, `styles/ui/desktop/modals-shell.css`, `styles/ui/desktop/modals-content.css` | Modify (T5) | − regole morte `#prestige-modal`/`#format-modal` |
 | `sw.js` | Modify (T5) | bump `CACHE_VERSION` |
 
-Nota deviazioni dalla spec (motivate): (1) CSS in UN file `styles/v3/prestige-hub.css` invece di desktop/+mobile/ separati — le regole di stato non sono breakpoint-specifiche e duplicarle sarebbe error-prone; (2) label `quantum_requires` NON riusata ma sostituita da `hub_counter_label` — il testo vecchio ha una parentesi aperta baked-in ("Richiede 20 Promozioni (Attuali:") inutilizzabile nel nuovo layout.
+Nota deviazioni dalla spec (motivate): (1) CSS in UN file `styles/ui/prestige-hub.css` invece di desktop/+mobile/ separati — le regole di stato non sono breakpoint-specifiche e duplicarle sarebbe error-prone; (2) label `quantum_requires` NON riusata ma sostituita da `hub_counter_label` — il testo vecchio ha una parentesi aperta baked-in ("Richiede 20 Promozioni (Attuali:") inutilizzabile nel nuovo layout.
 
 ---
 
@@ -50,8 +50,8 @@ Nota deviazioni dalla spec (motivate): (1) CSS in UN file `styles/v3/prestige-hu
 **Files:**
 - Modify: `langs/it.php` (dopo riga 242, blocco `prestige_*`)
 - Modify: `langs/en.php` (stesso punto)
-- Modify: `js/data/texts.js` (riga ~41, dopo `promoReady`)
-- Modify: `js/data-en/texts.js` (riga ~44, dopo `promoReady`)
+- Modify: `src/data/texts.ts` (riga ~41, dopo `promoReady`)
+- Modify: `src/data/en/texts.ts` (riga ~44, dopo `promoReady`)
 
 **Interfaces:**
 - Produces: `$labels["hub_titolo"]`, `$labels["hub_counter_label"]`, `$labels["hub_promo_locked_btn"]` (usate dal markup in T3); `gameData.texts.ui.formatReady` (usata da `updatePrestigeVisuals` in T4).
@@ -78,13 +78,13 @@ In `langs/en.php`, subito dopo `$labels["prestige_sign_btn"] = "Sign Contract";`
 
 - [ ] **Step 3: Aggiungi `ui.formatReady` in entrambi i texts**
 
-In `js/data/texts.js`, dopo `promoReady: "PRONTA!",` (riga 41):
+In `src/data/texts.ts`, dopo `promoReady: "PRONTA!",` (riga 41):
 
 ```js
         formatReady: "FORMATTA!",
 ```
 
-In `js/data-en/texts.js`, dopo `promoReady: "READY!",` (riga 44):
+In `src/data/en/texts.ts`, dopo `promoReady: "READY!",` (riga 44):
 
 ```js
         formatReady: "FORMAT!",
@@ -104,7 +104,7 @@ Expected: 1 match
 - [ ] **Step 5: Commit**
 
 ```bash
-git add langs/it.php langs/en.php js/data/texts.js js/data-en/texts.js
+git add langs/it.php langs/en.php src/data/texts.ts src/data/en/texts.ts
 git commit -m "v3.0: hub prestigio T1 — label i18n (hub, formatReady)"
 ```
 
@@ -113,14 +113,14 @@ git commit -m "v3.0: hub prestigio T1 — label i18n (hub, formatReady)"
 ### Task 2: CSS dell'hub (file nuovo, inerte finché il markup non esiste)
 
 **Files:**
-- Create: `styles/v3/prestige-hub.css`
-- Modify: `styles/v3/index.css` (riga 11, dopo `@import './lucide.css';`)
+- Create: `styles/ui/prestige-hub.css`
+- Modify: `styles/ui/index.css` (riga 11, dopo `@import './lucide.css';`)
 
 **Interfaces:**
 - Consumes: — (file autonomo)
 - Produces: classi `.hub-card`, `.hub-card-promo`, `.hub-card-format`, stati `.is-ready`/`.is-locked`/`.is-mystery`, elementi `.hub-card-title`, `.hub-card-warning`, `.hub-gain-box`, `.hub-gain-label/-value/-name/-bonus`, `.hub-progress(-track/-fill/-label)`, `.hub-confirm`, `.hub-btn-ready`/`.hub-btn-locked`, `.hub-btn-sub`, `.hub-mystery-veil`, `.hub-format-title-real/-mystery`, `.hub-format-counter-value` — il markup T3 usa ESATTAMENTE questi nomi.
 
-- [ ] **Step 1: Crea `styles/v3/prestige-hub.css`**
+- [ ] **Step 1: Crea `styles/ui/prestige-hub.css`**
 
 ```css
 /* =====================================================================
@@ -425,7 +425,7 @@ git commit -m "v3.0: hub prestigio T1 — label i18n (hub, formatReady)"
 
 - [ ] **Step 2: Registra l'import**
 
-In `styles/v3/index.css`, dopo `@import './lucide.css';` (riga 11):
+In `styles/ui/index.css`, dopo `@import './lucide.css';` (riga 11):
 
 ```css
 @import './prestige-hub.css';
@@ -442,7 +442,7 @@ Expected: ≥1 match
 - [ ] **Step 4: Commit**
 
 ```bash
-git add styles/v3/prestige-hub.css styles/v3/index.css
+git add styles/ui/prestige-hub.css styles/ui/index.css
 git commit -m "v3.0: hub prestigio T2 — CSS card (stati, desktop, mobile)"
 ```
 
@@ -781,7 +781,7 @@ git commit -m "v3.0: hub prestigio T3 — modal unico con card promo+format, via
 - Modify: `styles/base/navbar.css` (dopo riga 150)
 - Modify: `styles/base/keyframes.css` (dopo `promotionGlow`, riga ~292)
 - Modify: `styles/mobile.css` (dopo riga 229, blocco `.nav-special-btn.promotion-ready`)
-- Modify: `styles/v3/desktop/header-navbar.css` (dentro `@media (min-width: 769px)`, dopo il blocco `:active` del bottone, riga ~111)
+- Modify: `styles/ui/desktop/header-navbar.css` (dentro `@media (min-width: 769px)`, dopo il blocco `:active` del bottone, riga ~111)
 
 **Interfaces:**
 - Consumes: `gameData.texts.ui.formatReady` (T1), classe `.format-ready`.
@@ -908,7 +908,7 @@ Dopo il blocco `.nav-special-btn.promotion-ready` (riga 229):
     }
 ```
 
-- [ ] **Step 5: V3 desktop `styles/v3/desktop/header-navbar.css`**
+- [ ] **Step 5: V3 desktop `styles/ui/desktop/header-navbar.css`**
 
 Dentro il `@media (min-width: 769px)`, subito dopo il blocco `#open-prestige-hub-btn:active` (riga ~111):
 
@@ -950,7 +950,7 @@ Viewport mobile (≤768px, resize_window preset mobile): con `totalResets = 20` 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add js/ui-functions.js styles/base/navbar.css styles/base/keyframes.css styles/mobile.css styles/v3/desktop/header-navbar.css
+git add js/ui-functions.js styles/base/navbar.css styles/base/keyframes.css styles/mobile.css styles/ui/desktop/header-navbar.css
 git commit -m "v3.0: hub prestigio T4 — navbar FORMATTA! viola"
 ```
 
@@ -960,10 +960,10 @@ git commit -m "v3.0: hub prestigio T4 — navbar FORMATTA! viola"
 
 **Files:**
 - Modify: `langs/it.php`, `langs/en.php` (righe 292–296 in entrambi)
-- Modify: `js/data/texts.js` (righe ~92–93), `js/data-en/texts.js` (righe ~91–92)
+- Modify: `src/data/texts.ts` (righe ~92–93), `src/data/en/texts.ts` (righe ~91–92)
 - Modify: `styles/base/modals-content.css` (blocco `#prestige-modal .contract-modal`, righe ~1073–1084)
-- Modify: `styles/v3/desktop/modals-shell.css` (righe ~304–330)
-- Modify: `styles/v3/desktop/modals-content-v3.css` (righe ~311–322)
+- Modify: `styles/ui/desktop/modals-shell.css` (righe ~304–330)
+- Modify: `styles/ui/desktop/modals-content.css` (righe ~311–322)
 - Modify: `sw.js` (riga 7)
 
 **Interfaces:**
@@ -978,13 +978,13 @@ In `langs/it.php` e `langs/en.php`, eliminare le righe 292–296:
 
 - [ ] **Step 2: Rimuovi i toast morti**
 
-In `js/data/texts.js` eliminare le righe di `prestigeNeedMore` e `prestigeNeedComplete` (~92–93); idem in `js/data-en/texts.js` (~91–92). Prima di eliminare, verificare con Grep che `prestigeNeedMore|prestigeNeedComplete` non compaia in nessun altro file `js/**` o `src/**` (atteso: solo le definizioni).
+In `src/data/texts.ts` eliminare le righe di `prestigeNeedMore` e `prestigeNeedComplete` (~92–93); idem in `src/data/en/texts.ts` (~91–92). Prima di eliminare, verificare con Grep che `prestigeNeedMore|prestigeNeedComplete` non compaia in nessun altro file `js/**` o `src/**` (atteso: solo le definizioni).
 
 - [ ] **Step 3: Rimuovi il CSS morto dei vecchi modal**
 
 1. `styles/base/modals-content.css` righe ~1073–1084: eliminare i blocchi `#prestige-modal .contract-modal` e `#prestige-modal .contract-modal h2`.
-2. `styles/v3/desktop/modals-shell.css` righe ~304–330: eliminare i 6 blocchi `html body div#prestige-modal...` / `html body div#format-modal...`.
-3. `styles/v3/desktop/modals-content-v3.css` righe ~311–322: rimuovere i selettori `html body #prestige-modal ...` e `html body #format-modal ...` dalle liste (ATTENZIONE: sono membri di selector-list — rimuovere la riga E la virgola pendente, lasciando validi gli altri selettori del gruppo).
+2. `styles/ui/desktop/modals-shell.css` righe ~304–330: eliminare i 6 blocchi `html body div#prestige-modal...` / `html body div#format-modal...`.
+3. `styles/ui/desktop/modals-content.css` righe ~311–322: rimuovere i selettori `html body #prestige-modal ...` e `html body #format-modal ...` dalle liste (ATTENZIONE: sono membri di selector-list — rimuovere la riga E la virgola pendente, lasciando validi gli altri selettori del gruppo).
 
 - [ ] **Step 4: Bump Service Worker**
 
@@ -1012,7 +1012,7 @@ Browser smoke finale (localhost:8766, save usa-e-getta):
 - [ ] **Step 6: Commit**
 
 ```bash
-git add langs/it.php langs/en.php js/data/texts.js js/data-en/texts.js styles/base/modals-content.css styles/v3/desktop/modals-shell.css styles/v3/desktop/modals-content-v3.css sw.js
+git add langs/it.php langs/en.php src/data/texts.ts src/data/en/texts.ts styles/base/modals-content.css styles/ui/desktop/modals-shell.css styles/ui/desktop/modals-content.css sw.js
 git commit -m "v3.0: hub prestigio T5 — pulizia label/CSS morti + SW bump"
 ```
 

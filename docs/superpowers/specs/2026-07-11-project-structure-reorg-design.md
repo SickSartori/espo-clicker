@@ -63,7 +63,7 @@ Radice: solo config + entry (`index.php`, `package.json`, `vite.config.ts`, `tsc
 | `js/error-handler.js` | `src/app/error-handler.ts` | |
 | `js/script.js` | `src/app/{boot,save-flow,cloud-sync,offline}.ts` | **per ultimo** (god-object) |
 | `css/*` (22 file: entry main/mobile, 15 partial, 3 temi lazy, arcade) | `styles/{main.css,mobile.css,base/,themes/,arcade/}` | **filone D** |
-| `src/ui/theme/*.css` + `src/ui/desktop-fixes/` (20) + `src/ui/mobile-fixes/` (5) + `src/ui/icons/lucide-style.css` | `styles/v3/{,themes/,desktop/,mobile/}` | **filone D**; i temi legacy (completi, lazy) e v3 (override token) sono meccanismi DIVERSI → si co-locano, NON si cancellano |
+| `src/ui/theme/*.css` + `src/ui/desktop-fixes/` (20) + `src/ui/mobile-fixes/` (5) + `src/ui/icons/lucide-style.css` | `styles/ui/{,themes/,desktop/,mobile/}` (rinominata da v3 il 2026-07-12: niente cartelle versionate) | **filone D**; i temi legacy (completi, lazy) e v3 (override token) sono meccanismi DIVERSI → si co-locano, NON si cancellano |
 | `assets/image|sounds|video` | `assets/{img,audio,video}` | **filone E** |
 | periferici (`cheatboard`, `podio`, `social`, `arcade-loader`, `intro`, `esposion`) | `legacy/` | fuori scope, invariati |
 

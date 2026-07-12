@@ -10,7 +10,7 @@
  *   <script type="module" src="dist-v3/game.modules.js?v=<?php echo $cacheVer; ?>"></script>
  *   <?php endif; ?>
  */
-import '../styles/v3/index.css';
+import '../styles/ui/index.css';
 import { sha256, hmacSha256, randomHex } from './core/crypto';
 import { SaveDB, defaultSaveDB } from './core/save/db';
 import { encodeSave, decodeSave } from './core/save/codec';

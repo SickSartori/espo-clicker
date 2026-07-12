@@ -60,8 +60,8 @@ La regola di reveal è l'esistente `EspoV3.rules.isQuantumUnlocked` (20 reset ra
 
 ## 6. CSS
 
-- Nuovo `styles/v3/desktop/prestige-hub.css` (layout 2 card, stati, mystery-scrim con lucchetto in stile sagome skin) + `styles/v3/mobile/prestige-hub.css` (impilamento, fullscreen), registrati in `styles/v3/index.css`.
-- Stato navbar `.format-ready`: `styles/base/navbar.css` (legacy), `styles/v3/desktop/header-navbar.css` (v3), `styles/mobile.css` sezione 5 (mobile).
+- Nuovo `styles/ui/desktop/prestige-hub.css` (layout 2 card, stati, mystery-scrim con lucchetto in stile sagome skin) + `styles/ui/mobile/prestige-hub.css` (impilamento, fullscreen), registrati in `styles/ui/index.css`.
+- Stato navbar `.format-ready`: `styles/base/navbar.css` (legacy), `styles/ui/desktop/header-navbar.css` (v3), `styles/mobile.css` sezione 5 (mobile).
 - Struttura modal riusata da `styles/base/modals-core.css` (backdrop/content/close): nessuna primitiva nuova.
 - Temi 8bit/super: hanno override per `promotion-ready`; per `format-ready` si accetta il fallback allo stile base (override dedicati solo se stonano, da verificare a occhio in implementazione).
 
@@ -75,7 +75,7 @@ La regola di reveal è l'esistente `EspoV3.rules.isQuantumUnlocked` (20 reset ra
 
 Nuove label in **entrambe** le lingue, entrambi i canali:
 - `langs/it.php` + `langs/en.php` (markup PHP): titolo hub, titolo card misteriosa ("???"), label contatore promozioni, label conferma-disabilitata promo, eventuale sottotitolo hub.
-- `js/data/texts.js` + `js/data-en/texts.js` (stringhe JS): `ui.formatReady` ("FORMATTA!" / "FORMAT!") per il bottone navbar.
+- `src/data/texts.ts` + `src/data/en/texts.ts` (stringhe JS): `ui.formatReady` ("FORMATTA!" / "FORMAT!") per il bottone navbar.
 Riusate senza modifiche: `prestige_sign`, `prestige_warning`, `prestige_gain`, `prestige_token`, `prestige_new_mult`, `prestige_sign_btn`, `format_titolo`, `format_warning`, `format_gain`, `format_qbits`, `format_subtitle`, `quantum_requires`, `prestige_madeheaven_aria`.
 
 ## 9. Rischi e verifica

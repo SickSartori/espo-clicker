@@ -1,11 +1,11 @@
 /* =====================================================================
-   v3 theme entry — importato da main.ts.
-   Ordine: tokens base → reset → primitives → temi.
+   UI moderna — entry (importato da main.ts, bundle Vite).
+   Ordine: tokens base → tokens HUD → reset → primitives → temi.
    I temi sono opt-in via [data-theme='X'] sull'elemento [data-v3].
    ===================================================================== */
 
 @import './tokens.css';
-@import './tokens-v3.css';
+@import './tokens-hud.css';
 @import './reset.css';
 @import './primitives.css';
 @import './lucide.css';
@@ -32,16 +32,16 @@
 @import './desktop/clicker-3d.css';
 @import './desktop/tabs.css';
 @import './desktop/cards.css';
-@import './desktop/skins-modal-v3.css';
+@import './desktop/skins-modal.css';
 @import './desktop/modals-shell.css';
-@import './desktop/modals-content-v3.css';
-@import './desktop/golden-bug-v3.css';
-@import './desktop/toasts-v3.css';
-@import './desktop/fury-flames-v3.css';
-@import './desktop/login-modal-v3.css';
-@import './desktop/settings-modal-v3.css';
-@import './desktop/account-modal-v3.css';
-@import './desktop/super-theme-v3.css';
+@import './desktop/modals-content.css';
+@import './desktop/golden-bug.css';
+@import './desktop/toasts.css';
+@import './desktop/fury-flames.css';
+@import './desktop/login-modal.css';
+@import './desktop/settings-modal.css';
+@import './desktop/account-modal.css';
+@import './desktop/super-theme.css';
 
 /* =====================================================================
    Stili globali a11y critici (non scoped [data-v3]).

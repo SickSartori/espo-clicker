@@ -63,7 +63,7 @@ scripts/
 .github/workflows/quality.yml      # typecheck + test + build + budget on PR
 ```
 
-NB: tutto il CSS (legacy + v3) vive in `styles/` alla radice del repo: `styles/{main.css,mobile.css,base/,themes/,arcade/,v3/}` (reorg filone D, 2026-07-11).
+NB: tutto il CSS (legacy + v3) vive in `styles/` alla radice del repo: `styles/{main.css,mobile.css,base/,themes/,arcade/,ui/}` (reorg filone D, 2026-07-11).
 
 ## Test coverage
 
