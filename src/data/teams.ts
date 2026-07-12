@@ -1,4 +1,6 @@
-window.gameData.teams = {
+import { Decimal } from './decimal';
+
+export const teams: Record<string, any> = {
     assistenteQa: {
 		name: 'Assistente QA',
 		baseCost: new Decimal(15),

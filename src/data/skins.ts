@@ -1,4 +1,7 @@
-window.gameData.skins = {
+import { Decimal } from './decimal';
+import { IS_XMAS_TIME } from './season';
+
+export const skins: Record<string, any> = {
     default: {
         name: "Espòòò",
         desc: "L'originale inconfondibile.",

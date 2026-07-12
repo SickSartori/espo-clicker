@@ -1,4 +1,6 @@
-window.gameData.clickUpgrades = {
+import { Decimal } from './decimal';
+
+export const clickUpgrades: Record<string, any> = {
     caffeForte: {
         name: 'Caffè Forte',
         desc: 'Aggiunge +1 al valore di ogni click.',
@@ -128,7 +130,7 @@ window.gameData.clickUpgrades = {
     }
 };
 
-window.gameData.prestigeUpgrades = {
+export const prestigeUpgrades: Record<string, any> = {
     sinergia: {
         name: 'Sinergia Manageriale',
         desc: 'Ogni punto promozione vale +0.1% in più (Cumulativo).',
@@ -250,7 +252,7 @@ window.gameData.prestigeUpgrades = {
     }
 };
 
-window.gameData.buildingEnhancements = {
+export const buildingEnhancements: Record<string, any> = {
     caffeDoppio: {
         name: 'Caffè Doppio',
         desc: 'Assistenti QA x2 BPS.',
@@ -692,7 +694,7 @@ window.gameData.buildingEnhancements = {
         requiredCount: 100
     }
 };
-window.gameData.superUpgrades = {
+export const superUpgrades: Record<string, any> = {
     risveglio: {
         name: 'Risveglio Quantico',
         desc: 'La consapevolezza del multiverso raddoppia (x2) la potenza base di tutti i tuoi click per sempre.',

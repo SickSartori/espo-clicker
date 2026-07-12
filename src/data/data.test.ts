@@ -30,6 +30,15 @@ describe('data/index (reorg filone B)', () => {
     expect(Object.keys(gameData.events).length).toBeGreaterThan(0);
     expect(gameData.assets.sounds).toBeTypeOf('object');
   });
+  it('teams/upgrades hanno costi Decimal-like e skins ha default (B3)', () => {
+    const t = Object.values<any>(gameData.teams)[0];
+    expect(typeof t.baseCost.mul).toBe('function');
+    expect(Object.keys(gameData.skins)).toContain('default');
+    expect(Object.keys(gameData.clickUpgrades).length).toBeGreaterThan(0);
+    expect(Object.keys(gameData.prestigeUpgrades).length).toBeGreaterThan(0);
+    expect(Object.keys(gameData.buildingEnhancements).length).toBeGreaterThan(0);
+    expect(Object.keys(gameData.superUpgrades).length).toBeGreaterThan(0);
+  });
 });
 
 describe('data/en overlay (reorg filone B)', () => {

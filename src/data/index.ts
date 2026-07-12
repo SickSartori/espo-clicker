@@ -9,6 +9,9 @@
 import { texts } from './texts';
 import { events } from './events';
 import { assets } from './assets';
+import { teams } from './teams';
+import { skins } from './skins';
+import { clickUpgrades, prestigeUpgrades, buildingEnhancements, superUpgrades } from './upgrades';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
 import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
@@ -17,6 +20,12 @@ export const gameData: Record<string, any> = {
   texts,
   events,
   assets,
+  teams,
+  skins,
+  clickUpgrades,
+  prestigeUpgrades,
+  buildingEnhancements,
+  superUpgrades,
   i18n: { en },
 };
 
