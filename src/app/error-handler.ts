@@ -1,21 +1,22 @@
-// ============================================================
-// ESPO CLICKER - Global Error Handler
-// Cattura errori uncaught + promise rejection. Mostra toast
-// invece di silent failure. Evita loop infinito con flag.
-// ============================================================
-
-(function () {
-    'use strict';
+/**
+ * Error handler globale (ex js/error-handler.js — reorg C-thin, 2026-07-12).
+ * Cattura errori uncaught + promise rejection: toast invece di silent failure.
+ * Registrato a tempo-modulo → copre anche gli errori del modulo V3 (prima
+ * partiva col bundle: miglioramento, delta accettato).
+ */
+export function installErrorHandler(): void {
+    if (typeof window === 'undefined') return;
 
     var _shown = 0;
     var MAX_TOASTS = 3;
 
-    function notify(msg) {
+    function notify(msg: string): void {
         if (_shown >= MAX_TOASTS) return;
         _shown++;
         try {
-            if (window.EspooClicker && window.EspooClicker.showToast) {
-                window.EspooClicker.showToast('Errore: ' + msg, 'error');
+            const ec = (window as any).EspooClicker;
+            if (ec && ec.showToast) {
+                ec.showToast('Errore: ' + msg, 'error');
             }
         } catch (e) { /* swallow */ }
     }
@@ -31,4 +32,4 @@
         console.error('[UnhandledRejection]', reason);
         notify(reason);
     });
-})();
+}

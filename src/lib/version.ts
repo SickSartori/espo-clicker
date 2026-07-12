@@ -1,4 +1,12 @@
-const GAME_VERSION = {
+/**
+ * Versione gioco + routing CDN R2 + silenziatore console
+ * (ex js/version-config.js — reorg C-thin, 2026-07-12).
+ * installVersion() pubblica le API window.* identiche per il legacy.
+ * NB: il silenziatore DEBUG ora si installa a tempo-modulo (prima del bundle):
+ * silenzia anche i log del modulo V3 — delta accettato (prod più pulita).
+ */
+
+export const GAME_VERSION = {
     major: 3,       // Cambia questo per rompere la compatibilità in Beta
     minor: 0,       // Cambia questo per aggiornamenti "sicuri"
     stage: '',      // 'stable' o 'beta' o '' per nessun suffisso
@@ -9,23 +17,13 @@ const GAME_VERSION = {
     }
 };
 
-// Esportiamo globalmente
-window.GAME_VERSION = GAME_VERSION;
-
 // ============================================================
 // CDN ASSET ROUTING (Cloudflare R2 + presigned URL)
+// Corpo identico all'IIFE legacy: bucket privato, URL firmate 1h,
+// batch 30ms, cache con refresh 5 min prima della scadenza.
+// In locale i path restano relativi al server.
 // ============================================================
-// Su Altervista gli asset pesanti (audio/video/music) sono privati
-// su R2 e accessibili solo via URL firmate generate dal backend PHP.
-//
-//   - Bucket privato: nessuno scarica direttamente senza URL firmata
-//   - Banda CDN globale Cloudflare (gratis, no egress fee)
-//   - URL scadenza 1h: refresh automatico prima della scadenza
-//   - Whitelist Referer lato PHP: anti-hotlink server-side
-//
-// In locale (MAMP/dev) i path restano relativi al server stesso.
-// ============================================================
-(function () {
+function buildCdn(): any {
     var IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
 
     // Prefissi locali che richiedono routing su R2 (asset privati)
@@ -36,30 +34,30 @@ window.GAME_VERSION = GAME_VERSION;
     ];
 
     // Cache URL firmati: { path: { url, expiresAt } }
-    var _urlCache = {};
+    var _urlCache: Record<string, { url: string; expiresAt: number }> = {};
     // Coda di richieste pending per evitare richieste duplicate
-    var _pendingBatch = null;
-    var _pendingResolvers = [];
-    var _pendingPaths = new Set();
+    var _pendingBatch: Promise<void> | null = null;
+    var _pendingResolvers: Array<{ path: string; resolve: (u: string | null) => void }> = [];
+    var _pendingPaths = new Set<string>();
 
-    function _isRouted(path) {
+    function _isRouted(path: string): boolean {
         if (!path) return false;
         if (/^https?:\/\//i.test(path)) return false;
         var p = String(path).replace(/^\.\//, '').replace(/^\//, '');
         for (var i = 0; i < CDN_PREFIXES.length; i++) {
-            if (p.indexOf(CDN_PREFIXES[i]) === 0) return true;
+            if (p.indexOf(CDN_PREFIXES[i]!) === 0) return true;
         }
         return false;
     }
 
-    function _normalize(path) {
+    function _normalize(path: string): string {
         return String(path).replace(/^\.\//, '').replace(/^\//, '');
     }
 
     // Soglia per considerare un URL "in scadenza" (5 min prima)
     var REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
-    function _isCachedFresh(path) {
+    function _isCachedFresh(path: string): boolean {
         var entry = _urlCache[path];
         if (!entry) return false;
         return entry.expiresAt - Date.now() > REFRESH_BEFORE_MS;
@@ -69,7 +67,7 @@ window.GAME_VERSION = GAME_VERSION;
      * Fetch batch dei signed URLs dal backend PHP.
      * Accumula richieste fatte nello stesso tick e le manda in un'unica POST.
      */
-    function _fetchSignedUrls(paths) {
+    function _fetchSignedUrls(paths: string[]): Promise<Record<string, string>> {
         return fetch('php/get_asset_urls.php', {
             method: 'POST',
             credentials: 'same-origin',
@@ -94,12 +92,12 @@ window.GAME_VERSION = GAME_VERSION;
     /**
      * Risolve un path in URL firmata. Batcha richieste simultanee.
      */
-    function _resolve(path) {
+    function _resolve(path: string): Promise<string | null> {
         path = _normalize(path);
 
         // Cache hit fresca
         if (_isCachedFresh(path)) {
-            return Promise.resolve(_urlCache[path].url);
+            return Promise.resolve(_urlCache[path]!.url);
         }
 
         _pendingPaths.add(path);
@@ -133,14 +131,12 @@ window.GAME_VERSION = GAME_VERSION;
         });
     }
 
-    window.CDN = {
+    return {
         enabled: IS_ALTERVISTA,
         prefixes: CDN_PREFIXES,
 
-        /**
-         * True se il path va instradato via R2 signed URL.
-         */
-        isRouted: function (path) {
+        /** True se il path va instradato via R2 signed URL. */
+        isRouted: function (path: string) {
             return IS_ALTERVISTA && _isRouted(path);
         },
 
@@ -149,18 +145,16 @@ window.GAME_VERSION = GAME_VERSION;
          * o un URL cachato fresco se disponibile, altrimenti null.
          * Usare quando serve un valore immediato (es. Howler.src array).
          */
-        urlSync: function (path) {
+        urlSync: function (path: string) {
             if (!this.isRouted(path)) return path;
             var p = _normalize(path);
-            return _isCachedFresh(p) ? _urlCache[p].url : null;
+            return _isCachedFresh(p) ? _urlCache[p]!.url : null;
         },
 
         /**
          * Versione ASYNC: ritorna sempre URL utilizzabile (R2 signed o locale).
-         * @param {string} path - es. 'assets/sounds/click.mp3'
-         * @returns {Promise<string>} URL utilizzabile (signed o originale)
          */
-        url: function (path) {
+        url: function (path: string) {
             if (!this.isRouted(path)) return Promise.resolve(path);
             return _resolve(path).then(function (signed) {
                 return signed || path; // Fallback locale se sign fail
@@ -169,22 +163,20 @@ window.GAME_VERSION = GAME_VERSION;
 
         /**
          * Pre-fetch batch (consigliato al boot per ridurre round-trip).
-         * @param {string[]} paths
-         * @returns {Promise<Object>} mappa path → URL
          */
-        prefetch: function (paths) {
+        prefetch: function (paths: string[]) {
             if (!this.enabled) return Promise.resolve({});
             var routed = paths.filter(_isRouted).map(_normalize);
             if (routed.length === 0) return Promise.resolve({});
             // Filtra quelli già cachati freschi
             var toFetch = routed.filter(function (p) { return !_isCachedFresh(p); });
             if (toFetch.length === 0) {
-                var cached = {};
-                routed.forEach(function (p) { cached[p] = _urlCache[p].url; });
+                var cached: Record<string, string> = {};
+                routed.forEach(function (p) { cached[p] = _urlCache[p]!.url; });
                 return Promise.resolve(cached);
             }
             return _fetchSignedUrls(toFetch).then(function () {
-                var out = {};
+                var out: Record<string, string> = {};
                 routed.forEach(function (p) {
                     if (_urlCache[p]) out[p] = _urlCache[p].url;
                 });
@@ -192,24 +184,31 @@ window.GAME_VERSION = GAME_VERSION;
             });
         }
     };
-})();
+}
 
 // ============================================================
 // DEBUG MODE: silenzia console.log/warn/info in production
 // Attivabile dalla Cheatboard o da console: window.DEBUG_MODE = true
 // console.error NON viene mai silenziato
 // ============================================================
-window.DEBUG_MODE = false;
+function installDebugSilencer(): void {
+    (window as any).DEBUG_MODE = false;
 
-(function () {
     const _log = console.log.bind(console);
     const _warn = console.warn.bind(console);
     const _info = console.info.bind(console);
 
     // Salva i metodi originali per uso diretto (es. cheatboard Log State)
-    window._console = { log: _log, warn: _warn, info: _info, error: console.error.bind(console) };
+    (window as any)._console = { log: _log, warn: _warn, info: _info, error: console.error.bind(console) };
 
-    console.log = function (...args) { if (window.DEBUG_MODE) _log(...args); };
-    console.warn = function (...args) { if (window.DEBUG_MODE) _warn(...args); };
-    console.info = function (...args) { if (window.DEBUG_MODE) _info(...args); };
-})();
+    console.log = function (...args: unknown[]) { if ((window as any).DEBUG_MODE) _log(...args); };
+    console.warn = function (...args: unknown[]) { if ((window as any).DEBUG_MODE) _warn(...args); };
+    console.info = function (...args: unknown[]) { if ((window as any).DEBUG_MODE) _info(...args); };
+}
+
+export function installVersion(): void {
+    if (typeof window === 'undefined') return;
+    (window as any).GAME_VERSION = GAME_VERSION;
+    (window as any).CDN = buildCdn();
+    installDebugSilencer();
+}

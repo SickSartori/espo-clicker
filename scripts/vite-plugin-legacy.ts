@@ -17,8 +17,6 @@ const JS_FILES: readonly string[] = [
   'node_modules/lz-string/libs/lz-string.min.js',
   'js/backend-config.js',
   'js/save-db.js',
-  'js/error-handler.js',
-  'js/version-config.js',
   'js/asset-manager.js',
   'js/i18n.js',
   'js/data/gamestate.js',

@@ -70,6 +70,8 @@ import { createAssetManager, AssetManager } from './core/assets/manager';
 import { store } from './state/store';
 import { installInterop } from './state/interop';
 import { installGameData } from './data/index';
+import { installVersion } from './lib/version';
+import { installErrorHandler } from './app/error-handler';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
@@ -83,6 +85,11 @@ installInterop();
 // Reorg filone B: i dati di gioco vivono in src/data/ e vengono installati su
 // window.gameData PRIMA del bundle legacy (che li consuma al boot).
 installGameData();
+
+// Reorg C-thin: infrastruttura legacy come moduli — stesse API window.*,
+// installate PRIMA del bundle (ordine deterministico).
+installVersion();
+installErrorHandler();
 
 // Bind 3D parallax sul clicker (auto-skip se reduced-motion o mobile)
 autoInitClickerParallax();
