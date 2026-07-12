@@ -460,4 +460,4 @@ window.gameData.achievements = {
         getCurrent: () => (gameState.skins.unlocked || []).length,
         condition: () => (gameState.skins.unlocked || []).length >= 15
     }
-}
+};
