@@ -73,7 +73,7 @@ La tabella è indicativa: lo split fine di `game-logic`/`ui-functions`/`script` 
 
 Ordine per dipendenza e rischio. Ogni filone è un **ciclo suo** (spec breve se serve → writing-plans → fette), con lo stesso criterio d'accettazione per fetta della migrazione V3.
 
-- **A — Fondamenta stato**: `gamestate.js` → `src/state/store.ts` + `interop.ts`. Sblocca tutto il resto.
+- **A — Fondamenta stato**: `gamestate.js` → `src/state/store.ts` + `interop.ts`. Sblocca tutto il resto. **FATTO 2026-07-12** (store 11 chiavi + interop accessor, 7 unit + E2E interop, gate completo verde).
 - **B — Dati**: `data/` + `data-en/` → `src/data/` (moduli che esportano i dati). Lo store espone `gameData`.
 - **C — Logica & UI (de-monolite + unificazione JS)**: `game-logic` → `src/game/*`; `ui-functions` → `src/ui/*`; `modals` → `src/ui/modals/*`; `save-db`/`i18n`/`asset-manager` → `src/state`+`src/lib`; **`script.js` → `src/app/` per ultimo**. È il filone più grosso: a sotto-fette per file/dominio.
 - **D — CSS unificato** (*anticipato: primo filone in esecuzione, è l'unico indipendente dai filoni JS — decisione utente 2026-07-11*): `css/` + tutto il CSS sotto `src/ui/` → `styles/` (layout sopra). Move-only: nessuna riscrittura di regole; i tre bundle di output devono restare identici. Aggiornare `loadThemeCSS` (cssBase), `arcade.php`, build CSS nel plugin/Vite, import in `main.ts`/`index.css`, `sw.js` (bump versione cache). Piano: `docs/superpowers/plans/2026-07-11-css-reorg-filone-d.md`. **FATTO 2026-07-11** (task D0-D5, bundle bit-identici, E2E verdi).

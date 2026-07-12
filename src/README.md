@@ -29,6 +29,9 @@ src/
   main.ts                          # entry: espone window.EspoV3
   types/
     save.ts                        # SaveStateV1, V2, AnySaveState
+  state/
+    store.ts                       # store mutabile delle 11 var runtime condivise (ex gamestate.js)
+    interop.ts                     # accessor window.* per il legacy (TEMP, via a fine filone C)
   core/
     crypto.ts                      # sha256, hmacSha256, randomHex (Web Crypto)
     bignum.ts                      # break_eternity.js wrapper, installGlobalDecimal
@@ -89,6 +92,7 @@ EspoV3 = {
   },
   migrations: { migrate },
   loop: { Scheduler },
+  state: { store, installInterop },
   workers: { computeOffline, encodeSave, decodeSave, terminate },
   fx: {
     animations: () => import('./ui/animations'),     // lazy
@@ -128,7 +132,7 @@ EspoV3 = {
 ## Cosa NON è ancora migrato (next phase)
 
 - Game loop runtime (60+ timer in `script.js`/`game-logic.js`/`ui-functions.js`) — Scheduler V3 è pronto, da sostituire al posto dei timer legacy.
-- gameState completo: ancora gestito dal monolite. Va estratto progressivamente in moduli `game/click.ts`, `game/upgrades.ts`, ecc.
+- gameState: la PROPRIETÀ dello stato è nello store V3 (filone A, 2026-07-12) via accessor window; la LOGICA che lo muta resta nel legacy (filone C).
 - Save/load runtime: il client legacy fa ancora le chiamate. La logica pura (crypto, codec, anti-rollback, migrations) è pronta da agganciare.
 - CSS legacy non ancora rimossi: `mobile.css` 1545 righe, themes 469+475+140 righe. I nuovi tokens vivono accanto, opt-in via `[data-v3]`.
 - Cloud sync HMAC server-side (`php/save_progress.php`) compatibile con `EspoV3.crypto.hmacSha256`.
