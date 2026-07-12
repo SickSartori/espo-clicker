@@ -1,6 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { gameData } from './index';
 import { en } from './en/index';
+import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
+
+describe('data/season (fix B2)', () => {
+  it('IS_XMAS_TIME coerente con isChristmasSeason e isSeasonActive', () => {
+    expect(IS_XMAS_TIME).toBe(isChristmasSeason());
+    expect(isSeasonActive('christmas')).toBe(IS_XMAS_TIME);
+    expect(isSeasonActive('')).toBe(true);
+    expect(isSeasonActive('sconosciuta')).toBe(false);
+  });
+  it('unlockHint natalizio EN valorizzato da season (non undefined)', () => {
+    const hint = en.skins.christmas.unlockHint;
+    expect([
+      "Redeem the 'Merry Christmas' achievement!",
+      'Available in the Shop for 5 Tokens.',
+    ]).toContain(hint);
+  });
+});
 
 describe('data/index (reorg filone B)', () => {
   it('espone texts con la struttura consumata dal gioco', () => {

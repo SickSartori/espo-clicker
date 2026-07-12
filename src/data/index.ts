@@ -11,6 +11,7 @@ import { events } from './events';
 import { assets } from './assets';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
+import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
 
 export const gameData: Record<string, any> = {
   texts,
@@ -21,6 +22,11 @@ export const gameData: Record<string, any> = {
 
 export function installGameData(): void {
   if (typeof window === 'undefined') return;
+  // Stagionalità pubblicata per i consumatori legacy runtime (ui-functions).
+  // core.js legacy (finché esiste) la ri-assegna con valori identici: innocuo.
+  (window as any).isChristmasSeason = isChristmasSeason;
+  (window as any).isSeasonActive = isSeasonActive;
+  (window as any).IS_XMAS_TIME = IS_XMAS_TIME;
   (window as any).gameData = gameData;
   (window as any).ASSET_PACKAGES = ASSET_PACKAGES;
 }
