@@ -90,8 +90,6 @@ export const texts: Record<string, any> = {
         fileCorrupt: "File principale corrotto. Caricato Backup.",
         versionMismatch: "⚠️ Versione salvataggio incompatibile!",
         memoryFull: "Memoria piena! Impossibile salvare in locale.",
-        prestigeNeedMore: "Devi accumulare più bug per ottenere una promozione!",
-        prestigeNeedComplete: "Devi completare il progetto (100%) per la promozione!",
         bugCrit: "Bug Critico Risolto! +{amount} bug!",
         offlineClaim: "Hai riscattato {amount} bug!",
         settingsSaved: "Preferenze Salvate",

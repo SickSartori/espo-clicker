@@ -292,11 +292,6 @@
 	$labels["col_center_bps_aria"] = "Bug per secondo";
 	$labels["col_buy_qty_aria"] = "Quantità acquisto";
 	$labels["col_buildings_region_aria"] = "Team e produzione automatica";
-	$labels["quantum_reboot_title"] = "RIAVVIO UNIVERSO";
-	$labels["quantum_reboot_desc"] = "Distruggi questo universo (reset Bug, Teams, Lab e Token). Conserverai Skin, Obiettivi e Statistiche globali.";
-	$labels["quantum_energy"] = "ENERGIA RICAVATA:";
-	$labels["quantum_requires"] = "Richiede 20 Promozioni (Attuali:";
-	$labels["quantum_start_format"] = "AVVIA FORMATTAZIONE";
 	$labels["quantum_meta_tech"] = "Meta-Tecnologie";
 	$labels["quantum_empty"] = "Tutte le tecnologie quantiche sono state ricercate.";
 	$labels["idx_mobile_nav_aria"] = "Navigazione mobile";

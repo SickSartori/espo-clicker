@@ -306,24 +306,6 @@
   }
 
   /* ════════════════════════════════════════════════
-     PRESTIGE / FORMAT modal — center content
-     ════════════════════════════════════════════════ */
-  html body #prestige-modal .modal-content,
-  html body #format-modal .modal-content {
-    text-align: center;
-  }
-
-  html body #prestige-modal .modal-content > *:not(h2):not(.modal-close-btn):not(::before) {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  html body #format-modal .modal-content > *:not(h2):not(.modal-close-btn):not(::before) {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  /* ════════════════════════════════════════════════
      USER HUB modal (Account + Amici) — profile cards
      ════════════════════════════════════════════════ */
   html body #user-hub-modal .modal-content {

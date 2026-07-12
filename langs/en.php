@@ -292,11 +292,6 @@
 	$labels["col_center_bps_aria"] = "Bugs per second";
 	$labels["col_buy_qty_aria"] = "Purchase quantity";
 	$labels["col_buildings_region_aria"] = "Teams and automatic production";
-	$labels["quantum_reboot_title"] = "UNIVERSE REBOOT";
-	$labels["quantum_reboot_desc"] = "Destroy this universe (reset Bugs, Teams, Lab and Tokens). You'll keep Skins, Achievements and global Statistics.";
-	$labels["quantum_energy"] = "ENERGY HARVESTED:";
-	$labels["quantum_requires"] = "Requires 20 Promotions (Current:";
-	$labels["quantum_start_format"] = "START FORMAT";
 	$labels["quantum_meta_tech"] = "Meta-Technologies";
 	$labels["quantum_empty"] = "All quantum technologies have been researched.";
 	$labels["idx_mobile_nav_aria"] = "Mobile navigation";

@@ -1070,18 +1070,6 @@ html body #user-hub-modal .fp-chat-presets .fp-preset-btn {
 }
 
 /* --- STILI CONTRATTO PRESTIGIO --- */
-#prestige-modal .contract-modal {
-    background: linear-gradient(180deg, #18202a 0%, #0f1318 100%);
-    border: 1px solid rgba(241, 196, 15, 0.2);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-}
-
-#prestige-modal .contract-modal h2 {
-    background: transparent;
-    border: none;
-    text-shadow: 0 0 20px rgba(241, 196, 15, 0.3);
-}
-
 .contract-gain-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

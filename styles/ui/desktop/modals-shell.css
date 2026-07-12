@@ -301,36 +301,6 @@
   /* ────────────────────────────────────────────────
      PER-MODAL ACCENT (top stripe color override)
      ──────────────────────────────────────────────── */
-  html body div#prestige-modal.modal-backdrop > .modal-content::before {
-    background: linear-gradient(90deg, transparent, #f1c40f 20%, #f1c40f 80%, transparent);
-  }
-  html body div#prestige-modal.modal-backdrop > .modal-content {
-    border-color: rgba(241, 196, 15, 0.3) !important;
-    box-shadow:
-      0 24px 60px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(241, 196, 15, 0.12),
-      0 0 80px rgba(241, 196, 15, 0.12) !important;
-  }
-  html body div#prestige-modal.modal-backdrop > .modal-content > h2 i {
-    color: #f1c40f !important;
-    filter: drop-shadow(0 0 8px rgba(241, 196, 15, 0.7));
-  }
-
-  html body div#format-modal.modal-backdrop > .modal-content::before {
-    background: linear-gradient(90deg, transparent, #9b59b6 20%, #9b59b6 80%, transparent);
-  }
-  html body div#format-modal.modal-backdrop > .modal-content {
-    border-color: rgba(155, 89, 182, 0.35) !important;
-    box-shadow:
-      0 24px 60px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(155, 89, 182, 0.15),
-      0 0 80px rgba(155, 89, 182, 0.15) !important;
-  }
-  html body div#format-modal.modal-backdrop > .modal-content > h2 i {
-    color: #c084fc !important;
-    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.7));
-  }
-
   html body div#release-notes-modal.modal-backdrop > .modal-content::before {
     background: linear-gradient(90deg, transparent, #f1c40f 20%, #f1c40f 80%, transparent);
   }
