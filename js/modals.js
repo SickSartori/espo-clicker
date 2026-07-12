@@ -1310,7 +1310,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 Game.setSaveToken(data.save_token, data.token_expires_at);
                 window._tokenExpiredNotified = false;
 
-                if (data.save_data) Game.loadCloudData(data.save_data);
+                // DEV (Admin Console): se un cheat/scenario è attivo NON riallineare
+                // lo stato al cloud (stesso guard di _resyncFromCloud). Il re-auth per
+                // token scaduto e l'auto-login all'avvio passano da qui: senza guard
+                // l'anti-rollback adottava il save cloud "più avanti" annullando lo
+                // scenario caricato. Token e sessione sono comunque già aggiornati sopra.
+                if (window.cheatNoCloudSync) { /* stato locale invariato */ }
+                else if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
                     if (typeof resetGameToDefault === 'function') resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV9');
