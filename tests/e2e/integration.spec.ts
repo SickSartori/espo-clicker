@@ -191,4 +191,38 @@ test.describe('Integrazione gameplay', () => {
     expect(r.rulesOk).toBe(true);
     expect(typeof r.tabClickClass).toBe('string');
   });
+
+  test('interop stato (filone A): window.* e EspoV3.state.store sono lo stesso stato', async ({ page }) => {
+    await bootGame(page);
+
+    const r = await page.evaluate(() => {
+      const w = window as any;
+      const store = w.EspoV3.state && w.EspoV3.state.store;
+      if (!store) return { hasStore: false };
+
+      // Identità: il legacy ha già scritto gameState/bps al boot → stessa referenza.
+      const identity = w.gameState === store.gameState && w.bps === store.bps;
+
+      // Scrittura stile legacy (assegnazione bare) → visibile nello store…
+      const prevBps = store.bps;
+      w.bps = new w.Decimal('12345');
+      const legacyWrite = String(store.bps) === '12345';
+      // …e scrittura lato store → visibile dal legacy.
+      store.bps = new w.Decimal('67890');
+      const storeWrite = String(w.bps) === '67890';
+      w.bps = prevBps; // ripristino
+
+      const desc = Object.getOwnPropertyDescriptor(w, 'bps');
+      return {
+        hasStore: true, identity, legacyWrite, storeWrite,
+        accessor: typeof (desc && desc.get) === 'function',
+      };
+    });
+
+    expect(r.hasStore, 'EspoV3.state.store assente').toBe(true);
+    expect(r.identity).toBe(true);
+    expect(r.legacyWrite).toBe(true);
+    expect(r.storeWrite).toBe(true);
+    expect(r.accessor).toBe(true);
+  });
 });

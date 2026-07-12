@@ -67,10 +67,17 @@ import {
   crunchCooldownFromEnd,
 } from './game/events';
 import { createAssetManager, AssetManager } from './core/assets/manager';
+import { store } from './state/store';
+import { installInterop } from './state/interop';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
 installGlobalDecimal();
+
+// Reorg filone A: lo stato runtime condiviso vive in src/state/store.ts; gli
+// accessor window.* (bps, gameState, ...) servono il bundle legacy, che esegue
+// DOPO questo modulo (contratto F0). TEMPORANEO fino a fine filone C.
+installInterop();
 
 // Bind 3D parallax sul clicker (auto-skip se reduced-motion o mobile)
 autoInitClickerParallax();
@@ -154,6 +161,7 @@ const EspoV3 = {
     enableClickerParallax,
     renderLucideIcons,
   },
+  state: { store, installInterop },
 } as const;
 
 declare global {

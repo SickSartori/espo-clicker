@@ -1,14 +1,13 @@
-// --- VARIABILI DI STATO GLOBALI ---
-var bps = new Decimal(0);
-var prestigeBonus = new Decimal(1);
-var clickCPSBonus = new Decimal(1);
-var isBluescreenActive = false;
-var bluescreenMultiplier = new Decimal(1);
-var crunchTimeMultiplier = new Decimal(1);
-var crunchTimeEndTime = 0;
-var crunchTimeCooldownEnd = 0;
-var clickHistory = [];
-var achievementsBPSBonus = new Decimal(0);
+// --- STATO GLOBALE CONDIVISO (reorg filone A, 2026-07-12) ---
+// Le 11 variabili runtime (gameState, bps, prestigeBonus, clickCPSBonus,
+// isBluescreenActive, bluescreenMultiplier, crunchTimeMultiplier,
+// crunchTimeEndTime, crunchTimeCooldownEnd, clickHistory,
+// achievementsBPSBonus) vivono in src/state/store.ts (EspoV3.state.store),
+// esposte come ACCESSOR su window da src/state/interop.ts — installato dal
+// modulo V3, che esegue PRIMA di questo bundle. Le assegnazioni bare qui e
+// negli altri file (es. `gameState = getInitialGameState()`) passano dal
+// setter → store. Qui restano le window.* legacy e la generazione stato
+// (getInitialGameState/resetGameToDefault, accoppiate a gameData → filone B).
 
 // Variabili Window Globali
 window.goldenBugChance = 0.001;
@@ -19,9 +18,6 @@ window.costScalingBase = 1.22;
 window.costScalingReduction = 0;
 window.prestigeSynergyFactor = new Decimal(0);
 window.clickGlobalMult = new Decimal(1);
-
-// Variabile contenitore dello stato
-var gameState;
 
 // --- FUNZIONE GENERAZIONE STATO ---
 function getInitialGameState() {
