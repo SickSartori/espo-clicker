@@ -72,6 +72,7 @@ import { installInterop } from './state/interop';
 import { installGameData } from './data/index';
 import { installVersion } from './lib/version';
 import { installErrorHandler } from './app/error-handler';
+import { installBackend } from './lib/backend-config';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
@@ -90,6 +91,7 @@ installGameData();
 // installate PRIMA del bundle (ordine deterministico).
 installVersion();
 installErrorHandler();
+installBackend();
 
 // Bind 3D parallax sul clicker (auto-skip se reduced-motion o mobile)
 autoInitClickerParallax();
