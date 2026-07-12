@@ -42,6 +42,7 @@ window.gameData.i18n.en.texts = {
             "More Bugs Per Second = faster promotions."
         ],
         promoReady: "READY!",
+        formatReady: "FORMAT!",
         promotionReadyTitle: "PROMOTION READY!",
         bugsTitle: "Bugs",
         furyActive: "BPS x7",

@@ -240,6 +240,9 @@
 	$labels["prestige_token"] = "Lab Tokens";
 	$labels["prestige_new_mult"] = "New Multiplier:";
 	$labels["prestige_sign_btn"] = "Sign Contract";
+	$labels["hub_titolo"] = "Prestige";
+	$labels["hub_counter_label"] = "Promotions";
+	$labels["hub_promo_locked_btn"] = "Complete the project (100%)";
 
 	/*----------------------------------------------------------------------------------------
 	* IN-GAME ARCADE MODAL (includes/modals_arcade.php)

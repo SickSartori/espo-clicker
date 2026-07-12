@@ -39,6 +39,7 @@ window.gameData.texts = {
             "Più Bug Per Secondo = promozioni più veloci."
         ],
         promoReady: "PRONTA!",
+        formatReady: "FORMATTA!",
         promotionReadyTitle: "PROMOZIONE PRONTA!",
         bugsTitle: "Bug",
         furyActive: "BPS x7",

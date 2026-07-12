@@ -240,6 +240,9 @@
 	$labels["prestige_token"] = "Token Laboratorio";
 	$labels["prestige_new_mult"] = "Nuovo Moltiplicatore:";
 	$labels["prestige_sign_btn"] = "Firma Contratto";
+	$labels["hub_titolo"] = "Prestigio";
+	$labels["hub_counter_label"] = "Promozioni";
+	$labels["hub_promo_locked_btn"] = "Completa il progetto (100%)";
 
 	/*----------------------------------------------------------------------------------------
 	* MODALE ARCADE in-game (includes/modals_arcade.php)
