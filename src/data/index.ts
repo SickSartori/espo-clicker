@@ -10,11 +10,13 @@ import { texts } from './texts';
 import { events } from './events';
 import { assets } from './assets';
 import { ASSET_PACKAGES } from './asset-packages';
+import { en } from './en/index';
 
 export const gameData: Record<string, any> = {
   texts,
   events,
   assets,
+  i18n: { en },
 };
 
 export function installGameData(): void {

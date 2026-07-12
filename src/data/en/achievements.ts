@@ -1,8 +1,5 @@
 /* EN overlay — achievements. Stesse chiavi di js/data/achievements.js. */
-window.gameData = window.gameData || {};
-window.gameData.i18n = window.gameData.i18n || {};
-window.gameData.i18n.en = window.gameData.i18n.en || {};
-window.gameData.i18n.en.achievements = {
+export const achievements: Record<string, any> = {
     primoClick: { desc: "Land your first manual click.", flavor: "The first bug is always the easiest one." },
     primoTeam: { desc: "Own 10 QA Assistants." },
     jiraWarrior: { desc: "Handle 25 Jira Tickets." },

@@ -1,8 +1,5 @@
 /* EN overlay — skins. Stesse chiavi di js/data/skins.js. */
-window.gameData = window.gameData || {};
-window.gameData.i18n = window.gameData.i18n || {};
-window.gameData.i18n.en = window.gameData.i18n.en || {};
-window.gameData.i18n.en.skins = {
+export const skins: Record<string, any> = {
     default: {
         name: "Espòòò",
         desc: "The unmistakable original."
@@ -13,7 +10,7 @@ window.gameData.i18n.en.skins = {
     christmas: {
         name: "Espo Claus",
         desc: "Let's squash these bugs under the tree.",
-        unlockHint: IS_XMAS_TIME ? "Redeem the 'Merry Christmas' achievement!" : "Available in the Shop for 5 Tokens."
+        unlockHint: (window as any).IS_XMAS_TIME ? "Redeem the 'Merry Christmas' achievement!" : "Available in the Shop for 5 Tokens."
     },
 
     // --- RARE ---

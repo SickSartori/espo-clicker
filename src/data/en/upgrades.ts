@@ -1,8 +1,5 @@
 /* EN overlay — upgrades (click/prestige/building/super). Stesse chiavi di js/data/upgrades.js. */
-window.gameData = window.gameData || {};
-window.gameData.i18n = window.gameData.i18n || {};
-window.gameData.i18n.en = window.gameData.i18n.en || {};
-window.gameData.i18n.en.clickUpgrades = {
+export const clickUpgrades: Record<string, any> = {
     caffeForte: { name: "Strong Coffee", desc: "Adds +1 to the value of every click." },
     tastieraErgonomica: { name: "Ergonomic Keyboard", desc: "Adds +5 to the value of every click." },
     mouseGaming: { name: "Gaming Mouse", desc: "Adds +10 to the value of every click." },
@@ -16,7 +13,7 @@ window.gameData.i18n.en.clickUpgrades = {
     overclockingCognitivo: { name: "Cognitive Overclocking", desc: "Triples the base value of your clicks." },
     clickDivino: { name: "Divine Click", desc: "The Bionic Hand now earns 2% of your BPS." }
 };
-window.gameData.i18n.en.prestigeUpgrades = {
+export const prestigeUpgrades: Record<string, any> = {
     sinergia: { name: "Managerial Synergy", desc: "Each promotion point is worth +0.1% more (Cumulative)." },
     paracadute: { name: "Golden Parachute", desc: "Start the run with +2,000 Bugs per level." },
     serverAlwaysOn: { name: "Server Always-On", desc: "Raises offline earnings from 30% to 100% (+10%/lvl)." },
@@ -31,7 +28,7 @@ window.gameData.i18n.en.prestigeUpgrades = {
     esperienzaAccumulata: { name: "Accumulated Experience", desc: "Raises click value by +2% per level (permanent)." },
     deadlineStretta: { name: "Tight Deadline", desc: "keepTeams keeps +1 extra level for each purchase." }
 };
-window.gameData.i18n.en.buildingEnhancements = {
+export const buildingEnhancements: Record<string, any> = {
     caffeDoppio: { name: "Double Coffee", desc: "QA Assistants x2 BPS." },
     caffeTriplo: { name: "Triple Coffee", desc: "QA Assistants x2 BPS." },
     scrivanieErgonomiche: { name: "Ergonomic Desks", desc: "QA Assistants x3 BPS." },
@@ -88,7 +85,7 @@ window.gameData.i18n.en.buildingEnhancements = {
     hotfixDivino: { name: "Divine Hotfix", desc: "Architecture of Infinity x3 BPS." },
     deployDelCosmo: { name: "Deploy of the Cosmos", desc: "Architecture of Infinity x4 BPS." }
 };
-window.gameData.i18n.en.superUpgrades = {
+export const superUpgrades: Record<string, any> = {
     risveglio: { name: "Quantum Awakening", desc: "Awareness of the multiverse doubles (x2) the base power of all your clicks forever." },
     fastStart: { name: "Fast Start", desc: "Begin every Universe with +1 Million Bugs and 5 QA Assistants." },
     goldenAura: { name: "Golden Aura", desc: "Quantum resonance makes Critical Tickets (Golden Bug) contain triple (x3) the Bugs." },

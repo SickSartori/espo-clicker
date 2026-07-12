@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { gameData } from './index';
+import { en } from './en/index';
 
 describe('data/index (reorg filone B)', () => {
   it('espone texts con la struttura consumata dal gioco', () => {
@@ -11,5 +12,18 @@ describe('data/index (reorg filone B)', () => {
   it('espone events e assets', () => {
     expect(Object.keys(gameData.events).length).toBeGreaterThan(0);
     expect(gameData.assets.sounds).toBeTypeOf('object');
+  });
+});
+
+describe('data/en overlay (reorg filone B)', () => {
+  it('gli id dei dizionari en esistono nelle collezioni base (niente chiavi orfane)', () => {
+    for (const id of Object.keys(en.teams ?? {})) {
+      // le collezioni base arrivano in B3: finché mancano, il check è sui texts
+      if (gameData.teams) expect(gameData.teams[id], `team en orfano: ${id}`).toBeTruthy();
+    }
+    expect(en.texts).toBeTypeOf('object');
+  });
+  it('gameData.i18n.en è cablato', () => {
+    expect(gameData.i18n.en).toBe(en);
   });
 });

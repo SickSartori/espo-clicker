@@ -1,8 +1,5 @@
 /* EN overlay — texts. Stessa struttura annidata di js/data/texts.js. */
-window.gameData = window.gameData || {};
-window.gameData.i18n = window.gameData.i18n || {};
-window.gameData.i18n.en = window.gameData.i18n.en || {};
-window.gameData.i18n.en.texts = {
+export const texts: Record<string, any> = {
     ui: {
         buy: "Buy",
         owned: "OWNED",

@@ -1,8 +1,5 @@
 /* EN overlay — teams. Stesse chiavi di js/data/teams.js. */
-window.gameData = window.gameData || {};
-window.gameData.i18n = window.gameData.i18n || {};
-window.gameData.i18n.en = window.gameData.i18n.en || {};
-window.gameData.i18n.en.teams = {
+export const teams: Record<string, any> = {
 	assistenteQa: { name: "QA Assistant" },
 	teamQa: { name: "QA Team" },
 	automazioneTest: { name: "Test Automation" },
