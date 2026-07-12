@@ -1988,7 +1988,10 @@ function updateTabsVisibility() {
 // accessor di sola lettura → assegnargli una stringa è un no-op silenzioso
 // (l'icona non cambiava mai). Rimpiazziamo il nodo con un <i> Font Awesome
 // fresco; la classe .nav-icon resta così i querySelector successivi funzionano.
+// Idempotente: se il nodo è già l'<i> target non tocca il DOM (stessa identità
+// di nodo tra i tick) → chiamabile incondizionatamente nel loop a 10fps.
 function swapPrestigeIcon(oldIcon, className) {
+    if (oldIcon.tagName === 'I' && oldIcon.className === className) return oldIcon;
     const fresh = document.createElement('i');
     fresh.className = className;
     oldIcon.replaceWith(fresh);
@@ -2062,8 +2065,12 @@ function updatePrestigeVisuals() {
         if (prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
             prestigeBtn.classList.remove('promotion-ready');
             prestigeBtn.classList.remove('format-ready');
-            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-rocket');
         }
+        // Swap FUORI dal guard di transizione: a cold boot che atterra qui
+        // (resets 1–19, score < soglia) il bottone è senza classi di stato,
+        // il guard è falso e l'icona resterebbe la zap Lucide del boot per
+        // tutta la sessione. Idempotente → zero churn DOM sui tick successivi.
+        icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-rocket');
         prestigeBtn.style.cursor = "pointer";
 
         // Calcolo percentuale sicuro
