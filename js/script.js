@@ -1252,50 +1252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loaderUI.setStatus(gameData.texts.ui.loadingData);
         const loadGamePromise = loadGame(); // Carica salvataggi (async: attesa più sotto)
 
-        const btnFormatOpen = document.getElementById('btn-open-format-modal');
-        const btnFormatExecute = document.getElementById('btn-execute-format'); // Fallback se c'è ancora l'id vecchio
-        const formatModal = document.getElementById('format-modal');
         const btnConfirmFormat = document.getElementById('btn-confirm-format');
-
-        const openFormatHandler = () => {
-            // CONTROLLO DI SICUREZZA
-            if ((gameState.totalResets || 0) < 20) {
-                if (window.EspooClicker) window.EspooClicker.showToast("Devi effettuare almeno 20 Promozioni in questo Universo per formattare!", "error");
-                return;
-            }
-
-            if (formatModal) {
-                const tokenDiv = gameState.prestigePoints.div(10000);
-                let bonusQbits = new Decimal(0);
-                if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
-                let qBitsEarned = new Decimal(1).add(bonusQbits);
-                const previewEl = document.getElementById('format-gain-qbit');
-                if (previewEl) previewEl.textContent = `+${formatNumber(qBitsEarned)}`;
-
-                formatModal.style.display = 'flex';
-                formatModal.style.opacity = '1';
-
-                const content = formatModal.querySelector('.modal-content');
-                if (content) {
-                    if (typeof gsap !== 'undefined') {
-                        gsap.fromTo(content,
-                            { scale: 0.8, opacity: 0, y: 20 },
-                            { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
-                        );
-                    } else {
-                        content.style.opacity = '1';
-                        content.style.transform = 'scale(1) translateY(0px)';
-                    }
-                }
-                // ===================================================
-
-                document.body.classList.add('modal-open');
-                playSound('sound-click');
-            }
-        };
-
-        if (btnFormatOpen) btnFormatOpen.addEventListener('click', openFormatHandler);
-        if (btnFormatExecute) btnFormatExecute.addEventListener('click', openFormatHandler);
 
         if (btnConfirmFormat) {
             btnConfirmFormat.addEventListener('click', () => {
@@ -1798,12 +1755,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-
-        const cancelPrestigeBtn = document.getElementById('cancel-prestige-btn');
-        const prestigeModal = document.getElementById('prestige-modal');
-
-        if (cancelPrestigeBtn && prestigeModal)
-            cancelPrestigeBtn.addEventListener('click', () => prestigeModal.style.display = 'none');
 
         const vDisplay = document.getElementById('version-display');
 

@@ -1672,57 +1672,16 @@ function calculatePrestigeGained() {
     });
 }
 
-function openPrestigeContract() {
-    if (gameState.totalScore.lt(getPrestigeThreshold())) {
-        if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedComplete, "error");
-        }
-        return;
-    }
+function openPrestigeHub() {
+    // Le card riflettono lo stato corrente (promo pronta/non pronta,
+    // format mystery/locked/ready): niente più toast-blocco all'ingresso.
+    if (typeof renderPrestigeHubCards === 'function') renderPrestigeHubCards();
 
-    const gained = calculatePrestigeGained();
-    if (gained.lt(1)) {
-        if (window.EspooClicker && window.EspooClicker.showToast) {
-            window.EspooClicker.showToast(gameData.texts.toasts.prestigeNeedMore, "error");
-        }
-        return;
-    }
-
-    // Applica visivamente il bonus del Replicatore di Token
-    // F6 -> F8: formula unica in EspoV3.prestige (applyTokenDuplicator = +20% se attivo)
-    const _dupOn = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
-    let finalGained = window.EspoV3.prestige.applyTokenDuplicator(gained, _dupOn);
-
-    const tokenDisplay = document.getElementById('contract-gain-token');
-    const bonusDisplay = document.getElementById('contract-gain-bonus');
-
-    if (tokenDisplay) tokenDisplay.textContent = `+${formatNumber(finalGained)}`;
-
-    // Calcoli per la preview
-    let currentLifetime = gameState.lifetimePrestigePoints || new Decimal(0);
-    let estimatedLifetime = currentLifetime.add(finalGained);
-
-    // Calcolo Bonus
-    let baseBonus = estimatedLifetime.mul(0.01);
-    let synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
-    let synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
-
-    // synergy = count * 0.001 * lifetime
-    let synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
-    // Stesso softcap di calculatePrestigeBonus: l'anteprima deve mostrare il moltiplicatore reale.
-    let rawMultiplier = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
-    let totalMultiplier = new Decimal(1).add(applyBonusSoftcap(rawMultiplier));
-
-    if (bonusDisplay) {
-        bonusDisplay.innerHTML = `${gameData.texts.ui.newMultiplier} <span style="color: #f1c40f; font-weight: bold;">x${formatNumber(totalMultiplier)}</span>`;
-    }
-
-    const modal = document.getElementById('prestige-modal');
+    const modal = document.getElementById('prestige-hub-modal');
     if (modal) {
         modal.style.display = 'flex';
         modal.style.opacity = '1';
 
-        // Animazione Fluida GSAP per l'entrata
         const content = modal.querySelector('.modal-content');
         if (content) {
             if (typeof gsap !== 'undefined') {
@@ -1742,7 +1701,7 @@ function openPrestigeContract() {
 
 async function executePrestige() {
     const overlay = document.getElementById('prestige-transition-overlay');
-    const modal = document.getElementById('prestige-modal');
+    const modal = document.getElementById('prestige-hub-modal');
     const bar = document.getElementById('prestige-progress-bar');
     const animContainer = document.getElementById('prestige-anim-container');
 

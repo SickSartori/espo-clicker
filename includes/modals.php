@@ -337,102 +337,69 @@
         <div id="leaderboard-list"></div>
     </div>
 </div>
-<div id="prestige-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #f1c40f; box-shadow: 0 0 30px rgba(241,196,15,0.3); padding: 0; overflow: hidden; background: #0a0a0a;">
-        <button class="modal-close-btn" id="cancel-prestige-btn" style="z-index: 10;">&times;</button>
-        
-        <h2 style="background: #1f1905; color: #f1c40f; border-bottom: 1px solid rgba(241, 196, 15, 0.3); padding: 20px; margin: 0;">
-            <i class="fa-solid fa-certificate"></i> <?php echo $labels["prestige_titolo"]; ?>
-        </h2>
-        
-        <div class="settings-content" style="padding: 30px 25px;">
-            <p style="
-                color: #fff; 
-                background: rgba(241, 196, 15, 0.1); 
-                border: 1px solid #f1c40f;
-                font-weight: 600; 
-                font-size: 0.9rem; 
-                margin-bottom: 25px; 
-                line-height: 1.5; 
-                padding: 12px; 
-                border-radius: 8px;">
-                <i class="fa-solid fa-file-signature" style="color: #f1c40f;"></i> <?php echo $labels["prestige_sign"]; ?><br><br>
-                <span style="color:#bdc3c7; font-weight:normal; font-size: 0.85rem;"><?php echo $labels["prestige_warning"]; ?></span>
-            </p>
-
-            <div style="background: #110f08; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #4a3e12;">
-                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
-                    <?php echo $labels["prestige_gain"]; ?>
-                </div>
-                <div style="font-size: 3.5rem;font-family: var(--font-heading); font-weight: 900; color: #3498db; text-shadow: 0 0 20px rgba(52, 152, 219, 0.5); line-height: 1;" id="contract-gain-token">
-                    +0
-                </div>
-                <div style="color: #3498db; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; margin-top: 5px;">
-                    <?php echo $labels["prestige_token"]; ?>
-                </div>
-                <div id="contract-gain-bonus" style="font-size: 0.9rem; color: #95a5a6; margin-top: 15px; border-top: 1px solid #2a2305; padding-top: 15px;">
-                    <?php echo $labels["prestige_new_mult"]; ?> <span style="color: #f1c40f; font-weight: bold;">x1.00</span>
-                </div>
-            </div>
-
-            <button id="btn-confirm-prestige" class="buy-btn" data-action="prestige" style="
-                background: linear-gradient(135deg, #f1c40f, #d35400); 
-                color: #000; 
-                font-weight: 900; 
-                width: 100%; 
-                height: 55px; 
-                font-size: 1.2rem; 
-                box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
-                border-radius: 8px;
-                border: none;
-                text-transform: uppercase;
-                letter-spacing: 1px;">
-                <i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?>
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="format-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center; border: 1px solid #9b59b6; box-shadow: 0 0 30px rgba(155,89,182,0.6);">
+<div id="prestige-hub-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content prestige-hub-content">
         <button class="modal-close-btn">&times;</button>
-        <h2 style="background: #1a0f2e; color: #9b59b6; border-bottom: 1px solid rgba(155, 89, 182, 0.3); padding: 20px;">
-            <i class="fa-solid fa-infinity fa-spin"></i> <?php echo $labels["format_titolo"]; ?>
-		</h2>
-        <div class="settings-content" style="padding: 30px 25px;">    
-            <p style="
-                color: #fff; 
-                background: rgba(155, 89, 182, 0.2); 
-                border: 1px solid #9b59b6;
-                font-weight: 600; 
-                font-size: 0.9rem; 
-                margin-bottom: 25px; 
-                line-height: 1.5; 
-                padding: 12px; 
-                border-radius: 8px;">
-                <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> <?php echo $labels["format_warning"]; ?>
-            </p>
+        <h2>
+            <i data-lucide="zap"></i>
+            <?php echo $labels["hub_titolo"]; ?>
+        </h2>
 
-            <div style="background: #110a1f; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #4a235a;">
-                <div style="font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; letter-spacing: 1px;">
-					<?php echo $labels["format_gain"]; ?>
-				</div>
-                <div style="font-size: 3rem; font-weight: 900; color: #9b59b6; text-shadow: 0 0 20px rgba(155, 89, 182, 0.4); line-height: 1;">
-                    <span id="format-gain-qbit">+0</span>
+        <div class="settings-content hub-cards">
+
+            <!-- CARD PROMOZIONE (oro) — stati: is-locked / is-ready -->
+            <section id="hub-card-promo" class="hub-card hub-card-promo is-locked">
+                <h3 class="hub-card-title"><i class="fa-solid fa-certificate"></i> <?php echo $labels["prestige_titolo"]; ?></h3>
+
+                <p class="hub-card-warning">
+                    <i class="fa-solid fa-file-signature" style="color: #f1c40f;"></i> <?php echo $labels["prestige_sign"]; ?><br>
+                    <span class="hub-warning-sub"><?php echo $labels["prestige_warning"]; ?></span>
+                </p>
+
+                <div class="hub-gain-box">
+                    <div class="hub-gain-label"><?php echo $labels["prestige_gain"]; ?></div>
+                    <div class="hub-gain-value" id="contract-gain-token">+0</div>
+                    <div class="hub-gain-name"><?php echo $labels["prestige_token"]; ?></div>
+                    <div class="hub-gain-bonus" id="contract-gain-bonus"><?php echo $labels["prestige_new_mult"]; ?> <span>x1.00</span></div>
                 </div>
-                <div style="color: #9b59b6; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">
-					<?php echo $labels["format_qbits"]; ?>
-				</div>
-            </div>
 
-            <button id="btn-confirm-format" class="buy-btn quantum-btn" aria-label="<?php echo $labels['prestige_madeheaven_aria']; ?>" style="
-                width: 100%;
-                height: 55px;
-                font-size: 1.2rem;
-                border-radius: 8px;">
-                <i class="fa-solid fa-meteor"></i> MADE IN HEAVEN
-                <span style="display:block; font-size:0.7rem; font-weight:normal; opacity:0.85; margin-top:2px;"><?php echo $labels["format_subtitle"]; ?></span>
-            </button>
+                <div class="hub-progress">
+                    <div class="hub-progress-track"><div class="hub-progress-fill" id="hub-promo-progress-fill"></div></div>
+                    <span class="hub-progress-label" id="hub-promo-progress-label">0%</span>
+                </div>
+
+                <button id="btn-confirm-prestige" class="buy-btn hub-confirm hub-confirm-promo" disabled>
+                    <span class="hub-btn-ready"><i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?></span>
+                    <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_promo_locked_btn"]; ?></span>
+                </button>
+            </section>
+
+            <!-- CARD FORMATTAZIONE (viola) — stati: is-mystery / is-locked / is-ready -->
+            <section id="hub-card-format" class="hub-card hub-card-format is-mystery">
+                <div class="hub-mystery-veil" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+
+                <h3 class="hub-card-title">
+                    <span class="hub-format-title-real"><i class="fa-solid fa-infinity"></i> <?php echo $labels["format_titolo"]; ?></span>
+                    <span class="hub-format-title-mystery">???</span>
+                </h3>
+
+                <p class="hub-card-warning">
+                    <i class="fa-solid fa-skull" style="color: #e74c3c;"></i> <?php echo $labels["format_warning"]; ?>
+                </p>
+
+                <div class="hub-gain-box">
+                    <div class="hub-gain-label"><?php echo $labels["format_gain"]; ?></div>
+                    <div class="hub-gain-value" id="format-gain-qbit">+0</div>
+                    <div class="hub-gain-name"><?php echo $labels["format_qbits"]; ?></div>
+                </div>
+
+                <button id="btn-confirm-format" class="buy-btn quantum-btn hub-confirm hub-confirm-format" aria-label="<?php echo $labels['prestige_madeheaven_aria']; ?>" disabled>
+                    <span class="hub-btn-ready"><i class="fa-solid fa-meteor"></i>&nbsp;MADE IN HEAVEN
+                        <span class="hub-btn-sub"><?php echo $labels["format_subtitle"]; ?></span>
+                    </span>
+                    <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_counter_label"]; ?> <span class="hub-format-counter-value">0/20</span></span>
+                </button>
+            </section>
         </div>
     </div>
 </div>

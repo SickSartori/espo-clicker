@@ -336,20 +336,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openPrestigeBtn) {
         openPrestigeBtn.addEventListener('click', () => {
             if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
-            if (typeof openPrestigeContract === 'function') {
-                openPrestigeContract();
-            }
+            if (typeof openPrestigeHub === 'function') openPrestigeHub();
         });
     }
 
     if (btnConfirmPrestige) {
         btnConfirmPrestige.addEventListener('click', () => {
-            const action = btnConfirmPrestige.getAttribute('data-action');
-            if (action === 'format') {
-                if (typeof executeFormattingSequence === 'function') executeFormattingSequence();
-            } else {
-                if (typeof executePrestige === 'function') executePrestige();
-            }
+            if (typeof executePrestige === 'function') executePrestige();
         });
     }
 

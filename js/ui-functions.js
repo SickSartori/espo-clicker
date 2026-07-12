@@ -1734,38 +1734,95 @@ function updateWallets() {
         if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
     });
 
-    // Aggiorna Q-Bits in attesa nel bottone di formattazione (NUOVA FORMULA SQRT)
-    if (gameState.prestigePoints) {
-        const tokenDiv = gameState.prestigePoints.div(10000);
-        let bonusQbits = new Decimal(0);
-        if (tokenDiv.gte(1)) {
-            bonusQbits = tokenDiv.sqrt().floor();
-        }
-        const pendingQBits = new Decimal(1).add(bonusQbits);
-        setTextIfChanged('pending-qbits-display', `+${formatNumber(pendingQBits)} Q-Bit`);
+    // Hub Prestigio: aggiorna le card solo quando il modal è aperto
+    const hubModal = document.getElementById('prestige-hub-modal');
+    if (hubModal && hubModal.style.display === 'flex' && typeof renderPrestigeHubCards === 'function') {
+        renderPrestigeHubCards();
+    }
+}
+
+// --- HUB PRESTIGIO (Promozione + Formattazione) ---
+// Aggiorna le card dell'hub: chiamata all'apertura (openPrestigeHub) e dal
+// loop UI via updateWallets SOLO a modal aperto. Non ricostruisce il DOM:
+// testi/classi aggiornati solo se cambiati (stesso pattern di setTextIfChanged).
+function renderPrestigeHubCards() {
+    const promoCard = document.getElementById('hub-card-promo');
+    const formatCard = document.getElementById('hub-card-format');
+    if (!promoCard || !formatCard) return;
+
+    const currentScore = gameState.totalScore || new Decimal(0);
+    const threshold = getPrestigeThreshold();
+    const resets = gameState.totalResets || 0;
+
+    // ---- CARD PROMOZIONE ----
+    const gained = calculatePrestigeGained();
+    const canPrestige = currentScore.gte(threshold) && gained.gte(1);
+
+    setCardState(promoCard, canPrestige ? 'is-ready' : 'is-locked');
+
+    if (canPrestige) {
+        const dupOn = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
+        const finalGained = window.EspoV3.prestige.applyTokenDuplicator(gained, dupOn);
+        setTextIfChanged('contract-gain-token', `+${formatNumber(finalGained)}`);
+
+        // Anteprima nuovo moltiplicatore (stessi calcoli del vecchio openPrestigeContract)
+        const estimatedLifetime = (gameState.lifetimePrestigePoints || new Decimal(0)).add(finalGained);
+        const baseBonus = estimatedLifetime.mul(0.01);
+        const synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
+        const synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
+        const synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
+        const rawMultiplier = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
+        const totalMultiplier = new Decimal(1).add(applyBonusSoftcap(rawMultiplier));
+
+        const bonusEl = document.getElementById('contract-gain-bonus');
+        const bonusHtml = `${gameData.texts.ui.newMultiplier} <span>x${formatNumber(totalMultiplier)}</span>`;
+        if (bonusEl && bonusEl.innerHTML !== bonusHtml) bonusEl.innerHTML = bonusHtml;
+    } else {
+        let progress = 0;
+        if (currentScore.gt(0)) progress = currentScore.div(threshold).mul(100).toNumber();
+        const pct = `${Math.min(progress, 99).toFixed(0)}%`;
+        const fill = document.getElementById('hub-promo-progress-fill');
+        if (fill && fill.style.width !== pct) fill.style.width = pct;
+        setTextIfChanged('hub-promo-progress-label', pct);
     }
 
-    // --- NUOVO: GESTIONE REQUISITO FORMATTAZIONE ---
-    const formatBtn = document.getElementById('btn-open-format-modal');
-    const formatWarning = document.getElementById('format-requirement-warning');
-    const currentResetsDisplay = document.getElementById('current-resets-display');
+    const btnPromo = document.getElementById('btn-confirm-prestige');
+    if (btnPromo && btnPromo.disabled === canPrestige) btnPromo.disabled = !canPrestige;
 
-    if (formatBtn && formatWarning && currentResetsDisplay) {
-        const currentResets = gameState.totalResets || 0;
-        currentResetsDisplay.textContent = currentResets;
+    // ---- CARD FORMATTAZIONE ----
+    // resets >= 20 implica Quantum sbloccato (è uno dei rami OR della regola).
+    const isQ = window.EspoV3.rules.isQuantumUnlocked({
+        totalResets: resets,
+        totalFormattazioni: gameState.totalFormattazioni || 0,
+        qBits: String(gameState.qBits || 0),
+    });
+    const canFormat = resets >= 20;
 
-        if (currentResets < 20) {
-            formatBtn.disabled = true;
-            formatBtn.style.opacity = '0.4';
-            formatBtn.style.cursor = 'not-allowed';
-            formatWarning.style.display = 'block';
-        } else {
-            formatBtn.disabled = false;
-            formatBtn.style.opacity = '1';
-            formatBtn.style.cursor = 'pointer';
-            formatWarning.style.display = 'none';
-        }
+    setCardState(formatCard, canFormat ? 'is-ready' : (isQ ? 'is-locked' : 'is-mystery'));
+
+    if (canFormat) {
+        // Formula INVARIATA (era in updateWallets/openFormatHandler):
+        // qbit = 1 + floor(sqrt(prestigePoints / 10000))
+        const tokenDiv = (gameState.prestigePoints || new Decimal(0)).div(10000);
+        const bonusQbits = tokenDiv.gte(1) ? tokenDiv.sqrt().floor() : new Decimal(0);
+        const qBitsEarned = new Decimal(1).add(bonusQbits);
+        setTextIfChanged('format-gain-qbit', `+${formatNumber(qBitsEarned)}`);
+    } else {
+        const counterText = `${Math.min(resets, 20)}/20`;
+        document.querySelectorAll('.hub-format-counter-value').forEach(el => {
+            if (el.textContent !== counterText) el.textContent = counterText;
+        });
     }
+
+    const btnFormat = document.getElementById('btn-confirm-format');
+    if (btnFormat && btnFormat.disabled === canFormat) btnFormat.disabled = !canFormat;
+}
+
+// Applica UNA classe di stato alla card togliendo le altre (niente churn nel loop UI)
+function setCardState(card, state) {
+    if (card.classList.contains(state)) return;
+    card.classList.remove('is-ready', 'is-locked', 'is-mystery');
+    card.classList.add(state);
 }
 
 // Cache per updateStoreButtons: evita di settare disabled su ogni frame
