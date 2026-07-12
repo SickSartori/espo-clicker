@@ -1,0 +1,298 @@
+/* =====================================================================
+   Hub Prestigio — #prestige-hub-modal (Promozione + Formattazione)
+   =====================================================================
+   Due card: promo (oro) e format (viola).
+   Stati (classe sulla card, esclusivi, gestiti da renderPrestigeHubCards):
+     .is-ready   → gain box + bottone attivo
+     .is-locked  → progress/contatore + bottone disabilitato
+     .is-mystery → (solo format) velo "???" anti-spoiler + contatore
+   Sezione A: semantica stati (NESSUNA media query — vale ovunque).
+   Sezione B: layout desktop (≥769px). Sezione C: layout mobile (≤768px).
+   ===================================================================== */
+
+/* ── A. Stati / visibilità ─────────────────────────────────────────── */
+
+#prestige-hub-modal .hub-card { position: relative; }
+
+/* Gain box: solo a card pronta */
+#prestige-hub-modal .hub-card .hub-gain-box { display: none; }
+#prestige-hub-modal .hub-card.is-ready .hub-gain-box { display: block; }
+
+/* Progress promo: nascosta quando pronta */
+#prestige-hub-modal .hub-card-promo.is-ready .hub-progress { display: none; }
+
+/* Bottoni: doppia label ready/locked */
+#prestige-hub-modal .hub-confirm .hub-btn-ready { display: none; }
+#prestige-hub-modal .hub-confirm .hub-btn-locked { display: inline-flex; align-items: center; gap: 8px; }
+#prestige-hub-modal .hub-card.is-ready .hub-btn-ready { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+#prestige-hub-modal .hub-card.is-ready .hub-btn-locked { display: none; }
+
+/* Mystery (solo format): titolo "???", velo, niente warning */
+#prestige-hub-modal .hub-format-title-mystery { display: none; }
+#prestige-hub-modal .hub-card-format.is-mystery .hub-format-title-mystery { display: inline; letter-spacing: 4px; }
+#prestige-hub-modal .hub-card-format.is-mystery .hub-format-title-real { display: none; }
+#prestige-hub-modal .hub-card-format.is-mystery .hub-card-warning { visibility: hidden; }
+
+#prestige-hub-modal .hub-mystery-veil { display: none; }
+#prestige-hub-modal .hub-card-format.is-mystery .hub-mystery-veil {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(155, 89, 182, 0.12) 0%, transparent 55%),
+    rgba(8, 6, 14, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+#prestige-hub-modal .hub-mystery-veil i {
+  font-size: 2.6rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 18px rgba(155, 89, 182, 0.8), 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+/* Contatore e bottone sopra il velo */
+#prestige-hub-modal .hub-card-format .hub-confirm { position: relative; z-index: 2; }
+
+/* Bottoni disabilitati */
+#prestige-hub-modal .hub-confirm:disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* ── B. Layout + estetica desktop ──────────────────────────────────── */
+
+@media (min-width: 769px) {
+
+  html body #prestige-hub-modal .modal-content {
+    max-width: 860px;
+    width: 92%;
+  }
+
+  #prestige-hub-modal .hub-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 25px;
+    align-items: stretch;
+  }
+
+  #prestige-hub-modal .hub-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 14px;
+    background: #0d1117;
+    overflow: hidden;
+  }
+
+  /* Variante ORO */
+  #prestige-hub-modal .hub-card-promo {
+    border: 1px solid rgba(241, 196, 15, 0.45);
+    box-shadow: inset 0 0 40px rgba(241, 196, 15, 0.05);
+  }
+  #prestige-hub-modal .hub-card-promo .hub-card-title { color: #f1c40f; }
+  #prestige-hub-modal .hub-card-promo .hub-gain-box { border: 1px solid #4a3e12; background: #110f08; }
+  #prestige-hub-modal .hub-card-promo .hub-gain-value { color: #3498db; text-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+  #prestige-hub-modal .hub-card-promo .hub-gain-name { color: #3498db; }
+
+  /* Variante VIOLA */
+  #prestige-hub-modal .hub-card-format {
+    border: 1px solid rgba(155, 89, 182, 0.45);
+    box-shadow: inset 0 0 40px rgba(155, 89, 182, 0.05);
+  }
+  #prestige-hub-modal .hub-card-format .hub-card-title { color: #9b59b6; }
+  #prestige-hub-modal .hub-card-format .hub-gain-box { border: 1px solid #4a235a; background: #110a1f; }
+  #prestige-hub-modal .hub-card-format .hub-gain-value { color: #9b59b6; text-shadow: 0 0 20px rgba(155, 89, 182, 0.4); }
+  #prestige-hub-modal .hub-card-format .hub-gain-name { color: #9b59b6; }
+
+  #prestige-hub-modal .hub-card-title {
+    margin: 0;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #prestige-hub-modal .hub-card-warning {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+  }
+  #prestige-hub-modal .hub-warning-sub { color: #bdc3c7; font-weight: normal; font-size: 0.8rem; }
+
+  #prestige-hub-modal .hub-gain-box {
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  #prestige-hub-modal .hub-gain-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #7f8c8d;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+  #prestige-hub-modal .hub-gain-value {
+    font-size: 2.6rem;
+    font-family: var(--font-heading);
+    font-weight: 900;
+    line-height: 1;
+  }
+  #prestige-hub-modal .hub-gain-name { font-weight: bold; font-size: 1rem; margin-top: 5px; }
+  #prestige-hub-modal .hub-gain-bonus {
+    font-size: 0.85rem;
+    color: #95a5a6;
+    margin-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 12px;
+  }
+  #prestige-hub-modal .hub-gain-bonus span { color: #f1c40f; font-weight: bold; }
+
+  #prestige-hub-modal .hub-progress { display: flex; align-items: center; gap: 10px; }
+  #prestige-hub-modal .hub-progress-track {
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+  #prestige-hub-modal .hub-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #d35400, #f1c40f);
+    transition: width 300ms ease;
+  }
+  #prestige-hub-modal .hub-progress-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    color: #f1c40f;
+    font-size: 0.9rem;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  /* Bottoni conferma: la promo eredita l'oro del vecchio contratto,
+     la format eredita .quantum-btn (viola) dal legacy */
+  #prestige-hub-modal .hub-confirm {
+    margin-top: auto;
+    width: 100%;
+    min-height: 55px;
+    font-size: 1.05rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #prestige-hub-modal .hub-confirm-promo {
+    background: linear-gradient(135deg, #f1c40f, #d35400);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+  }
+  #prestige-hub-modal .hub-btn-sub {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: normal;
+    opacity: 0.85;
+    margin-top: 2px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+}
+
+/* ── C. Layout mobile ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* .hub-cards ha anche la classe .settings-content → eredita già
+     flex:1 + overflow-y:auto dal blocco app-like di mobile.css */
+  #prestige-hub-modal .hub-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 14px 30px;
+  }
+
+  #prestige-hub-modal .hub-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #0d1117;
+    overflow: hidden;
+  }
+  #prestige-hub-modal .hub-card-promo { border: 1px solid rgba(241, 196, 15, 0.45); }
+  #prestige-hub-modal .hub-card-promo .hub-card-title { color: #f1c40f; }
+  #prestige-hub-modal .hub-card-promo .hub-gain-box { border: 1px solid #4a3e12; background: #110f08; }
+  #prestige-hub-modal .hub-card-promo .hub-gain-value { color: #3498db; }
+  #prestige-hub-modal .hub-card-format { border: 1px solid rgba(155, 89, 182, 0.45); }
+  #prestige-hub-modal .hub-card-format .hub-card-title { color: #9b59b6; }
+  #prestige-hub-modal .hub-card-format .hub-gain-box { border: 1px solid #4a235a; background: #110a1f; }
+  #prestige-hub-modal .hub-card-format .hub-gain-value { color: #9b59b6; }
+
+  #prestige-hub-modal .hub-card-title {
+    margin: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #prestige-hub-modal .hub-card-warning {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  #prestige-hub-modal .hub-warning-sub { color: #bdc3c7; font-size: 0.75rem; }
+
+  #prestige-hub-modal .hub-gain-box { border-radius: 10px; padding: 12px; text-align: center; }
+  #prestige-hub-modal .hub-gain-label { font-size: 0.65rem; text-transform: uppercase; color: #7f8c8d; }
+  #prestige-hub-modal .hub-gain-value { font-size: 2rem; font-weight: 900; line-height: 1.1; }
+  #prestige-hub-modal .hub-gain-name { font-weight: bold; font-size: 0.9rem; }
+  #prestige-hub-modal .hub-gain-bonus { font-size: 0.8rem; color: #95a5a6; margin-top: 8px; }
+  #prestige-hub-modal .hub-gain-bonus span { color: #f1c40f; font-weight: bold; }
+
+  #prestige-hub-modal .hub-progress { display: flex; align-items: center; gap: 8px; }
+  #prestige-hub-modal .hub-progress-track { flex: 1; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  #prestige-hub-modal .hub-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #d35400, #f1c40f); transition: width 300ms ease; }
+  #prestige-hub-modal .hub-progress-label { font-weight: 800; color: #f1c40f; font-size: 0.85rem; }
+
+  #prestige-hub-modal .hub-confirm {
+    width: 100%;
+    min-height: 52px; /* touch target */
+    border-radius: 8px;
+    border: none;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #prestige-hub-modal .hub-confirm-promo {
+    background: linear-gradient(135deg, #f1c40f, #d35400);
+    color: #000;
+  }
+  #prestige-hub-modal .hub-btn-sub { display: block; font-size: 0.65rem; font-weight: normal; opacity: 0.85; text-transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #prestige-hub-modal .hub-progress-fill { transition: none; }
+}
