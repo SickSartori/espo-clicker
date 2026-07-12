@@ -34,7 +34,7 @@
 // 6. Bumpa CACHE_VERSION in:    sw.js
 // ============================================================
 
-window.ASSET_PACKAGES = {
+export const ASSET_PACKAGES: Record<string, any> = {
 
     // ===========================================================
     // 📦 CORE — Avvio immediato

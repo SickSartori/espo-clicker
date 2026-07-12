@@ -69,6 +69,7 @@ import {
 import { createAssetManager, AssetManager } from './core/assets/manager';
 import { store } from './state/store';
 import { installInterop } from './state/interop';
+import { installGameData } from './data/index';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
@@ -78,6 +79,10 @@ installGlobalDecimal();
 // accessor window.* (bps, gameState, ...) servono il bundle legacy, che esegue
 // DOPO questo modulo (contratto F0). TEMPORANEO fino a fine filone C.
 installInterop();
+
+// Reorg filone B: i dati di gioco vivono in src/data/ e vengono installati su
+// window.gameData PRIMA del bundle legacy (che li consuma al boot).
+installGameData();
 
 // Bind 3D parallax sul clicker (auto-skip se reduced-motion o mobile)
 autoInitClickerParallax();

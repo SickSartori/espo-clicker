@@ -1,4 +1,4 @@
-window.gameData.assets = {
+export const assets: Record<string, any> = {
     sounds: {
         'bg-music': {
             id: 'sound-bg-music',

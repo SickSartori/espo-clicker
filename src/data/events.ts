@@ -1,4 +1,4 @@
-window.gameData.events = {
+export const events: Record<string, any> = {
     rickRoll: {
         name: 'Rick Roll',
         type: 'video',

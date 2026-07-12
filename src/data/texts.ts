@@ -1,4 +1,4 @@
-window.gameData.texts = {
+export const texts: Record<string, any> = {
     ui: {
         buy: "Compra",
         owned: "POSSEDUTO",
