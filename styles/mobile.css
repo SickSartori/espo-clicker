@@ -216,13 +216,15 @@
         white-space: nowrap;
     }
 
-    /* Stato "Pronta": "PRONTA!" non entra nel quadrato → basta l'icona verde pulsante */
-    .nav-special-btn.promotion-ready span {
+    /* Stato "Pronta": "PRONTA!" non entra nel quadrato → basta l'icona verde
+       pulsante. Selettore ID-qualificato come format-ready qui sotto: pareggia
+       la specificità di navbar.css e vince per ordine di caricamento. */
+    #game-navbar .nav-group .nav-special-btn.promotion-ready span {
         display: none;
     }
 
     /* Stato "Pronta" (Verde Pulsante) */
-    .nav-special-btn.promotion-ready {
+    #game-navbar .nav-group .nav-special-btn.promotion-ready {
         background: linear-gradient(135deg, #2ecc71, #27ae60);
         border-color: #fff;
         box-shadow: 0 0 15px #2ecc71;
