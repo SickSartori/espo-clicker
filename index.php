@@ -61,15 +61,10 @@ require_once("php/check_version.php");
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
 		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $mobileVer; ?>" media="(max-width: 768px)">
 
-		<!-- V3 styles (tokens, primitives, skip-link a11y). Solo se build V3 presente.
+		<!-- V3 styles (tokens, primitives, skip-link a11y). V3 è l'app, sempre caricato.
 		     Cache buster via filemtime() — ogni rebuild Vite invalida cache SW automaticamente. -->
-		<?php
-		$v3CssPath = __DIR__ . '/dist-v3/assets/v3-styles.css';
-		if (file_exists($v3CssPath)):
-			$v3CssVer = filemtime($v3CssPath);
-		?>
-		<link rel="stylesheet" href="dist-v3/assets/v3-styles.css?v=<?php echo $v3CssVer; ?>">
-		<?php endif; ?>
+		<?php $v3CssVer = assetVer(__DIR__ . '/dist/assets/styles.css', $cacheVer); ?>
+		<link rel="stylesheet" href="dist/assets/styles.css?v=<?php echo $v3CssVer; ?>">
 
 		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
 
@@ -317,7 +312,7 @@ require_once("php/check_version.php");
 
 		<!-- ============================================================ -->
 		<!-- LIBRERIE ESTERNE (solo quelle necessarie all'avvio)        -->
-		<!-- lz-string: ora bundlato in game.bundle.min.js              -->
+		<!-- lz-string: dipendenza npm, riesposta su window da src/main.ts -->
 		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
 		<!-- ============================================================ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
@@ -328,33 +323,21 @@ require_once("php/check_version.php");
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
 
 		<!-- ============================================================ -->
-		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
-		<!-- Espone window.EspoV3 con i moduli TS migrati progressivamente -->
-		<!-- Caricato solo se dist-v3/ esiste (build:v3 eseguita)         -->
+		<!-- V3 MODULES (Vite ESM) — bundle dell'app                      -->
+		<!-- Espone window.EspoV3 con i moduli TS del gioco                -->
 		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
 		<!--                                                              -->
-		<!-- ORDINE (Fase 0 migrazione): defer e module eseguono in ordine -->
-		<!-- di documento, quindi qui — DOPO la CDN break_infinity, PRIMA  -->
-		<!-- del bundle legacy — vale il contratto:                        -->
+		<!-- ORDINE: defer e module eseguono in ordine di documento,       -->
+		<!-- quindi qui — DOPO la CDN break_infinity, PRIMA del bundle     -->
+		<!-- legacy — vale il contratto:                                   -->
 		<!--  1. window.Decimal = break_infinity (CDN); se la CDN fallisce  -->
 		<!--     installGlobalDecimal() installa break_eternity (fallback)  -->
 		<!--  2. window.EspoV3 è GIÀ pronto quando il legacy esegue → le    -->
 		<!--     deleghe `window.EspoV3?.x ?? legacy` sono sync e sicure    -->
-		<!-- Se dist-v3/ manca il tag non viene emesso → il legacy usa i   -->
-		<!-- propri fallback. Niente eventi "ready" asincroni.             -->
 		<!-- ============================================================ -->
-		<?php
-		$v3JsPath = __DIR__ . '/dist-v3/game.modules.js';
-		if (file_exists($v3JsPath)):
-			$v3JsVer = filemtime($v3JsPath);
-		?>
-		<script type="module" src="dist-v3/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
-		<?php endif; ?>
+		<?php $v3JsVer = assetVer(__DIR__ . '/dist/game.modules.js', $cacheVer); ?>
+		<script type="module" src="dist/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
 
-		<!-- ============================================================ -->
-		<!-- GAME BUNDLE (esbuild minificato)                            -->
-		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
-		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
 		<!-- ============================================================ -->
 		<!-- Cache buster condiviso: usato per i theme CSS lazy-load
 		     (loadThemeCSS in ui-functions.js). Senza questo gli aggiornamenti
@@ -363,22 +346,15 @@ require_once("php/check_version.php");
 		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
 		     Letta dal bridge i18n del modulo V3 (src/lib/i18n.ts) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
-		<?php
-		// Cache-bust del bundle via filemtime (dev E prod) → ogni rebuild
-		// (npm run build = vite build) viene servito fresco senza bumpare la versione.
-		// $cacheVer resta solo come fallback se il file non esiste (build non fatta).
-		$bundleVer = assetVer(__DIR__ . '/dist/game.bundle.min.js', $cacheVer);
-		?>
-		<script src="dist/game.bundle.min.js?v=<?php echo $bundleVer; ?>" defer></script>
 
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->
 		<!-- Carica Phaser + CSS + JS arcade solo all'apertura Arcade   -->
 		<!-- Risparmio: ~1.5 MB + 9 richieste HTTP sull'avvio          -->
-		<!-- ============================================================ -->
-		<script src="js/arcade-loader.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<!-- Ora modulo ESM (src/lib/arcade-loader.ts), import side-effect -->
+		<!-- in main.ts → caricato dal tag V3 module sopra (riga ~351). -->
 		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
-		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
+		<!-- vengono iniettati dinamicamente da ArcadeLoader            -->
 	
 		<!-- Cheatboard/Admin Console: ora caricata da src/lib/backend-config.ts (modulo V3)
 		     (gattata su EspoBackend.env === 'dev'), non più da PHP qui. -->

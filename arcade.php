@@ -176,7 +176,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
         + '</div>';
 })();
 </script>
-<script src="js/arcade-loader.js?v=<?php echo $arcadeAssetVer; ?>"></script>
+<script src="dist/arcade-loader.min.js?v=<?php echo assetVer(__DIR__ . '/dist/arcade-loader.min.js', $cacheVer); ?>"></script>
 <script src="js/arcade-page.js?v=<?php echo $arcadeAssetVer; ?>"></script>
 
 </body>

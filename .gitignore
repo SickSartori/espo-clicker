@@ -31,9 +31,6 @@ assets/packs
 # Build output legacy (rigenerato da `npm run build` in locale e in CI prima del deploy)
 /dist/
 
-# Vite v3 dev output (decideremo se committare a fine migrazione)
-dist-v3/
-
 # Vitest / TS cache
 coverage/
 .vite/

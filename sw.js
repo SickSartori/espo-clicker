@@ -163,10 +163,10 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     if (NO_CACHE_PATTERNS.some(pattern => pattern.test(url))) return;
 
-    // V3 Vite bundle: stale-while-revalidate per evitare cache stale
-    // dopo rebuild senza dover bumpare CACHE_VERSION manualmente.
+    // V3 Vite bundle (dentro dist/): stale-while-revalidate per evitare cache
+    // stale dopo rebuild senza dover bumpare CACHE_VERSION manualmente.
     // Il filemtime nel link PHP garantisce comunque cache-bust deterministico.
-    if (/\/dist-v3\//.test(url)) {
+    if (/\/dist\/(game\.modules\.js|chunks\/|assets\/)/.test(url)) {
         event.respondWith(staleWhileRevalidate(request));
         return;
     }
