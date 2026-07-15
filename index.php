@@ -170,10 +170,10 @@ require_once("php/check_version.php");
 
 		<nav id="game-navbar" aria-label="<?php echo $labels["idx_main_menu_aria"]; ?>">
 			<div class="nav-group left">
-				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
-					<i class="nav-icon" data-lucide="book-open"></i>
+				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["help_menu_titolo"]; ?>">
+					<i class="nav-icon" data-lucide="info"></i>
 					<span class="nav-label">
-						<?php echo $labels["navbar_guida"]; ?>
+						<?php echo $labels["help_menu_titolo"]; ?>
 					</span>
 				</button>
 				<button id="open-stats-btn" class="nav-item" title="<?php echo $labels["navbar_stats"]; ?>">
@@ -346,6 +346,7 @@ require_once("php/check_version.php");
 		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
 		     Letta dal bridge i18n del modulo V3 (src/lib/i18n.ts) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
+		<script src="js/feedback.js?v=<?php echo $cacheVer; ?>" defer></script>
 
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->

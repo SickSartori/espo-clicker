@@ -26,6 +26,25 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guida";
+	$labels["navbar_segnala"] = "Segnala";
+
+	// --- Feedback / Segnalazioni (board Trello) ---
+	$labels["feedback_titolo"] = "Segnala un problema o un'idea";
+	$labels["feedback_intro"] = "Hai trovato un bug, hai un'idea o un suggerimento? Raccontacelo: finisce dritto nella nostra board interna.";
+	$labels["feedback_type_idea"] = "Idea";
+	$labels["feedback_type_bug"] = "Bug";
+	$labels["feedback_type_improvement"] = "Miglioramento";
+	$labels["feedback_label_titolo"] = "Titolo";
+	$labels["feedback_ph_titolo"] = "Riassumi in una frase";
+	$labels["feedback_label_desc"] = "Descrizione (opzionale)";
+	$labels["feedback_ph_desc"] = "Più dettagli dai, meglio è: come riprodurlo, cosa ti aspettavi…";
+	$labels["feedback_privacy"] = "Alleghiamo automaticamente versione, lingua e browser per aiutarci a diagnosticare. Nessun dato sensibile.";
+	$labels["feedback_invia"] = "Invia segnalazione";
+	$labels["feedback_toast_ok"] = "Grazie! Segnalazione inviata. 🎉";
+	$labels["feedback_toast_err"] = "Ops, invio non riuscito. Riprova più tardi.";
+	$labels["feedback_toast_validate"] = "Scrivi almeno un titolo (3+ caratteri).";
+	$labels["feedback_toast_sending"] = "Invio…";
+	$labels["help_menu_titolo"] = "Aiuto";
 	$labels["navbar_stats"] = "Statistiche";
 	$labels["navbar_arcade"] = "Sala Giochi";
 	$labels["navbar_obiettivi"] = "Obiettivi";

@@ -26,6 +26,25 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guide";
+	$labels["navbar_segnala"] = "Feedback";
+
+	// --- Feedback / Reports (Trello board) ---
+	$labels["feedback_titolo"] = "Report a problem or idea";
+	$labels["feedback_intro"] = "Found a bug, got an idea or a suggestion? Tell us — it goes straight to our internal board.";
+	$labels["feedback_type_idea"] = "Idea";
+	$labels["feedback_type_bug"] = "Bug";
+	$labels["feedback_type_improvement"] = "Improvement";
+	$labels["feedback_label_titolo"] = "Title";
+	$labels["feedback_ph_titolo"] = "Sum it up in one line";
+	$labels["feedback_label_desc"] = "Description (optional)";
+	$labels["feedback_ph_desc"] = "The more detail the better: steps to reproduce, what you expected…";
+	$labels["feedback_privacy"] = "We automatically attach version, language and browser to help us diagnose. No sensitive data.";
+	$labels["feedback_invia"] = "Send feedback";
+	$labels["feedback_toast_ok"] = "Thanks! Your feedback was sent. 🎉";
+	$labels["feedback_toast_err"] = "Oops, sending failed. Please try again later.";
+	$labels["feedback_toast_validate"] = "Please enter a title (3+ characters).";
+	$labels["feedback_toast_sending"] = "Sending…";
+	$labels["help_menu_titolo"] = "Help";
 	$labels["navbar_stats"] = "Statistics";
 	$labels["navbar_arcade"] = "Arcade";
 	$labels["navbar_obiettivi"] = "Achievements";
