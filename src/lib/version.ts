@@ -6,6 +6,8 @@
  * silenzia anche i log del modulo V3 — delta accettato (prod più pulita).
  */
 
+import { useR2Assets } from './host-env';
+
 export const GAME_VERSION = {
     major: 3,       // Cambia questo per rompere la compatibilità in Beta
     minor: 0,       // Cambia questo per aggiornamenti "sicuri"
@@ -24,7 +26,10 @@ export const GAME_VERSION = {
 // In locale i path restano relativi al server.
 // ============================================================
 function buildCdn(): any {
-    var IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
+    // R2 attivo su QUALSIASI host deployato (non locale). Prima era inchiodato su
+    // 'altervista.org' → su dominio custom / Pages gli asset andavano 404.
+    // Vedi src/lib/host-env.ts. Sul sottodominio Altervista attuale: invariato.
+    var USE_R2 = useR2Assets(location.hostname);
 
     // Prefissi locali che richiedono routing su R2 (asset privati)
     var CDN_PREFIXES = [
@@ -132,12 +137,12 @@ function buildCdn(): any {
     }
 
     return {
-        enabled: IS_ALTERVISTA,
+        enabled: USE_R2,
         prefixes: CDN_PREFIXES,
 
         /** True se il path va instradato via R2 signed URL. */
         isRouted: function (path: string) {
-            return IS_ALTERVISTA && _isRouted(path);
+            return USE_R2 && _isRouted(path);
         },
 
         /**

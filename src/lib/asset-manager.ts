@@ -7,6 +7,7 @@
  * prima: i deferred/module eseguono tutti PRIMA che DOMContentLoaded scatti.
  */
 import { createAssetManager } from '../core/assets/manager';
+import { isLocalHost } from './host-env';
 
 export function installAssetManager(): void {
     if (typeof window === 'undefined') return;
@@ -15,12 +16,15 @@ export function installAssetManager(): void {
     const IMG_BASE = 'assets/image/';
     let _bootDone = false; // True dopo che il gioco ha fatto il boot
 
-    // Detect host Altervista: rallenta i caricamenti (concorrenza e retry) per
-    // evitare ERR_CONNECTION_RESET sotto carico burst.
-    var IS_ALTERVISTA = /altervista\.org$/i.test(location.hostname);
-    var MAX_RETRIES = IS_ALTERVISTA ? 4 : 3;
+    // Host deployato (non locale): rallenta i caricamenti (concorrenza e retry)
+    // perché Altervista chiude connessioni con ERR_CONNECTION_RESET sotto burst.
+    // Prima era inchiodato su 'altervista.org'; ora copre anche il dominio custom
+    // (stesso hardware Altervista). ⚠️ Su Cloudflare Pages il throttle non serve —
+    // rilassare al cutover. Sul sottodominio/localhost attuali: invariato.
+    var IS_REMOTE = !isLocalHost(location.hostname);
+    var MAX_RETRIES = IS_REMOTE ? 4 : 3;
     var RETRY_DELAY_MS = 800;
-    var MAX_CONCURRENT = IS_ALTERVISTA ? 2 : 3;
+    var MAX_CONCURRENT = IS_REMOTE ? 2 : 3;
 
     // Emetti un evento quando un pacchetto è pronto (il resto del gioco lo ascolta).
     function _emitLoaded(packageName: string, pkg: any): void {
@@ -52,7 +56,7 @@ export function installAssetManager(): void {
             if (_bootDone) return;
             _bootDone = true;
             console.log('[AssetManager] 🚀 Boot completato — avvio caricamento progressivo.');
-            _mgr.progressivePlan(IS_ALTERVISTA).forEach(function (item: any) {
+            _mgr.progressivePlan(IS_REMOTE).forEach(function (item: any) {
                 setTimeout(function () { _mgr.load(item.name); }, item.delay);
             });
         },
