@@ -71,7 +71,7 @@ jobs:
             **/.DS_Store
             node_modules/**
             **/*.map
-            docs/**
+            dev/**
             src/**
             scripts/**
             assets/sounds/music/**
@@ -79,9 +79,10 @@ jobs:
             music/songs/**
             package.json
             package-lock.json
-            bump-version.js
             vite.config.ts
             tsconfig.json
+            playwright.config.ts
+            test-results/**
             .lighthouserc.json
             deploy.bat
             deploy-ui.bat

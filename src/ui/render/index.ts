@@ -2609,7 +2609,7 @@ Object.assign(window as any, {
     bumpScoreDisplay, startMatrixEffect, stopMatrixEffect, showV2MigrationModal,
     simpleMarkdown, checkTabNotifications, equipSkin,
     // Extra (non nella lista dei 20 del brief/RENDER_GLOBALS, ma richieste da
-    // tests/e2e/integration.spec.ts, F5 pre-esistente): erano globali implicite
+    // dev/tests/e2e/integration.spec.ts, F5 pre-esistente): erano globali implicite
     // via classic-script prima della migrazione, qui vanno ri-esposte esplicitamente.
     formatFullNumber, formatTime, loadThemeCSS, updateTabsVisibility, checkOverlayNotifications,
 });

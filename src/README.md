@@ -136,7 +136,7 @@ EspoV3 = {
 - Game loop runtime (60+ timer in `script.js`/`game-logic.js`/`ui-functions.js`) — Scheduler V3 è pronto, da sostituire al posto dei timer legacy.
 - gameState: la PROPRIETÀ dello stato è nello store V3 (filone A, 2026-07-12) via accessor window; la LOGICA che lo muta resta nel legacy (filone C).
 - Save/load runtime: il client legacy fa ancora le chiamate. La logica pura (crypto, codec, anti-rollback, migrations) è pronta da agganciare.
-- CSS legacy non ancora rimossi: `mobile.css` 1545 righe, themes 469+475+140 righe. I tokens V3 (`styles/ui/tokens.css`) sono GLOBALI (`:root`) e fanno override della base legacy via cascata; la vecchia skin scoped `[data-v3]` (reset/primitives/theme-stub) era inerte — `data-v3` non è mai impostato — ed è stata rimossa (Blocco #2). Mappa completa in `docs/css-architecture.md`.
+- CSS legacy non ancora rimossi: `mobile.css` 1545 righe, themes 469+475+140 righe. I tokens V3 (`styles/ui/tokens.css`) sono GLOBALI (`:root`) e fanno override della base legacy via cascata; la vecchia skin scoped `[data-v3]` (reset/primitives/theme-stub) era inerte — `data-v3` non è mai impostato — ed è stata rimossa (Blocco #2). Mappa completa in `dev/docs/css-architecture.md`.
 - Cloud sync HMAC server-side (`php/save_progress.php`) compatibile con `EspoV3.crypto.hmacSha256`.
 
 ## Rischi noti

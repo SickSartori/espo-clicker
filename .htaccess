@@ -34,3 +34,15 @@
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 </IfModule>
+
+# Difesa in profondità: nega l'accesso diretto ai dump SQL (non vanno mai serviti dal web).
+# I sorgenti dev (dev/**) sono già esclusi dal deploy; questa è la seconda barriera.
+<FilesMatch "\.sql$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

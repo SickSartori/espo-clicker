@@ -17,7 +17,7 @@ const HOST = process.env.E2E_HOST || '127.0.0.1';
 const BASE_URL = `http://${HOST}:${PORT}`;
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './dev/tests/e2e',
   fullyParallel: false, // un solo gioco per volta: gli spec mutano gameState condiviso per pagina
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
