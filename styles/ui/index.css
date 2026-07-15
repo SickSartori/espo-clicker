@@ -4,7 +4,7 @@
    Nota: gli stub tema opt-in [data-theme] (8bit/super/christmas) erano
    scoped sotto [data-v3], mai impostato su alcun elemento → inerti,
    rimossi. I temi reali restano i legacy styles/themes/*-theme.css,
-   caricati dinamicamente all'equip skin (vedi docs/css-architecture.md).
+   caricati dinamicamente all'equip skin.
    ===================================================================== */
 
 @import './tokens.css';

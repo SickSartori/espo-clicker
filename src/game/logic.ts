@@ -965,7 +965,7 @@ function checkBuildingMilestone(teamKey: any, oldCount: any, newCount: any) {
 // 11 livelli), poi applica rendimenti decrescenti (√): evita lo snowball che
 // rendeva i livelli alti istantanei. Tarabili: KNEE = dove inizia il
 // rallentamento (in "punti bonus", cioè bonus-1); COEFF = ripidità oltre.
-// Verificato con balance-sim.js (modalità wrap06).
+// Verificato con simulazione di bilanciamento (modalità wrap06).
 //
 // ATTENZIONE — ordine di esecuzione: queste due costanti vengono valutate
 // all'IMPORT di questo modulo (gli import sono hoisted, quindi girano PRIMA
