@@ -68,7 +68,7 @@ test.describe('Smoke gameplay', () => {
       const w = window as any;
       const D = w.Decimal;
       const E = w.EspoV3.events;
-      const bps = w.bps;
+      const bps = w.EspoV3.state.store.bps;
       const click = w.calculateClickValue();
 
       const std = E.goldenBugReward(D, { bps, clickValue: click, globalMult: 1, bugType: 'standard' });
@@ -96,7 +96,7 @@ test.describe('Smoke gameplay', () => {
       const D = w.Decimal;
       const E = w.EspoV3.events;
       const gs = w.EspooClicker.getGameState();
-      const day = (s: number) => Number(E.dailyReward(D, { bps: w.bps, baseClickValue: gs.baseClickValue, streak: s }));
+      const day = (s: number) => Number(E.dailyReward(D, { bps: w.EspoV3.state.store.bps, baseClickValue: gs.baseClickValue, streak: s }));
       return { s1: day(1), s5: day(5), s7: day(7), s20: day(20) };
     });
 

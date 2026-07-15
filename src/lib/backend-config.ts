@@ -5,6 +5,7 @@
  * Functions. installBackend() pubblica window.EspoBackend e, in dev, inietta
  * la cheatboard (script separato, non bundlato).
  */
+import { installCheatboardBridge } from '../state/cheatboard-bridge';
 
 const BACKENDS = {
     dev: {
@@ -68,6 +69,7 @@ export function installBackend(): void {
        In build di PRODUZIONE non viene caricata. */
     if (ACTIVE === 'dev' && !(window as any).__cheatboardLoaded) {
         (window as any).__cheatboardLoaded = true;
+        installCheatboardBridge();
         var s = document.createElement('script');
         s.src = 'js/cheatboard.js?v=' + Date.now(); // dev: sempre fresco
         s.defer = true;

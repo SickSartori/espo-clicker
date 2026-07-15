@@ -1,16 +1,15 @@
 /**
- * Entry V3 (strangler pattern).
+ * Entry V3 (unico bundle — il vecchio bundle legacy classic è stato eliminato,
+ * kill-legacy periferici). Espone i moduli su `window.EspoV3` e installa su
+ * `window` tutto ciò che i residui classic (js/cheatboard.js dev-only, e
+ * js/arcade-page.js sulla pagina standalone arcade.php) si aspettano di trovare.
  *
- * Espone moduli nuovi su `window.EspoV3` finché il vecchio bundle (dist/game.bundle.min.js)
- * resta in carica. Quando una funzionalità è completamente migrata, il vecchio chiama
- * `window.EspoV3.foo()` invece della propria implementazione, e poi viene cancellata.
- *
- * Caricamento in index.php (condizionale):
- *   <?php if (file_exists('dist-v3/game.modules.js')): ?>
- *   <script type="module" src="dist-v3/game.modules.js?v=<?php echo $cacheVer; ?>"></script>
- *   <?php endif; ?>
+ * Caricamento in index.php (bundle dell'app, dopo break_infinity):
+ *   <?php $v3JsVer = assetVer(__DIR__ . '/dist/game.modules.js', $cacheVer); ?>
+ *   <script type="module" src="dist/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
  */
 import '../styles/ui/index.css';
+import LZString from 'lz-string';
 import { sha256, hmacSha256, randomHex } from './core/crypto';
 import { SaveDB, defaultSaveDB } from './core/save/db';
 import { encodeSave, decodeSave } from './core/save/codec';
@@ -31,6 +30,15 @@ import { formatNumber, formatFullNumber } from './ui/format/number-format';
 import { formatTime } from './ui/format/time-format';
 import { createThemeCssLoader, ThemeCssLoader } from './ui/theme/css-loader';
 import { createToastQueue, ToastQueue } from './ui/toast/queue';
+import { initModals } from './ui/modals';
+import { initPodio } from './ui/podio';
+import { initSocial } from './ui/social';
+import { initBoot } from './app/boot';
+import './ui/render'; // rendering/HUD/toast — ex js/ui-functions.js (side-effect: ri-esposizioni su window)
+import './game/logic'; // economia/eventi/achievement/audio — ex js/game-logic.js (side-effect: ri-esposizioni su window)
+import './ui/intro'; // EspoIntro — ex js/intro.js (side-effect: window.EspoIntro)
+import './ui/fx/esposion'; // EsposionFX — ex js/esposion.js (side-effect: window.EsposionFX)
+import './lib/arcade-loader'; // ArcadeLoader — ex js/arcade-loader.js (side-effect: window.ArcadeLoader, unica istanza)
 import {
   anyClickUpgradeAvailable,
   anyEnhancementAvailable,
@@ -68,7 +76,6 @@ import {
 } from './game/events';
 import { createAssetManager, AssetManager } from './core/assets/manager';
 import { store } from './state/store';
-import { installInterop } from './state/interop';
 import { installGameData } from './data/index';
 import { installVersion } from './lib/version';
 import { installErrorHandler } from './app/error-handler';
@@ -76,15 +83,11 @@ import { installBackend } from './lib/backend-config';
 import { installSaveDb } from './state/save-db';
 import { installI18n } from './lib/i18n';
 import { installAssetManager } from './lib/asset-manager';
+import { initGameState } from './state/game-state';
 
 // Installa Decimal globale prima che il legacy bundle ne crei istanze.
 // Drop-in replacement per la CDN break_infinity.
 installGlobalDecimal();
-
-// Reorg filone A: lo stato runtime condiviso vive in src/state/store.ts; gli
-// accessor window.* (bps, gameState, ...) servono il bundle legacy, che esegue
-// DOPO questo modulo (contratto F0). TEMPORANEO fino a fine filone C.
-installInterop();
 
 // Reorg filone B: i dati di gioco vivono in src/data/ e vengono installati su
 // window.gameData PRIMA del bundle legacy (che li consuma al boot).
@@ -104,6 +107,9 @@ autoInitClickerParallax();
 
 // Lucide icons — render any [data-lucide] in the page
 autoInitLucide();
+
+// Modali migrate (ex js/modals.js) — registra il wiring su DOMContentLoaded.
+initModals();
 
 const EspoV3 = {
   version: '3.0.0-alpha',
@@ -181,7 +187,7 @@ const EspoV3 = {
     enableClickerParallax,
     renderLucideIcons,
   },
-  state: { store, installInterop },
+  state: { store },
 } as const;
 
 declare global {
@@ -193,3 +199,20 @@ declare global {
 window.EspoV3 = EspoV3;
 
 console.log(`[EspoV3] modules pronti — schema v${CURRENT_SCHEMA_VERSION}`);
+
+// Stato iniziale (ex js/data/gamestate.js) — DOPO installGameData/installVersion
+// e dopo EspoV3, PRIMA del boot che lo consuma.
+initGameState();
+
+(window as any).LZString = LZString; // ex vendor classic — consumato da boot.ts e cheatboard (dev)
+
+// Boot del gioco (ex js/script.js) — registra il DOMContentLoaded che costruisce
+// window.EspooClicker, carica il save e avvia lo Scheduler.
+initBoot();
+
+// Classifica e tab Amici (ex js/podio.js, js/social.js) — registrati DOPO initBoot()
+// così i loro handler DOMContentLoaded girano dopo quello del boot, come nell'ordine
+// originale del bundle legacy. Entrambi restano order-independent verso EspooClicker
+// grazie alla guardia di polling preservata al loro interno.
+initPodio();  // classifica — ex js/podio.js
+initSocial(); // tab Amici — ex js/social.js

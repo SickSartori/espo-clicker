@@ -3,50 +3,25 @@ import fs from 'node:fs';
 import type { Plugin } from 'vite';
 
 // ============================================================
-// Plugin Vite che replica il vecchio build.js (F7): concatena i file legacy
-// nell'ordine di dipendenza (globali window.*, NON ES modules), minifica ed
-// emette dist/game.bundle.min.js; costruisce i CSS legacy; copia i vendor
-// (break_eternity + break_infinity). Gira nel hook closeBundle di `vite build`,
-// così un solo comando produce sia dist-v3/ (V3) sia dist/ (legacy).
+// Plugin Vite che replica il vecchio build.js (F7) per la parte residua non-ESM:
+// costruisce i CSS legacy, copia i vendor (break_eternity + break_infinity) e
+// ricompila src/lib/arcade-loader.ts in un classic script IIFE per arcade.php.
+// Gira nel hook closeBundle di `vite build`, DOPO che Vite ha scritto in dist/
+// il bundle V3 (ESM): aggiunge allo stesso dist/ i residui non-ESM (CSS legacy,
+// vendor, arcade-loader) — un solo comando, un solo output dist/.
 //
-// JS_FILES: ordine = ordine di dipendenza. Copiare verbatim a ogni aggiunta di
-// file legacy. gamestate.js legge window.gameData.* a top-level → deve stare
-// DOPO i data/*, data-en/* e i18n; script.js ULTIMO (god-object).
+// Il bundle JS legacy (dist/game.bundle.min.js) è STATO ELIMINATO (kill-legacy
+// periferici Task 5): script.js, gamestate.js, intro.js, esposion.js, podio.js,
+// social.js sono tutti moduli ESM caricati da src/main.ts. arcade-loader.ts è
+// anch'esso un modulo ESM (sorgente unica, importato da main.ts per index.php),
+// ma arcade.php è una pagina STANDALONE (window.open, niente game.modules.js) che
+// non carica moduli V3 → serve una build classic separata: dist/arcade-loader.min.js
+// (IIFE via esbuild). js/arcade-page.js resta classic e la consuma.
 // ============================================================
-const JS_FILES: readonly string[] = [
-  'node_modules/lz-string/libs/lz-string.min.js',
-  'js/data/gamestate.js',
-  'js/ui-functions.js',
-  'js/game-logic.js',
-  'js/modals.js',
-  'js/podio.js',
-  'js/social.js',
-  'js/arcade-loader.js',
-  'js/intro.js',
-  'js/esposion.js',
-  'js/script.js',
-];
-
 const VENDORS: ReadonlyArray<readonly [string, string]> = [
   ['node_modules/break_eternity.js/dist/break_eternity.min.js', 'dist/break_eternity.min.js'],
   ['node_modules/break_infinity.js/dist/break_infinity.min.js', 'dist/break_infinity.min.js'],
 ];
-
-async function buildLegacyJS(isDev: boolean): Promise<void> {
-  const missing = JS_FILES.filter((f) => !fs.existsSync(f));
-  if (missing.length) throw new Error('File legacy mancanti: ' + missing.join(', '));
-  const concat = JS_FILES.map((f) => `/* === ${f} === */\n${fs.readFileSync(f, 'utf8')}`).join('\n\n');
-  const result = await esbuild.build({
-    stdin: { contents: concat, loader: 'js', sourcefile: 'game.bundle.js' },
-    bundle: false,
-    minify: !isDev,
-    sourcemap: isDev ? 'inline' : false,
-    target: ['es2018'],
-    outfile: 'dist/game.bundle.min.js',
-    logLevel: 'silent',
-  });
-  if (result.errors.length) throw new Error('Errori JS legacy: ' + JSON.stringify(result.errors));
-}
 
 async function buildLegacyCSS(isDev: boolean): Promise<void> {
   const shared = {
@@ -70,7 +45,23 @@ function copyVendors(): void {
   }
 }
 
-/** Plugin Vite: dopo il build V3, produce il bundle legacy (JS+CSS) e copia i vendor. */
+/**
+ * Ricompila src/lib/arcade-loader.ts in un classic script IIFE per arcade.php
+ * (pagina standalone, window.open, non carica dist/game.modules.js).
+ */
+async function buildArcadeLoader(isDev: boolean): Promise<void> {
+  await esbuild.build({
+    entryPoints: ['src/lib/arcade-loader.ts'],
+    bundle: true,
+    format: 'iife',
+    minify: !isDev,
+    target: ['es2018'],
+    outfile: 'dist/arcade-loader.min.js',
+    logLevel: 'silent',
+  });
+}
+
+/** Plugin Vite: dopo il build V3, produce i CSS legacy, copia i vendor e ricompila arcade-loader (IIFE). */
 export default function legacyBundle(): Plugin {
   let isDev = false;
   return {
@@ -81,13 +72,14 @@ export default function legacyBundle(): Plugin {
       if (!fs.existsSync('dist')) fs.mkdirSync('dist');
     },
     async closeBundle() {
-      await Promise.all([buildLegacyJS(isDev), buildLegacyCSS(isDev)]);
+      await buildLegacyCSS(isDev);
       copyVendors();
-      const sizes = ['dist/game.bundle.min.js', 'dist/break_infinity.min.js'].map((f) => {
+      await buildArcadeLoader(isDev);
+      const sizes = ['dist/break_infinity.min.js'].map((f) => {
         const kb = (fs.statSync(f).size / 1024).toFixed(1);
         return `${f} (${kb} KB)`;
       });
-      console.log('[legacy] ' + sizes.join('  '));
+      console.log('[legacy vendor] ' + sizes.join('  '));
     },
   };
 }

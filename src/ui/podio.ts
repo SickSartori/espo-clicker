@@ -1,17 +1,34 @@
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Classifica (leaderboard) — globale e amici.
+ * window.EspooClicker.loadLeaderboard(scope?) popola #leaderboard-list interrogando
+ * le Edge Function Supabase (get-leaderboard / friends-leaderboard) via window.EspoBackend.call().
+ *
+ * Migrato da js/podio.js (classic script, già wrapped in DOMContentLoaded) a modulo ESM —
+ * kill-legacy periferici. Preservata IDENTICA la guardia di polling
+ * `if (window.EspooClicker) init(); else setInterval(...)`: è ciò che tiene il modulo
+ * order-independent rispetto al boot (window.EspooClicker viene costruito dentro il
+ * DOMContentLoaded di src/app/boot.ts, che può girare prima o dopo questo). I riferimenti
+ * a global legacy passano da `window.*` (alias `w`) perché un modulo strict non li vede.
+ */
+import { store } from '../state/store';
 
-    function initPodio() {
+export function initPodio(): void {
+  document.addEventListener('DOMContentLoaded', () => {
+    const w = window as any;
+
+    function initPodioBindings() {
         // Riferimenti API dal gioco principale
-        const Game = window.EspooClicker;
+        const Game = w.EspooClicker;
         if (!Game) {
             console.error("Errore critico: EspooClicker non è definito.");
             return;
         }
 
         // Riferimenti Modale
-        const openLeaderboardBtn = document.getElementById('open-leaderboard-btn');
-        const leaderboardModal = document.getElementById('leaderboard-modal');
-        const leaderboardList = document.getElementById('leaderboard-list');
+        // Non-null: usati senza guard esplicita anche nell'originale (comportamento invariato).
+        const openLeaderboardBtn = document.getElementById('open-leaderboard-btn') as HTMLElement;
+        const leaderboardModal = document.getElementById('leaderboard-modal') as HTMLElement;
+        const leaderboardList = document.getElementById('leaderboard-list') as HTMLElement;
         let currentScope = 'global'; // 'global' | 'friends'
 
         // Apertura modale
@@ -26,14 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Funzione per caricare e mostrare la classifica
-        async function loadLeaderboard(scope) {
+        async function loadLeaderboard(scope?: string | null) {
             if (scope) currentScope = scope;
             scope = currentScope;
             // Aggiorna lo stato attivo del toggle Globale|Amici
             document.querySelectorAll('#leaderboard-modal .lb-scope-btn').forEach(b =>
                 b.classList.toggle('active', b.getAttribute('data-scope') === scope));
 
-            leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + window.gameData.texts.leaderboard.loading + '</span></div>';
+            leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + store.gameData.texts.leaderboard.loading + '</span></div>';
 
             try {
                 // Forza salvataggio e ATTENDI la risposta del server prima di caricare
@@ -46,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isFriends = scope === 'friends';
                 const slug = isFriends ? 'friends-leaderboard' : 'get-leaderboard';
                 const payload = (isFriends && Game.getSaveToken) ? { save_token: Game.getSaveToken() } : {};
-                const response = await window.EspoBackend.call(slug, payload);
+                const response = await w.EspoBackend.call(slug, payload);
                 if (!response.ok) {
                     throw new Error(`Errore di rete: ${response.statusText}`);
                 }
@@ -54,8 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (scores.length === 0) {
                     const emptyMsg = (scope === 'friends')
-                        ? (window.gameData.texts.leaderboard.emptyFriends || window.gameData.texts.leaderboard.empty)
-                        : window.gameData.texts.leaderboard.empty;
+                        ? (store.gameData.texts.leaderboard.emptyFriends || store.gameData.texts.leaderboard.empty)
+                        : store.gameData.texts.leaderboard.empty;
                     leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + emptyMsg + '</span></div>';
                     return;
                 }
@@ -63,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Costruisci la lista HTML
                 leaderboardList.innerHTML = ''; // Pulisci
                 const currentUsername = sessionStorage.getItem('espooUser');
-                scores.forEach((entry, index) => {
+                scores.forEach((entry: any, index: number) => {
                     const item = document.createElement('div');
                     let rankClass = '';
                     if (index === 0) rankClass = 'rank-1';
@@ -80,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Gestione Livello
                     let level = entry.prestigeLevel || 0;
-                    let prestigeBadge = `<span class="level-badge">${window.gameData.texts.leaderboard.levelAbbr} ${level}</span>`;
+                    let prestigeBadge = `<span class="level-badge">${store.gameData.texts.leaderboard.levelAbbr} ${level}</span>`;
 
                     // ---  GESTIONE FOTO PROFILO (SKIN) ---
                     let skinId = entry.equippedSkin || 'default';
@@ -94,11 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Recuperiamo i dati della skin (se esiste, altrimenti default)
-                    let skinData = window.gameData.skins[skinId] || window.gameData.skins['default'];
+                    let skinData = store.gameData.skins[skinId] || store.gameData.skins['default'];
                     let avatarImg = skinData.img ? `assets/image/${skinData.img}` : 'assets/image/espo.webp';
 
                     // Colore del bordo in base alla rarità
-                    const rColors = {
+                    const rColors: Record<string, string> = {
                         'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
                         'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
                     };
@@ -111,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let formattazioni = entry.totalFormattazioni ? parseInt(entry.totalFormattazioni) : 0;
                     let formatBadge = '';
                     if (formattazioni > 0) {
-                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="${window.gameData.texts.leaderboard.formatTitle}"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
+                        formatBadge = `<span class="level-badge" style="background-color: rgba(155, 89, 182, 0.2); color: #9b59b6; border-color: #8e44ad; margin-left: 5px;" title="${store.gameData.texts.leaderboard.formatTitle}"><i class="fa-solid fa-atom"></i> ${formattazioni}</span>`;
                     }
 
                     if (entry.username === currentUsername) {
@@ -137,40 +154,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Impossibile caricare la classifica:', error);
-                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">' + window.gameData.texts.leaderboard.error + '</span></div>';
+                leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label" style="color: #e74c3c;">' + store.gameData.texts.leaderboard.error + '</span></div>';
             }
         }
 
         // Funzione di utilità per la sicurezza (evita XSS)
-        function escapeHTML(str) {
+        function escapeHTML(str: any) {
             if (typeof str !== 'string') return '';
-            return str.replace(/[&<>"']/g, function (m) {
-                return {
+            return str.replace(/[&<>"']/g, function (m: string) {
+                return ({
                     '&': '&amp;',
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;',
                     "'": '&#039;'
-                }[m];
+                } as Record<string, string>)[m] || '';
             });
         }
 
         // Esponi la funzione di caricamento
-        if (window.EspooClicker) {
-            window.EspooClicker.loadLeaderboard = loadLeaderboard;
+        if (w.EspooClicker) {
+            w.EspooClicker.loadLeaderboard = loadLeaderboard;
         }
     }
 
     // Assicura che lo script principale sia stato caricato
-    if (window.EspooClicker) {
-        initPodio();
+    if (w.EspooClicker) {
+        initPodioBindings();
     } else {
         // Aspetta che l'oggetto EspooClicker sia disponibile
         const checkInterval = setInterval(() => {
-            if (window.EspooClicker) {
+            if (w.EspooClicker) {
                 clearInterval(checkInterval);
-                initPodio();
+                initPodioBindings();
             }
         }, 50); // Controlla ogni 50ms
     }
-});
+  });
+}

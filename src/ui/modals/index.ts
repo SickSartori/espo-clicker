@@ -1,4 +1,22 @@
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Modali (login, settings/volumi, account, leaderboard, help, arcade selector…).
+ *
+ * Migrato da js/modals.js (classic script) a modulo ESM — Blocco #1 kill-legacy.
+ * Il wiring resta agganciato a `DOMContentLoaded`: `main.ts` è un modulo deferred
+ * che gira PRIMA di DOMContentLoaded, quindi il listener viene registrato al
+ * momento originale. NB: l'handler di modals scatta PRIMA di quello di script.js
+ * (che costruisce `window.EspooClicker` DENTRO il proprio DOMContentLoaded), quindi
+ * EspooClicker NON esiste ancora quando gira questo corpo: il binding è reso
+ * order-independent dal guard ibrido `EspoGameReady` (preservato dall'originale).
+ * I riferimenti a global legacy passano da `window.*` (via l'alias `w`) perché un
+ * modulo strict non vede lo scope-bundle. Gli `window.X = …` (funzioni esposte da
+ * questo file, es. stopAllTestAudio) restano identici.
+ */
+import { store } from '../../state/store';
+
+export function initModals(): void {
+  document.addEventListener('DOMContentLoaded', () => {
+    const w = window as any;
 
     // ==========================================
     // 0. FUNZIONI HELPER GLOBALI
@@ -15,13 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Funzione mancante: Ferma tutti i test audio
-    window.stopAllTestAudio = function () {
+    w.stopAllTestAudio = function () {
         // Ferma tutti i suoni SFX gestiti da Howler (non la musica di background)
-        if (typeof AudioManager !== 'undefined') {
-            for (const id in AudioManager._sounds) {
-                const def = AudioManager._getSoundDef(id);
+        if (typeof w.AudioManager !== 'undefined') {
+            for (const id in w.AudioManager._sounds) {
+                const def = w.AudioManager._getSoundDef(id);
                 if (def && def.type !== 'music') {
-                    const howl = AudioManager._sounds[id];
+                    const howl = w.AudioManager._sounds[id];
                     if (howl && howl.playing()) howl.stop();
                 }
             }
@@ -36,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Funzione mancante: Resetta le icone dei bottoni Play
-    window.resetTestButtons = function () {
+    w.resetTestButtons = function () {
         document.querySelectorAll('.mixer-test-btn').forEach(btn => {
             btn.classList.remove('playing');
             const icon = btn.querySelector('i');
@@ -59,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input = document.getElementById(targetId);
             } else {
                 // Fallback: cerca l'input vicino
-                input = btn.closest('.input-group-modern').querySelector('input');
+                input = btn.closest('.input-group-modern')!.querySelector('input');
             }
 
             if (input) {
@@ -104,28 +122,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginModal = document.getElementById('login-modal');
     const helpModal = document.getElementById('help-modal');
     const skinsModal = document.getElementById('skins-modal');
-    const allModals = document.querySelectorAll('.modal-backdrop');
+    const allModals = document.querySelectorAll('.modal-backdrop') as NodeListOf<HTMLElement>;
 
     // Elementi Interni Settings
-    const masterSlider = document.getElementById('master-slider');
-    const sfxSlider = document.getElementById('sfx-slider');
-    const musicSlider = document.getElementById('music-slider');
+    const masterSlider = document.getElementById('master-slider') as HTMLInputElement | null;
+    const sfxSlider = document.getElementById('sfx-slider') as HTMLInputElement | null;
+    const musicSlider = document.getElementById('music-slider') as HTMLInputElement | null;
     const masterDisplay = document.getElementById('master-vol-display');
     const sfxDisplay = document.getElementById('sfx-vol-display');
     const musicDisplay = document.getElementById('music-vol-display');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
 
     // Login & Account Elements
-    const loginButton = document.getElementById('login-btn');
-    const loginInput = document.getElementById('login-username-input');
-    const loginPasswordInput = document.getElementById('login-password-input');
+    // Non-null: usati anche senza guard esplicita altrove nel file (comportamento originale invariato).
+    const loginButton = document.getElementById('login-btn') as HTMLButtonElement;
+    const loginInput = document.getElementById('login-username-input') as HTMLInputElement;
+    const loginPasswordInput = document.getElementById('login-password-input') as HTMLInputElement;
     const logoutBtn = document.getElementById('logout-btn');
     const changePassBtn = document.getElementById('change-password-btn');
     const changeUserBtn = document.getElementById('change-username-btn');
     const deleteSaveBtn = document.getElementById('delete-save-btn');
     const currentUsernameDisplay = document.getElementById('current-username-display');
     // Music
-    const audio = document.getElementById('bg-music');
+    const audio = document.getElementById('bg-music') as HTMLAudioElement;
     // 1. Aggiungi il riferimento
     const openArcadeBtn = document.getElementById('open-arcade-btn');
     const arcadeModal = document.getElementById('arcade-modal');
@@ -135,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (versionDisplayBtn) {
     versionDisplayBtn.style.pointerEvents = 'auto'; // Abilita i click
     versionDisplayBtn.style.cursor = 'pointer';
-    versionDisplayBtn.title = gameData.texts.ui.readNews;
+    versionDisplayBtn.title = store.gameData.texts.ui.readNews;
     
     versionDisplayBtn.addEventListener('click', () => {
         const Game = getGameAPI();
@@ -149,12 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apri arcade in nuova scheda fullscreen (no più modal)
             // Sync BPS corrente via localStorage per reward calc accurato
             try {
-                if (typeof bps !== 'undefined' && bps && bps.toString) {
-                    localStorage.setItem('espo_main_bps', bps.toString());
+                if (typeof store.bps !== 'undefined' && store.bps && store.bps.toString) {
+                    localStorage.setItem('espo_main_bps', store.bps.toString());
                 }
                 // Mirror del saldo Bug totale per il wallet dell'arcade standalone
                 // (arcade.php legge 'espo_main_bugs' + i pending per il totale).
-                const _gs = (window.EspooClicker && window.EspooClicker.getGameState) ? window.EspooClicker.getGameState() : null;
+                const _gs = (w.EspooClicker && w.EspooClicker.getGameState) ? w.EspooClicker.getGameState() : null;
                 if (_gs && _gs.score != null && _gs.score.toString) {
                     localStorage.setItem('espo_main_bugs', _gs.score.toString());
                 }
@@ -164,8 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
             if (arcadeWin && arcadeWin.focus) arcadeWin.focus();
 
-            if (window.EspooClicker && window.EspooClicker.playSound) {
-                window.EspooClicker.playSound('sound-click');
+            if (w.EspooClicker && w.EspooClicker.playSound) {
+                w.EspooClicker.playSound('sound-click');
             }
         });
     }
@@ -185,12 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(raw);
             if (!data || !data.score || parseFloat(data.score) <= 0) return;
 
-            const Game = getGameAPI ? getGameAPI() : window.EspooClicker;
+            const Game = getGameAPI ? getGameAPI() : w.EspooClicker;
             if (!Game) return;
             const gs = Game.getGameState ? Game.getGameState() : null;
             if (!gs) return;
 
-            const reward = (typeof Decimal !== 'undefined') ? new Decimal(data.score) : parseFloat(data.score);
+            const reward = (typeof w.Decimal !== 'undefined') ? new w.Decimal(data.score) : parseFloat(data.score);
             gs.score = gs.score.add ? gs.score.add(reward) : (gs.score + reward);
             if (Game.saveGame) Game.saveGame();
             if (Game.showToast) {
@@ -200,10 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear pending — ANTI-RACE: se il tab arcade ha scritto ALTRI reward tra
             // la lettura e questo punto, sottrai solo quanto incassato invece di azzerare.
             const cur = localStorage.getItem('espo_arcade_pending_rewards');
-            if (cur && cur !== raw && typeof Decimal !== 'undefined') {
+            if (cur && cur !== raw && typeof w.Decimal !== 'undefined') {
                 try {
                     const curData = JSON.parse(cur);
-                    const residue = new Decimal(curData.score || '0').sub(data.score);
+                    const residue = new w.Decimal(curData.score || '0').sub(data.score);
                     if (residue.gt(0)) {
                         localStorage.setItem('espo_arcade_pending_rewards',
                             JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
@@ -243,22 +262,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const descEl = document.getElementById('preview-desc');
             const scoreEl = document.getElementById('preview-highscore');
 
-            if (titleEl) { titleEl.textContent = title; titleEl.style.color = color; }
+            if (titleEl) { titleEl.textContent = title; titleEl.style.color = color ?? ''; }
             if (descEl) descEl.textContent = desc;
 
             // Recupera High Score
-            const Game = window.EspooClicker;
+            const Game = w.EspooClicker;
             if (Game && scoreEl) {
                 const state = Game.getGameState();
-                const score = (state.arcadeHighScores && state.arcadeHighScores[gameKey]) ? state.arcadeHighScores[gameKey] : 0;
+                const score = (state.arcadeHighScores && state.arcadeHighScores[gameKey ?? '']) ? state.arcadeHighScores[gameKey ?? ''] : 0;
                 scoreEl.textContent = score;
             }
         };
 
         item.addEventListener('mouseenter', () => {
             if (!item.classList.contains('active')) {
-                if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
-                    window.EspooClicker.playSound('sound-arcade-hover');
+                if (w.EspooClicker && typeof w.EspooClicker.playSound === 'function') {
+                    w.EspooClicker.playSound('sound-arcade-hover');
                 }
             }
             updatePreview();
@@ -266,8 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         item.addEventListener('click', () => {
             updatePreview();
-            if (window.EspooClicker && typeof window.EspooClicker.playSound === 'function') {
-                window.EspooClicker.playSound('sound-click'); // Suono click normale per la selezione
+            if (w.EspooClicker && typeof w.EspooClicker.playSound === 'function') {
+                w.EspooClicker.playSound('sound-click'); // Suono click normale per la selezione
             }
         });
     });
@@ -281,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arcadeModal && arcadeModal.style.display === 'flex' &&
             selector && selector.style.display !== 'none') {
 
-            const items = Array.from(selector.querySelectorAll('.arcade-menu-item:not(.locked)'));
+            const items = Array.from(selector.querySelectorAll('.arcade-menu-item:not(.locked)')) as HTMLElement[];
             if (items.length === 0) return;
 
             let currentIndex = items.findIndex(item => item.classList.contains('active'));
@@ -289,17 +308,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 currentIndex = (currentIndex + 1) % items.length;
-                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+                items[currentIndex]!.dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
             }
             else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 currentIndex = (currentIndex - 1 + items.length) % items.length;
-                items[currentIndex].dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
+                items[currentIndex]!.dispatchEvent(new Event('mouseenter')); // Aggiorna graficamente
             }
             else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (currentIndex >= 0) {
-                    items[currentIndex].click(); // Avvia il gioco selezionato
+                    items[currentIndex]!.click(); // Avvia il gioco selezionato
                 }
             }
         }
@@ -310,10 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const playPromise = audio.play();
 
         if (playPromise !== undefined) {
-            playPromise.then(_ => {
+            playPromise.then((_: unknown) => {
                 // L'autoplay è partito!
             })
-                .catch(error => {
+                .catch((error: unknown) => {
                     // L'autoplay è stato bloccato.
                     console.log("Autoplay bloccato dal browser. Serve interazione.");
                     // Qui potresti mostrare un pulsante "Clicca per riattivare l'audio"
@@ -335,14 +354,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GESTIONE PRESTIGIO ---
     if (openPrestigeBtn) {
         openPrestigeBtn.addEventListener('click', () => {
-            if (typeof updatePrestigeVisuals === 'function') updatePrestigeVisuals();
-            if (typeof openPrestigeHub === 'function') openPrestigeHub();
+            if (typeof w.updatePrestigeVisuals === 'function') w.updatePrestigeVisuals();
+            if (typeof w.openPrestigeHub === 'function') w.openPrestigeHub();
         });
     }
 
     if (btnConfirmPrestige) {
         btnConfirmPrestige.addEventListener('click', () => {
-            if (typeof executePrestige === 'function') executePrestige();
+            if (typeof w.executePrestige === 'function') w.executePrestige();
         });
     }
 
@@ -356,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHeaderReset = document.getElementById('header-reset-btn');
 
     // --- FUNZIONE HELPER PER GENERARE LA RIGA HTML ---
-    function createMixerRow(id, name, val) {
+    function createMixerRow(id: any, name: any, val: any) {
         const row = document.createElement('div');
         row.className = 'mixer-row';
         const color = val === 0 ? '#7f8c8d' : '#3498db';
@@ -379,9 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- NUOVO: Stop Audio Automatico quando il mouse esce dalla riga ---
         row.addEventListener('mouseleave', () => {
-            const btn = row.querySelector('.mixer-test-btn');
-            const targetId = btn.getAttribute('data-target');
-            const el = document.getElementById(targetId);
+            const btn = row.querySelector('.mixer-test-btn') as HTMLElement;
+            const targetId = btn.getAttribute('data-target')!;
+            const el = document.getElementById(targetId) as HTMLMediaElement | null;
 
             // Se l'elemento esiste e (sta suonando OPPURE il bottone dice che sta suonando)
             if (el && (!el.paused || btn.classList.contains('playing'))) {
@@ -413,22 +432,22 @@ document.addEventListener('DOMContentLoaded', () => {
         listAdvAudio.innerHTML = '';
 
         const Game = getGameAPI();
-        const assets = gameData.assets;
+        const assets = store.gameData.assets;
         const userAudio = Game.getGameState().user.audioCustom;
 
         // Categorie
-        const categories = {
-            'ambiente': { title: gameData.texts.ui.audioCatAmbiente, icon: 'fa-music', items: [] },
-            'eventi': { title: gameData.texts.ui.audioCatEventi, icon: 'fa-film', items: [] },
-            'effetti': { title: gameData.texts.ui.audioCatEffetti, icon: 'fa-volume-high', items: [] }
+        const categories: Record<string, { title: any; icon: string; items: any[] }> = {
+            'ambiente': { title: store.gameData.texts.ui.audioCatAmbiente, icon: 'fa-music', items: [] },
+            'eventi': { title: store.gameData.texts.ui.audioCatEventi, icon: 'fa-film', items: [] },
+            'effetti': { title: store.gameData.texts.ui.audioCatEffetti, icon: 'fa-volume-high', items: [] }
         };
 
-        const allAssets = { ...assets.sounds, ...assets.videos };
+        const allAssets: any = { ...assets.sounds, ...assets.videos };
 
         // Popola categorie
-        for (const [key, data] of Object.entries(allAssets)) {
+        for (const [key, data] of Object.entries(allAssets) as [string, any][]) {
             if (categories[data.category]) {
-                categories[data.category].items.push({ key, ...data });
+                categories[data.category]!.items.push({ key, ...data });
             }
         }
 
@@ -455,21 +474,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listener Slider (Aggiornamento Tempo Reale)
         listAdvAudio.querySelectorAll('.mixer-slider').forEach(input => {
             input.addEventListener('input', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                const newVal = parseFloat(e.target.value);
+                const targetEl = e.target as HTMLInputElement;
+                const targetId = targetEl.getAttribute('data-target')!;
+                const newVal = parseFloat(targetEl.value);
 
                 Game.getGameState().user.audioCustom[targetId] = newVal;
 
                 // Aggiorna UI percentuale
-                const valSpan = e.target.parentElement.querySelector('.mixer-value');
+                const valSpan = targetEl.parentElement!.querySelector('.mixer-value') as HTMLElement;
                 valSpan.textContent = Math.round(newVal * 100) + '%';
                 valSpan.style.color = newVal === 0 ? '#7f8c8d' : '#3498db';
 
                 // Applica volume in tempo reale via AudioManager
-                if (typeof AudioManager !== 'undefined') {
-                    const def = AudioManager._getSoundDef(targetId);
+                if (typeof w.AudioManager !== 'undefined') {
+                    const def = w.AudioManager._getSoundDef(targetId);
                     const type = (def && def.type === 'music') ? 'music' : 'sfx';
-                    AudioManager.setVolume(targetId, AudioManager._calcVolume(targetId, type));
+                    w.AudioManager.setVolume(targetId, w.AudioManager._calcVolume(targetId, type));
                 }
             });
         });
@@ -480,12 +500,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function handleTestAudioClick(btn) {
+    function handleTestAudioClick(btn: any) {
         const targetId = btn.getAttribute('data-target');
         const icon = btn.querySelector('i');
 
         // Video: gestione diretta sull'elemento DOM
-        const videoEl = document.getElementById(targetId);
+        const videoEl = document.getElementById(targetId) as HTMLMediaElement | null;
         if (videoEl && videoEl.tagName === 'VIDEO') {
             if (!videoEl.paused && !videoEl.ended) {
                 videoEl.pause();
@@ -495,8 +515,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon.style.marginLeft = '2px';
                 return;
             }
-            window.stopAllTestAudio();
-            window.resetTestButtons();
+            w.stopAllTestAudio();
+            w.resetTestButtons();
             const Game = getGameAPI();
             const userVol = Game.getGameState().user;
             const customVal = (Game.getGameState().user.audioCustom[targetId] ?? 1);
@@ -513,15 +533,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     icon.className = 'fa-solid fa-play';
                     icon.style.marginLeft = '2px';
                 };
-            }).catch(e => {
+            }).catch((e: any) => {
                 if (e.name !== 'AbortError') console.error("Errore playback video test:", e);
             });
             return;
         }
 
         // Audio: gestione via AudioManager (Howler)
-        if (typeof AudioManager === 'undefined') return;
-        const howl = AudioManager.getHowl(targetId);
+        if (typeof w.AudioManager === 'undefined') return;
+        const howl = w.AudioManager.getHowl(targetId);
         if (!howl) return;
 
         // Se sta già suonando, ferma
@@ -533,12 +553,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        window.stopAllTestAudio();
-        window.resetTestButtons();
+        w.stopAllTestAudio();
+        w.resetTestButtons();
 
-        const def = AudioManager._getSoundDef(targetId);
+        const def = w.AudioManager._getSoundDef(targetId);
         const type = (def && def.type === 'music') ? 'music' : 'sfx';
-        const vol = AudioManager._calcVolume(targetId, type);
+        const vol = w.AudioManager._calcVolume(targetId, type);
 
         howl.volume(vol > 0 ? vol : 0.1);
         howl.play();
@@ -557,19 +577,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAdvAudio) {
         btnAdvAudio.addEventListener('click', () => {
             // Salva lo stato attuale (es. se c'è Espo Fury attivo)
-            if (window.currentActiveEvent !== 'Audio Mixer') {
-                window.preMixerEvent = window.currentActiveEvent;
+            if (w.currentActiveEvent !== 'Audio Mixer') {
+                w.preMixerEvent = w.currentActiveEvent;
             }
-            window.currentActiveEvent = 'Audio Mixer';
+            w.currentActiveEvent = 'Audio Mixer';
 
             // Chiudi settings e apri Mixer
             if (settingsModal) settingsModal.style.display = 'none';
             if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
 
             // STOP TOTALE: Silenzia tutto (Howler + video DOM)
-            if (typeof AudioManager !== 'undefined') {
-                for (const id in AudioManager._sounds) {
-                    AudioManager.stop(id, 0);
+            if (typeof w.AudioManager !== 'undefined') {
+                for (const id in w.AudioManager._sounds) {
+                    w.AudioManager.stop(id, 0);
                 }
             }
             document.querySelectorAll('video').forEach(el => {
@@ -589,36 +609,36 @@ document.addEventListener('DOMContentLoaded', () => {
             if (settingsModal) settingsModal.style.display = 'flex';
 
             // Ferma test
-            window.stopAllTestAudio();
-            window.resetTestButtons();
+            w.stopAllTestAudio();
+            w.resetTestButtons();
 
             // 6. RIPRISTINA LO STATO PRECEDENTE
-            window.currentActiveEvent = window.preMixerEvent || null;
-            window.preMixerEvent = null;
+            w.currentActiveEvent = w.preMixerEvent || null;
+            w.preMixerEvent = null;
 
-            if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience) {
-                AudioManager.updateAmbience();
+            if (typeof w.AudioManager !== 'undefined' && w.AudioManager.updateAmbience) {
+                w.AudioManager.updateAmbience();
             }
 
             // 7. SMART RESUME (Fallback per musica background standard)
-            if (window.EspooClicker && typeof window.EspooClicker.tryStartAudio === 'function') {
-                window.EspooClicker.tryStartAudio();
+            if (w.EspooClicker && typeof w.EspooClicker.tryStartAudio === 'function') {
+                w.EspooClicker.tryStartAudio();
             }
         });
     }
 
     if (btnHeaderReset) {
         btnHeaderReset.addEventListener('click', () => {
-            if (confirm(gameData.texts.dialogs.audioResetConfirm)) {
-                const Game = window.EspooClicker;
+            if (confirm(store.gameData.texts.dialogs.audioResetConfirm)) {
+                const Game = w.EspooClicker;
                 if (!Game) return;
 
-                const assets = gameData.assets;
+                const assets = store.gameData.assets;
                 // Unisci suoni e video per resettarli tutti
-                const allAssets = { ...assets.sounds, ...assets.videos };
+                const allAssets: any = { ...assets.sounds, ...assets.videos };
 
                 // Ripristina i valori nel salvataggio usando il 'defaultVol' di game-data
-                for (const [key, data] of Object.entries(allAssets)) {
+                for (const [key, data] of Object.entries(allAssets) as [string, any][]) {
                     if (data.defaultVol !== undefined) {
                         Game.getGameState().user.audioCustom[data.id] = data.defaultVol;
                     }
@@ -628,9 +648,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAudioMixer(); // Ridisegna gli slider con i nuovi valori
 
                 // Aggiorna il volume reale del gioco immediatamente
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+                if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();
 
-                Game.showToast(gameData.texts.toasts.audioReset, "info");
+                Game.showToast(store.gameData.texts.toasts.audioReset, "info");
             }
         });
     }
@@ -639,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. GESTIONE MODALI STANDARD
     // ==========================================
 
-    function getGameAPI() { return window.EspooClicker || null; }
+    function getGameAPI() { return w.EspooClicker || null; }
 
     // ==========================================
     // LOGIN — debug data-stream (scena fullscreen)
@@ -686,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let lines = '';
             for (let rep = 0; rep < 2; rep++) {
                 for (let k = 0; k < n; k++) {
-                    const ln = LOGIN_STREAM_LINES[(startIdx + k) % n];
+                    const ln = LOGIN_STREAM_LINES[(startIdx + k) % n]!;
                     lines += '<span class="ln' + (ln.c ? ' ' + ln.c : '') + '">' + ln.t + '</span>';
                 }
             }
@@ -698,22 +718,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Rigenera le colonne al resize (debounce) solo se il login è visibile
-    let _loginStreamTimer = null;
+    let _loginStreamTimer: ReturnType<typeof setTimeout> | null = null;
     window.addEventListener('resize', () => {
         const lm = document.getElementById('login-modal');
         if (!lm || getComputedStyle(lm).display === 'none') return;
-        clearTimeout(_loginStreamTimer);
+        clearTimeout(_loginStreamTimer ?? undefined);
         _loginStreamTimer = setTimeout(buildLoginStream, 200);
     });
 
-    function openModal(modal) {
+    function openModal(modal: any) {
         if (modal) {
             const content = modal.querySelector('.modal-content');
 
             // Kill animazioni in corso (close ancora attivo, ecc.)
-            if (typeof gsap !== 'undefined') {
-                gsap.killTweensOf(modal);
-                if (content) gsap.killTweensOf(content);
+            if (typeof w.gsap !== 'undefined') {
+                w.gsap.killTweensOf(modal);
+                if (content) w.gsap.killTweensOf(content);
             }
 
             // Reset stato pulito (modal magari era a metà close)
@@ -729,8 +749,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modal.id === 'login-modal') buildLoginStream();
 
             // Animazione "finestra": fade + leggero scale (subito, no rAF)
-            if (content && typeof gsap !== 'undefined') {
-                gsap.fromTo(content,
+            if (content && typeof w.gsap !== 'undefined') {
+                w.gsap.fromTo(content,
                     { scale: 0.97, opacity: 0 },
                     { scale: 1, opacity: 1, duration: 0.26, ease: "power2.out", clearProps: 'transform,opacity' }
                 );
@@ -740,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (modal.id === 'login-modal') {
                     modal.style.opacity = 1;
                 } else {
-                    gsap.fromTo(modal,
+                    w.gsap.fromTo(modal,
                         { opacity: 0 },
                         { opacity: 1, duration: 0.22, ease: "power1.out", clearProps: 'opacity' }
                     );
@@ -753,28 +773,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Suona SOLO se il modale NON è quello di login
             if (modal.id !== 'login-modal') {
-                if (typeof AudioManager !== 'undefined') {
-                    AudioManager.playClickEffect();
-                } else if (typeof playSound === 'function') {
-                    playSound('sound-click');
+                if (typeof w.AudioManager !== 'undefined') {
+                    w.AudioManager.playClickEffect();
+                } else if (typeof w.playSound === 'function') {
+                    w.playSound('sound-click');
                 }
             }
         }
     }
 
-    function closeModal(modal) {
+    function closeModal(modal: any) {
         if (modal) {
             const content = modal.querySelector('.modal-content');
 
             // Kill any open tweens prima di partire close
-            if (typeof gsap !== 'undefined') {
-                gsap.killTweensOf(modal);
-                if (content) gsap.killTweensOf(content);
+            if (typeof w.gsap !== 'undefined') {
+                w.gsap.killTweensOf(modal);
+                if (content) w.gsap.killTweensOf(content);
             }
 
             // Animazione uscita (veloce, no scale 0.8 = no jump grosso)
-            if (content && typeof gsap !== 'undefined') {
-                gsap.to(content, {
+            if (content && typeof w.gsap !== 'undefined') {
+                w.gsap.to(content, {
                     scale: 0.97,
                     opacity: 0,
                     duration: 0.18,
@@ -788,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         finishClose();
                     }
                 });
-                gsap.to(modal, { opacity: 0, duration: 0.18 });
+                w.gsap.to(modal, { opacity: 0, duration: 0.18 });
             } else {
                 modal.style.display = 'none';
                 if (content) { content.style.transform = ''; content.style.opacity = ''; }
@@ -798,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function finishClose() {
                 let anyOpen = false;
-                document.querySelectorAll('.modal-backdrop').forEach(m => {
+                (document.querySelectorAll('.modal-backdrop') as NodeListOf<HTMLElement>).forEach(m => {
                     if (m.style.display === 'flex' && m !== modal && m.style.opacity !== '0') anyOpen = true;
                 });
 
@@ -812,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // A11y: Esc chiude il modale visibile in cima (tranne il login, che e' un gate)
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
-        const open = Array.from(document.querySelectorAll('.modal-backdrop'))
+        const open = (Array.from(document.querySelectorAll('.modal-backdrop')) as HTMLElement[])
             .filter(m => m.style.display === 'flex' && m.style.opacity !== '0' && m.id !== 'login-modal');
         if (open.length) closeModal(open[open.length - 1]);
     });
@@ -825,13 +845,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (openAchievementsBtn) openAchievementsBtn.addEventListener('click', () => {
-        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
         openModal(achievementsModal);
     });
 
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => openModal(helpModal));
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
-        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+        if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
         openModal(skinsModal);
     });
 
@@ -850,8 +870,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Aggiorna il nome utente mostrato nella navbar e nell'header dell'hub
-    function setAccountIdentity(name) {
-        const fallback = (window.gameData && gameData.texts && gameData.texts.ui && gameData.texts.ui.defaultPlayer) || 'Giocatore';
+    function setAccountIdentity(name: any) {
+        const fallback = (store.gameData && store.gameData.texts && store.gameData.texts.ui && store.gameData.texts.ui.defaultPlayer) || 'Giocatore';
         const n = name || fallback;
         const navLabel = document.getElementById('navbar-username-label');
         if (navLabel) navLabel.textContent = n;
@@ -860,14 +880,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Attiva una tab dell'hub nome-utente (account | amici)
-    function setHubTab(target) {
+    function setHubTab(target: any) {
         if (!userHubModal) return;
         userHubModal.querySelectorAll('.hub-tab').forEach(t => {
             const on = t.getAttribute('data-hubtab') === target;
             t.classList.toggle('active', on);
             t.setAttribute('aria-selected', on ? 'true' : 'false');
         });
-        userHubModal.querySelectorAll('.hub-pane').forEach(p => {
+        (userHubModal.querySelectorAll('.hub-pane') as NodeListOf<HTMLElement>).forEach(p => {
             const on = p.getAttribute('data-hubpane') === target;
             p.classList.toggle('active', on);
             p.style.display = on ? '' : 'none';
@@ -891,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Area Critica sempre richiusa all'apertura: va aperta apposta per accedere
         const dz = userHubModal && userHubModal.querySelector('.danger-collapsible');
         if (dz) dz.removeAttribute('open');
-        const dzPass = document.getElementById('danger-zone-password');
+        const dzPass = document.getElementById('danger-zone-password') as HTMLInputElement | null;
         if (dzPass) dzPass.value = '';
         openModal(userHubModal);
     });
@@ -901,17 +921,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Nota: rimosso il check isFastClick() — bloccava i click legittimi
             // post-touchend (DevTools device emulation, mobile moderni). Con
             // viewport width=device-width il "ghost click" 300ms non esiste più.
-            if (e.target.classList.contains('modal-close-btn')) {
+            if ((e.target as HTMLElement).classList.contains('modal-close-btn')) {
                 closeModal(modal);
 
-                if (modal.id === 'arcade-modal' && window.currentActiveEvent === 'Arcade Mode') {
-                    window.currentActiveEvent = null;
-                    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
-                    if (typeof window.exitSnakeGame === 'function') window.exitSnakeGame();
-                    if (typeof window.exitSpaceGame === 'function') window.exitSpaceGame();
-                    if (typeof window.exitAsteroidsGame === 'function') window.exitAsteroidsGame();
-                    if (typeof window.exitInvadersGame === 'function') window.exitInvadersGame();
-                    if (typeof window.exitCentipedeGame === 'function') window.exitCentipedeGame();
+                if (modal.id === 'arcade-modal' && w.currentActiveEvent === 'Arcade Mode') {
+                    w.currentActiveEvent = null;
+                    if (typeof w.AudioManager !== 'undefined') w.AudioManager.updateAmbience();
+                    if (typeof w.exitSnakeGame === 'function') w.exitSnakeGame();
+                    if (typeof w.exitSpaceGame === 'function') w.exitSpaceGame();
+                    if (typeof w.exitAsteroidsGame === 'function') w.exitAsteroidsGame();
+                    if (typeof w.exitInvadersGame === 'function') w.exitInvadersGame();
+                    if (typeof w.exitCentipedeGame === 'function') w.exitCentipedeGame();
                 }
 
             }
@@ -925,11 +945,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const userSettings = gameState.user;
 
         // Selettore lingua: riflette APP_LANG e, al cambio, riscrive il cookie e ricarica.
-        const langSelect = document.getElementById('lang-select');
+        const langSelect = document.getElementById('lang-select') as HTMLSelectElement | null;
         if (langSelect) {
-            langSelect.value = window.APP_LANG || 'it';
+            langSelect.value = w.APP_LANG || 'it';
             langSelect.onchange = function () {
-                const lang = this.value === 'en' ? 'en' : 'it';
+                const lang = langSelect.value === 'en' ? 'en' : 'it';
                 document.cookie = 'user_default_language=' + lang + ';path=/;max-age=' + (60 * 60 * 24 * 365);
                 location.reload();
             };
@@ -939,11 +959,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUsernameDisplay) currentUsernameDisplay.textContent = userSettings.username;
         if (masterSlider) {
             masterSlider.value = userSettings.masterVolume;
-            if (masterDisplay) masterDisplay.textContent = Math.round(userSettings.masterVolume * 100);
+            if (masterDisplay) masterDisplay.textContent = String(Math.round(userSettings.masterVolume * 100));
         }
 
-        const oldMusicSelect = document.getElementById('bg-music-select');
-        const lockMsg = document.getElementById('bg-music-lock-msg');
+        const oldMusicSelect = document.getElementById('bg-music-select') as HTMLSelectElement | null;
+        const lockMsg = document.getElementById('bg-music-lock-msg') as HTMLElement | null;
 
         if (oldMusicSelect) {
             // 1. Inizializza la preferenza se manca (per salvataggi vecchi)
@@ -951,11 +971,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Controlla se la skin attuale FORZA la musica
             const currentSkinId = gameState.skins.current;
-            const currentSkinData = gameData.skins[currentSkinId];
+            const currentSkinData = store.gameData.skins[currentSkinId];
             const isThemeLocked = currentSkinData && currentSkinData.themeConfig && currentSkinData.themeConfig.specialMusic;
 
             // 3. Crea un NUOVO elemento select pulito (clone superficiale per rimuovere listener vecchi)
-            const newSelect = oldMusicSelect.cloneNode(false); // false = non copiare le option vecchie
+            const newSelect = oldMusicSelect.cloneNode(false) as HTMLSelectElement; // false = non copiare le option vecchie
 
             // Gestione UI Blocco
             newSelect.disabled = isThemeLocked;
@@ -963,7 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lockMsg) lockMsg.style.display = isThemeLocked ? 'block' : 'none';
 
             // 4. Mappatura Sblocchi (Definizione regole)
-            const musicUnlockMap = {
+            const musicUnlockMap: Record<string, string | null> = {
                 'sound-bg-music': null,
                 'sound-bg-music-v2': null,
                 'sound-bg-music-v3': null,
@@ -974,11 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 'sound-bg-music-divine': 'jesus'
             };
 
-            const sounds = gameData.assets.sounds;
+            const sounds = store.gameData.assets.sounds;
             const excludedTracks = ['sound-bluescreen', 'sound-matrix', 'sound-fury-music', 'sound-star'];
 
             // 5. Popola le opzioni
-            for (const [key, sound] of Object.entries(sounds)) {
+            for (const [key, sound] of Object.entries(sounds) as [string, any][]) {
                 if (sound.type === 'music' && sound.category === 'ambiente' && !excludedTracks.includes(sound.id)) {
 
                     const requiredSkin = musicUnlockMap[sound.id];
@@ -1016,27 +1036,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. Listener Aggiornato (Usa Game.getGameState() direttamente per sicurezza)
             newSelect.addEventListener('change', (e) => {
-                const val = e.target.value;
+                const val = (e.target as HTMLSelectElement).value;
                 // Aggiorna lo stato globale
                 Game.getGameState().user.bgMusicSelection = val;
 
                 // Applica subito l'audio
-                if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
+                if (typeof w.AudioManager !== 'undefined') w.AudioManager.updateAmbience();
 
                 // Salva
                 Game.saveGame();
             });
 
             // 7. Sostituisci il vecchio select nel DOM con quello nuovo
-            oldMusicSelect.parentNode.replaceChild(newSelect, oldMusicSelect);
+            oldMusicSelect.parentNode!.replaceChild(newSelect, oldMusicSelect);
         }
 
         openModal(settingsModal);
     }
 
-    function setupAudioControl(slider, display, key, isMusic = false) {
+    function setupAudioControl(slider: any, display: any, key: any, isMusic = false) {
         if (!slider) return;
-        const Game = window.EspooClicker;
+        const Game = w.EspooClicker;
         if (!Game) return;
 
         slider.value = Game.getGameState().user[key];
@@ -1047,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Game.getGameState().user[key] = val;
             if (display) display.textContent = Math.round(val * 100);
             if (isMusic || key === 'masterVolume') {
-                if (typeof updateAmbientVolume === 'function') updateAmbientVolume();
+                if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();
             }
             // Mantieni sincronizzata l'icona del quick-mute con lo slider master
             if (key === 'masterVolume' && typeof Game.updateMuteButton === 'function') {
@@ -1057,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initModalBindings() {
-        const Game = window.EspooClicker;
+        const Game = w.EspooClicker;
         if (!Game) return;
 
         // Setup Slider Audio
@@ -1082,14 +1102,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Logica ibrida: Se il gioco è già pronto, esegui subito. Altrimenti aspetta l'evento.
-    if (window.EspooClicker)
+    if (w.EspooClicker)
         initModalBindings();
     else
         document.addEventListener('EspoGameReady', initModalBindings);
 
     if (loginButton) loginButton.addEventListener('click', handleLogin);
 
-    window._showLoginForTokenExpiry = () => {
+    w._showLoginForTokenExpiry = () => {
         const sessUser = sessionStorage.getItem('espooUser');
         const sessPass = sessionStorage.getItem('espooPass');
         if (sessUser && sessPass && loginInput && loginPasswordInput) {
@@ -1105,24 +1125,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // della scadenza 24h). A differenza di _showLoginForTokenExpiry NON ricarica il cloud
     // né riapre modali: chiede solo un nuovo token riusando le credenziali di sessione.
     // Fail-safe: in caso di errore resta attivo il controllo reattivo alla scadenza.
-    window._silentTokenRefresh = async () => {
+    w._silentTokenRefresh = async () => {
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || window._tokenRefreshing) return;
+        if (!u || !p || w._tokenRefreshing) return;
         const Game = getGameAPI();
         if (!Game || typeof Game.setSaveToken !== 'function') return;
-        window._tokenRefreshing = true;
+        w._tokenRefreshing = true;
         try {
-            const res = await window.EspoBackend.call('refresh-token', { username: u, password: p });
+            const res = await w.EspoBackend.call('refresh-token', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success' && data.save_token) {
                 Game.setSaveToken(data.save_token, data.token_expires_at);
-                window._tokenExpiredNotified = false;
+                w._tokenExpiredNotified = false;
             }
         } catch (e) {
             // silenzioso: il fallback reattivo coprirà l'eventuale scadenza
         } finally {
-            window._tokenRefreshing = false;
+            w._tokenRefreshing = false;
         }
     };
 
@@ -1131,23 +1151,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // adottiamo in modo AUTORITATIVO (force) — il confronto solo-lifetimeScore del load
     // normale non basta a risolvere il conflitto. Così il client si riallinea e i
     // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
-    window._resyncFromCloud = async () => {
+    w._resyncFromCloud = async () => {
         // DEV (Admin Console): se lo stato è stato alterato da un cheat NON riallinearlo al
         // cloud — annullerebbe lo scenario/cheat caricato. Coerente con saveGame, che in quel
         // caso salta del tutto il push (quindi non genera nemmeno il conflitto che porta qui).
-        if (window.cheatNoCloudSync) return;
+        if (w.cheatNoCloudSync) return;
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || window._resyncing) return;
+        if (!u || !p || w._resyncing) return;
         const Game = getGameAPI();
         if (!Game || typeof Game.loadCloudData !== 'function') return;
-        window._resyncing = true;
+        w._resyncing = true;
         try {
-            const res = await window.EspoBackend.call('login-register', { username: u, password: p });
+            const res = await w.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success') {
                 if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
-                window._tokenExpiredNotified = false;
+                w._tokenExpiredNotified = false;
                 if (data.save_data) {
                     Game.loadCloudData(data.save_data, { force: true });
                     if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
@@ -1156,15 +1176,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             // riprova al prossimo salvataggio / tap sul badge
         } finally {
-            window._resyncing = false;
+            w._resyncing = false;
         }
     };
 
     if (logoutBtn) logoutBtn.addEventListener('click', async () => {
-        if (confirm(gameData.texts.dialogs.logout)) {
+        if (confirm(store.gameData.texts.dialogs.logout)) {
             sessionStorage.clear();
-            if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
-                try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+            if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
+                try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
             }
             localStorage.removeItem('espotoolClickerSaveV9');
             localStorage.removeItem('espotoolClickerSaveV9_Backup');
@@ -1175,15 +1195,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handler pulsanti Account (change user/pass/delete)
     if (changePassBtn) changePassBtn.addEventListener('click', async () => {
         const Game = getGameAPI();
-        const oldPass = document.getElementById('old-password-input').value;
-        const newPass = document.getElementById('new-password-input').value;
-        if (!oldPass || !newPass) { alert(gameData.texts.dialogs.fillFields); return; }
+        const oldPass = (document.getElementById('old-password-input') as HTMLInputElement).value;
+        const newPass = (document.getElementById('new-password-input') as HTMLInputElement).value;
+        if (!oldPass || !newPass) { alert(store.gameData.texts.dialogs.fillFields); return; }
 
         try {
-            const res = await window.EspoBackend.call('change-password', { save_token: Game.getSaveToken(), oldPassword: oldPass, newPassword: newPass });
+            const res = await w.EspoBackend.call('change-password', { save_token: Game.getSaveToken(), oldPassword: oldPass, newPassword: newPass });
             const data = await res.json();
             if (data.status === 'success') {
-                Game.showToast(gameData.texts.toasts.passChanged, "success");
+                Game.showToast(store.gameData.texts.toasts.passChanged, "success");
                 Game.setPassword(newPass);	// Aggiorno la password per le varie funzioni di salvataggio
                 sessionStorage.setItem('espooPass', newPass); // Aggiorna sessione
             } else {
@@ -1194,18 +1214,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (changeUserBtn) changeUserBtn.addEventListener('click', async () => {
         const Game = getGameAPI();
-        const newName = document.getElementById('new-username-input').value;
-        const password = prompt(gameData.texts.dialogs.confirmPass);
+        const newName = (document.getElementById('new-username-input') as HTMLInputElement).value;
+        const password = prompt(store.gameData.texts.dialogs.confirmPass);
         if (!newName || !password) return;
 
         try {
-            const res = await window.EspoBackend.call('change-username', { save_token: Game.getSaveToken(), password: password, newUsername: newName });
+            const res = await w.EspoBackend.call('change-username', { save_token: Game.getSaveToken(), password: password, newUsername: newName });
             const data = await res.json();
             if (data.status === 'success') {
                 Game.getGameState().user.username = newName;
                 sessionStorage.setItem('espooUser', newName);
                 setAccountIdentity(newName);
-                Game.showToast(gameData.texts.toasts.nameChanged, "success");
+                Game.showToast(store.gameData.texts.toasts.nameChanged, "success");
                 Game.saveGame();
             } else {
                 alert(data.message);
@@ -1214,24 +1234,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (deleteSaveBtn) deleteSaveBtn.addEventListener('click', async () => {
-        const password = document.getElementById('danger-zone-password').value;
-        if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
-        if (!confirm(gameData.texts.dialogs.deleteConfirm)) return;
+        const password = (document.getElementById('danger-zone-password') as HTMLInputElement).value;
+        if (!password) { alert(store.gameData.texts.dialogs.enterPass); return; }
+        if (!confirm(store.gameData.texts.dialogs.deleteConfirm)) return;
 
         const Game = getGameAPI();
         try {
-            const res = await window.EspoBackend.call('delete-user', { save_token: Game.getSaveToken(), password: password });
+            const res = await w.EspoBackend.call('delete-user', { save_token: Game.getSaveToken(), password: password });
             const data = await res.json();
             if (data.status === 'success') {
                 // Impedisci il salvataggio automatico alla chiusura
                 Game.getGameState().isDeleting = true;
 
 
-                alert(gameData.texts.dialogs.accountDeleted);
+                alert(store.gameData.texts.dialogs.accountDeleted);
                 sessionStorage.clear();
                 localStorage.clear(); // Pulisce tutto il browser
-                if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
-                    try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+                if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
+                    try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                 }
                 location.reload();
             } else {
@@ -1242,22 +1262,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetProgressBtn = document.getElementById('reset-progress-btn');
     if (resetProgressBtn) {
         resetProgressBtn.addEventListener('click', async () => {
-            const password = document.getElementById('danger-zone-password').value;
-            if (!password) { alert(gameData.texts.dialogs.enterPass); return; }
-            if (!confirm(gameData.texts.dialogs.resetConfirm)) return;
+            const password = (document.getElementById('danger-zone-password') as HTMLInputElement).value;
+            if (!password) { alert(store.gameData.texts.dialogs.enterPass); return; }
+            if (!confirm(store.gameData.texts.dialogs.resetConfirm)) return;
 
             const Game = getGameAPI();
             try {
-                const res = await window.EspoBackend.call('reset-progress', { save_token: Game.getSaveToken(), password: password });
+                const res = await w.EspoBackend.call('reset-progress', { save_token: Game.getSaveToken(), password: password });
                 const data = await res.json();
                 if (data.status === 'success') {
                     // Evita che il salvataggio automatico sovrascriva il reset
                     Game.getGameState().isDeleting = true;
 
-                    alert(gameData.texts.dialogs.progressReset);
+                    alert(store.gameData.texts.dialogs.progressReset);
 
-                    if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') {
-                        try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
+                    if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
+                        try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                     }
                     localStorage.removeItem('espotoolClickerSaveV9');
                     localStorage.removeItem('espotoolClickerSaveV9_Backup');
@@ -1273,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const Game = getGameAPI();
         if (Game) {
             Game.saveGame();
-            Game.showToast(gameData.texts.toasts.settingsSaved);
+            Game.showToast(store.gameData.texts.toasts.settingsSaved);
         }
         closeModal(settingsModal);
     });
@@ -1294,28 +1314,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginButton.disabled = true;
         try {
-            const res = await window.EspoBackend.call('login-register', { username: u, password: p });
+            const res = await w.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
             if (data.status === 'success') {
                 sessionStorage.setItem('espooUser', u);
                 sessionStorage.setItem('espooPass', p);
                 Game.setPassword(p);
                 Game.setSaveToken(data.save_token, data.token_expires_at);
-                window._tokenExpiredNotified = false;
+                w._tokenExpiredNotified = false;
 
                 // DEV (Admin Console): se un cheat/scenario è attivo NON riallineare
                 // lo stato al cloud (stesso guard di _resyncFromCloud). Il re-auth per
                 // token scaduto e l'auto-login all'avvio passano da qui: senza guard
                 // l'anti-rollback adottava il save cloud "più avanti" annullando lo
                 // scenario caricato. Token e sessione sono comunque già aggiornati sopra.
-                if (window.cheatNoCloudSync) { /* stato locale invariato */ }
+                if (w.cheatNoCloudSync) { /* stato locale invariato */ }
                 else if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
-                    if (typeof resetGameToDefault === 'function') resetGameToDefault();
+                    if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
                     localStorage.removeItem('espotoolClickerSaveV9');
                     localStorage.removeItem('espotoolClickerSaveV9_Backup');
                     Game.getGameState().user.username = u;
-                    if (typeof applySkinVisuals === 'function') applySkinVisuals('default');
+                    if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
                     Game.saveGame();
                 }
 
@@ -1324,37 +1344,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Sblocca il contesto audio sfruttando il gesto di login: così gli SFX
                 // dell'intro e la musica partono senza dover premere "Attiva audio".
-                if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
-                    Howler.ctx.resume().catch(() => {});
+                if (typeof w.Howler !== 'undefined' && w.Howler.ctx && w.Howler.ctx.state === 'suspended') {
+                    w.Howler.ctx.resume().catch(() => {});
                 }
 
                 // L'intro cinematica parte solo su login esplicito (no F5/re-auth).
                 // In quel caso azzera la musica (duck 0) PRIMA di startGameRoutines/
                 // updateAmbientVolume: cosi' la canzone di sfondo NON parte durante
                 // l'intro. Viene riavviata a fine intro (onComplete).
-                const _willPlayIntro = !hadSession && window.EspoIntro && typeof window.EspoIntro.play === 'function';
-                if (_willPlayIntro && typeof setMusicDuck === 'function') setMusicDuck(0);
+                const _willPlayIntro = !hadSession && w.EspoIntro && typeof w.EspoIntro.play === 'function';
+                if (_willPlayIntro && typeof w.setMusicDuck === 'function') w.setMusicDuck(0);
 
                 Game.startGameRoutines();
 
                 // 1. PRIMA applica i volumi dal salvataggio ai tag HTML reali
-                if (typeof window.updateAmbientVolume === 'function') {
-                    window.updateAmbientVolume();
+                if (typeof w.updateAmbientVolume === 'function') {
+                    w.updateAmbientVolume();
                 }
 
                 // 2. POI aggiorna gli slider visivi (perché non sembrino rotti se apri le opzioni)
                 const userVol = Game.getGameState().user;
                 if (masterSlider) {
                     masterSlider.value = userVol.masterVolume;
-                    if (masterDisplay) masterDisplay.textContent = Math.round(userVol.masterVolume * 100);
+                    if (masterDisplay) masterDisplay.textContent = String(Math.round(userVol.masterVolume * 100));
                 }
                 if (sfxSlider) {
                     sfxSlider.value = userVol.sfxVolume;
-                    if (sfxDisplay) sfxDisplay.textContent = Math.round(userVol.sfxVolume * 100);
+                    if (sfxDisplay) sfxDisplay.textContent = String(Math.round(userVol.sfxVolume * 100));
                 }
                 if (musicSlider) {
                     musicSlider.value = userVol.musicVolume;
-                    if (musicDisplay) musicDisplay.textContent = Math.round(userVol.musicVolume * 100);
+                    if (musicDisplay) musicDisplay.textContent = String(Math.round(userVol.musicVolume * 100));
                 }
                 // Sincronizza anche l'icona del quick-mute col volume caricato dal salvataggio
                 if (typeof Game.updateMuteButton === 'function') Game.updateMuteButton();
@@ -1364,30 +1384,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 // post-login (V2 / release notes) partono a fine intro via onComplete.
                 // Il toast "Benvenuto" e' rimosso: lo dice gia' l'intro.
                 const runPostLogin = () => {
-                    if (window.triggerV2MigrationModal) {
-                        showV2MigrationModal(() => {
-                            window.triggerV2MigrationModal = false;
-                            if (window.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
+                    if (w.triggerV2MigrationModal) {
+                        w.showV2MigrationModal(() => {
+                            w.triggerV2MigrationModal = false;
+                            if (w.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
                                 Game.openReleaseNotes();
                             }
                         });
-                    } else if (window.shouldShowReleaseNotesOnLoad) {
+                    } else if (w.shouldShowReleaseNotesOnLoad) {
                         if (Game.openReleaseNotes) Game.openReleaseNotes();
                     }
                 };
 
                 if (_willPlayIntro) {
-                    window.EspoIntro.play({
+                    w.EspoIntro.play({
                         username: u,
                         // releaseAmbientVfx: la neve/VFX skin parte SOLO ora, a intro
                         // finita (non sul login né durante l'intro).
-                        onComplete: () => { if (typeof setMusicDuck === 'function') setMusicDuck(1); Game.tryStartAudio(); if (typeof window.releaseAmbientVfx === 'function') window.releaseAmbientVfx(); runPostLogin(); }
+                        onComplete: () => { if (typeof w.setMusicDuck === 'function') w.setMusicDuck(1); Game.tryStartAudio(); if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx(); runPostLogin(); }
                     });
                 } else {
                     // Fallback difensivo: comportamento ~ a prima dell'intro.
                     // Niente intro (F5/re-auth): il gioco è già visibile → VFX subito.
                     Game.tryStartAudio();
-                    if (typeof window.releaseAmbientVfx === 'function') window.releaseAmbientVfx();
+                    if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
                     runPostLogin();
                 }
             } else {
@@ -1397,13 +1417,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loginButton.disabled = false;
     }
 
-    function setupEnterKey(inputElement, actionBtn) {
+    function setupEnterKey(inputElement: any, actionBtn: any) {
         if (inputElement) {
-            inputElement.addEventListener('keypress', (e) => {
+            inputElement.addEventListener('keypress', (e: any) => {
                 if (e.key === 'Enter') { e.preventDefault(); actionBtn.click(); }
             });
         }
     }
     setupEnterKey(loginInput, loginButton);
     setupEnterKey(loginPasswordInput, loginButton);
-});
+  });
+}

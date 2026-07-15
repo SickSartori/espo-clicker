@@ -1,12 +1,25 @@
+/**
+ * Rendering / HUD / store / skins / stats / toast-DOM.
+ *
+ * Migrato da js/ui-functions.js (classic script) a modulo ESM — Blocco #1 kill-legacy.
+ * Le 44 funzioni sono dichiarazioni top-level (non eseguono nulla alla definizione).
+ * I 2 loader V3 (`_v3themeLoader`, `_v3toastQueue`) sono resi LAZY perché questo
+ * modulo è importato da main.ts PRIMA che `window.EspoV3` sia costruito. I riferimenti
+ * a global legacy passano da `window.*` (alias `w`) perché un modulo strict non vede
+ * lo scope-bundle. Le funzioni consumate da altri file/`onclick` inline sono ri-esposte
+ * `window.X = X` (shim TEMPORANEI, rimossi a fine migrazione).
+ */
+const w = window as any;
+import { store } from '../../state/store';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
-const domCache = new Map();
+const domCache = new Map<string, any>();
 
 /**
  * Recupera un elemento dal DOM usando una cache interna.
  * Riduce le chiamate lente a document.getElementById.
  */
-function getEl(id) {
+function getEl(id: any) {
     if (!domCache.has(id)) {
         const el = document.getElementById(id);
         if (el) domCache.set(id, el);
@@ -19,7 +32,7 @@ function getEl(id) {
  * Aggiorna il testo di un elemento solo se è cambiato.
  * Evita il "Layout Thrashing" del browser.
  */
-function setTextIfChanged(elementId, newText) {
+function setTextIfChanged(elementId: any, newText: any) {
     let el = getEl(elementId);
 
     if (el && el.textContent !== String(newText)) {
@@ -32,50 +45,54 @@ function setTextIfChanged(elementId, newText) {
 
 // ---------  FUNZIONI DI FORMATTORE ---------
 
-function formatNumber(num) {
-    // F5 -> F8: formattazione pura in EspoV3.format (suffissi localizzati da gameData).
-    return window.EspoV3.format.formatNumber(num, gameData.texts.format.suffixes);
+function formatNumber(num: any) {
+    // F5 -> F8: formattazione pura in EspoV3.format (suffissi localizzati da store.gameData).
+    return window.EspoV3.format.formatNumber(num, store.gameData.texts.format.suffixes);
 }
 
-function formatFullNumber(num) {
+function formatFullNumber(num: any) {
     // F5 -> F8: floor + separatori in EspoV3.format (esatto anche oltre 2^53).
-    return window.EspoV3.format.formatFullNumber(num, gameData.texts.format.suffixes);
+    return window.EspoV3.format.formatFullNumber(num, store.gameData.texts.format.suffixes);
 }
 
 // --- LAZY LOAD CSS (F5 -> F8) ---
 // dedup, coalescing e failsafe vivono in EspoV3.theme (puro, testato); qui resta
 // solo l'iniezione DOM del <link>. Il fallback legacy inline e stato rimosso.
-const _v3themeLoader = window.EspoV3.theme.createCssLoader({
-    inject: (href, onDone) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        link.onload = onDone;
-        link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe
-        document.head.appendChild(link);
-    },
-    cssBase: 'styles/themes/', // reorg D1: i temi lazy vivono in styles/themes (ex css/)
-    cacheVer: () => window.CACHE_VER || (window.GAME_VERSION ? window.GAME_VERSION.major : Date.now()),
-    onLog: (m) => console.log(m),
-    onWarn: (m, e) => console.warn(m, e),
-});
-
-function loadThemeCSS(themeFile, onReady) {
-    return _v3themeLoader.load(themeFile, onReady);
+// Lazy: questo modulo è importato da main.ts PRIMA che window.EspoV3 sia costruito.
+let _themeLoaderInstance: any;
+function themeLoader(): any {
+    return (_themeLoaderInstance ??= (window as any).EspoV3.theme.createCssLoader({
+        inject: (href: any, onDone: any) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = onDone;
+            link.onerror = onDone; // CSS irraggiungibile: applica comunque la classe
+            document.head.appendChild(link);
+        },
+        cssBase: 'styles/themes/', // reorg D1: i temi lazy vivono in styles/themes (ex css/)
+        cacheVer: () => w.CACHE_VER || (w.GAME_VERSION ? w.GAME_VERSION.major : Date.now()),
+        onLog: (m: any) => console.log(m),
+        onWarn: (m: any, e: any) => console.warn(m, e),
+    }));
 }
 
-function formatTime(totalSeconds) {
-    // F5 -> F8: logica pura in EspoV3.format, etichette (d/h/m/s) da gameData.
-    return window.EspoV3.format.formatTime(totalSeconds, gameData.texts.format.time);
+function loadThemeCSS(themeFile: any, onReady?: any) {
+    return themeLoader().load(themeFile, onReady);
+}
+
+function formatTime(totalSeconds: any) {
+    // F5 -> F8: logica pura in EspoV3.format, etichette (d/h/m/s) da store.gameData.
+    return window.EspoV3.format.formatTime(totalSeconds, store.gameData.texts.format.time);
 }
 
 
-let matrixFrameId = null;
-let matrixResizeHandler = null;
+let matrixFrameId: any = null;
+let matrixResizeHandler: any = null;
 
 function startMatrixEffect() {
-    const canvas = document.getElementById('matrix-canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
 
     // Adatta il canvas a tutto lo schermo
     canvas.width = window.innerWidth;
@@ -90,7 +107,7 @@ function startMatrixEffect() {
     const fontSize = 16;
     const columns = canvas.width / fontSize; // Numero di colonne
 
-    const drops = [];
+    const drops: any[] = [];
     // Inizializza le gocce (tutte partono da y=1)
     for (let index = 0; index < columns; index++) {
         drops[index] = 1;
@@ -99,7 +116,7 @@ function startMatrixEffect() {
     let lastMatrixFrame = 0;
     const MATRIX_FRAME_INTERVAL = 1000 / 30; // 30 FPS reali
 
-    const draw = (timestamp) => {
+    const draw = (timestamp: any) => {
         matrixFrameId = requestAnimationFrame(draw);
 
         // Throttle a 30fps reali per risparmiare CPU/batteria
@@ -150,15 +167,15 @@ function stopMatrixEffect() {
         matrixResizeHandler = null;
     }
     // Pulisci il canvas
-    const canvas = document.getElementById('matrix-canvas');
+    const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
     if (canvas) {
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
 
 // --- GENERATORE UNIVERSALE DI CARD ---
-function renderStoreSection(config) {
+function renderStoreSection(config: any) {
     const list = document.getElementById(config.containerId);
     if (!list) return;
 
@@ -172,7 +189,7 @@ function renderStoreSection(config) {
         previousScrollTop = scrollParent.scrollTop;
     }
 
-    const mode = gameState.filterSettings.globalFilter || 'available';
+    const mode = store.gameState.filterSettings.globalFilter || 'available';
     let visibleCount = 0;
 
     // MAPPING DATI
@@ -233,7 +250,7 @@ function renderStoreSection(config) {
     // Onboarding: se in modalita' "available" non c'e' nulla da comprare (es. nuovo
     // giocatore con tutto bloccato), rivela il prossimo obiettivo piu' vicino allo
     // sblocco, con la sua progress bar, cosi' la tab non resta vuota.
-    let nextLockedKey = null;
+    let nextLockedKey: any = null;
     if (mode === 'available') {
         const hasAvailable = items.some(it => it.status.unlocked && !it.status.purchased && !it.status.isMaxed);
         if (!hasAvailable) {
@@ -252,7 +269,7 @@ function renderStoreSection(config) {
     items.forEach(item => {
         const { key, data, state, status } = item;
         const domId = `${config.type}-item-${key}`;
-        let el = document.getElementById(domId);
+        let el: any = document.getElementById(domId);
 
         // Filtri Visibilità
         let isVisible = false;
@@ -304,7 +321,7 @@ function renderStoreSection(config) {
 
             // Listener con PreventDefault per evitare focus jump
             const btn = el.querySelector('.buy-btn');
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', (e: any) => {
                 e.preventDefault();
                 config.onBuy(key);
             });
@@ -341,7 +358,7 @@ function renderStoreSection(config) {
                 txt = status.costText;
             } else {
                 const val = status.currentCost || data.cost || 0;
-                txt = `${gameData.texts.ui.cost}: ${formatNumber(val)}`;
+                txt = `${store.gameData.texts.ui.cost}: ${formatNumber(val)}`;
             }
             if (costDisplay.textContent !== txt) costDisplay.textContent = txt;
         }
@@ -362,7 +379,7 @@ function renderStoreSection(config) {
 
         // Stati UI
         if (status.isMaxed || (status.purchased && !data.isCounted && config.type !== 'building')) {
-            const label = status.isMaxed ? "MAX" : gameData.texts.ui.owned;
+            const label = status.isMaxed ? "MAX" : store.gameData.texts.ui.owned;
             if (btn.textContent !== label) btn.textContent = label;
             btn.className = "buy-btn owned";
             btn.disabled = true;
@@ -371,7 +388,7 @@ function renderStoreSection(config) {
             if (progressContainer) progressContainer.style.display = 'none';
 
         } else if (status.unlocked) {
-            const label = status.label || gameData.texts.ui.buy;
+            const label = status.label || store.gameData.texts.ui.buy;
             if (btn.textContent !== label) btn.textContent = label;
 
             const newClass = `buy-btn ${config.btnClass || ''}`;
@@ -414,24 +431,24 @@ function updateClickStore() {
         type: 'click',
         containerId: 'click-upgrade-list',
         emptyId: 'click-upgrade-empty',
-        dataSource: gameData.clickUpgrades,
-        stateSource: gameState.clickUpgrades,
+        dataSource: store.gameData.clickUpgrades,
+        stateSource: store.gameState.clickUpgrades,
         cardClass: 'click-upgrade',
         btnClass: 'buy-click-btn',
-        onBuy: (key) => buyClickUpgrade(key),
-        getStatus: (key, data, state) => {
-            const isUnlocked = gameState.totalClicks >= data.requiredClicks;
+        onBuy: (key: any) => w.buyClickUpgrade(key),
+        getStatus: (key: any, data: any, state: any) => {
+            const isUnlocked = store.gameState.totalClicks >= data.requiredClicks;
 
             return {
                 purchased: state.purchased,
                 unlocked: isUnlocked,
-                canAfford: gameState.score.gte(data.cost),
-                label: gameData.texts.ui.buy,
-                progress: Math.min((gameState.totalClicks / data.requiredClicks) * 100, 100),   // Calcolo preciso della barra di progresso
-                progressText: `Click: ${formatNumber(gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
+                canAfford: store.gameState.score.gte(data.cost),
+                label: store.gameData.texts.ui.buy,
+                progress: Math.min((store.gameState.totalClicks / data.requiredClicks) * 100, 100),   // Calcolo preciso della barra di progresso
+                progressText: `Click: ${formatNumber(store.gameState.totalClicks)} / ${formatNumber(data.requiredClicks)}`
             };
         },
-        setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
+        setEmptyMsg: (el: any, mode: any) => setEmptyMessage(el, mode)
     });
 }
 
@@ -445,14 +462,14 @@ function refreshAllStores() {
         type: 'enhancement',
         containerId: 'enhancement-list',
         emptyId: 'enhancement-empty',
-        dataSource: gameData.buildingEnhancements,
-        stateSource: gameState.buildingEnhancements,
+        dataSource: store.gameData.buildingEnhancements,
+        stateSource: store.gameState.buildingEnhancements,
         cardClass: 'enhancement-upgrade',
         btnClass: 'enhancement-btn',
-        onBuy: (key) => buyTeamEnhancement(key),
-        getStatus: (key, data, state) => {
-            const targetTeamState = gameState.teams[data.targetTeam];
-            const targetTeamData = gameData.teams[data.targetTeam];
+        onBuy: (key: any) => w.buyTeamEnhancement(key),
+        getStatus: (key: any, data: any, state: any) => {
+            const targetTeamState = store.gameState.teams[data.targetTeam];
+            const targetTeamData = store.gameData.teams[data.targetTeam];
 
             const current = targetTeamState ? targetTeamState.count : 0;
             const teamName = targetTeamData ? targetTeamData.name : "???";
@@ -460,14 +477,14 @@ function refreshAllStores() {
             return {
                 purchased: state.purchased,
                 unlocked: current >= data.requiredCount,
-                canAfford: gameState.score.gte(data.cost),
-                label: gameData.texts.ui.buy,
+                canAfford: store.gameState.score.gte(data.cost),
+                label: store.gameData.texts.ui.buy,
                 progress: Math.min((current / data.requiredCount) * 100, 100),
                 // Qui avveniva l'errore: ora usiamo la variabile sicura 'teamName'
                 progressText: `${teamName}: ${current}/${data.requiredCount}`
             };
         },
-        setEmptyMsg: (el, mode) => setEmptyMessage(el, mode)
+        setEmptyMsg: (el: any, mode: any) => setEmptyMessage(el, mode)
     });
 
     // NEGOZIO PRESTIGIO
@@ -475,28 +492,28 @@ function refreshAllStores() {
         type: 'prestige',
         containerId: 'prestige-list-container',
         emptyId: 'prestige-empty',
-        dataSource: gameData.prestigeUpgrades,
-        stateSource: gameState.prestigeUpgrades,
+        dataSource: store.gameData.prestigeUpgrades,
+        stateSource: store.gameState.prestigeUpgrades,
         cardClass: 'prestige-upgrade',
         btnClass: 'prestige-btn',
-        onBuy: (key) => buyPrestigeUpgrade(key),
-        getStatus: (key, data, state) => {
+        onBuy: (key: any) => w.buyPrestigeUpgrade(key),
+        getStatus: (key: any, data: any, state: any) => {
             const isMaxed = data.maxLevel && state.count >= data.maxLevel;
             const singlePurchased = !data.isCounted && state.purchased;
-            const actualCost = data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost;
+            const actualCost = data.isCounted ? w.calculatePrestigeUpgradeCost(key) : data.baseCost;
 
             return {
                 purchased: singlePurchased,
                 unlocked: !isMaxed && !singlePurchased,
                 isMaxed: isMaxed,
-                canAfford: gameState.prestigePoints.gte(actualCost), // Usa actualCost
-                label: isMaxed || singlePurchased ? gameData.texts.ui.owned : (isMaxed ? gameData.texts.ui.max : gameData.texts.ui.buy.toUpperCase()),
-                costText: `${gameData.texts.ui.cost}: ${formatNumber(actualCost)} Token`, // Usa actualCost
+                canAfford: store.gameState.prestigePoints.gte(actualCost), // Usa actualCost
+                label: isMaxed || singlePurchased ? store.gameData.texts.ui.owned : (isMaxed ? store.gameData.texts.ui.max : store.gameData.texts.ui.buy.toUpperCase()),
+                costText: `${store.gameData.texts.ui.cost}: ${formatNumber(actualCost)} Token`, // Usa actualCost
                 currentCost: actualCost, // Usa actualCost
                 progress: 100
             };
         },
-        setEmptyMsg: (el, mode) => { el.textContent = gameData.texts.ui.labFull; }
+        setEmptyMsg: (el: any, mode: any) => { el.textContent = store.gameData.texts.ui.labFull; }
     });
 
     // NEGOZIO TEAMS
@@ -504,30 +521,30 @@ function refreshAllStores() {
         type: 'building',
         containerId: 'building-list-container',
         emptyId: 'building-empty',
-        dataSource: gameData.teams,
-        stateSource: gameState.teams,
+        dataSource: store.gameData.teams,
+        stateSource: store.gameState.teams,
         cardClass: 'upgrade',
         btnClass: 'buy-building-btn',
         useCustomBody: true,
         showCount: true,
         fixedOrder: true,
-        onBuy: (key) => buyTeam(key),
-        getStatus: (key, data, state) => {
-            let amountToBuy = window.buyMultiplier;
+        onBuy: (key: any) => w.buyTeam(key),
+        getStatus: (key: any, data: any, state: any) => {
+            let amountToBuy = w.buyMultiplier;
             let isMax = false;
 
             if (amountToBuy === 'MAX') {
-                const max = calculateMaxAffordable(key);
+                const max = w.calculateMaxAffordable(key);
                 amountToBuy = max > 0 ? max : 1;
                 isMax = true;
             }
 
-            const currentCost = calculateBulkCost(key, amountToBuy);
+            const currentCost = w.calculateBulkCost(key, amountToBuy);
 
             let teamBPS = data.cpsPerUnit;
-            for (const enhanceKey in gameState.buildingEnhancements) {
-                const eData = gameData.buildingEnhancements[enhanceKey];
-                const eState = gameState.buildingEnhancements[enhanceKey];
+            for (const enhanceKey in store.gameState.buildingEnhancements) {
+                const eData = store.gameData.buildingEnhancements[enhanceKey];
+                const eState = store.gameState.buildingEnhancements[enhanceKey];
 
                 if (!eData) continue;
 
@@ -535,48 +552,48 @@ function refreshAllStores() {
                     teamBPS *= eData.multiplier;
                 }
             }
-            const totalUnitBPS = teamBPS * prestigeBonus * clickCPSBonus * bluescreenMultiplier;
+            const totalUnitBPS = teamBPS * store.prestigeBonus * store.clickCPSBonus * store.bluescreenMultiplier;
 
-            let prefix = gameData.texts.ui.cost;
-            if (isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})`;
-            else if (!isMax && amountToBuy > 1) prefix = `${gameData.texts.ui.cost} (${amountToBuy}x)`;
+            let prefix = store.gameData.texts.ui.cost;
+            if (isMax && amountToBuy > 1) prefix = `${store.gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})`;
+            else if (!isMax && amountToBuy > 1) prefix = `${store.gameData.texts.ui.cost} (${amountToBuy}x)`;
 
             return {
                 unlocked: true,
                 purchased: false,
-                canAfford: gameState.score.gte(currentCost),
-                label: gameData.texts.ui.buy,
+                canAfford: store.gameState.score.gte(currentCost),
+                label: store.gameData.texts.ui.buy,
                 costText: `${prefix}: ${formatNumber(currentCost)}`,
-                bpsText: `+${formatNumber(totalUnitBPS)} ${gameData.texts.ui.bpsEach}`,
+                bpsText: `+${formatNumber(totalUnitBPS)} ${store.gameData.texts.ui.bpsEach}`,
                 currentCost: currentCost
             };
         }
     });
 
     // NEGOZIO QUANTICO (Q-Lab)
-    if (gameState.totalFormattazioni > 0 || gameState.qBits.gt(0)) {
+    if (store.gameState.totalFormattazioni > 0 || store.gameState.qBits.gt(0)) {
         renderStoreSection({
             type: 'quantum',
             containerId: 'quantum-list-container',
             emptyId: 'quantum-empty',
-            dataSource: gameData.superUpgrades,
-            stateSource: gameState.superUpgrades,
+            dataSource: store.gameData.superUpgrades,
+            stateSource: store.gameState.superUpgrades,
             cardClass: 'prestige-upgrade quantum-card', // Ricicliamo la struttura lab
             btnClass: 'quantum-btn',
-            onBuy: (key) => { if (typeof buySuperUpgrade === 'function') buySuperUpgrade(key); },
-            getStatus: (key, data, state) => {
+            onBuy: (key: any) => { if (typeof w.buySuperUpgrade === 'function') w.buySuperUpgrade(key); },
+            getStatus: (key: any, data: any, state: any) => {
                 return {
                     purchased: state.purchased,
                     unlocked: !state.purchased,
                     isMaxed: false,
-                    canAfford: gameState.qBits.gte(data.cost),
-                    label: state.purchased ? gameData.texts.ui.owned : gameData.texts.ui.buy.toUpperCase(),
-                    costText: `${gameData.texts.ui.cost}: ${formatNumber(data.cost)} qBit`,
+                    canAfford: store.gameState.qBits.gte(data.cost),
+                    label: state.purchased ? store.gameData.texts.ui.owned : store.gameData.texts.ui.buy.toUpperCase(),
+                    costText: `${store.gameData.texts.ui.cost}: ${formatNumber(data.cost)} qBit`,
                     currentCost: data.cost,
                     progress: 100
                 };
             },
-            setEmptyMsg: (el, mode) => { el.textContent = "Tecnologia massima raggiunta."; }
+            setEmptyMsg: (el: any, mode: any) => { el.textContent = "Tecnologia massima raggiunta."; }
         });
     }
 
@@ -585,13 +602,13 @@ function refreshAllStores() {
 
 let currentSkinFilter = 'all';
 let currentRarityFilter = 'all';
-let modernSkinsArray = [];
+let modernSkinsArray: any[] = [];
 let modernCurrentIndex = 0;
 let lastViewedSkinId = null;
 
 // Listener per i filtri e lo switch (eseguiti una sola volta all'avvio)
 document.addEventListener('DOMContentLoaded', () => {
-    const toggleUI = document.getElementById('skins-ui-toggle');
+    const toggleUI = document.getElementById('skins-ui-toggle') as HTMLInputElement | null;
     const toggleLabel = document.getElementById('skins-ui-label'); // FIX: Recupero elemento testo
 
     if (toggleUI) {
@@ -603,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleLabel.textContent = toggleUI.checked ? 'Card' : 'Griglia';
         }
 
-        toggleUI.addEventListener('change', (e) => {
+        toggleUI.addEventListener('change', (e: any) => {
             localStorage.setItem('useModernSkinsUI', e.target.checked);
 
             // FIX: Aggiorna dinamicamente il testo al cambio di visualizzazione
@@ -617,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup Filtri Stato
     document.querySelectorAll('.skin-filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', (e: any) => {
             document.querySelectorAll('.skin-filter-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentSkinFilter = e.target.getAttribute('data-filter');
@@ -628,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup Filtro Rarità
     const raritySelect = document.getElementById('skin-rarity-filter');
     if (raritySelect) {
-        raritySelect.addEventListener('change', (e) => {
+        raritySelect.addEventListener('change', (e: any) => {
             currentRarityFilter = e.target.value;
             updateSkinsUI();
         });
@@ -638,40 +655,40 @@ document.addEventListener('DOMContentLoaded', () => {
 // Funzione principale per aggiornare la modale delle skin
 // === Guardaroba unificato (v3) — render grid moderno con sfondo dinamico ===
 function updateSkinsUI() {
-    if (window.AssetManager) {
-        window.AssetManager.load('SKINS_EPIC');
-        window.AssetManager.load('SKINS_LEGENDARY');
+    if (w.AssetManager) {
+        w.AssetManager.load('SKINS_EPIC');
+        w.AssetManager.load('SKINS_LEGENDARY');
     }
 
     const grid = document.getElementById('skins-grid-modern');
     if (!grid) return;
 
-    if (!gameState.skins || typeof gameState.skins !== 'object') gameState.skins = { unlocked: ['default'], current: 'default' };
-    if (!Array.isArray(gameState.skins.unlocked)) gameState.skins.unlocked = ['default'];
+    if (!store.gameState.skins || typeof store.gameState.skins !== 'object') store.gameState.skins = { unlocked: ['default'], current: 'default' };
+    if (!Array.isArray(store.gameState.skins.unlocked)) store.gameState.skins.unlocked = ['default'];
 
-    const unlockedList = gameState.skins.unlocked;
-    const currentSkin = gameState.skins.current;
+    const unlockedList = store.gameState.skins.unlocked;
+    const currentSkin = store.gameState.skins.current;
 
-    // Etichette rarità: da gameData.texts.rarities (tradotte via overlay i18n),
+    // Etichette rarità: da store.gameData.texts.rarities (tradotte via overlay i18n),
     // con fallback IT hardcoded se il dizionario non è disponibile.
-    const rarityMap = (gameData.texts && gameData.texts.rarities) || {
+    const rarityMap: any = (store.gameData.texts && store.gameData.texts.rarities) || {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
         'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
     };
-    const rColors = {
+    const rColors: any = {
         'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
         'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
     };
-    const rGlows = {
+    const rGlows: any = {
         'common': 'rgba(189,195,199,0.18)', 'rare': 'rgba(52,152,219,0.25)', 'epic': 'rgba(155,89,182,0.25)',
         'legendary': 'rgba(241,196,15,0.3)', 'divine': 'rgba(255,238,144,0.4)', 'christmas': 'rgba(231,76,60,0.3)'
     };
 
-    const T = (gameData.texts && gameData.texts.ui) || {};
+    const T = (store.gameData.texts && store.gameData.texts.ui) || {};
 
-    const skinToAchievement = {};
-    for (const achKey in gameData.achievements) {
-        const ach = gameData.achievements[achKey];
+    const skinToAchievement: any = {};
+    for (const achKey in store.gameData.achievements) {
+        const ach = store.gameData.achievements[achKey];
         if (ach.reward && ach.reward.type === 'skin') {
             const skinId = ach.reward.id || ach.reward.value;
             skinToAchievement[skinId] = ach;
@@ -679,10 +696,10 @@ function updateSkinsUI() {
     }
 
     let lockedCount = 0;
-    for (const key in gameData.skins) {
+    for (const key in store.gameData.skins) {
         if (!unlockedList.includes(key)) lockedCount++;
     }
-    const lockedFilterBtn = document.querySelector('.skin-filter-btn[data-filter="locked"]');
+    const lockedFilterBtn = document.querySelector('.skin-filter-btn[data-filter="locked"]') as HTMLButtonElement | null;
     if (lockedFilterBtn) {
         if (lockedCount === 0) {
             lockedFilterBtn.disabled = true;
@@ -699,36 +716,36 @@ function updateSkinsUI() {
         }
     }
 
-    const rarityOrder = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
-    const skinsArray = [];
-    for (const key in gameData.skins) {
-        const data = gameData.skins[key];
+    const rarityOrder: any = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
+    const skinsArray: any[] = [];
+    for (const key in store.gameData.skins) {
+        const data = store.gameData.skins[key];
         const isUnlocked = unlockedList.includes(key);
         const isEquipped = currentSkin === key;
         const isBuyable = !isUnlocked && data.cost !== undefined;
-        const canAfford = isBuyable && gameState.prestigePoints.gte(data.cost);
+        const canAfford = isBuyable && store.gameState.prestigePoints.gte(data.cost);
 
         if (currentSkinFilter === 'unlocked' && !isUnlocked) continue;
         if (currentSkinFilter === 'locked' && isUnlocked) continue;
         if (currentRarityFilter !== 'all' && data.rarity !== currentRarityFilter) continue;
 
         let requirement = '';
-        let baseText = gameData.texts.ui.unknown;
+        let baseText = store.gameData.texts.ui.unknown;
         if (!isUnlocked && !isBuyable) {
             const linkedAch = skinToAchievement[key];
             if (linkedAch) {
-                const isSecretLocked = linkedAch.isSecret && !gameState.achievements[linkedAch.id || key]?.unlocked;
-                requirement = isSecretLocked ? gameData.texts.ui.secretGoal : (linkedAch.realDesc || linkedAch.desc);
+                const isSecretLocked = linkedAch.isSecret && !store.gameState.achievements[linkedAch.id || key]?.unlocked;
+                requirement = isSecretLocked ? store.gameData.texts.ui.secretGoal : (linkedAch.realDesc || linkedAch.desc);
                 baseText = linkedAch.name;
             } else if (data.unlockHint) {
                 requirement = data.unlockHint;
-                baseText = gameData.texts.ui.skinLocked;
+                baseText = store.gameData.texts.ui.skinLocked;
             }
         }
         // Le skin ottenibili dallo shop (comprabili, gratis, o dietro formattazione)
         // rivelano l'arte reale; solo quelle da obiettivo restano "mistero" (hidden.webp).
         const isFree = isBuyable && data.cost && typeof data.cost.lte === 'function' && data.cost.lte(0);
-        const needsFormat = isBuyable && data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        const needsFormat = isBuyable && data.requiresFormatting && (store.gameState.totalFormattazioni || 0) < 1;
         // NON possedute → SEMPRE silhouette-mistero + lucchetto, anche le comprabili:
         // così non si spoilera l'arte. Le info stanno nel chip (gratis/prezzo/formatta/obiettivo).
         const imgSource = isUnlocked
@@ -834,7 +851,7 @@ function updateSkinsUI() {
 }
 
 // === Skin Preview Modal (apre on click su card) ===
-function showSkinPreview(skinId) {
+function showSkinPreview(skinId: any) {
     const skin = (typeof modernSkinsArray !== 'undefined' && modernSkinsArray)
         ? modernSkinsArray.find(s => s.id === skinId)
         : null;
@@ -854,7 +871,7 @@ function showSkinPreview(skinId) {
     } else if (skin.isUnlocked) {
         actionHtml = `<button class="preview-btn equip-btn" onclick="equipSkin('${skin.id}'); closeSkinPreview();">EQUIPAGGIA</button>`;
     } else if (skin.isBuyable) {
-        const needsFormat = skin.data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1;
+        const needsFormat = skin.data.requiresFormatting && (store.gameState.totalFormattazioni || 0) < 1;
         if (needsFormat) {
             actionHtml = `
                 <div class="preview-cost format"><i class="fa-solid fa-rotate"></i> Richiede Formattazione</div>
@@ -907,14 +924,14 @@ function showSkinPreview(skinId) {
     modal.style.display = 'flex';
 
     // ESC closes
-    if (!window._skinPreviewKeyHandler) {
-        window._skinPreviewKeyHandler = (e) => {
+    if (!w._skinPreviewKeyHandler) {
+        w._skinPreviewKeyHandler = (e: any) => {
             const m = document.getElementById('skin-preview-modal');
             if (m && m.style.display !== 'none' && e.key === 'Escape') {
                 closeSkinPreview();
             }
         };
-        document.addEventListener('keydown', window._skinPreviewKeyHandler);
+        document.addEventListener('keydown', w._skinPreviewKeyHandler);
     }
 
     // Click backdrop closes
@@ -926,8 +943,8 @@ function closeSkinPreview() {
     if (modal) modal.style.display = 'none';
 }
 
-window.showSkinPreview = showSkinPreview;
-window.closeSkinPreview = closeSkinPreview;
+w.showSkinPreview = showSkinPreview;
+w.closeSkinPreview = closeSkinPreview;
 
 
 function updateAchievementsUI() {
@@ -935,7 +952,7 @@ function updateAchievementsUI() {
     if (!list) return;
 
     list.innerHTML = '';
-    const items = [];
+    const items: any[] = [];
 
     const typeIcons = {
         'click': 'fa-computer-mouse',
@@ -945,12 +962,12 @@ function updateAchievementsUI() {
         'custom': 'fa-star'
     };
 
-    Object.keys(gameData.achievements).forEach(key => {
-        const data = gameData.achievements[key];
-        const state = gameState.achievements[key] || { unlocked: false, claimed: false };
+    Object.keys(store.gameData.achievements).forEach(key => {
+        const data = store.gameData.achievements[key];
+        const state = store.gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
 
-        if (data.season && !window.isSeasonActive(data.season) && !state.unlocked) {
+        if (data.season && !w.isSeasonActive(data.season) && !state.unlocked) {
             return; // Salta questo giro del ciclo
         }
 
@@ -966,10 +983,10 @@ function updateAchievementsUI() {
             // formattazioni, reset, BPS, Q-bit, skin…) che altrimenti restano
             // hardcoded a 0 nella card, pur avendo lo stato corretto.
             if (typeof data.getCurrent === 'function') currentVal = data.getCurrent();
-            else if (data.type === 'click') currentVal = gameState.totalClicks;
-            else if (data.type === 'score') currentVal = gameState.totalScore;
-            else if (data.type === 'building') currentVal = gameState.teams[data.buildingId] ? gameState.teams[data.buildingId].count : 0;
-            else if (data.type === 'time') currentVal = gameState.totalPlayTime;
+            else if (data.type === 'click') currentVal = store.gameState.totalClicks;
+            else if (data.type === 'score') currentVal = store.gameState.totalScore;
+            else if (data.type === 'building') currentVal = store.gameState.teams[data.buildingId] ? store.gameState.teams[data.buildingId].count : 0;
+            else if (data.type === 'time') currentVal = store.gameState.totalPlayTime;
 
             if (data.target && data.target > 0) progress = Math.min(100, (currentVal / data.target) * 100);
         } else { progress = 100; }
@@ -1010,13 +1027,13 @@ function updateAchievementsUI() {
         let tooltipAttr = '';
 
         if (isUnlocked && !isClaimed && data.reward) {
-            let rewardText = gameData.texts.ui.rewardClaim;
+            let rewardText = store.gameData.texts.ui.rewardClaim;
 
             if (data.reward.type === 'bugs') {
                 rewardText = `+${formatNumber(data.reward.value)} BUG`;
             } else if (data.reward.type === 'skin') {
                 const skinId = data.reward.id || data.reward.value;
-                const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : "Skin Speciale";
+                const skinName = store.gameData.skins[skinId] ? store.gameData.skins[skinId].name : "Skin Speciale";
 
                 rewardText = "SKIN SPECIALE";
 
@@ -1050,8 +1067,8 @@ function updateAchievementsUI() {
             }
         }
 
-        let desc = (data.isSecret && !isUnlocked) ? gameData.texts.ui.secretGoal : (data.realDesc || data.desc);
-        let name = (data.isSecret && !isUnlocked) ? gameData.texts.ui.unknown : data.name;
+        let desc = (data.isSecret && !isUnlocked) ? store.gameData.texts.ui.secretGoal : (data.realDesc || data.desc);
+        let name = (data.isSecret && !isUnlocked) ? store.gameData.texts.ui.unknown : data.name;
 
         el.innerHTML = `
             <div class="trophy-icon-wrapper">
@@ -1076,15 +1093,15 @@ function updateAchievementsUI() {
             if (claimBtn) {
                 claimBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (typeof claimAchievementReward === 'function') claimAchievementReward(key);
+                    if (typeof w.claimAchievementReward === 'function') w.claimAchievementReward(key);
                 });
             }
         }
     });
 }
 
-function showClickFeedback(event) {
-    const feedbackContainer = document.getElementById('click-feedback-container');
+function showClickFeedback(event: any) {
+    const feedbackContainer = document.getElementById('click-feedback-container') as any;
     if (!feedbackContainer) return;
 
     // PERF (clic a raffica): gli effetti decorativi (+N, particelle, tween GSAP) si
@@ -1121,7 +1138,7 @@ function showClickFeedback(event) {
             startX = event.clientX - rect.left - (size / 2);
             startY = event.clientY - rect.top - (size / 2);
         } else {
-            const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+            const btnRect = document.getElementById('clicker-btn')!.getBoundingClientRect();
             startX = (btnRect.left + btnRect.width / 2) - rect.left - (size / 2);
             startY = (btnRect.top + btnRect.height / 2) - rect.top - (size / 2);
         }
@@ -1133,8 +1150,8 @@ function showClickFeedback(event) {
 
         feedbackContainer.appendChild(container);
 
-        if (typeof gsap !== 'undefined') {
-            gsap.fromTo(container,
+        if (typeof w.gsap !== 'undefined') {
+            w.gsap.fromTo(container,
                 { scale: 0.5, opacity: 1, y: 0 },
                 {
                     duration: 0.7,
@@ -1163,10 +1180,10 @@ function showClickFeedback(event) {
     // --- VARIABILI LOGICA DI GIOCO ---
     const now = Date.now();
     const COOLDOWN_404 = 300000;
-    const lastCrash = gameState.lastBluescreenTimestamp || 0;
+    const lastCrash = store.gameState.lastBluescreenTimestamp || 0;
     const timeSinceLast = now - lastCrash;
-    const isBlueScreen = (typeof isBluescreenActive !== 'undefined') ? isBluescreenActive : false;
-    const currentScore = gameState.score || 0;
+    const isBlueScreen = (typeof store.isBluescreenActive !== 'undefined') ? store.isBluescreenActive : false;
+    const currentScore = store.gameState.score || 0;
 
     let animDuration = 1.2;
     let startScale = 0.5;
@@ -1188,23 +1205,23 @@ function showClickFeedback(event) {
         easeType = "elastic.out(1, 0.3)";
 
         let dynamicMultiplier = Math.floor(2 + Math.random() * 3);
-        gameState.lastBluescreenTimestamp = now;
-        if (window.EspooClicker) window.EspooClicker.saveGame();
-        if (typeof triggerBluescreen === 'function') triggerBluescreen(dynamicMultiplier);
+        store.gameState.lastBluescreenTimestamp = now;
+        if (w.EspooClicker) w.EspooClicker.saveGame();
+        if (typeof w.triggerBluescreen === 'function') w.triggerBluescreen(dynamicMultiplier);
     }
     else {
         // --- CLICK STANDARD ---
         // Usa il valore reale appena guadagnato (include bonus combo) se disponibile,
         // altrimenti ricalcola.
-        let val = (typeof window._lastClickValue !== 'undefined' && window._lastClickValue !== null)
-            ? window._lastClickValue
-            : (typeof calculateClickValue === 'function')
-                ? calculateClickValue()
-                : gameState.baseClickValue;
+        let val = (typeof w._lastClickValue !== 'undefined' && w._lastClickValue !== null)
+            ? w._lastClickValue
+            : (typeof w.calculateClickValue === 'function')
+                ? w.calculateClickValue()
+                : store.gameState.baseClickValue;
 
         feedback.textContent = `+${formatNumber(val)}`;
 
-        const critChance = (typeof window.goldenBugChance !== 'undefined') ? window.goldenBugChance : 0.001;
+        const critChance = (typeof w.goldenBugChance !== 'undefined') ? w.goldenBugChance : 0.001;
         const isCrit = Math.random() < (critChance * 10);
 
         let color = '#ffffff';
@@ -1249,7 +1266,7 @@ function showClickFeedback(event) {
         startX = event.clientX - rect.left;
         startY = event.clientY - rect.top;
     } else {
-        const btnRect = document.getElementById('clicker-btn').getBoundingClientRect();
+        const btnRect = document.getElementById('clicker-btn')!.getBoundingClientRect();
         startX = (btnRect.left + btnRect.width / 2) - rect.left;
         startY = (btnRect.top + btnRect.height / 2) - rect.top;
     }
@@ -1263,8 +1280,8 @@ function showClickFeedback(event) {
     feedbackContainer.appendChild(feedback);
 
     // --- ANIMAZIONE GSAP ---
-    if (typeof gsap !== 'undefined') {
-        gsap.fromTo(feedback,
+    if (typeof w.gsap !== 'undefined') {
+        w.gsap.fromTo(feedback,
             {
                 opacity: 1,
                 scale: startScale,
@@ -1287,15 +1304,15 @@ function showClickFeedback(event) {
         feedback.style.transition = "all 1s ease-out";
         requestAnimationFrame(() => {
             feedback.style.transform = `translateY(-100px)`;
-            feedback.style.opacity = 0;
+            feedback.style.opacity = '0';
         });
         setTimeout(() => feedback.remove(), 1000);
     }
 
-    // Sparkle particles — usa FX.particleBurst (GSAP) se disponibile, altrimenti fallback CSS
+    // Sparkle particles — usa w.FX.particleBurst (GSAP) se disponibile, altrimenti fallback CSS
     const px = startX + randomOffsetX;
     const py = startY + randomOffsetY;
-    if (typeof FX !== 'undefined' && typeof gsap !== 'undefined') {
+    if (typeof w.FX !== 'undefined' && typeof w.gsap !== 'undefined') {
         // PERF: le particelle (6-12 elementi+tween a click) sono il costo dominante;
         // durante i clic a raffica le saltiamo quando il contenitore e' gia' carico,
         // tenendo comunque il +N. Evita l'accumulo che causava il freeze.
@@ -1303,9 +1320,9 @@ function showClickFeedback(event) {
         // SOLO a contenitore leggero (era <=40). Sopra, teniamo il +N e saltiamo le
         // particelle — così non si arriva mai a saturare il renderer durante lo spam.
         if (feedbackContainer.childElementCount <= 14) {
-            const combo = FX._comboCount || 0;
+            const combo = w.FX._comboCount || 0;
             const count = combo >= 20 ? 12 : combo >= 10 ? 10 : 6;
-            FX.particleBurst(px, py, count);
+            w.FX.particleBurst(px, py, count);
         }
     } else {
         const sparkCount = 3 + Math.floor(Math.random() * 3);
@@ -1326,15 +1343,15 @@ function showClickFeedback(event) {
 
 
 // --- MINI MARKDOWN PARSER (Sostituisce Marked.js ~20KB) ---
-function simpleMarkdown(md) {
+function simpleMarkdown(md: any) {
     // Parser a blocchi. Niente <br> a tappeto (prima ogni \n diventava <br>:
     // spaziatura doppia e incoerente sopra ai margini dei blocchi). Qui generiamo
     // HTML semantico e lasciamo gestire lo spazio ai margini di ogni blocco.
-    const esc = (s) => s
+    const esc = (s: any) => s
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-    const inline = (s) => esc(s)
+    const inline = (s: any) => esc(s)
         .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;">$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;">$1</code>');
@@ -1374,30 +1391,30 @@ function simpleMarkdown(md) {
 }
 
 // --- MODALE V2 MIGRATION (Sostituisce SweetAlert2) ---
-function showV2MigrationModal(onConfirm) {
+function showV2MigrationModal(onConfirm: any) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-backdrop';
     overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
     overlay.innerHTML = `
         <div class="modal-content" style="max-width:480px; text-align:center; animation: popIn 0.3s ease-out; padding: 10px">
-            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">${gameData.texts.v2.title}</h2>
+            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:15px;">${store.gameData.texts.v2.title}</h2>
             <div style="text-align:left; font-size:0.95rem; color:#bdc3c7; margin-bottom:20px;">
-                ${gameData.texts.v2.thanks}<br><br>
-                ${gameData.texts.v2.intro}<br><br>
+                ${store.gameData.texts.v2.thanks}<br><br>
+                ${store.gameData.texts.v2.intro}<br><br>
                 <div style="background:rgba(46,204,113,0.1); border-left:4px solid #2ecc71; padding:10px; margin-bottom:10px; border-radius:4px;">
-                    <b style="color:#2ecc71;">&#10003; ${gameData.texts.v2.skinsSafe}</b><br>${gameData.texts.v2.wardrobeIntact}
+                    <b style="color:#2ecc71;">&#10003; ${store.gameData.texts.v2.skinsSafe}</b><br>${store.gameData.texts.v2.wardrobeIntact}
                 </div>
                 <div style="background:rgba(155,89,182,0.1); border-left:4px solid #9b59b6; padding:10px; border-radius:4px;">
-                    <b style="color:#9b59b6;">&#10003; ${gameData.texts.v2.veteranBonus}</b><br>${gameData.texts.v2.credited}
+                    <b style="color:#9b59b6;">&#10003; ${store.gameData.texts.v2.veteranBonus}</b><br>${store.gameData.texts.v2.credited}
                 </div>
             </div>
             <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="v2-migration-confirm">
-                <i class="fa-solid fa-meteor" style="margin-right: 2px;"></i> ${gameData.texts.v2.discover}
+                <i class="fa-solid fa-meteor" style="margin-right: 2px;"></i> ${store.gameData.texts.v2.discover}
             </button>
         </div>`;
     document.body.appendChild(overlay);
 
-    document.getElementById('v2-migration-confirm').addEventListener('click', () => {
+    document.getElementById('v2-migration-confirm')!.addEventListener('click', () => {
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.2s ease';
         setTimeout(() => {
@@ -1412,21 +1429,25 @@ const MAX_VISIBLE_TOASTS = 5;
 
 // gate, anti-spam, coda e slot vivono in EspoV3.toast (puro, testato); qui resta
 // il rendering DOM (createToastDOM) e l'exit animation. Fallback legacy rimosso.
-const _v3toastQueue = window.EspoV3.toast.createQueue({
-    maxVisible: MAX_VISIBLE_TOASTS,
-    render: (t, slot) => createToastDOM(t.message, t.type, t.duration, slot),
-    canShow: () => !!sessionStorage.getItem('espooUser'),
-});
-
-function showToast(message, type = 'info', duration) {
-    return _v3toastQueue.push(message, type, duration);
+// Lazy: questo modulo è importato da main.ts PRIMA che window.EspoV3 sia costruito.
+let _toastQueueInstance: any;
+function toastQueue(): any {
+    return (_toastQueueInstance ??= (window as any).EspoV3.toast.createQueue({
+        maxVisible: MAX_VISIBLE_TOASTS,
+        render: (t: any, slot: any) => createToastDOM(t.message, t.type, t.duration, slot),
+        canShow: () => !!sessionStorage.getItem('espooUser'),
+    }));
 }
 
-function createToastDOM(message, type, duration, slot) {
+function showToast(message: any, type: any = 'info', duration?: any) {
+    return toastQueue().push(message, type, duration);
+}
+
+function createToastDOM(message: any, type: any, duration: any, slot: any) {
     const toastContainer = document.getElementById('toast-container');
     if (!toastContainer) return;
 
-    const toast = document.createElement('div');
+    const toast: any = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.dataset.slot = slot;
     // Posizione fissa via CSS variable — niente flex layout shift
@@ -1452,7 +1473,7 @@ function createToastDOM(message, type, duration, slot) {
     toast._dismissTimer = dismissTimer;
 }
 
-function _dismissToast(toast, slot) {
+function _dismissToast(toast: any, slot: any) {
     if (!toast || toast._dismissed) return;
     toast._dismissed = true;
     if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
@@ -1462,7 +1483,7 @@ function _dismissToast(toast, slot) {
     // Libera lo slot DOPO l'exit animation (~350ms)
     setTimeout(() => {
         if (toast.parentNode) toast.remove();
-        _v3toastQueue.releaseSlot(slot);
+        toastQueue().releaseSlot(slot);
     }, 360);
 }
 
@@ -1474,14 +1495,14 @@ function checkTabNotifications() {
 
     // Click Tab
     const clickNotify = rules.anyClickUpgradeAvailable(
-        gameState.totalClicks,
-        String(gameState.score),
-        Object.keys(gameData.clickUpgrades)
-            .filter(k => gameState.clickUpgrades[k])
+        store.gameState.totalClicks,
+        String(store.gameState.score),
+        Object.keys(store.gameData.clickUpgrades)
+            .filter(k => store.gameState.clickUpgrades[k])
             .map(k => ({
-                purchased: !!gameState.clickUpgrades[k].purchased,
-                requiredClicks: gameData.clickUpgrades[k].requiredClicks,
-                cost: gameData.clickUpgrades[k].cost,
+                purchased: !!store.gameState.clickUpgrades[k].purchased,
+                requiredClicks: store.gameData.clickUpgrades[k].requiredClicks,
+                cost: store.gameData.clickUpgrades[k].cost,
             }))
     );
 
@@ -1490,15 +1511,15 @@ function checkTabNotifications() {
 
     // Auto Tab
     const autoNotify = rules.anyEnhancementAvailable(
-        String(gameState.score),
-        Object.keys(gameData.buildingEnhancements)
-            .filter(k => gameState.buildingEnhancements[k] && gameData.buildingEnhancements[k]
-                && gameState.teams[gameData.buildingEnhancements[k].targetTeam])
+        String(store.gameState.score),
+        Object.keys(store.gameData.buildingEnhancements)
+            .filter(k => store.gameState.buildingEnhancements[k] && store.gameData.buildingEnhancements[k]
+                && store.gameState.teams[store.gameData.buildingEnhancements[k].targetTeam])
             .map(k => ({
-                purchased: !!gameState.buildingEnhancements[k].purchased,
-                requiredCount: gameData.buildingEnhancements[k].requiredCount,
-                teamCount: gameState.teams[gameData.buildingEnhancements[k].targetTeam].count,
-                cost: gameData.buildingEnhancements[k].cost,
+                purchased: !!store.gameState.buildingEnhancements[k].purchased,
+                requiredCount: store.gameData.buildingEnhancements[k].requiredCount,
+                teamCount: store.gameState.teams[store.gameData.buildingEnhancements[k].targetTeam].count,
+                cost: store.gameData.buildingEnhancements[k].cost,
             }))
     );
 
@@ -1508,19 +1529,19 @@ function checkTabNotifications() {
 
     // Prestige Tab
     let prestigeNotify = false;
-    if (gameState.totalResets > 0 || gameState.prestigePoints.gt(0)) {
+    if (store.gameState.totalResets > 0 || store.gameState.prestigePoints.gt(0)) {
         prestigeNotify = rules.anyPrestigeUpgradeAvailable(
             true, // gate gia valutato sopra
-            String(gameState.prestigePoints),
-            Object.keys(gameData.prestigeUpgrades).map(k => {
-                const d = gameData.prestigeUpgrades[k];
-                const st = gameState.prestigeUpgrades[k];
+            String(store.gameState.prestigePoints),
+            Object.keys(store.gameData.prestigeUpgrades).map(k => {
+                const d = store.gameData.prestigeUpgrades[k];
+                const st = store.gameState.prestigeUpgrades[k];
                 return d.isCounted
                     ? {
                         counted: true, count: st.count, maxLevel: d.maxLevel,
                         // costo scalato = formula game-logic (F6): resta qui
-                        cost: String((typeof calculatePrestigeUpgradeCost === 'function')
-                            ? calculatePrestigeUpgradeCost(k) : d.baseCost),
+                        cost: String((typeof w.calculatePrestigeUpgradeCost === 'function')
+                            ? w.calculatePrestigeUpgradeCost(k) : d.baseCost),
                     }
                     : { counted: false, purchased: !!st.purchased, cost: d.baseCost };
             })
@@ -1533,11 +1554,11 @@ function checkTabNotifications() {
 
     // --- AGGIORNAMENTO TITOLO BROWSER ---
     let title = "Espòòò Clicker";
-    const canPrestige = gameState.totalScore.gte(getPrestigeThreshold());
+    const canPrestige = store.gameState.totalScore.gte(w.getPrestigeThreshold());
     if (canPrestige)
-        title = gameData.texts.ui.promotionReadyTitle + " - " + title;
+        title = store.gameData.texts.ui.promotionReadyTitle + " - " + title;
     else
-        title = formatNumber(gameState.score) + " " + gameData.texts.ui.bugsTitle + " - " + title;
+        title = formatNumber(store.gameState.score) + " " + store.gameData.texts.ui.bugsTitle + " - " + title;
     if (document.title !== title)
         document.title = title;
 }
@@ -1546,15 +1567,15 @@ function updateBonusCounter() {
     const counter = document.getElementById('bonus-counter-display');
     const valueSpan = document.getElementById('combined-multiplier-value');
 
-    // La variabile prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
-    if (prestigeBonus.gt(1.05))	// Mostra solo se il bonus è significativo
+    // La variabile store.prestigeBonus ora contiene TUTTI i bonus permanenti (prestigio + achievement)
+    if (store.prestigeBonus.gt(1.05))	// Mostra solo se il bonus è significativo
     {
         if (counter)
             counter.style.display = 'block';
 
         if (valueSpan) {
             // Mostra il moltiplicatore totale con 2 decimali
-            valueSpan.textContent = `x${prestigeBonus.toFixed(2)}`;
+            valueSpan.textContent = `x${store.prestigeBonus.toFixed(2)}`;
 
             // Aggiungi anche un po' di stile per farlo risaltare
             valueSpan.style.color = '#f1c40f';
@@ -1585,7 +1606,7 @@ function updateUI() {
 
 // --- SOTTO-FUNZIONI (Copia queste sotto updateUI) ---
 // Cache per calculateVisualBPS: evita di ricalcolare 10x/sec se nulla è cambiato
-let _cachedVisualBPS = null;
+let _cachedVisualBPS: any = null;
 let _lastVisualBPSCalc = 0;
 const VISUAL_BPS_CACHE_MS = 150; // Ricalcola max ogni 150ms
 
@@ -1596,9 +1617,9 @@ function calculateVisualBPS() {
     }
 
     // F5 -> F8: somma pura in EspoV3.rules (big-number via stringa); cache 150ms sopra.
-    _cachedVisualBPS = new Decimal(window.EspoV3.rules.visualBps(
-        String(bps),
-        clickHistory.map(c => ({ time: c.time, value: String(c.value) })),
+    _cachedVisualBPS = new w.Decimal(window.EspoV3.rules.visualBps(
+        String(store.bps),
+        store.clickHistory.map((c: any) => ({ time: c.time, value: String(c.value) })),
         now
     ));
     _lastVisualBPSCalc = now;
@@ -1606,40 +1627,40 @@ function calculateVisualBPS() {
 }
 
 const scoreAnimState = { value: 0 };
-let _scoreTween = null;
-let _scoreFastRaf = null;
+let _scoreTween: any = null;
+let _scoreFastRaf: any = null;
 
 // Aggiornamento reattivo del solo #score-display durante il click attivo: scrive il
 // valore reale (rAF-throttle, max 1 write/frame) bypassando il count-up GSAP, che
 // inseguendo un bersaglio che salta ogni 100ms restava indietro (lag percepito).
 // Il count-up resta per l'income passivo (BPS), quando non si clicca.
 function bumpScoreDisplay() {
-    if (typeof gameState === 'undefined' || !gameState.score) return;
+    if (typeof store.gameState === 'undefined' || !store.gameState.score) return;
     if (_scoreFastRaf) return;
     _scoreFastRaf = requestAnimationFrame(() => {
         _scoreFastRaf = null;
         if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
-        const n = gameState.score.toNumber();
+        const n = store.gameState.score.toNumber();
         scoreAnimState.value = isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
-        if (typeof setTextIfChanged === 'function') setTextIfChanged('score-display', formatNumber(gameState.score));
+        if (typeof setTextIfChanged === 'function') setTextIfChanged('score-display', formatNumber(store.gameState.score));
     });
 }
 
 // Oltre questa soglia i JS Number perdono la precisione intera (2^53): animare con
-// GSAP un Number verso un Decimal enorme produce lag e valori spuri (es. il contatore
+// GSAP un Number verso un w.Decimal enorme produce lag e valori spuri (es. il contatore
 // che "si ferma"/glitcha attorno a 100,00 Sxd ≈ 1e53). Sopra la soglia scriviamo
-// direttamente il Decimal formattato — l'animazione count-up a quelle scale non è
+// direttamente il w.Decimal formattato — l'animazione count-up a quelle scale non è
 // comunque percepibile. Sotto, manteniamo l'animazione fluida (Number esatti).
 const SCORE_ANIM_MAX = Number.MAX_SAFE_INTEGER; // ~9.007e15
 
-function updateScoreBoard(totalBPS) {
-    const scoreNum = gameState.score.toNumber(); // Infinity se oltre il range Number
+function updateScoreBoard(totalBPS: any) {
+    const scoreNum = store.gameState.score.toNumber(); // Infinity se oltre il range Number
 
     if (!isFinite(scoreNum) || scoreNum > SCORE_ANIM_MAX) {
-        // Numero troppo grande per un'animazione affidabile: scrittura diretta dal Decimal
+        // Numero troppo grande per un'animazione affidabile: scrittura diretta dal w.Decimal
         if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
         scoreAnimState.value = scoreNum; // mantiene coerente lo stato per i confronti
-        setTextIfChanged('score-display', formatNumber(gameState.score));
+        setTextIfChanged('score-display', formatNumber(store.gameState.score));
     } else {
         // Se è la prima volta (o reset/promozione), allinea subito senza animazione
         if (Math.abs(scoreAnimState.value - scoreNum) > scoreNum * 0.5)
@@ -1649,16 +1670,16 @@ function updateScoreBoard(totalBPS) {
         // che salta ogni 100ms e resterebbe indietro (lag). bumpScoreDisplay ha già
         // scritto il valore reale; qui sincronizziamo. Il count-up resta per l'income
         // passivo (BPS), quando non si clicca da un po'.
-        const activeClicking = (Date.now() - (window._lastClickAt || 0)) < 250;
+        const activeClicking = (Date.now() - (w._lastClickAt || 0)) < 250;
         if (activeClicking) {
             if (_scoreTween) { _scoreTween.kill(); _scoreTween = null; }
             scoreAnimState.value = scoreNum;
-            setTextIfChanged('score-display', formatNumber(gameState.score));
+            setTextIfChanged('score-display', formatNumber(store.gameState.score));
         } else {
             // Kill tween precedente per evitare stacking
             if (_scoreTween) _scoreTween.kill();
             // GSAP anima il valore "visuale" (Number) verso il valore reale (Number)
-            _scoreTween = gsap.to(scoreAnimState, {
+            _scoreTween = w.gsap.to(scoreAnimState, {
                 duration: 0.2,
                 value: scoreNum,
                 ease: "power1.out",
@@ -1671,7 +1692,7 @@ function updateScoreBoard(totalBPS) {
 
     const scoreEl = getEl('score-display');
     if (scoreEl) {
-        scoreEl.setAttribute('data-tooltip', formatFullNumber(gameState.score));
+        scoreEl.setAttribute('data-tooltip', formatFullNumber(store.gameState.score));
         scoreEl.classList.add('simple-tooltip');
         // Micro-bump visivo quando il punteggio aumenta
         if (scoreNum > scoreAnimState.value * 1.001) {
@@ -1688,8 +1709,8 @@ function updateScoreBoard(totalBPS) {
         cpsEl.classList.add('simple-tooltip');
     }
 
-    if (typeof calculateRawClickValue === 'function') {
-        const rawClick = calculateRawClickValue();
+    if (typeof w.calculateRawClickValue === 'function') {
+        const rawClick = w.calculateRawClickValue();
         setTextIfChanged('raw-click-display', `Click Power: ${formatNumber(rawClick)}`);
     }
 }
@@ -1701,16 +1722,16 @@ function updateHUD() {
     const displayTokens = document.getElementById('prestige-points-display');
     const headerQbit = document.getElementById('header-qbit-container');
 
-    const hasPrestige = gameState.totalResets > 0 || gameState.prestigePoints.gt(0) || gameState.lifetimePrestigePoints.gt(0);
-    const hasQuantum = gameState.totalFormattazioni > 0 || gameState.qBits.gt(0);
+    const hasPrestige = store.gameState.totalResets > 0 || store.gameState.prestigePoints.gt(0) || store.gameState.lifetimePrestigePoints.gt(0);
+    const hasQuantum = store.gameState.totalFormattazioni > 0 || store.gameState.qBits.gt(0);
 
     // Mostra i pannelli se hai fatto almeno un Prestigio O una Formattazione
     if (hasPrestige || hasQuantum) {
         if (leftPanel) leftPanel.classList.remove("header_stat_box_display_none");
         if (rightPanel) rightPanel.classList.remove("header_stat_box_display_none");
 
-        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(prestigeBonus)}`);
-        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(gameState.prestigePoints));
+        if (displayCareer) setTextIfChanged('display-career-bonus', `x${formatNumber(store.prestigeBonus)}`);
+        if (displayTokens) setTextIfChanged('prestige-points-display', formatNumber(store.gameState.prestigePoints));
 
         // Gestione visibilità div specifico dei Q-Bits
         if (headerQbit) headerQbit.style.display = hasQuantum ? 'flex' : 'none';
@@ -1722,16 +1743,16 @@ function updateHUD() {
 }
 
 function updateWallets() {
-    setTextIfChanged('lab-wallet-amount', formatNumber(gameState.prestigePoints));
-    setTextIfChanged('bug-wallet-amount', formatNumber(gameState.score.floor()));
+    setTextIfChanged('lab-wallet-amount', formatNumber(store.gameState.prestigePoints));
+    setTextIfChanged('bug-wallet-amount', formatNumber(store.gameState.score.floor()));
 
     // Aggiorna Q-Bits anche nell'header in alto
-    setTextIfChanged('qbit-wallet-amount', formatNumber(gameState.qBits));
-    setTextIfChanged('header-qbit-display', formatNumber(gameState.qBits));
+    setTextIfChanged('qbit-wallet-amount', formatNumber(store.gameState.qBits));
+    setTextIfChanged('header-qbit-display', formatNumber(store.gameState.qBits));
 
     // Aggiorna i wallet bug replicati (elementi .bug-wallet-amount sparsi nella UI)
     document.querySelectorAll('.bug-wallet-amount').forEach(el => {
-        if (el.textContent !== formatNumber(gameState.score)) el.textContent = formatNumber(gameState.score);
+        if (el.textContent !== formatNumber(store.gameState.score)) el.textContent = formatNumber(store.gameState.score);
     });
 
     // Hub Prestigio: aggiorna le card solo quando il modal è aperto
@@ -1750,32 +1771,32 @@ function renderPrestigeHubCards() {
     const formatCard = document.getElementById('hub-card-format');
     if (!promoCard || !formatCard) return;
 
-    const currentScore = gameState.totalScore || new Decimal(0);
-    const threshold = getPrestigeThreshold();
-    const resets = gameState.totalResets || 0;
+    const currentScore = store.gameState.totalScore || new w.Decimal(0);
+    const threshold = w.getPrestigeThreshold();
+    const resets = store.gameState.totalResets || 0;
 
     // ---- CARD PROMOZIONE ----
-    const gained = calculatePrestigeGained();
+    const gained = w.calculatePrestigeGained();
     const canPrestige = currentScore.gte(threshold) && gained.gte(1);
 
     setCardState(promoCard, canPrestige ? 'is-ready' : 'is-locked');
 
     if (canPrestige) {
-        const dupOn = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
+        const dupOn = !!(store.gameState.superUpgrades && store.gameState.superUpgrades.tokenDuplicator && store.gameState.superUpgrades.tokenDuplicator.purchased);
         const finalGained = window.EspoV3.prestige.applyTokenDuplicator(gained, dupOn);
         setTextIfChanged('contract-gain-token', `+${formatNumber(finalGained)}`);
 
         // Anteprima nuovo moltiplicatore (stessi calcoli del vecchio openPrestigeContract)
-        const estimatedLifetime = (gameState.lifetimePrestigePoints || new Decimal(0)).add(finalGained);
+        const estimatedLifetime = (store.gameState.lifetimePrestigePoints || new w.Decimal(0)).add(finalGained);
         const baseBonus = estimatedLifetime.mul(0.01);
-        const synergyCount = gameState.prestigeUpgrades.sinergia ? gameState.prestigeUpgrades.sinergia.count : 0;
-        const synergyPerLevel = gameData.prestigeUpgrades.sinergia.bonusPerLevel || new Decimal(0.001);
-        const synergyBonus = new Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
-        const rawMultiplier = baseBonus.add(synergyBonus).add(achievementsBPSBonus);
-        const totalMultiplier = new Decimal(1).add(applyBonusSoftcap(rawMultiplier));
+        const synergyCount = store.gameState.prestigeUpgrades.sinergia ? store.gameState.prestigeUpgrades.sinergia.count : 0;
+        const synergyPerLevel = store.gameData.prestigeUpgrades.sinergia.bonusPerLevel || new w.Decimal(0.001);
+        const synergyBonus = new w.Decimal(synergyCount).mul(synergyPerLevel).mul(estimatedLifetime);
+        const rawMultiplier = baseBonus.add(synergyBonus).add(store.achievementsBPSBonus);
+        const totalMultiplier = new w.Decimal(1).add(w.applyBonusSoftcap(rawMultiplier));
 
         const bonusEl = document.getElementById('contract-gain-bonus');
-        const bonusHtml = `${gameData.texts.ui.newMultiplier} <span>x${formatNumber(totalMultiplier)}</span>`;
+        const bonusHtml = `${store.gameData.texts.ui.newMultiplier} <span>x${formatNumber(totalMultiplier)}</span>`;
         if (bonusEl && bonusEl.innerHTML !== bonusHtml) bonusEl.innerHTML = bonusHtml;
     } else {
         let progress = 0;
@@ -1786,15 +1807,15 @@ function renderPrestigeHubCards() {
         setTextIfChanged('hub-promo-progress-label', pct);
     }
 
-    const btnPromo = document.getElementById('btn-confirm-prestige');
+    const btnPromo = document.getElementById('btn-confirm-prestige') as HTMLButtonElement | null;
     if (btnPromo && btnPromo.disabled === canPrestige) btnPromo.disabled = !canPrestige;
 
     // ---- CARD FORMATTAZIONE ----
     // resets >= 20 implica Quantum sbloccato (è uno dei rami OR della regola).
     const isQ = window.EspoV3.rules.isQuantumUnlocked({
         totalResets: resets,
-        totalFormattazioni: gameState.totalFormattazioni || 0,
-        qBits: String(gameState.qBits || 0),
+        totalFormattazioni: store.gameState.totalFormattazioni || 0,
+        qBits: String(store.gameState.qBits || 0),
     });
     const canFormat = resets >= 20;
 
@@ -1803,9 +1824,9 @@ function renderPrestigeHubCards() {
     if (canFormat) {
         // Formula INVARIATA (era in updateWallets/openFormatHandler):
         // qbit = 1 + floor(sqrt(prestigePoints / 10000))
-        const tokenDiv = (gameState.prestigePoints || new Decimal(0)).div(10000);
-        const bonusQbits = tokenDiv.gte(1) ? tokenDiv.sqrt().floor() : new Decimal(0);
-        const qBitsEarned = new Decimal(1).add(bonusQbits);
+        const tokenDiv = (store.gameState.prestigePoints || new w.Decimal(0)).div(10000);
+        const bonusQbits = tokenDiv.gte(1) ? tokenDiv.sqrt().floor() : new w.Decimal(0);
+        const qBitsEarned = new w.Decimal(1).add(bonusQbits);
         setTextIfChanged('format-gain-qbit', `+${formatNumber(qBitsEarned)}`);
     } else {
         const counterText = `${Math.min(resets, 20)}/20`;
@@ -1814,34 +1835,34 @@ function renderPrestigeHubCards() {
         });
     }
 
-    const btnFormat = document.getElementById('btn-confirm-format');
+    const btnFormat = document.getElementById('btn-confirm-format') as HTMLButtonElement | null;
     if (btnFormat && btnFormat.disabled === canFormat) btnFormat.disabled = !canFormat;
 }
 
 // Applica UNA classe di stato alla card togliendo le altre (niente churn nel loop UI)
-function setCardState(card, state) {
+function setCardState(card: any, state: any) {
     if (card.classList.contains(state)) return;
     card.classList.remove('is-ready', 'is-locked', 'is-mystery');
     card.classList.add(state);
 }
 
 // Cache per updateStoreButtons: evita di settare disabled su ogni frame
-const _btnDisabledCache = {};
+const _btnDisabledCache: any = {};
 
 function updateStoreButtons() {
     // Teams
-    for (const key in gameState.teams) {
-        if (!gameData.teams[key]) continue;
-        let amountToBuy = window.buyMultiplier;
+    for (const key in store.gameState.teams) {
+        if (!store.gameData.teams[key]) continue;
+        let amountToBuy = w.buyMultiplier;
         let isMax = false;
         if (amountToBuy === 'MAX') {
-            const max = calculateMaxAffordable(key);
+            const max = w.calculateMaxAffordable(key);
             amountToBuy = max > 0 ? max : 1;
             isMax = true;
         }
-        const currentCost = calculateBulkCost(key, amountToBuy);
+        const currentCost = w.calculateBulkCost(key, amountToBuy);
         const btnId = `buy-${key}`;
-        const shouldDisable = gameState.score.lt(currentCost);
+        const shouldDisable = store.gameState.score.lt(currentCost);
 
         // Solo se lo stato disabled è cambiato
         if (_btnDisabledCache[btnId] !== shouldDisable) {
@@ -1852,19 +1873,19 @@ function updateStoreButtons() {
 
         const costEl = getEl(`cost-${key}`);
         if (costEl) {
-            let prefix = isMax && amountToBuy > 1 ? `${gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})` :
-                (!isMax && amountToBuy > 1) ? `${gameData.texts.ui.cost} (${amountToBuy}x)` : gameData.texts.ui.cost;
+            let prefix = isMax && amountToBuy > 1 ? `${store.gameData.texts.ui.cost} (+${formatNumber(amountToBuy)})` :
+                (!isMax && amountToBuy > 1) ? `${store.gameData.texts.ui.cost} (${amountToBuy}x)` : store.gameData.texts.ui.cost;
             const costText = `${prefix}: ${formatNumber(currentCost)}`;
             if (costEl.textContent !== costText) costEl.textContent = costText;
         }
     }
 
     // Click Upgrades
-    for (const key in gameState.clickUpgrades) {
-        if (!gameData.clickUpgrades[key]) continue;
-        if (!gameState.clickUpgrades[key].purchased) {
+    for (const key in store.gameState.clickUpgrades) {
+        if (!store.gameData.clickUpgrades[key]) continue;
+        if (!store.gameState.clickUpgrades[key].purchased) {
             const btnId = `buy-${key}`;
-            const shouldDisable = gameState.score.lt(gameData.clickUpgrades[key].cost);
+            const shouldDisable = store.gameState.score.lt(store.gameData.clickUpgrades[key].cost);
             if (_btnDisabledCache[btnId] !== shouldDisable) {
                 const btn = getEl(btnId);
                 if (btn && !btn.classList.contains('owned')) {
@@ -1876,11 +1897,11 @@ function updateStoreButtons() {
     }
 
     // Enhancements
-    for (const key in gameState.buildingEnhancements) {
-        if (!gameData.buildingEnhancements[key]) continue;
-        if (!gameState.buildingEnhancements[key].purchased) {
+    for (const key in store.gameState.buildingEnhancements) {
+        if (!store.gameData.buildingEnhancements[key]) continue;
+        if (!store.gameState.buildingEnhancements[key].purchased) {
             const btnId = `buy-${key}`;
-            const shouldDisable = gameState.score.lt(gameData.buildingEnhancements[key].cost);
+            const shouldDisable = store.gameState.score.lt(store.gameData.buildingEnhancements[key].cost);
             if (_btnDisabledCache[btnId] !== shouldDisable) {
                 const btn = getEl(btnId);
                 if (btn && !btn.classList.contains('owned')) {
@@ -1892,15 +1913,15 @@ function updateStoreButtons() {
     }
 
     // Prestige / Lab
-    for (const key in gameState.prestigeUpgrades) {
-        const data = gameData.prestigeUpgrades[key];
-        const state = gameState.prestigeUpgrades[key];
+    for (const key in store.gameState.prestigeUpgrades) {
+        const data = store.gameData.prestigeUpgrades[key];
+        const state = store.gameState.prestigeUpgrades[key];
         if (!data) continue;
         if (data.isCounted && data.maxLevel && state.count >= data.maxLevel) continue;
         if (!data.isCounted && state.purchased) continue;
 
         const btnId = `buy-${key}`;
-        const shouldDisable = gameState.prestigePoints.lt(data.isCounted ? calculatePrestigeUpgradeCost(key) : data.baseCost);
+        const shouldDisable = store.gameState.prestigePoints.lt(data.isCounted ? w.calculatePrestigeUpgradeCost(key) : data.baseCost);
         if (_btnDisabledCache[btnId] !== shouldDisable) {
             const btn = getEl(btnId);
             if (btn && !btn.classList.contains('owned')) {
@@ -1915,36 +1936,36 @@ function updateSkillButton() {
     const btnCrunch = getEl('skill-crunchTime');
     if (!btnCrunch) return;
 
-    if (document.body.classList.contains('rick-rolling') || isBluescreenActive) {
+    if (document.body.classList.contains('rick-rolling') || store.isBluescreenActive) {
         btnCrunch.style.display = 'none';
         return;
     }
 
-    if (gameState.prestigeUpgrades.crunchTime && gameState.prestigeUpgrades.crunchTime.purchased) {
+    if (store.gameState.prestigeUpgrades.crunchTime && store.gameState.prestigeUpgrades.crunchTime.purchased) {
         if (btnCrunch.style.display === 'none') btnCrunch.style.display = 'block';
 
         const timerDiv = btnCrunch.querySelector('.skill-timer');
         const now = Date.now();
 
-        if (now < crunchTimeEndTime) {
+        if (now < store.crunchTimeEndTime) {
             // ATTIVO
-            const timeLeft = Math.ceil((crunchTimeEndTime - now) / 1000);
+            const timeLeft = Math.ceil((store.crunchTimeEndTime - now) / 1000);
             if (btnCrunch.className !== 'skill-btn active') btnCrunch.className = 'skill-btn active';
-            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyActive;
+            btnCrunch.childNodes[0].textContent = store.gameData.texts.ui.furyActive;
             if (timerDiv) timerDiv.textContent = `${timeLeft}s`;
-        } else if (now < crunchTimeCooldownEnd) {
+        } else if (now < store.crunchTimeCooldownEnd) {
             // COOLDOWN
-            const timeLeft = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
+            const timeLeft = Math.ceil((store.crunchTimeCooldownEnd - now) / 1000);
             if (btnCrunch.className !== 'skill-btn cooldown') btnCrunch.className = 'skill-btn cooldown';
-            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyCooldown;
+            btnCrunch.childNodes[0].textContent = store.gameData.texts.ui.furyCooldown;
             const m = Math.floor(timeLeft / 60);
             const s = timeLeft % 60;
             if (timerDiv) timerDiv.textContent = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
             // PRONTO
             if (btnCrunch.className !== 'skill-btn') btnCrunch.className = 'skill-btn';
-            btnCrunch.childNodes[0].textContent = gameData.texts.ui.furyReady;
-            if (timerDiv) timerDiv.textContent = gameData.texts.ui.clickMe;
+            btnCrunch.childNodes[0].textContent = store.gameData.texts.ui.furyReady;
+            if (timerDiv) timerDiv.textContent = store.gameData.texts.ui.clickMe;
         }
     } else {
         if (btnCrunch.style.display !== 'none') btnCrunch.style.display = 'none';
@@ -1954,14 +1975,14 @@ function updateSkillButton() {
 function updateTabsVisibility() {
     const tabPrestige = getEl('tab-prestige');
     if (tabPrestige) {
-        const _pp = gameState.prestigePoints || new Decimal(0);
-        const _lpp = gameState.lifetimePrestigePoints || new Decimal(0);
+        const _pp = store.gameState.prestigePoints || new w.Decimal(0);
+        const _lpp = store.gameState.lifetimePrestigePoints || new w.Decimal(0);
         // F5 -> F8: predicato in EspoV3.rules
         if (window.EspoV3.rules.isPrestigeTabVisible({
-            totalResets: gameState.totalResets,
+            totalResets: store.gameState.totalResets,
             prestigePoints: String(_pp),
             lifetimePrestigePoints: String(_lpp),
-            totalFormattazioni: gameState.totalFormattazioni || 0,
+            totalFormattazioni: store.gameState.totalFormattazioni || 0,
         })) tabPrestige.classList.remove("tab_promozione");
     }
 
@@ -1970,9 +1991,9 @@ function updateTabsVisibility() {
 
     // Appare se hai fatto 20 reset, o se hai già formattato, o se hai Q-bits
     const isQuantumUnlocked = window.EspoV3.rules.isQuantumUnlocked({
-        totalResets: gameState.totalResets,
-        totalFormattazioni: gameState.totalFormattazioni,
-        qBits: String(gameState.qBits),
+        totalResets: store.gameState.totalResets,
+        totalFormattazioni: store.gameState.totalFormattazioni,
+        qBits: String(store.gameState.qBits),
     });
 
     if (tabQuantum) {
@@ -1990,7 +2011,7 @@ function updateTabsVisibility() {
 // fresco; la classe .nav-icon resta così i querySelector successivi funzionano.
 // Idempotente: se il nodo è già l'<i> target non tocca il DOM (stessa identità
 // di nodo tra i tick) → chiamabile incondizionatamente nel loop a 10fps.
-function swapPrestigeIcon(oldIcon, className) {
+function swapPrestigeIcon(oldIcon: any, className: any) {
     if (oldIcon.tagName === 'I' && oldIcon.className === className) return oldIcon;
     const fresh = document.createElement('i');
     fresh.className = className;
@@ -2003,14 +2024,14 @@ function updatePrestigeVisuals() {
     if (!prestigeBtn) return;
 
     // Recupera i valori in modo sicuro (gestisce null/undefined)
-    const currentScore = gameState.totalScore || new Decimal(0);
-    const threshold = getPrestigeThreshold();
-    const resets = gameState.totalResets || 0;
-    const prestigePoints = gameState.prestigePoints || new Decimal(0);
-    const lifetimePoints = gameState.lifetimePrestigePoints || new Decimal(0);
+    const currentScore = store.gameState.totalScore || new w.Decimal(0);
+    const threshold = w.getPrestigeThreshold();
+    const resets = store.gameState.totalResets || 0;
+    const prestigePoints = store.gameState.prestigePoints || new w.Decimal(0);
+    const lifetimePoints = store.gameState.lifetimePrestigePoints || new w.Decimal(0);
 
     const canPrestige = currentScore.gte(threshold);
-    const hasFormatted = (gameState.totalFormattazioni || 0) > 0;
+    const hasFormatted = (store.gameState.totalFormattazioni || 0) > 0;
 
     // Mostra il bottone SE:
     // 1. Puoi fare prestigio ORA (canPrestige)
@@ -2028,8 +2049,8 @@ function updatePrestigeVisuals() {
     // Se deve essere mostrato, forza il flex
     if (prestigeBtn.style.display !== 'flex') prestigeBtn.style.display = 'flex';
 
-    let icon = prestigeBtn.querySelector('.nav-icon');
-    let label = prestigeBtn.querySelector('span');
+    let icon: any = prestigeBtn.querySelector('.nav-icon');
+    let label: any = prestigeBtn.querySelector('span');
 
     // Ricrea contenuto interno se manca (sicurezza)
     if (!icon || !label) {
@@ -2049,7 +2070,7 @@ function updatePrestigeVisuals() {
             prestigeBtn.classList.add('format-ready');
             prestigeBtn.style.cursor = "pointer";
             icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-meteor');
-            label.textContent = gameData.texts.ui.formatReady;
+            label.textContent = store.gameData.texts.ui.formatReady;
         }
     } else if (canPrestige) {
         // STATO: PRONTA!
@@ -2058,7 +2079,7 @@ function updatePrestigeVisuals() {
             prestigeBtn.classList.add('promotion-ready');
             prestigeBtn.style.cursor = "pointer";
             icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-circle-check');
-            label.textContent = gameData.texts.ui.promoReady;
+            label.textContent = store.gameData.texts.ui.promoReady;
         }
     } else {
         // STATO: IN PROGRESS (percentuale) — il click apre comunque l'hub
@@ -2096,38 +2117,38 @@ function updatePrestigeUI() {
 }
 
 
-function setEmptyMessage(el, mode) {
-    if (mode === 'available') el.textContent = gameData.texts.ui.noItemsBuy;
-    else if (mode === 'locked') el.textContent = gameData.texts.ui.noItemsLock;
-    else if (mode === 'purchased') el.textContent = gameData.texts.ui.noItemsPurchased;
-    else el.textContent = gameData.texts.ui.nothingToShow;
+function setEmptyMessage(el: any, mode: any) {
+    if (mode === 'available') el.textContent = store.gameData.texts.ui.noItemsBuy;
+    else if (mode === 'locked') el.textContent = store.gameData.texts.ui.noItemsLock;
+    else if (mode === 'purchased') el.textContent = store.gameData.texts.ui.noItemsPurchased;
+    else el.textContent = store.gameData.texts.ui.nothingToShow;
 }
 
 // --- HELPERS PER SKIN ---
-function equipSkin(skinId) {
-    if (!gameState.skins.unlocked.includes(skinId)) return;
+function equipSkin(skinId: any) {
+    if (!store.gameState.skins.unlocked.includes(skinId)) return;
 
-    if (skinId === 'christmas' && typeof isChristmasSeason === 'function' && isChristmasSeason()) {
+    if (skinId === 'christmas' && typeof w.isChristmasSeason === 'function' && w.isChristmasSeason()) {
         triggerChristmasOverlay();
     }
 
-    gameState.skins.current = skinId;
+    store.gameState.skins.current = skinId;
 
     // Applica grafica e suoni loop (questo funziona sempre, anche fuori stagione)
     applySkinVisuals(skinId, true);
 
-    if (typeof playSound === 'function') playSound('sound-click');
-    if (window.EspooClicker) window.EspooClicker.saveGame();
+    if (typeof w.playSound === 'function') w.playSound('sound-click');
+    if (w.EspooClicker) w.EspooClicker.saveGame();
 
     // Aggiorna solo lo stato equipaggiato senza ricostruire l'intera UI (evita il flash)
     _refreshEquippedState(skinId);
 }
 
 // Aggiorna stato equipped + sfondo dinamico body (rarità skin attiva)
-function _refreshEquippedState(newSkinId) {
+function _refreshEquippedState(newSkinId: any) {
     // Set body data-attribute per CSS in-game tinted background
-    if (gameData?.skins?.[newSkinId]?.rarity) {
-        document.body.setAttribute('data-current-skin-rarity', gameData.skins[newSkinId].rarity);
+    if (store.gameData?.skins?.[newSkinId]?.rarity) {
+        document.body.setAttribute('data-current-skin-rarity', store.gameData.skins[newSkinId].rarity);
     }
     // Re-render unified grid
     updateSkinsUI();
@@ -2143,8 +2164,8 @@ function triggerChristmasOverlay() {
     if (overlay) {
         overlay.classList.add("christmas_overlay_flex");
     }
-    if (typeof AudioManager !== 'undefined') {
-        AudioManager.play('sound-merry', 'sfx');
+    if (typeof w.AudioManager !== 'undefined') {
+        w.AudioManager.play('sound-merry', 'sfx');
     }
     setTimeout(() => {
         if (overlay) overlay.classList.remove("christmas_overlay_flex");
@@ -2154,7 +2175,7 @@ function triggerChristmasOverlay() {
 let christmasAudioInitialized = false;
 
 // --- GESTORE UNIFICATO EFFETTI VISIVI (VFX) ---
-const VFXManager = {
+const VFXManager: any = {
     intervals: {},
     frames: {},
     _revealed: false,       // gioco visibile (post login + intro)?
@@ -2179,14 +2200,14 @@ const VFXManager = {
         const fire = document.getElementById('fire-particles-container');
         if (fire) { fire.innerHTML = ''; fire.style.display = 'none'; }
 
-        const matrix = document.getElementById('matrix-canvas');
+        const matrix = document.getElementById('matrix-canvas') as HTMLCanvasElement | null;
         if (matrix) {
-            const ctx = matrix.getContext('2d');
+            const ctx = matrix.getContext('2d')!;
             ctx.clearRect(0, 0, matrix.width, matrix.height);
         }
     },
 
-    start(effectType) {
+    start(effectType: any) {
         // Non stoppiamo tutto se stiamo per attivare qualcosa,
         // lo farà applySkinVisuals per gestire layer combinati.
 
@@ -2228,7 +2249,7 @@ const VFXManager = {
             flake.style.left = Math.random() * 100 + 'vw';
             flake.style.animationDuration = (Math.random() * 7 + 5) + 's';
             flake.style.animationDelay = (Math.random() * -20) + 's';
-            flake.style.opacity = Math.random() * 0.7 + 0.3;
+            flake.style.opacity = (Math.random() * 0.7 + 0.3) as any;
             container.appendChild(flake);
         }
     },
@@ -2240,9 +2261,9 @@ const VFXManager = {
 
         if (this.intervals.fire) clearInterval(this.intervals.fire);
 
-        // La funzione spawnFireParticle è quella esistente in game-logic.js
+        // La funzione w.spawnFireParticle è quella esistente in game-logic.js
         this.intervals.fire = setInterval(() => {
-            if (typeof spawnFireParticle === 'function') spawnFireParticle(container);
+            if (typeof w.spawnFireParticle === 'function') w.spawnFireParticle(container);
         }, 100);
     },
 
@@ -2254,14 +2275,14 @@ const VFXManager = {
 
 // Reveal del gioco (post login + intro): sblocca i VFX ambientali della skin
 // messi in coda durante login/intro. Esposto su window per modals.js.
-window.releaseAmbientVfx = function () {
+w.releaseAmbientVfx = function () {
     if (typeof VFXManager !== 'undefined') VFXManager.releaseAmbientVfx();
 };
 
-function applySkinVisuals(skinId, forcePlayMusic = false) {
-    if (!applySkinVisuals._token) applySkinVisuals._token = 0;
-    const data = gameData.skins[skinId];
-    const skinData = data || gameData.skins['default'];
+function applySkinVisuals(skinId: any, forcePlayMusic = false) {
+    if (!(applySkinVisuals as any)._token) (applySkinVisuals as any)._token = 0;
+    const data = store.gameData.skins[skinId];
+    const skinData = data || store.gameData.skins['default'];
     const theme = skinData.themeConfig || {};
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
@@ -2281,14 +2302,14 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     // da altri sistemi (es. effetti transitori), non solo le var del tema.
     for (let i = document.body.style.length - 1; i >= 0; i--) {
         const prop = document.body.style[i];
-        if (prop.startsWith('--')) document.body.style.removeProperty(prop);
+        if (prop!.startsWith('--')) document.body.style.removeProperty(prop!);
     }
     VFXManager.stopAll();
 
     // 3. APPLICAZIONE VARIABILI CSS CUSTOM (Per varianti di colore leggere)
     if (theme.cssVars) {
         for (const [property, value] of Object.entries(theme.cssVars)) {
-            document.body.style.setProperty(property, value);
+            document.body.style.setProperty(property, value as string);
         }
     }
 
@@ -2296,11 +2317,11 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     // La classe body si applica solo a CSS caricato (link.onload): al primo
     // equip evita il flash di tema rotto (FOUC). Il token scarta i callback
     // di un equip ormai superato da uno più recente.
-    const applyToken = ++applySkinVisuals._token;
+    const applyToken = ++(applySkinVisuals as any)._token;
     if (theme.bodyClass) {
         if (theme.cssFile) {
             loadThemeCSS(theme.cssFile, () => {
-                if (applyToken !== applySkinVisuals._token) return;
+                if (applyToken !== (applySkinVisuals as any)._token) return;
                 document.body.classList.add(theme.bodyClass);
             });
         } else {
@@ -2316,7 +2337,7 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     }
 
     // (Gestione Golden Bug e Audio invariata...)
-    const goldenBugIcon = document.querySelector('#golden-bug i');
+    const goldenBugIcon = document.querySelector('#golden-bug i') as HTMLElement | null;
     if (goldenBugIcon) {
         goldenBugIcon.className = 'fa-solid';
         goldenBugIcon.style.color = '';
@@ -2328,14 +2349,14 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
         }
     }
 
-    if (typeof AudioManager !== 'undefined' && AudioManager.updateAmbience)
-        AudioManager.updateAmbience();
+    if (typeof w.AudioManager !== 'undefined' && w.AudioManager.updateAmbience)
+        w.AudioManager.updateAmbience();
 
     // Applica le immagini centrali
-    const applyClasses = (element, imgSrc) => {
+    const applyClasses = (element: any, imgSrc: any) => {
         if (!element) return;
         element.src = `assets/image/${imgSrc}`;
-        Array.from(element.classList).forEach(cls => {
+        Array.from(element.classList).forEach((cls: any) => {
             if (cls.startsWith('bg-')) element.classList.remove(cls);
         });
         element.classList.add(`bg-${skinData.rarity || 'common'}`);
@@ -2345,8 +2366,8 @@ function applySkinVisuals(skinId, forcePlayMusic = false) {
     applyClasses(photoClicked, skinData.imgClick);
 
     // Esposion: attiva/disattiva la skin dinamica (effetti combo->esplosione).
-    if (typeof EsposionFX !== 'undefined') {
-        if (skinId === 'esposion') EsposionFX.start(); else EsposionFX.stop();
+    if (typeof w.EsposionFX !== 'undefined') {
+        if (skinId === 'esposion') w.EsposionFX.start(); else w.EsposionFX.stop();
     }
 }
 
@@ -2356,12 +2377,12 @@ function checkOverlayNotifications() {
     // Controlla se ci sono obiettivi sbloccati MA non riscattati (che hanno un premio)
     // F5 -> F8: predicato in EspoV3.rules
     const hasClaimable = window.EspoV3.rules.anyClaimableAchievement(
-        Object.keys(gameData.achievements)
-            .filter(k => gameState.achievements[k])
+        Object.keys(store.gameData.achievements)
+            .filter(k => store.gameState.achievements[k])
             .map(k => ({
-                unlocked: !!gameState.achievements[k].unlocked,
-                claimed: !!gameState.achievements[k].claimed,
-                hasReward: !!gameData.achievements[k].reward,
+                unlocked: !!store.gameState.achievements[k].unlocked,
+                claimed: !!store.gameState.achievements[k].claimed,
+                hasReward: !!store.gameData.achievements[k].reward,
             }))
     );
 
@@ -2379,22 +2400,22 @@ function updateStatsUI() {
     if (!statsList) return;
 
     // 1. Recupera la soglia dinamica attuale
-    const threshold = getPrestigeThreshold();
+    const threshold = w.getPrestigeThreshold();
 
     // 2. Calcola il progresso basandosi sulla soglia
-    const progress = gameState.totalScore.div(threshold).mul(100).min(100).toNumber();
+    const progress = store.gameState.totalScore.div(threshold).mul(100).min(100).toNumber();
 
     // Recupera ENTRAMBI i valori
-    const rawClick = (typeof calculateRawClickValue === 'function') ? calculateRawClickValue() : gameState.baseClickValue;
-    const totalClick = (typeof calculateClickValue === 'function') ? calculateClickValue() : rawClick;
+    const rawClick = (typeof w.calculateRawClickValue === 'function') ? w.calculateRawClickValue() : store.gameState.baseClickValue;
+    const totalClick = (typeof w.calculateClickValue === 'function') ? w.calculateClickValue() : rawClick;
 
     // Dati Offline
-    const totalOffline = gameState.totalOfflineScore || 0;
+    const totalOffline = store.gameState.totalOfflineScore || 0;
 
     // Calcolo Efficienza Offline
     let offlineEff = 0.30;
-    if (gameState.prestigeUpgrades && gameState.prestigeUpgrades.serverAlwaysOn)
-        offlineEff += (gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
+    if (store.gameState.prestigeUpgrades && store.gameState.prestigeUpgrades.serverAlwaysOn)
+        offlineEff += (store.gameState.prestigeUpgrades.serverAlwaysOn.count * 0.10);
 
     if (offlineEff > 1.0)
         offlineEff = 1.0;
@@ -2402,8 +2423,8 @@ function updateStatsUI() {
     const offlinePercentText = (offlineEff * 100).toFixed(0) + "%";
 
     // DATI NG+ (End-Game)
-    const totalFormats = gameState.totalFormattazioni || 0;
-    const totalQBits = gameState.lifetimeQBits || new Decimal(0);
+    const totalFormats = store.gameState.totalFormattazioni || 0;
+    const totalQBits = store.gameState.lifetimeQBits || new w.Decimal(0);
 
     // --- STRUTTURA (costruita UNA SOLA VOLTA) ---
     // Prima si riscriveva tutto l'innerHTML a ogni tick (10x/s): i nodi venivano
@@ -2419,9 +2440,9 @@ function updateStatsUI() {
                     <div class="stat-progress-info">
                         <span>
                             <i class="fa-solid fa-rocket" style="color: #2ecc71; margin-right: 6px;"></i>
-                            ${gameData.texts.stats.promoProgress}
+                            ${store.gameData.texts.stats.promoProgress}
                             <span style="font-size: 0.75rem; color: #95a5a6; font-weight: normal; margin-left: 5px;">
-                                (${gameData.texts.stats.goal} <span id="st-threshold" class="simple-tooltip" data-tooltip=""></span>)
+                                (${store.gameData.texts.stats.goal} <span id="st-threshold" class="simple-tooltip" data-tooltip=""></span>)
                             </span>
                         </span>
                         <span id="st-progress-pct" style="font-size: 1.1rem; font-weight: 800;"></span>
@@ -2434,22 +2455,22 @@ function updateStatsUI() {
 
             <!-- Economia -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> ${gameData.texts.stats.economy}</div>
+                <div class="stats-header"><i class="fa-solid fa-wallet" style="color: #2ecc71; margin-right: 8px;"></i> ${store.gameData.texts.stats.economy}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.bugsNow}</span>
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #2ecc71; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.bugsNow}</span>
                         <span id="st-score" class="stat-value simple-tooltip" style="color: #2ecc71;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.runTotal}</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-trend-up" style="color: #3498db; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.runTotal}</span>
                         <span id="st-total" class="stat-value simple-tooltip" style="color: #3498db;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.careerTotal}</span>
+                        <span class="stat-label"><i class="fa-solid fa-crown" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.careerTotal}</span>
                         <span id="st-lifetime" class="stat-value simple-tooltip" style="color: #f1c40f;" data-tooltip=""></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.offline}</span>
+                        <span class="stat-label"><i class="fa-solid fa-moon" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.offline}</span>
                         <span id="st-offline" class="stat-value simple-tooltip" style="color: #9b59b6;" data-tooltip="">
                             <span id="st-offline-val"></span>
                             <span id="st-offline-pct" style="font-size: 0.75rem; color: #7f8c8d; font-weight: normal;"></span>
@@ -2460,7 +2481,7 @@ function updateStatsUI() {
 
             <!-- Performance -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> ${gameData.texts.stats.performance}</div>
+                <div class="stats-header"><i class="fa-solid fa-microchip" style="color: #3498db; margin-right: 8px;"></i> ${store.gameData.texts.stats.performance}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-gauge-high" style="color: #e67e22; margin-right: 4px; font-size: 0.65rem;"></i> BPS</span>
@@ -2474,7 +2495,7 @@ function updateStatsUI() {
                         </span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.multiplier}</span>
+                        <span class="stat-label"><i class="fa-solid fa-bolt" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.multiplier}</span>
                         <span id="st-mult" class="stat-value" style="color: #f1c40f;"></span>
                     </div>
                     <div class="stat-box">
@@ -2486,14 +2507,14 @@ function updateStatsUI() {
 
             <!-- Multiverso (NG+) -->
             <div id="st-multiverse" class="stats-section" style="border-color: rgba(155, 89, 182, 0.3); display: none;">
-                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> ${gameData.texts.stats.multiverse}</div>
+                <div class="stats-header" style="color: #9b59b6;"><i class="fa-solid fa-meteor" style="margin-right: 8px;"></i> ${store.gameData.texts.stats.multiverse}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.universesDestroyed}</span>
+                        <span class="stat-label"><i class="fa-solid fa-explosion" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.universesDestroyed}</span>
                         <span id="st-formats" class="stat-value" style="color: #e74c3c;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.quantumEnergy}</span>
+                        <span class="stat-label"><i class="fa-solid fa-atom" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.quantumEnergy}</span>
                         <span id="st-qbits" class="stat-value" style="color: #9b59b6; text-shadow: 0 0 10px rgba(155,89,182,0.3);"></span>
                     </div>
                 </div>
@@ -2501,30 +2522,30 @@ function updateStatsUI() {
 
             <!-- Profilo -->
             <div class="stats-section">
-                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> ${gameData.texts.stats.profile}</div>
+                <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> ${store.gameData.texts.stats.profile}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
                         <span id="st-skin" class="stat-value" style="text-transform: capitalize; color: #9b59b6;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.playtime}</span>
+                        <span class="stat-label"><i class="fa-solid fa-clock" style="color: #95a5a6; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.playtime}</span>
                         <span id="st-playtime" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.totalClicks}</span>
+                        <span class="stat-label"><i class="fa-solid fa-computer-mouse" style="color: #e74c3c; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.totalClicks}</span>
                         <span id="st-clicks" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-fire" style="color: #ff4757; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.comboRecord}</span>
+                        <span class="stat-label"><i class="fa-solid fa-fire" style="color: #ff4757; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.comboRecord}</span>
                         <span id="st-combo" class="stat-value" style="color: #ff4757;"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.promotions}</span>
+                        <span class="stat-label"><i class="fa-solid fa-arrow-up-right-dots" style="color: #f39c12; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.promotions}</span>
                         <span id="st-resets" class="stat-value"></span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${gameData.texts.stats.goldenBugs}</span>
+                        <span class="stat-label"><i class="fa-solid fa-bug" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.goldenBugs}</span>
                         <span id="st-golden" class="stat-value" style="color: #f1c40f;"></span>
                     </div>
                 </div>
@@ -2535,8 +2556,8 @@ function updateStatsUI() {
     }
 
     // --- VALORI (aggiornati in place: niente rebuild, hover/tooltip preservati) ---
-    const _set = (id, txt) => { const e = document.getElementById(id); if (e && e.textContent !== String(txt)) e.textContent = String(txt); };
-    const _attr = (id, name, val) => { const e = document.getElementById(id); if (e && e.getAttribute(name) !== String(val)) e.setAttribute(name, String(val)); };
+    const _set = (id: any, txt: any) => { const e = document.getElementById(id); if (e && e.textContent !== String(txt)) e.textContent = String(txt); };
+    const _attr = (id: any, name: any, val: any) => { const e = document.getElementById(id); if (e && e.getAttribute(name) !== String(val)) e.setAttribute(name, String(val)); };
 
     _attr('st-threshold', 'data-tooltip', formatFullNumber(threshold));
     _set('st-threshold', formatNumber(threshold));
@@ -2545,22 +2566,22 @@ function updateStatsUI() {
     const _fill = document.getElementById('st-progress-fill');
     if (_fill) _fill.style.width = progress + '%';
 
-    _attr('st-score', 'data-tooltip', formatFullNumber(gameState.score));
-    _set('st-score', formatNumber(gameState.score.floor()));
-    _attr('st-total', 'data-tooltip', formatFullNumber(gameState.totalScore));
-    _set('st-total', formatNumber(gameState.totalScore));
-    _attr('st-lifetime', 'data-tooltip', formatFullNumber(gameState.lifetimeScore));
-    _set('st-lifetime', formatNumber(gameState.lifetimeScore));
+    _attr('st-score', 'data-tooltip', formatFullNumber(store.gameState.score));
+    _set('st-score', formatNumber(store.gameState.score.floor()));
+    _attr('st-total', 'data-tooltip', formatFullNumber(store.gameState.totalScore));
+    _set('st-total', formatNumber(store.gameState.totalScore));
+    _attr('st-lifetime', 'data-tooltip', formatFullNumber(store.gameState.lifetimeScore));
+    _set('st-lifetime', formatNumber(store.gameState.lifetimeScore));
     _attr('st-offline', 'data-tooltip', formatFullNumber(totalOffline));
     _set('st-offline-val', formatNumber(totalOffline));
     _set('st-offline-pct', '(' + offlinePercentText + ')');
 
-    _attr('st-bps', 'data-tooltip', formatFullNumber(bps));
-    _set('st-bps', formatNumber(bps));
+    _attr('st-bps', 'data-tooltip', formatFullNumber(store.bps));
+    _set('st-bps', formatNumber(store.bps));
     _set('st-click', formatNumber(rawClick));
     _set('st-click-mult', '(x' + formatNumber(totalClick) + ')');
-    _set('st-mult', 'x' + formatNumber(prestigeBonus));
-    _set('st-crit', (goldenBugChance * 100).toFixed(2) + '%');
+    _set('st-mult', 'x' + formatNumber(store.prestigeBonus));
+    _set('st-crit', (w.goldenBugChance * 100).toFixed(2) + '%');
 
     const _mv = document.getElementById('st-multiverse');
     if (_mv) {
@@ -2572,10 +2593,29 @@ function updateStatsUI() {
         }
     }
 
-    _set('st-skin', (gameData.skins[gameState.skins.current] ? gameData.skins[gameState.skins.current].name : 'Default'));
-    _set('st-playtime', formatTime(gameState.totalPlayTime));
-    _set('st-clicks', formatNumber(gameState.totalClicks));
-    _set('st-combo', 'x' + formatNumber(gameState.longestCombo || 0));
-    _set('st-resets', formatNumber(gameState.totalResets));
-    _set('st-golden', formatNumber(gameState.totalGoldenBugsClicked || 0));
+    _set('st-skin', (store.gameData.skins[store.gameState.skins.current] ? store.gameData.skins[store.gameState.skins.current].name : 'Default'));
+    _set('st-playtime', formatTime(store.gameState.totalPlayTime));
+    _set('st-clicks', formatNumber(store.gameState.totalClicks));
+    _set('st-combo', 'x' + formatNumber(store.gameState.longestCombo || 0));
+    _set('st-resets', formatNumber(store.gameState.totalResets));
+    _set('st-golden', formatNumber(store.gameState.totalGoldenBugsClicked || 0));
 }
+
+// === shim outbound kill-legacy (TEMPORANEI, rimossi a fine migrazione) ===
+Object.assign(window as any, {
+    formatNumber, showToast, updateUI, updateSkinsUI, applySkinVisuals,
+    updatePrestigeVisuals, updatePrestigeUI, updateStatsUI, updateAchievementsUI,
+    refreshAllStores, updateClickStore, renderPrestigeHubCards, showClickFeedback,
+    bumpScoreDisplay, startMatrixEffect, stopMatrixEffect, showV2MigrationModal,
+    simpleMarkdown, checkTabNotifications, equipSkin,
+    // Extra (non nella lista dei 20 del brief/RENDER_GLOBALS, ma richieste da
+    // tests/e2e/integration.spec.ts, F5 pre-esistente): erano globali implicite
+    // via classic-script prima della migrazione, qui vanno ri-esposte esplicitamente.
+    formatFullNumber, formatTime, loadThemeCSS, updateTabsVisibility, checkOverlayNotifications,
+});
+
+// Forza questo file come modulo ESM agli occhi di tsc (nessuna riga import/export
+// top-level altrimenti): senza questo, le 44 funzioni diventerebbero dichiarazioni
+// globali ambient condivise con l'intero programma TS (typeof globalThis), mascherando
+// per errore assegnazioni window.* non qualificate come valide. Zero impatto runtime.
+export {};

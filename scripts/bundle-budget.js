@@ -15,10 +15,9 @@ const ROOT = path.resolve(__dirname, '..');
 // NOTE: bundle V3 entry include break_eternity.js (~25KB gzip) per drop-in replace
 // della CDN break_infinity. Una volta tolta la CDN dal legacy, il netto è zero.
 const BUDGETS = [
-  { file: 'dist/game.bundle.min.js', maxRaw: 230, maxGzip: 75 },
   { file: 'dist/styles.bundle.min.css', maxRaw: 110, maxGzip: 25 },
   { file: 'dist/styles.mobile.min.css', maxRaw: 25, maxGzip: 6 },
-  { file: 'dist-v3/game.modules.js', maxRaw: 90, maxGzip: 25 },
+  { file: 'dist/game.modules.js', maxRaw: 90, maxGzip: 25 },
 ];
 
 let failed = 0;

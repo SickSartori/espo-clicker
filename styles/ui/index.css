@@ -1,18 +1,16 @@
 /* =====================================================================
    UI moderna — entry (importato da main.ts, bundle Vite).
-   Ordine: tokens base → tokens HUD → reset → primitives → temi.
-   I temi sono opt-in via [data-theme='X'] sull'elemento [data-v3].
+   Ordine: tokens → tokens-hud → lucide → prestige-hub → mobile → desktop.
+   Nota: gli stub tema opt-in [data-theme] (8bit/super/christmas) erano
+   scoped sotto [data-v3], mai impostato su alcun elemento → inerti,
+   rimossi. I temi reali restano i legacy styles/themes/*-theme.css,
+   caricati dinamicamente all'equip skin (vedi docs/css-architecture.md).
    ===================================================================== */
 
 @import './tokens.css';
 @import './tokens-hud.css';
-@import './reset.css';
-@import './primitives.css';
 @import './lucide.css';
 @import './prestige-hub.css';
-@import './themes/8bit.css';
-@import './themes/super.css';
-@import './themes/christmas.css';
 
 /* Mobile fixes — override su mobile.css legacy */
 @import './mobile/modal-close.css';

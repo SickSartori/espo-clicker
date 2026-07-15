@@ -17,7 +17,7 @@ describe('data/achievements via store (reorg B4)', () => {
       try { a.condition(); return true; } catch { return false; }
     });
     expect(runnable.length).toBeGreaterThan(0);
-    store.gameState = undefined; // ripristino
+    store.gameState = undefined as any; // ripristino (runtime undefined; tipo non-opzionale)
   });
 });
 

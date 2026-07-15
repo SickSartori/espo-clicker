@@ -1,43 +1,54 @@
 /* =====================================================================
- * social.js — UI Amici (Fase 3).
+ * social.ts — UI Amici (Fase 3).
  * Cablata sulle Edge Functions Supabase via window.EspoBackend.call().
  * Auth: save_token della sessione (Game.getSaveToken()), come gli altri
  * endpoint (login-register, save-progress, change-*).
  * Vive dentro la tab "Amici" dell'hub nome-utente (#user-hub-modal).
+ *
+ * Migrato da js/social.js (classic script, già wrapped in DOMContentLoaded) a modulo
+ * ESM — kill-legacy periferici. Preservata IDENTICA la guardia di polling
+ * `if (window.EspooClicker) init(); else setInterval(...)`: è ciò che tiene il modulo
+ * order-independent rispetto al boot. I riferimenti a global legacy passano da
+ * `window.*` (alias `w`) perché un modulo strict non li vede.
  * ===================================================================== */
-document.addEventListener('DOMContentLoaded', () => {
+import { store } from '../state/store';
 
-    function initSocial() {
-        const Game = window.EspooClicker;
+export function initSocial(): void {
+  document.addEventListener('DOMContentLoaded', () => {
+    const w = window as any;
+
+    function initSocialBindings() {
+        const Game = w.EspooClicker;
         if (!Game) return;
 
-        const hub  = document.getElementById('user-hub-modal');
+        const hub  = document.getElementById('user-hub-modal') as HTMLElement;
         const pane = hub ? hub.querySelector('.hub-pane[data-hubpane="amici"]') : null;
         if (!pane) return;
 
-        const friendsView  = document.getElementById('friends-view');
-        const searchInput  = document.getElementById('friend-search-input');
+        // Non-null: usati senza guard esplicita altrove nel file (comportamento originale invariato).
+        const friendsView  = document.getElementById('friends-view') as HTMLElement;
+        const searchInput  = document.getElementById('friend-search-input') as HTMLInputElement;
         const searchBtn    = document.getElementById('friend-search-btn');
-        const searchResult = document.getElementById('friend-search-result');
-        const requestsBox  = document.getElementById('friends-requests');
-        const listTitle    = document.getElementById('friends-list-title');
-        const listBox      = document.getElementById('friends-list');
-        const emptyBox     = document.getElementById('friends-empty');
-        const profilePanel = document.getElementById('friend-profile-panel');
+        const searchResult = document.getElementById('friend-search-result') as HTMLElement;
+        const requestsBox  = document.getElementById('friends-requests') as HTMLElement;
+        const listTitle    = document.getElementById('friends-list-title') as HTMLElement;
+        const listBox      = document.getElementById('friends-list') as HTMLElement;
+        const emptyBox     = document.getElementById('friends-empty') as HTMLElement;
+        const profilePanel = document.getElementById('friend-profile-panel') as HTMLElement;
         const badgeEl      = document.getElementById('user-hub-badge');
         const hubAmiciBadge = document.getElementById('hub-amici-badge');
 
-        const T = () => (window.gameData && gameData.texts && gameData.texts.social) || {};
+        const T = () => (store.gameData && store.gameData.texts && store.gameData.texts.social) || {};
 
-        function escapeHTML(str) {
+        function escapeHTML(str: any) {
             if (typeof str !== 'string') return '';
-            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+            return str.replace(/[&<>"']/g, (m: string) => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' } as Record<string, string>)[m] || ''));
         }
 
         // Avatar skin — stessa logica di podio.js (rarità → colore bordo)
-        const rColors = { common: '#bdc3c7', rare: '#3498db', epic: '#9b59b6', legendary: '#f1c40f', divine: '#ffee90', christmas: '#e74c3c' };
-        function skinVisual(skinId) {
-            const skins = (window.gameData && gameData.skins) || {};
+        const rColors: Record<string, string> = { common: '#bdc3c7', rare: '#3498db', epic: '#9b59b6', legendary: '#f1c40f', divine: '#ffee90', christmas: '#e74c3c' };
+        function skinVisual(skinId: any) {
+            const skins = (store.gameData && store.gameData.skins) || {};
             const sd = skins[skinId] || skins['default'] || {};
             return {
                 img: sd.img ? `assets/image/${sd.img}` : 'assets/image/espo.webp',
@@ -47,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // "Online" (< 5 min) oppure "visto Nm/h/g fa" — secondi calcolati lato server
-        function onlineLabel(secs) {
+        function onlineLabel(secs: number | null | undefined) {
             const t = T();
             if (secs === null || secs === undefined) return { cls: 'off', text: t.never || 'mai online' };
             if (secs < 300) return { cls: 'on', text: t.online || 'Online' };
@@ -59,9 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return { cls: 'off', text: (t.lastSeen || 'visto') + ' ' + unit };
         }
 
-        function toast(msg, type) { if (msg && Game.showToast) Game.showToast(msg, type || 'info'); }
+        function toast(msg: any, type?: any) { if (msg && Game.showToast) Game.showToast(msg, type || 'info'); }
 
-        function setBadge(el, n) {
+        function setBadge(el: HTMLElement | null, n: number) {
             if (!el) return;
             if (n > 0) { el.textContent = n > 9 ? '9+' : String(n); el.hidden = false; }
             else { el.hidden = true; }
@@ -70,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // La lista amici è a schermo? (hub aperto, tab Amici attiva, nessun profilo aperto)
         function amiciListVisible() {
             if (!hub || getComputedStyle(hub).display === 'none') return false;
-            if (!pane || getComputedStyle(pane).display === 'none') return false;
+            if (!pane || getComputedStyle(pane as Element).display === 'none') return false;
             return !profilePanel || getComputedStyle(profilePanel).display === 'none';
         }
 
@@ -93,23 +104,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Chiamata a una Edge Function con il token di sessione iniettato
-        async function sb(slug, payload) {
+        async function sb(slug: string, payload?: any) {
             const token = (typeof Game.getSaveToken === 'function') ? Game.getSaveToken() : null;
             if (!token) return { status: 'token_expired', message: 'no-token' };
             try {
-                const res = await window.EspoBackend.call(slug, Object.assign({ save_token: token }, payload || {}));
+                const res = await w.EspoBackend.call(slug, Object.assign({ save_token: token }, payload || {}));
                 return await res.json();
             } catch (e) {
                 return { status: 'error', message: (T().error || 'Errore di rete.') };
             }
         }
 
-        function statusHTML(on) {
+        function statusHTML(on: any) {
             return `<span class="friend-status ${on.cls}">${on.cls === 'on' ? '<i class="fa-solid fa-circle"></i> ' : ''}${escapeHTML(on.text)}</span>`;
         }
 
         // Riga amico/richiesta. context: 'friend' | 'incoming' | 'outgoing'
-        function friendRowHTML(f, context) {
+        function friendRowHTML(f: any, context: string) {
             const sv = skinVisual(f.equippedSkin);
             const on = onlineLabel(f.lastSeenSecondsAgo);
             let actions = '';
@@ -151,21 +162,21 @@ document.addEventListener('DOMContentLoaded', () => {
             let reqHTML = '';
             if (data.incoming && data.incoming.length) {
                 reqHTML += `<div class="friends-section-title">${T().incoming || 'Richieste ricevute'} <span class="cnt alert">${data.incoming.length}</span></div>`;
-                reqHTML += data.incoming.map(f => friendRowHTML(f, 'incoming')).join('');
+                reqHTML += data.incoming.map((f: any) => friendRowHTML(f, 'incoming')).join('');
             }
             if (data.outgoing && data.outgoing.length) {
                 reqHTML += `<div class="friends-section-title">${T().outgoing || 'Richieste inviate'}</div>`;
-                reqHTML += data.outgoing.map(f => friendRowHTML(f, 'outgoing')).join('');
+                reqHTML += data.outgoing.map((f: any) => friendRowHTML(f, 'outgoing')).join('');
             }
             requestsBox.innerHTML = reqHTML;
 
             const friends = data.friends || [];
             _friendsById = {};
-            friends.forEach(f => { _friendsById[f.id] = f; });
+            friends.forEach((f: any) => { _friendsById[f.id] = f; });
             if (friends.length) {
                 listTitle.style.display = '';
                 listTitle.innerHTML = `${T().yourFriends || 'I tuoi amici'} <span class="cnt">${friends.length}</span>`;
-                listBox.innerHTML = friends.map(f => friendRowHTML(f, 'friend')).join('');
+                listBox.innerHTML = friends.map((f: any) => friendRowHTML(f, 'friend')).join('');
             } else {
                 listTitle.style.display = 'none';
                 listBox.innerHTML = '';
@@ -175,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Riga risultato ricerca / suggerimento, con azione in base alla relazione
-        function searchRowHTML(u, relation) {
+        function searchRowHTML(u: any, relation: any) {
             const sv = skinVisual(u.equippedSkin);
             const on = onlineLabel(u.lastSeenSecondsAgo);
             let action;
@@ -196,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ricerca per nome PARZIALE (>=2 caratteri). Con query vuota → suggerimenti
         // (utenti non ancora amici). allowSuggestions=true consente la modalità vuota.
-        async function doSearch(allowSuggestions) {
+        async function doSearch(allowSuggestions?: boolean) {
             const q = (searchInput.value || '').trim();
             if (!q && !allowSuggestions) { searchResult.innerHTML = ''; return; }
             searchResult.innerHTML = `<div class="friends-loading">${(q ? T().searching : T().loading) || '…'}</div>`;
@@ -216,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             let html = '';
             if (data.mode === 'suggestions') html += `<div class="friends-section-title">${T().suggestions || 'Suggeriti'}</div>`;
-            html += results.map(r => searchRowHTML(r.user, r.relation)).join('');
+            html += results.map((r: any) => searchRowHTML(r.user, r.relation)).join('');
             searchResult.innerHTML = html;
         }
 
@@ -225,14 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchResult.innerHTML.trim()) doSearch(true);
         }
 
-        async function sendRequest(id) {
+        async function sendRequest(id: any) {
             const data = await sb('friends-request', { targetId: id });
             toast(data.message || '', data.status === 'success' ? 'success' : 'error');
             refreshSearch();   // la persona aggiunta passa a "in attesa" nella lista
             loadFriends();
         }
 
-        async function respond(id, action) {
+        async function respond(id: any, action: any) {
             const data = await sb('friends-respond', { requesterId: id, action: action });
             if (data.status === 'success') toast(action === 'accept' ? (T().accepted || '') : (T().rejected || ''), 'success');
             else toast(data.message || '', 'error');
@@ -240,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFriends();
         }
 
-        async function removeFriend(id) {
+        async function removeFriend(id: any) {
             if (!confirm(T().removeConfirm || 'Rimuovere questo amico?')) return;
             const data = await sb('friends-remove', { friendId: id });
             if (data.status === 'success') toast(T().removed || '', 'info');
@@ -251,10 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const CHAT_EMOJI = ['👍','😂','😍','🥳','😎','🤩','😭','😡','🔥','💪','🎉','🐛','💀','❤️','👀','🚀'];
         // Frasi preimpostate (whitelist lato server, come le emoji). ò = ò per matchare esattamente.
         const CHAT_PRESETS = ["Espòòòò", "Ciao!", "Ben fatto!", "Bravo!", "Aiutooo!", "Grande!", "Nooo!", "Buona fortuna!"];
-        let _chatFriendId = null, _chatTimer = null, _chatLastCount = -1, _profileFriendId = null, _friendsById = {}, _lastBadgeTotal = -1, _badgeTimer = null;
+        let _chatFriendId: any = null, _chatTimer: any = null, _chatLastCount = -1, _profileFriendId: any = null,
+            _friendsById: Record<string, any> = {}, _lastBadgeTotal = -1, _badgeTimer: any = null;
 
         // "ora" / "5m" / "3h" / "gg/mm" — quando è stato mandato
-        function msgTime(iso) {
+        function msgTime(iso: any) {
             const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
             if (s < 60) return 'ora';
             if (s < 3600) return Math.floor(s / 60) + 'm';
@@ -263,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2);
         }
 
-        function chatMsgHTML(m) {
+        function chatMsgHTML(m: any) {
             const isPreset = CHAT_EMOJI.indexOf(m.emoji) === -1; // testo (preset) se non è un'emoji della palette
             const time = m.created_at ? msgTime(m.created_at) : '';
             return `<div class="fp-msg ${m.mine ? 'mine' : 'theirs'}">` +
@@ -272,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `</div>`;
         }
 
-        function renderChatBubbles(messages) {
+        function renderChatBubbles(messages: any[]) {
             const log = document.getElementById('fp-chat-log');
             if (!log) return;
             if (!messages.length) {
@@ -283,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
             log.scrollTop = log.scrollHeight;
         }
 
-        async function loadChat(friendId, silent) {
+        async function loadChat(friendId: any, silent?: boolean) {
             const data = await sb('friends-messages', { friendId: friendId });
             if (!data || data.status !== 'success') return;
             const msgs = data.messages || [];
@@ -292,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatBubbles(msgs);
         }
 
-        async function sendEmoji(emoji) {
+        async function sendEmoji(emoji: string) {
             if (!_chatFriendId) return;
             const log = document.getElementById('fp-chat-log');
             if (log) { // append ottimistico
@@ -307,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadChat(_chatFriendId, false);
         }
 
-        async function startChat(friendId) {
+        async function startChat(friendId: any) {
             _chatFriendId = friendId;
             _chatLastCount = -1;
             const presetBox = document.querySelector('#friend-profile-panel .fp-chat-presets');
@@ -328,10 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Sotto-tab del profilo amico: Statistiche | Armadietto | Chat
-        function setFpTab(target) {
+        function setFpTab(target: any) {
             profilePanel.querySelectorAll('.fp-tab').forEach(t =>
                 t.classList.toggle('active', t.getAttribute('data-fptab') === target));
-            profilePanel.querySelectorAll('.fp-pane').forEach(p => {
+            (profilePanel.querySelectorAll('.fp-pane') as NodeListOf<HTMLElement>).forEach(p => {
                 const on = p.getAttribute('data-fppane') === target;
                 p.classList.toggle('active', on);
                 p.style.display = on ? '' : 'none';
@@ -345,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ---- Pannello profilo amico ----
-        async function openProfile(id) {
+        async function openProfile(id: any) {
             friendsView.style.display = 'none';
             profilePanel.style.display = '';
             profilePanel.innerHTML = `<div class="friends-loading">${T().loading || 'Carico…'}</div>`;
@@ -361,13 +373,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const p = data.profile, sv = skinVisual(p.equippedSkin), on = onlineLabel(p.lastSeenSecondsAgo);
             const stashed = _friendsById[id];
             const preUnseen = (stashed && stashed.unseen > 0) ? stashed.unseen : 0;
-            const fmt = (v) => (v === null || v === undefined) ? '—' : (Game.formatNumber ? Game.formatNumber(v) : v);
+            const fmt = (v: any) => (v === null || v === undefined) ? '—' : (Game.formatNumber ? Game.formatNumber(v) : v);
             const playH = (p.totalPlayTime != null) ? (p.totalPlayTime / 3600000).toFixed(1) + 'h' : '—';
             const combo = (p.longestCombo != null) ? p.longestCombo : '—';
 
             const unlocked = Array.isArray(p.skinsUnlocked) ? p.skinsUnlocked : [];
             const locker = unlocked.length
-                ? unlocked.map(sid => { const s = skinVisual(sid); return `<div class="locker-skin" title="${escapeHTML(s.name)}"><img src="${s.img}" style="border-color:${s.border}" alt=""></div>`; }).join('')
+                ? unlocked.map((sid: any) => { const s = skinVisual(sid); return `<div class="locker-skin" title="${escapeHTML(s.name)}"><img src="${s.img}" style="border-color:${s.border}" alt=""></div>`; }).join('')
                 : `<div class="friends-noresult">${T().noSkins || '—'}</div>`;
 
             profilePanel.innerHTML = `
@@ -423,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ---- Eventi (delega su tutta la pane) ----
         const searchClear = document.getElementById('friend-search-clear');
         function toggleClear() { if (searchClear) searchClear.hidden = !(searchInput && (searchInput.value || '').trim()); }
-        let _searchTimer = null;
+        let _searchTimer: any = null;
         if (searchInput) {
             // Ricerca live mentre si digita (debounce)
             searchInput.addEventListener('input', () => { toggleClear(); clearTimeout(_searchTimer); _searchTimer = setTimeout(() => doSearch(true), 280); });
@@ -434,23 +446,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchClear) searchClear.addEventListener('click', () => { searchInput.value = ''; toggleClear(); searchInput.focus(); doSearch(true); });
         if (searchBtn) searchBtn.addEventListener('click', () => { clearTimeout(_searchTimer); doSearch(true); });
 
-        pane.addEventListener('click', (e) => {
-            const add = e.target.closest('[data-add]');
+        (pane as Element).addEventListener('click', (e) => {
+            const add = (e.target as HTMLElement).closest('[data-add]');
             if (add) { sendRequest(add.getAttribute('data-add')); return; }
-            const mini = e.target.closest('.friend-mini-btn[data-act]');
+            const mini = (e.target as HTMLElement).closest('.friend-mini-btn[data-act]');
             if (mini) { respond(mini.getAttribute('data-id'), mini.getAttribute('data-act')); return; }
-            const open = e.target.closest('[data-open]');
+            const open = (e.target as HTMLElement).closest('[data-open]');
             if (open) { openProfile(open.getAttribute('data-open')); return; }
-            const fptab = e.target.closest('.fp-tab[data-fptab]');
+            const fptab = (e.target as HTMLElement).closest('.fp-tab[data-fptab]');
             if (fptab) { setFpTab(fptab.getAttribute('data-fptab')); return; }
-            const back = e.target.closest('.fp-back');
+            const back = (e.target as HTMLElement).closest('.fp-back');
             if (back) { loadFriends(); return; }   // ricarica: i badge per-amico riflettono i messaggi ora letti
-            const rem = e.target.closest('[data-remove]');
+            const rem = (e.target as HTMLElement).closest('[data-remove]');
             if (rem) { removeFriend(rem.getAttribute('data-remove')); return; }
-            const emo = e.target.closest('.fp-emoji-btn[data-emoji]');
-            if (emo) { sendEmoji(emo.getAttribute('data-emoji')); return; }
-            const pre = e.target.closest('.fp-preset-btn[data-preset]');
-            if (pre) { sendEmoji(pre.getAttribute('data-preset')); return; }
+            const emo = (e.target as HTMLElement).closest('.fp-emoji-btn[data-emoji]');
+            if (emo) { sendEmoji(emo.getAttribute('data-emoji') as string); return; }
+            const pre = (e.target as HTMLElement).closest('.fp-preset-btn[data-preset]');
+            if (pre) { sendEmoji(pre.getAttribute('data-preset') as string); return; }
         });
 
         // Testi statici (placeholder + stato vuoto) dalla lingua attiva
@@ -474,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFriends();
         });
 
-        window.EspoSocial = { reload: loadFriends, refreshBadge: updateBadge };
+        w.EspoSocial = { reload: loadFriends, refreshBadge: updateBadge };
         // Polling adattivo: ~15s mentre l'hub è aperto (lista sotto gli occhi),
         // 45s in background. Un solo timer che si ripianifica in base a cosa è visibile.
         function badgeLoop() {
@@ -486,8 +498,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(badgeLoop, 3000);   // primo controllo poco dopo il login
     }
 
-    if (window.EspooClicker) initSocial();
+    if (w.EspooClicker) initSocialBindings();
     else {
-        const iv = setInterval(() => { if (window.EspooClicker) { clearInterval(iv); initSocial(); } }, 50);
+        const iv = setInterval(() => { if (w.EspooClicker) { clearInterval(iv); initSocialBindings(); } }, 50);
     }
-});
+  });
+}

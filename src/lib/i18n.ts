@@ -5,12 +5,13 @@
  * window.APP_LANG è inline in index.php (parse-time) → disponibile qui.
  */
 import { applyLanguage as applyOverlay } from '../core/i18n/overlay';
+import { store } from '../state/store';
 
 export function installI18n(): void {
     if (typeof window === 'undefined') return;
 
     (window as any).applyLanguage = function (lang: string) {
-        return applyOverlay((window as any).gameData, lang);
+        return applyOverlay(store.gameData, lang);
     };
 
     // Applica subito: il modulo gira prima del render (initializeGame nel bundle).

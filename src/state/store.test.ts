@@ -30,6 +30,6 @@ describe('state/store (reorg filone A)', () => {
     const s = { score: 1 } as any;
     store.gameState = s;
     expect(store.gameState).toBe(s);
-    store.gameState = undefined; // ripristino
+    store.gameState = undefined as any; // ripristino (runtime undefined; il tipo è non-opzionale)
   });
 });

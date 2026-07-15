@@ -1,36 +1,49 @@
+/**
+ * Logica di gioco: economia/acquisti, eventi runtime (golden bug, crunch, bluescreen),
+ * achievement, prestigio-orchestrazione, e il sottosistema audio (AudioManager/FX).
+ *
+ * Migrato da js/game-logic.js (classic script) a modulo ESM — Blocco #1 kill-legacy.
+ * Le 49 funzioni + 4 object-literal sono dichiarazioni top-level (nessun DOMContentLoaded
+ * wrapper). Nessun accesso top-level a window.EspoV3 → nessun lazy-getter. I riferimenti
+ * a global legacy (gameState/gameData/Decimal/updateUI/…) passano da `window.*` (alias `w`)
+ * perché un modulo strict non li vede. Le funzioni/oggetti consumati da altri file / test /
+ * cheatboard sono ri-esposti in coda (shim TEMPORANEI, rimossi a fine migrazione).
+ */
+const w = window as any;
+import { store } from '../state/store';
+
 // --- GESTIONE CONFLITTI EVENTI (SEMAFORO) ---
-let fireParticleInterval = null;
 let lastRicardoVideoId = null;
 
-window.currentActiveEvent = null; // Il "Semaforo"
-let audioGlitchInterval = null;
-let lastVideoPlayedId = null;
+w.currentActiveEvent = null; // Il "Semaforo"
+let audioGlitchInterval: any = null;
+let lastVideoPlayedId: any = null;
 
 const RewardHandlers = {
     // Aggiunge Bug al wallet
-    bugs: (value) => {
-        let val = new Decimal(value);
-        gameState.score = gameState.score.add(val);
-        gameState.totalScore = gameState.totalScore.add(val);
-        gameState.lifetimeScore = gameState.lifetimeScore.add(val);
-        return `+${formatNumber(val)} Bug!`;
+    bugs: (value: any) => {
+        let val = new w.Decimal(value);
+        store.gameState.score = store.gameState.score.add(val);
+        store.gameState.totalScore = store.gameState.totalScore.add(val);
+        store.gameState.lifetimeScore = store.gameState.lifetimeScore.add(val);
+        return `+${w.formatNumber(val)} Bug!`;
     },
     // Aggiunge Token Prestigio
-    prestige: (value) => {
-        let val = new Decimal(value);
-        gameState.prestigePoints = gameState.prestigePoints.add(val);
-        return `+${formatNumber(val)} Token Lab!`;
+    prestige: (value: any) => {
+        let val = new w.Decimal(value);
+        store.gameState.prestigePoints = store.gameState.prestigePoints.add(val);
+        return `+${w.formatNumber(val)} Token Lab!`;
     },
     // Sblocca una Skin (Invariato)
-    skin: (skinId) => {
-        if (!gameState.skins.unlocked.includes(skinId)) {
-            gameState.skins.unlocked.push(skinId);
-            const skinName = gameData.skins[skinId] ? gameData.skins[skinId].name : skinId;
-            return gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
+    skin: (skinId: any) => {
+        if (!store.gameState.skins.unlocked.includes(skinId)) {
+            store.gameState.skins.unlocked.push(skinId);
+            const skinName = store.gameData.skins[skinId] ? store.gameData.skins[skinId].name : skinId;
+            return store.gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
         }
         return null;
     },
-    multiplier: (value) => {
+    multiplier: (value: any) => {
         return `Bonus BPS x${value} Attivo!`;
     },
     spawnGolden: () => {
@@ -43,15 +56,15 @@ const RewardHandlers = {
  * Funzione generica per assegnare un premio
  * @param {Object} reward - Oggetto ricompensa {type, value/id}
  */
-function grantReward(reward) {
-    if (!reward || !RewardHandlers[reward.type]) return;
+function grantReward(reward: any) {
+    if (!reward || !(RewardHandlers as any)[reward.type]) return;
 
     // Chiama l'handler specifico passandogli il valore o l'ID
-    const message = RewardHandlers[reward.type](reward.value || reward.id);
+    const message = (RewardHandlers as any)[reward.type](reward.value || reward.id);
 
     // Mostra il toast solo se l'handler ha restituito un messaggio
     if (message) {
-        window.EspooClicker.showToast(gameData.texts.toasts.rewardClaimed.replace('{message}', message), 'reward');
+        w.EspooClicker.showToast(store.gameData.texts.toasts.rewardClaimed.replace('{message}', message), 'reward');
     }
 }
 
@@ -59,15 +72,15 @@ function grantReward(reward) {
  * Calcola il costo scalato per i potenziamenti del Laboratorio (Prestigio)
  * Formula: CostoBase * (Moltiplicatore ^ Livello)
  */
-function calculatePrestigeUpgradeCost(upgradeKey) {
-    const data = gameData.prestigeUpgrades[upgradeKey];
-    const state = gameState.prestigeUpgrades[upgradeKey];
+function calculatePrestigeUpgradeCost(upgradeKey: any) {
+    const data = store.gameData.prestigeUpgrades[upgradeKey];
+    const state = store.gameState.prestigeUpgrades[upgradeKey];
     // F6 -> F8: formula in EspoV3.economy col Decimal della pagina (bit-identico).
-    return window.EspoV3.economy.prestigeUpgradeCost(Decimal, {
+    return window.EspoV3.economy.prestigeUpgradeCost(w.Decimal, {
         isCounted: !!data.isCounted,
         baseCost: data.baseCost,
         count: (state && state.count) || 0,
-        qDiscount: !!(gameState.superUpgrades && gameState.superUpgrades.qDiscount && gameState.superUpgrades.qDiscount.purchased),
+        qDiscount: !!(store.gameState.superUpgrades && store.gameState.superUpgrades.qDiscount && store.gameState.superUpgrades.qDiscount.purchased),
     });
 }
 
@@ -77,122 +90,122 @@ function calculatePrestigeUpgradeCost(upgradeKey) {
  */
 function getPrestigeThreshold() {
     // F6 -> F8: soglia base * 3^resets in EspoV3.economy (bit-identico).
-    return window.EspoV3.economy.prestigeThreshold(Decimal, gameState.totalResets || 0);
+    return window.EspoV3.economy.prestigeThreshold(w.Decimal, store.gameState.totalResets || 0);
 }
 
-function checkEventConflict(newEventName) {
-    if (window.currentActiveEvent) {
-        window.EspooClicker.showToast(`⛔ Occupato: Evento "${window.currentActiveEvent}" in corso!`, 'error');
+function checkEventConflict(newEventName: any) {
+    if (w.currentActiveEvent) {
+        w.EspooClicker.showToast(`⛔ Occupato: Evento "${w.currentActiveEvent}" in corso!`, 'error');
         return true;
     }
-    window.currentActiveEvent = newEventName;
+    w.currentActiveEvent = newEventName;
     return false;
 }
 
 function clearActiveEvent() {
-    console.log(`Evento "${window.currentActiveEvent}" terminato.`);
+    console.log(`Evento "${w.currentActiveEvent}" terminato.`);
 
-    if (window.currentActiveEvent === 'Audio Mixer') {
-        window.preMixerEvent = null;
+    if (w.currentActiveEvent === 'Audio Mixer') {
+        w.preMixerEvent = null;
         console.log("Evento scaduto durante il Mixer. Backup pulito.");
     } else {
         // Comportamento standard
-        window.currentActiveEvent = null;
+        w.currentActiveEvent = null;
     }
 }
 
 // --------- SISTEMA DI UPGRADE GENERICO (NEW) ---------
 
 // Applica un singolo effetto
-function applyEffect(effect, level = 1) {
+function applyEffect(effect: any, level = 1) {
     if (!effect)
         return;
 
-    let lvl = new Decimal(level);
+    let lvl = new w.Decimal(level);
 
     if (effect.type === 'mult_state') {
-        if (gameState.hasOwnProperty(effect.stat))
-            gameState[effect.stat] = gameState[effect.stat].mul(effect.val);
+        if (store.gameState.hasOwnProperty(effect.stat))
+            store.gameState[effect.stat] = store.gameState[effect.stat].mul(effect.val);
     }
     else if (effect.type === 'mult_global') {
-        if (window.hasOwnProperty(effect.stat)) {
+        if (w.hasOwnProperty(effect.stat)) {
             // Gestione Ibrida: Se la variabile target è Decimal usa .mul, altrimenti *
-            if (window[effect.stat] instanceof Decimal) {
-                let value = new Decimal(effect.val);
-                window[effect.stat] = window[effect.stat].mul(value);
+            if (w[effect.stat] instanceof w.Decimal) {
+                let value = new w.Decimal(effect.val);
+                w[effect.stat] = w[effect.stat].mul(value);
             }
             else
-                window[effect.stat] *= effect.val;
+                w[effect.stat] *= effect.val;
         }
     }
     else if (effect.type === 'add_mult_per_level') {
-        if (window.hasOwnProperty(effect.stat)) {
-            let value = new Decimal(effect.val);
+        if (w.hasOwnProperty(effect.stat)) {
+            let value = new w.Decimal(effect.val);
             let bonus = value.mul(lvl);
 
-            if (window[effect.stat] instanceof Decimal)
-                window[effect.stat] = window[effect.stat].add(bonus);
+            if (w[effect.stat] instanceof w.Decimal)
+                w[effect.stat] = w[effect.stat].add(bonus);
             else
-                window[effect.stat] += (effect.val * level);
+                w[effect.stat] += (effect.val * level);
         }
     }
     else if (effect.type === 'add_global_stat_per_level') {
-        if (window.hasOwnProperty(effect.stat)) {
-            let value = new Decimal(effect.val);
+        if (w.hasOwnProperty(effect.stat)) {
+            let value = new w.Decimal(effect.val);
             let bonus = value.mul(lvl);
 
-            if (window[effect.stat] instanceof Decimal)
-                window[effect.stat] = window[effect.stat].add(bonus);
+            if (w[effect.stat] instanceof w.Decimal)
+                w[effect.stat] = w[effect.stat].add(bonus);
             else
-                window[effect.stat] += (effect.val * level);
+                w[effect.stat] += (effect.val * level);
         }
     }
     else if (effect.type === 'set_flag')
-        window.gameFlags[effect.flag] = effect.val;
+        w.gameFlags[effect.flag] = effect.val;
 }
 
 // Ricalcola tutti gli effetti passivi
 function reapplyAllEffects() {
     // Reset Totale
-    window.goldenBugChance = 0.001;
-    window.goldenBugMult = new Decimal(1);
-    window.goldenBugSpawnTime = 60000;
-    window.clickGlobalMult = new Decimal(1);
-    window.clickCPSBonus = new Decimal(1);
-    window.costScalingReduction = 0;
-    window.prestigeSynergyFactor = new Decimal(0);
+    w.goldenBugChance = 0.001;
+    w.goldenBugMult = new w.Decimal(1);
+    w.goldenBugSpawnTime = 60000;
+    w.clickGlobalMult = new w.Decimal(1);
+    store.clickCPSBonus = new w.Decimal(1);
+    w.costScalingReduction = 0;
+    w.prestigeSynergyFactor = new w.Decimal(0);
 
-    window.gameFlags = {};
+    w.gameFlags = {};
 
     // Click Upgrades
-    for (const key in gameState.clickUpgrades) {
-        if (gameState.clickUpgrades[key].purchased) {
-            const data = gameData.clickUpgrades[key];
-            if (data && data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+    for (const key in store.gameState.clickUpgrades) {
+        if (store.gameState.clickUpgrades[key].purchased) {
+            const data = store.gameData.clickUpgrades[key];
+            if (data && data.effects) data.effects.forEach((eff: any) => { if (eff.trigger === 'passive') applyEffect(eff); });
         }
     }
 
     // Prestige Upgrades
-    for (const key in gameState.prestigeUpgrades) {
-        const state = gameState.prestigeUpgrades[key];
-        const data = gameData.prestigeUpgrades[key];
+    for (const key in store.gameState.prestigeUpgrades) {
+        const state = store.gameState.prestigeUpgrades[key];
+        const data = store.gameData.prestigeUpgrades[key];
 
         if (!data) continue;
 
         if ((data.isCounted && state.count > 0) || (!data.isCounted && state.purchased)) {
-            if (data.effects) data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
+            if (data.effects) data.effects.forEach((eff: any) => { if (eff.trigger === 'passive') applyEffect(eff, state.count || 1); });
         }
     }
 
     // Super Upgrades (Q-Lab)
-    if (gameState.superUpgrades) {
-        for (const key in gameState.superUpgrades) {
-            const state = gameState.superUpgrades[key];
-            const data = gameData.superUpgrades[key];
+    if (store.gameState.superUpgrades) {
+        for (const key in store.gameState.superUpgrades) {
+            const state = store.gameState.superUpgrades[key];
+            const data = store.gameData.superUpgrades[key];
             if (!data) continue;
             
             if (state.purchased && data.effects) {
-                data.effects.forEach(eff => { if (eff.trigger === 'passive') applyEffect(eff); });
+                data.effects.forEach((eff: any) => { if (eff.trigger === 'passive') applyEffect(eff); });
             }
         }
     }
@@ -200,28 +213,29 @@ function reapplyAllEffects() {
 
 // --------- 3. AUDIO MANAGER CENTRALIZZATO (Howler.js) ---------
 const AudioManager = {
-    _sounds: {},        // Cache Howl instances: { 'sound-click': Howl, ... }
+    _sounds: {} as Record<string, any>,        // Cache Howl instances: { 'sound-click': Howl, ... }
     _currentMusic: null, // ID della traccia musicale attualmente in play
     _musicDuck: 1,       // Moltiplicatore volume SOLO musica (1=pieno). Abbassato durante l'intro.
     _audioUnlocked: false,
     _pendingPlay: new Set(), // Tracce con play accodato ma non ancora confermato da Howler
-    _ambienceTimer: null,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
+    _ambienceTimer: null as any,    // Debounce: evita chiamate multiple a updateAmbience() in rapida
                              // successione (boot, cloud sync, listener) → un solo play per ciclo
     _promptEl: null,         // Riferimento all'elemento DOM del banner "clicca per l'audio"
+    _lastClickSound: 0,      // Timestamp ultimo click sound (throttle anti-spam)
 
     init() {
         // Registra tutti i suoni definiti in gameData.assets.sounds come Howl instances.
         // Su R2: l'URL firmato deve essere già stato prefetchato (window.CDN.prefetch())
         // prima di chiamare init(). Se non c'è cache, fallback al path locale.
-        for (const key in gameData.assets.sounds) {
-            const sound = gameData.assets.sounds[key];
+        for (const key in store.gameData.assets.sounds) {
+            const sound = store.gameData.assets.sounds[key];
             const localSrc = sound.file.includes('/') ? sound.file : `assets/sounds/${sound.file}`;
 
             // Prova prima URL firmato sync (cache R2), altrimenti locale
-            const signed = (window.CDN && window.CDN.urlSync) ? window.CDN.urlSync(localSrc) : null;
+            const signed = (w.CDN && w.CDN.urlSync) ? w.CDN.urlSync(localSrc) : null;
             const src = signed ? [signed] : [localSrc];
 
-            this._sounds[sound.id] = new Howl({
+            this._sounds[sound.id] = new w.Howl({
                 src: src,
                 volume: 0, // Impostato dinamicamente al play
                 loop: !!sound.loop,
@@ -243,7 +257,7 @@ const AudioManager = {
                         this._audioUnlocked = true;
                         const onGesture = () => {
                             this._hideAudioPrompt();
-                            const ctx = Howler.ctx;
+                            const ctx = w.Howler.ctx;
                             if (ctx && ctx.state === 'suspended') {
                                 ctx.resume().catch(() => {});
                             }
@@ -255,14 +269,14 @@ const AudioManager = {
                         this._showAudioPrompt();
                     }
                 },
-                onloaderror: (id, err) => {
+                onloaderror: (id: any, err: any) => {
                     console.warn(`[Audio] Errore caricamento ${sound.id}:`, err);
                     // Fallback R2 → locale: ricostruisci Howl con sola src locale
                     const current = this._sounds[sound.id];
                     if (signed && current && !current._cdnFallbackUsed) {
                         console.warn('[CDN] Audio fail, fallback locale:', sound.id);
                         try { current.unload(); } catch (e) {}
-                        const replacement = new Howl({
+                        const replacement = new w.Howl({
                             src: [localSrc],
                             volume: 0,
                             loop: !!sound.loop,
@@ -277,7 +291,7 @@ const AudioManager = {
             });
         }
 
-        this._audioUnlocked = Howler.ctx && Howler.ctx.state === 'running';
+        this._audioUnlocked = w.Howler.ctx && w.Howler.ctx.state === 'running';
         // NON chiamare updateAmbience() qui: i Howl sono appena creati e non è ancora
         // noto se l'utente è loggato. Il play parte da tryStartAudio() che viene
         // chiamata subito dopo da tryStart() e/o dal setTimeout post-loader.
@@ -294,18 +308,18 @@ const AudioManager = {
         if (btn) btn.classList.remove('is-blocked');
     },
 
-    getCustomVolume(id) {
-        if (gameState && gameState.user && gameState.user.audioCustom) {
-            const val = gameState.user.audioCustom[id];
+    getCustomVolume(id: any) {
+        if (store.gameState && store.gameState.user && store.gameState.user.audioCustom) {
+            const val = store.gameState.user.audioCustom[id];
             return (val !== undefined) ? val : 1.0;
         }
         return 1.0;
     },
 
-    _calcVolume(id, type, mult) {
-        const master = gameState.user.masterVolume || 0;
+    _calcVolume(id: any, type: any, mult?: any) {
+        const master = store.gameState.user.masterVolume || 0;
         if (master <= 0) return 0;
-        const channel = (type === 'music') ? gameState.user.musicVolume : gameState.user.sfxVolume;
+        const channel = (type === 'music') ? store.gameState.user.musicVolume : store.gameState.user.sfxVolume;
         const custom = this.getCustomVolume(id);
         const duck = (type === 'music') ? this._musicDuck : 1;
         return Math.max(0, Math.min(1, master * channel * custom * duck * (mult || 1)));
@@ -313,12 +327,12 @@ const AudioManager = {
 
     // Duck musica (0..1): abbassa SOLO le tracce musicali (es. durante l'intro,
     // così non copre gli SFX/il reveal); setMusicDuck(1) ripristina con re-fade.
-    setMusicDuck(factor) {
+    setMusicDuck(factor: any) {
         this._musicDuck = (typeof factor === 'number') ? Math.max(0, Math.min(1, factor)) : 1;
         this.updateAmbience();
     },
 
-    play(id, type = 'sfx') {
+    play(id: any, type = 'sfx') {
         const howl = this._sounds[id];
         if (!howl) return;
         const vol = this._calcVolume(id, type);
@@ -337,7 +351,7 @@ const AudioManager = {
     },
 
     // Ferma un suono specifico con fade-out opzionale
-    stop(id, fadeMs) {
+    stop(id: any, fadeMs: any) {
         const howl = this._sounds[id];
         if (!howl) return;
         if (howl._fadeStopTimer) { clearTimeout(howl._fadeStopTimer); howl._fadeStopTimer = null; }
@@ -363,7 +377,7 @@ const AudioManager = {
         if (document.body.classList.contains('super-star-active')) {
             soundId = 'sound-click';
         } else if (document.body.classList.contains('crunch-active')) {
-            if (gameState.skins.current === 'superespo') soundId = 'sound-fireball';
+            if (store.gameState.skins.current === 'superespo') soundId = 'sound-fireball';
         }
 
         const howl = this._sounds[soundId];
@@ -372,7 +386,7 @@ const AudioManager = {
         let rate = 1.0;
         let volumeMult = 1.0;
 
-        if (isBluescreenActive && !document.body.classList.contains('super-star-active')) {
+        if (store.isBluescreenActive && !document.body.classList.contains('super-star-active')) {
             if (document.body.classList.contains('rick-rolling')) {
                 volumeMult = 0.2;
             } else {
@@ -412,13 +426,13 @@ const AudioManager = {
 
         // Raccogli tutte le tracce musicali
         const allMusicIds = [];
-        for (const key in gameData.assets.sounds) {
-            if (gameData.assets.sounds[key].type === 'music') {
-                allMusicIds.push(gameData.assets.sounds[key].id);
+        for (const key in store.gameData.assets.sounds) {
+            if (store.gameData.assets.sounds[key].type === 'music') {
+                allMusicIds.push(store.gameData.assets.sounds[key].id);
             }
         }
-        for (const key in gameData.skins) {
-            const conf = gameData.skins[key].themeConfig;
+        for (const key in store.gameData.skins) {
+            const conf = store.gameData.skins[key].themeConfig;
             if (conf && conf.specialMusic && !allMusicIds.includes(conf.specialMusic)) {
                 allMusicIds.push(conf.specialMusic);
             }
@@ -427,26 +441,26 @@ const AudioManager = {
         // Risolvi quale traccia suonare (sistema priorità)
         let targetTrackId = null;
 
-        if (window.currentActiveEvent === 'Audio Mixer') {
+        if (w.currentActiveEvent === 'Audio Mixer') {
             targetTrackId = null;
         } else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
-        } else if (gameState.crunchTimeEndTime > Date.now()) {
+        } else if (store.gameState.crunchTimeEndTime > Date.now()) {
             targetTrackId = 'sound-fury-music';
-        } else if (isBluescreenActive) {
+        } else if (store.isBluescreenActive) {
             if (document.body.classList.contains('matrix-active')) {
                 targetTrackId = 'sound-matrix';
             } else if (document.body.classList.contains('super-star-active')) {
                 targetTrackId = 'sound-star';
             } else {
-                targetTrackId = (gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
+                targetTrackId = (store.gameState.skins.current === 'christmas') ? 'sound-snowball' : 'sound-bluescreen';
             }
         } else {
-            const currentSkin = gameData.skins[gameState.skins.current] || gameData.skins['default'];
+            const currentSkin = store.gameData.skins[store.gameState.skins.current] || store.gameData.skins['default'];
             if (currentSkin.themeConfig && currentSkin.themeConfig.specialMusic) {
                 targetTrackId = currentSkin.themeConfig.specialMusic;
             } else {
-                targetTrackId = gameState.user.bgMusicSelection || 'sound-bg-music';
+                targetTrackId = store.gameState.user.bgMusicSelection || 'sound-bg-music';
             }
         }
 
@@ -459,7 +473,7 @@ const AudioManager = {
                 const vol = this._calcVolume(id, 'music');
 
                 // Eccezione glitch natalizio
-                if (id === 'sound-snowball' && isBluescreenActive && gameState.skins.current === 'christmas') {
+                if (id === 'sound-snowball' && store.isBluescreenActive && store.gameState.skins.current === 'christmas') {
                     return; // Gestito da audioGlitchInterval
                 }
 
@@ -498,15 +512,15 @@ const AudioManager = {
     },
 
     // Helper: trova la definizione di un suono dal suo ID
-    _getSoundDef(id) {
-        for (const key in gameData.assets.sounds) {
-            if (gameData.assets.sounds[key].id === id) return gameData.assets.sounds[key];
+    _getSoundDef(id: any) {
+        for (const key in store.gameData.assets.sounds) {
+            if (store.gameData.assets.sounds[key].id === id) return store.gameData.assets.sounds[key];
         }
         return null;
     },
 
     // Aggiorna il volume di un suono specifico (usato dal mixer)
-    setVolume(id, volume) {
+    setVolume(id: any, volume: any) {
         const howl = this._sounds[id];
         if (howl && howl.playing()) {
             howl.volume(Math.max(0, Math.min(1, volume)));
@@ -514,7 +528,7 @@ const AudioManager = {
     },
 
     // Ritorna l'istanza Howl per uso diretto (es. glitch interval)
-    getHowl(id) {
+    getHowl(id: any) {
         return this._sounds[id] || null;
     }
 };
@@ -526,21 +540,21 @@ const FX = {
     // Screen shake — scuote il game-container
     shake(intensity = 4, duration = 0.25) {
         const el = document.getElementById('game-container');
-        if (!el || typeof gsap === 'undefined') return;
-        gsap.killTweensOf(el, 'x,y');
-        gsap.to(el, {
+        if (!el || typeof w.gsap === 'undefined') return;
+        w.gsap.killTweensOf(el, 'x,y');
+        w.gsap.to(el, {
             x: () => (Math.random() - 0.5) * intensity,
             y: () => (Math.random() - 0.5) * intensity,
             duration: 0.04,
             repeat: Math.floor(duration / 0.04),
             yoyo: true,
             ease: 'power1.inOut',
-            onComplete: () => gsap.set(el, { x: 0, y: 0 })
+            onComplete: () => w.gsap.set(el, { x: 0, y: 0 })
         });
     },
 
     // Haptic vibration (mobile)
-    vibrate(pattern) {
+    vibrate(pattern: any) {
         if (navigator.vibrate) {
             navigator.vibrate(pattern || 15);
         }
@@ -548,7 +562,7 @@ const FX = {
 
     // Impact flash — breve lampo bianco/colorato sullo schermo
     flash(color = 'rgba(255,255,255,0.15)', duration = 0.12) {
-        if (typeof gsap === 'undefined') return;
+        if (typeof w.gsap === 'undefined') return;
         let overlay = document.getElementById('fx-flash-overlay');
         if (!overlay) {
             overlay = document.createElement('div');
@@ -557,8 +571,8 @@ const FX = {
             document.body.appendChild(overlay);
         }
         overlay.style.background = color;
-        gsap.killTweensOf(overlay);
-        gsap.fromTo(overlay,
+        w.gsap.killTweensOf(overlay);
+        w.gsap.fromTo(overlay,
             { opacity: 1 },
             { opacity: 0, duration: duration, ease: 'power2.out' }
         );
@@ -567,13 +581,13 @@ const FX = {
     // Glow ring — anello espansivo dal clicker button
     glowRing(color = '#ff4757') {
         const btn = document.getElementById('clicker-btn');
-        if (!btn || typeof gsap === 'undefined') return;
+        if (!btn || typeof w.gsap === 'undefined') return;
         const ring = document.createElement('div');
         ring.style.cssText = `position:absolute;top:50%;left:50%;width:100%;height:100%;
             border-radius:50%;border:2px solid ${color};pointer-events:none;
             transform:translate(-50%,-50%) scale(1);opacity:0.8;z-index:5`;
         btn.appendChild(ring);
-        gsap.to(ring, {
+        w.gsap.to(ring, {
             scale: 1.8,
             opacity: 0,
             duration: 0.5,
@@ -584,8 +598,9 @@ const FX = {
 
     // Combo tracker
     _comboCount: 0,
-    _comboTimer: null,
+    _comboTimer: null as any,
     _comboThreshold: 350, // ms tra click per mantenere combo (margine ampio = combo più facili)
+    _lastComboFx: 0, // timestamp ultimo FX combo
 
     registerClick() {
         // Durante eventi video il combo overlay copre il video — lo sopprimiamo
@@ -595,26 +610,26 @@ const FX = {
             this._comboCount = 0;
             clearTimeout(this._comboTimer);
             this._hideComboDisplay();
-            if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.decay();
+            if (typeof w.EsposionFX !== 'undefined' && w.EsposionFX.isActive()) w.EsposionFX.decay();
             this.vibrate(10);
             return 0;
         }
 
         // +1 normalmente; il cheat di test (cheatboard, max ×3) fa salire la combo
         // più in fretta per provare le fasi alte / lo sblocco senza 150+ click.
-        this._comboCount += (window.cheatComboMult || 1);
+        this._comboCount += (w.cheatComboMult || 1);
 
         // Record combo più lunga (statistica lifetime, persiste su prestige/format)
-        if (typeof gameState !== 'undefined' && gameState &&
-            this._comboCount > (gameState.longestCombo || 0)) {
-            gameState.longestCombo = this._comboCount;
+        if (typeof store.gameState !== 'undefined' && store.gameState &&
+            this._comboCount > (store.gameState.longestCombo || 0)) {
+            store.gameState.longestCombo = this._comboCount;
         }
 
         clearTimeout(this._comboTimer);
         this._comboTimer = setTimeout(() => {
             this._comboCount = 0;
             this._hideComboDisplay();
-            if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.decay();
+            if (typeof w.EsposionFX !== 'undefined' && w.EsposionFX.isActive()) w.EsposionFX.decay();
         }, this._comboThreshold);
 
         // Haptic su ogni click
@@ -649,13 +664,13 @@ const FX = {
         }
 
         // Esposion: la skin dinamica reagisce al combo (solo estetico).
-        if (typeof EsposionFX !== 'undefined' && EsposionFX.isActive()) EsposionFX.update(this._comboCount);
+        if (typeof w.EsposionFX !== 'undefined' && w.EsposionFX.isActive()) w.EsposionFX.update(this._comboCount);
 
         return this._comboCount;
     },
 
     // Combo counter visuale
-    _showComboDisplay(count) {
+    _showComboDisplay(count: any) {
         let el = document.getElementById('fx-combo-display');
         if (!el) {
             el = document.createElement('div');
@@ -666,7 +681,7 @@ const FX = {
             const section = document.getElementById('clicker-section');
             (section || document.body).appendChild(el);
             // Centra via GSAP così scale e translateX coesistono nello stesso layer
-            if (typeof gsap !== 'undefined') gsap.set(el, { xPercent: -50 });
+            if (typeof w.gsap !== 'undefined') w.gsap.set(el, { xPercent: -50 });
         }
         // Scala e colore in base al combo
         let size = count >= 30 ? '2.2rem' : count >= 20 ? '1.8rem' : count >= 10 ? '1.5rem' : '1.2rem';
@@ -678,9 +693,9 @@ const FX = {
         el.textContent = `x${count} COMBO`;
 
         // Pulse con GSAP — xPercent:-50 mantenuto in entrambi i frame per non perdere la centratura
-        if (typeof gsap !== 'undefined') {
-            gsap.killTweensOf(el);
-            gsap.fromTo(el,
+        if (typeof w.gsap !== 'undefined') {
+            w.gsap.killTweensOf(el);
+            w.gsap.fromTo(el,
                 { scale: 1.3, xPercent: -50 },
                 { scale: 1,   xPercent: -50, duration: 0.15, ease: 'back.out(2)' }
             );
@@ -695,8 +710,8 @@ const FX = {
     },
 
     // Burst particellare avanzato (usa GSAP per animare)
-    particleBurst(x, y, count = 8, colors = ['#ff4757', '#f1c40f', '#3498db', '#2ecc71']) {
-        if (typeof gsap === 'undefined') return;
+    particleBurst(x: any, y: any, count = 8, colors = ['#ff4757', '#f1c40f', '#3498db', '#2ecc71']) {
+        if (typeof w.gsap === 'undefined') return;
         const container = document.getElementById('click-feedback-container');
         if (!container) return;
 
@@ -715,7 +730,7 @@ const FX = {
                 box-shadow:0 0 ${size * 2}px ${color}`;
             container.appendChild(p);
 
-            gsap.to(p, {
+            w.gsap.to(p, {
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist - 20,
                 opacity: 0,
@@ -728,10 +743,10 @@ const FX = {
     },
 
     // Prestige sequence — timeline orchestrata
-    prestigeSequence(callback) {
-        if (typeof gsap === 'undefined') { if (callback) callback(); return; }
+    prestigeSequence(callback?: any) {
+        if (typeof w.gsap === 'undefined') { if (callback) callback(); return; }
 
-        const tl = gsap.timeline();
+        const tl = w.gsap.timeline();
         // 1. Flash bianco
         this.flash('rgba(255,255,255,0.3)', 0.3);
         // 2. Shake forte
@@ -744,60 +759,60 @@ const FX = {
 };
 
 // --- WRAPPERS PER COMPATIBILITÀ (Non rompere il codice esistente) ---
-function playSound(id, type) { AudioManager.play(id, type); }
+function playSound(id: any, type?: any) { AudioManager.play(id, type); }
 function setBgMusicVolume() { AudioManager.updateAmbience(); }
 function updateAmbientVolume() { AudioManager.updateAmbience(); }
-function setMusicDuck(factor) { if (typeof AudioManager !== 'undefined') AudioManager.setMusicDuck(factor); }
-function getCustomVolume(id) { return AudioManager.getCustomVolume(id); }
+function setMusicDuck(factor: any) { if (typeof AudioManager !== 'undefined') AudioManager.setMusicDuck(factor); }
+function getCustomVolume(id: any) { return AudioManager.getCustomVolume(id); }
 
 // --------- FUNZIONI DI ACQUISTO ---------
 
 function finalizePurchase() {
     playSound('sound-buy');
-    refreshAllStores(); // Ridisegna i negozi per aggiornare i tasti (grigi/verdi)
-    window.EspooClicker.saveGame();
-    updateUI();
+    w.refreshAllStores(); // Ridisegna i negozi per aggiornare i tasti (grigi/verdi)
+    w.EspooClicker.saveGame();
+    w.updateUI();
 }
 
-function buySkin(skinId) {
-    const data = gameData.skins[skinId];
+function buySkin(skinId: any) {
+    const data = store.gameData.skins[skinId];
     if (!data || !data.cost) return;
-    if (gameState.skins.unlocked.includes(skinId)) return;
+    if (store.gameState.skins.unlocked.includes(skinId)) return;
 
     // Skin post-formattazione: richiede almeno 1 formattazione
-    if (data.requiresFormatting && (gameState.totalFormattazioni || 0) < 1) {
+    if (data.requiresFormatting && (store.gameState.totalFormattazioni || 0) < 1) {
         playSound('sound-error');
-        window.EspooClicker.showToast(gameData.texts.toasts.skinNeedFormat, 'error');
+        w.EspooClicker.showToast(store.gameData.texts.toasts.skinNeedFormat, 'error');
         return;
     }
 
-    if (gameState.prestigePoints.gte(data.cost)) {
-        gameState.prestigePoints = gameState.prestigePoints.minus(data.cost);
-        gameState.skins.unlocked.push(skinId);
+    if (store.gameState.prestigePoints.gte(data.cost)) {
+        store.gameState.prestigePoints = store.gameState.prestigePoints.minus(data.cost);
+        store.gameState.skins.unlocked.push(skinId);
         const _isFreeSkin = typeof data.cost.lte === 'function' && data.cost.lte(0);
-        const _skinToast = (_isFreeSkin && gameData.texts.toasts.skinClaimed) ? gameData.texts.toasts.skinClaimed : gameData.texts.toasts.skinBought;
+        const _skinToast = (_isFreeSkin && store.gameData.texts.toasts.skinClaimed) ? store.gameData.texts.toasts.skinClaimed : store.gameData.texts.toasts.skinBought;
         playSound('sound-buy');
-        window.EspooClicker.showToast(_skinToast.replace('{name}', data.name), 'success');
-        window.EspooClicker.saveGame();
-        if (typeof updatePrestigeUI === 'function') updatePrestigeUI();
-        if (typeof updateSkinsUI === 'function') updateSkinsUI();
+        w.EspooClicker.showToast(_skinToast.replace('{name}', data.name), 'success');
+        w.EspooClicker.saveGame();
+        if (typeof w.updatePrestigeUI === 'function') w.updatePrestigeUI();
+        if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
     } else {
         playSound('sound-error');
-        window.EspooClicker.showToast(gameData.texts.toasts.insufficientTokens, 'error');
+        w.EspooClicker.showToast(store.gameData.texts.toasts.insufficientTokens, 'error');
     }
 }
 
-function buyClickUpgrade(upgradeKey) {
-    const state = gameState.clickUpgrades[upgradeKey];
-    const data = gameData.clickUpgrades[upgradeKey];
+function buyClickUpgrade(upgradeKey: any) {
+    const state = store.gameState.clickUpgrades[upgradeKey];
+    const data = store.gameData.clickUpgrades[upgradeKey];
 
-    if (gameState.score.gte(data.cost) && !state.purchased) {
-        gameState.score = gameState.score.minus(data.cost);
-        gameState.baseClickValue = gameState.baseClickValue.add(data.clickIncrease);
+    if (store.gameState.score.gte(data.cost) && !state.purchased) {
+        store.gameState.score = store.gameState.score.minus(data.cost);
+        store.gameState.baseClickValue = store.gameState.baseClickValue.add(data.clickIncrease);
         state.purchased = true;
 
         if (data.effects)
-            data.effects.forEach(eff => applyEffect(eff));
+            data.effects.forEach((eff: any) => applyEffect(eff));
 
         if (upgradeKey === 'clickAutomatico')
             recalculateCPS();
@@ -806,43 +821,43 @@ function buyClickUpgrade(upgradeKey) {
     }
 }
 
-function buyTeamEnhancement(enhanceKey) {
-    const state = gameState.buildingEnhancements[enhanceKey];
-    const data = gameData.buildingEnhancements[enhanceKey];
+function buyTeamEnhancement(enhanceKey: any) {
+    const state = store.gameState.buildingEnhancements[enhanceKey];
+    const data = store.gameData.buildingEnhancements[enhanceKey];
 
-    if (gameState.score.gte(data.cost) && !state.purchased) {
-        gameState.score = gameState.score.minus(data.cost);
+    if (store.gameState.score.gte(data.cost) && !state.purchased) {
+        store.gameState.score = store.gameState.score.minus(data.cost);
         state.purchased = true;
         recalculateCPS();
         finalizePurchase();
     }
 }
 
-function buyPrestigeUpgrade(upgradeKey) {
-    const state = gameState.prestigeUpgrades[upgradeKey];
-    const data = gameData.prestigeUpgrades[upgradeKey];
+function buyPrestigeUpgrade(upgradeKey: any) {
+    const state = store.gameState.prestigeUpgrades[upgradeKey];
+    const data = store.gameData.prestigeUpgrades[upgradeKey];
     const cost = data.isCounted ? calculatePrestigeUpgradeCost(upgradeKey) : data.baseCost;
 
     if (data.isCounted) {
-        if (gameState.prestigePoints.lt(cost))
+        if (store.gameState.prestigePoints.lt(cost))
             return;
     }
     else {
-        if (gameState.prestigePoints.lt(cost) || state.purchased)
+        if (store.gameState.prestigePoints.lt(cost) || state.purchased)
             return;
     }
 
-    gameState.prestigePoints = gameState.prestigePoints.minus(cost);
+    store.gameState.prestigePoints = store.gameState.prestigePoints.minus(cost);
 
     if (data.isCounted) {
         state.count++;
         if (data.effects)
-            data.effects.forEach(eff => applyEffect(eff, 1));
+            data.effects.forEach((eff: any) => applyEffect(eff, 1));
     }
     else {
         state.purchased = true;
         if (data.effects)
-            data.effects.forEach(eff => applyEffect(eff));
+            data.effects.forEach((eff: any) => applyEffect(eff));
     }
 
     calculatePrestigeBonus();
@@ -850,21 +865,21 @@ function buyPrestigeUpgrade(upgradeKey) {
     finalizePurchase();
 }
 
-function buySuperUpgrade(upgradeKey) {
-    const state = gameState.superUpgrades[upgradeKey];
-    const data = gameData.superUpgrades[upgradeKey];
+function buySuperUpgrade(upgradeKey: any) {
+    const state = store.gameState.superUpgrades[upgradeKey];
+    const data = store.gameData.superUpgrades[upgradeKey];
 
-    if (gameState.qBits.lt(data.cost) || state.purchased) return;
+    if (store.gameState.qBits.lt(data.cost) || state.purchased) return;
 
-    gameState.qBits = gameState.qBits.minus(data.cost);
+    store.gameState.qBits = store.gameState.qBits.minus(data.cost);
     state.purchased = true;
 
     playSound('sound-buy');
     if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
     recalculateCPS();
-    if (typeof refreshAllStores === 'function') refreshAllStores();
-    if (window.EspooClicker) window.EspooClicker.saveGame();
-    if (typeof updateUI === 'function') updateUI();
+    if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+    if (w.EspooClicker) w.EspooClicker.saveGame();
+    if (typeof w.updateUI === 'function') w.updateUI();
 }
 
 
@@ -873,35 +888,35 @@ function buySuperUpgrade(upgradeKey) {
 
 // Input comune alle formule costo team V3: r derivato dai global di scaling,
 // livello Outsourcing per lo sconto. Usato dalle deleghe F6 (fetta 2).
-function _teamCostInput(teamKey) {
+function _teamCostInput(teamKey: any) {
     let r = 1.05;
-    if (window.costScalingBase)
-        r = Math.max(1.05, window.costScalingBase - window.costScalingReduction);
-    const outsourcingState = gameState.prestigeUpgrades.outsourcing;
+    if (w.costScalingBase)
+        r = Math.max(1.05, w.costScalingBase - w.costScalingReduction);
+    const outsourcingState = store.gameState.prestigeUpgrades.outsourcing;
     return {
-        baseCost: gameData.teams[teamKey].baseCost,
-        count: gameState.teams[teamKey].count,
+        baseCost: store.gameData.teams[teamKey].baseCost,
+        count: store.gameState.teams[teamKey].count,
         r: r,
         outsourcingLevel: (outsourcingState && outsourcingState.count) || 0,
     };
 }
 
-function calculateBulkCost(teamKey, amount) {
+function calculateBulkCost(teamKey: any, amount: any) {
     // F6 -> F8: serie geometrica + sconto outsourcing in EspoV3.economy (bit-identico).
-    return window.EspoV3.economy.teamBulkCost(Decimal, _teamCostInput(teamKey), amount);
+    return window.EspoV3.economy.teamBulkCost(w.Decimal, _teamCostInput(teamKey), amount);
 }
 
 /*function calculateTeamCost(teamKey) {
     return calculateBulkCost(teamKey, 1);
 }*/
 
-function calculateMaxAffordable(teamKey) {
+function calculateMaxAffordable(teamKey: any) {
     // F6 -> F8: formula log + raffinamento in EspoV3.economy.
-    return window.EspoV3.economy.maxAffordableTeams(Decimal, _teamCostInput(teamKey), gameState.score);
+    return window.EspoV3.economy.maxAffordableTeams(w.Decimal, _teamCostInput(teamKey), store.gameState.score);
 }
 
-function buyTeam(teamKey) {
-    let amount = window.buyMultiplier;
+function buyTeam(teamKey: any) {
+    let amount = w.buyMultiplier;
     if (typeof amount === 'undefined') amount = 1;
 
     if (amount === 'MAX') {
@@ -909,38 +924,38 @@ function buyTeam(teamKey) {
         if (amount === 0) return;
     }
 
-    const state = gameState.teams[teamKey];
+    const state = store.gameState.teams[teamKey];
     const currentCost = calculateBulkCost(teamKey, amount);
 
-    if (gameState.score.gte(currentCost)) {
+    if (store.gameState.score.gte(currentCost)) {
         playSound('sound-buy');
-        gameState.score = gameState.score.minus(currentCost);
+        store.gameState.score = store.gameState.score.minus(currentCost);
         const oldCount = state.count;
         state.count += amount;
         checkBuildingMilestone(teamKey, oldCount, state.count);
         recalculateCPS();
-        refreshAllStores();
-        window.EspooClicker.saveGame();
-        updateUI();
+        w.refreshAllStores();
+        w.EspooClicker.saveGame();
+        w.updateUI();
     } else {
         playSound('sound-error');
-        window.EspooClicker.showToast(gameData.texts.toasts.insufficientBugs, 'error');
+        w.EspooClicker.showToast(store.gameData.texts.toasts.insufficientBugs, 'error');
     }
 }
 
 // Pop "traguardo" quando un team supera una soglia di unità possedute.
 // Riempie il vuoto del mid-game con un feedback gratificante (toast + flash).
-function checkBuildingMilestone(teamKey, oldCount, newCount) {
+function checkBuildingMilestone(teamKey: any, oldCount: any, newCount: any) {
     // F6 -> F8: la soglia attraversata vive in EspoV3.economy (puro, testato);
     // qui restano toast e flash DOM.
     const reached = window.EspoV3.economy.milestoneReached(oldCount, newCount);
 
     if (reached <= 0) return;
 
-    const teamData = gameData.teams[teamKey];
+    const teamData = store.gameData.teams[teamKey];
     const name = (teamData && teamData.name) ? teamData.name : teamKey;
-    if (window.EspooClicker && window.EspooClicker.showToast) {
-        window.EspooClicker.showToast(gameData.texts.toasts.milestone.replace('{name}', name).replace('{amount}', reached), 'reward');
+    if (w.EspooClicker && w.EspooClicker.showToast) {
+        w.EspooClicker.showToast(store.gameData.texts.toasts.milestone.replace('{name}', name).replace('{amount}', reached), 'reward');
     }
     if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(0, 217, 255, 0.10)', 0.18);
 }
@@ -951,9 +966,24 @@ function checkBuildingMilestone(teamKey, oldCount, newCount) {
 // rendeva i livelli alti istantanei. Tarabili: KNEE = dove inizia il
 // rallentamento (in "punti bonus", cioè bonus-1); COEFF = ripidità oltre.
 // Verificato con balance-sim.js (modalità wrap06).
-const PRESTIGE_BONUS_SOFTCAP_KNEE = new Decimal(80);
-const PRESTIGE_BONUS_SOFTCAP_COEFF = new Decimal(0.6);
-function applyBonusSoftcap(x) {
+//
+// ATTENZIONE — ordine di esecuzione: queste due costanti vengono valutate
+// all'IMPORT di questo modulo (gli import sono hoisted, quindi girano PRIMA
+// del corpo di main.ts). `new w.Decimal(...)` richiede che `window.Decimal`
+// esista già a quel momento. Oggi funziona SOLO perché il tag <script> classico
+// dist/break_infinity.min.js (index.php:325) viene eseguito prima del tag
+// <script type="module"> (index.php:351), quindi window.Decimal è già globale
+// quando questo modulo viene importato — installGlobalDecimal() non è ancora
+// stato chiamato e non serve. Se in futuro quel tag classico viene rimosso a
+// favore di installGlobalDecimal() (chiamato dal corpo di main.ts), questo
+// modulo esploderà all'import perché window.Decimal sarà ancora undefined in
+// questo punto. Task futuro: NON rimuovere break_infinity.min.js da index.php
+// finché queste costanti (e ogni altro `new w.Decimal(...)` a livello di
+// modulo) non vengono spostate dentro una funzione richiamata dopo
+// installGlobalDecimal(), o rese lazy.
+const PRESTIGE_BONUS_SOFTCAP_KNEE = new w.Decimal(80);
+const PRESTIGE_BONUS_SOFTCAP_COEFF = new w.Decimal(0.6);
+function applyBonusSoftcap(x: any) {
     if (x.lte(PRESTIGE_BONUS_SOFTCAP_KNEE)) return x;
     const excess = x.minus(PRESTIGE_BONUS_SOFTCAP_KNEE);
     return PRESTIGE_BONUS_SOFTCAP_KNEE.add(PRESTIGE_BONUS_SOFTCAP_COEFF.mul(excess.sqrt()));
@@ -961,10 +991,10 @@ function applyBonusSoftcap(x) {
 
 function calculatePrestigeBonus() {
     // F6 -> F8: formula in EspoV3.economy, costanti di bilanciamento iniettate da qui.
-    prestigeBonus = window.EspoV3.economy.computePrestigeBonus(Decimal, {
-        lifetimePrestigePoints: gameState.lifetimePrestigePoints,
-        synergyFactor: window.prestigeSynergyFactor,
-        achievementsBonus: achievementsBPSBonus,
+    store.prestigeBonus = window.EspoV3.economy.computePrestigeBonus(w.Decimal, {
+        lifetimePrestigePoints: store.gameState.lifetimePrestigePoints,
+        synergyFactor: w.prestigeSynergyFactor,
+        achievementsBonus: store.achievementsBPSBonus,
         softcapKnee: PRESTIGE_BONUS_SOFTCAP_KNEE,
         softcapCoeff: PRESTIGE_BONUS_SOFTCAP_COEFF,
     });
@@ -975,24 +1005,24 @@ function recalculateCPS() {
     // di iterazione legacy: la sequenza di add e contratto di parita float) e
     // l'assegnazione al global bps.
     const teams = [];
-    for (const key in gameState.teams) {
-        const teamState = gameState.teams[key];
-        const teamData = gameData.teams[key];
+    for (const key in store.gameState.teams) {
+        const teamState = store.gameState.teams[key];
+        const teamData = store.gameData.teams[key];
         if (!teamData || !(teamState.count > 0)) continue;
         const multipliers = [];
-        for (const upgKey in gameState.buildingEnhancements) {
-            const upgState = gameState.buildingEnhancements[upgKey];
-            const upgData = gameData.buildingEnhancements[upgKey];
+        for (const upgKey in store.gameState.buildingEnhancements) {
+            const upgState = store.gameState.buildingEnhancements[upgKey];
+            const upgData = store.gameData.buildingEnhancements[upgKey];
             if (upgState.purchased && upgData && upgData.targetTeam === key) {
                 multipliers.push(upgData.multiplier);
             }
         }
         teams.push({ cpsPerUnit: teamData.cpsPerUnit, count: teamState.count, multipliers: multipliers });
     }
-    const autoQA = (window.gameFlags && window.gameFlags.autoClickQA && gameState.teams.assistenteQa)
-        ? (gameState.teams.assistenteQa.count || 0) : 0;
-    bps = window.EspoV3.economy.computeBps(Decimal, teams, autoQA,
-        [prestigeBonus, clickCPSBonus, bluescreenMultiplier, crunchTimeMultiplier]);
+    const autoQA = (w.gameFlags && w.gameFlags.autoClickQA && store.gameState.teams.assistenteQa)
+        ? (store.gameState.teams.assistenteQa.count || 0) : 0;
+    store.bps = window.EspoV3.economy.computeBps(w.Decimal, teams, autoQA,
+        [store.prestigeBonus, store.clickCPSBonus, store.bluescreenMultiplier, store.crunchTimeMultiplier]);
 }
 
 // 1. CRUNCH TIME
@@ -1002,36 +1032,36 @@ function activateCrunchTime() {
     // 1. Controlli Preliminari
     if (checkEventConflict('Espo Fury')) return false;
 
-    if (now < crunchTimeCooldownEnd) {
-        const remaining = Math.ceil((crunchTimeCooldownEnd - now) / 1000);
-        window.EspooClicker.showToast(gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
+    if (now < store.crunchTimeCooldownEnd) {
+        const remaining = Math.ceil((store.crunchTimeCooldownEnd - now) / 1000);
+        w.EspooClicker.showToast(store.gameData.texts.toasts.furyCalm.replace('{seconds}', remaining), 'warning');
         clearActiveEvent();
         return false;
     }
 
     // 2. Attivazione Logica
     // F6 -> F8: durata e cooldown in EspoV3.events.
-    crunchTimeMultiplier = new Decimal(7);
-    const overclockActive = gameState.superUpgrades && gameState.superUpgrades.overclock && gameState.superUpgrades.overclock.purchased;
-    const reteContattiLevel = (gameState.prestigeUpgrades.reteContatti && gameState.prestigeUpgrades.reteContatti.count) || 0;
+    store.crunchTimeMultiplier = new w.Decimal(7);
+    const overclockActive = store.gameState.superUpgrades && store.gameState.superUpgrades.overclock && store.gameState.superUpgrades.overclock.purchased;
+    const reteContattiLevel = (store.gameState.prestigeUpgrades.reteContatti && store.gameState.prestigeUpgrades.reteContatti.count) || 0;
     const furyDuration = window.EspoV3.events.crunchDuration(!!overclockActive);
-    crunchTimeEndTime = now + furyDuration;
+    store.crunchTimeEndTime = now + furyDuration;
     const cooldownFromEnd = window.EspoV3.events.crunchCooldownFromEnd(reteContattiLevel);
-    crunchTimeCooldownEnd = crunchTimeEndTime + cooldownFromEnd;
+    store.crunchTimeCooldownEnd = store.crunchTimeEndTime + cooldownFromEnd;
 
-    gameState.crunchTimeEndTime = crunchTimeEndTime;
-    gameState.crunchTimeCooldownEnd = crunchTimeCooldownEnd;
+    store.gameState.crunchTimeEndTime = store.crunchTimeEndTime;
+    store.gameState.crunchTimeCooldownEnd = store.crunchTimeCooldownEnd;
 
     recalculateCPS();
 
-    if (typeof updateUI === 'function') updateUI();
-    if (window.EspooClicker) window.EspooClicker.saveGame();
+    if (typeof w.updateUI === 'function') w.updateUI();
+    if (w.EspooClicker) w.EspooClicker.saveGame();
 
     document.body.classList.add('crunch-active');
 
     // 3. Gestione Immagini (Supporto Temi: 8-Bit, Super, Standard)
-    const photoNormal = document.getElementById('manager-photo-normal');
-    const photoClicked = document.getElementById('manager-photo-clicked');
+    const photoNormal = document.getElementById('manager-photo-normal') as HTMLImageElement | null;
+    const photoClicked = document.getElementById('manager-photo-clicked') as HTMLImageElement | null;
 
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
@@ -1056,8 +1086,8 @@ function activateCrunchTime() {
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
-        if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
+        if (w.fireParticleInterval) clearInterval(w.fireParticleInterval);
+        w.fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
 
     // 5. Gestione Audio Centralizzata
@@ -1068,14 +1098,14 @@ function activateCrunchTime() {
     }
 
     // 6. Feedback Utente
-    window.EspooClicker.showToast(gameData.texts.toasts.furyActive, 'success');
+    w.EspooClicker.showToast(store.gameData.texts.toasts.furyActive, 'success');
     return true;
 }
 
 const MAX_FIRE_PARTICLES = 30;  // Cap massimo di particelle fuoco nel DOM
 const MAX_FIRE_SPARKS = 10;     // Cap massimo scintille
 
-function spawnFireParticle(container) {
+function spawnFireParticle(container: any) {
     // Cap: se ci sono troppe particelle, rimuovi le più vecchie
     const existingParticles = container.querySelectorAll('.fire-particle');
     if (existingParticles.length >= MAX_FIRE_PARTICLES) {
@@ -1137,8 +1167,8 @@ function spawnFireParticle(container) {
 
 function resumeCrunchTimeEffects() {
     // 1. Ripristino Stato
-    window.currentActiveEvent = 'Espo Fury';
-    crunchTimeMultiplier = new Decimal(7);
+    w.currentActiveEvent = 'Espo Fury';
+    store.crunchTimeMultiplier = new w.Decimal(7);
     document.body.classList.add('crunch-active');
 
     const overlay = document.getElementById('crunch-overlay');
@@ -1148,13 +1178,13 @@ function resumeCrunchTimeEffects() {
     const fireContainer = document.getElementById('fire-particles-container');
     if (fireContainer) {
         fireContainer.style.display = 'block';
-        if (fireParticleInterval) clearInterval(fireParticleInterval);
-        fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
+        if (w.fireParticleInterval) clearInterval(w.fireParticleInterval);
+        w.fireParticleInterval = setInterval(() => { spawnFireParticle(fireContainer); }, 100);
     }
 
     // 3. Ripristino Immagini (Supporto Temi: 8-Bit, Super, Standard)
-    const photoNormal = document.getElementById('manager-photo-normal');
-    const photoClicked = document.getElementById('manager-photo-clicked');
+    const photoNormal = document.getElementById('manager-photo-normal') as HTMLImageElement | null;
+    const photoClicked = document.getElementById('manager-photo-clicked') as HTMLImageElement | null;
 
     if (photoNormal && photoClicked) {
         if (document.body.classList.contains('theme-8bit')) {
@@ -1177,7 +1207,7 @@ function resumeCrunchTimeEffects() {
 
     // 5. Aggiornamento Logica
     recalculateCPS();
-    if (typeof updateUI === 'function') updateUI();
+    if (typeof w.updateUI === 'function') w.updateUI();
 }
 
 
@@ -1185,9 +1215,9 @@ function resumeCrunchTimeEffects() {
 // contenitore a livello body (#event-hud) cosi' il layout e' relativo al viewport
 // (immune ai transform intermittenti degli antenati che li clippavano/scollegavano).
 // Solo desktop (>1024): su mobile resta il layout dedicato. Ripristinati a fine evento.
-let _eventHudStash = null;
+let _eventHudStash: any = null;
 function moveHudIntoEvent() {
-    if (_eventHudStash || window.innerWidth <= 1024) return;
+    if (_eventHudStash || w.innerWidth <= 1024) return;
     let hud = document.getElementById('event-hud');
     if (!hud) { hud = document.createElement('div'); hud.id = 'event-hud'; document.body.appendChild(hud); }
     _eventHudStash = [];
@@ -1198,7 +1228,7 @@ function moveHudIntoEvent() {
 }
 function restoreEventHud() {
     if (!_eventHudStash) return;
-    _eventHudStash.forEach(function (r) {
+    _eventHudStash.forEach(function (r: any) {
         if (r.next && r.next.parentNode === r.parent) r.parent.insertBefore(r.el, r.next);
         else r.parent.appendChild(r.el);
     });
@@ -1206,13 +1236,13 @@ function restoreEventHud() {
 }
 
 const EventHandlers = {
-    video: (config, eventKey) => {
+    video: (config: any, eventKey: any) => {
         document.body.classList.add('rick-rolling');
         moveHudIntoEvent();
 
         // 1. Reset e nascondi altri video
         ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video'].forEach(id => {
-            const videoMeme = document.getElementById(id);
+            const videoMeme = document.getElementById(id) as HTMLVideoElement | null;
             if (videoMeme) {
                 videoMeme.pause();
                 videoMeme.classList.add("video_display_none");
@@ -1229,13 +1259,13 @@ const EventHandlers = {
         // 2. Selezione Video
         let videoId = config.videos[0];
         if (config.videos.length > 1) {
-            const available = config.videos.filter(id => id !== lastVideoPlayedId);
+            const available = config.videos.filter((id: any) => id !== lastVideoPlayedId);
             const pool = available.length > 0 ? available : config.videos;
             videoId = pool[Math.floor(Math.random() * pool.length)];
         }
         lastVideoPlayedId = videoId;
 
-        const video = document.getElementById(videoId);
+        const video = document.getElementById(videoId) as (HTMLVideoElement & { _cdnFallbackBound?: boolean }) | null;
 
         if (video) {
             // Risolvi src sincrono: prova cache R2, poi data-src diretto, poi locale.
@@ -1245,8 +1275,8 @@ const EventHandlers = {
                 const direct    = video.getAttribute('data-src');
                 if (direct) return direct;
                 const localPath = video.getAttribute('data-src-local');
-                if (window.CDN && window.CDN.urlSync && localPath) {
-                    const sync = window.CDN.urlSync(localPath);
+                if (w.CDN && w.CDN.urlSync && localPath) {
+                    const sync = w.CDN.urlSync(localPath);
                     if (sync) return sync;
                 }
                 return localPath || '';
@@ -1269,10 +1299,10 @@ const EventHandlers = {
                         });
                     }
                     video.load();
-                } else if (window.CDN && window.CDN.url) {
+                } else if (w.CDN && w.CDN.url) {
                     // Cache miss: chiedi async e riprova fra poco (caso edge)
                     const localPath = video.getAttribute('data-src-local');
-                    window.CDN.url(localPath).then(src => {
+                    w.CDN.url(localPath).then((src: any) => {
                         if (src && !video.src) {
                             video.src = src;
                             video.load();
@@ -1289,7 +1319,7 @@ const EventHandlers = {
 
             // Calcolo Volume
             const customVol = getCustomVolume(config.audioId || videoId);
-            video.volume = (gameState.user.masterVolume * gameState.user.musicVolume) * customVol;
+            video.volume = (store.gameState.user.masterVolume * store.gameState.user.musicVolume) * customVol;
 
             // Play robusto: su mobile (iOS PWA / Chrome Android) gli eventi partono da timer
             // (no gesto utente) -> autoplay bloccato se non muted. Fallback: ritenta muted.
@@ -1300,7 +1330,7 @@ const EventHandlers = {
                         video.muted = true;
                         const p2 = video.play();
                         if (p2 && typeof p2.catch === 'function') {
-                            p2.catch(err => console.warn("Video bloccato anche muted", err));
+                            p2.catch((err: any) => console.warn("Video bloccato anche muted", err));
                         }
                     });
                 }
@@ -1333,7 +1363,7 @@ const EventHandlers = {
             clickOverlay.style.display = 'block';
 
             // Handler del Click sull'Overlay
-            const overlayClickHandler = (e) => {
+            const overlayClickHandler = (e: any) => {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -1374,7 +1404,7 @@ const EventHandlers = {
         if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
     },
 
-    css_mode: (config, eventKey) => {
+    css_mode: (config: any, eventKey: any) => {
         // LOGICA CSS (404 / Bluescreen / Matrix)
         // Applica la classe dell'evento al body
         document.body.classList.add(config.cssClass);
@@ -1382,10 +1412,10 @@ const EventHandlers = {
         // GESTIONE SPECIFICA PER MATRIX
         if (config.cssClass === 'matrix-active') {
             // Avvia l'effetto canvas
-            if (typeof startMatrixEffect === 'function') startMatrixEffect();
+            if (typeof w.startMatrixEffect === 'function') w.startMatrixEffect();
 
-            const photoNormal = document.getElementById('manager-photo-normal');
-            const photoClicked = document.getElementById('manager-photo-clicked');
+            const photoNormal = document.getElementById('manager-photo-normal') as HTMLImageElement | null;
+            const photoClicked = document.getElementById('manager-photo-clicked') as HTMLImageElement | null;
 
             if (photoNormal && photoClicked) {
                 // NUOVA LOGICA DI SCELTA SKIN MATRIX
@@ -1405,14 +1435,14 @@ const EventHandlers = {
 
         // GESTIONE AUDIO EVENTI (Delega al Manager Centrale)
         // Se è l'evento di Natale (Bluescreen), gestisci il glitch audio specifico
-        if (gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
+        if (store.gameState.skins.current === 'christmas' && eventKey === 'bluescreen') {
             const snowHowl = AudioManager.getHowl('sound-snowball');
             if (snowHowl) {
                 snowHowl.play();
                 if (audioGlitchInterval) clearInterval(audioGlitchInterval);
                 audioGlitchInterval = setInterval(() => {
                     snowHowl.rate(0.2 + Math.random() * 1.6);
-                    const baseVol = gameState.user.masterVolume * gameState.user.musicVolume;
+                    const baseVol = store.gameState.user.masterVolume * store.gameState.user.musicVolume;
                     snowHowl.volume((Math.random() < 0.3) ? 0 : Math.max(0, Math.min(1, baseVol * 0.2)));
                 }, 100);
             }
@@ -1427,8 +1457,8 @@ const EventHandlers = {
 };
 
 // --- FUNZIONE EVENTI UNIVERSALE (Ottimizzata) ---
-function triggerGameEvent(eventKey, overrideMult = null) {
-    const config = gameData.events[eventKey];
+function triggerGameEvent(eventKey: any, overrideMult: any = null) {
+    const config = store.gameData.events[eventKey];
     if (!config) return false;
     if (checkEventConflict(config.name)) return false;
 
@@ -1443,8 +1473,8 @@ function triggerGameEvent(eventKey, overrideMult = null) {
         bonusMult = Math.floor(Math.random() * (config.maxMult - config.minMult + 1)) + config.minMult;
     }
 
-    isBluescreenActive = true;
-    bluescreenMultiplier = new Decimal(bonusMult); // Fondamentale: Decimal
+    store.isBluescreenActive = true;
+    store.bluescreenMultiplier = new w.Decimal(bonusMult); // Fondamentale: Decimal
     recalculateCPS();
 
     const emDisplay = document.getElementById('event-multiplier-display');
@@ -1463,13 +1493,13 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 
     // Toast video event: durata estesa (8s) per compensare l'assenza del banner.
     const toastDuration = config.type === 'video' ? 8000 : undefined;
-    window.EspooClicker.showToast(
+    w.EspooClicker.showToast(
         config.toast.replace('{mult}', bonusMult),
         config.toastType,
         toastDuration
     );
 
-    if (EventHandlers[config.type]) EventHandlers[config.type](config, eventKey);
+    if ((EventHandlers as any)[config.type]) (EventHandlers as any)[config.type](config, eventKey);
 
     setTimeout(() => {
         document.body.classList.remove('rick-rolling');
@@ -1481,20 +1511,20 @@ function triggerGameEvent(eventKey, overrideMult = null) {
 }
 
 
-function triggerBluescreen(multiplier) {
+function triggerBluescreen(multiplier: any) {
     // 1. Priorità Skin Speciali esistenti (Rick / Ricardo)
-    if (gameState.skins.current === 'rick' && Math.random() < 0.8) {
+    if (store.gameState.skins.current === 'rick' && Math.random() < 0.8) {
         return triggerGameEvent('rickRoll');
     }
-    if (gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
+    if (store.gameState.skins.current === 'ricardo' && Math.random() < 0.8) {
         return triggerGameEvent('ricardo');
     }
     // 2. Priorità Skin Britney Espears
-    if (gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
+    if (store.gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
         return triggerGameEvent('britneyEspears');
     }
     // 3. Priorità Skin Super Espò
-    if (gameState.skins.current === 'superespo') {
+    if (store.gameState.skins.current === 'superespo') {
         return triggerGameEvent('superStarMode', multiplier);
     }
     // 3. Scelta Casuale Standard (Solo per altre skin): 50% Blue Screen / 50% Matrix
@@ -1503,17 +1533,17 @@ function triggerBluescreen(multiplier) {
 }
 
 function stopBluescreenEffect() {
-    isBluescreenActive = false;
-    bluescreenMultiplier = new Decimal(1); // Reset a Decimal(1)
+    store.isBluescreenActive = false;
+    store.bluescreenMultiplier = new w.Decimal(1); // Reset a Decimal(1)
 
     document.body.classList.remove('bluescreen-active');
     document.body.classList.remove('matrix-active');
     document.body.classList.remove('rick-rolling');
     restoreEventHud();
 
-    if (typeof stopMatrixEffect === 'function') stopMatrixEffect();
+    if (typeof w.stopMatrixEffect === 'function') w.stopMatrixEffect();
 
-    const emDisplay = document.getElementById('event-multiplier-display');
+    const emDisplay = document.getElementById('event-multiplier-display') as any;
     if (emDisplay) {
         clearTimeout(emDisplay._autoHideTimer);
         emDisplay.style.display = 'none';
@@ -1529,12 +1559,12 @@ function stopBluescreenEffect() {
             AudioManager.stop('sound-bluescreen', 200);
             AudioManager.stop('sound-matrix', 200);
         }
-        const rickVideo = document.getElementById('rick-roll-video');
+        const rickVideo = document.getElementById('rick-roll-video') as HTMLVideoElement | null;
         if (rickVideo) { rickVideo.pause(); rickVideo.classList.add("video_display_none"); }
     } catch (e) { }
 
     if (audioGlitchInterval) { clearInterval(audioGlitchInterval); audioGlitchInterval = null; }
-    if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+    if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
     if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
     clearActiveEvent();
@@ -1543,31 +1573,31 @@ function stopBluescreenEffect() {
 // CALCOLO CENTRALIZZATO DEL VALORE CLICK
 function calculateClickValue() {
     // F6 -> F8: formula in EspoV3.economy, Decimal della pagina.
-    return window.EspoV3.economy.computeClickValue(Decimal, {
-        baseClickValue: gameState.baseClickValue,
-        clickGlobalMult: window.clickGlobalMult || 1,
-        prestigeBonus: prestigeBonus,
-        bluescreenMultiplier: bluescreenMultiplier,
-        crunchTimeMultiplier: crunchTimeMultiplier,
-        bionicHand: !!window.gameFlags.bionicHand,
-        divineClick: !!window.gameFlags.divineClick,
-        bps: bps,
-        goldenFrenzyActive: !!(window.goldenFrenzyEnd && Date.now() < window.goldenFrenzyEnd),
-        goldenFrenzyMult: window.goldenFrenzyMult || 1,
+    return window.EspoV3.economy.computeClickValue(w.Decimal, {
+        baseClickValue: store.gameState.baseClickValue,
+        clickGlobalMult: w.clickGlobalMult || 1,
+        prestigeBonus: store.prestigeBonus,
+        bluescreenMultiplier: store.bluescreenMultiplier,
+        crunchTimeMultiplier: store.crunchTimeMultiplier,
+        bionicHand: !!w.gameFlags.bionicHand,
+        divineClick: !!w.gameFlags.divineClick,
+        bps: store.bps,
+        goldenFrenzyActive: !!(w.goldenFrenzyEnd && Date.now() < w.goldenFrenzyEnd),
+        goldenFrenzyMult: w.goldenFrenzyMult || 1,
     });
 }
 function calculateRawClickValue() {
     // F6 -> F8: formula in EspoV3.economy, Decimal della pagina.
-    return window.EspoV3.economy.computeRawClickValue(Decimal, {
-        baseClickValue: gameState.baseClickValue,
-        clickGlobalMult: window.clickGlobalMult || 1,
-        bionicHand: !!window.gameFlags.bionicHand,
-        divineClick: !!window.gameFlags.divineClick,
-        bps: bps,
+    return window.EspoV3.economy.computeRawClickValue(w.Decimal, {
+        baseClickValue: store.gameState.baseClickValue,
+        clickGlobalMult: w.clickGlobalMult || 1,
+        bionicHand: !!w.gameFlags.bionicHand,
+        divineClick: !!w.gameFlags.divineClick,
+        bps: store.bps,
     });
 }
 
-function resolveBug(event) {
+function resolveBug(event: any) {
     // Blocca solo i click sintetici da script (autoclicker): isTrusted=false.
     // L'attivazione reale da tastiera (Enter/Spazio) ha detail===0 ma isTrusted===true → consentita (a11y).
     if (event.detail === 0 && event.isTrusted === false) return;
@@ -1575,15 +1605,15 @@ function resolveBug(event) {
     // Il focus del mouse e' gia' gestito dai listener mouseup/mouseleave/touchend.
 
     const isSuperTheme = document.body.classList.contains('theme-super');
-    const isFuryActive = (typeof crunchTimeEndTime !== 'undefined' && crunchTimeEndTime > Date.now());
+    const isFuryActive = (typeof store.crunchTimeEndTime !== 'undefined' && store.crunchTimeEndTime > Date.now());
 
     // Audio + FX combo sono BEST-EFFORT: un loro errore non deve MAI impedire il
     // conteggio del click (score/totalClicks più sotto). Isolati con try/catch così
     // un raro throw (stato Howler, GSAP, skin dinamica) non "fa sparire" il click.
     try {
         if (isSuperTheme && isFuryActive) {
-            if (window.EspooClicker && window.EspooClicker.playSound) {
-                window.EspooClicker.playSound('sound-fireball');
+            if (w.EspooClicker && w.EspooClicker.playSound) {
+                w.EspooClicker.playSound('sound-fireball');
             }
         } else {
             AudioManager.playClickEffect();
@@ -1607,19 +1637,19 @@ function resolveBug(event) {
         currentClickValue = currentClickValue.mul(comboMult);
     }
     // Stash per showClickFeedback (mostra il +N reale incluso il bonus combo)
-    window._lastClickValue = currentClickValue;
+    w._lastClickValue = currentClickValue;
 
-    clickHistory.push({ time: Date.now(), value: currentClickValue });
-    gameState.score = gameState.score.add(currentClickValue);
-    gameState.totalScore = gameState.totalScore.add(currentClickValue);
-    gameState.lifetimeScore = gameState.lifetimeScore.add(currentClickValue);
-    gameState.totalClicks++;
+    store.clickHistory.push({ time: Date.now(), value: currentClickValue });
+    store.gameState.score = store.gameState.score.add(currentClickValue);
+    store.gameState.totalScore = store.gameState.totalScore.add(currentClickValue);
+    store.gameState.lifetimeScore = store.gameState.lifetimeScore.add(currentClickValue);
+    store.gameState.totalClicks++;
     // Display reattivo: il numero segue il click subito (rAF-throttle), bypassando il
     // count-up GSAP che — riavviato ogni 100ms dal loop UI — restava indietro (lag).
-    window._lastClickAt = Date.now();
-    if (typeof bumpScoreDisplay === 'function') bumpScoreDisplay();
+    w._lastClickAt = Date.now();
+    if (typeof w.bumpScoreDisplay === 'function') w.bumpScoreDisplay();
 
-    if (typeof showClickFeedback === 'function') showClickFeedback(event);
+    if (typeof w.showClickFeedback === 'function') w.showClickFeedback(event);
 
     // --- NUOVA LOGICA ANIMAZIONE CLICK ---
     // Non cancelliamo più i timer precedenti. Ogni tocco vive di vita propria.
@@ -1629,13 +1659,13 @@ function resolveBug(event) {
         btn.classList.add('click-shrink', 'clicked');
 
         // Se l'utente clicca a raffica, cancelliamo il reset precedente per non farlo scattare
-        if (window.clickAnimTimer) {
-            clearTimeout(window.clickAnimTimer);
+        if (w.clickAnimTimer) {
+            clearTimeout(w.clickAnimTimer);
         }
 
         // Timer: se l'utente smette di cliccare, il bottone si rialza.
         // 120ms > durata transizione CSS (80ms + 40ms delay) per evitare il flash vuoto
-        window.clickAnimTimer = setTimeout(() => {
+        w.clickAnimTimer = setTimeout(() => {
             btn.classList.remove('click-shrink', 'clicked');
         }, 120);
     }
@@ -1643,16 +1673,16 @@ function resolveBug(event) {
     // Throttle: durante lo spam click ridisegniamo il negozio (sort + DOM) al massimo
     // ~ogni 200ms invece che a ogni click. La chiamata "trailing" assicura che lo stato
     // finale (progress bar, sblocchi) sia corretto anche a fine raffica.
-    if (typeof updateClickStore === 'function') {
+    if (typeof w.updateClickStore === 'function') {
         const now = Date.now();
-        if (!window._clickStoreLast || now - window._clickStoreLast >= 200) {
-            window._clickStoreLast = now;
-            updateClickStore();
-        } else if (!window._clickStoreTrailing) {
-            window._clickStoreTrailing = setTimeout(() => {
-                window._clickStoreTrailing = null;
-                window._clickStoreLast = Date.now();
-                updateClickStore();
+        if (!w._clickStoreLast || now - w._clickStoreLast >= 200) {
+            w._clickStoreLast = now;
+            w.updateClickStore();
+        } else if (!w._clickStoreTrailing) {
+            w._clickStoreTrailing = setTimeout(() => {
+                w._clickStoreTrailing = null;
+                w._clickStoreLast = Date.now();
+                w.updateClickStore();
             }, 200);
         }
     }
@@ -1666,8 +1696,8 @@ function resolveBug(event) {
 function calculatePrestigeGained() {
     // F6 -> F8: formula in EspoV3.prestige col Decimal della pagina (bit-identico).
     // Il Replicatore di Token NON e incluso (lo applicano i call-site).
-    return window.EspoV3.prestige.prestigeGained(Decimal, {
-        totalScore: gameState.totalScore,
+    return window.EspoV3.prestige.prestigeGained(w.Decimal, {
+        totalScore: store.gameState.totalScore,
         threshold: getPrestigeThreshold(),
     });
 }
@@ -1675,17 +1705,17 @@ function calculatePrestigeGained() {
 function openPrestigeHub() {
     // Le card riflettono lo stato corrente (promo pronta/non pronta,
     // format mystery/locked/ready): niente più toast-blocco all'ingresso.
-    if (typeof renderPrestigeHubCards === 'function') renderPrestigeHubCards();
+    if (typeof w.renderPrestigeHubCards === 'function') w.renderPrestigeHubCards();
 
     const modal = document.getElementById('prestige-hub-modal');
     if (modal) {
         modal.style.display = 'flex';
         modal.style.opacity = '1';
 
-        const content = modal.querySelector('.modal-content');
+        const content = modal.querySelector('.modal-content') as HTMLElement | null;
         if (content) {
-            if (typeof gsap !== 'undefined') {
-                gsap.fromTo(content,
+            if (typeof w.gsap !== 'undefined') {
+                w.gsap.fromTo(content,
                     { scale: 0.8, opacity: 0, y: 20 },
                     { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }
                 );
@@ -1729,23 +1759,23 @@ async function executePrestige() {
         if (typeof FX !== 'undefined') FX.prestigeSequence();
     }
 
-    const savedFilter = (gameState.filterSettings && gameState.filterSettings.globalFilter)
-        ? gameState.filterSettings.globalFilter
+    const savedFilter = (store.gameState.filterSettings && store.gameState.filterSettings.globalFilter)
+        ? store.gameState.filterSettings.globalFilter
         : 'available';
 
     // Calcolo Punti
-    let gained = new Decimal(0);
+    let gained = new w.Decimal(0);
     if (typeof calculatePrestigeGained === 'function') {
         gained = calculatePrestigeGained();
     }
 
     // Applica realmente il bonus del Replicatore di Token
     // F6 -> F8: stessa formula unica di EspoV3.prestige
-    const _dupOn2 = !!(gameState.superUpgrades && gameState.superUpgrades.tokenDuplicator && gameState.superUpgrades.tokenDuplicator.purchased);
+    const _dupOn2 = !!(store.gameState.superUpgrades && store.gameState.superUpgrades.tokenDuplicator && store.gameState.superUpgrades.tokenDuplicator.purchased);
     gained = window.EspoV3.prestige.applyTokenDuplicator(gained, _dupOn2);
 
-    let newPrestigePoints = gameState.prestigePoints.add(gained);
-    let newLifetime = gameState.lifetimePrestigePoints.add(gained);
+    let newPrestigePoints = store.gameState.prestigePoints.add(gained);
+    let newLifetime = store.gameState.lifetimePrestigePoints.add(gained);
 
     // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game)
     const persistentKeys = [
@@ -1755,20 +1785,20 @@ async function executePrestige() {
         'arcadeHighScores'
     ];
 
-    const preservedData = {};
+    const preservedData: Record<string, any> = {};
     persistentKeys.forEach(key => {
-        if (gameState[key] !== undefined) {
-            preservedData[key] = JSON.parse(JSON.stringify(gameState[key]));
+        if (store.gameState[key] !== undefined) {
+            preservedData[key] = JSON.parse(JSON.stringify(store.gameState[key]));
         }
     });
 
-    const newResets = gameState.totalResets + 1;
+    const newResets = store.gameState.totalResets + 1;
 
     // Attesa animazione
     await new Promise(r => setTimeout(r, 1500));
 
     // RESET: Generazione Stato Pulito
-    let newState = getInitialGameState();
+    let newState = w.getInitialGameState();
 
     // Ripristino Dati Persistenti
     persistentKeys.forEach(key => {
@@ -1782,11 +1812,11 @@ async function executePrestige() {
     newState.filterSettings.globalFilter = savedFilter;
 
     // Ricostruzione Decimali Critici (dopo il JSON parse)
-    if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new Decimal(newState.lifetimeScore);
-    if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new Decimal(newState.totalOfflineScore);
-    if (typeof newState.score === 'string') newState.score = new Decimal(newState.score);
-    if (newState.qBits !== undefined && typeof newState.qBits === 'string') newState.qBits = new Decimal(newState.qBits);
-    if (newState.lifetimeQBits !== undefined && typeof newState.lifetimeQBits === 'string') newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
+    if (typeof newState.lifetimeScore === 'string') newState.lifetimeScore = new w.Decimal(newState.lifetimeScore);
+    if (typeof newState.totalOfflineScore === 'string') newState.totalOfflineScore = new w.Decimal(newState.totalOfflineScore);
+    if (typeof newState.score === 'string') newState.score = new w.Decimal(newState.score);
+    if (newState.qBits !== undefined && typeof newState.qBits === 'string') newState.qBits = new w.Decimal(newState.qBits);
+    if (newState.lifetimeQBits !== undefined && typeof newState.lifetimeQBits === 'string') newState.lifetimeQBits = new w.Decimal(newState.lifetimeQBits);
 
     newState.prestigePoints = newPrestigePoints;
     newState.lifetimePrestigePoints = newLifetime;
@@ -1796,21 +1826,21 @@ async function executePrestige() {
     // F6 -> F8: bug iniziali e carryover team in EspoV3.prestige (puri, testati);
     // qui restano lettura flag e applicazione allo stato nuovo.
     const prestige = window.EspoV3.prestige;
-    const fastStartOn = !!(gameState.superUpgrades && gameState.superUpgrades.fastStart && gameState.superUpgrades.fastStart.purchased);
-    newState.score = prestige.prestigeStartingBugs(Decimal, {
-        paracaduteLevel: (gameState.prestigeUpgrades.paracadute && gameState.prestigeUpgrades.paracadute.count) || 0,
+    const fastStartOn = !!(store.gameState.superUpgrades && store.gameState.superUpgrades.fastStart && store.gameState.superUpgrades.fastStart.purchased);
+    newState.score = prestige.prestigeStartingBugs(w.Decimal, {
+        paracaduteLevel: (store.gameState.prestigeUpgrades.paracadute && store.gameState.prestigeUpgrades.paracadute.count) || 0,
         fastStart: fastStartOn,
     });
 
     if (newState.teams) {
-        const previous = {};
-        for (const k in gameState.teams) previous[k] = gameState.teams[k].count;
-        const initial = {};
+        const previous: Record<string, any> = {};
+        for (const k in store.gameState.teams) previous[k] = store.gameState.teams[k].count;
+        const initial: Record<string, any> = {};
         for (const k in newState.teams) initial[k] = newState.teams[k].count;
         const counts = prestige.prestigeTeamCarryover({
-            keepTeams: !!(gameState.superUpgrades && gameState.superUpgrades.keepTeams && gameState.superUpgrades.keepTeams.purchased),
-            deadlineLevel: (gameState.prestigeUpgrades.deadlineStretta && gameState.prestigeUpgrades.deadlineStretta.count) || 0,
-            ereditaLevel: (gameState.prestigeUpgrades.eredita && gameState.prestigeUpgrades.eredita.count) || 0,
+            keepTeams: !!(store.gameState.superUpgrades && store.gameState.superUpgrades.keepTeams && store.gameState.superUpgrades.keepTeams.purchased),
+            deadlineLevel: (store.gameState.prestigeUpgrades.deadlineStretta && store.gameState.prestigeUpgrades.deadlineStretta.count) || 0,
+            ereditaLevel: (store.gameState.prestigeUpgrades.eredita && store.gameState.prestigeUpgrades.eredita.count) || 0,
             accelerazione: !!(newState.prestigeUpgrades.accelerazione && newState.prestigeUpgrades.accelerazione.purchased),
             fastStart: fastStartOn,
             previous: previous,
@@ -1822,20 +1852,20 @@ async function executePrestige() {
     }
 
     // Applicazione Nuovo Stato
-    gameState = newState;
+    store.gameState = newState;
 
     // Reset Variabili Runtime
-    if (typeof bps !== 'undefined') bps = new Decimal(0);
-    clickHistory = [];
-    isBluescreenActive = false;
-    bluescreenMultiplier = new Decimal(1);
+    if (typeof store.bps !== 'undefined') store.bps = new w.Decimal(0);
+    store.clickHistory = [];
+    store.isBluescreenActive = false;
+    store.bluescreenMultiplier = new w.Decimal(1);
     document.body.classList.remove('bluescreen-active');
 
     // Ferma suoni evento
     if (typeof AudioManager !== 'undefined') AudioManager.stop('sound-bluescreen', 200);
 
     // Sincronizza visivamente il menu a tendina
-    const filterSelect = document.getElementById('global-filter-select');
+    const filterSelect = document.getElementById('global-filter-select') as HTMLSelectElement | null;
     if (filterSelect) {
         filterSelect.value = savedFilter;
     }
@@ -1846,11 +1876,11 @@ async function executePrestige() {
     if (typeof recalculateCPS === 'function') recalculateCPS();
 
     // Refresh Negozi (Ora vedrà il filtro corretto!)
-    if (typeof refreshAllStores === 'function') refreshAllStores();
-    if (typeof updateUI === 'function') updateUI();
+    if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+    if (typeof w.updateUI === 'function') w.updateUI();
 
     // Salvataggio Immediato
-    if (window.EspooClicker) window.EspooClicker.saveGame();
+    if (w.EspooClicker) w.EspooClicker.saveGame();
 
     // Rimozione Overlay
     if (overlay) {
@@ -1860,23 +1890,23 @@ async function executePrestige() {
         setTimeout(() => {
             overlay.classList.add("prestige_transition_overlay_display_none");
             overlay.style.display = 'none'; // Nascondi del tutto
-            if (window.EspooClicker && gameData.texts)
-                window.EspooClicker.showToast(gameData.texts.toasts.promoSuccess, 'achievement');
+            if (w.EspooClicker && store.gameData.texts)
+                w.EspooClicker.showToast(store.gameData.texts.toasts.promoSuccess, 'achievement');
         }, 500); // 500ms è il tempo della transition CSS
     }
 }
 
 function executeFormattingSequence() {
     // 1. Chiusura Interfaccia
-    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    document.querySelectorAll<HTMLElement>('.modal-backdrop').forEach(m => m.style.display = 'none');
     document.body.classList.remove('modal-open');
 
     // 2. Ferma la musica di sottofondo
-    const bgmId = gameState.user.bgMusicSelection || 'sound-bg-music';
-    const bgm = document.getElementById(bgmId);
+    const bgmId = store.gameState.user.bgMusicSelection || 'sound-bg-music';
+    const bgm = document.getElementById(bgmId) as HTMLAudioElement | null;
     if (bgm) bgm.pause();
 
-    window.currentActiveEvent = 'Formatting';
+    w.currentActiveEvent = 'Formatting';
 
     // 3. Creazione Schermata Cinematografica (Testo Estetico + Contenitore Progress Bar)
     let prepOverlay = document.getElementById('format-prep-overlay');
@@ -1890,14 +1920,14 @@ function executeFormattingSequence() {
 
         prepOverlay.innerHTML = `
             <div id="format-text-phase" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
-                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">${gameData.texts.reformat.prep}</h1>
-                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">${gameData.texts.reformat.loadingData}</p>
+                <h1 style="color:#9b59b6; font-family:'Courier New', monospace; letter-spacing:4px; text-shadow:0 0 15px rgba(155,89,182,0.8); margin:0;">${store.gameData.texts.reformat.prep}</h1>
+                <p style="color:#bdc3c7; font-family:'Courier New', monospace; font-size:1.2rem; margin-top:15px;" class="fa-fade">${store.gameData.texts.reformat.loadingData}</p>
             </div>
             
             <div id="format-video-phase" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:transparent;">
                 <div style="position:absolute; bottom:60px; left:50%; transform:translateX(-50%); width:70%; z-index:100001;">
                     <div style="color:#fff; font-family:'Courier New', monospace; font-size:1.2rem; font-weight:bold; margin-bottom:10px; text-align:center; text-shadow:2px 2px 4px #000;">
-                        ${gameData.texts.reformat.restoring}
+                        ${store.gameData.texts.reformat.restoring}
                     </div>
                     <div style="width:100%; height:20px; background:rgba(0,0,0,0.7); border:2px solid #9b59b6; border-radius:10px; overflow:hidden;">
                         <div id="format-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #8e44ad, #d2b4de); box-shadow:0 0 10px #9b59b6; transition: width 22s linear;"></div>
@@ -1907,9 +1937,9 @@ function executeFormattingSequence() {
         `;
         document.body.appendChild(prepOverlay);
     } else {
-        document.getElementById('format-text-phase').style.display = 'flex';
-        document.getElementById('format-video-phase').style.display = 'none';
-        document.getElementById('format-progress-bar').style.width = '0%';
+        document.getElementById('format-text-phase')!.style.display = 'flex';
+        document.getElementById('format-video-phase')!.style.display = 'none';
+        document.getElementById('format-progress-bar')!.style.width = '0%';
         prepOverlay.style.display = 'block';
     }
 
@@ -1923,29 +1953,29 @@ function executeFormattingSequence() {
 
     // Calcolo QBits da salvare
     // F6 -> F8: formula in EspoV3.prestige (1 garantito + sqrt(token/10k) floored).
-    const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(Decimal, gameState.prestigePoints);
+    const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(w.Decimal, store.gameState.prestigePoints);
 
     // Salvataggio Dati Super-Persistenti
-    const superPersistentData = {
-        achievements: JSON.parse(JSON.stringify(gameState.achievements)),
-        skins: JSON.parse(JSON.stringify(gameState.skins)),
-        user: JSON.parse(JSON.stringify(gameState.user)),
-        lifetimeScore: gameState.lifetimeScore,
-        totalClicks: gameState.totalClicks,
-        totalPlayTime: gameState.totalPlayTime,
-        totalGoldenBugsClicked: gameState.totalGoldenBugsClicked,
-        longestCombo: gameState.longestCombo || 0,
-        arcadeHighScores: gameState.arcadeHighScores ? JSON.parse(JSON.stringify(gameState.arcadeHighScores)) : {},
-        totalFormattazioni: (gameState.totalFormattazioni || 0) + 1,
-        qBits: (gameState.qBits || new Decimal(0)).add(qBitsEarned),
-        lifetimeQBits: (gameState.lifetimeQBits || new Decimal(0)).add(qBitsEarned),
-        superUpgrades: gameState.superUpgrades ? JSON.parse(JSON.stringify(gameState.superUpgrades)) : {}
+    const superPersistentData: any = {
+        achievements: JSON.parse(JSON.stringify(store.gameState.achievements)),
+        skins: JSON.parse(JSON.stringify(store.gameState.skins)),
+        user: JSON.parse(JSON.stringify(store.gameState.user)),
+        lifetimeScore: store.gameState.lifetimeScore,
+        totalClicks: store.gameState.totalClicks,
+        totalPlayTime: store.gameState.totalPlayTime,
+        totalGoldenBugsClicked: store.gameState.totalGoldenBugsClicked,
+        longestCombo: store.gameState.longestCombo || 0,
+        arcadeHighScores: store.gameState.arcadeHighScores ? JSON.parse(JSON.stringify(store.gameState.arcadeHighScores)) : {},
+        totalFormattazioni: (store.gameState.totalFormattazioni || 0) + 1,
+        qBits: (store.gameState.qBits || new w.Decimal(0)).add(qBitsEarned),
+        lifetimeQBits: (store.gameState.lifetimeQBits || new w.Decimal(0)).add(qBitsEarned),
+        superUpgrades: store.gameState.superUpgrades ? JSON.parse(JSON.stringify(store.gameState.superUpgrades)) : {}
     };
-    if (gameState.superUpgrades && gameState.superUpgrades.echoQuantico && gameState.superUpgrades.echoQuantico.purchased) {
-        const counted = Object.entries(gameState.prestigeUpgrades)
-            .filter(([, s]) => s.count > 0);
+    if (store.gameState.superUpgrades && store.gameState.superUpgrades.echoQuantico && store.gameState.superUpgrades.echoQuantico.purchased) {
+        const counted = Object.entries(store.gameState.prestigeUpgrades as Record<string, any>)
+            .filter(([, s]: [string, any]) => s.count > 0);
         if (counted.length > 0) {
-            const [key, state] = counted[Math.floor(Math.random() * counted.length)];
+            const [key, state] = counted[Math.floor(Math.random() * counted.length)]!;
             superPersistentData.echoQuanticoPreserved = { key, state: JSON.parse(JSON.stringify(state)) };
         }
     }
@@ -1958,11 +1988,11 @@ function executeFormattingSequence() {
         // In questo modo il video, che si trova al di sotto, sarà visibile, e la barra gli galleggerà sopra!
         prepOverlay.style.background = 'transparent';
 
-        document.getElementById('format-text-phase').style.display = 'none';
+        document.getElementById('format-text-phase')!.style.display = 'none';
         const vidPhase = document.getElementById('format-video-phase');
-        vidPhase.style.display = 'block';
+        vidPhase!.style.display = 'block';
 
-        const video = document.getElementById('video-bigbang');
+        const video = document.getElementById('video-bigbang') as HTMLVideoElement | null;
         if (video) {
             video.classList.remove('video_display_none');
             video.style.position = 'fixed';
@@ -1979,12 +2009,12 @@ function executeFormattingSequence() {
             video.style.zIndex = '99990';
             video.style.display = 'block';
 
-            video.volume = gameState.user.masterVolume * gameState.user.musicVolume;
+            video.volume = store.gameState.user.masterVolume * store.gameState.user.musicVolume;
             video.currentTime = 0;
 
             let playPromise = video.play();
             if (playPromise !== undefined) {
-                playPromise.catch(e => {
+                playPromise.catch((e: any) => {
                     console.warn("Video bloccato dal browser, forzo il mute.", e);
                     video.muted = true;
                     video.play();
@@ -1999,7 +2029,7 @@ function executeFormattingSequence() {
         }, 50);
 
         // === HARD RESET DEL GIOCO (Dietro le quinte) ===
-        let newState = getInitialGameState();
+        let newState = w.getInitialGameState();
         Object.assign(newState, superPersistentData);
         if (superPersistentData.echoQuanticoPreserved) {
             const { key, state } = superPersistentData.echoQuanticoPreserved;
@@ -2008,22 +2038,22 @@ function executeFormattingSequence() {
             }
         }
 
-        newState.lifetimeScore = new Decimal(newState.lifetimeScore);
-        newState.qBits = new Decimal(newState.qBits);
-        newState.lifetimeQBits = new Decimal(newState.lifetimeQBits);
+        newState.lifetimeScore = new w.Decimal(newState.lifetimeScore);
+        newState.qBits = new w.Decimal(newState.qBits);
+        newState.lifetimeQBits = new w.Decimal(newState.lifetimeQBits);
         newState.lastSaveTimestamp = Date.now();
 
-        let startBonusBugs = new Decimal(0);
+        let startBonusBugs = new w.Decimal(0);
         if (newState.superUpgrades && newState.superUpgrades.fastStart && newState.superUpgrades.fastStart.purchased) {
             startBonusBugs = startBonusBugs.add(10000);
             if (newState.teams && newState.teams.assistenteQa) newState.teams.assistenteQa.count += 5;
         }
         newState.score = startBonusBugs;
 
-        gameState = newState;
-        bps = new Decimal(0);
-        clickHistory = [];
-        window.gameFlags = {};
+        store.gameState = newState;
+        store.bps = new w.Decimal(0);
+        store.clickHistory = [];
+        w.gameFlags = {};
 
         if (typeof reapplyAllEffects === 'function') reapplyAllEffects();
         calculatePrestigeBonus();
@@ -2041,17 +2071,17 @@ function executeFormattingSequence() {
 
             prepOverlay.style.display = 'none';
 
-            window.currentActiveEvent = null;
-            if (typeof refreshAllStores === 'function') refreshAllStores();
-            if (typeof updateUI === 'function') updateUI();
+            w.currentActiveEvent = null;
+            if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+            if (typeof w.updateUI === 'function') w.updateUI();
             if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
             const tabQuantum = document.getElementById('tab-quantum');
             if (tabQuantum) tabQuantum.click();
 
-            if (window.EspooClicker) {
-                window.EspooClicker.saveGame();
-                window.EspooClicker.showToast(`FORMATTAZIONE CONCLUSA! +${formatNumber(qBitsEarned)} Q-BITS`, 'achievement');
+            if (w.EspooClicker) {
+                w.EspooClicker.saveGame();
+                w.EspooClicker.showToast(`FORMATTAZIONE CONCLUSA! +${w.formatNumber(qBitsEarned)} Q-BITS`, 'achievement');
             }
         }, 22000);
 
@@ -2059,20 +2089,20 @@ function executeFormattingSequence() {
 }
 
 function checkAchievements() {
-    let totalAchBPSBonus = new Decimal(0); // Inizializza come Decimal
-    const isPostPrestige = gameState.totalResets > 0;
+    let totalAchBPSBonus = new w.Decimal(0); // Inizializza come Decimal
+    const isPostPrestige = store.gameState.totalResets > 0;
 
-    for (const key in gameData.achievements) {
-        const data = gameData.achievements[key];
+    for (const key in store.gameData.achievements) {
+        const data = store.gameData.achievements[key];
         // Inizializzazione sicura se manca nel save
-        if (!gameState.achievements[key]) {
-            gameState.achievements[key] = { unlocked: false, claimed: false };
+        if (!store.gameState.achievements[key]) {
+            store.gameState.achievements[key] = { unlocked: false, claimed: false };
         }
-        if (gameState.achievements[key].claimed === undefined) {
-            gameState.achievements[key].claimed = false;
+        if (store.gameState.achievements[key].claimed === undefined) {
+            store.gameState.achievements[key].claimed = false;
         }
 
-        const state = gameState.achievements[key];
+        const state = store.gameState.achievements[key];
 
         // Skip obiettivi moltiplicatore se non sei in prestigio
         if (data.reward && data.reward.type === 'multiplier' && !isPostPrestige) {
@@ -2087,35 +2117,35 @@ function checkAchievements() {
         // Calcolo Bonus Moltiplicatore (Decimal)
         if (state.claimed && data.reward && data.reward.type === 'multiplier') {
             // Esempio: value 1.5 diventa bonus 0.5
-            let val = new Decimal(data.reward.value).minus(1);
+            let val = new w.Decimal(data.reward.value).minus(1);
             totalAchBPSBonus = totalAchBPSBonus.add(val);
         }
     }
 
-    achievementsBPSBonus = totalAchBPSBonus;
+    store.achievementsBPSBonus = totalAchBPSBonus;
     calculatePrestigeBonus();
 }
 
-function unlockAchievement(key) {
-    const data = gameData.achievements[key];
-    gameState.achievements[key].unlocked = true;
-    gameState.achievements[key].unlockTime = Date.now();
+function unlockAchievement(key: any) {
+    const data = store.gameData.achievements[key];
+    store.gameState.achievements[key].unlocked = true;
+    store.gameState.achievements[key].unlockTime = Date.now();
     if (!data.reward) {
-        gameState.achievements[key].claimed = true;
+        store.gameState.achievements[key].claimed = true;
     } else {
-        gameState.achievements[key].claimed = false;
+        store.gameState.achievements[key].claimed = false;
     }
     playSound('sound-achievement');
-    let msg = gameData.texts.toasts.achievementUnlock.replace('{name}', data.name);
-    if (data.reward) msg += gameData.texts.toasts.rewardAvailable;
-    window.EspooClicker.showToast(msg);
-    window.EspooClicker.saveGame();
-    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+    let msg = store.gameData.texts.toasts.achievementUnlock.replace('{name}', data.name);
+    if (data.reward) msg += store.gameData.texts.toasts.rewardAvailable;
+    w.EspooClicker.showToast(msg);
+    w.EspooClicker.saveGame();
+    if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
 }
 
-function claimAchievementReward(key) {
-    const state = gameState.achievements[key];
-    const data = gameData.achievements[key];
+function claimAchievementReward(key: any) {
+    const state = store.gameState.achievements[key];
+    const data = store.gameData.achievements[key];
 
     // Controlli di sicurezza
     if (!state || !state.unlocked || state.claimed) return;
@@ -2131,23 +2161,23 @@ function claimAchievementReward(key) {
 
     // Ricalcola e Salva
     recalculateCPS();
-    window.EspooClicker.saveGame();
+    w.EspooClicker.saveGame();
 
     // Aggiorna UI
-    if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
-    if (typeof updateSkinsUI === 'function') updateSkinsUI();
+    if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
+    if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
 }
 
-let goldenBugTimer;
+let goldenBugTimer: any;
 function scheduleGoldenBug() {
     if (goldenBugTimer) clearTimeout(goldenBugTimer);
-    const nextSpawnTime = goldenBugSpawnTime + Math.random() * goldenBugSpawnTime;
+    const nextSpawnTime = w.goldenBugSpawnTime + Math.random() * w.goldenBugSpawnTime;
     goldenBugTimer = setTimeout(spawnGoldenBug, nextSpawnTime);
 }
 
 function spawnGoldenBug() {
     // Reset stato pulito (anim residue, classi)
-    goldenBug.classList.remove('visible', 'despawning', 'clicked');
+    w.goldenBug.classList.remove('visible', 'despawning', 'clicked');
 
     const bugWidth = 64;
     const bugHeight = 64;
@@ -2164,11 +2194,11 @@ function spawnGoldenBug() {
     const randomX = Math.max(0, Math.random() * maxX);
     const randomY = Math.max(0, Math.random() * maxY);
 
-    const finalLeft = rect.left + window.scrollX + padding + randomX;
-    const finalTop = rect.top + window.scrollY + padding + randomY;
+    const finalLeft = rect.left + w.scrollX + padding + randomX;
+    const finalTop = rect.top + w.scrollY + padding + randomY;
 
-    goldenBug.style.left = `${finalLeft}px`;
-    goldenBug.style.top = `${finalTop}px`;
+    w.goldenBug.style.left = `${finalLeft}px`;
+    w.goldenBug.style.top = `${finalTop}px`;
 
     // Varietà: scegli il tipo di bug (effetto "cosa mi esce?")
     //   standard 70% · lucky 18% (ricompensa ×8) · frenzy 12% (buff click ×7 15s)
@@ -2176,28 +2206,28 @@ function spawnGoldenBug() {
     let bugType = 'standard';
     if (typeRoll < 0.12) bugType = 'frenzy';
     else if (typeRoll < 0.30) bugType = 'lucky';
-    window._goldenBugType = bugType;
-    goldenBug.classList.remove('gb-lucky', 'gb-frenzy');
-    if (bugType !== 'standard') goldenBug.classList.add('gb-' + bugType);
+    w._goldenBugType = bugType;
+    w.goldenBug.classList.remove('gb-lucky', 'gb-frenzy');
+    if (bugType !== 'standard') w.goldenBug.classList.add('gb-' + bugType);
 
     // Force reflow per riavviare animazioni dopo remove .visible
-    void goldenBug.offsetWidth;
-    goldenBug.classList.add('visible');
+    void w.goldenBug.offsetWidth;
+    w.goldenBug.classList.add('visible');
 
     // Cleanup precedenti timer
-    if (window._goldenBugDespawnTimer) clearTimeout(window._goldenBugDespawnTimer);
-    if (window._goldenBugWarnTimer) clearTimeout(window._goldenBugWarnTimer);
+    if (w._goldenBugDespawnTimer) clearTimeout(w._goldenBugDespawnTimer);
+    if (w._goldenBugWarnTimer) clearTimeout(w._goldenBugWarnTimer);
 
     // Warning ultimi 2s — flicker urgente
-    window._goldenBugWarnTimer = setTimeout(() => {
-        if (goldenBug.classList.contains('visible')) {
-            goldenBug.classList.add('despawning');
+    w._goldenBugWarnTimer = setTimeout(() => {
+        if (w.goldenBug.classList.contains('visible')) {
+            w.goldenBug.classList.add('despawning');
         }
     }, 8000);
 
     // Despawn dopo 10s
-    window._goldenBugDespawnTimer = setTimeout(() => {
-        goldenBug.classList.remove('visible', 'despawning');
+    w._goldenBugDespawnTimer = setTimeout(() => {
+        w.goldenBug.classList.remove('visible', 'despawning');
     }, 10000);
 
     scheduleGoldenBug();
@@ -2205,43 +2235,43 @@ function spawnGoldenBug() {
 }
 
 function clickGoldenBug() {
-    const goldenBug = document.getElementById('golden-bug');
+    const goldenBug = document.getElementById('golden-bug') as any;
     if (goldenBug && goldenBug.classList.contains('clicked')) return; // anti-doppio-click
 
     playSound('sound-golden');
-    gameState.totalGoldenBugsClicked++;
+    store.gameState.totalGoldenBugsClicked++;
 
     const currentClickValue = calculateClickValue();
-    const bugType = window._goldenBugType || 'standard';
+    const bugType = w._goldenBugType || 'standard';
 
     // F6 -> F8: reward e buff in EspoV3.events col Decimal della pagina (bit-identico).
     // Qui restano toast/FX/timer.
-    const res = window.EspoV3.events.goldenBugReward(Decimal, {
-        bps: bps, clickValue: currentClickValue,
-        globalMult: window.goldenBugMult, bugType: bugType,
+    const res = window.EspoV3.events.goldenBugReward(w.Decimal, {
+        bps: store.bps, clickValue: currentClickValue,
+        globalMult: w.goldenBugMult, bugType: bugType,
     });
     const bonus = res.bonus;
     let toastMsg;
     if (bugType === 'lucky') {
-        toastMsg = gameData.texts.toasts.luckyBug.replace('{amount}', formatNumber(bonus));
+        toastMsg = store.gameData.texts.toasts.luckyBug.replace('{amount}', w.formatNumber(bonus));
     } else if (res.frenzy) {
-        window.goldenFrenzyMult = new Decimal(res.frenzy.mult);
-        window.goldenFrenzyEnd = Date.now() + res.frenzy.durationMs;
+        w.goldenFrenzyMult = new w.Decimal(res.frenzy.mult);
+        w.goldenFrenzyEnd = Date.now() + res.frenzy.durationMs;
         if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(231,76,60,0.15)', 0.25);
-        toastMsg = gameData.texts.toasts.frenzy;
+        toastMsg = store.gameData.texts.toasts.frenzy;
     } else {
-        toastMsg = gameData.texts.toasts.bugCrit.replace('{amount}', formatNumber(bonus));
+        toastMsg = store.gameData.texts.toasts.bugCrit.replace('{amount}', w.formatNumber(bonus));
     }
 
-    gameState.score = gameState.score.add(bonus);
-    gameState.totalScore = gameState.totalScore.add(bonus);
-    gameState.lifetimeScore = gameState.lifetimeScore.add(bonus);
+    store.gameState.score = store.gameState.score.add(bonus);
+    store.gameState.totalScore = store.gameState.totalScore.add(bonus);
+    store.gameState.lifetimeScore = store.gameState.lifetimeScore.add(bonus);
 
-    window.EspooClicker.showToast(toastMsg, 'reward');
+    w.EspooClicker.showToast(toastMsg, 'reward');
 
     // Cancella timer despawn (clicked, niente warning ulteriore)
-    if (window._goldenBugDespawnTimer) clearTimeout(window._goldenBugDespawnTimer);
-    if (window._goldenBugWarnTimer) clearTimeout(window._goldenBugWarnTimer);
+    if (w._goldenBugDespawnTimer) clearTimeout(w._goldenBugDespawnTimer);
+    if (w._goldenBugWarnTimer) clearTimeout(w._goldenBugWarnTimer);
 
     if (goldenBug) {
         goldenBug.classList.remove('despawning');
@@ -2251,7 +2281,7 @@ function clickGoldenBug() {
             goldenBug.classList.remove('visible', 'clicked');
         }, 340);
     }
-    updateUI();
+    w.updateUI();
 }
 
 // ============================================================
@@ -2263,39 +2293,39 @@ function clickGoldenBug() {
 // ============================================================
 const DAILY_BONUS_KEY = 'espo_daily_bonus';
 
-function _dailyDateStr(offsetDays) {
+function _dailyDateStr(offsetDays: any) {
     const d = new Date();
     if (offsetDays) d.setDate(d.getDate() + offsetDays);
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
 
 function claimDailyBonus() {
-    if (typeof gameState === 'undefined' || !gameState.score) return;
+    if (typeof store.gameState === 'undefined' || !store.gameState.score) return;
 
-    let data = {};
-    try { data = JSON.parse(localStorage.getItem(DAILY_BONUS_KEY)) || {}; } catch (e) { data = {}; }
+    let data: any = {};
+    try { data = JSON.parse(localStorage.getItem(DAILY_BONUS_KEY) as string) || {}; } catch (e) { data = {}; }
 
     const today = _dailyDateStr(0);
     if (data.lastDate === today) return; // già riscosso oggi
 
     // F6 -> F8: streak e ricompensa in EspoV3.events.
     const streak = window.EspoV3.events.dailyStreak(data.lastDate, today, _dailyDateStr(-1), data.streak);
-    const reward = window.EspoV3.events.dailyReward(Decimal, { bps: bps, baseClickValue: gameState.baseClickValue, streak: streak });
+    const reward = window.EspoV3.events.dailyReward(w.Decimal, { bps: store.bps, baseClickValue: store.gameState.baseClickValue, streak: streak });
 
-    gameState.score = gameState.score.add(reward);
-    gameState.totalScore = gameState.totalScore.add(reward);
-    gameState.lifetimeScore = gameState.lifetimeScore.add(reward);
+    store.gameState.score = store.gameState.score.add(reward);
+    store.gameState.totalScore = store.gameState.totalScore.add(reward);
+    store.gameState.lifetimeScore = store.gameState.lifetimeScore.add(reward);
 
     try {
         localStorage.setItem(DAILY_BONUS_KEY, JSON.stringify({ lastDate: today, streak: streak }));
     } catch (e) {}
 
-    if (window.EspooClicker && window.EspooClicker.saveGame) window.EspooClicker.saveGame();
-    if (typeof updateUI === 'function') updateUI();
+    if (w.EspooClicker && w.EspooClicker.saveGame) w.EspooClicker.saveGame();
+    if (typeof w.updateUI === 'function') w.updateUI();
 
-    const msg = gameData.texts.toasts.dailyBonus.replace('{streak}', streak).replace('{amount}', formatNumber(reward));
-    if (window.EspooClicker && window.EspooClicker.showToast) {
-        window.EspooClicker.showToast(msg, 'reward');
+    const msg = store.gameData.texts.toasts.dailyBonus.replace('{streak}', streak).replace('{amount}', w.formatNumber(reward));
+    if (w.EspooClicker && w.EspooClicker.showToast) {
+        w.EspooClicker.showToast(msg, 'reward');
     }
     if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(46, 204, 113, 0.12)', 0.3);
 }
@@ -2305,3 +2335,23 @@ function claimDailyBonus() {
 document.addEventListener('EspoGameReady', () => {
     setTimeout(claimDailyBonus, 3500);
 }, { once: true });
+
+
+// === shim outbound kill-legacy (TEMPORANEI, rimossi a fine migrazione) ===
+Object.assign(window as any, {
+  // audio/FX (ex-PREP)
+  AudioManager, FX, EventHandlers,
+  // funzioni consumate da script.js / render / modals / smoke / integration
+  playSound, updateAmbientVolume, setMusicDuck, getCustomVolume, setBgMusicVolume,
+  executePrestige, openPrestigeHub, executeFormattingSequence, scheduleGoldenBug,
+  checkAchievements, calculatePrestigeBonus, resumeCrunchTimeEffects, clickGoldenBug,
+  recalculateCPS, reapplyAllEffects, activateCrunchTime, resolveBug,
+  calculateClickValue, calculateRawClickValue, spawnFireParticle, triggerBluescreen,
+  claimAchievementReward, buySuperUpgrade, buySkin, calculateBulkCost,
+  calculateMaxAffordable, buyTeam, calculatePrestigeUpgradeCost, buyPrestigeUpgrade,
+  buyTeamEnhancement, buyClickUpgrade, getPrestigeThreshold, applyBonusSoftcap,
+  calculatePrestigeGained,
+  // dev-only (cheatboard, testate da cheatboard.spec)
+  clearActiveEvent, stopBluescreenEffect, triggerGameEvent, spawnGoldenBug,
+});
+export {};

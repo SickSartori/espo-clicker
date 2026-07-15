@@ -192,37 +192,26 @@ test.describe('Integrazione gameplay', () => {
     expect(typeof r.tabClickClass).toBe('string');
   });
 
-  test('interop stato (filone A): window.* e EspoV3.state.store sono lo stesso stato', async ({ page }) => {
+  test('stato (Fase C): EspoV3.state.store è la fonte diretta, niente più accessor su window', async ({ page }) => {
     await bootGame(page);
 
+    // Post-interop: NON c'è più un accessor generico su window per lo store.
+    // NB: non testare 'bps' qui — in dev (localhost) cheatboard-bridge.ts installa
+    // un accessor LEGITTIMO proprio su window.bps (una delle sue 5 CHEAT_KEYS) per
+    // js/cheatboard.js. 'clickCPSBonus' non è tra le CHEAT_KEYS: se avesse ancora
+    // un accessor sarebbe un vero residuo dell'interop morto.
     const r = await page.evaluate(() => {
       const w = window as any;
-      const store = w.EspoV3.state && w.EspoV3.state.store;
-      if (!store) return { hasStore: false };
-
-      // Identità: il legacy ha già scritto gameState/bps al boot → stessa referenza.
-      const identity = w.gameState === store.gameState && w.bps === store.bps;
-
-      // Scrittura stile legacy (assegnazione bare) → visibile nello store…
-      const prevBps = store.bps;
-      w.bps = new w.Decimal('12345');
-      const legacyWrite = String(store.bps) === '12345';
-      // …e scrittura lato store → visibile dal legacy.
-      store.bps = new w.Decimal('67890');
-      const storeWrite = String(w.bps) === '67890';
-      w.bps = prevBps; // ripristino
-
-      const desc = Object.getOwnPropertyDescriptor(w, 'bps');
-      return {
-        hasStore: true, identity, legacyWrite, storeWrite,
-        accessor: typeof (desc && desc.get) === 'function',
-      };
+      const store = w.EspoV3.state.store;
+      const desc = Object.getOwnPropertyDescriptor(w, 'clickCPSBonus');
+      const prev = store.clickCPSBonus;
+      store.clickCPSBonus = new w.Decimal('4242');
+      const ok = String(store.clickCPSBonus) === '4242';
+      store.clickCPSBonus = prev;
+      return { noAccessor: !(desc && desc.get), storeWrite: ok, hasStore: !!store };
     });
-
-    expect(r.hasStore, 'EspoV3.state.store assente').toBe(true);
-    expect(r.identity).toBe(true);
-    expect(r.legacyWrite).toBe(true);
+    expect(r.hasStore).toBe(true);
+    expect(r.noAccessor).toBe(true);   // l'interop è morto
     expect(r.storeWrite).toBe(true);
-    expect(r.accessor).toBe(true);
   });
 });

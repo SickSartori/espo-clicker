@@ -39,8 +39,8 @@ export function installGameData(): void {
   (window as any).isChristmasSeason = isChristmasSeason;
   (window as any).isSeasonActive = isSeasonActive;
   (window as any).IS_XMAS_TIME = IS_XMAS_TIME;
-  // store.gameData = stessa referenza; l'assegnazione window sotto passa
-  // dall'accessor interop (12ª chiave) → idempotente, ordine-indipendente.
+  // store.gameData è la fonte diretta per i moduli V3. window.gameData resta
+  // una proprietà bare (stessa referenza) solo per la cheatboard dev-only.
   store.gameData = gameData;
   (window as any).gameData = gameData;
   (window as any).ASSET_PACKAGES = ASSET_PACKAGES;
