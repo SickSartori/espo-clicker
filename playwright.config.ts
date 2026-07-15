@@ -9,7 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
  *  - smoke.spec: verifica comportamenti chiave (acquisto team, promozione,
  *    golden bug) che sopravvivranno alla F7 quando il legacy verrà rimosso.
  *
- * Richiede i bundle buildati (dist/ + dist-v3/): `npm run build` prima, o il
+ * Richiede i bundle buildati (dist/): `npm run build` prima, o il
  * job CI lo fa a monte. Il webServer avvia PHP via scripts/e2e-server.js.
  */
 const PORT = process.env.E2E_PORT || '8899';

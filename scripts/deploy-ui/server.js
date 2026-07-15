@@ -70,7 +70,7 @@ function actions(input) {
 
     release_notes:     { steps: () => [{ fn: () => fs.readFileSync(path.join(ROOT, 'release-notes_it.md'), 'utf8') }] },
     clean_rebuild:     { steps: () => [
-                           { fn: () => { for (const d of ['dist', 'dist-v3']) fs.rmSync(path.join(ROOT, d), { recursive: true, force: true }); return 'dist/ e dist-v3/ rimossi.'; } },
+                           { fn: () => { for (const d of ['dist']) fs.rmSync(path.join(ROOT, d), { recursive: true, force: true }); return 'dist/ rimosso.'; } },
                            npm('run', 'build'),
                          ] },
   };

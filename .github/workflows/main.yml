@@ -20,7 +20,7 @@ jobs:
       - name: Checkout del codice
         uses: actions/checkout@v4
 
-      # Step 1b: Build bundle (dist-v3/ è gitignored → va generato qui)
+      # Step 1b: Build bundle (dist/ è gitignored → va generato qui)
       - name: 🟢 Setup Node
         uses: actions/setup-node@v4
         with:

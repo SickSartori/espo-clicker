@@ -469,7 +469,7 @@ echo ================================================================
 echo  PULISCI dist/ + REBUILD
 echo ================================================================
 echo.
-echo  Cancella dist/ + dist-v3/ poi build pulito.
+echo  Cancella dist/ poi build pulito.
 echo.
 set /p confirm="  Procedi? (s/N): "
 if /i "!confirm!" NEQ "s" goto menu
@@ -477,7 +477,6 @@ if /i "!confirm!" NEQ "s" goto menu
 echo.
 echo  Pulizia dist/...
 if exist dist rmdir /s /q dist
-if exist dist-v3 rmdir /s /q dist-v3
 echo  [OK] Pulizia OK
 
 echo.

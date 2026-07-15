@@ -6,7 +6,7 @@ Codice nuovo TypeScript per la migrazione strangler dal monolite `js/script.js`.
 
 - Branch: `develop-exp` (prove). Niente merge/commit automatici.
 - Build legacy esbuild (`dist/`) **resta in funzione** — non rotta.
-- Build V3 Vite (`dist-v3/game.modules.js`) si carica in parallelo via `index.php` (solo se file esiste).
+- Build V3 Vite (`dist/game.modules.js`) si carica in parallelo via `index.php` (solo se file esiste).
 
 ## Comandi
 
@@ -34,7 +34,7 @@ src/
     en/                            # overlay lingua EN
   state/
     store.ts                       # store mutabile: 11 var runtime condivise (ex gamestate.js) + gameData
-    interop.ts                     # accessor window.* per il legacy (TEMP, via a fine filone C)
+    cheatboard-bridge.ts            # accessor window.* dev-only per js/cheatboard.js (interop.ts rimosso)
   core/
     crypto.ts                      # sha256, hmacSha256, randomHex (Web Crypto)
     bignum.ts                      # break_eternity.js wrapper, installGlobalDecimal
@@ -95,7 +95,7 @@ EspoV3 = {
   },
   migrations: { migrate },
   loop: { Scheduler },
-  state: { store, installInterop },
+  state: { store },
   workers: { computeOffline, encodeSave, decodeSave, terminate },
   fx: {
     animations: () => import('./ui/animations'),     // lazy
@@ -111,8 +111,8 @@ EspoV3 = {
 | dist/game.bundle.min.js (legacy)  | 216KB   | 57.5KB  | 230/75  |
 | dist/styles.bundle.min.css        | 104KB   | 20.9KB  | 110/25  |
 | dist/styles.mobile.min.css        | 21.5KB  | 4.9KB   | 25/6    |
-| dist-v3/game.modules.js           | 70.8KB  | 19.3KB  | 90/25   |
-| dist-v3/chunks/pixi-particles     | 229.7KB | 71.4KB  | lazy    |
+| dist/game.modules.js              | 70.8KB  | 19.3KB  | 90/25   |
+| dist/chunks/pixi-particles        | 229.7KB | 71.4KB  | lazy    |
 
 ## Strategia strangler
 
@@ -130,14 +130,13 @@ EspoV3 = {
 - ARIA labels/roles su navbar, mobile-nav, score-display, clicker-btn, toast-container.
 - `prefers-reduced-motion` rispettato in tokens.css + animations/index.ts.
 - `prefers-color-scheme` light auto in tokens.css.
-- `:focus-visible` ring su tutto `[data-v3]`.
 
 ## Cosa NON è ancora migrato (next phase)
 
 - Game loop runtime (60+ timer in `script.js`/`game-logic.js`/`ui-functions.js`) — Scheduler V3 è pronto, da sostituire al posto dei timer legacy.
 - gameState: la PROPRIETÀ dello stato è nello store V3 (filone A, 2026-07-12) via accessor window; la LOGICA che lo muta resta nel legacy (filone C).
 - Save/load runtime: il client legacy fa ancora le chiamate. La logica pura (crypto, codec, anti-rollback, migrations) è pronta da agganciare.
-- CSS legacy non ancora rimossi: `mobile.css` 1545 righe, themes 469+475+140 righe. I nuovi tokens vivono accanto, opt-in via `[data-v3]`.
+- CSS legacy non ancora rimossi: `mobile.css` 1545 righe, themes 469+475+140 righe. I tokens V3 (`styles/ui/tokens.css`) sono GLOBALI (`:root`) e fanno override della base legacy via cascata; la vecchia skin scoped `[data-v3]` (reset/primitives/theme-stub) era inerte — `data-v3` non è mai impostato — ed è stata rimossa (Blocco #2). Mappa completa in `docs/css-architecture.md`.
 - Cloud sync HMAC server-side (`php/save_progress.php`) compatibile con `EspoV3.crypto.hmacSha256`.
 
 ## Rischi noti
