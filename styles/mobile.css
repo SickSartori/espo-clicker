@@ -183,8 +183,10 @@
         justify-content: center;
         gap: 1px;
         margin-left: 5px;
-        background: linear-gradient(135deg, #8e44ad, #9b59b6);
-        border: 1px solid #a569bd;
+        /* Base = "in corso" (apribile, non azionabile): grigio spento.
+           promotion-ready/format-ready/hub-both-ready impongono il proprio colore. */
+        background: linear-gradient(135deg, #3a4557, #2a323f);
+        border: 1px solid rgba(148, 163, 184, 0.4);
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         overflow: hidden;
         position: relative;
@@ -223,16 +225,20 @@
         display: none;
     }
 
-    /* Stato "Pronta" (Verde Pulsante) */
+    /* Stato "Pronta" (Oro promozione, come la card) */
     #game-navbar .nav-group .nav-special-btn.promotion-ready {
-        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        background: linear-gradient(135deg, #f1c40f, #d35400);
         border-color: #fff;
-        box-shadow: 0 0 15px #2ecc71;
+        box-shadow: 0 0 15px #f1c40f;
     }
 
-    /* Stato "Formatta": il base mobile è GIÀ viola → si distingue con
-       bordo bianco + glow pulsante forte (lo span testo è nascosto come
-       per promotion-ready: nel quadrato 44px resta l'icona meteora).
+    /* Icona scura leggibile sull'oro (le altre icone navbar sono bianche) */
+    #game-navbar .nav-group .nav-special-btn.promotion-ready .nav-icon {
+        color: #1a1206;
+    }
+
+    /* Stato "Formatta": viola quantico (lo span testo è nascosto come per
+       promotion-ready: nel quadrato 44px resta l'icona meteora).
        Selettore ID-qualificato: pareggia la specificità di navbar.css
        (#game-navbar .nav-group ...) e vince per ordine, perché il bundle
        mobile carica DOPO quello base. */
@@ -245,6 +251,18 @@
         border-color: #fff;
         box-shadow: 0 0 15px #9b59b6;
         animation: formatGlow 1.5s infinite alternate;
+    }
+
+    /* Stato "Scegli": promo E format pronte → icona sola + sfumato oro→viola */
+    #game-navbar .nav-group .nav-special-btn.hub-both-ready span {
+        display: none;
+    }
+
+    #game-navbar .nav-group .nav-special-btn.hub-both-ready {
+        background: linear-gradient(120deg, #f1c40f, #e67e22 45%, #9b59b6);
+        border-color: #fff;
+        box-shadow: 0 0 15px #9b59b6;
+        animation: bothGlow 1.5s infinite alternate;
     }
 
     body:not(.mobile-view-center) #golden-bug.visible {

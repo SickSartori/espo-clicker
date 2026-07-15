@@ -127,12 +127,12 @@
     box-shadow: 0 2px 0 #71368a;
 }
 
-/* Specificità aumentata */
+/* Specificità aumentata — ORO promozione (allineato alla card Promozione) */
 #game-navbar .nav-group .nav-special-btn.promotion-ready {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
-    color: white;
-    border: 1px solid #2ecc71;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    background: linear-gradient(135deg, #f1c40f, #d35400);
+    color: #1a1206;
+    border: 1px solid #f1c40f;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
     cursor: pointer;
     opacity: 1;
     animation: promotionGlow 1.5s infinite alternate;
@@ -141,7 +141,7 @@
 
 #game-navbar .nav-group .nav-special-btn.promotion-ready:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.6);
     filter: brightness(1.1);
 }
 
@@ -168,6 +168,29 @@
 }
 
 #game-navbar .nav-group .nav-special-btn.format-ready:active {
+    transform: translateY(1px);
+}
+
+/* Promo E format pronte insieme: sfumato oro→viola (lo "sfumato tra i colori") */
+#game-navbar .nav-group .nav-special-btn.hub-both-ready {
+    background: linear-gradient(120deg, #f1c40f, #e67e22 40%, #9b59b6);
+    color: white;
+    border: 1px solid #d2b4de;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    opacity: 1;
+    animation: bothGlow 1.5s infinite alternate;
+    pointer-events: auto;
+}
+
+#game-navbar .nav-group .nav-special-btn.hub-both-ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.65);
+    filter: brightness(1.1);
+}
+
+#game-navbar .nav-group .nav-special-btn.hub-both-ready:active {
     transform: translateY(1px);
 }
 

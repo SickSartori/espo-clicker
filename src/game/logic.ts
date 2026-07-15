@@ -1981,7 +1981,9 @@ function executeFormattingSequence() {
     }
 
     // 5. TIMING FASE 2 (Dopo esattamente 2 secondi dall'urlo)
-    setTimeout(() => {
+    // Fase 2 (reveal video + hard reset + finale) incapsulata: parte SOLO a
+    // video pronto (gate anti-freeze in fondo), non più a 2s "alla cieca".
+    const _revealPhase2 = () => {
 
         // --- IL FIX È QUI ---
         // Rendiamo lo sfondo dell'overlay trasparente. 
@@ -2085,6 +2087,30 @@ function executeFormattingSequence() {
             }
         }, 22000);
 
+    };
+
+    // Gate anti-freeze: l'mp4 Big Bang (~11 MB) NON è faststart, quindi al click
+    // può non essere ancora bufferizzato. Aspetta 'canplaythrough' — tenendo su
+    // la schermata "loading data" — prima di avviare la fase 2, con un tetto di
+    // sicurezza così un 404/rete lenta non blocca mai la sequenza.
+    setTimeout(() => {
+        const _v = document.getElementById('video-bigbang') as HTMLVideoElement | null;
+        if (_v && _v.readyState < 4) {
+            let started = false;
+            let cap: any;
+            const go = () => {
+                if (started) return;
+                started = true;
+                clearTimeout(cap);
+                _v.removeEventListener('canplaythrough', go);
+                _revealPhase2();
+            };
+            _v.addEventListener('canplaythrough', go, { once: true });
+            cap = setTimeout(go, 15000);
+            try { if (_v.readyState < 1 && typeof _v.load === 'function') _v.load(); } catch { /* no-op */ }
+        } else {
+            _revealPhase2();
+        }
     }, 2000);
 }
 
@@ -2323,7 +2349,11 @@ function claimDailyBonus() {
     if (w.EspooClicker && w.EspooClicker.saveGame) w.EspooClicker.saveGame();
     if (typeof w.updateUI === 'function') w.updateUI();
 
-    const msg = store.gameData.texts.toasts.dailyBonus.replace('{streak}', streak).replace('{amount}', w.formatNumber(reward));
+    // Dal giorno 7 la ricompensa non cresce più (cap in dailyReward) → messaggio
+    // dedicato, niente falso "domani vale di più". Fallback su dailyBonus se il
+    // testo manca (overlay lingua parziale).
+    const tpl = (streak >= 7 && store.gameData.texts.toasts.dailyBonusMax) || store.gameData.texts.toasts.dailyBonus;
+    const msg = tpl.replace('{streak}', streak).replace('{amount}', w.formatNumber(reward));
     if (w.EspooClicker && w.EspooClicker.showToast) {
         w.EspooClicker.showToast(msg, 'reward');
     }

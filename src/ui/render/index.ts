@@ -2019,6 +2019,12 @@ function swapPrestigeIcon(oldIcon: any, className: any) {
     return fresh;
 }
 
+// Toast one-shot quando promo/format DIVENTANO pronte (fronte di salita in
+// sessione). Baseline al primo tick + finestra di grazia: il sync cloud può
+// alzare score/resets nei primi secondi dopo il boot e non deve annunciare.
+let _hubReadyPrev: { promo: boolean; format: boolean } | null = null;
+let _hubToastArmedAt = 0;
+
 function updatePrestigeVisuals() {
     const prestigeBtn = document.getElementById('open-prestige-hub-btn');
     if (!prestigeBtn) return;
@@ -2057,57 +2063,109 @@ function updatePrestigeVisuals() {
         prestigeBtn.innerHTML = '<i class="nav-icon"></i> <span></span>';
         icon = prestigeBtn.querySelector('.nav-icon');
         label = prestigeBtn.querySelector('span');
+        // DOM ricostruito: invalida il guard di stato così icona/label vengono
+        // riapplicate al prossimo blocco (altrimenti resterebbe l'<i> vuoto).
+        delete prestigeBtn.dataset.hubState;
     }
 
-    // Formattazione eseguibile: priorità massima (l'azione più grossa vince).
+    // Con l'hub a 2 meccaniche, promo e format possono essere pronte INSIEME
+    // (resets >= 20 + score >= soglia). Niente più priorità "format vince":
+    // il bottone sfuma tra i colori delle card in base allo stato.
+    //   'both'     → promo E format pronte → sfumato oro→viola (.hub-both-ready)
+    //   'format'   → solo format           → viola (.format-ready)
+    //   'promo'    → solo promo            → oro   (.promotion-ready)
+    //   'progress' → nessuna azionabile    → grigio spento + % (apre comunque l'hub)
     // resets >= 20 implica Quantum sbloccato (ramo OR della regola).
     const canFormat = resets >= 20;
 
-    if (canFormat) {
-        // STATO: FORMATTA! (viola)
-        if (!prestigeBtn.classList.contains('format-ready')) {
-            prestigeBtn.classList.remove('promotion-ready');
-            prestigeBtn.classList.add('format-ready');
-            prestigeBtn.style.cursor = "pointer";
+    // Preload del video Big Bang appena la formattazione è raggiungibile.
+    // L'mp4 (~11 MB) è faststart (remux 2026-07): il 1° frame parte subito,
+    // ma scaricarlo in background da quando resets≥20 (end-game, raro) evita
+    // comunque il buffering al click "MADE IN HEAVEN" su reti lente.
+    // Guard: una sola volta per sessione.
+    if (canFormat && !w._bigbangPreloaded) {
+        const bb = document.getElementById('video-bigbang') as HTMLVideoElement | null;
+        if (bb) {
+            if (!bb.getAttribute('src')) {
+                const local = bb.getAttribute('data-src-local');
+                const direct = bb.getAttribute('data-src');
+                const sync = (w.CDN && w.CDN.urlSync) ? w.CDN.urlSync(local) : null;
+                const resolved = direct || sync || local || '';
+                if (resolved) bb.setAttribute('src', resolved);
+            }
+            bb.preload = 'auto';
+            try { if (typeof bb.load === 'function') bb.load(); } catch { /* buffering best-effort */ }
+            w._bigbangPreloaded = true;
+        }
+    }
+
+    const hubState = (canFormat && canPrestige) ? 'both'
+        : canFormat ? 'format'
+        : canPrestige ? 'promo'
+        : 'progress';
+
+    // Annuncio via toast SOLO sui fronti di salita della prontezza (non sul
+    // cambio di stato render: both→format dopo una promozione non deve
+    // ri-annunciare la formattazione, era già pronta).
+    if (_hubReadyPrev === null) {
+        _hubReadyPrev = { promo: canPrestige, format: canFormat };
+        _hubToastArmedAt = Date.now() + 8000;
+    } else if (canPrestige !== _hubReadyPrev.promo || canFormat !== _hubReadyPrev.format) {
+        const promoEdge = canPrestige && !_hubReadyPrev.promo;
+        const formatEdge = canFormat && !_hubReadyPrev.format;
+        _hubReadyPrev = { promo: canPrestige, format: canFormat };
+        if ((promoEdge || formatEdge) && Date.now() >= _hubToastArmedAt) {
+            const t = store.gameData.texts.toasts;
+            const msg = (hubState === 'both') ? t.hubBothReady
+                : formatEdge ? t.hubFormatReady
+                : t.hubPromoReady;
+            showToast(msg, 'success', 5000);
+        }
+    }
+
+    // Icona/label/classi cambiano SOLO al cambio di stato → zero churn nel loop.
+    // Guard via dataset: a cold boot dataset.hubState è undefined ≠ ogni stato,
+    // quindi la prima entrata applica sempre icona/classi (niente zap residua).
+    if (prestigeBtn.dataset.hubState !== hubState) {
+        prestigeBtn.dataset.hubState = hubState;
+        prestigeBtn.classList.toggle('promotion-ready', hubState === 'promo');
+        prestigeBtn.classList.toggle('format-ready', hubState === 'format');
+        prestigeBtn.classList.toggle('hub-both-ready', hubState === 'both');
+        prestigeBtn.style.cursor = 'pointer';
+
+        if (hubState === 'both') {
+            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-bolt');
+            label.textContent = store.gameData.texts.ui.hubBothReady;
+            prestigeBtn.title = store.gameData.texts.ui.hubTitleBoth;
+        } else if (hubState === 'format') {
             icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-meteor');
             label.textContent = store.gameData.texts.ui.formatReady;
-        }
-    } else if (canPrestige) {
-        // STATO: PRONTA!
-        if (!prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
-            prestigeBtn.classList.remove('format-ready');
-            prestigeBtn.classList.add('promotion-ready');
-            prestigeBtn.style.cursor = "pointer";
+            prestigeBtn.title = store.gameData.texts.ui.hubTitleFormat;
+        } else if (hubState === 'promo') {
             icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-circle-check');
             label.textContent = store.gameData.texts.ui.promoReady;
+            prestigeBtn.title = store.gameData.texts.ui.hubTitlePromo;
+        } else {
+            icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-rocket');
+            // title di 'progress' impostato sotto, cambia col tick (percentuale)
         }
-    } else {
-        // STATO: IN PROGRESS (percentuale) — il click apre comunque l'hub
-        if (prestigeBtn.classList.contains('promotion-ready') || prestigeBtn.classList.contains('format-ready')) {
-            prestigeBtn.classList.remove('promotion-ready');
-            prestigeBtn.classList.remove('format-ready');
-        }
-        // Swap FUORI dal guard di transizione: a cold boot che atterra qui
-        // (resets 1–19, score < soglia) il bottone è senza classi di stato,
-        // il guard è falso e l'icona resterebbe la zap Lucide del boot per
-        // tutta la sessione. Idempotente → zero churn DOM sui tick successivi.
-        icon = swapPrestigeIcon(icon, 'nav-icon fa-solid fa-rocket');
-        prestigeBtn.style.cursor = "pointer";
+    }
 
-        // Calcolo percentuale sicuro
+    // La percentuale va rinfrescata a ogni tick finché siamo in 'progress'.
+    if (hubState === 'progress') {
         let progress = 0;
         if (currentScore.gt(0)) {
             progress = currentScore.div(threshold).mul(100).toNumber();
         }
+        // Cap a 99% perché a 100% scatta canPrestige (→ stato 'promo').
+        const pct = Math.min(progress, 99).toFixed(0);
+        const newText = `${pct}%`;
+        if (label.textContent !== newText) label.textContent = newText;
 
-        // Cap a 99% perché a 100% scatta il "canPrestige"
-        const finalPercent = Math.min(progress, 99).toFixed(0);
-
-        const newText = `${finalPercent}%`;
-
-        if (label.textContent !== newText) {
-            label.textContent = newText;
-        }
+        const newTitle = store.gameData.texts.ui.hubTitleProgress
+            .replace('{percent}', pct)
+            .replace('{resets}', String(resets));
+        if (prestigeBtn.title !== newTitle) prestigeBtn.title = newTitle;
     }
 }
 

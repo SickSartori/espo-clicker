@@ -281,12 +281,12 @@
 
 @keyframes promotionGlow {
     from {
-        box-shadow: 0 0 5px rgba(46, 204, 113, 0.4);
+        box-shadow: 0 0 5px rgba(241, 196, 15, 0.4);
         transform: scale(1);
     }
 
     to {
-        box-shadow: 0 0 20px rgba(46, 204, 113, 0.8);
+        box-shadow: 0 0 20px rgba(241, 196, 15, 0.85);
         transform: scale(1.05);
     }
 }
@@ -299,6 +299,19 @@
 
     to {
         box-shadow: 0 0 20px rgba(155, 89, 182, 0.9);
+        transform: scale(1.05);
+    }
+}
+
+/* Promo + format pronte insieme: il glow pulsa dall'oro al viola */
+@keyframes bothGlow {
+    from {
+        box-shadow: 0 0 6px rgba(241, 196, 15, 0.5);
+        transform: scale(1);
+    }
+
+    to {
+        box-shadow: 0 0 20px rgba(155, 89, 182, 0.8);
         transform: scale(1.05);
     }
 }

@@ -561,7 +561,8 @@ body.super-star-active::after {
 
 /* RGB SUI BOTTONI DI ACQUISTO E PROMOZIONE */
 body.super-star-active .buy-btn:not(:disabled),
-body.super-star-active .nav-special-btn.promotion-ready {
+body.super-star-active .nav-special-btn.promotion-ready,
+body.super-star-active .nav-special-btn.hub-both-ready {
     animation: rgb-cycle 1.5s linear infinite;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }

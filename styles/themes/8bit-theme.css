@@ -142,7 +142,8 @@ body.theme-8bit #game-navbar .nav-item:hover {
     transform: translateY(-2px);
 }
 
-body.theme-8bit #game-navbar .nav-special-btn.promotion-ready {
+body.theme-8bit #game-navbar .nav-special-btn.promotion-ready,
+body.theme-8bit #game-navbar .nav-special-btn.hub-both-ready {
     animation: pixelFlash 0.5s infinite step-end;
     box-shadow: 4px 4px 0 #000;
     transform: none;
