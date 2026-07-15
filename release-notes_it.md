@@ -6,6 +6,40 @@ Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali
 
 ---
 
+### 👥 Amici, Chat e Classifiche Social
+
+* **🔎 Trova i Tuoi Amici:** Cerca altri giocatori per nome e inviagli una richiesta di amicizia direttamente dal tuo profilo.
+* **🏆 Classifica Globale o Amici:** Confronta i progressi con tutto il mondo, oppure passa alla vista "Amici" per una sfida più personale.
+* **💬 Chat a Emoji:** Sfotti e incoraggia i tuoi amici con una chat rapida a emoji, con cronologia e conferma di lettura.
+* **👤 Profilo Amico:** Apri il profilo di un amico per vedere le sue statistiche, il suo armadietto di skin e la chat, tutto in comode sotto-schede.
+* **🔔 Notifiche Amici:** Un badge ti avvisa quando ricevi una richiesta di amicizia o un nuovo messaggio.
+
+---
+
+### ⚡ Hub Promozione + Formattazione
+
+* **🎛️ Due Poteri, Un Solo Hub:** Promozione e Formattazione ora convivono in un unico pannello elegante con due card affiancate: capisci al volo cosa è pronto e cosa manca ancora.
+* **🌈 Bottone che Sfuma per Stato:** Il pulsante in alto cambia colore in base alla situazione — oro quando la Promozione è pronta, viola per la Formattazione, e una sfumatura oro→viola che ti invita a "SCEGLI!" quando sono pronte entrambe.
+* **👀 Controlla i Progressi:** Apri l'hub quando vuoi per vedere a che punto sei, anche prima di poter agire.
+* **🎬 Cinematica più Fluida:** La sequenza cinematografica della Formattazione ora parte subito e scorre liscia, senza più blocchi.
+
+---
+
+### 🎵 Nuove Skin e Musica Dedicata
+
+* **✨ Skin Espò 3.0 Gratis:** Un look cyber tutto nuovo, gratuito per tutti, con i colori allineati all'interfaccia 3.0.
+* **🎸 Musica su Misura:** Ora alcune skin portano con sé la loro atmosfera, con una traccia di sottofondo dedicata che parte quando le equipaggi.
+* **🤫 Da Scoprire:** Quali skin nascondono una sorpresa musicale? Equipaggiale e scoprilo!
+
+---
+
+### ❓ Menu Aiuto e Segnalazioni
+
+* **📖 Guida a Portata di Click:** Un nuovo menu Aiuto raccoglie una guida rapida per orientarti tra le meccaniche del gioco.
+* **🐛 Segnala al Volo:** Hai trovato un bug o hai un'idea? Ora puoi segnalarcelo direttamente dal gioco, in pochi secondi.
+
+---
+
 ### 🎨 Interfaccia Cyberpunk-Tech (UI 3.0)
 
 * **🖼️ Restyling Completo:** Nuova identità visiva con tonalità cyan/neon, glow strategici, font monospace tech e dettagli HUD ovunque.
