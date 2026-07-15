@@ -323,65 +323,79 @@ html body #skins-modal #skins-grid-modern.skins-unified-grid::after {
    PATTERN BACKGROUNDS PER RARITÀ (card v3)
    ════════════════════════════════════════════════ */
 
-/* COMMON — grid HUD tech sottile + slate base */
+/* Firme allineate all'ambient in-game (skin-ambient.css):
+   stessa forma+colore per tier, condensate in card. Tutte STATICHE:
+   con 30+ card in griglia la performance viene prima del movimento. */
+
+/* COMMON — "calibrazione": griglia HUD slate, quasi neutra */
 .skin-card-v3.rarity-common {
   background:
     linear-gradient(0deg,
       transparent 0,
       transparent calc(50% - 0.5px),
-      rgba(148, 163, 184, 0.04) 50%,
+      rgba(148, 163, 184, 0.045) 50%,
       transparent calc(50% + 0.5px),
       transparent 100%) 0 0/100% 24px repeat-y,
     linear-gradient(90deg,
       transparent 0,
       transparent calc(50% - 0.5px),
-      rgba(148, 163, 184, 0.04) 50%,
+      rgba(148, 163, 184, 0.045) 50%,
       transparent calc(50% + 0.5px),
       transparent 100%) 0 0/24px 100% repeat-x,
+    radial-gradient(ellipse 80% 45% at 50% 0%,
+      rgba(148, 163, 184, 0.07) 0%,
+      transparent 65%),
     linear-gradient(180deg,
-      rgba(20, 28, 48, 0.7) 0%,
-      rgba(10, 15, 28, 0.95) 100%);
+      rgba(19, 26, 44, 0.75) 0%,
+      rgba(9, 13, 24, 0.96) 100%);
 }
 
-/* RARE — circuit traces cyan + scan diagonale */
+/* RARE — "sonar": anello cyan dietro l'arte + tracce circuito */
 .skin-card-v3.rarity-rare {
   background:
+    radial-gradient(circle at 50% 30%,
+      transparent 0 26%,
+      rgba(0, 217, 255, 0.14) 27% 28%,
+      transparent 29% 38%,
+      rgba(0, 217, 255, 0.06) 39% 40%,
+      transparent 41%),
     repeating-linear-gradient(45deg,
       transparent 0,
       transparent 18px,
       rgba(0, 217, 255, 0.05) 19px,
       transparent 20px),
-    repeating-linear-gradient(180deg,
-      transparent 0,
-      transparent 28px,
-      rgba(0, 217, 255, 0.04) 29px,
-      transparent 30px),
-    radial-gradient(ellipse 60% 40% at 50% 0%,
-      rgba(0, 217, 255, 0.10) 0%,
-      transparent 60%),
+    radial-gradient(ellipse 65% 42% at 50% 8%,
+      rgba(0, 217, 255, 0.13) 0%,
+      transparent 62%),
     linear-gradient(180deg,
-      rgba(8, 28, 48, 0.85) 0%,
-      rgba(5, 15, 28, 0.95) 100%);
+      rgba(7, 30, 52, 0.85) 0%,
+      rgba(4, 14, 27, 0.96) 100%);
 }
 
-/* EPIC — hex pattern viola + pulse glow */
+/* EPIC — "radar": mesh esagonale + cono di sweep viola */
 .skin-card-v3.rarity-epic {
   background:
+    conic-gradient(from 300deg at 50% 30%,
+      transparent 0deg,
+      rgba(192, 132, 252, 0.12) 20deg,
+      rgba(168, 85, 247, 0.04) 38deg,
+      transparent 55deg,
+      transparent 360deg),
     repeating-linear-gradient(60deg,
       transparent 0, transparent 14px,
-      rgba(192, 132, 252, 0.05) 15px, transparent 16px),
+      rgba(192, 132, 252, 0.055) 15px, transparent 16px),
     repeating-linear-gradient(-60deg,
       transparent 0, transparent 14px,
-      rgba(192, 132, 252, 0.05) 15px, transparent 16px),
+      rgba(192, 132, 252, 0.055) 15px, transparent 16px),
     radial-gradient(ellipse 70% 50% at 50% 0%,
-      rgba(168, 85, 247, 0.12) 0%,
+      rgba(168, 85, 247, 0.15) 0%,
       transparent 65%),
     linear-gradient(180deg,
-      rgba(28, 18, 48, 0.85) 0%,
-      rgba(15, 10, 28, 0.95) 100%);
+      rgba(29, 17, 52, 0.85) 0%,
+      rgba(14, 9, 27, 0.96) 100%);
 }
 
-/* LEGENDARY — raggi conici dorati + sparkles */
+/* LEGENDARY — "corona": raggi dorati + scintille sparse */
 .skin-card-v3.rarity-legendary {
   background:
     radial-gradient(circle 1px at 22% 35%,
@@ -391,58 +405,71 @@ html body #skins-modal #skins-grid-modern.skins-unified-grid::after {
     radial-gradient(circle 1px at 80% 70%,
       rgba(252, 211, 77, 0.5) 50%, transparent 51%),
     radial-gradient(circle 1.5px at 38% 78%,
-      rgba(252, 211, 77, 0.6) 50%, transparent 51%),
-    conic-gradient(from 45deg at 50% 30%,
+      rgba(255, 226, 130, 0.6) 50%, transparent 51%),
+    radial-gradient(circle 1px at 12% 58%,
+      rgba(255, 226, 130, 0.45) 50%, transparent 51%),
+    conic-gradient(from 20deg at 50% 28%,
       transparent 0deg,
-      rgba(252, 211, 77, 0.06) 40deg,
-      transparent 80deg,
-      rgba(245, 158, 11, 0.10) 160deg,
-      transparent 220deg,
-      rgba(252, 211, 77, 0.06) 320deg,
+      rgba(252, 211, 77, 0.08) 30deg,
+      transparent 62deg,
+      rgba(245, 158, 11, 0.11) 118deg,
+      transparent 165deg,
+      rgba(252, 211, 77, 0.08) 215deg,
+      transparent 258deg,
+      rgba(245, 158, 11, 0.09) 310deg,
+      transparent 348deg,
       transparent 360deg),
     linear-gradient(180deg,
-      rgba(38, 28, 8, 0.85) 0%,
-      rgba(20, 15, 8, 0.95) 100%);
+      rgba(41, 29, 8, 0.85) 0%,
+      rgba(21, 15, 7, 0.96) 100%);
 }
 
-/* DIVINE — aurora warm + bagliore eterea */
+/* DIVINE — "aurora + halo": arco avorio + controbanda prismatica */
 .skin-card-v3.rarity-divine {
   background:
+    radial-gradient(circle at 50% 28%,
+      transparent 0 30%,
+      rgba(255, 238, 180, 0.20) 31% 32.5%,
+      transparent 34%),
     linear-gradient(135deg,
       transparent 0%,
-      rgba(255, 240, 180, 0.08) 25%,
-      transparent 50%,
-      rgba(255, 220, 160, 0.10) 75%,
+      rgba(255, 240, 180, 0.09) 22%,
+      transparent 42%,
+      rgba(172, 225, 255, 0.05) 58%,
+      transparent 72%,
+      rgba(255, 220, 160, 0.11) 88%,
       transparent 100%),
-    radial-gradient(ellipse 80% 60% at 50% 30%,
-      rgba(255, 238, 144, 0.18) 0%,
-      transparent 70%),
-    radial-gradient(ellipse 100% 40% at 50% 100%,
-      rgba(255, 220, 180, 0.10) 0%,
+    radial-gradient(ellipse 80% 55% at 50% 24%,
+      rgba(255, 238, 144, 0.16) 0%,
       transparent 70%),
     linear-gradient(180deg,
-      rgba(38, 32, 18, 0.85) 0%,
-      rgba(22, 18, 12, 0.95) 100%);
+      rgba(41, 34, 17, 0.85) 0%,
+      rgba(23, 19, 11, 0.96) 100%);
 }
 
-/* CHRISTMAS — fiocchi + warm glow rosso */
+/* CHRISTMAS — fiocchi + calore rosso/oro dal basso */
 .skin-card-v3.rarity-christmas {
   background:
     radial-gradient(circle 1.5px at 18% 25%,
-      rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+      rgba(250, 250, 255, 0.7) 50%, transparent 51%),
     radial-gradient(circle 1px at 55% 35%,
-      rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+      rgba(250, 250, 255, 0.5) 50%, transparent 51%),
     radial-gradient(circle 1.5px at 75% 60%,
-      rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+      rgba(250, 250, 255, 0.6) 50%, transparent 51%),
     radial-gradient(circle 1px at 30% 75%,
-      rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+      rgba(250, 250, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1px at 88% 18%,
+      rgba(250, 250, 255, 0.45) 50%, transparent 51%),
     radial-gradient(ellipse 100% 50% at 50% 100%,
-      rgba(239, 68, 68, 0.15) 0%,
-      rgba(245, 158, 11, 0.06) 50%,
+      rgba(239, 68, 68, 0.17) 0%,
+      rgba(245, 158, 11, 0.07) 50%,
       transparent 80%),
+    radial-gradient(ellipse 70% 40% at 50% 0%,
+      rgba(120, 200, 150, 0.06) 0%,
+      transparent 65%),
     linear-gradient(180deg,
-      rgba(38, 12, 18, 0.85) 0%,
-      rgba(20, 8, 10, 0.95) 100%);
+      rgba(41, 12, 19, 0.85) 0%,
+      rgba(21, 8, 11, 0.96) 100%);
 }
 
 /* Hover: pattern intensifica leggermente */

@@ -18,6 +18,7 @@
 @import './mobile/achievements-modal.css';
 @import './mobile/score-header.css';
 @import './mobile/clicker-button.css';
+@import './mobile/skin-ambient.css';
 
 /* Desktop refresh — HUD/FUI cyberpunk-tech identity (>= 769px) */
 @import './desktop/background.css';
