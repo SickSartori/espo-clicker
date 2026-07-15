@@ -1037,3 +1037,144 @@ body.playing #arcade-fs-header::after {
     0%, 100% { text-shadow: 0 0 8px rgba(255, 206, 21, 0.6); }
     50%      { text-shadow: 0 0 20px rgba(255, 206, 21, 1), 0 0 40px rgba(255, 206, 21, 0.5); }
 }
+
+/* ============================================================ */
+/* HEADER MARQUEE — redesign parte alta + size pass             */
+/* Sezione autonoma in coda: selettori #arcade-fullscreen …     */
+/* (0,2,x) vincono sia sulle regole sopra sia sul bundle del    */
+/* gioco (modals-arcade) senza !important.                      */
+/* ============================================================ */
+
+/* Fascia header: stessa altezza ma DENSA — prima era un nastro
+   da 71px con dentro elementi minuti che "galleggiavano". */
+#arcade-fullscreen #arcade-fs-header {
+    padding: 12px 20px;
+    gap: 16px;
+    background:
+        radial-gradient(ellipse 60% 130% at 50% -30%, rgba(0, 217, 255, 0.10) 0%, transparent 70%),
+        linear-gradient(180deg, #101c2c 0%, #0a1220 55%, #060912 100%);
+}
+
+/* Titolo = insegna: root 13px → i rem rendevano ~17px, da chiosco
+   più che da marquee. Px espliciti + clamp per i riflow. */
+#arcade-fullscreen .fs-title {
+    font-size: clamp(18px, 1.8vw, 23px);
+    letter-spacing: 4px;
+    gap: 12px;
+    white-space: nowrap;
+    min-width: 0;
+    text-shadow:
+        0 0 4px #fff,
+        0 0 14px #00d9ff,
+        0 0 32px #00d9ff,
+        0 2px 0 rgba(0, 0, 0, 0.55);
+}
+#arcade-fullscreen .fs-title i { font-size: 1.25em; }
+
+/* Wallet: da due pill sparse a cluster unico da cabinet (CREDITS) */
+#arcade-fullscreen .fs-wallet {
+    gap: 6px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid #17242f;
+    border-radius: 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+}
+#arcade-fullscreen .wallet-main { border-radius: 7px; }
+#arcade-fullscreen .wallet-pending { border-radius: 7px; }
+
+/* X: il bundle del gioco la schiacciava a 36px (e su mobile a 30×36,
+   deformata dal flex). Quadrata, misura piena, mai compressa. */
+#arcade-fullscreen #arcade-fs-close {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+#arcade-fullscreen #arcade-fs-close i { font-size: 18px; }
+
+/* Rail luminosa inferiore più presente (marquee vero) */
+#arcade-fullscreen #arcade-fs-header::after { height: 4px; }
+
+/* GIOCA è la call-to-action del cabinet: taglia da protagonista */
+#arcade-fullscreen #arcade-play-btn {
+    font-size: 17px;
+    letter-spacing: 2px;
+    padding: 15px 46px;
+    min-width: 210px;
+    border-radius: 8px;
+}
+
+/* Separatore anteprima nel colore del gioco selezionato */
+#arcade-fullscreen .preview-separator {
+    color: rgba(var(--game-rgb, 0, 217, 255), 0.55);
+    text-shadow: 0 0 8px rgba(var(--game-rgb, 0, 217, 255), 0.35);
+    transition: color 400ms ease;
+}
+
+/* ---------- Mobile: header snello, niente collisioni ---------- */
+@media (max-width: 768px) {
+    /* 71px → ~54px: padding compatto + safe-area per il notch */
+    #arcade-fullscreen #arcade-fs-header {
+        padding: 8px 12px;
+        padding-top: max(8px, env(safe-area-inset-top));
+        gap: 8px;
+    }
+    /* Prima: titolo 17px in 169px → andava A CAPO sotto il wallet.
+       14px + spacing ridotto = una riga anche a 360px. */
+    #arcade-fullscreen .fs-title {
+        font-size: 14px;
+        letter-spacing: 2px;
+        gap: 8px;
+    }
+    #arcade-fullscreen .fs-title i { font-size: 1.35em; }
+    /* La pill "+0" (pending vuoto) è peso morto sui 375px: compare
+       solo quando c'è davvero un premio in attesa (.has-pending). */
+    #arcade-fullscreen .wallet-pending:not(.has-pending) { display: none; }
+    #arcade-fullscreen .fs-wallet { padding: 3px; }
+    #arcade-fullscreen .wallet-main { padding: 5px 10px; }
+    #arcade-fullscreen .wallet-total { font-size: 14px; }
+    /* X: 38px, quadrata (prima 30×36 schiacciata) */
+    #arcade-fullscreen #arcade-fs-close {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+    #arcade-fullscreen #arcade-fs-close i { font-size: 15px; }
+
+    /* Monitor anteprima: meno cornice, più contenuto (36px → 18px)
+       e testo che respira sulla larghezza reale. */
+    #arcade-fullscreen .arcade-preview-monitor { padding: 18px 14px; }
+    #arcade-fullscreen .arcade-preview-monitor .preview-content { max-width: 96%; }
+    #arcade-fullscreen #preview-title { font-size: clamp(19px, 5.2vw, 24px); }
+    #arcade-fullscreen #preview-desc { font-size: 14.5px; max-width: 36ch; }
+
+    /* GIOCA a misura pollice: largo, centrato */
+    #arcade-fullscreen #arcade-play-btn {
+        width: min(300px, 86%);
+        padding: 15px 0;
+        font-size: 16px;
+        min-width: 0;
+    }
+}
+
+/* Spazio per il virtual pad ingrandito: il pad reale è ~218px + 8px di
+   offset → i 200px riservati sopra lo facevano sovrapporre al canvas. */
+@media (max-width: 768px) and (pointer: coarse) {
+    body.playing #arcade-fs-body { padding-bottom: 232px; }
+}
+html.touch-device body.playing #arcade-fs-body { padding-bottom: 232px; }
+
+/* Caso più largo dell'header mobile: pending visibile (premio in attesa).
+   Senza questo, a 360px la pill gialla collideva col titolo (−46px).
+   Pill compatta + titolo senza icona e più stretto finché c'è il premio. */
+@media (max-width: 768px) {
+    #arcade-fullscreen .wallet-pending.has-pending { padding: 4px 8px; gap: 4px; }
+    #arcade-fullscreen .wallet-pending.has-pending #fs-pending-val { font-size: 12px; }
+    #arcade-fs-header:has(.wallet-pending.has-pending) .fs-title i { display: none; }
+    #arcade-fs-header:has(.wallet-pending.has-pending) .fs-title {
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+}
