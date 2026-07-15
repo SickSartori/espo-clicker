@@ -216,6 +216,18 @@ export const texts: Record<string, any> = {
         credited: "Ti abbiamo accreditato <b>1 Formattazione</b> e <b>1 Q-Bit</b>. Il Quantum Lab è già aperto!",
         discover: "SCOPRI LE NOVITÀ"
     },
+    launch: {
+        title: "IL LANCIO È QUI",
+        thanks: "Grazie per aver giocato a <b>Espò Clicker</b> prima di tutti.",
+        intro: "Per il lancio ufficiale la classifica riparte da zero: benvenuto nella <b>Season 1</b>. Tutti alla stessa linea di partenza.",
+        founderTitle: "SEI UN FONDATORE",
+        founderSkin: "Hai sbloccato la skin esclusiva <b>Espò Fondatore</b>: non sarà mai più ottenibile da nessun altro.",
+        keepAll: "Il tuo guardaroba resta al sicuro.",
+        pickIntro: "Il resto del guardaroba si azzera, ma puoi <b>salvarne fino a 5</b>. Scegli con cura.",
+        pickCounter: "Selezionate: {n}/5",
+        confirm: "INIZIA LA SEASON 1",
+        confirmPick: "SALVA E INIZIA"
+    },
     format: {
         suffixes: [
             "", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",

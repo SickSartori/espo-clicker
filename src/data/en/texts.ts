@@ -212,6 +212,18 @@ export const texts: Record<string, any> = {
         credited: "We've credited you <b>1 Format</b> and <b>1 Q-Bit</b>. The Quantum Lab is already open!",
         discover: "DISCOVER WHAT'S NEW"
     },
+    launch: {
+        title: "LAUNCH IS HERE",
+        thanks: "Thanks for playing <b>Espò Clicker</b> before everyone else.",
+        intro: "For the official launch the leaderboard resets to zero: welcome to <b>Season 1</b>. Everyone at the same starting line.",
+        founderTitle: "YOU'RE A FOUNDER",
+        founderSkin: "You unlocked the exclusive <b>Founder Espò</b> skin — it will never be obtainable again.",
+        keepAll: "Your wardrobe stays safe.",
+        pickIntro: "The rest of your wardrobe resets, but you can <b>keep up to 5</b>. Choose wisely.",
+        pickCounter: "Selected: {n}/5",
+        confirm: "START SEASON 1",
+        confirmPick: "SAVE & START"
+    },
     format: {
         time: { d: "d", h: "h", m: "m", s: "s" }
     },

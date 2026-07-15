@@ -283,5 +283,23 @@ export const skins: Record<string, any> = {
             goldenBugIcon: 'fa-sun',
             goldenBugColor: '#f1c40f'
         }
+    },
+
+    // --- FONDATORE (esclusiva pre-lancio, non ottenibile dai nuovi) ---
+    // Concessa solo dalla migrazione di lancio (v2→v3) a chi giocava prima del
+    // 03/08/2026. Nessun `cost` e nessun achievement collegato → per i nuovi
+    // giocatori resta bloccata e non acquistabile.
+    founder: {
+        name: "Espò Fondatore",
+        desc: "C'eri prima del lancio. Il codice non lo dimentica.",
+        img: "skins/founder.webp",
+        imgClick: "skins/founder-click.webp",
+        rarity: "divine",
+        unlockHint: "Riservata ai giocatori pre-lancio. Non più ottenibile.",
+        themeConfig: {
+            specialMusic: 'sound-bg-music-divine',
+            goldenBugIcon: 'fa-crown',
+            goldenBugColor: '#f1c40f'
+        }
     }
 };

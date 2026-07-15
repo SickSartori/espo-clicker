@@ -345,7 +345,7 @@
                 </div>
                 <div class="cb-group">
                     <div class="cb-gt">Zona pericolosa</div>
-                    <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
+                    <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-v3" class="cb-btn purple"><i class="fa-solid fa-rocket"></i> Test Lancio V3</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
                 </div>
             </section>
 
@@ -641,6 +641,24 @@
         localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(fake)));
         gameState.isDeleting = true; location.reload();
     }
+    // Simula un save PRE-lancio (schemaVersion 2) con 8 skin non-default → alla
+    // ricarica scatta la migrazione V2→V3: Fondatore + skin-picker (salva 5).
+    async function forceV3() {
+        if (!confirm(cbT('Simulare il lancio (V2→V3)? Crea un falso save pre-lancio con 8 skin e ricarica.'))) return;
+        const pool = Object.keys(gameData.skins).filter(s => s !== 'default' && s !== 'founder').slice(0, 8);
+        const fake = {
+            version: { major: 3, minor: 0, stage: '' },
+            schemaVersion: 2,
+            user: { username: gameState.user.username, masterVolume: gameState.user.masterVolume },
+            skins: { unlocked: ['default'].concat(pool), current: pool[0] || 'default' },
+            score: '1000000000', totalScore: '1000000000', lifetimeScore: '1000000000',
+            totalResets: 2, totalFormattazioni: 1, totalClicks: 80000
+        };
+        const compressed = LZString.compressToUTF16(JSON.stringify(fake));
+        try { await window.EspoV3.save.db.write(compressed); } catch (e) { /* IDB ko → fallback sotto */ }
+        localStorage.setItem('espotoolClickerSaveV9', compressed);
+        gameState.isDeleting = true; location.reload();
+    }
     async function hardReset() {
         if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nAzzera progressi locali E cloud e ricarica (resti loggato).'))) return;
 
@@ -840,7 +858,7 @@
     on('cb-god', godMode);
     on('cb-debug', debugToggle); on('cb-log', logState); on('cb-save', forceSave);
     on('cb-combo-mult', comboMultCycle);
-    on('cb-v2', forceV2); on('cb-hardreset', hardReset);
+    on('cb-v2', forceV2); on('cb-v3', forceV3); on('cb-hardreset', hardReset);
 
     // --- 13. Init ---
     activate('risorse');

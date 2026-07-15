@@ -46,6 +46,7 @@ test.describe('kill-legacy — ui-functions', () => {
     'updatePrestigeVisuals', 'updatePrestigeUI', 'updateStatsUI', 'updateAchievementsUI',
     'refreshAllStores', 'updateClickStore', 'renderPrestigeHubCards', 'showClickFeedback',
     'bumpScoreDisplay', 'startMatrixEffect', 'stopMatrixEffect', 'showV2MigrationModal',
+    'showLaunchMigrationModal',
     'simpleMarkdown', 'checkTabNotifications', 'equipSkin',
   ];
 

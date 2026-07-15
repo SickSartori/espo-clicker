@@ -119,7 +119,7 @@ export const clickUpgrades: Record<string, any> = {
         name: 'Click Divino',
         desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
         cost: new Decimal(1000000000),
-        requiredClicks: 100000,
+        requiredClicks: 50000,
         clickIncrease: new Decimal(0),
         effects: [{
             trigger: 'passive',

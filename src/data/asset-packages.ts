@@ -26,10 +26,9 @@
 // AGGIUNGERE UNA NUOVA SKIN
 // ============================================================
 // 1. Aggiungi il file WebP in:  assets/image/skins/
-// 2. Aggiungi l'entry in:       js/data/skins.js
+// 2. Aggiungi l'entry in:       src/data/skins.ts (+ overlay EN in src/data/en/skins.ts)
 //      img: 'skins/nome-skin.webp', imgClick: 'skins/nome-skin-click.webp'
-// 3. Aggiungi i path al pack giusto qui sotto (es. SKINS_COMMON)
-// 4. Aggiungi i path al pack corrispondente in: assets/packs/build.php
+// 3. Aggiungi i path al pack giusto qui sotto (es. SKINS_COMMON, THEME_DIVINE)
 // 5. Rigenera gli ZIP:          http://localhost:8888/Espo-Clicker/assets/packs/build.php
 // 6. Bumpa CACHE_VERSION in:    sw.js
 // ============================================================
@@ -169,8 +168,10 @@ export const ASSET_PACKAGES: Record<string, any> = {
         images: [
             'skins/gespo.webp',
             'skins/gespo-click.webp',
+            'skins/founder.webp',        // Fondatore (esclusiva pre-lancio)
+            'skins/founder-click.webp',
         ],
-        // Dimensione stimata: ~237 KB
+        // Dimensione stimata: ~300 KB
     },
 
     // ===========================================================

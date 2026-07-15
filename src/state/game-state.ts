@@ -17,7 +17,10 @@ function getInitialGameState() {
         // Schema del SAVE (≠ version del GIOCO): consumato dal framework migrazioni
         // V3 (EspoV3.migrations, detectSchemaVersion). I save senza questo campo
         // sono trattati come schema 1 e migrati via gate legacy version.major.
-        schemaVersion: 2,
+        // schemaVersion 3 = lancio produzione: un nuovo giocatore nasce già in
+        // Season 1 e non passa mai dalla migrazione Fondatore (v2→v3).
+        schemaVersion: 3,
+        season: 1,
         arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0 },
         score: new w.Decimal(0),
         baseClickValue: new w.Decimal(1),

@@ -1424,6 +1424,121 @@ function showV2MigrationModal(onConfirm: any) {
     });
 }
 
+// --- MODALE LANCIO PRODUZIONE V3 (Season 1 + Fondatore + skin-picker) ---
+// Mostrato dal cascade di boot/modals quando `triggerLaunchMigrationModal` è true
+// oppure quando è rimasta pendente una scelta skin Fondatore (`pendingFounderChoice`,
+// es. reload a metà scelta). Se ci sono più di 5 skin non-default da salvare, rende
+// un picker (max 5) e FINALIZZA la scelta al conferma; altrimenti è solo un benvenuto.
+const FOUNDER_MAX_KEPT = 5;
+function showLaunchMigrationModal(onConfirm: any) {
+    const t = store.gameData.texts.launch || {};
+    const gs: any = store.gameState;
+    const isFounder = !!gs.isFounder;
+    // Filtro al catalogo skin noto: gli id vengono dal save (manomettibile) e
+    // finiscono in innerHTML → tenere solo skin reali rende id/nome valori fidati
+    // (niente XSS) ed evita celle rotte per skin id rimossi nei vecchi salvataggi.
+    const candidates: string[] = (Array.isArray(gs.founderCandidateSkins) ? gs.founderCandidateSkins : [])
+        .filter((id: string) => !!id && id !== 'default' && !!store.gameData.skins[id]);
+    const needsPicker = isFounder && !!gs.pendingFounderChoice && candidates.length > FOUNDER_MAX_KEPT;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-backdrop';
+    overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
+
+    const founderBlock = isFounder ? `
+        <div style="background:rgba(241,196,15,0.1); border-left:4px solid #f1c40f; padding:10px; margin-bottom:10px; border-radius:4px;">
+            <b style="color:#f1c40f;">&#128081; ${t.founderTitle}</b><br>${t.founderSkin}
+        </div>` : '';
+
+    let choiceBlock = '';
+    if (needsPicker) {
+        const cells = candidates.map((id) => {
+            const skin = store.gameData.skins[id] || {};
+            const name = skin.name || id;
+            const img = skin.img ? `assets/image/${skin.img}` : '';
+            return `<button type="button" class="launch-skin-cell" data-skin="${id}" title="${name}"
+                        style="position:relative; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px 4px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:outline 0.12s ease;">
+                        <img src="${img}" alt="${name}" loading="lazy" style="width:56px; height:56px; object-fit:contain; pointer-events:none;">
+                        <span style="font-size:0.68rem; color:#bdc3c7; line-height:1.1; pointer-events:none; max-width:76px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</span>
+                    </button>`;
+        }).join('');
+        choiceBlock = `
+            <div style="margin-bottom:8px;">${t.pickIntro}</div>
+            <div id="launch-skin-counter" style="font-weight:700; color:#2ecc71; margin-bottom:8px;">${(t.pickCounter || '{n}/5').replace('{n}', '0')}</div>
+            <div id="launch-skin-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; max-height:44vh; overflow-y:auto; padding:4px; border:1px solid rgba(255,255,255,0.08); border-radius:8px;">${cells}</div>`;
+    } else if (isFounder) {
+        choiceBlock = `
+            <div style="background:rgba(46,204,113,0.1); border-left:4px solid #2ecc71; padding:10px; border-radius:4px;">
+                <b style="color:#2ecc71;">&#10003; ${t.keepAll}</b>
+            </div>`;
+    }
+
+    const confirmLabel = needsPicker ? (t.confirmPick || t.confirm) : t.confirm;
+
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width:520px; text-align:center; animation:popIn 0.3s ease-out; padding:16px;">
+            <h2 style="color:#f1c40f; letter-spacing:3px; margin-bottom:12px;">${t.title}</h2>
+            <div style="text-align:left; font-size:0.95rem; color:#bdc3c7; margin-bottom:16px;">
+                ${t.thanks}<br><br>
+                ${t.intro}<br><br>
+                ${founderBlock}
+                ${choiceBlock}
+            </div>
+            <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="launch-migration-confirm">
+                <i class="fa-solid fa-rocket" style="margin-right:4px;"></i> ${confirmLabel}
+            </button>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    // Selezione picker (max 5)
+    const selected = new Set<string>();
+    if (needsPicker) {
+        const counter = overlay.querySelector('#launch-skin-counter');
+        const updateCounter = () => {
+            if (counter) counter.textContent = (t.pickCounter || '{n}/5').replace('{n}', String(selected.size));
+        };
+        overlay.querySelectorAll('.launch-skin-cell').forEach((cell) => {
+            cell.addEventListener('click', () => {
+                const el = cell as HTMLElement;
+                const id = el.dataset.skin!;
+                if (selected.has(id)) {
+                    selected.delete(id);
+                    el.style.outline = 'none';
+                } else {
+                    if (selected.size >= FOUNDER_MAX_KEPT) return; // blocca oltre 5
+                    selected.add(id);
+                    el.style.outline = '3px solid #2ecc71';
+                }
+                updateCounter();
+            });
+        });
+    }
+
+    const finalize = () => {
+        // Applica la scelta skin solo nel caso picker (finalizza il "salva 5")
+        if (needsPicker) {
+            const unlocked: string[] = Array.isArray(gs.skins.unlocked) ? gs.skins.unlocked : ['default'];
+            selected.forEach((id) => { if (!unlocked.includes(id)) unlocked.push(id); });
+            gs.skins.unlocked = unlocked;
+        }
+        // In ogni caso di Fondatore chiudiamo la fase di scelta
+        if (isFounder) {
+            gs.pendingFounderChoice = false;
+            delete gs.founderCandidateSkins;
+            if (w.EspooClicker && typeof w.EspooClicker.saveGame === 'function') w.EspooClicker.saveGame();
+            if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+        }
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.2s ease';
+        setTimeout(() => {
+            overlay.remove();
+            if (onConfirm) onConfirm();
+        }, 200);
+    };
+
+    document.getElementById('launch-migration-confirm')!.addEventListener('click', finalize);
+}
+
 // === TOAST SYSTEM v3 — slot-based (F5 -> F8: coda/slot in EspoV3.toast) ===
 const MAX_VISIBLE_TOASTS = 5;
 
@@ -2665,6 +2780,7 @@ Object.assign(window as any, {
     updatePrestigeVisuals, updatePrestigeUI, updateStatsUI, updateAchievementsUI,
     refreshAllStores, updateClickStore, renderPrestigeHubCards, showClickFeedback,
     bumpScoreDisplay, startMatrixEffect, stopMatrixEffect, showV2MigrationModal,
+    showLaunchMigrationModal,
     simpleMarkdown, checkTabNotifications, equipSkin,
     // Extra (non nella lista dei 20 del brief/RENDER_GLOBALS, ma richieste da
     // dev/tests/e2e/integration.spec.ts, F5 pre-esistente): erano globali implicite

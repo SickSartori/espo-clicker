@@ -1384,7 +1384,14 @@ export function initModals(): void {
                 // post-login (V2 / release notes) partono a fine intro via onComplete.
                 // Il toast "Benvenuto" e' rimosso: lo dice gia' l'intro.
                 const runPostLogin = () => {
-                    if (w.triggerV2MigrationModal) {
+                    if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
+                        w.showLaunchMigrationModal(() => {
+                            w.triggerLaunchMigrationModal = false;
+                            if (w.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {
+                                Game.openReleaseNotes();
+                            }
+                        });
+                    } else if (w.triggerV2MigrationModal) {
                         w.showV2MigrationModal(() => {
                             w.triggerV2MigrationModal = false;
                             if (w.shouldShowReleaseNotesOnLoad && Game.openReleaseNotes) {

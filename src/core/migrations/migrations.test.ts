@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { migrate, detectSchemaVersion } from './index';
-import type { SaveStateV1, SaveStateV2 } from '../../types/save';
+import type { SaveStateV1, SaveStateV2, SaveStateV3 } from '../../types/save';
 import { CURRENT_SCHEMA_VERSION } from '../../types/save';
 
 describe('detectSchemaVersion', () => {
@@ -15,9 +15,9 @@ describe('migrate', () => {
   });
 
   it('save già current → no-op, report null', () => {
-    const v2: SaveStateV2 = {
-      schemaVersion: 2,
-      version: { major: 2, minor: 0, patch: 0 },
+    const v3: SaveStateV3 = {
+      schemaVersion: 3,
+      version: { major: 3, minor: 0, patch: 0 },
       user: { username: 'tester', masterVolume: 0.8 },
       skins: { current: 'default', unlocked: ['default'] },
       score: '100', totalScore: '100', lifetimeScore: '100',
@@ -26,8 +26,8 @@ describe('migrate', () => {
       totalFormattazioni: 0, totalResets: 0, crunchTimeEndTime: 0,
       teams: {}, buildingEnhancements: {}, achievements: {},
     };
-    const out = migrate(v2);
-    expect(out.state).toBe(v2);
+    const out = migrate(v3);
+    expect(out.state).toBe(v3);
     expect(out.report).toBeNull();
   });
 
@@ -85,5 +85,51 @@ describe('migrate', () => {
 
   it('schemaVersion futuro → throw', () => {
     expect(() => migrate({ schemaVersion: 999 } as never)).toThrow(/più recente/);
+  });
+});
+
+describe('migrate v2→v3 (lancio Season 1)', () => {
+  const baseV2 = (over: Partial<SaveStateV2> = {}): SaveStateV2 => ({
+    schemaVersion: 2,
+    version: { major: 3, minor: 0, patch: 0 },
+    user: { username: 'p', masterVolume: 0.7 },
+    skins: { current: 'default', unlocked: ['default'] },
+    score: '5', totalScore: '5', lifetimeScore: '5',
+    totalOfflineScore: '0', prestigePoints: '0', lifetimePrestigePoints: '0',
+    baseClickValue: '1', qBits: '0', lifetimeQBits: '0',
+    totalFormattazioni: 0, totalResets: 0, crunchTimeEndTime: 0,
+    teams: {}, buildingEnhancements: {}, achievements: {},
+    ...over,
+  });
+
+  it('nessun progresso → non Fondatore, ma Season 1', () => {
+    const out = migrate(baseV2());
+    expect(out.state?.schemaVersion).toBe(3);
+    expect(out.state?.season).toBe(1);
+    expect(out.report?.founderReward).toBe(false);
+    expect(out.state?.isFounder).toBe(false);
+    expect(out.state?.pendingFounderChoice).toBe(false);
+  });
+
+  it('≥1 Promozione → Fondatore', () => {
+    const out = migrate(baseV2({ totalResets: 1 }));
+    expect(out.report?.founderReward).toBe(true);
+    expect(out.state?.isFounder).toBe(true);
+    expect(out.state?.foundedAt).toBeGreaterThan(0);
+  });
+
+  it('≥1 skin non-default → Fondatore, ≤5 salvate senza picker', () => {
+    const out = migrate(baseV2({ skins: { current: 'gold', unlocked: ['default', 'gold', 'rick'] } }));
+    expect(out.report?.founderReward).toBe(true);
+    expect(out.report?.salvageableSkins).toEqual(['gold', 'rick']);
+    expect(out.state?.pendingFounderChoice).toBe(false);
+  });
+
+  it('>5 skin non-default → picker pendente', () => {
+    const many = ['default', 'a', 'b', 'c', 'd', 'e', 'f'];
+    const out = migrate(baseV2({ skins: { current: 'a', unlocked: many } }));
+    expect(out.report?.founderReward).toBe(true);
+    expect(out.state?.pendingFounderChoice).toBe(true);
+    expect(out.state?.founderCandidateSkins).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
 });

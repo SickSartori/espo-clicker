@@ -118,5 +118,12 @@ export const skins: Record<string, any> = {
     jesus: {
         desc: "The savior of the database.",
         unlockHint: "Unlock the 'Mouse Divinity' achievement."
+    },
+
+    // --- FOUNDER (pre-launch exclusive) ---
+    founder: {
+        name: "Founder Espò",
+        desc: "You were here before launch. The code remembers.",
+        unlockHint: "Reserved for pre-launch players. No longer obtainable."
     }
 };

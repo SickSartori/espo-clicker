@@ -17,6 +17,7 @@
 import type { AnySaveState, SaveStateCurrent } from '../../types/save';
 import { CURRENT_SCHEMA_VERSION } from '../../types/save';
 import { v1ToV2 } from './v1-to-v2';
+import { v2ToV3 } from './v2-to-v3';
 
 export interface MigrationReport {
   fromVersion: number;
@@ -24,17 +25,26 @@ export interface MigrationReport {
   steps: string[];
   /** True se l'utente aveva un save legacy con progressi → mostrare release notes / premio veterano. */
   veteranReward?: boolean;
+  /** V2→V3: giocatore pre-lancio idoneo al premio Fondatore (skin esclusiva + salva 5 skin). */
+  founderReward?: boolean;
+  /** V2→V3: skin non-default possedute pre-lancio, candidate al picker (max 5). */
+  salvageableSkins?: string[];
 }
 
 export interface MigrationStep<From, To> {
   from: number;
   to: number;
   description: string;
-  apply: (state: From) => { state: To; veteranReward?: boolean };
+  apply: (state: From) => {
+    state: To;
+    veteranReward?: boolean;
+    founderReward?: boolean;
+    salvageableSkins?: string[];
+  };
 }
 
-/** Ordine cronologico: v1→v2, futuri v2→v3, ... */
-const MIGRATIONS: ReadonlyArray<MigrationStep<any, any>> = [v1ToV2];
+/** Ordine cronologico: v1→v2, v2→v3 (lancio produzione), futuri v3→v4, ... */
+const MIGRATIONS: ReadonlyArray<MigrationStep<any, any>> = [v1ToV2, v2ToV3];
 
 /**
  * Determina lo schemaVersion di uno save. Saves pre-v2 senza campo = 1.
@@ -69,6 +79,8 @@ export function migrate(input: AnySaveState | null): {
   let version = fromVersion;
   const steps: string[] = [];
   let veteranReward = false;
+  let founderReward = false;
+  let salvageableSkins: string[] | undefined;
 
   while (version < CURRENT_SCHEMA_VERSION) {
     const step = MIGRATIONS.find((m) => m.from === version);
@@ -78,17 +90,20 @@ export function migrate(input: AnySaveState | null): {
     const result = step.apply(current);
     current = result.state;
     if (result.veteranReward) veteranReward = true;
+    if (result.founderReward) founderReward = true;
+    if (result.salvageableSkins) salvageableSkins = result.salvageableSkins;
     steps.push(step.description);
     version = step.to;
   }
 
-  return {
-    state: current as SaveStateCurrent,
-    report: {
-      fromVersion,
-      toVersion: version,
-      steps,
-      veteranReward,
-    },
+  const report: MigrationReport = {
+    fromVersion,
+    toVersion: version,
+    steps,
+    veteranReward,
+    founderReward,
   };
+  if (salvageableSkins) report.salvageableSkins = salvageableSkins;
+
+  return { state: current as SaveStateCurrent, report };
 }

@@ -347,6 +347,11 @@ export function initBoot(): void {
                     prestige: prestigeToSend,
                     equippedSkin: store.gameState.skins.current,
                     totalFormattazioni: store.gameState.totalFormattazioni || 0,
+                    // Stagione classifica: il lancio produzione apre la Season 1. Il
+                    // backend (Edge Function) la usa per partizionare la leaderboard e
+                    // far ripartire il wipe pulito senza che l'anti-rollback resusciti
+                    // i punteggi pre-lancio. Campo additivo: non entra nell'hash.
+                    season: store.gameState.season || 1,
                     // Snapshot pubblico per la feature Amici (statistiche + armadietto skin).
                     // Inviato in chiaro perché saveData è compresso e non leggibile lato server.
                     profile: {
@@ -530,6 +535,80 @@ export function initBoot(): void {
         u.bgMusicSelection = 'sound-bg-music-v3';
     }
 
+    // === LANCIO PRODUZIONE: orchestratore migrazione Season 1 / Fondatore ===
+    // Clona il pattern V1→V2: calcola il salvage via migrate() (puro), poi
+    // resetGameToDefault() e reinietta SOLO identità/preferenze. L'economia e gli
+    // achievement si azzerano ("tutti in partenza"); i Fondatori (save pre-lancio
+    // con progresso reale) ricevono la skin `founder` e salvano fino a 5 skin
+    // (scelta rimandata al modale). Idempotente per sessione via _launchMigrationDone.
+    function applyLaunchMigration(sourceState: any, origin: string) {
+        w._launchMigrationDone = true;
+
+        const migrated = window.EspoV3.migrations.migrate(Object.assign({}, sourceState));
+        const m: any = (migrated && migrated.state) || {};
+        const report: any = migrated && migrated.report;
+        const founder = !!(report && report.founderReward);
+        const salvageable: string[] = (report && Array.isArray(report.salvageableSkins))
+            ? report.salvageableSkins.filter((s: string) => s && s !== 'default')
+            : [];
+
+        // Identità/preferenze da preservare (lette PRIMA del reset)
+        const oldUser = sourceState.user || {};
+        const oldCurrent = (sourceState.skins && sourceState.skins.current) || 'default';
+        const sessionUser = sessionStorage.getItem('espooUser');
+
+        console.log(`🚀 Lancio → Season 1 (${origin}). Fondatore=${founder}, skin salvabili=${salvageable.length}`);
+
+        // Reset pulito (economia + achievement azzerati)
+        if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
+
+        // Reinietta identità e preferenze audio
+        if (oldUser.username) store.gameState.user.username = oldUser.username;
+        if (sessionUser) store.gameState.user.username = sessionUser;
+        if (typeof oldUser.masterVolume === 'number') store.gameState.user.masterVolume = oldUser.masterVolume;
+        if (typeof oldUser.musicVolume === 'number') store.gameState.user.musicVolume = oldUser.musicVolume;
+        if (typeof oldUser.sfxVolume === 'number') store.gameState.user.sfxVolume = oldUser.sfxVolume;
+        if (oldUser.bgMusicSelection) store.gameState.user.bgMusicSelection = oldUser.bgMusicSelection;
+
+        // Season 1 + versione corrente
+        store.gameState.schemaVersion = 3;
+        store.gameState.season = (m && m.season) || 1;
+        if (w.GAME_VERSION) store.gameState.version = JSON.parse(JSON.stringify(w.GAME_VERSION));
+
+        // Skin: default + (founder) + fino a 5 salvate
+        const kept: string[] = ['default'];
+        if (founder) {
+            kept.push('founder');
+            store.gameState.isFounder = true;
+            store.gameState.foundedAt = (m && m.foundedAt) || 0;
+
+            if (salvageable.length <= 5) {
+                // ≤5: le tiene tutte in automatico (nessun picker)
+                salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
+            } else {
+                // >5: scelta interattiva rimandata al modale (picker max 5)
+                store.gameState.pendingFounderChoice = true;
+                store.gameState.founderCandidateSkins = salvageable.slice();
+            }
+        }
+        store.gameState.skins.unlocked = kept;
+        store.gameState.skins.current = kept.includes(oldCurrent) ? oldCurrent : (founder ? 'founder' : 'default');
+
+        // Cascade modali Season 1 + release notes
+        w.triggerLaunchMigrationModal = true;
+        w.shouldShowReleaseNotesOnLoad = true;
+
+        // Visuals + ricalcoli + persistenza immediata
+        if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
+        if (typeof w.calculatePrestigeBonus === 'function') w.calculatePrestigeBonus();
+        if (typeof w.recalculateCPS === 'function') w.recalculateCPS();
+        if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+        if (typeof w.updateUI === 'function') w.updateUI();
+
+        saveGame();
+        try { localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState))); } catch (_) { /* ignore */ }
+    }
+
     async function loadGame() {
         // Carica da IndexedDB V9
         let savedState = await w.SaveDB.loadFromIndexedDB();
@@ -583,6 +662,17 @@ export function initBoot(): void {
                     w.shouldShowReleaseNotesOnLoad = true;
                 }
 
+                // === LANCIO PRODUZIONE: migrazione Season 1 / Fondatore (locale) ===
+                // Un save pre-lancio (schemaVersion < 3) viene azzerato a Season 1 e,
+                // se idoneo, premiato come Fondatore. Salta il merge/compat sottostante.
+                let launchMigrated = false;
+                const _localSchema = Number(parsedState && parsedState.schemaVersion) || 1;
+                if (parsedState && _localSchema < 3 && !w._launchMigrationDone) {
+                    applyLaunchMigration(parsedState, 'locale');
+                    launchMigrated = true;
+                }
+
+                if (!launchMigrated) {
                 // --- CONTROLLO COMPATIBILITÀ VERSIONE ---
                 if (!checkSaveCompatibility(parsedState)) {
                     console.warn("⚠️ Reset forzato per incompatibilità versione.");
@@ -662,6 +752,7 @@ export function initBoot(): void {
 
                     if (store.gameState.baseClickValue.eq(0)) store.gameState.baseClickValue = new w.Decimal(1);
                 }
+                } // fine if(!launchMigrated): la migrazione lancio salta merge/compat
 
                 // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
                 if (loadedFromBackup) {
@@ -1390,7 +1481,17 @@ export function initBoot(): void {
                         startGameRoutines();
                         
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
-                        if (w.triggerV2MigrationModal) {
+                        if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
+                            setTimeout(() => {
+                                w.showLaunchMigrationModal(() => {
+                                    w.triggerLaunchMigrationModal = false;
+                                    if (w.shouldShowReleaseNotesOnLoad && w.EspooClicker.openReleaseNotes) {
+                                        w.EspooClicker.openReleaseNotes();
+                                    }
+                                });
+                                if (w.EspooClicker) w.EspooClicker.saveGame();
+                            }, 800);
+                        } else if (w.triggerV2MigrationModal) {
                             setTimeout(() => {
                                 w.showV2MigrationModal(() => {
                                     if (w.shouldShowReleaseNotesOnLoad && w.EspooClicker.openReleaseNotes) {
@@ -1935,6 +2036,29 @@ export function initBoot(): void {
                     } else {
                         cloudState = cloudDataRaw;
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
+                    }
+
+                    // === LANCIO PRODUZIONE: Season 1 / Fondatore (cloud) ===
+                    // Un cloud save pre-lancio (schemaVersion < 3) va azzerato a Season 1.
+                    // Gestito PRIMA dell'anti-rollback: dopo il reset i lifetime locali
+                    // sono 0 e il comparatore sceglierebbe il cloud (più "avanti"),
+                    // resuscitando i vecchi progressi. Supera il vecchio blocco V1→V2 sotto.
+                    const _cloudSchema = Number(cloudState && cloudState.schemaVersion) || 1;
+                    if (_cloudSchema < 3) {
+                        if (w._launchMigrationDone) {
+                            // Già migrato in locale questa sessione: il cloud pre-lancio è
+                            // stale. Tieni il locale (Season 1) e ri-pushalo (ora col token).
+                            console.warn("🚀 Cloud pre-lancio ignorato: Season 1 già applicata in locale.");
+                            const _sess = sessionStorage.getItem('espooUser');
+                            if (_sess) store.gameState.user.username = _sess;
+                            saveGame();
+                            if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+                            if (typeof w.updateUI === 'function') w.updateUI();
+                            return;
+                        }
+                        // Nessun save locale migrato (es. nuovo dispositivo): migra dal cloud.
+                        applyLaunchMigration(cloudState, 'cloud');
+                        return;
                     }
 
                     // --- 2. PROTEZIONE ANTI-ROLLBACK ---
