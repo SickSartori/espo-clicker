@@ -199,9 +199,16 @@ export function initBoot(): void {
 
     function markCloudSaved() {
         lastCloudSaveOkAt = Date.now();
+        w._cloudPreWipe = false; // push riuscito → il cloud ora contiene il nostro save Season 1
         _setCloudBadge(false);
     }
     function markCloudUnsynced(reason: any) {
+        // Fase di lancio (cloud ancora pre-wipe): il cloud pre-lancio risulta
+        // "più avanti" finché il season-wipe backend non è attivo → niente badge
+        // allarmante durante questa fase (il locale, Season 1, è autoritativo).
+        // _cloudPreWipe (impostato da loadCloudData al login) copre anche le
+        // sessioni SUCCESSIVE alla migrazione, dove _launchMigrationDone è false.
+        if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) return;
         // Solo se loggati e il cloud è fermo da un po' (evita flash su blip transitori).
         if (!store.gameState || !store.gameState.user || !store.gameState.user.username) return;
         if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
@@ -382,19 +389,27 @@ export function initBoot(): void {
                             }
                         } else if (data.status === 'conflict') {
                             console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
-                            // Auto-recovery SILENZIOSA: il cloud è più avanti (anti-rollback
-                            // Format>Prestige>Score) quindi lo adottiamo come autoritativo da
-                            // solo, senza chiedere nulla (prima serviva tap sul badge / reload).
-                            // Throttle 15s = niente loop se due dispositivi salvano in contesa;
-                            // se l'auto-resync è già in corso o appena fatto, mostro il badge.
-                            const _nowCf = Date.now();
-                            if (typeof w._resyncFromCloud === 'function' && !w._resyncing &&
-                                _nowCf - (w._lastAutoResyncAt || 0) > 15000) {
-                                w._lastAutoResyncAt = _nowCf;
-                                console.log('[Cloud] Conflitto → auto-resync dal cloud (autoritativo)…');
-                                w._resyncFromCloud();
+                            // LANCIO: durante la fase pre-wipe il cloud pre-lancio è "più
+                            // avanti" solo perché il season-wipe backend non è ancora attivo.
+                            // NON riallineare (perderemmo la migrazione) e NON allarmare: il
+                            // locale è autoritativo, il push riuscirà a wipe avvenuto.
+                            if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) {
+                                console.warn('[Cloud] Conflitto ignorato in fase di lancio (Season 1 autoritativa lato client).');
                             } else {
-                                markCloudUnsynced('conflict');
+                                // Auto-recovery SILENZIOSA: il cloud è più avanti (anti-rollback
+                                // Format>Prestige>Score) quindi lo adottiamo come autoritativo da
+                                // solo, senza chiedere nulla (prima serviva tap sul badge / reload).
+                                // Throttle 15s = niente loop se due dispositivi salvano in contesa;
+                                // se l'auto-resync è già in corso o appena fatto, mostro il badge.
+                                const _nowCf = Date.now();
+                                if (typeof w._resyncFromCloud === 'function' && !w._resyncing &&
+                                    _nowCf - (w._lastAutoResyncAt || 0) > 15000) {
+                                    w._lastAutoResyncAt = _nowCf;
+                                    console.log('[Cloud] Conflitto → auto-resync dal cloud (autoritativo)…');
+                                    w._resyncFromCloud();
+                                } else {
+                                    markCloudUnsynced('conflict');
+                                }
                             }
                         } else if (data.status === 'warning') {
                             console.warn(`[Save✗ WARNING] ${data.message}`);
@@ -573,6 +588,11 @@ export function initBoot(): void {
 
         // Season 1 + versione corrente
         store.gameState.schemaVersion = 3;
+        // Marker PERSISTITO (≠ _launchMigrationDone, che vive solo questa sessione):
+        // nelle sessioni successive dice a loadCloudData che il locale è un Season 1
+        // REALE — anche i nuovi giocatori nascono schemaVersion 3, quindi lo schema
+        // da solo non basta a distinguere "già migrato" da "dispositivo nuovo".
+        store.gameState.launchMigrated = true;
         store.gameState.season = (m && m.season) || 1;
         if (w.GAME_VERSION) store.gameState.version = JSON.parse(JSON.stringify(w.GAME_VERSION));
 
@@ -595,9 +615,10 @@ export function initBoot(): void {
         store.gameState.skins.unlocked = kept;
         store.gameState.skins.current = kept.includes(oldCurrent) ? oldCurrent : (founder ? 'founder' : 'default');
 
-        // Cascade modali Season 1 + release notes
+        // Cascade modale Season 1. Niente release notes in automatico in fase di
+        // lancio: il modale di lancio già racconta tutto (Season 1 + Fondatore) e
+        // le RN si accavallerebbero allo skin-picker. Restano apribili dal menu Aiuto.
         w.triggerLaunchMigrationModal = true;
-        w.shouldShowReleaseNotesOnLoad = true;
 
         // Visuals + ricalcoli + persistenza immediata
         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
@@ -2045,10 +2066,17 @@ export function initBoot(): void {
                     // sono 0 e il comparatore sceglierebbe il cloud (più "avanti"),
                     // resuscitando i vecchi progressi. Supera il vecchio blocco V1→V2 sotto.
                     const _cloudSchema = Number(cloudState && cloudState.schemaVersion) || 1;
+                    // Cloud ancora pre-wipe → ogni push risponderà 'conflict' finché il
+                    // season-wipe backend non è attivo: sopprime badge e auto-resync
+                    // (vedi markCloudUnsynced). Si azzera al primo push riuscito.
+                    w._cloudPreWipe = _cloudSchema < 3;
                     if (_cloudSchema < 3) {
-                        if (w._launchMigrationDone) {
-                            // Già migrato in locale questa sessione: il cloud pre-lancio è
-                            // stale. Tieni il locale (Season 1) e ri-pushalo (ora col token).
+                        if (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated)) {
+                            // Già migrato in locale — in QUESTA sessione (flag window) o in una
+                            // precedente (marker `launchMigrated` persistito nel save): il cloud
+                            // pre-lancio è stale. Tieni il locale (Season 1) e ri-pushalo.
+                            // Senza il marker persistito, ogni F5/riapertura post-migrazione
+                            // rifaceva la migrazione dal cloud azzerando i progressi Season 1.
                             console.warn("🚀 Cloud pre-lancio ignorato: Season 1 già applicata in locale.");
                             const _sess = sessionStorage.getItem('espooUser');
                             if (_sess) store.gameState.user.username = _sess;
