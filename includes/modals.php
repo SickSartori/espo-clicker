@@ -326,6 +326,7 @@
 			<i class="fa-solid fa-medal"></i>
 			<?php echo $labels["modals_classifica_titolo"]; ?>
 		</h2>
+        <div id="leaderboard-season" style="text-align:center; margin:-4px 0 10px; font:700 0.82rem/1 'Rajdhani',system-ui,sans-serif; letter-spacing:2px; color:#f1c40f; text-transform:uppercase;"></div>
         <div class="lb-scope-toggle" role="tablist">
             <button class="lb-scope-btn active" data-scope="global" role="tab">
                 <i class="fa-solid fa-globe"></i> <?php echo $labels["lb_scope_global"]; ?>

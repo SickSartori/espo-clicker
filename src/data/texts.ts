@@ -141,7 +141,8 @@ export const texts: Record<string, any> = {
         emptyFriends: "Nessun amico in classifica. Aggiungine qualcuno!",
         error: "Impossibile caricare la classifica.",
         levelAbbr: "LIV.",
-        formatTitle: "Formattazioni (NG+)"
+        formatTitle: "Formattazioni (NG+)",
+        season: "Season {n}"
     },
     social: {
         searchPlaceholder: "Cerca un utente per nome…",
@@ -204,7 +205,8 @@ export const texts: Record<string, any> = {
         totalClicks: "Click Totali",
         comboRecord: "Combo Record",
         promotions: "Promozioni",
-        goldenBugs: "Golden Bug"
+        goldenBugs: "Golden Bug",
+        season: "Stagione"
     },
     v2: {
         title: "BENVENUTO NELLA V2.0",

@@ -50,6 +50,14 @@ export function initPodio(): void {
             document.querySelectorAll('#leaderboard-modal .lb-scope-btn').forEach(b =>
                 b.classList.toggle('active', b.getAttribute('data-scope') === scope));
 
+            // Season badge sotto il titolo — guidato da gameState.season. Backend-ready:
+            // se in futuro la risposta classifica includerà la stagione, si aggancia a quella.
+            const seasonEl = document.getElementById('leaderboard-season');
+            if (seasonEl) {
+                const s = (store.gameState && store.gameState.season) || 1;
+                seasonEl.textContent = (store.gameData.texts.leaderboard.season || 'Season {n}').replace('{n}', String(s));
+            }
+
             leaderboardList.innerHTML = '<div class="stat-item"><span class="stat-label">' + store.gameData.texts.leaderboard.loading + '</span></div>';
 
             try {

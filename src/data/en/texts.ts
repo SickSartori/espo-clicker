@@ -137,7 +137,8 @@ export const texts: Record<string, any> = {
         emptyFriends: "No friends on the leaderboard yet. Add some!",
         error: "Couldn't load the leaderboard.",
         levelAbbr: "LVL",
-        formatTitle: "Formats (NG+)"
+        formatTitle: "Formats (NG+)",
+        season: "Season {n}"
     },
     social: {
         searchPlaceholder: "Search a user by name…",
@@ -200,7 +201,8 @@ export const texts: Record<string, any> = {
         totalClicks: "Total Clicks",
         comboRecord: "Best Combo",
         promotions: "Promotions",
-        goldenBugs: "Golden Bugs"
+        goldenBugs: "Golden Bugs",
+        season: "Season"
     },
     v2: {
         title: "WELCOME TO V2.0",

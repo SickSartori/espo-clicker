@@ -359,6 +359,7 @@ export function initBoot(): void {
                         totalPlayTime: Math.floor(store.gameState.totalPlayTime || 0),
                         longestCombo: Math.floor(store.gameState.longestCombo || 0),
                         totalGolden: Math.floor(store.gameState.totalGoldenBugsClicked || 0),
+                        season: store.gameState.season || 1,
                         skinsUnlocked: (store.gameState.skins && Array.isArray(store.gameState.skins.unlocked)) ? store.gameState.skins.unlocked : []
                     },
                     hash: signature

@@ -2698,6 +2698,10 @@ function updateStatsUI() {
                 <div class="stats-header"><i class="fa-solid fa-id-card" style="color: #9b59b6; margin-right: 8px;"></i> ${store.gameData.texts.stats.profile}</div>
                 <div class="stats-grid">
                     <div class="stat-box">
+                        <span class="stat-label"><i class="fa-solid fa-trophy" style="color: #f1c40f; margin-right: 4px; font-size: 0.65rem;"></i> ${store.gameData.texts.stats.season || 'Season'}</span>
+                        <span id="st-season" class="stat-value" style="color: #f1c40f;"></span>
+                    </div>
+                    <div class="stat-box">
                         <span class="stat-label"><i class="fa-solid fa-shirt" style="color: #9b59b6; margin-right: 4px; font-size: 0.65rem;"></i> Skin</span>
                         <span id="st-skin" class="stat-value" style="text-transform: capitalize; color: #9b59b6;"></span>
                     </div>
@@ -2771,6 +2775,7 @@ function updateStatsUI() {
     _set('st-clicks', formatNumber(store.gameState.totalClicks));
     _set('st-combo', 'x' + formatNumber(store.gameState.longestCombo || 0));
     _set('st-resets', formatNumber(store.gameState.totalResets));
+    _set('st-season', String(store.gameState.season || 1));
     _set('st-golden', formatNumber(store.gameState.totalGoldenBugsClicked || 0));
 }
 
