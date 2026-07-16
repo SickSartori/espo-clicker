@@ -8,6 +8,17 @@
 	// HEAD
 	$labels["head_titolo"] = "Espòòò Clicker";
 
+	// LAUNCH COUNTDOWN (pre-release v3.0)
+	$labels["countdown_badge"] = "COMING SOON";
+	$labels["countdown_sub"] = "The big 3.0 is almost here.";
+	$labels["countdown_d"] = "Days";
+	$labels["countdown_h"] = "Hrs";
+	$labels["countdown_m"] = "Min";
+	$labels["countdown_s"] = "Sec";
+	$labels["countdown_release"] = "Release";
+	$labels["countdown_testing"] = "Servers warming up — testing in progress";
+	$labels["countdown_enter"] = "ENTER";
+
 	// LOADER
 	$labels["loader_titolo"] = "Espòò Clicker";
 	$labels["loader_status"] = "Initializing resources...";

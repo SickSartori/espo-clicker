@@ -1,6 +1,9 @@
 <?php
 require_once("php/check_language.php");
 require_once("php/check_version.php");
+require_once("php/launch-gate.php");
+// Gate lancio v3.0: prima del lancio, in produzione, serve SOLO il countdown.
+if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
