@@ -1135,13 +1135,14 @@ body.playing #arcade-fs-header::after {
     #arcade-fullscreen .fs-wallet { padding: 3px; }
     #arcade-fullscreen .wallet-main { padding: 5px 10px; }
     #arcade-fullscreen .wallet-total { font-size: 14px; }
-    /* X: 38px, quadrata (prima 30×36 schiacciata) */
+    /* X: 44×44 quadrata — touch target minimo (PRODUCT.md "≥44px" / WCAG 2.5.8).
+       Prima 38px (e 30×36 pre-v3): sotto la soglia dei 44px. */
     #arcade-fullscreen #arcade-fs-close {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
     }
-    #arcade-fullscreen #arcade-fs-close i { font-size: 15px; }
+    #arcade-fullscreen #arcade-fs-close i { font-size: 16px; }
 
     /* Monitor anteprima: meno cornice, più contenuto (36px → 18px)
        e testo che respira sulla larghezza reale. */
