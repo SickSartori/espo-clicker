@@ -22,15 +22,19 @@
     height: 44px !important;
     min-height: 44px !important;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* !important anche su questi: la regola desktop .skins-modal-v3 (senza media
+       query) usa !important su background/border/box-shadow/font-size e su mobile
+       vincerebbe: font-size 0.7rem rende visibile la × testuale ACCANTO a quella
+       del ::after (glifo doppio) e riporta lo stile rosso desktop. */
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     color: #fff;
-    box-shadow: none;
+    box-shadow: none !important;
     z-index: 10;
     transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1),
                 transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
     padding: 0;
-    font-size: 0;
+    font-size: 0 !important;
   }
 
   html body #skins-modal .modal-close-btn::after {

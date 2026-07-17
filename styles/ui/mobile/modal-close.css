@@ -18,18 +18,22 @@
     right: 10px;
     bottom: auto;
     left: auto;
-    width: 44px; /* touch target minimo Apple HIG/WCAG 2.5.8 */
-    height: 44px;
-    min-height: 44px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* !important: le regole desktop di skins-modal.css (.skins-modal-v3 /
+       .skin-preview-content) non hanno media query e usano !important su
+       geometria, colori e font-size — su mobile vincerebbero: X a 28px
+       (sotto il touch target 44px) e × testuale visibile accanto al ::after. */
+    width: 44px !important; /* touch target minimo Apple HIG/WCAG 2.5.8 */
+    height: 44px !important;
+    min-height: 44px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 50%;
     color: #fff;
-    box-shadow: none;
+    box-shadow: none !important;
     z-index: 10;
     padding: 0;
     margin: 0;
-    font-size: 0;
+    font-size: 0 !important;
     transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1),
                 transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
