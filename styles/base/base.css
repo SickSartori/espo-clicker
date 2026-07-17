@@ -197,7 +197,7 @@ body::after {
 
 /* Stile per la schermata blu (override sfondo) */
 body.bluescreen-active {
-    background: #000 url("assets/image/ui/bluescreen.webp") no-repeat center center fixed;
+    background: #000 url("../assets/image/ui/bluescreen.webp") no-repeat center center fixed;
     background-size: cover;
     transition: all 0.2s ease-in-out;
 }
