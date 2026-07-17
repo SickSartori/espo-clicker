@@ -142,6 +142,15 @@ export const assets: Record<string, any> = {
             loop: true,
             defaultVol: 0.2
         },
+        'carmaespon-theme': {
+            id: 'sound-bg-carmaespon',
+            file: 'assets/sounds/music/bg-carmaespon.mp3',
+            name: 'Carmaespòn',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.2
+        },
         'espedy-theme': {
             id: 'sound-bg-espedy',
             file: 'assets/sounds/music/bg-espedy.mp3',

@@ -245,7 +245,7 @@ export const skins: Record<string, any> = {
         rarity: "legendary",
         cost: new Decimal(60),
         themeConfig: {
-            specialMusic: 'sound-fury-music',
+            specialMusic: 'sound-bg-carmaespon',
             goldenBugIcon: 'fa-fire',
             goldenBugColor: '#e74c3c'
         }
@@ -297,7 +297,6 @@ export const skins: Record<string, any> = {
         rarity: "divine",
         unlockHint: "Riservata ai giocatori pre-lancio. Non più ottenibile.",
         themeConfig: {
-            specialMusic: 'sound-bg-music-divine',
             goldenBugIcon: 'fa-crown',
             goldenBugColor: '#f1c40f'
         }
