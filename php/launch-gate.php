@@ -21,8 +21,8 @@ if (!defined('LAUNCH_TS'))       define('LAUNCH_TS', strtotime('2026-08-03 07:00
 if (!defined('COUNTDOWN_FORCE')) define('COUNTDOWN_FORCE', '');
 
 // --- Bypass tester: apri ?unlock=SECRET una volta → cookie 'espo_preview' (7 giorni) ---
-// ⚠️ CAMBIA questa chiave prima del deploy in produzione.
-if (!defined('UNLOCK_SECRET'))   define('UNLOCK_SECRET', 'espo-preview-CAMBIAMI');
+// Chiave d'accesso anticipato impostata. Ruotala dopo il lancio (finisce nei log URL).
+if (!defined('UNLOCK_SECRET'))   define('UNLOCK_SECRET', 'TwyqscMhw9bt6a7m63Ek3pLRvAvl');
 
 /** True se l'host è produzione (non localhost/rete locale e non sotto /test/). */
 function espo_is_production() {
