@@ -1,4 +1,4 @@
-/* code/css/super-theme.css */
+/* styles/themes/super-theme.css — caricato lazy da cssBase 'styles/themes/': gli url() risolvono da qui, servono due ../ per arrivare ad assets/ */
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -18,7 +18,7 @@ body.theme-super {
 body.theme-super #center-column {
     background-color: #5c94fc !important;
     background-image:
-        url('../assets/image/arcade/floorbricks.webp') !important;
+        url('../../assets/image/arcade/floorbricks.webp') !important;
     background-repeat: repeat-x !important;
     background-position: 0 bottom !important;
     background-size: auto 48px !important;
@@ -65,17 +65,17 @@ body.theme-super #center-column::before {
     height: 100%;
     background-image:
         /* CLOUDS SET A + B */
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud2.webp'),
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud1.webp'),
-        url('../assets/image/arcade/cloud2.webp'),
-        url('../assets/image/arcade/cloud1.webp'),
+        url('../../assets/image/arcade/cloud1.webp'),
+        url('../../assets/image/arcade/cloud2.webp'),
+        url('../../assets/image/arcade/cloud1.webp'),
+        url('../../assets/image/arcade/cloud1.webp'),
+        url('../../assets/image/arcade/cloud2.webp'),
+        url('../../assets/image/arcade/cloud1.webp'),
         /* MOUNTAINS A + B */
-        url('../assets/image/arcade/mountain1.webp'),
-        url('../assets/image/arcade/mountain2.webp'),
-        url('../assets/image/arcade/mountain1.webp'),
-        url('../assets/image/arcade/mountain2.webp');
+        url('../../assets/image/arcade/mountain1.webp'),
+        url('../../assets/image/arcade/mountain2.webp'),
+        url('../../assets/image/arcade/mountain1.webp'),
+        url('../../assets/image/arcade/mountain2.webp');
     background-repeat: no-repeat;
     background-position:
         /* CLOUDS — A: 6%, 18%, 38% B(+50%): 56%, 68%, 88% (element-relative) */
@@ -121,18 +121,18 @@ body.theme-super #center-column::after {
     height: 160px;
     background-image:
         /* TUBES SET A — medium, small, medium */
-        url('../assets/image/arcade/vertical-medium-tube.webp'),
-        url('../assets/image/arcade/vertical-small-tube.webp'),
-        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../../assets/image/arcade/vertical-small-tube.webp'),
+        url('../../assets/image/arcade/vertical-medium-tube.webp'),
         /* TUBES SET B duplicate */
-        url('../assets/image/arcade/vertical-medium-tube.webp'),
-        url('../assets/image/arcade/vertical-small-tube.webp'),
-        url('../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../../assets/image/arcade/vertical-medium-tube.webp'),
+        url('../../assets/image/arcade/vertical-small-tube.webp'),
+        url('../../assets/image/arcade/vertical-medium-tube.webp'),
         /* BUSHES — accent tra tubi, SET A + B */
-        url('../assets/image/arcade/bush1.webp'),
-        url('../assets/image/arcade/bush2.webp'),
-        url('../assets/image/arcade/bush1.webp'),
-        url('../assets/image/arcade/bush2.webp');
+        url('../../assets/image/arcade/bush1.webp'),
+        url('../../assets/image/arcade/bush2.webp'),
+        url('../../assets/image/arcade/bush1.webp'),
+        url('../../assets/image/arcade/bush2.webp');
     background-repeat: no-repeat;
     background-position:
         /* TUBES container 18/50/82% = element 9/25/41% + 59/75/91% */
@@ -457,7 +457,7 @@ body.theme-super #golden-bug {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    background-image: url('../assets/image/ui/super-block.webp') !important;
+    background-image: url('../../assets/image/ui/super-block.webp') !important;
     background-size: contain !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
