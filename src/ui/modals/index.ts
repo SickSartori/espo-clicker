@@ -1331,12 +1331,30 @@ export function initModals(): void {
                 if (w.cheatNoCloudSync) { /* stato locale invariato */ }
                 else if (data.save_data) Game.loadCloudData(data.save_data);
                 else {
-                    if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
-                    localStorage.removeItem('espotoolClickerSaveV9');
-                    localStorage.removeItem('espotoolClickerSaveV9_Backup');
-                    Game.getGameState().user.username = u;
-                    if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
-                    Game.saveGame();
+                    // Cloud senza save_data. Normalmente = account nuovo (mai salvato) →
+                    // reset pulito. MA se il locale è un Season 1 REALE dello STESSO utente
+                    // (launchMigrated + username coincidente), il cloud vuoto NON è un
+                    // account nuovo: è un save cloud svuotato — es. il season-wipe di lancio
+                    // se azzerasse anche save_data invece dei soli punteggi. In quel caso
+                    // resettare cancellerebbe skin `founder` e progressi Season 1
+                    // (irrecuperabili: nessun costo/achievement li ridà). Tieni il locale e
+                    // ri-pushalo col token appena ottenuto, invece di distruggerlo.
+                    const _gsPre = Game.getGameState();
+                    const _localUser = _gsPre && _gsPre.user && _gsPre.user.username;
+                    const _keepLocalSeason1 = !!(_gsPre && _gsPre.launchMigrated) && _localUser === u;
+
+                    if (_keepLocalSeason1) {
+                        console.warn('🚀 Cloud senza save_data ma locale Season 1 dello stesso utente → tengo il locale e ri-pusho (niente reset).');
+                        _gsPre.user.username = u;
+                        Game.saveGame();
+                    } else {
+                        if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
+                        localStorage.removeItem('espotoolClickerSaveV9');
+                        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+                        Game.getGameState().user.username = u;
+                        if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
+                        Game.saveGame();
+                    }
                 }
 
                 closeModal(loginModal);

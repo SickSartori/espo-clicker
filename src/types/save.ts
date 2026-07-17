@@ -87,6 +87,13 @@ export interface SaveStateV3 extends Omit<SaveStateV2, 'schemaVersion'> {
   pendingFounderChoice?: boolean;
   /** Skin non-default possedute pre-lancio, candidate al picker (max 5 salvabili). */
   founderCandidateSkins?: string[];
+  /**
+   * True se questo save è passato dalla migrazione di lancio (v2→v3).
+   * Persistito (≠ `window._launchMigrationDone`, che vive solo una sessione):
+   * serve a distinguere, al login con cloud ancora pre-wipe, un locale Season 1
+   * REALE da uno stato default — anche i nuovi giocatori nascono schemaVersion 3.
+   */
+  launchMigrated?: boolean;
 }
 
 /** Alias per lo schema corrente — aggiornare quando si bumpa. */
