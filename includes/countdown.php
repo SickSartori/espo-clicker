@@ -213,6 +213,27 @@ $releaseHuman = $launchDT->format('d/m/Y') . ' · ' . $launchDT->format('H:i');
 
     <script>
         (function () {
+            /* ⚠️ Anti reload-storm al lancio. Se un visitatore arriva DURANTE il countdown,
+               il service worker installa e precacha './index.php' (sw.js: PRECACHE_ASSETS)
+               — che in questa finestra restituisce PROPRIO questa schermata. Quella copia
+               resta poi il fallback di navigazione (sw.js: caches.match('./index.php')):
+               al lancio verrebbe servita dalla cache, vedrebbe diff<=0 e si ricaricherebbe
+               ogni 1,5s, amplificando il carico sul picco di apertura.
+               Qui de-registriamo il SW e svuotiamo le cache: nessuna countdown resta
+               cachata. Bonus: ripulisce anche il SW/cache della v2 dei giocatori storici. */
+            try {
+                if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+                    navigator.serviceWorker.getRegistrations()
+                        .then(function (rs) { rs.forEach(function (r) { r.unregister(); }); })
+                        .catch(function () {});
+                }
+                if (window.caches && caches.keys) {
+                    caches.keys()
+                        .then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); })
+                        .catch(function () {});
+                }
+            } catch (e) {}
+
             var target = <?php echo $launchMs; ?>;
             var d = document.getElementById('cd-d'), h = document.getElementById('cd-h'),
                 m = document.getElementById('cd-m'), s = document.getElementById('cd-s');
