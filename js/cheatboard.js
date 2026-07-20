@@ -641,15 +641,32 @@
         localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(fake)));
         gameState.isDeleting = true; location.reload();
     }
-    // Simula un save PRE-lancio (schemaVersion 2) con 8 skin non-default → alla
-    // ricarica scatta la migrazione V2→V3: Fondatore + skin-picker (salva 5).
+    // Simula un save PRE-lancio (schemaVersion 2) → alla ricarica scatta la migrazione
+    // V2→V3: Fondatore + skin-picker (salva 5).
+    //
+    // Le skin del finto save sono LE TUE, quelle davvero sbloccate adesso: è l'unico
+    // modo perché il picker mostri quello che vedrà un giocatore reale al lancio.
+    // (Prima prendeva le prime 8 del catalogo, quindi si testava una lista finta.)
+    // Solo se ne hai troppo poche per far scattare il picker (serve >5) si completa
+    // con altre dal catalogo, altrimenti non ci sarebbe niente da scegliere.
+    //
+    // L'audio parte MUTO e con una traccia vecchia di proposito: così si vede se
+    // l'onboarding audio della 3.0 lo riaccende davvero (bug del percorso migrazione).
     async function forceV3() {
-        if (!confirm(cbT('Simulare il lancio (V2→V3)? Crea un falso save pre-lancio con 8 skin e ricarica.'))) return;
-        const pool = Object.keys(gameData.skins).filter(s => s !== 'default' && s !== 'founder').slice(0, 8);
+        const mine = (gameState.skins && Array.isArray(gameState.skins.unlocked) ? gameState.skins.unlocked : [])
+            .filter(s => s && s !== 'default' && s !== 'founder' && gameData.skins[s]);
+        const filler = Object.keys(gameData.skins)
+            .filter(s => s !== 'default' && s !== 'founder' && !mine.includes(s));
+        const topUp = mine.length > 5 ? 0 : (6 - mine.length);
+        const pool = mine.concat(filler.slice(0, topUp));
+        const msg = topUp > 0
+            ? 'Simulare il lancio (V2→V3)?\n\nHai ' + mine.length + ' skin sbloccate: troppo poche per il picker (serve >5), ne aggiungo ' + topUp + ' dal catalogo → ' + pool.length + ' totali.'
+            : 'Simulare il lancio (V2→V3)?\n\nUso le tue ' + mine.length + ' skin realmente sbloccate: il picker ti farà sceglierne 5.';
+        if (!confirm(cbT(msg + '\nAudio impostato su muto per verificare il forzamento. Ricarica la pagina.'))) return;
         const fake = {
             version: { major: 3, minor: 0, stage: '' },
             schemaVersion: 2,
-            user: { username: gameState.user.username, masterVolume: gameState.user.masterVolume },
+            user: { username: gameState.user.username, masterVolume: 0, musicVolume: 0, sfxVolume: 0, bgMusicSelection: 'sound-bg-music' },
             skins: { unlocked: ['default'].concat(pool), current: pool[0] || 'default' },
             score: '1000000000', totalScore: '1000000000', lifetimeScore: '1000000000',
             totalResets: 2, totalFormattazioni: 1, totalClicks: 80000

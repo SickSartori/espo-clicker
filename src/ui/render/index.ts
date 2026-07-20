@@ -1440,6 +1440,13 @@ function showLaunchMigrationModal(onConfirm: any) {
     const candidates: string[] = (Array.isArray(gs.founderCandidateSkins) ? gs.founderCandidateSkins : [])
         .filter((id: string) => !!id && id !== 'default' && !!store.gameData.skins[id]);
     const needsPicker = isFounder && !!gs.pendingFounderChoice && candidates.length > FOUNDER_MAX_KEPT;
+    // Rete di sicurezza. `pendingFounderChoice` lo decide boot.ts contando le skin GREZZE
+    // del vecchio save; qui invece si conta dopo il filtro sul catalogo. Se una skin è
+    // stata rimossa dal gioco tra la 2.x e la 3.0, i due conteggi divergono: boot.ts non
+    // sblocca nulla (delega al picker) e il picker non viene reso (candidati ≤ 5)
+    // → il Fondatore resterebbe con la sola `founder`, perdendo tutto il resto.
+    // In quel caso non c'è niente da scegliere: si assegnano d'ufficio quelle rimaste.
+    const autoGrant = isFounder && !!gs.pendingFounderChoice && !needsPicker && candidates.length > 0;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-backdrop';
@@ -1515,10 +1522,12 @@ function showLaunchMigrationModal(onConfirm: any) {
     }
 
     const finalize = () => {
-        // Applica la scelta skin solo nel caso picker (finalizza il "salva 5")
-        if (needsPicker) {
+        // Skin da sbloccare: quelle scelte nel picker, oppure tutte le superstiti quando
+        // la scelta era pendente ma il picker non serviva più (vedi `autoGrant`).
+        const toGrant: string[] = needsPicker ? Array.from(selected) : (autoGrant ? candidates : []);
+        if (toGrant.length) {
             const unlocked: string[] = Array.isArray(gs.skins.unlocked) ? gs.skins.unlocked : ['default'];
-            selected.forEach((id) => { if (!unlocked.includes(id)) unlocked.push(id); });
+            toGrant.forEach((id) => { if (!unlocked.includes(id)) unlocked.push(id); });
             gs.skins.unlocked = unlocked;
         }
         // In ogni caso di Fondatore chiudiamo la fase di scelta
