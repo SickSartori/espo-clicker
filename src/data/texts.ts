@@ -227,6 +227,7 @@ export const texts: Record<string, any> = {
         keepAll: "Il tuo guardaroba resta al sicuro.",
         pickIntro: "Il resto del guardaroba si azzera, ma puoi <b>salvarne fino a 5</b>. Scegli con cura.",
         pickCounter: "Selezionate: {n}/5",
+        pickHint: "Devi sceglierne almeno una: questa scelta non si può rifare.",
         confirm: "INIZIA LA SEASON 1",
         confirmPick: "SALVA E INIZIA"
     },

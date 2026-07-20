@@ -223,6 +223,7 @@ export const texts: Record<string, any> = {
         keepAll: "Your wardrobe stays safe.",
         pickIntro: "The rest of your wardrobe resets, but you can <b>keep up to 5</b>. Choose wisely.",
         pickCounter: "Selected: {n}/5",
+        pickHint: "You must keep at least one — this choice can't be redone.",
         confirm: "START SEASON 1",
         confirmPick: "SAVE & START"
     },

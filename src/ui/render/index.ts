@@ -1450,6 +1450,10 @@ function showLaunchMigrationModal(onConfirm: any) {
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-backdrop';
+    // L'id serve al gestore Esc di ui/modals: come il login, questo e' un GATE e non
+    // va chiuso da tastiera. Chiudendolo la scelta resterebbe pendente (riappare al
+    // reload, ok) ma per tutta la sessione il Fondatore giocherebbe senza le sue skin.
+    overlay.id = 'launch-migration-modal';
     overlay.style.cssText = 'display:flex; z-index:10000; animation: fadeIn 0.3s ease-out;';
 
     const founderBlock = isFounder ? `
@@ -1472,7 +1476,8 @@ function showLaunchMigrationModal(onConfirm: any) {
         choiceBlock = `
             <div style="margin-bottom:8px;">${t.pickIntro}</div>
             <div id="launch-skin-counter" style="font-weight:700; color:#2ecc71; margin-bottom:8px;">${(t.pickCounter || '{n}/5').replace('{n}', '0')}</div>
-            <div id="launch-skin-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; max-height:44vh; overflow-y:auto; padding:4px; border:1px solid rgba(255,255,255,0.08); border-radius:8px;">${cells}</div>`;
+            <div id="launch-skin-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; max-height:44vh; overflow-y:auto; padding:4px; border:1px solid rgba(255,255,255,0.08); border-radius:8px;">${cells}</div>
+            <div id="launch-skin-hint" style="font-size:0.8rem; color:#e67e22; margin-top:8px;">${t.pickHint || ''}</div>`;
     } else if (isFounder) {
         choiceBlock = `
             <div style="background:rgba(46,204,113,0.1); border-left:4px solid #2ecc71; padding:10px; border-radius:4px;">
@@ -1491,7 +1496,7 @@ function showLaunchMigrationModal(onConfirm: any) {
                 ${founderBlock}
                 ${choiceBlock}
             </div>
-            <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="launch-migration-confirm">
+            <button class="buy-btn" style="padding:12px; font-size:1.1rem;" id="launch-migration-confirm"${needsPicker ? ' disabled' : ''}>
                 <i class="fa-solid fa-rocket" style="margin-right:4px;"></i> ${confirmLabel}
             </button>
         </div>`;
@@ -1501,8 +1506,16 @@ function showLaunchMigrationModal(onConfirm: any) {
     const selected = new Set<string>();
     if (needsPicker) {
         const counter = overlay.querySelector('#launch-skin-counter');
+        const hint = overlay.querySelector('#launch-skin-hint') as HTMLElement | null;
+        const confirmBtn = overlay.querySelector('#launch-migration-confirm') as HTMLButtonElement | null;
         const updateCounter = () => {
             if (counter) counter.textContent = (t.pickCounter || '{n}/5').replace('{n}', String(selected.size));
+            // A 0 selezionate il pulsante e' bloccato: un clic distratto sul bottone
+            // grosso e verde cancellerebbe l'INTERO guardaroba, senza modo di tornare
+            // indietro. Almeno una skin va scelta; da 1 a 5 decide il giocatore.
+            if (confirmBtn) confirmBtn.disabled = selected.size === 0;
+            // visibility e non display: cosi' il riquadro non salta quando sparisce
+            if (hint) hint.style.visibility = selected.size === 0 ? 'visible' : 'hidden';
         };
         overlay.querySelectorAll('.launch-skin-cell').forEach((cell) => {
             cell.addEventListener('click', () => {

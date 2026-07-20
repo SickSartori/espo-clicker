@@ -829,11 +829,14 @@ export function initModals(): void {
         }
     }
 
-    // A11y: Esc chiude il modale visibile in cima (tranne il login, che e' un gate)
+    // A11y: Esc chiude il modale visibile in cima. Esclusi i due GATE: il login e la
+    // scelta skin del lancio (chiuderla lascerebbe il Fondatore senza skin per tutta
+    // la sessione, perche' a sbloccarle e' la conferma del modale stesso).
+    const ESC_GATES = ['login-modal', 'launch-migration-modal'];
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
         const open = (Array.from(document.querySelectorAll('.modal-backdrop')) as HTMLElement[])
-            .filter(m => m.style.display === 'flex' && m.style.opacity !== '0' && m.id !== 'login-modal');
+            .filter(m => m.style.display === 'flex' && m.style.opacity !== '0' && !ESC_GATES.includes(m.id));
         if (open.length) closeModal(open[open.length - 1]);
     });
 
