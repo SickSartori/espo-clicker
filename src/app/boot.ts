@@ -586,6 +586,18 @@ export function initBoot(): void {
         if (typeof oldUser.sfxVolume === 'number') store.gameState.user.sfxVolume = oldUser.sfxVolume;
         if (oldUser.bgMusicSelection) store.gameState.user.bgMusicSelection = oldUser.bgMusicSelection;
 
+        // Onboarding audio del lancio. Va richiamato QUI e non solo dai due call-site
+        // storici (localShowRN / cloudShowRN), perché NESSUNO dei due copre la migrazione:
+        //  - percorso cloud: applyLaunchMigration() esce con `return` molto prima del
+        //    blocco `if (cloudShowRN)` in fondo a loadCloudData;
+        //  - percorso locale: un save pre-lancio può già dichiarare version 3.0 (è lo
+        //    SCHEMA a essere vecchio, non il numero di versione), e allora
+        //    shouldShowReleaseNotesFor() risponde false.
+        // Effetto del buco: chi arrivava dalla 2.x con l'audio mutato restava mutato e
+        // con la vecchia traccia. Sovrascrive di proposito le preferenze appena
+        // reiniettate qui sopra: è il "forza audio al primo avvio della 3.0".
+        applyV3AudioOnboarding();
+
         // Season 1 + versione corrente
         store.gameState.schemaVersion = 3;
         // Marker PERSISTITO (≠ _launchMigrationDone, che vive solo questa sessione):
@@ -626,6 +638,15 @@ export function initBoot(): void {
         if (typeof w.recalculateCPS === 'function') w.recalculateCPS();
         if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
         if (typeof w.updateUI === 'function') w.updateUI();
+
+        // Applica l'audio SUBITO, non solo nello stato salvato. Nel percorso cloud la
+        // migrazione salta la ri-sincronizzazione di fine loadCloudData
+        // (updateAmbientVolume + updateAmbience + tryStartAudio): senza queste righe il
+        // volume forzato qui sopra resterebbe scritto nel save ma inudibile fino a un F5.
+        if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();
+        if (typeof w.AudioManager !== 'undefined') w.AudioManager.updateAmbience();
+        if (w.EspooClicker && typeof w.EspooClicker.tryStartAudio === 'function') w.EspooClicker.tryStartAudio();
+        if (w.EspooClicker && typeof w.EspooClicker.updateMuteButton === 'function') w.EspooClicker.updateMuteButton();
 
         saveGame();
         try { localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState))); } catch (_) { /* ignore */ }
