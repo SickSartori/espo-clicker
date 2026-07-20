@@ -41,12 +41,16 @@ $releaseHuman = $launchDT->format('d/m/Y') . ' · ' . $launchDT->format('H:i');
             --logo: 'Harabara', 'Rajdhani', sans-serif;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; }
+        html, body { min-height: 100%; }
         body {
             background: radial-gradient(ellipse 120% 90% at 50% -10%, #0a1622 0%, var(--bg) 60%);
             color: var(--ink); font-family: var(--tech);
-            min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-            text-align: center; overflow: hidden; position: relative; padding: 24px;
+            /* NB: niente `align-items:center` + `overflow:hidden`: con contenuto piu' alto
+               della finestra tagliava simmetricamente sopra e sotto, rendendo la status bar
+               e la riga di rilascio irraggiungibili. Il centraggio verticale lo fa
+               `.wrap { margin:auto }`, che in flex resta scrollabile se non ci sta. */
+            min-height: 100dvh; display: flex; justify-content: center;
+            text-align: center; overflow-x: hidden; position: relative; padding: 24px;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -83,7 +87,7 @@ $releaseHuman = $launchDT->format('d/m/Y') . ' · ' . $launchDT->format('H:i');
         @keyframes sweep { to { transform: translateY(calc(100vh + 140px)); } }
 
         /* ============ CONTENUTO ============ */
-        .wrap { position: relative; z-index: 2; width: 100%; max-width: 640px; padding: 34px 26px; }
+        .wrap { position: relative; z-index: 2; width: 100%; max-width: 640px; padding: 34px 26px; margin: auto; }
         /* Cornici HUD ad angolo */
         .wrap::before, .wrap::after, .corner { position: absolute; width: 26px; height: 26px; border: 2px solid rgba(34,211,238,0.55); }
         .wrap::before { content: ''; top: 0; left: 0; border-right: 0; border-bottom: 0; }
@@ -175,6 +179,29 @@ $releaseHuman = $launchDT->format('d/m/Y') . ' · ' . $launchDT->format('H:i');
             .version::before, .version::after { display: none; }
         }
         @media (max-width: 460px) { .sep { display: none; } .wrap { padding: 26px 16px; } }
+
+        /* ---- Viewport bassi (finestre desktop/laptop non altissime): compatta il blocco
+           così status bar in alto e riga "Rilascio" in basso restano dentro lo schermo.
+           Le misure passano da vw a vh: è l'ALTEZZA il vincolo, non la larghezza. ---- */
+        @media (max-height: 1000px) {
+            .wrap { padding: 20px 22px; }
+            .logo { width: clamp(120px, 24vh, 250px); margin-bottom: 4px; }
+            .version { font-size: clamp(2.8rem, 12vh, 5rem); }
+            .badge { margin-bottom: 12px; padding: 6px 14px; }
+            .timer { margin-bottom: 16px; }
+            .cell { padding: 11px 6px 9px; }
+            .num { font-size: clamp(1.7rem, 6.5vh, 2.8rem); }
+        }
+        @media (max-height: 760px) {
+            .wrap { padding: 14px 18px; }
+            .logo { width: clamp(96px, 19vh, 170px); }
+            .version { font-size: clamp(2.2rem, 9.5vh, 3.6rem); }
+            .badge { margin-bottom: 9px; }
+            .timer { margin-bottom: 12px; }
+            .cell { padding: 8px 5px 7px; }
+            .num { font-size: clamp(1.4rem, 5.2vh, 2.2rem); }
+            .lbl { margin-top: 5px; letter-spacing: 2px; }
+        }
     </style>
 </head>
 <body>
