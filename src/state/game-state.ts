@@ -51,7 +51,7 @@ function getInitialGameState() {
         achievements: {},
         user: {
             username: 'Giocatore',
-            masterVolume: 0.8,
+            masterVolume: 1.0,
             sfxVolume: 1.0,
             musicVolume: 0.5,
             audioCustom: {},

@@ -545,7 +545,7 @@ export function initBoot(): void {
     function applyV3AudioOnboarding() {
         if (!store.gameState || !store.gameState.user) return;
         const u = store.gameState.user;
-        if (!(u.masterVolume > 0)) u.masterVolume = store.gameState.lastVolume || 0.8;
+        if (!(u.masterVolume > 0)) u.masterVolume = store.gameState.lastVolume || 1.0;
         if (!(u.musicVolume > 0)) u.musicVolume = 0.5;
         if (!(u.sfxVolume > 0)) u.sfxVolume = 1.0;
         u.bgMusicSelection = 'sound-bg-music-v3';
@@ -581,7 +581,12 @@ export function initBoot(): void {
         // Reinietta identità e preferenze audio
         if (oldUser.username) store.gameState.user.username = oldUser.username;
         if (sessionUser) store.gameState.user.username = sessionUser;
-        if (typeof oldUser.masterVolume === 'number') store.gameState.user.masterVolume = oldUser.masterVolume;
+        // Volume MASTER: NON reiniettato di proposito. Al lancio riparte al nuovo default
+        // (1.0), come per un giocatore nuovo. Reiniettando il vecchio valore, i migranti
+        // col default 2.x (0.8 — la stragrande maggioranza, che non l'ha mai toccato)
+        // resterebbero più bassi dei nuovi: la lamentela "è tutto troppo basso". Il lancio
+        // è già un reset pieno (economia, skin, traccia audio), quindi anche il master
+        // riparte pulito; chi vuole abbassarlo lo fa dalle impostazioni.
         if (typeof oldUser.musicVolume === 'number') store.gameState.user.musicVolume = oldUser.musicVolume;
         if (typeof oldUser.sfxVolume === 'number') store.gameState.user.sfxVolume = oldUser.sfxVolume;
         if (oldUser.bgMusicSelection) store.gameState.user.bgMusicSelection = oldUser.bgMusicSelection;
