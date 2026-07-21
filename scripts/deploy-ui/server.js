@@ -19,9 +19,14 @@ const R2 = 'r2:espo-clicker-assets';
 
 const pkg = () => JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
-// Helper per definire gli step. shell:true solo per npm (npm.cmd su Windows);
-// git/rclone vanno con shell:false → argomenti separati = nessuna injection.
-const npm = (...a) => ({ file: 'npm', args: a, shell: true });
+// Helper per definire gli step. Tutto con shell:false → argomenti passati come
+// array, mai concatenati: nessuna injection, nessun DEP0190. npm su Windows è
+// npm.cmd e lo spawn diretto di un .cmd senza shell è vietato (CVE-2024-27980),
+// quindi lo si invoca via cmd.exe /c (un .exe) — stesso pattern di `start` sotto.
+const isWin = process.platform === 'win32';
+const npm = (...a) => isWin
+  ? { file: 'cmd', args: ['/c', 'npm', ...a], shell: false, label: 'npm ' + a.join(' ') }
+  : { file: 'npm', args: a, shell: false };
 const git = (...a) => ({ file: 'git', args: a, shell: false });
 const rclone = (...a) => ({ file: 'rclone', args: a, shell: false });
 const A = path.join(ROOT, 'assets');
@@ -70,7 +75,7 @@ function actions(input) {
 
     release_notes:     { steps: () => [{ fn: () => fs.readFileSync(path.join(ROOT, 'release-notes_it.md'), 'utf8') }] },
     clean_rebuild:     { steps: () => [
-                           { fn: () => { for (const d of ['dist', 'dist-v3']) fs.rmSync(path.join(ROOT, d), { recursive: true, force: true }); return 'dist/ e dist-v3/ rimossi.'; } },
+                           { fn: () => { for (const d of ['dist']) fs.rmSync(path.join(ROOT, d), { recursive: true, force: true }); return 'dist/ rimosso.'; } },
                            npm('run', 'build'),
                          ] },
   };
@@ -94,7 +99,7 @@ function runSteps(steps, res) {
       return;
     }
 
-    send('step', { cmd: `${step.file} ${step.args.join(' ')}` });
+    send('step', { cmd: step.label || `${step.file} ${step.args.join(' ')}` });
     let p;
     try { p = spawn(step.file, step.args, { cwd: ROOT, shell: !!step.shell, windowsHide: true }); }
     catch (e) { send('out', { line: 'ERRORE avvio: ' + e.message + '\n' }); return finish(1); }

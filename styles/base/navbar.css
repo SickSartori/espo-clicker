@@ -1,0 +1,226 @@
+#game-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: linear-gradient(180deg, #0a0d12 0%, #080b0f 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: var(--z-nav);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+    animation: navSlideDown 0.4s ease-out;
+}
+
+@keyframes navSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.nav-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+}
+
+.nav-group.left {
+    justify-content: flex-start;
+}
+
+.nav-group.center {
+    justify-content: center;
+}
+
+.nav-group.right {
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.nav-item {
+    background: transparent;
+    border: none;
+    color: #8b9bb0; /* >=4.5:1 su #0a0d12 (AA testo piccolo) */
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 72px;
+    flex: 0 0 72px;
+    height: 52px;
+    position: relative;
+}
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #c8d6e5;
+    transform: translateY(-2px);
+}
+
+.nav-item:active {
+    transform: translateY(1px) scale(0.97);
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+    margin-bottom: 3px;
+    filter: none;
+}
+
+/* Icona e label sono decorative: il bersaglio del click resta sempre il
+   <button>. Cosi' un'eventuale sostituzione del nodo icona (re-render) non puo'
+   mangiare il click quando il puntatore e' sopra l'icona. */
+.nav-item .nav-icon,
+.nav-item .nav-label {
+    pointer-events: none;
+}
+
+.nav-special-btn .nav-icon {
+    margin: 0;
+    margin-right: 6px;
+    font-size: 1rem;
+}
+
+.nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+/* Bottone Speciale (Promozione) */
+.nav-special-btn {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #bdc3c7;
+    border: 1px solid #4a6582;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    margin-left: 15px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.nav-special-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 0 #71368a, 0 8px 15px rgba(0, 0, 0, 0.4);
+}
+
+.nav-special-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #71368a;
+}
+
+/* Specificità aumentata — ORO promozione (allineato alla card Promozione) */
+#game-navbar .nav-group .nav-special-btn.promotion-ready {
+    background: linear-gradient(135deg, #f1c40f, #d35400);
+    color: #1a1206;
+    border: 1px solid #f1c40f;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+    cursor: pointer;
+    opacity: 1;
+    animation: promotionGlow 1.5s infinite alternate;
+    pointer-events: auto;
+}
+
+#game-navbar .nav-group .nav-special-btn.promotion-ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.6);
+    filter: brightness(1.1);
+}
+
+#game-navbar .nav-group .nav-special-btn.promotion-ready:active {
+    transform: translateY(1px);
+}
+
+/* Formattazione pronta: priorità sul verde promozione */
+#game-navbar .nav-group .nav-special-btn.format-ready {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    color: white;
+    border: 1px solid #d2b4de;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.7);
+    cursor: pointer;
+    opacity: 1;
+    animation: formatGlow 1.5s infinite alternate;
+    pointer-events: auto;
+}
+
+#game-navbar .nav-group .nav-special-btn.format-ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.7);
+    filter: brightness(1.1);
+}
+
+#game-navbar .nav-group .nav-special-btn.format-ready:active {
+    transform: translateY(1px);
+}
+
+/* Promo E format pronte insieme: sfumato oro→viola (lo "sfumato tra i colori") */
+#game-navbar .nav-group .nav-special-btn.hub-both-ready {
+    background: linear-gradient(120deg, #f1c40f, #e67e22 40%, #9b59b6);
+    color: white;
+    border: 1px solid #d2b4de;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    opacity: 1;
+    animation: bothGlow 1.5s infinite alternate;
+    pointer-events: auto;
+}
+
+#game-navbar .nav-group .nav-special-btn.hub-both-ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 0.65);
+    filter: brightness(1.1);
+}
+
+#game-navbar .nav-group .nav-special-btn.hub-both-ready:active {
+    transform: translateY(1px);
+}
+
+/* Specificità aumentata */
+#game-navbar .nav-group .nav-item.notify-overlay {
+    animation: none;
+    transform: none;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+}
+
+#game-navbar .nav-group .nav-item.notify-overlay:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.nav-item.notify-overlay::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 55%;
+    right: auto;
+    margin-left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #e74c3c;
+    border: 1px solid #151b22;
+    animation: dotPulse 2s infinite;
+    z-index: calc(var(--z-nav) + 1);
+    pointer-events: none;
+}

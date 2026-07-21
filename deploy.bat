@@ -96,7 +96,7 @@ echo  Bumpa patch + invalida cache + build legacy + v3 in 1 step.
 echo.
 echo  Files aggiornati:
 echo    * package.json
-echo    * js/version-config.js
+echo    * src/lib/version.ts
 echo    * sw.js (CACHE_VERSION)
 echo    * php/config.php (devVersion + prodVersion)
 echo.
@@ -469,7 +469,7 @@ echo ================================================================
 echo  PULISCI dist/ + REBUILD
 echo ================================================================
 echo.
-echo  Cancella dist/ + dist-v3/ poi build pulito.
+echo  Cancella dist/ poi build pulito.
 echo.
 set /p confirm="  Procedi? (s/N): "
 if /i "!confirm!" NEQ "s" goto menu
@@ -477,7 +477,6 @@ if /i "!confirm!" NEQ "s" goto menu
 echo.
 echo  Pulizia dist/...
 if exist dist rmdir /s /q dist
-if exist dist-v3 rmdir /s /q dist-v3
 echo  [OK] Pulizia OK
 
 echo.

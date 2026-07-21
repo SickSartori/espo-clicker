@@ -10,6 +10,17 @@ export function encodeSave(data: unknown): string {
   return LZString.compressToUTF16(JSON.stringify(data));
 }
 
+/**
+ * Comprimi una stringa JSON GIÀ serializzata dal caller.
+ * Usata quando il caller ha bisogno dello stesso identico payload per più
+ * destinazioni (IndexedDB / localStorage / cloud) o quando la serializzazione
+ * deve avvenire nel main thread (Decimal custom) e solo la compressione va
+ * spostata nel worker.
+ */
+export function encodeSaveString(json: string): string {
+  return LZString.compressToUTF16(json);
+}
+
 export function decodeSave<T = unknown>(payload: string | null | undefined): T | null {
   if (!payload) return null;
   try {

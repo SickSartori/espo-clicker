@@ -1,0 +1,345 @@
+/* =====================================================================
+   v3 — Clicker ambient (sfondi per rarità della skin equipaggiata)
+   =====================================================================
+   Scope: #clicker-ambient, div dedicato PRIMO figlio di #clicker-section
+   (i ::before/::after della section sono già degli anelli orbitali,
+   vedi clicker-3d.css). 3 layer per rarità:
+     - il div      → tinta/mesh STATICA (mai animata: zero repaint)
+     - ::before    → firma primaria (animata SOLO transform/opacity)
+     - ::after     → accento (animata SOLO transform/opacity)
+   Scala di rarità = forma + colore + ritmo unici per tier:
+     common     linee/griglia     slate     quasi fermo (drift 40s)
+     rare       cerchio/sonar     cyan      respiro 8s + ping
+     epic       mesh esagonale    viola     sweep radar 16s + doppio ping 7s
+     legendary  raggi rotanti     oro       rotazione 55s + braci che salgono
+     divine     aurora + halo     avorio    tende 22s + alone 9s
+     christmas  (neve via christmas-theme; qui solo la tinta base)
+   Principî (PRODUCT.md): il click è sacro (tutto dietro, bassa opacità);
+   respiro lento (cicli ≥7s); premium, non urlato.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  html body #clicker-section {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Layer base ───────────────────────────────────────────────── */
+  html body #clicker-ambient {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    /* tinta base per QUALSIASI rarità (christmas inclusa): parità col
+       vecchio glow generico via variabile (definita in skins-modal.css) */
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        var(--skin-rarity-glow, rgba(0, 217, 255, 0.12)) 0%,
+        transparent 70%);
+  }
+
+  html body #clicker-ambient::before,
+  html body #clicker-ambient::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* I temi totali disegnano già il proprio mondo: ambient spento. */
+  html body.theme-super #clicker-ambient,
+  html body.theme-8bit #clicker-ambient {
+    display: none;
+  }
+
+  /* ════════════════════════════════════════════════
+     COMMON — "calibrazione": griglia HUD, quasi ferma
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="common"] #clicker-ambient {
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(148, 163, 184, 0.16) 0%,
+        transparent 70%),
+      radial-gradient(ellipse 140% 100% at 50% 115%,
+        rgba(10, 15, 28, 0.5) 0%,
+        transparent 60%);
+  }
+
+  body[data-current-skin-rarity="common"] #clicker-ambient::before {
+    inset: -64px 0 0 -64px;
+    background:
+      linear-gradient(90deg,
+        rgba(148, 163, 184, 0.055) 0 1px,
+        transparent 1px 100%) 0 0/64px 64px,
+      linear-gradient(0deg,
+        rgba(148, 163, 184, 0.035) 0 1px,
+        transparent 1px 100%) 0 0/64px 64px;
+    animation: v3-amb-grid-drift 40s linear infinite;
+  }
+
+  @keyframes v3-amb-grid-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(64px, 64px, 0); }
+  }
+
+  /* ════════════════════════════════════════════════
+     RARE — "sonar": disco cyan che respira + ping
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="rare"] #clicker-ambient {
+    background:
+      radial-gradient(ellipse 75% 65% at 50% 50%,
+        rgba(0, 217, 255, 0.14) 0%,
+        rgba(0, 120, 180, 0.05) 45%,
+        transparent 72%),
+      radial-gradient(ellipse 140% 100% at 50% 115%,
+        rgba(4, 18, 34, 0.55) 0%,
+        transparent 60%);
+  }
+
+  body[data-current-skin-rarity="rare"] #clicker-ambient::before {
+    top: 50%;
+    left: 50%;
+    width: min(64vh, 480px);
+    height: min(64vh, 480px);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle,
+        rgba(0, 217, 255, 0.20) 0%,
+        rgba(0, 217, 255, 0.07) 42%,
+        transparent 68%);
+    animation: v3-amb-sonar-breathe 8s ease-in-out infinite;
+  }
+
+  @keyframes v3-amb-sonar-breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.8; }
+    50%      { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+  }
+
+  body[data-current-skin-rarity="rare"] #clicker-ambient::after {
+    top: 50%;
+    left: 50%;
+    width: min(64vh, 480px);
+    height: min(64vh, 480px);
+    border-radius: 50%;
+    border: 1px solid rgba(0, 217, 255, 0.35);
+    box-shadow:
+      0 0 22px rgba(0, 217, 255, 0.14),
+      inset 0 0 22px rgba(0, 217, 255, 0.10);
+    animation: v3-amb-sonar-ping 8s ease-out infinite;
+  }
+
+  @keyframes v3-amb-sonar-ping {
+    0%       { transform: translate(-50%, -50%) scale(0.35); opacity: 0.55; }
+    60%      { transform: translate(-50%, -50%) scale(1.08); opacity: 0; }
+    100%     { transform: translate(-50%, -50%) scale(1.08); opacity: 0; }
+  }
+
+  /* ════════════════════════════════════════════════
+     EPIC — "radar": mesh esagonale + sweep + doppio ping
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="epic"] #clicker-ambient {
+    background:
+      repeating-linear-gradient(60deg,
+        transparent 0, transparent 25px,
+        rgba(192, 132, 252, 0.045) 26px, transparent 27px),
+      repeating-linear-gradient(-60deg,
+        transparent 0, transparent 25px,
+        rgba(192, 132, 252, 0.045) 26px, transparent 27px),
+      radial-gradient(ellipse 72% 62% at 50% 50%,
+        rgba(168, 85, 247, 0.18) 0%,
+        transparent 70%),
+      radial-gradient(ellipse 140% 100% at 50% 115%,
+        rgba(18, 8, 34, 0.55) 0%,
+        transparent 60%);
+  }
+
+  /* Doppio anello radar in espansione */
+  body[data-current-skin-rarity="epic"] #clicker-ambient::before {
+    top: 50%;
+    left: 50%;
+    width: min(70vh, 520px);
+    height: min(70vh, 520px);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle,
+        transparent 0 46%,
+        rgba(192, 132, 252, 0.20) 47% 49%,
+        transparent 50% 66%,
+        rgba(168, 85, 247, 0.13) 67% 69%,
+        transparent 70%);
+    animation: v3-amb-radar-ping 7s ease-out infinite;
+  }
+
+  @keyframes v3-amb-radar-ping {
+    0%   { transform: translate(-50%, -50%) scale(0.30); opacity: 0.65; }
+    70%  { transform: translate(-50%, -50%) scale(1.05); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1.05); opacity: 0; }
+  }
+
+  /* Cono radar che ruota (lento, mai stroboscopico) */
+  body[data-current-skin-rarity="epic"] #clicker-ambient::after {
+    top: 50%;
+    left: 50%;
+    width: min(78vh, 560px);
+    height: min(78vh, 560px);
+    border-radius: 50%;
+    background:
+      conic-gradient(from 0deg at 50% 50%,
+        transparent 0deg,
+        rgba(192, 132, 252, 0.13) 16deg,
+        rgba(168, 85, 247, 0.05) 34deg,
+        transparent 52deg,
+        transparent 360deg);
+    -webkit-mask: radial-gradient(circle, #000 0 60%, transparent 72%);
+    mask: radial-gradient(circle, #000 0 60%, transparent 72%);
+    animation: v3-amb-radar-sweep 16s linear infinite;
+  }
+
+  @keyframes v3-amb-radar-sweep {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* ════════════════════════════════════════════════
+     LEGENDARY — "corona": raggi dorati che RUOTANO + braci
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="legendary"] #clicker-ambient {
+    background:
+      radial-gradient(ellipse 72% 62% at 50% 50%,
+        rgba(245, 158, 11, 0.16) 0%,
+        transparent 70%),
+      linear-gradient(180deg,
+        rgba(60, 40, 8, 0.18) 0%,
+        transparent 35%,
+        transparent 70%,
+        rgba(40, 26, 6, 0.30) 100%);
+  }
+
+  /* Raggi conici: davvero rotanti (transform, non background) */
+  body[data-current-skin-rarity="legendary"] #clicker-ambient::before {
+    top: 50%;
+    left: 50%;
+    width: min(120vh, 900px);
+    height: min(120vh, 900px);
+    border-radius: 50%;
+    background:
+      conic-gradient(from 0deg at 50% 50%,
+        transparent 0deg,
+        rgba(252, 211, 77, 0.09) 28deg,
+        transparent 62deg,
+        rgba(245, 158, 11, 0.07) 118deg,
+        transparent 152deg,
+        rgba(252, 211, 77, 0.10) 208deg,
+        transparent 244deg,
+        rgba(245, 158, 11, 0.07) 298deg,
+        transparent 334deg,
+        transparent 360deg);
+    -webkit-mask: radial-gradient(circle, #000 0 55%, transparent 70%);
+    mask: radial-gradient(circle, #000 0 55%, transparent 70%);
+    animation: v3-amb-rays-rotate 55s linear infinite;
+  }
+
+  @keyframes v3-amb-rays-rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* Braci dorate che salgono (tile 260/130px → loop senza cuciture) */
+  body[data-current-skin-rarity="legendary"] #clicker-ambient::after {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: -260px;
+    background:
+      radial-gradient(circle 1.5px at 22% 30%,
+        rgba(252, 211, 77, 0.55) 50%, transparent 51%) 0 0/260px 260px,
+      radial-gradient(circle 2px at 68% 62%,
+        rgba(245, 158, 11, 0.45) 50%, transparent 51%) 0 0/260px 260px,
+      radial-gradient(circle 1px at 45% 78%,
+        rgba(255, 226, 130, 0.50) 50%, transparent 51%) 0 0/130px 130px;
+    animation: v3-amb-embers-rise 18s linear infinite;
+  }
+
+  @keyframes v3-amb-embers-rise {
+    0%   { transform: translate3d(0, 0, 0);      opacity: 0.75; }
+    50%  { transform: translate3d(0, -130px, 0); opacity: 0.95; }
+    100% { transform: translate3d(0, -260px, 0); opacity: 0.75; }
+  }
+
+  /* ════════════════════════════════════════════════
+     DIVINE — "aurora": tende di luce + halo che respira
+     ════════════════════════════════════════════════ */
+  body[data-current-skin-rarity="divine"] #clicker-ambient {
+    background:
+      radial-gradient(ellipse 80% 68% at 50% 46%,
+        rgba(255, 238, 144, 0.18) 0%,
+        transparent 70%),
+      radial-gradient(ellipse 60% 30% at 50% 0%,
+        rgba(255, 246, 214, 0.10) 0%,
+        transparent 75%),
+      linear-gradient(180deg,
+        transparent 0%,
+        transparent 72%,
+        rgba(46, 38, 16, 0.28) 100%);
+  }
+
+  /* Tende d'aurora: calde + una controbanda fredda (tocco prismatico) */
+  body[data-current-skin-rarity="divine"] #clicker-ambient::before {
+    top: -10%;
+    left: -60%;
+    width: 220%;
+    height: 120%;
+    background:
+      linear-gradient(135deg,
+        transparent 6%,
+        rgba(255, 240, 180, 0.11) 16%,
+        transparent 30%,
+        rgba(255, 220, 160, 0.13) 46%,
+        transparent 60%,
+        rgba(172, 225, 255, 0.06) 72%,
+        transparent 84%,
+        rgba(255, 246, 200, 0.09) 94%,
+        transparent 100%);
+    animation: v3-amb-aurora-drift 22s ease-in-out infinite alternate;
+  }
+
+  @keyframes v3-amb-aurora-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(9%, 0, 0); }
+  }
+
+  /* Halo: anello sottile dietro Espo che respira piano */
+  body[data-current-skin-rarity="divine"] #clicker-ambient::after {
+    top: 50%;
+    left: 50%;
+    width: min(58vh, 430px);
+    height: min(58vh, 430px);
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 238, 180, 0.38);
+    box-shadow:
+      0 0 30px rgba(255, 238, 144, 0.22),
+      inset 0 0 30px rgba(255, 238, 144, 0.10);
+    animation: v3-amb-halo-breathe 9s ease-in-out infinite;
+  }
+
+  @keyframes v3-amb-halo-breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.6; }
+    50%      { transform: translate(-50%, -50%) scale(1.05); opacity: 0.95; }
+  }
+
+  /* ════════════════════════════════════════════════
+     CHRISTMAS — gestita da christmas-theme.css (neve JS unica).
+     Qui resta SOLO la tinta base via --skin-rarity-glow: niente
+     firma dedicata = niente doppia neve.
+     ════════════════════════════════════════════════ */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #clicker-ambient,
+  html body #clicker-ambient::before,
+  html body #clicker-ambient::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

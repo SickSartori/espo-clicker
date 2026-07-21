@@ -1,6 +1,9 @@
 <?php
 require_once("php/check_language.php");
 require_once("php/check_version.php");
+require_once("php/launch-gate.php");
+// Gate lancio v3.0: prima del lancio, in produzione, serve SOLO il countdown.
+if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
@@ -50,7 +53,7 @@ require_once("php/check_version.php");
 
 		<!-- Bundle Core + UI + all styles -->
 		<!-- Cache-bust come il JS bundle: in dev (localhost) filemtime → CSS fresca a
-		     ogni `node build.js` senza bumpare la versione, in dev e in prod (come il bundle V3). -->
+		     ogni `npm run build` (vite) senza bumpare la versione, in dev e in prod (come il bundle V3). -->
 		<?php
 		// $cacheVer resta solo come fallback se il file non esiste (build non ancora eseguita).
 		$stylesVer = assetVer(__DIR__ . '/dist/styles.bundle.min.css', $cacheVer);
@@ -61,15 +64,10 @@ require_once("php/check_version.php");
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
 		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $mobileVer; ?>" media="(max-width: 768px)">
 
-		<!-- V3 styles (tokens, primitives, skip-link a11y). Solo se build V3 presente.
+		<!-- V3 styles (tokens, primitives, skip-link a11y). V3 è l'app, sempre caricato.
 		     Cache buster via filemtime() — ogni rebuild Vite invalida cache SW automaticamente. -->
-		<?php
-		$v3CssPath = __DIR__ . '/dist-v3/assets/v3-styles.css';
-		if (file_exists($v3CssPath)):
-			$v3CssVer = filemtime($v3CssPath);
-		?>
-		<link rel="stylesheet" href="dist-v3/assets/v3-styles.css?v=<?php echo $v3CssVer; ?>">
-		<?php endif; ?>
+		<?php $v3CssVer = assetVer(__DIR__ . '/dist/assets/styles.css', $cacheVer); ?>
+		<link rel="stylesheet" href="dist/assets/styles.css?v=<?php echo $v3CssVer; ?>">
 
 		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
 
@@ -175,10 +173,10 @@ require_once("php/check_version.php");
 
 		<nav id="game-navbar" aria-label="<?php echo $labels["idx_main_menu_aria"]; ?>">
 			<div class="nav-group left">
-				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
-					<i class="nav-icon" data-lucide="book-open"></i>
+				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["help_menu_titolo"]; ?>">
+					<i class="nav-icon" data-lucide="info"></i>
 					<span class="nav-label">
-						<?php echo $labels["navbar_guida"]; ?>
+						<?php echo $labels["help_menu_titolo"]; ?>
 					</span>
 				</button>
 				<button id="open-stats-btn" class="nav-item" title="<?php echo $labels["navbar_stats"]; ?>">
@@ -203,7 +201,7 @@ require_once("php/check_version.php");
 					</span>
 				</button>
 				<button id="open-skins-btn" class="nav-item" title="<?php echo $labels["navbar_skin"]; ?>">
-					<i class="nav-icon" data-lucide="palette"></i>
+					<i class="nav-icon" data-lucide="shirt"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_skin"]; ?>
 					</span>
@@ -222,6 +220,11 @@ require_once("php/check_version.php");
 					<span>
 						<?php echo $labels["navbar_promozione"]; ?>
 					</span>
+				</button>
+				<button id="open-user-hub-btn" class="nav-item" title="<?php echo $labels["navbar_account_title"]; ?>">
+					<i class="nav-icon" data-lucide="users"></i>
+					<span class="nav-label" id="navbar-username-label"><?php echo $labels["account_default_name"]; ?></span>
+					<span id="user-hub-badge" class="user-hub-badge" hidden></span>
 				</button>
 				<button id="open-settings-btn" class="nav-item" title="<?php echo $labels["navbar_opzioni"]; ?>">
 					<i class="nav-icon" data-lucide="sliders"></i>
@@ -312,65 +315,53 @@ require_once("php/check_version.php");
 
 		<!-- ============================================================ -->
 		<!-- LIBRERIE ESTERNE (solo quelle necessarie all'avvio)        -->
-		<!-- lz-string: ora bundlato in game.bundle.min.js              -->
+		<!-- lz-string: dipendenza npm, riesposta su window da src/main.ts -->
 		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
 		<!-- ============================================================ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
+		<?php $biVer = assetVer(__DIR__ . '/dist/break_infinity.min.js', $cacheVer); ?>
+		<script src="dist/break_infinity.min.js?v=<?php echo $biVer; ?>" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
 
 		<!-- ============================================================ -->
-		<!-- GAME BUNDLE (esbuild minificato)                            -->
-		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
-		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
+		<!-- V3 MODULES (Vite ESM) — bundle dell'app                      -->
+		<!-- Espone window.EspoV3 con i moduli TS del gioco                -->
+		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
+		<!--                                                              -->
+		<!-- ORDINE: defer e module eseguono in ordine di documento,       -->
+		<!-- quindi qui — DOPO la CDN break_infinity, PRIMA del bundle     -->
+		<!-- legacy — vale il contratto:                                   -->
+		<!--  1. window.Decimal = break_infinity (CDN); se la CDN fallisce  -->
+		<!--     installGlobalDecimal() installa break_eternity (fallback)  -->
+		<!--  2. window.EspoV3 è GIÀ pronto quando il legacy esegue → le    -->
+		<!--     deleghe `window.EspoV3?.x ?? legacy` sono sync e sicure    -->
+		<!-- ============================================================ -->
+		<?php $v3JsVer = assetVer(__DIR__ . '/dist/game.modules.js', $cacheVer); ?>
+		<script type="module" src="dist/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
+
 		<!-- ============================================================ -->
 		<!-- Cache buster condiviso: usato per i theme CSS lazy-load
 		     (loadThemeCSS in ui-functions.js). Senza questo gli aggiornamenti
 		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
 		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
 		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
-		     Letta dall'overlay i18n nel bundle (js/i18n.js) per applicare EN sui dati. -->
+		     Letta dal bridge i18n del modulo V3 (src/lib/i18n.ts) per applicare EN sui dati. -->
 		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
-		<?php
-		// Cache-bust del bundle via filemtime (dev E prod) → ogni rebuild
-		// (node build.js) viene servito fresco senza dover bumpare la versione.
-		// $cacheVer resta solo come fallback se il file non esiste (build non fatta).
-		$bundleVer = assetVer(__DIR__ . '/dist/game.bundle.min.js', $cacheVer);
-		?>
-		<script src="dist/game.bundle.min.js?v=<?php echo $bundleVer; ?>" defer></script>
+		<script src="js/feedback.js?v=<?php echo $cacheVer; ?>" defer></script>
 
-		<!-- ============================================================ -->
-		<!-- V3 MODULES (Vite ESM, strangler pattern)                     -->
-		<!-- Espone window.EspoV3 con i moduli TS migrati progressivamente -->
-		<!-- Caricato solo se dist-v3/ esiste (build:v3 eseguita)         -->
-		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
-		<!-- ============================================================ -->
-		<?php
-		$v3JsPath = __DIR__ . '/dist-v3/game.modules.js';
-		if (file_exists($v3JsPath)):
-			$v3JsVer = filemtime($v3JsPath);
-		?>
-		<script type="module" src="dist-v3/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
-		<?php endif; ?>
-		
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->
 		<!-- Carica Phaser + CSS + JS arcade solo all'apertura Arcade   -->
 		<!-- Risparmio: ~1.5 MB + 9 richieste HTTP sull'avvio          -->
-		<!-- ============================================================ -->
-		<script src="js/arcade-loader.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<!-- Ora modulo ESM (src/lib/arcade-loader.ts), import side-effect -->
+		<!-- in main.ts → caricato dal tag V3 module sopra (riga ~351). -->
 		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
-		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
+		<!-- vengono iniettati dinamicamente da ArcadeLoader            -->
 	
-		<?php
-// Uso la stessa variabile usata nella libreria check_version.php
-if (isset($config['instanceName']) && $config['instanceName'] === 'dev' && ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? '')) {
-	echo '<script src="js/cheatboard.js?v=' . time() . '" defer></script>'; // dev: sempre fresco
-	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-}
-?>
+		<!-- Cheatboard/Admin Console: ora caricata da src/lib/backend-config.ts (modulo V3)
+		     (gattata su EspoBackend.env === 'dev'), non più da PHP qui. -->
 		<?php
 		// DEV/TEST (instanceName=dev): NIENTE service worker. Evita che la cache
 		// stale del SW serva CSS/JS vecchi dopo ogni rebuild (causa #1 di "non

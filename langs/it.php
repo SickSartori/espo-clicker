@@ -8,6 +8,17 @@
 	// HEAD
 	$labels["head_titolo"] = "Espòòò Clicker";
 
+	// COUNTDOWN LANCIO (pre-rilascio v3.0)
+	$labels["countdown_badge"] = "IN ARRIVO";
+	$labels["countdown_sub"] = "La grande 3.0 sta per arrivare.";
+	$labels["countdown_d"] = "Giorni";
+	$labels["countdown_h"] = "Ore";
+	$labels["countdown_m"] = "Min";
+	$labels["countdown_s"] = "Sec";
+	$labels["countdown_release"] = "Rilascio";
+	$labels["countdown_testing"] = "Server in preparazione — test in corso";
+	$labels["countdown_enter"] = "ENTRA";
+
 	// LOADER
 	$labels["loader_titolo"] = "Espòò Clicker";
 	$labels["loader_status"] = "Inizializzazione risorse...";
@@ -26,6 +37,25 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guida";
+	$labels["navbar_segnala"] = "Segnala";
+
+	// --- Feedback / Segnalazioni (board Trello) ---
+	$labels["feedback_titolo"] = "Segnala un problema o un'idea";
+	$labels["feedback_intro"] = "Hai trovato un bug, hai un'idea o un suggerimento? Raccontacelo: finisce dritto nella nostra board interna.";
+	$labels["feedback_type_idea"] = "Idea";
+	$labels["feedback_type_bug"] = "Bug";
+	$labels["feedback_type_improvement"] = "Miglioramento";
+	$labels["feedback_label_titolo"] = "Titolo";
+	$labels["feedback_ph_titolo"] = "Riassumi in una frase";
+	$labels["feedback_label_desc"] = "Descrizione (opzionale)";
+	$labels["feedback_ph_desc"] = "Più dettagli dai, meglio è: come riprodurlo, cosa ti aspettavi…";
+	$labels["feedback_privacy"] = "Alleghiamo automaticamente versione, lingua e browser per aiutarci a diagnosticare. Nessun dato sensibile.";
+	$labels["feedback_invia"] = "Invia segnalazione";
+	$labels["feedback_toast_ok"] = "Grazie! Segnalazione inviata. 🎉";
+	$labels["feedback_toast_err"] = "Ops, invio non riuscito. Riprova più tardi.";
+	$labels["feedback_toast_validate"] = "Scrivi almeno un titolo (3+ caratteri).";
+	$labels["feedback_toast_sending"] = "Invio…";
+	$labels["help_menu_titolo"] = "Aiuto";
 	$labels["navbar_stats"] = "Statistiche";
 	$labels["navbar_arcade"] = "Sala Giochi";
 	$labels["navbar_obiettivi"] = "Obiettivi";
@@ -33,6 +63,9 @@
 	$labels["navbar_classifica"] = "Classifica";
 	$labels["navbar_promozione"] = "Promozione";
 	$labels["navbar_opzioni"] = "Opzioni";
+	$labels["navbar_account_title"] = "Account e Amici";
+	$labels["lb_scope_global"] = "Globale";
+	$labels["lb_scope_friends"] = "Amici";
 
 	// GAME CONTAINER
 	$labels["game_container_click_titolo"] = " Click";
@@ -222,6 +255,11 @@
 	$labels["account_critical"] = "Area Critica";
 	$labels["account_confirm_pass_ph"] = "Password per confermare";
 	$labels["account_delete"] = "Elimina";
+	$labels["account_logout"] = "Esci dall'account";
+	$labels["hub_tab_account"] = "Account";
+	$labels["hub_tab_amici"] = "Amici";
+	$labels["hub_amici_soon_title"] = "Amici in arrivo";
+	$labels["hub_amici_soon_desc"] = "Presto potrai aggiungere amici, scambiare emoji, vedere le loro statistiche e l'armadietto skin, e sfidarli in classifica.";
 	$labels["opt_bg_music"] = "Musica di Sfondo";
 	$labels["opt_music_locked"] = "Bloccato dalla Skin attuale";
 	$labels["opt_install_app"] = "Installa App";
@@ -232,6 +270,9 @@
 	$labels["prestige_token"] = "Token Laboratorio";
 	$labels["prestige_new_mult"] = "Nuovo Moltiplicatore:";
 	$labels["prestige_sign_btn"] = "Firma Contratto";
+	$labels["hub_titolo"] = "Prestigio";
+	$labels["hub_counter_label"] = "Promozioni";
+	$labels["hub_promo_locked_btn"] = "Completa il progetto (100%)";
 
 	/*----------------------------------------------------------------------------------------
 	* MODALE ARCADE in-game (includes/modals_arcade.php)
@@ -281,11 +322,6 @@
 	$labels["col_center_bps_aria"] = "Bug per secondo";
 	$labels["col_buy_qty_aria"] = "Quantità acquisto";
 	$labels["col_buildings_region_aria"] = "Team e produzione automatica";
-	$labels["quantum_reboot_title"] = "RIAVVIO UNIVERSO";
-	$labels["quantum_reboot_desc"] = "Distruggi questo universo (reset Bug, Teams, Lab e Token). Conserverai Skin, Obiettivi e Statistiche globali.";
-	$labels["quantum_energy"] = "ENERGIA RICAVATA:";
-	$labels["quantum_requires"] = "Richiede 20 Promozioni (Attuali:";
-	$labels["quantum_start_format"] = "AVVIA FORMATTAZIONE";
 	$labels["quantum_meta_tech"] = "Meta-Tecnologie";
 	$labels["quantum_empty"] = "Tutte le tecnologie quantiche sono state ricercate.";
 	$labels["idx_mobile_nav_aria"] = "Navigazione mobile";

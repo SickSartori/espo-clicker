@@ -1,0 +1,260 @@
+/* =====================================================================
+   v3 desktop — Navbar decorations only
+   =====================================================================
+   Layout originale legacy (navbar.css:1-42) MANTENUTO:
+     - position: fixed top
+     - display: flex; justify-content: space-between
+     - 3 nav-group distribuiti (flex: 1 ciascuno) sinistra/centro/destra
+   Solo cambi estetici: glass background, neon accents, hover.
+   NON tocco display/flex/justify/gap/width — evita sovrapposizioni.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* Solo decorazioni atmosfera, NESSUN override layout */
+  html body #game-navbar {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: linear-gradient(180deg,
+      rgba(10, 15, 28, 0.92) 0%,
+      rgba(10, 15, 28, 0.78) 100%);
+    border-bottom: 1px solid rgba(0, 217, 255, 0.18);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      0 1px 0 rgba(0, 217, 255, 0.08);
+  }
+
+  /* Neon underline centrato */
+  html body #game-navbar::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(0, 217, 255, 0.7),
+      transparent);
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.5);
+    pointer-events: none;
+  }
+
+  /* Nav items: solo decorazioni hover, NESSUN width/padding override
+     che possa rompere flex: 0 0 72px del legacy. */
+  html body #game-navbar .nav-item {
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  html body #game-navbar .nav-item .nav-icon {
+    color: var(--v3-accent-cyan, #00d9ff);
+    transition: filter 200ms;
+  }
+
+  html body #game-navbar .nav-item .nav-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  html body #game-navbar .nav-item:hover {
+    background-color: rgba(0, 217, 255, 0.08);
+  }
+
+  html body #game-navbar .nav-item:hover .nav-icon {
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.7));
+  }
+
+  /* Base = stato "in corso": hub sbloccato, apribile per vedere i progressi,
+     ma nessuna azione eseguibile ORA → grigio spento, non un invito ad agire.
+     I colori vivi (oro/viola/sfumato) compaiono solo con gli stati pronti. */
+  html body #game-navbar #open-prestige-hub-btn {
+    background: linear-gradient(135deg, #3a4557 0%, #2a323f 100%);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    transition: all 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Shimmer riflesso: predisposto sul base ma SPENTO (sta fuori campo).
+     Si accende solo sugli stati pronti (call-to-action), sotto. */
+  html body #game-navbar #open-prestige-hub-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.25) 50%,
+      transparent 70%);
+    transform: translateX(-100%);
+    animation: none;
+    pointer-events: none;
+  }
+
+  /* Shimmer attivo solo quando c'è qualcosa da fare */
+  html body #game-navbar #open-prestige-hub-btn.promotion-ready::after,
+  html body #game-navbar #open-prestige-hub-btn.format-ready::after,
+  html body #game-navbar #open-prestige-hub-btn.hub-both-ready::after {
+    animation: v3-prestige-shimmer 4s ease-in-out infinite;
+  }
+
+  html body #game-navbar #open-prestige-hub-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    filter: brightness(1.12);
+  }
+
+  html body #game-navbar #open-prestige-hub-btn:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  /* Stato FORMATTA! — viola quantico, vince sul verde base */
+  html body #game-navbar #open-prestige-hub-btn.format-ready {
+    background: linear-gradient(135deg, #9b59b6 0%, #71368a 100%);
+    border: 1px solid rgba(210, 180, 222, 0.7);
+    box-shadow:
+      0 4px 16px rgba(155, 89, 182, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  html body #game-navbar #open-prestige-hub-btn.format-ready:hover {
+    box-shadow:
+      0 8px 24px rgba(155, 89, 182, 0.65),
+      0 0 32px rgba(155, 89, 182, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* Stato PRONTA! — oro promozione, allineato alla card Promozione dell'hub.
+     Testo/icona scuri per leggibilità sull'oro (come il bottone-firma card). */
+  html body #game-navbar #open-prestige-hub-btn.promotion-ready {
+    background: linear-gradient(135deg, #f1c40f 0%, #d35400 100%);
+    border: 1px solid rgba(241, 196, 15, 0.7);
+    box-shadow:
+      0 4px 16px rgba(241, 196, 15, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    color: #1a1206;
+  }
+
+  html body #game-navbar #open-prestige-hub-btn.promotion-ready:hover {
+    box-shadow:
+      0 8px 24px rgba(241, 196, 15, 0.6),
+      0 0 32px rgba(241, 196, 15, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  /* Stato SCEGLI! — promo E format pronte insieme: lo "sfumato tra i colori",
+     oro→viola passando per l'arancio (bridge caldo→freddo delle due card). */
+  html body #game-navbar #open-prestige-hub-btn.hub-both-ready {
+    background: linear-gradient(120deg, #f1c40f 0%, #e67e22 40%, #9b59b6 100%);
+    border: 1px solid rgba(210, 180, 222, 0.75);
+    box-shadow:
+      0 4px 18px rgba(155, 89, 182, 0.5),
+      0 0 22px rgba(241, 196, 15, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  html body #game-navbar #open-prestige-hub-btn.hub-both-ready:hover {
+    box-shadow:
+      0 8px 26px rgba(155, 89, 182, 0.6),
+      0 0 34px rgba(241, 196, 15, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  }
+
+  @keyframes v3-prestige-shimmer {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(150%); }
+    100% { transform: translateX(150%); }
+  }
+
+  /* ────────────────────────────────────────────────────
+     NAVBAR NOTIFY-OVERLAY — icon glow (NO dot badge)
+     Il JS legacy aggiunge .notify-overlay su .nav-item.
+     Override: nascondi dot ::after, icona pulsa.
+     ──────────────────────────────────────────────────── */
+
+  /* Rimuovi stili legacy notify-overlay */
+  html body #game-navbar .nav-item.notify-overlay {
+    animation: none;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+  }
+
+  /* Nascondi dot legacy */
+  html body #game-navbar .nav-item.notify-overlay::after {
+    display: none !important;
+  }
+
+  /* Icona pulsa per segnalare contenuto nuovo */
+  html body #game-navbar .nav-item.notify-overlay .nav-icon {
+    color: var(--v3-tier-uncommon, #10b981) !important;
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.8));
+    animation: v3-nav-icon-notify 2s ease-in-out infinite;
+  }
+
+  @keyframes v3-nav-icon-notify {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); transform: scale(1); }
+    50%      { filter: drop-shadow(0 0 16px rgba(16, 185, 129, 1)); transform: scale(1.2); }
+  }
+
+  /* ────────────────────────────────────────────────────
+     ICON + TEXT ALIGNMENT — vertical centering fix
+     ──────────────────────────────────────────────────── */
+  html body #game-navbar .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    position: relative;
+  }
+
+  html body #game-navbar .nav-item .nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  html body #game-navbar .nav-item .nav-label {
+    font-size: 0.6rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Prestige button icon alignment */
+  html body #game-navbar #open-prestige-hub-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  html body #game-navbar #open-prestige-hub-btn .nav-icon {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #game-navbar #open-prestige-hub-btn::after,
+  html body #game-navbar .nav-item,
+  html body #game-navbar .nav-item.notify-overlay .nav-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

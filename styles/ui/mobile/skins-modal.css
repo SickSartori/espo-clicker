@@ -1,0 +1,140 @@
+/* =====================================================================
+   v3 mobile fixes — skins modal "Guardaroba"
+   =====================================================================
+   Override mirati su mobile.css esistente. Non rompono desktop.
+   Caricato dopo dist/styles.bundle.min.css → vince per cascade order.
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  /* -------------------------------------------------------------------
+     1. CHIUDI button — meno aggressivo del rosso pieno fixed bottom.
+     Diventa pillola ghost in alto a destra, no più barra fissa.
+     ------------------------------------------------------------------- */
+  html body #skins-modal .modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    left: auto;
+    /* !important: deve battere il 28px !important desktop di skins-modal-v3.css */
+    width: 44px !important; /* touch target minimo Apple HIG/WCAG 2.5.8 */
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 50%;
+    /* !important anche su questi: la regola desktop .skins-modal-v3 (senza media
+       query) usa !important su background/border/box-shadow/font-size e su mobile
+       vincerebbe: font-size 0.7rem rende visibile la × testuale ACCANTO a quella
+       del ::after (glifo doppio) e riporta lo stile rosso desktop. */
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #fff;
+    box-shadow: none !important;
+    z-index: 10;
+    transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 0;
+    font-size: 0 !important;
+  }
+
+  html body #skins-modal .modal-close-btn::after {
+    content: '\00d7'; /* × unicode */
+    font-family: system-ui, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  html body #skins-modal .modal-close-btn:hover,
+  html body #skins-modal .modal-close-btn:focus-visible {
+    background: rgba(231, 76, 60, 0.6);
+    transform: scale(1.05);
+    outline: none;
+  }
+
+  html body #skins-modal .modal-close-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* -------------------------------------------------------------------
+     2. Modal content layout — riempi viewport, no spazi morti.
+     ------------------------------------------------------------------- */
+  html body #skins-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    padding: 0;
+    overflow: hidden;
+    /* iOS safe-area */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  html body #skins-modal h2 {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 14px 60px 10px 18px;
+    font-size: 1.15rem;
+    text-align: left;
+  }
+
+  /* -------------------------------------------------------------------
+     3. Controls bar compatto — filtri + dropdown su 1 riga scrollabile.
+     ------------------------------------------------------------------- */
+  html body #skins-modal .skins-controls-bar {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  html body #skins-modal .skins-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    align-items: center;
+  }
+
+  html body #skins-modal .skin-filter-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    border-radius: 999px;
+    min-height: 32px;
+    flex: 0 0 auto;
+  }
+
+  html body #skins-modal .skin-select-filter {
+    flex: 1 1 110px;
+    min-height: 32px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* -------------------------------------------------------------------
+     4. Vista CARD GRID su mobile — la griglia unificata
+     (#skins-grid-modern.skins-unified-grid) è ora gestita interamente da
+     skins-modal-v3.css. Resta solo questo vecchio hide, oggi INERTE:
+     sovrascritto dal display:grid !important a specificità maggiore del v3.
+     ------------------------------------------------------------------- */
+  html body #skins-modal #skins-grid-modern {
+    display: none !important;
+  }
+}
+
+/* =====================================================================
+   Reduced motion: niente bounce su close button.
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html body #skins-modal .modal-close-btn {
+    transition: none !important;
+  }
+}

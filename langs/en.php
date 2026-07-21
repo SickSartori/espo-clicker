@@ -8,6 +8,17 @@
 	// HEAD
 	$labels["head_titolo"] = "Espòòò Clicker";
 
+	// LAUNCH COUNTDOWN (pre-release v3.0)
+	$labels["countdown_badge"] = "COMING SOON";
+	$labels["countdown_sub"] = "The big 3.0 is almost here.";
+	$labels["countdown_d"] = "Days";
+	$labels["countdown_h"] = "Hrs";
+	$labels["countdown_m"] = "Min";
+	$labels["countdown_s"] = "Sec";
+	$labels["countdown_release"] = "Release";
+	$labels["countdown_testing"] = "Servers warming up — testing in progress";
+	$labels["countdown_enter"] = "ENTER";
+
 	// LOADER
 	$labels["loader_titolo"] = "Espòò Clicker";
 	$labels["loader_status"] = "Initializing resources...";
@@ -26,6 +37,25 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guide";
+	$labels["navbar_segnala"] = "Feedback";
+
+	// --- Feedback / Reports (Trello board) ---
+	$labels["feedback_titolo"] = "Report a problem or idea";
+	$labels["feedback_intro"] = "Found a bug, got an idea or a suggestion? Tell us — it goes straight to our internal board.";
+	$labels["feedback_type_idea"] = "Idea";
+	$labels["feedback_type_bug"] = "Bug";
+	$labels["feedback_type_improvement"] = "Improvement";
+	$labels["feedback_label_titolo"] = "Title";
+	$labels["feedback_ph_titolo"] = "Sum it up in one line";
+	$labels["feedback_label_desc"] = "Description (optional)";
+	$labels["feedback_ph_desc"] = "The more detail the better: steps to reproduce, what you expected…";
+	$labels["feedback_privacy"] = "We automatically attach version, language and browser to help us diagnose. No sensitive data.";
+	$labels["feedback_invia"] = "Send feedback";
+	$labels["feedback_toast_ok"] = "Thanks! Your feedback was sent. 🎉";
+	$labels["feedback_toast_err"] = "Oops, sending failed. Please try again later.";
+	$labels["feedback_toast_validate"] = "Please enter a title (3+ characters).";
+	$labels["feedback_toast_sending"] = "Sending…";
+	$labels["help_menu_titolo"] = "Help";
 	$labels["navbar_stats"] = "Statistics";
 	$labels["navbar_arcade"] = "Arcade";
 	$labels["navbar_obiettivi"] = "Achievements";
@@ -33,6 +63,9 @@
 	$labels["navbar_classifica"] = "Leaderboard";
 	$labels["navbar_promozione"] = "Promotion";
 	$labels["navbar_opzioni"] = "Options";
+	$labels["navbar_account_title"] = "Account & Friends";
+	$labels["lb_scope_global"] = "Global";
+	$labels["lb_scope_friends"] = "Friends";
 
 	// GAME CONTAINER
 	$labels["game_container_click_titolo"] = " Click";
@@ -222,6 +255,11 @@
 	$labels["account_critical"] = "Critical Area";
 	$labels["account_confirm_pass_ph"] = "Password to confirm";
 	$labels["account_delete"] = "Delete";
+	$labels["account_logout"] = "Sign out";
+	$labels["hub_tab_account"] = "Account";
+	$labels["hub_tab_amici"] = "Friends";
+	$labels["hub_amici_soon_title"] = "Friends coming soon";
+	$labels["hub_amici_soon_desc"] = "Soon you'll be able to add friends, exchange emoji, view their stats and skin locker, and challenge them on the leaderboard.";
 	$labels["opt_bg_music"] = "Background Music";
 	$labels["opt_music_locked"] = "Locked by the current Skin";
 	$labels["opt_install_app"] = "Install App";
@@ -232,6 +270,9 @@
 	$labels["prestige_token"] = "Lab Tokens";
 	$labels["prestige_new_mult"] = "New Multiplier:";
 	$labels["prestige_sign_btn"] = "Sign Contract";
+	$labels["hub_titolo"] = "Prestige";
+	$labels["hub_counter_label"] = "Promotions";
+	$labels["hub_promo_locked_btn"] = "Complete the project (100%)";
 
 	/*----------------------------------------------------------------------------------------
 	* IN-GAME ARCADE MODAL (includes/modals_arcade.php)
@@ -281,11 +322,6 @@
 	$labels["col_center_bps_aria"] = "Bugs per second";
 	$labels["col_buy_qty_aria"] = "Purchase quantity";
 	$labels["col_buildings_region_aria"] = "Teams and automatic production";
-	$labels["quantum_reboot_title"] = "UNIVERSE REBOOT";
-	$labels["quantum_reboot_desc"] = "Destroy this universe (reset Bugs, Teams, Lab and Tokens). You'll keep Skins, Achievements and global Statistics.";
-	$labels["quantum_energy"] = "ENERGY HARVESTED:";
-	$labels["quantum_requires"] = "Requires 20 Promotions (Current:";
-	$labels["quantum_start_format"] = "START FORMAT";
 	$labels["quantum_meta_tech"] = "Meta-Technologies";
 	$labels["quantum_empty"] = "All quantum technologies have been researched.";
 	$labels["idx_mobile_nav_aria"] = "Mobile navigation";

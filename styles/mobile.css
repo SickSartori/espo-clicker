@@ -1,0 +1,1411 @@
+/* --- STILI PER SMARTPHONE E TABLET (Layout App Dark) --- */
+@media only screen and (max-width: 1024px) {
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) var(--bg-nav);
+    }
+
+    #open-arcade-btn {
+        display: none;
+    }
+
+    /* 1. GLOBAL & SCROLL LOCK */
+    body {
+        padding: 0;
+        padding-top: calc(55px + env(safe-area-inset-top));
+        padding-bottom: calc(56px + env(safe-area-inset-bottom));
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overscroll-behavior-y: contain;
+    }
+
+    /* 2. CONTENITORE PRINCIPALE */
+    #game-container {
+        display: block;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        position: relative;
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        box-sizing: border-box;
+        touch-action: pan-x pan-y;
+    }
+
+    /* 3. COLONNE (Viste come Tab) */
+    .game-column {
+        display: none;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: none;
+        box-sizing: border-box;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #center-column {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        background: transparent;
+    }
+
+    .column-header-center {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        height: 48px;
+        min-height: 48px;
+        padding: 0 10px;
+    }
+
+    /* Score resta centrato absolute, pannelli laterali si adattano */
+    .column-header-center .header-main-score {
+        padding: 4px 5px 0;
+    }
+
+    .column-header-center .header-stat-box {
+        min-width: 45px;
+        z-index: 1;
+    }
+
+    .column-header-center .header-label {
+        font-size: 0.55rem;
+        letter-spacing: 0.5px;
+    }
+
+    .column-header-center .header-value {
+        font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 80px;
+    }
+
+    .column-header-center .header-label-main {
+        font-size: 0.55rem;
+        letter-spacing: 1px;
+    }
+
+    /* Riduce gap tra token e qbits */
+    #header-right-panel > div {
+        gap: 8px;
+    }
+
+    #header-right-panel .header-label {
+        font-size: 0.5rem;
+    }
+
+    #header-right-panel .header-value {
+        font-size: 0.8rem;
+    }
+
+    #center-column.mobile-active {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #left-column,
+    #right-column {
+        overflow-y: auto
+    }
+
+    /* 4. NAVBAR SUPERIORE */
+    #game-navbar {
+        padding: 0 8px;
+        padding-top: env(safe-area-inset-top);
+        height: calc(55px + env(safe-area-inset-top));
+        gap: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Dissolve i 3 gruppi (left/center/right): su desktop sono flex:1 con
+       allineamenti interni, ma con Aiuto/Arcade nascosti su mobile restava la
+       barra sbilanciata (1 icona a sx, cluster al centro). Con display:contents
+       le icone diventano figli diretti della barra e space-between le distribuisce
+       in modo uniforme. */
+    .nav-group {
+        display: contents;
+    }
+
+    .nav-label {
+        display: none;
+    }
+
+    .nav-item {
+        width: auto;
+        flex: 0 0 auto;
+        min-width: 35px;
+        max-width: 50px;
+        padding: 8px 4px;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .nav-icon {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    /* Badge notifica: la posizione desktop (left:55% + margin 12px, tarata su
+       item da 72px) finiva fuori dall'icona mobile e veniva tagliata da
+       overflow:hidden. Su mobile va in alto a destra, dentro i bordi dell'item. */
+    .nav-item.notify-overlay::after {
+        top: 5px;
+        left: auto;
+        right: 5px;
+        margin-left: 0;
+    }
+
+    /* 5. BOTTONE PROMOZIONE (Icona + Percentuale, impilate) */
+    /* Prima alternava icona/percentuale con un'animazione opacity di 7s, ma il
+       cambio risultava bloccato (animazione congelata / throttling): la % non
+       compariva mai. Ora mostriamo icona sopra e % sotto, sempre visibili. */
+    .nav-special-btn {
+        font-size: 0;
+        padding: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        margin-left: 5px;
+        /* Base = "in corso" (apribile, non azionabile): grigio spento.
+           promotion-ready/format-ready/hub-both-ready impongono il proprio colore. */
+        background: linear-gradient(135deg, #3a4557, #2a323f);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .nav-special-btn .nav-icon {
+        font-size: 1rem;
+        margin: 0;
+        color: #fff;
+        line-height: 1;
+        animation: none;
+        transform: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-special-btn span {
+        display: block;
+        position: static;
+        transform: none;
+        opacity: 1;
+        animation: none;
+        font-size: 0.5rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: 0;
+        color: #fff;
+        white-space: nowrap;
+    }
+
+    /* Stato "Pronta": "PRONTA!" non entra nel quadrato → basta l'icona verde
+       pulsante. Selettore ID-qualificato come format-ready qui sotto: pareggia
+       la specificità di navbar.css e vince per ordine di caricamento. */
+    #game-navbar .nav-group .nav-special-btn.promotion-ready span {
+        display: none;
+    }
+
+    /* Stato "Pronta" (Oro promozione, come la card) */
+    #game-navbar .nav-group .nav-special-btn.promotion-ready {
+        background: linear-gradient(135deg, #f1c40f, #d35400);
+        border-color: #fff;
+        box-shadow: 0 0 15px #f1c40f;
+    }
+
+    /* Icona scura leggibile sull'oro (le altre icone navbar sono bianche) */
+    #game-navbar .nav-group .nav-special-btn.promotion-ready .nav-icon {
+        color: #1a1206;
+    }
+
+    /* Stato "Formatta": viola quantico (lo span testo è nascosto come per
+       promotion-ready: nel quadrato 44px resta l'icona meteora).
+       Selettore ID-qualificato: pareggia la specificità di navbar.css
+       (#game-navbar .nav-group ...) e vince per ordine, perché il bundle
+       mobile carica DOPO quello base. */
+    #game-navbar .nav-group .nav-special-btn.format-ready span {
+        display: none;
+    }
+
+    #game-navbar .nav-group .nav-special-btn.format-ready {
+        background: linear-gradient(135deg, #a55eea, #8e44ad);
+        border-color: #fff;
+        box-shadow: 0 0 15px #9b59b6;
+        animation: formatGlow 1.5s infinite alternate;
+    }
+
+    /* Stato "Scegli": promo E format pronte → icona sola + sfumato oro→viola */
+    #game-navbar .nav-group .nav-special-btn.hub-both-ready span {
+        display: none;
+    }
+
+    #game-navbar .nav-group .nav-special-btn.hub-both-ready {
+        background: linear-gradient(120deg, #f1c40f, #e67e22 45%, #9b59b6);
+        border-color: #fff;
+        box-shadow: 0 0 15px #9b59b6;
+        animation: bothGlow 1.5s infinite alternate;
+    }
+
+    body:not(.mobile-view-center) #golden-bug.visible {
+        display: none;
+    }
+
+    /* 6. BARRA INFERIORE (Bottom Nav) - SCURA */
+    #mobile-nav-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: calc(58px + env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(26, 33, 43, 0.96) 0%, rgba(13, 18, 25, 0.98) 100%);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(52, 152, 219, 0.18);
+        border-radius: 16px 16px 0 0;
+        justify-content: space-around;
+        align-items: flex-start;
+        padding-top: 8px;
+        z-index: 2000;
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.55);
+    }
+
+
+    .mobile-nav-btn {
+        position: relative;
+        background: transparent;
+        border: none;
+        color: #7f8c8d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        margin: 0 4px;
+        border-radius: 12px;
+        font-family: var(--font-heading);
+        transition: color 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    background 0.25s ease;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+    }
+
+    .mobile-nav-btn i {
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    color 0.25s ease,
+                    text-shadow 0.25s ease;
+        will-change: transform, color, text-shadow;
+        transform: translateZ(0);
+    }
+
+    .mobile-nav-btn span {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .mobile-nav-btn.active {
+        color: #3498db;
+        /* Blu */
+        background: rgba(52, 152, 219, 0.05);
+    }
+
+    .mobile-nav-btn.active i {
+        transform: translateY(-3px);
+        color: #3498db;
+        text-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+    }
+
+    .mobile-nav-btn.active::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 30%;
+        right: 30%;
+        height: 2px;
+        border-radius: 0 0 3px 3px;
+        background-color: #3498db;
+        box-shadow: 0 2px 10px #3498db;
+    }
+
+    /* Bottone Arcade: azione speciale (apre la Sala Giochi) → accento magenta,
+       distinto dal blu delle viste-colonna. Niente stato .active (non è una vista). */
+    .mobile-nav-arcade {
+        color: #c56cf0;
+    }
+    .mobile-nav-arcade i {
+        color: #c56cf0;
+        text-shadow: 0 0 12px rgba(197, 108, 240, 0.55);
+    }
+    .mobile-nav-arcade:active {
+        background: rgba(197, 108, 240, 0.08);
+    }
+    .mobile-nav-arcade:active i {
+        transform: translateY(2px) scale(0.92);
+    }
+
+    .contract-modal {
+        width: 95%;
+        max-height: 85vh;
+        /* Non uscire dallo schermo */
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+
+    .contract-body {
+        overflow-y: auto;
+        /* Scrolla il contenuto */
+        padding: 15px;
+        flex-grow: 1;
+    }
+
+    .contract-columns {
+        flex-direction: column;
+        /* Una sotto l'altra */
+        gap: 15px;
+    }
+
+    .contract-separator {
+        margin: 5px 0;
+        transform: rotate(90deg);
+    }
+
+    .contract-footer {
+        padding: 15px;
+        background: #0d1117;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .contract-footer .buy-btn {
+        width: 100%;
+    }
+
+    .modal-backdrop {
+        z-index: 2100;
+        /* Sopra la barra (2000) */
+        align-items: center;
+    }
+
+    .modal-content {
+        width: 92%;
+        max-height: 80vh;
+        margin: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 9. VARIE */
+    #click-upgrade-list,
+    #enhancement-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    #skins-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 10px;
+    }
+
+    /* Marquee (Testo Scorrevo) */
+    .upgrade-name,
+    .progress-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .upgrade:active .upgrade-name {
+        animation: marqueeScroll 4s linear infinite alternate;
+    }
+
+    .upgrade-details {
+        min-width: 0;
+        padding-right: 5px;
+    }
+
+    /* Mute: bottom-left sopra la nav mobile, con safe-area */
+    #quick-mute-btn {
+        bottom: calc(85px + env(safe-area-inset-bottom, 0px));
+        left: calc(14px + env(safe-area-inset-left, 0px));
+        font-size: 1.05rem;
+        background-color: rgba(21, 27, 34, 0.9);
+        border-color: #4a6582;
+        opacity: 0.92;
+        z-index: 1900;
+    }
+
+    #github-link-container {
+        display: none;
+    }
+
+    /* Versione - specificità aumentata per override clicker.css */
+    body #version-display {
+        position: relative;
+        z-index: 1500;
+        font-size: 0.65rem;
+        opacity: 0.5;
+        pointer-events: none;
+        padding: 5px 12px;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        transform: none;
+        transition: none;
+        animation: none;
+        box-shadow: none;
+        white-space: nowrap;
+        overflow: visible;
+        margin: 0 auto;
+        align-self: center;
+    }
+
+    /* Proporzioni allineate al desktop: il bottone era troppo stretto (~137px).
+       Size stabile in tutti gli stati (anche cooldown) per evitare salti. */
+    #skill-crunchTime {
+        min-width: 210px;
+        width: auto;
+        padding: 14px 32px;
+        font-size: 0.95rem;
+        letter-spacing: 2.5px;
+        border-radius: 8px;
+        margin-top: 6px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    #skill-crunchTime .skill-timer {
+        font-size: 0.72rem;
+        margin-top: 3px;
+    }
+
+    .prestige-upgrade {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        padding: 15px;
+        gap: 10px;
+    }
+
+    /* 2. Gestione Testi (Parte Alta) */
+    .prestige-upgrade .upgrade-details {
+        width: 100%;
+        text-align: left;
+        margin-right: 0;
+    }
+
+    /* Forza il titolo a non essere tagliato brutalmente */
+    .prestige-upgrade .upgrade-name {
+        font-size: 1rem;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .prestige-upgrade .upgrade-desc {
+        white-space: normal;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        color: #d2b4de;
+        max-width: 100%;
+    }
+
+    .prestige-upgrade .upgrade-cost {
+        font-size: 0.7rem;
+        font-weight: bold;
+        white-space: nowrap;
+        line-height: 1;
+    }
+
+    .upgrade-cost {
+        font-size: 0.7rem;
+        white-space: nowrap;
+        line-height: 1;
+    }
+
+    .prestige-upgrade .upgrade-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        margin-top: 5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prestige-upgrade .upgrade-count {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .prestige-upgrade .upgrade-count::before {
+        content: "Liv. ";
+        font-size: 0.7rem;
+        color: #bdc3c7;
+        vertical-align: middle;
+        text-transform: uppercase;
+        margin-right: 4px;
+    }
+
+    .prestige-upgrade .buy-btn {
+        margin: 0;
+        height: 40px;
+    }
+
+    .prestige-upgrade .buy-btn:not(.owned) {
+        min-width: 110px;
+    }
+
+    .prestige-upgrade .buy-btn.owned {
+        width: auto;
+        align-self: center;
+        flex-grow: 0;
+        min-width: unset;
+        margin-left: auto;
+        padding: 4px 10px;
+    }
+
+    #lab-wallet-container {
+        display: flex;
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0px;
+        z-index: 100;
+        background-color: #14202b;
+        margin: 0;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #lab-wallet-amount {
+        font-size: 1.3rem;
+    }
+
+    #buy-controls {
+        margin-left: -15px;
+        margin-right: -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        top: -15px;
+        margin-top: -15px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        gap: 5px;
+    }
+
+    .store-section {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .mobile-bug-wallet {
+        display: flex;
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0px;
+        z-index: 110;
+        background-color: #14202b;
+        padding: 10px;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0 auto;
+    }
+
+
+    #teams-sticky-header {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 500;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        padding: 10px 15px;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+        display: block;
+    }
+
+    #teams-sticky-header .mobile-bug-wallet {
+        position: absolute;
+        top: -52px;
+        right: 15px;
+        z-index: 505;
+        width: auto;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        height: 40px;
+    }
+
+    #teams-sticky-header .mobile-bug-wallet .label {
+        font-size: 0.85rem;
+        color: #95a5a6;
+        margin-right: 6px;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+
+    #teams-sticky-header .bug-wallet-amount {
+        font-size: 1.15rem;
+        color: #ff4757;
+        font-weight: 800;
+        text-shadow: none;
+    }
+
+    /* 3. Bottoni Moltiplicatori (Saliti in alto) */
+    #teams-sticky-header #buy-controls {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        gap: 5px;
+        justify-content: space-between;
+    }
+
+    #buy-controls .buy-btn {
+        flex: 1;
+        height: 38px;
+        font-size: 0.85rem;
+        margin: 0;
+        border-radius: 6px;
+    }
+
+    #building-store {
+        padding: 10px;
+        padding-bottom: 80px;
+    }
+
+    /* Stile specifico per la card Teams su mobile */
+    #building-list-container .upgrade {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    /* Parte sinistra (Nome, BPS, Costo) */
+    #building-list-container .upgrade-details {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: left;
+    }
+
+    #building-list-container .upgrade-name {
+        font-size: .7rem;
+        margin-bottom: 4px;
+        color: #fff;
+    }
+
+    /* Parte destra (Numero posseduto e Tasto Compra) */
+    #building-list-container .upgrade-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 15px;
+        flex-shrink: 0;
+    }
+
+    #building-list-container .upgrade-count {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #fff;
+        opacity: 0.8;
+        min-width: 30px;
+        text-align: right;
+    }
+
+    /* Il bottone Compra */
+    #building-list-container .buy-btn {
+        width: auto;
+        min-width: 90px;
+        height: 38px;
+        font-size: 0.85rem;
+        padding: 0 10px;
+        margin: 0;
+    }
+
+    /* Sticky headers su mobile più scuri */
+    .tabs-header,
+    .column-header-aligned {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    #toast-container {
+        top: 70px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        transform: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .toast {
+        max-width: 85%;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        border-radius: 20px;
+
+        background-color: rgba(10, 15, 20, 0.92);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        text-align: center;
+        pointer-events: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .toast i {
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+
+    #left-column,
+    #center-column,
+    #right-column,
+    .game-column {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #game-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 768px) {
+
+    #game-navbar {
+        padding: 5px 8px;
+        padding-top: env(safe-area-inset-top);
+        gap: 4px;
+        overflow: hidden;
+    }
+
+    #tokens-display {
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    /* Rimpicciolisce il bottone Prestigio */
+    #prestige-btn-header {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+
+    .christmas-title {
+        font-size: 8vw;
+        white-space: nowrap;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
+    }
+
+    /* 2. SOTTOTITOLO (Skin Equipaggiata) */
+    .christmas-subtitle {
+        font-size: 1rem;
+        margin-top: 15px;
+        text-align: center;
+        padding: 0 20px;
+        opacity: 0.9;
+    }
+
+    /* 3. GRIGLIA SKIN (Layout a 2 colonne per leggibilità) */
+    #skins-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+
+    /* Rende il nome e la descrizione più leggibili */
+    .skin-name-display {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+
+}
+
+@media (hover: none) {
+
+    /* Disabilita trasformazioni hover che potrebbero bloccare l'animazione di click */
+    #clicker-btn:hover {
+        transform: none;
+    }
+
+    /* Assicura che la classe JS abbia la priorità */
+    #clicker-btn.click-shrink {
+        transform: scale(0.90);
+    }
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Sicurezza extra per le immagini dentro i bottoni */
+button img {
+    pointer-events: none;
+    /* Fa sì che il click passi direttamente al bottone */
+}
+
+/* ============================================================
+   FIX MOBILE AGGIUNTIVI — Store, Teams, Modali, Prestige
+   ============================================================ */
+@media only screen and (max-width: 1024px) {
+
+    /* Task 8 — Store: sticky bug-wallet Safari fix */
+    .mobile-bug-wallet {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 110;
+    }
+
+    .tab-content {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* Task 9 — Teams: sticky header sfondo solido */
+    #teams-sticky-header {
+        background: #0d1117;
+    }
+
+    #building-list-container .upgrade {
+        border-radius: var(--radius-md);
+        padding: 12px;
+        margin-bottom: 8px;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+    /* Task 10 — Modali: overflow consistente */
+    .modal-content {
+        width: 92%;
+        max-height: 80dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    /* Fix input nascosto da tastiera virtuale */
+    #login-modal .modal-content,
+    #account-modal .modal-content {
+        scroll-padding-bottom: 120px;
+        overflow-y: auto;
+    }
+
+    #login-modal .modal-content input:focus,
+    #account-modal .modal-content input:focus {
+        scroll-margin-bottom: 20px;
+    }
+
+    /* Task 11 — Prestige/Lab: sticky Safari */
+    #lab-wallet-container {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background-color: #14202b;
+        margin: 0 0 10px 0;
+        padding: 10px;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #left-column,
+    #right-column {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .prestige-upgrade {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        padding: 12px;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+    .prestige-upgrade .upgrade-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+        margin-top: 5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Fix allineamento su schermi molto stretti (<375px) */
+@media only screen and (max-width: 374px) {
+    .column-header-center {
+        padding: 0 6px;
+    }
+
+    .column-header-center .header-stat-box {
+        min-width: 38px;
+    }
+
+    .column-header-center .header-label {
+        font-size: 0.5rem;
+    }
+}
+
+
+/* ==========================================================================
+   MOBILE SIMPLIFIED UI - CLEAN VERSION (NO !IMPORTANT)
+   Override tramite Specificità (High Specificity Selectors)
+   ========================================================================== */
+
+@media only screen and (max-width: 1024px) {
+
+    /* ---------------------------------------------------
+       1. PERFORMANCE & ANTI-LAG (SCATTI)
+    --------------------------------------------------- */
+    html body::before {
+        animation: none;
+    }
+
+    #clicker-btn,
+    .click-feedback {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+
+    /* ---------------------------------------------------
+       2. MODALI "APP-LIKE" (100% Schermo reale)
+    --------------------------------------------------- */
+    html body .modal-backdrop {
+        align-items: flex-end;
+    }
+
+    /* Login + Offline ("Bentornato"): dialog centrati, non bottom-sheet */
+    html body div#login-modal.modal-backdrop,
+    html body div#offline-modal.modal-backdrop {
+        align-items: center;
+    }
+
+    html body .modal-content {
+        width: 100%;
+        max-width: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 0;
+        overflow: hidden; /* Impedisce scrollbar sul contenitore, scrollano solo le aree interne */
+    }
+
+    /* Login + Offline: altezza automatica, non full-screen */
+    html body div#login-modal div.modal-content,
+    html body div#offline-modal div.modal-content {
+        height: auto;
+        max-height: 90dvh;
+        border-radius: 16px;
+        width: 92%;
+        overflow: hidden;
+    }
+
+    html body .settings-content,
+    html body #achievement-list,
+    html body #leaderboard-list,
+    html body #stats-list,
+    html body .skins-grid-container,
+    html body .profile-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px;
+    }
+
+    /* ---------------------------------------------------
+       3. BOTTONE CHIUSURA (COMPATTO, SEMPRE IN FONDO)
+    --------------------------------------------------- */
+    html body .modal-close-btn {
+        order: 99;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 48px; /* Apple HIG: min 44px touch target — 48px per centrare CHIUDI */
+        min-height: 48px;
+        background: rgba(231, 76, 60, 0.85);
+        color: #fff;
+        font-size: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: auto;
+        border-radius: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.4);
+        flex-shrink: 0;
+        z-index: 10000;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: content-box; /* L'altezza non include il padding safe-area */
+        cursor: pointer;
+        pointer-events: auto;
+        touch-action: manipulation; /* No 300ms tap delay, no double-tap zoom */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    html body .modal-close-btn::after {
+        content: 'CHIUDI';
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        pointer-events: none;
+    }
+
+    html body div#settings-modal button.modal-close-btn {
+        display: none;
+    }
+
+    /* ---------------------------------------------------
+       4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
+    --------------------------------------------------- */
+    html body #game-container {
+        height: calc(100dvh - 111px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+
+    html body #center-column.mobile-active {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    html body #clicker-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    html body #clicker-btn {
+        margin: 0 auto;
+        width: min(60vw, 40dvh);
+        height: min(60vw, 40dvh);
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html body #game-container #clicker-section #clicker-btn.clicked #manager-photo-normal,
+    html body #game-container #clicker-section #clicker-btn.click-shrink #manager-photo-normal {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    html body #game-container #clicker-section #clicker-btn.clicked #manager-photo-clicked,
+    html body #game-container #clicker-section #clicker-btn.click-shrink #manager-photo-clicked {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    html body #version-display {
+        position: static;
+        transform: none;
+        transition: none;
+        animation: none;
+        margin: 0 auto 4px auto;
+        text-align: center;
+        width: auto;
+        max-width: 90%;
+        display: block;
+        font-size: 0.65rem;
+        padding: 3px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+        pointer-events: auto;
+        cursor: pointer;
+        opacity: 0.7;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        bottom: auto;
+        left: auto;
+        right: auto;
+    }
+
+    html body #version-display:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* ---------------------------------------------------
+       5. SCHERMATA SKIN: LAYOUT APP-LIKE v3.0
+    --------------------------------------------------- */
+
+    /* Container principale: scrollabile in verticale, nasconde overflow orizzontale */
+    html body div#skins-modal div#skins-grid-modern {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        min-height: 0;
+        padding-top: 30px; /* ridotto: scala 1.35 sfora meno in alto */
+        padding-bottom: 12px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    /* Barra Filtri Rarità compatta */
+    html body div#skins-modal .skins-controls-bar {
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.3);
+        flex-shrink: 0;
+    }
+
+    html body .skins-filters {
+        display: flex;
+        overflow-x: auto;
+        width: 100%;
+        gap: 5px;
+        padding: 4px 0;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    html body #skin-rarity-filter {
+        display: block;
+        width: 100%;
+        height: 38px;
+        background: #1a252f;
+        border: 1px solid #3498db;
+        color: white;
+        border-radius: 8px;
+    }
+
+    /* ---------------------------------------------------
+       6. IMPOSTAZIONI CENTRATE
+    --------------------------------------------------- */
+    html body .slider-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 14px 10px;
+        gap: 10px;
+    }
+
+    html body .slider-wrapper {
+        width: 100%;
+        align-items: center;
+    }
+
+    html body .slider-icon {
+        display: none;
+    }
+
+    html body .slider-wrapper label {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    html body .slider-value {
+        width: 100%;
+        text-align: center;
+        font-size: 1.2rem;
+        margin-top: 5px;
+    }
+
+    html body .custom-slider {
+        width: 92%;
+        height: 10px;
+    }
+
+    html body .custom-slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    html body div#login-modal div.modal-content {
+        justify-content: center;
+        align-items: center;
+        padding: 24px 20px;
+    }
+
+    /* ---------------------------------------------------
+       7. NASCONDIAMO IL SUPERFLUO
+    --------------------------------------------------- */
+
+    html body nav#game-navbar button#open-help-btn,
+    html body div#settings-modal button#open-advanced-audio-btn,
+    html body div#achievements-modal div#achievement-list div.trophy-desc,
+    html body div#achievements-modal div#achievement-list div.trophy-flavor {
+        display: none;
+    }
+
+    /* Stats: nascondi solo la sezione Profilo su mobile */
+    html body div#stats-modal div#stats-list div.stats-section:last-child {
+        display: none;
+    }
+
+    html body #stats-list .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    html body #stats-list .stat-box {
+        padding: 8px 10px;
+    }
+
+    html body #stats-list .stat-box .stat-value {
+        font-size: 0.95rem;
+    }
+
+    html body #stats-list .stat-box .stat-label {
+        font-size: 0.65rem;
+    }
+
+    html body #achievement-list .trophy-row {
+        min-height: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    html body #achievement-list .trophy-icon-wrapper {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+        font-size: 1rem;
+        margin-right: 0;
+    }
+
+    html body #achievement-list .trophy-title {
+        font-size: 0.9rem;
+        white-space: normal;
+    }
+
+    html body #skins-modal .skins-controls-bar {
+        justify-content: center;
+        padding: 6px 10px;
+    }
+
+    /* Cheatboard: sotto i modali e semi-trasparente su mobile */
+    html body #cheatboard-container {
+        z-index: 1500; /* sotto modal-backdrop (2000) */
+    }
+
+    html body #cheatboard-handle {
+        opacity: 0.35;
+        transition: opacity 0.2s ease;
+    }
+
+    html body #cheatboard-handle:hover,
+    html body #cheatboard-handle:active {
+        opacity: 0.85;
+    }
+}
+
+/* Schermi molto bassi: iPhone 5, SE 1a gen (altezza ≤ 620px) */
+@media only screen and (max-width: 1024px) and (max-height: 620px) {
+
+    /* Modal titles — spazio ridotto su mobile */
+    .modal-content h2 {
+        font-size: 1rem;
+        padding: 12px 20px;
+    }
+}
+
+/* ==========================================================================
+   FLOOR INPUT 16px — anti auto-zoom iOS Safari (WCAG/usabilità form)
+   Caricato con media (max-width: 768px): vale solo su phone.
+   Specificità alta (html body) per battere .clean-input input e simili.
+   ========================================================================== */
+html body input[type="text"],
+html body input[type="password"],
+html body input[type="number"],
+html body input[type="email"],
+html body .input-group-modern input,
+html body .clean-input input {
+    font-size: 16px;
+}

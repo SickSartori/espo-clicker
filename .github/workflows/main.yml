@@ -20,7 +20,7 @@ jobs:
       - name: Checkout del codice
         uses: actions/checkout@v4
 
-      # Step 1b: Build bundle (dist-v3/ è gitignored → va generato qui)
+      # Step 1b: Build bundle (dist/ è gitignored → va generato qui)
       - name: 🟢 Setup Node
         uses: actions/setup-node@v4
         with:
@@ -71,7 +71,7 @@ jobs:
             **/.DS_Store
             node_modules/**
             **/*.map
-            docs/**
+            dev/**
             src/**
             scripts/**
             assets/sounds/music/**
@@ -79,10 +79,10 @@ jobs:
             music/songs/**
             package.json
             package-lock.json
-            build.js
-            bump-version.js
             vite.config.ts
             tsconfig.json
+            playwright.config.ts
+            test-results/**
             .lighthouserc.json
             deploy.bat
             deploy-ui.bat

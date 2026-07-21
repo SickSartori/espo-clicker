@@ -15,8 +15,15 @@ import LZString from 'lz-string';
 declare const self: DedicatedWorkerGlobalScope;
 
 interface EncodeMsg { type: 'encode'; id: number; data: unknown }
+/**
+ * Variante da stringa GIÀ serializzata: il main thread fa JSON.stringify
+ * (così i Decimal usano il loro toJSON/serializzazione nativa — un clone
+ * strutturato li appiattirebbe in modo diverso) e il worker fa solo la parte
+ * costosa: la compressione LZString.
+ */
+interface EncodeStringMsg { type: 'encodeString'; id: number; payload: string }
 interface DecodeMsg { type: 'decode'; id: number; payload: string }
-type InMsg = EncodeMsg | DecodeMsg;
+type InMsg = EncodeMsg | EncodeStringMsg | DecodeMsg;
 
 if (typeof self !== 'undefined' && typeof (self as { postMessage?: unknown }).postMessage === 'function') {
   self.addEventListener('message', (e: MessageEvent) => {
@@ -24,6 +31,9 @@ if (typeof self !== 'undefined' && typeof (self as { postMessage?: unknown }).po
     try {
       if (msg.type === 'encode') {
         const payload = LZString.compressToUTF16(JSON.stringify(msg.data));
+        self.postMessage({ type: 'encoded', id: msg.id, payload });
+      } else if (msg.type === 'encodeString') {
+        const payload = LZString.compressToUTF16(msg.payload);
         self.postMessage({ type: 'encoded', id: msg.id, payload });
       } else if (msg.type === 'decode') {
         const json = LZString.decompressFromUTF16(msg.payload);

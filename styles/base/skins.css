@@ -1,0 +1,63 @@
+#skins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    padding: 15px;
+    padding-bottom: 40px;
+}
+
+.skin-name-display {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+    min-height: 20px;
+}
+
+#skins-grid::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar,
+#achievement-list::-webkit-scrollbar,
+#leaderboard-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#skins-grid::-webkit-scrollbar-track,
+.settings-content::-webkit-scrollbar-track,
+#achievement-list::-webkit-scrollbar-track,
+#leaderboard-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+#skins-grid::-webkit-scrollbar-thumb,
+.settings-content::-webkit-scrollbar-thumb,
+#achievement-list::-webkit-scrollbar-thumb,
+#leaderboard-list::-webkit-scrollbar-thumb {
+    background: #5d7c9a;
+    border-radius: 3px;
+}
+
+/* Responsive - Specificità aumentata dove necessario */
+@media (max-width: 768px) {
+    body #skins-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+
+    body .skin-name-display {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+}
+

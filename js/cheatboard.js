@@ -66,7 +66,8 @@
         ['Tutti gli obiettivi sbloccati', 'All achievements unlocked'], ['Tutti gli obiettivi bloccati', 'All achievements locked'],
         ['Stato stampato in console (F12)', 'State printed to console (F12)'], ['Salvataggio forzato', 'Forced save'], ['saveGame non disponibile', 'saveGame not available'],
         ['Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.', 'Simulate V2 migration? Creates a fake V1 save and reloads.'],
-        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Cancella tutto senza password e ricarica.', 'Wipes everything without a password and reloads.']
+        ['RESET TOTALE DEV', 'FULL DEV RESET'], ['Azzera progressi locali E cloud e ricarica (resti loggato).', 'Wipes local AND cloud progress and reloads (you stay logged in).'],
+        ['Reset cloud fallito: ', 'Cloud reset failed: '], ['Reset cloud fallito (rete). Riprova.', 'Cloud reset failed (network). Retry.']
     ].sort((a, b) => b[0].length - a[0].length);
     const cbT = (s) => { if (!CB_EN || s == null) return s; for (let i = 0; i < CB_MAP.length; i++) s = s.split(CB_MAP[i][0]).join(CB_MAP[i][1]); return s; };
 
@@ -344,7 +345,7 @@
                 </div>
                 <div class="cb-group">
                     <div class="cb-gt">Zona pericolosa</div>
-                    <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
+                    <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-v3" class="cb-btn purple"><i class="fa-solid fa-rocket"></i> Test Lancio V3</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
                 </div>
             </section>
 
@@ -640,8 +641,72 @@
         localStorage.setItem('espotoolClickerSaveV8', LZString.compressToUTF16(JSON.stringify(fake)));
         gameState.isDeleting = true; location.reload();
     }
+    // Simula un save PRE-lancio (schemaVersion 2) → alla ricarica scatta la migrazione
+    // V2→V3: Fondatore + skin-picker (salva 5).
+    //
+    // Le skin del finto save sono LE TUE, quelle davvero sbloccate adesso: è l'unico
+    // modo perché il picker mostri quello che vedrà un giocatore reale al lancio.
+    // (Prima prendeva le prime 8 del catalogo, quindi si testava una lista finta.)
+    // Solo se ne hai troppo poche per far scattare il picker (serve >5) si completa
+    // con altre dal catalogo, altrimenti non ci sarebbe niente da scegliere.
+    //
+    // L'audio parte MUTO e con una traccia vecchia di proposito: così si vede se
+    // l'onboarding audio della 3.0 lo riaccende davvero (bug del percorso migrazione).
+    async function forceV3() {
+        const mine = (gameState.skins && Array.isArray(gameState.skins.unlocked) ? gameState.skins.unlocked : [])
+            .filter(s => s && s !== 'default' && s !== 'founder' && gameData.skins[s]);
+        const filler = Object.keys(gameData.skins)
+            .filter(s => s !== 'default' && s !== 'founder' && !mine.includes(s));
+        const topUp = mine.length > 5 ? 0 : (6 - mine.length);
+        const pool = mine.concat(filler.slice(0, topUp));
+        const msg = topUp > 0
+            ? 'Simulare il lancio (V2→V3)?\n\nHai ' + mine.length + ' skin sbloccate: troppo poche per il picker (serve >5), ne aggiungo ' + topUp + ' dal catalogo → ' + pool.length + ' totali.'
+            : 'Simulare il lancio (V2→V3)?\n\nUso le tue ' + mine.length + ' skin realmente sbloccate: il picker ti farà sceglierne 5.';
+        if (!confirm(cbT(msg + '\nAudio impostato su muto per verificare il forzamento. Ricarica la pagina.'))) return;
+        const fake = {
+            version: { major: 3, minor: 0, stage: '' },
+            schemaVersion: 2,
+            user: { username: gameState.user.username, masterVolume: 0, musicVolume: 0, sfxVolume: 0, bgMusicSelection: 'sound-bg-music' },
+            skins: { unlocked: ['default'].concat(pool), current: pool[0] || 'default' },
+            score: '1000000000', totalScore: '1000000000', lifetimeScore: '1000000000',
+            totalResets: 2, totalFormattazioni: 1, totalClicks: 80000
+        };
+        const compressed = LZString.compressToUTF16(JSON.stringify(fake));
+        try { await window.EspoV3.save.db.write(compressed); } catch (e) { /* IDB ko → fallback sotto */ }
+        localStorage.setItem('espotoolClickerSaveV9', compressed);
+        gameState.isDeleting = true; location.reload();
+    }
     async function hardReset() {
-        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nCancella tutto senza password e ricarica.'))) return;
+        if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nAzzera progressi locali E cloud e ricarica (resti loggato).'))) return;
+
+        // Se sei loggato, il wipe SOLO locale è vano: al reload l'auto-login
+        // ripristina dal cloud ("non resetta i progressi"). Quindi azzeriamo ANCHE
+        // il cloud con l'EF ufficiale reset-progress — come la Danger Zone — ma
+        // prendendo la password dalla SESSIONE (niente prompt = "senza password").
+        // NON si fa logout: si resta loggati e al reload si ricarica il cloud VUOTO.
+        const token = (window.EspooClicker && typeof window.EspooClicker.getSaveToken === 'function')
+            ? window.EspooClicker.getSaveToken() : null;
+        const pass = sessionStorage.getItem('espooPass');
+        const user = sessionStorage.getItem('espooUser');
+        if (user && token && pass && window.EspoBackend) {
+            try {
+                const res = await window.EspoBackend.call('reset-progress', { save_token: token, password: pass });
+                const data = await res.json();
+                if (!data || data.status !== 'success') {
+                    // Non ricaricare: il cloud non è stato azzerato → i progressi
+                    // tornerebbero. Meglio dirlo che fingere un reset riuscito.
+                    alert(cbT('Reset cloud fallito: ') + ((data && (data.message || data.status)) || '?'));
+                    return;
+                }
+            } catch (e) {
+                console.warn('[hardReset] reset cloud fallito:', e);
+                alert(cbT('Reset cloud fallito (rete). Riprova.'));
+                return;
+            }
+        }
+
+        // Cloud azzerato (o utente non loggato) → wipe locale e reload. Niente
+        // logout: la sessione resta, al reload l'auto-login ricarica lo stato fresco.
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
         localStorage.removeItem('espotoolClickerSaveV9');
@@ -783,7 +848,14 @@
     }
 
     // --- 12. Wiring ---
-    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+    // Ogni azione della console marca la sessione come "cheattata": da qui in poi i
+    // salvataggi restano SOLO LOCALI (vedi saveGame in script.js + _resyncFromCloud in
+    // modals.js). Senza questo, caricare uno Scenario o usare un cheat spingeva lo stato
+    // al cloud, dove l'anti-rollback del server (Format > Prestige > Score) lo rifiutava
+    // come "conflict" e il client si riallineava d'autorità al cloud reale, ANNULLANDO lo
+    // scenario caricato al primo salvataggio/acquisto. I cheat non devono comunque finire
+    // in leaderboard. Il flag si azzera da solo al reload della pagina.
+    const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', () => { window.cheatNoCloudSync = true; fn(); }); };
     // Risorse
     on('cb-add-bugs', addBugs); on('cb-add-tokens', addTokens); on('cb-add-qbits', addQbits);
     on('cb-set-score-btn', setScore); on('cb-set-tokens-btn', setTokens); on('cb-set-qbits-btn', setQbits);
@@ -803,7 +875,7 @@
     on('cb-god', godMode);
     on('cb-debug', debugToggle); on('cb-log', logState); on('cb-save', forceSave);
     on('cb-combo-mult', comboMultCycle);
-    on('cb-v2', forceV2); on('cb-hardreset', hardReset);
+    on('cb-v2', forceV2); on('cb-v3', forceV3); on('cb-hardreset', hardReset);
 
     // --- 13. Init ---
     activate('risorse');

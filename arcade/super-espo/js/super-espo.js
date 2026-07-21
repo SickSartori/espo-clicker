@@ -545,7 +545,7 @@
         // Fireballs group: proiettili Fire mode
         fireballs = this.physics.add.group();
 
-        this.physics.add.collider(player, platforms);
+        this.physics.add.collider(player, platforms, onPlayerPlatform, null, this);
         this.physics.add.collider(player, blocks, hitBlock, null, this);
         this.physics.add.overlap(player, coins, collectCoin, null, this);
         this.physics.add.collider(enemies, platforms);
@@ -566,7 +566,9 @@
         // Fireball collisions
         this.physics.add.collider(fireballs, platforms, fireballHitGround, null, this);
         this.physics.add.collider(fireballs, blocks, fireballHitGround, null, this);
-        this.physics.add.collider(fireballs, enemyBlockers);
+        // NIENTE collider fireballs↔enemyBlockers: quei rettangoli invisibili ai bordi
+        // servono SOLO a tenere i nemici/power-up sulla piattaforma. Coi fireball facevano
+        // da "muro invisibile" che li bloccava al bordo invece di farli cadere giù.
         this.physics.add.overlap(fireballs, enemies, fireballHitEnemy, null, this);
     }
 
@@ -991,6 +993,39 @@
         }
     }
 
+    // Callback collisione player↔platforms: serve SOLO a gestire i mattoni rompibili.
+    // Tutte le altre piattaforme restano solide senza logica extra (early return).
+    function onPlayerPlatform(player, plat) {
+        if (!plat.isBrick) return;
+        // Testata DAL BASSO: il player colpisce il mattone con la testa mentre sale.
+        // (in piedi SOPRA invece è blocked.down + touching.up → non si rompe).
+        if (!(player.body.blocked.up && plat.body.touching.down)) return;
+        if (playerForm !== 'small') {
+            breakBrick(this, plat);            // potenziato (Super/Fire) → spacca il mattone
+        } else {
+            // Piccolo: il mattone rimbalza ma resta solido (come Mario).
+            this.tweens.add({ targets: plat, y: plat.y - 5, yoyo: true, duration: 90 });
+        }
+    }
+
+    // Distrugge un mattone in 4 frammenti (stile Mario) + suono + punti.
+    function breakBrick(scene, brick) {
+        const x = brick.x, y = brick.y;
+        brick.destroy();                       // non più solido: il player può proseguire
+        bonusScore += 50;
+        playSoundEffect(scene, 'snd-stomp');
+        showPopupScore(scene, x, y - 14, '+50', '#e08a4a', 600);
+        const frag = (dx, dy) => {
+            const f = scene.add.rectangle(x, y, 10, 10, 0xb5532a).setDepth(18);
+            scene.physics.add.existing(f);
+            f.body.setVelocity(dx, dy);
+            f.body.setGravityY(900);
+            scene.tweens.add({ targets: f, alpha: 0, angle: dx >= 0 ? 360 : -360,
+                duration: 700, onComplete: () => { if (f && f.destroy) f.destroy(); } });
+        };
+        frag(-120, -260); frag(120, -260); frag(-70, -150); frag(70, -150);
+    }
+
     // Mini-piattaforma di mattoni solidi all'altezza di salto + monete sopra.
     function buildBrickRow(scene, x, width, top) {
         const maxN = Math.max(3, Math.min(6, Math.floor(width / 36)));
@@ -999,6 +1034,7 @@
         const startX = x - ((n - 1) * 32) / 2;
         for (let i = 0; i < n; i++) {
             const blk = platforms.create(startX + i * 32, by, 'brick').setScale(2);
+            blk.isBrick = true; // rompibile dal basso quando Espò è potenziato (Super/Fire)
             blk.refreshBody();
         }
         if (Math.random() > 0.4) spawnCoinsList(scene, x, by - 40, Math.min(n, 4));
@@ -1252,8 +1288,17 @@
     }
 
     function fireballHitGround(fb) {
-        // bounce gestito da physics. Solo despawn se fuori camera.
-        if (!fb) return;
+        // Sul PAVIMENTO (blocked.down) rimbalza: lo gestisce la physics, e oltre il bordo
+        // la palla cade nel vuoto. Contro un MURO/gradino verticale (blocked.left/right)
+        // invece ESPLODE come in Mario, così non resta incastrata a rimbalzare sul posto
+        // al piede della parete (segnalazione: "le fireball non cadono / restano sul bordo").
+        if (!fb || !fb.body) return;
+        if (fb.body.blocked.left || fb.body.blocked.right) {
+            spawnExplosion(this, fb.x, fb.y);
+            if (fb.destroy) fb.destroy();
+            return;
+        }
+        // Despawn quando esce dalla vista orizzontalmente
         if (fb.x < this.cameras.main.scrollX - 100 || fb.x > this.cameras.main.scrollX + this.cameras.main.width + 100) {
             if (fb.destroy) fb.destroy();
         }
@@ -1365,8 +1410,10 @@
             flower.anims.play('fire-flower-spin');
         }
 
-        // Emersione lenta dal blocco
-        scene.tweens.add({ targets: flower, y: y - 30, duration: 500, ease: 'Power2' });
+        // Emersione: sale dal blocco e si POSA sopra (non più flottante). y = block.y - 20,
+        // quindi il tetto del blocco è a y+4; con metà fiore (~13px a scala 1.6) il centro
+        // a riposo va a ~y-9 perché il bordo inferiore appoggi sul blocco.
+        scene.tweens.add({ targets: flower, y: y - 10, duration: 500, ease: 'Power2' });
 
         // Pulsazione scale per attirare attenzione
         scene.tweens.add({

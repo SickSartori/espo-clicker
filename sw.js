@@ -1,10 +1,10 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v3.0.14
+// ESPO CLICKER - Service Worker v3.0.16
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v3.0.14';
+const CACHE_VERSION = 'espo-v3.0.16';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
@@ -163,10 +163,10 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     if (NO_CACHE_PATTERNS.some(pattern => pattern.test(url))) return;
 
-    // V3 Vite bundle: stale-while-revalidate per evitare cache stale
-    // dopo rebuild senza dover bumpare CACHE_VERSION manualmente.
+    // V3 Vite bundle (dentro dist/): stale-while-revalidate per evitare cache
+    // stale dopo rebuild senza dover bumpare CACHE_VERSION manualmente.
     // Il filemtime nel link PHP garantisce comunque cache-bust deterministico.
-    if (/\/dist-v3\//.test(url)) {
+    if (/\/dist\/(game\.modules\.js|chunks\/|assets\/)/.test(url)) {
         event.respondWith(staleWhileRevalidate(request));
         return;
     }
@@ -259,18 +259,45 @@ async function cacheFirst(request) {
     return networkResponse;
 }
 
+// Timeout oltre il quale, se ho gia' una copia in cache, smetto di aspettare la rete.
+// Altervista (hosting condiviso) ha un TTFB su index.php molto variabile: misurato
+// 63ms..4400ms per la STESSA richiesta. Senza timeout, networkFirst bloccava OGNI
+// navigazione dietro il picco lento anche con la pagina gia' in cache. La copia in
+// cache di index.php e' sempre la versione GIOCO (il countdown de-registra il SW,
+// quindi non viene mai cachato), quindi servirla e' sempre corretto.
+const NAV_NETWORK_TIMEOUT = 2500;
+
 async function networkFirst(request) {
-    try {
-        const response = await fetch(request);
-        // FIX: Controllo del protocollo prima di salvare in cache
+    const cached = await caches.match(request);
+
+    const netPromise = fetch(request).then((response) => {
         if (response.ok && request.url.startsWith('http')) {
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, response.clone());
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((c) => c.put(request, clone)).catch(() => {});
         }
         return response;
+    });
+
+    // Con una copia in cache: corsa rete-vs-timeout. Se la rete non risponde in tempo,
+    // servo la cache SUBITO e lascio che l'aggiornamento continui in background.
+    if (cached) {
+        try {
+            const winner = await Promise.race([
+                netPromise,
+                new Promise((resolve) => setTimeout(() => resolve('__timeout__'), NAV_NETWORK_TIMEOUT)),
+            ]);
+            if (winner !== '__timeout__') return winner; // rete arrivata prima del timeout
+        } catch (_) {
+            return cached; // rete fallita: la cache e' il miglior risultato
+        }
+        netPromise.catch(() => {}); // evita unhandled rejection: l'update prosegue dietro
+        return cached;
+    }
+
+    // Nessuna cache (primo load): comportamento originale — aspetta la rete.
+    try {
+        return await netPromise;
     } catch (err) {
-        const cached = await caches.match(request);
-        if (cached) return cached;
         return caches.match('./index.php');
     }
 }

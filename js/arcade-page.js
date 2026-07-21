@@ -81,12 +81,37 @@
             const gs = window._lastGameState;
             if (gs && gs.arcadeHighScores) _writeHighScores(gs.arcadeHighScores);
         },
+        // Allineato a EspoV3.format.formatNumber (src/ui/format/number-format.ts):
+        // stessa scala di suffissi e stessa semantica (2 decimali con virgola,
+        // esponenziale oltre l'ultimo suffisso). La vecchia scala si fermava a "B"
+        // e oltre 1e12 il wallet mostrava il numero esteso. Parsing in stringa:
+        // regge anche i Decimal break_eternity oltre 1e308 (parseFloat → Infinity).
         formatNumber: function (n) {
-            const num = (n && n.toString) ? parseFloat(n.toString()) : parseFloat(n);
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + ' B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + ' M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + ' k';
-            return String(Math.floor(num));
+            var SUFFIXES = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",
+                "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg",
+                "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg", "Tg",
+                "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg", "Qag"];
+            var raw = (n === null || n === undefined) ? '' : String(n).trim();
+            var m = /^([+-]?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/.exec(raw);
+            if (!m) return '0';
+            var base = Number(m[1] + m[2] + (m[3] ? '.' + m[3] : ''));
+            if (base === 0) return '0';
+            var shift = Math.floor(Math.log10(Math.abs(base)));
+            var mant = base / Math.pow(10, shift);
+            var exp = shift + (m[4] ? Number(m[4]) : 0);
+            if (exp < 3) {
+                var val = mant * Math.pow(10, exp);
+                return Number.isInteger(val) ? val.toLocaleString('it-IT')
+                    : val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            var idx = Math.floor(exp / 3);
+            if (idx > 0 && idx < SUFFIXES.length) {
+                var scaled = mant * Math.pow(10, exp % 3);
+                if (scaled >= 999.995) { scaled /= 1000; idx++; }
+                if (idx < SUFFIXES.length) return scaled.toFixed(2).replace('.', ',') + ' ' + SUFFIXES[idx];
+            }
+            if (Math.abs(Number(mant.toFixed(2))) >= 10) { mant /= 10; exp++; }
+            return mant.toFixed(2).replace('.', ',') + 'e+' + exp;
         },
         showToast: function (msg, type) {
             // Toast DEDICATO dell'arcade: mostrato DENTRO il canvas del gioco attivo,

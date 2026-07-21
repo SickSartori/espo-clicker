@@ -1,6 +1,9 @@
 <?php
 require_once("php/check_language.php");
 require_once("php/check_version.php");
+require_once("php/launch-gate.php");
+// Gate lancio v3.0: prima del lancio, in produzione, serve SOLO il countdown.
+if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 // Cache-bust locale: in dev (localhost) usa timestamp per forzare il reload
 // degli asset arcade in iterazione (CSS/JS dedicati). In produzione resta la
 // versione stabile ($cacheVer) per sfruttare cache HTTP/SW.
@@ -32,7 +35,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
     <!-- Decimal (break_eternity) — locale per reward calc -->
     <script src="dist/break_eternity.min.js?v=<?php echo assetVer(__DIR__ . '/dist/break_eternity.min.js', $cacheVer); ?>"></script>
 
-    <link rel="stylesheet" href="css/arcade-fullscreen.css?v=<?php echo $arcadeAssetVer; ?>">
+    <link rel="stylesheet" href="styles/arcade/arcade-fullscreen.css?v=<?php echo $arcadeAssetVer; ?>">
 </head>
 <body>
 
@@ -176,7 +179,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
         + '</div>';
 })();
 </script>
-<script src="js/arcade-loader.js?v=<?php echo $arcadeAssetVer; ?>"></script>
+<script src="dist/arcade-loader.min.js?v=<?php echo assetVer(__DIR__ . '/dist/arcade-loader.min.js', $cacheVer); ?>"></script>
 <script src="js/arcade-page.js?v=<?php echo $arcadeAssetVer; ?>"></script>
 
 </body>

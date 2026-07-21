@@ -1,6 +1,6 @@
 <?php
-    // NB: le credenziali DB NON stanno qui. La connessione usa l'array
-    // restituito da php/config.php (vedi php/db_connect.php).
+    // NB: le credenziali DB NON stanno qui. Stanno nell'array restituito
+    // da php/config.php.
 
     // General
     define("SECOND", 1);

@@ -31,6 +31,10 @@
     </div>
 
     <div id="clicker-section">
+        <!-- Ambient rarità: layer decorativo dietro al clicker (div dedicato: i
+             ::before/::after della section sono già usati dagli anelli orbitali).
+             Stili in styles/ui/desktop/skin-ambient.css (+ variante mobile). -->
+        <div id="clicker-ambient" aria-hidden="true"></div>
         <div id="click-feedback-container" aria-hidden="true"></div>
         <button id="clicker-btn"
             title="<?php echo $labels["col_center_bottone_clicker_titolo"]; ?>"

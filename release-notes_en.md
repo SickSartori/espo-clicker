@@ -6,6 +6,40 @@ A radical restyling of the whole interface, animations rebuilt from scratch, mor
 
 ---
 
+### 👥 Friends, Chat and Social Leaderboards
+
+* **🔎 Find Your Friends:** Search for other players by name and send a friend request right from your profile.
+* **🏆 Global or Friends Leaderboard:** Compare your progress with the whole world, or switch to the "Friends" view for a more personal rivalry.
+* **💬 Emoji Chat:** Tease and cheer on your friends with a quick emoji chat, complete with history and read receipts.
+* **👤 Friend Profile:** Open a friend's profile to see their stats, their skin locker and the chat, all in tidy sub-tabs.
+* **🔔 Friend Notifications:** A badge lets you know when you get a friend request or a new message.
+
+---
+
+### ⚡ Promotion + Format Hub
+
+* **🎛️ Two Powers, One Hub:** Promotion and Format now live together in a single sleek panel with two side-by-side cards: see at a glance what's ready and what's still cooking.
+* **🌈 Button That Shifts by State:** The top button changes color to match the situation — gold when Promotion is ready, purple for Format, and a gold→purple blend inviting you to "CHOOSE!" when both are ready at once.
+* **👀 Check Your Progress:** Open the hub whenever you like to see how close you are, even before you can act.
+* **🎬 Smoother Cinematic:** The Format's cinematic sequence now starts right away and plays smoothly, with no more freezes.
+
+---
+
+### 🎵 New Skins and Dedicated Music
+
+* **✨ Free Espò 3.0 Skin:** A brand-new cyber look, free for everyone, with colors aligned to the 3.0 interface.
+* **🎸 Tailor-Made Music:** Some skins now bring their own vibe, with a dedicated background track that kicks in when you equip them.
+* **🤫 Discover Them:** Which skins hide a musical surprise? Equip them and find out!
+
+---
+
+### ❓ Help and Reporting Menu
+
+* **📖 Guide One Click Away:** A new Help menu gathers a quick guide to help you get your bearings among the game's mechanics.
+* **🐛 Report on the Fly:** Found a bug or got an idea? You can now send it to us straight from the game, in seconds.
+
+---
+
 ### 🎨 Cyberpunk-Tech Interface (UI 3.0)
 
 * **🖼️ Complete Restyle:** New visual identity with cyan/neon tones, strategic glows, tech monospace fonts and HUD details everywhere.

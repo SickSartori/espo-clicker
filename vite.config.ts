@@ -1,11 +1,19 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
+import legacyBundle from './scripts/vite-plugin-legacy.js';
 
-// Vite v3 dual-build setup.
-// Output: dist-v3/game.modules.js (ESM) — caricato in parallelo a dist/game.bundle.min.js
-// durante migrazione strangler. Quando tutto migrato, dist/ viene eliminato e build.js droppato.
+// Vite: build UNICO (F7). Produce dist/game.modules.js (unico bundle ESM, V3)
+// e — tramite il plugin legacyBundle (closeBundle) — i residui non-ESM: CSS
+// legacy, vendor (break_eternity/break_infinity) e dist/arcade-loader.min.js
+// (IIFE per arcade.php, pagina standalone). Ha sostituito il vecchio build.js.
 export default defineConfig({
+  // Il plugin legacy emette i residui non-ESM (CSS, vendor, arcade-loader IIFE) dopo il build V3.
+  plugins: [legacyBundle()],
   root: '.',
+  // Base RELATIVA: il bundle vive sotto /dist/ ma il mount point cambia per
+  // ambiente (root Altervista vs /test/ vs localhost). Con base assoluta ('/')
+  // Vite emetteva new Worker(new URL('/assets/x.worker.js')) → 404 ovunque.
+  base: '',
   publicDir: false, // assets serviti da PHP, no copia
   resolve: {
     alias: {
@@ -18,7 +26,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
-    outDir: 'dist-v3',
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
     minify: 'esbuild',
@@ -34,7 +42,7 @@ export default defineConfig({
         // Asset binari mantengono hash per cache busting.
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name ?? '';
-          if (name.endsWith('.css')) return 'assets/v3-styles.css';
+          if (name.endsWith('.css')) return 'assets/styles.css';
           return 'assets/[name]-[hash][extname]';
         },
         format: 'es',
