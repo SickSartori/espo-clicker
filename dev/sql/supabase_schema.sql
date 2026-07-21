@@ -27,8 +27,11 @@ CREATE TABLE IF NOT EXISTS leaderboard (
   prestige_level      INT  NOT NULL DEFAULT 0,
   equipped_skin       TEXT NOT NULL DEFAULT 'default',
   total_formattazioni INT  NOT NULL DEFAULT 0,
+  season              INT  NOT NULL DEFAULT 0,   -- Season classifica: 0 = pre-lancio, 1 = lancio prod
   updated_at          TIMESTAMPTZ DEFAULT NOW()
 );
+-- DB gia' esistenti: il CREATE IF NOT EXISTS sopra non aggiunge la colonna, quindi:
+ALTER TABLE leaderboard ADD COLUMN IF NOT EXISTS season INT NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS friends (
   id           SERIAL PRIMARY KEY,
@@ -99,20 +102,29 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
--- ---------- RPC anti-rollback (chiamata da save-progress) ----------
+-- ---------- RPC anti-rollback + season-aware (chiamata da save-progress) ----------
+-- Season-aware: un save di stagione SUPERIORE vince sempre (il reset della nuova
+-- Season riparte da zero e NON deve essere respinto dall'anti-rollback). Un client
+-- SENZA campo season (v2 pre-lancio) = Season 0 -> comportamento invariato.
+-- Firma a 7 argomenti (p_season con DEFAULT 0 per compat con chiamate a 6 arg).
+DROP FUNCTION IF EXISTS save_progress(uuid, text, int, int, text, jsonb);
 CREATE OR REPLACE FUNCTION save_progress(
   p_user_id UUID,
   p_score TEXT,
   p_prestige INT,
   p_formattazioni INT,
   p_skin TEXT,
-  p_save_data JSONB
+  p_save_data JSONB,
+  p_season INT DEFAULT 0
 ) RETURNS TEXT
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
   cur_score TEXT;
   cur_prestige INT;
   cur_format INT;
+  cur_season INT;
   v_username TEXT;
 BEGIN
   SELECT username INTO v_username FROM users WHERE id = p_user_id;
@@ -120,13 +132,20 @@ BEGIN
     RETURN 'error:no_user';
   END IF;
 
-  SELECT score, prestige_level, total_formattazioni
-    INTO cur_score, cur_prestige, cur_format
+  SELECT score, prestige_level, total_formattazioni, season
+    INTO cur_score, cur_prestige, cur_format, cur_season
     FROM leaderboard WHERE username = v_username
     FOR UPDATE;
 
-  -- Gerarchia anti-rollback: Formattazioni > Prestige > Score
-  IF cur_format IS NOT NULL THEN
+  -- Gate stagione (PRIMA dell'anti-rollback):
+  --   entrante > salvata            -> season-flip: accetta SEMPRE (reset atteso)
+  --   entrante < salvata            -> client su stagione vecchia: rifiuta
+  --   stessa stagione / riga nuova  -> anti-rollback Format>Prestige>Score invariato
+  IF cur_season IS NOT NULL AND p_season > cur_season THEN
+    NULL; -- accetta senza anti-rollback
+  ELSIF cur_season IS NOT NULL AND p_season < cur_season THEN
+    RETURN 'conflict:Season';
+  ELSIF cur_format IS NOT NULL THEN
     IF p_formattazioni < cur_format THEN
       RETURN 'conflict:Format';
     ELSIF p_formattazioni = cur_format AND p_prestige < cur_prestige THEN
@@ -139,13 +158,14 @@ BEGIN
 
   UPDATE users SET save_data = p_save_data WHERE id = p_user_id;
 
-  INSERT INTO leaderboard (username, score, prestige_level, equipped_skin, total_formattazioni, updated_at)
-    VALUES (v_username, p_score, p_prestige, p_skin, p_formattazioni, NOW())
+  INSERT INTO leaderboard (username, score, prestige_level, equipped_skin, total_formattazioni, season, updated_at)
+    VALUES (v_username, p_score, p_prestige, p_skin, p_formattazioni, p_season, NOW())
   ON CONFLICT (username) DO UPDATE SET
     score = EXCLUDED.score,
     prestige_level = EXCLUDED.prestige_level,
     equipped_skin = EXCLUDED.equipped_skin,
     total_formattazioni = EXCLUDED.total_formattazioni,
+    season = EXCLUDED.season,
     updated_at = NOW();
 
   RETURN 'ok';
@@ -157,7 +177,8 @@ $$;
 -- (pubblica nel JS) poteva sovrascrivere il save di qualsiasi utente via
 -- /rest/v1/rpc/save_progress, bypassando l'auth save_token delle EF.
 -- Solo service_role (Edge Functions) deve poterla eseguire.
-REVOKE EXECUTE ON FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB) TO service_role;
+REVOKE EXECUTE ON FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB,INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB,INT) TO service_role;
 -- SECURITY DEFINER senza search_path fisso = rischio hijack via schema shadowing
-ALTER FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB) SET search_path = public, pg_temp;
+-- (gia' impostato inline nel CREATE sopra; ripetuto qui per idempotenza)
+ALTER FUNCTION save_progress(UUID,TEXT,INT,INT,TEXT,JSONB,INT) SET search_path = public, pg_temp;
