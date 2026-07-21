@@ -29,8 +29,11 @@
 </IfModule>
 
 <IfModule mod_headers.c>
-    # Cache immutable per bundle versionati
-    <FilesMatch "^(game\.bundle|styles\.(bundle|mobile))\.min\.(js|css)$">
+    # Cache immutable per i bundle versionati (richiesti con ?v=<filemtime>, quindi
+    # un cambio di contenuto cambia l'URL -> immutable non serve mai una copia stale).
+    # NB: il nome storico game.bundle.min.js NON esiste piu' in V3 (il bundle e'
+    # game.modules.js): prima nessun bundle riceveva l'header, ora si'.
+    <FilesMatch "^(game\.modules\.js|arcade-loader\.min\.js|break_(eternity|infinity)\.min\.js|styles\.(bundle|mobile)\.min\.css)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 </IfModule>
