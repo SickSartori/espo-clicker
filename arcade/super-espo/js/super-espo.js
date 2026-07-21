@@ -246,6 +246,21 @@
             // Passa alla fase 2: barra di progresso reale durante Phaser preload
             _showLoader('loading');
             espoGame = new Phaser.Game(config);
+
+            // FIX "schermo nero all'avvio": con Scale.FIT, se Phaser misura il
+            // contenitore mentre non ha ancora la dimensione definitiva (animazione
+            // CRT "turn-on" che parte da transform:scale(1,0.001), oppure layout flex
+            // non ancora assestato), il canvas nasce a ~0px e resta NERO finché un
+            // resize della finestra non forza il ricalcolo. Nessun evento resize
+            // arriva da solo → restava nero fino a quando l'utente ridimensionava.
+            // Ri-applichiamo noi il fit appena il layout è assestato: stesso effetto
+            // del resize manuale, ma automatico. Più tentativi coprono sia il boot
+            // rapido sia la fine dell'animazione CRT (0.5s).
+            const _refitEspo = () => { if (espoGame && espoGame.scale) espoGame.scale.refresh(); };
+            espoGame.events.once('ready', _refitEspo);
+            requestAnimationFrame(_refitEspo);
+            setTimeout(_refitEspo, 150);
+            setTimeout(_refitEspo, 650); // oltre la fine dell'animazione crt-turn-on
         });
     };
 
