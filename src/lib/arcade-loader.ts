@@ -10,7 +10,16 @@
 // istanza (import side-effect in main.ts). I riferimenti a global legacy
 // passano da `window.*` (alias `w`) perché un modulo strict non li vede.
 // ============================================================
+import { installCdn } from './version';
+
 const w = window as any;
+
+// window.CDN sulla pagina arcade. arcade.php carica questo file ma NON il bundle del
+// gioco (game.modules.js), dove installVersion() installa CDN: senza questa riga
+// super-espo.js trova window.CDN === undefined, urlSync() ritorna null e gli audio
+// cadono sul path locale `assets/sounds/arcade/...` — 404 in produzione (quei file
+// vivono solo su R2). Idempotente: nel bundle gioco l'istanza è già presente.
+installCdn();
 
 // ---- Assets da caricare on-demand ----------------------
 

@@ -211,9 +211,22 @@ function installDebugSilencer(): void {
     console.info = function (...args: unknown[]) { if ((window as any).DEBUG_MODE) _info(...args); };
 }
 
+/**
+ * Installa SOLO window.CDN (idempotente). Estratto da installVersion() perché la
+ * pagina arcade (arcade.php) NON carica il bundle del gioco — quindi non chiama mai
+ * installVersion() — ma i giochi Phaser che risolvono gli asset via R2 (super-espo)
+ * hanno comunque bisogno di window.CDN. arcade-loader.ts lo chiama a sé.
+ * La guardia `!CDN` garantisce un'unica istanza anche quando entrambi i percorsi
+ * (bundle gioco + arcade-loader) girano nella stessa pagina.
+ */
+export function installCdn(): void {
+    if (typeof window === 'undefined') return;
+    if (!(window as any).CDN) (window as any).CDN = buildCdn();
+}
+
 export function installVersion(): void {
     if (typeof window === 'undefined') return;
     (window as any).GAME_VERSION = GAME_VERSION;
-    (window as any).CDN = buildCdn();
+    installCdn();
     installDebugSilencer();
 }
