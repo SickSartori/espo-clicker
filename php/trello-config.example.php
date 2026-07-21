@@ -34,6 +34,7 @@ return [
     // Anti-abuse: accetta solo richieste da questi Referer (come get_asset_urls.php).
     // Lascia [] per disabilitare il check (sconsigliato in produzione).
     'allowed_referers' => [
+        'https://www.espooclicker.altervista.org/',
         'https://espooclicker.altervista.org/',
         'http://localhost:8888/',
         'http://localhost/',
