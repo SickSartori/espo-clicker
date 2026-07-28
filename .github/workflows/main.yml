@@ -38,17 +38,19 @@ jobs:
         run: |
           echo "Impostazione ambiente su PRODUCTION..."
 
-          # Imposta instanceName=production in config.php
+          # Imposta instanceName=production in config.php. Fallisce se il pattern
+          # non aggancia: meglio un deploy interrotto che uno in dev-mode online.
+          grep -q '"instanceName" => "dev"' php/config.php \
+            || { echo "::error::instanceName non e' 'dev' in php/config.php: deploy annullato"; exit 1; }
           sed -i 's/"instanceName" => "dev"/"instanceName" => "production"/' php/config.php
 
-          # Estrae devVersion e prodVersion da config.php e aggiorna sw.js
-          DEV_VER=$(grep -oP '"devVersion" => "\K[^"]+' php/config.php)
-          PROD_VER=$(grep -oP '"prodVersion" => "\K[^"]+' php/config.php)
-          echo "Sostituzione versione SW: $DEV_VER → $PROD_VER"
-          sed -i "s/espo-v${DEV_VER}/espo-v${PROD_VER}/g" sw.js
-          sed -i "s/v=${DEV_VER}/v=${PROD_VER}/g" sw.js
-
-          # Verifica
+          # NB: qui NON si riscrive piu' CACHE_VERSION in sw.js.
+          # Lo faceva un sed che sostituiva espo-v${devVersion} con espo-v${prodVersion}:
+          # essendo le due versioni sempre uguali in config.php, sostituiva una stringa
+          # con se' stessa — un no-op che dava l'illusione di invalidare la cache.
+          # La sorgente di verita' e' sw.js, aggiornato da scripts/bump-version.js
+          # insieme a package.json e config.php. Se serve invalidare, si bumpa prima
+          # del deploy (npm run cache:bump) e si committa.
           grep "instanceName" php/config.php
           grep "CACHE_VERSION" sw.js
 
@@ -57,13 +59,19 @@ jobs:
         run: rm -f js/cheatboard.js
 
       # Step 4: Caricamento FTP
-      # NOTA: Assicurati che FTP_REMOTE_PATH punti alla cartella di produzione (es. public_html)
+      # ⚠️ PRODUZIONE va nella root FTP ("./"), NON in FTP_REMOTE_PATH.
+      #    FTP_REMOTE_PATH e' il percorso dell'area di TEST e lo usa solo test.yml
+      #    (server-dir li'). Non ripuntarlo alla produzione "per coerenza": il primo
+      #    push su test sovrascriverebbe il sito live.
+      #    server-dir e' esplicitato qui anche se coincide col default, cosi' la
+      #    differenza fra i due workflow si legge senza doverla dedurre.
       - name: 📂 Caricamento FTP su Server
         uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ./
           exclude: |
             **/.git*
             **/.git*/**
@@ -87,6 +95,8 @@ jobs:
             deploy.bat
             deploy-ui.bat
             README.md
+            PRODUCT.md
             php/config.example.php
             php/r2-config.example.php
+            php/trello-config.example.php
             php/r2-cors-policy.json
