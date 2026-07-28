@@ -185,8 +185,8 @@ Deployment is FTP, and only half of it is automatic:
 
 | Branch | Role | What happens |
 |--------|------|--------------|
-| `develop-v3` | where work happens | Quality + E2E run on every push and PR |
-| `test` | deploy mirror | force-pushed from `develop-v3`; a push here auto-deploys to the test server |
+| `develop` | where work happens | Quality + E2E run on every push and PR |
+| `test` | deploy mirror | force-pushed from `develop`; a push here auto-deploys to the test server |
 | `main` | production | merged `--no-ff` from `test` and tagged `v<version>` |
 
 The two targets differ on purpose: the production job **deletes** the cheatboard script before uploading, while test keeps it. Runtime cache-busting ignores the version number entirely — it uses `filemtime()` on the built files and only falls back to the configured version if a file is missing.
