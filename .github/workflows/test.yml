@@ -54,6 +54,9 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_REMOTE_PATH }}
           log-level: verbose
+          # Come in main.yml: gli SFX restano come fallback locale (~900 KB),
+          # arcade-theme.mp3 no — 10 MB di musica in loop, l'unica traccia fuori
+          # da assets/sounds/music/ e quindi l'unica che sfuggiva al filtro.
           exclude: |
             **/.git*
             **/.git*/**
@@ -64,6 +67,7 @@ jobs:
             src/**
             scripts/**
             assets/sounds/music/**
+            assets/sounds/arcade/arcade-theme.mp3
             assets/video/**
             music/songs/**
             package.json

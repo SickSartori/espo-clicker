@@ -72,6 +72,14 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ./
+          # Gli SFX sotto assets/sounds/ restano caricati apposta: servono da
+          # fallback locale quando la signed URL R2 non e' disponibile
+          # (CDN.urlSync(path) || path). Sono ~900 KB in tutto.
+          # arcade-theme.mp3 invece no: e' una traccia musicale da 10 MB
+          # (type: 'music', loop), l'unica che sta fuori da assets/sounds/music/
+          # e che quindi sfuggiva al filtro qui sotto. Da sola valeva il 92% dei
+          # suoni spediti via FTP, e per la musica il fallback locale non esiste
+          # comunque: se R2 non risponde tacciono anche tutti gli altri temi.
           exclude: |
             **/.git*
             **/.git*/**
@@ -83,6 +91,7 @@ jobs:
             src/**
             scripts/**
             assets/sounds/music/**
+            assets/sounds/arcade/arcade-theme.mp3
             assets/video/**
             music/songs/**
             package.json
