@@ -1,10 +1,18 @@
 <?php
 // ============================================================
-// CONFIG DB + AMBIENTE — Template di configurazione
+// CONFIG DB + AMBIENTE — Template di riferimento
 // ============================================================
-// 1. Copia questo file in: php/config.php
-// 2. Compila i valori reali del tuo ambiente
-// 3. php/config.php e' (o sara') in .gitignore — NON committare le credenziali
+// ⚠️ php/config.php NON e' in .gitignore: e' TRACCIATO ed e' gia' nel repo,
+//    precompilato con i default MAMP (localhost / root / root).
+//
+//    Di conseguenza NON metterci credenziali reali ne' segreti: finirebbero
+//    nella storia pubblica del repository, dove restano anche se poi li togli.
+//    Per i valori sensibili usare un file ignorato da git, come gia' si fa con
+//    php/r2-config.php e php/trello-config.php.
+//
+//    Questo template resta come riferimento dei campi attesi.
+//    devVersion/prodVersion in config.php sono riscritti in automatico da
+//    scripts/bump-version.js, qui possono essere disallineati.
 // ============================================================
 
 return [

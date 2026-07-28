@@ -490,6 +490,10 @@ export function initModals(): void {
                     const def = w.AudioManager._getSoundDef(targetId);
                     const type = (def && def.type === 'music') ? 'music' : 'sfx';
                     w.AudioManager.setVolume(targetId, w.AudioManager._calcVolume(targetId, type));
+                    // Questo slider non passa da updateAmbience(): ripubblica a mano
+                    // la fotografia per l'arcade, altrimenti i suoni di Super Espo
+                    // restano al valore precedente finche' non cambia altro.
+                    if (w.AudioManager._publishArcadeAudio) w.AudioManager._publishArcadeAudio();
                 }
             });
         });

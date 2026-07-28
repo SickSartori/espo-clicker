@@ -23,6 +23,36 @@
 (function () {
     const STORAGE_KEY = 'espo_arcade_pending_rewards';
     const HIGHSCORE_KEY = 'espo_arcade_highscores';
+    const AUDIO_KEY = 'espo_arcade_audio';
+
+    // ----- Volumi dal gioco principale -------------------------------------
+    // arcade.php e' un documento separato: niente store, niente AudioManager.
+    // Il gioco principale pubblica qui la fotografia del mixer
+    // (AudioManager._publishArcadeAudio in src/game/logic.ts); senza di essa
+    // i giochi suonerebbero a volume pieno ignorando i cursori dell'utente.
+    // Cache in memoria, invalidata dall'evento 'storage': il browser lo emette
+    // nelle ALTRE finestre quando il gioco principale scrive, quindi muovere un
+    // cursore nel mixer si sente subito anche nell'arcade gia' aperto.
+    let _audioCache = null;
+    function _readAudio() {
+        if (_audioCache) return _audioCache;
+        let a = null;
+        try { a = JSON.parse(localStorage.getItem(AUDIO_KEY) || 'null'); } catch (e) {}
+        if (!a || typeof a !== 'object') a = {};
+        _audioCache = {
+            masterVolume: typeof a.masterVolume === 'number' ? a.masterVolume : 1,
+            sfxVolume:    typeof a.sfxVolume    === 'number' ? a.sfxVolume    : 1,
+            musicVolume:  typeof a.musicVolume  === 'number' ? a.musicVolume  : 0.5,
+            audioCustom:  (a.audioCustom && typeof a.audioCustom === 'object') ? a.audioCustom : {}
+        };
+        return _audioCache;
+    }
+    try {
+        window.addEventListener('storage', function (e) {
+            // e.key === null = storage svuotato in blocco → invalida comunque.
+            if (!e || e.key === null || e.key === AUDIO_KEY) _audioCache = null;
+        });
+    } catch (e) {}
 
     function _readPending() {
         try {
@@ -73,7 +103,9 @@
                 skins: { current: 'default', unlocked: ['default'] },
                 arcadeHighScores: _readHighScores(),
                 totalGoldenBugsClicked: 0,
-                user: { username: 'Player' }
+                // Volumi reali dal mixer, non piu' uno stub con il solo username:
+                // super-espo.js legge masterVolume/sfxVolume/audioCustom da qui.
+                user: Object.assign({ username: 'Player' }, _readAudio())
             };
         },
         saveGame: function () {
