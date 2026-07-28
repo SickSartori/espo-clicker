@@ -1,0 +1,61 @@
+/* =====================================================================
+   Lucide icons — base style
+   =====================================================================
+   <i data-lucide="..."> gets replaced with inline <svg class="lucide-icon">
+   We size by inheriting font-size of parent (em-based).
+   Stroke color follows currentColor.
+   ===================================================================== */
+
+.lucide-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.15em;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* In flex containers, allow natural alignment */
+.nav-item .lucide-icon,
+.tab-btn .lucide-icon,
+.header-label .lucide-icon,
+.header-label-main .lucide-icon {
+  width: 1em;
+  height: 1em;
+}
+
+/* Navbar nav-icon override sizing */
+.nav-item .nav-icon.lucide-icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* Special prestige button icon size */
+#open-prestige-hub-btn .nav-icon.lucide-icon {
+  width: 1em;
+  height: 1em;
+}
+
+/* Tab buttons icons */
+.tab-btn .lucide-icon {
+  width: 0.95em;
+  height: 0.95em;
+  margin-right: 4px;
+}
+
+/* Score header icons */
+.header-label .lucide-icon,
+.header-label-main .lucide-icon {
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 2px;
+}
+
+/* Stronger contrast for low-opacity contexts */
+.lucide-icon[stroke-width] {
+  stroke-width: 2;
+}

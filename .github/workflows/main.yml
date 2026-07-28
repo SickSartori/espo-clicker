@@ -20,6 +20,19 @@ jobs:
       - name: Checkout del codice
         uses: actions/checkout@v4
 
+      # Step 1b: Build bundle (dist/ è gitignored → va generato qui)
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 📦 Install dipendenze
+        run: npm ci
+
+      - name: 🏗️ Build (legacy esbuild + v3 Vite)
+        run: npm run build
+
       # Step 2: Forza la configurazione su PRODUCTION
       - name: 🔧 Set config to PRODUCTION
         run: |
@@ -46,7 +59,7 @@ jobs:
       # Step 4: Caricamento FTP
       # NOTA: Assicurati che FTP_REMOTE_PATH punti alla cartella di produzione (es. public_html)
       - name: 📂 Caricamento FTP su Server
-        uses: SamKirkland/FTP-Deploy-Action@master
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -56,22 +69,24 @@ jobs:
             **/.git*/**
             .github/**
             **/.DS_Store
-            **/Thumbs.db
-            .gitignore
-            README.md
-            code.md
-            game-meta.md
-            build.js
-            bump-version.js
-            deploy.bat
-            package.json
-            package-lock.json
             node_modules/**
-            .claude/**
-            dist/**/*.map
-            php/r2-config.example.php
-            php/r2-cors-policy.json
-            css/concat.php
-            assets/sounds/**
+            **/*.map
+            dev/**
+            src/**
+            scripts/**
+            assets/sounds/music/**
             assets/video/**
             music/songs/**
+            package.json
+            package-lock.json
+            vite.config.ts
+            tsconfig.json
+            playwright.config.ts
+            test-results/**
+            .lighthouserc.json
+            deploy.bat
+            deploy-ui.bat
+            README.md
+            php/config.example.php
+            php/r2-config.example.php
+            php/r2-cors-policy.json

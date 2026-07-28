@@ -1,0 +1,131 @@
+/* =====================================================================
+   v3 mobile — Clicker ambient per rarità (versione LEGGERA)
+   =====================================================================
+   Stessa identità del desktop (forma + colore per tier) ma batteria-first:
+   SOLO gradienti statici sul div #clicker-ambient + un unico micro-respiro
+   di opacità (compositor-friendly). Niente pseudo-elementi animati.
+   Desktop completo in ui/desktop/skin-ambient.css.
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  html body #clicker-section {
+    position: relative;
+  }
+
+  html body #clicker-ambient {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    /* tinta base per qualsiasi rarità (christmas inclusa) */
+    background:
+      radial-gradient(ellipse 75% 60% at 50% 46%,
+        var(--skin-rarity-glow, rgba(0, 217, 255, 0.12)) 0%,
+        transparent 70%);
+    animation: v3-amb-mobile-breathe 12s ease-in-out infinite;
+  }
+
+  @keyframes v3-amb-mobile-breathe {
+    0%, 100% { opacity: 0.82; }
+    50%      { opacity: 1; }
+  }
+
+  /* Temi totali: mondo proprio, ambient spento */
+  html body.theme-super #clicker-ambient,
+  html body.theme-8bit #clicker-ambient {
+    display: none;
+  }
+
+  /* COMMON — griglia di calibrazione, slate */
+  body[data-current-skin-rarity="common"] #clicker-ambient {
+    background:
+      linear-gradient(90deg,
+        rgba(148, 163, 184, 0.05) 0 1px, transparent 1px 100%) 0 0/56px 56px,
+      linear-gradient(0deg,
+        rgba(148, 163, 184, 0.03) 0 1px, transparent 1px 100%) 0 0/56px 56px,
+      radial-gradient(ellipse 75% 60% at 50% 46%,
+        rgba(148, 163, 184, 0.14) 0%, transparent 70%);
+  }
+
+  /* RARE — sonar: glow cyan + anello fisso */
+  body[data-current-skin-rarity="rare"] #clicker-ambient {
+    background:
+      radial-gradient(circle at 50% 46%,
+        transparent 0 33%,
+        rgba(0, 217, 255, 0.16) 34% 35%,
+        transparent 36%),
+      radial-gradient(ellipse 78% 62% at 50% 46%,
+        rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+  }
+
+  /* EPIC — mesh esagonale + cono radar fisso, viola */
+  body[data-current-skin-rarity="epic"] #clicker-ambient {
+    background:
+      repeating-linear-gradient(60deg,
+        transparent 0, transparent 22px,
+        rgba(192, 132, 252, 0.045) 23px, transparent 24px),
+      repeating-linear-gradient(-60deg,
+        transparent 0, transparent 22px,
+        rgba(192, 132, 252, 0.045) 23px, transparent 24px),
+      conic-gradient(from 320deg at 50% 46%,
+        transparent 0deg,
+        rgba(192, 132, 252, 0.10) 18deg,
+        transparent 44deg,
+        transparent 360deg),
+      radial-gradient(ellipse 75% 60% at 50% 46%,
+        rgba(168, 85, 247, 0.17) 0%, transparent 70%);
+  }
+
+  /* LEGENDARY — raggi dorati fissi + scintille */
+  body[data-current-skin-rarity="legendary"] #clicker-ambient {
+    background:
+      radial-gradient(circle 1.5px at 24% 32%,
+        rgba(252, 211, 77, 0.5) 50%, transparent 51%),
+      radial-gradient(circle 1px at 70% 24%,
+        rgba(255, 226, 130, 0.45) 50%, transparent 51%),
+      radial-gradient(circle 1.5px at 62% 74%,
+        rgba(245, 158, 11, 0.4) 50%, transparent 51%),
+      conic-gradient(from 0deg at 50% 46%,
+        transparent 0deg,
+        rgba(252, 211, 77, 0.08) 30deg,
+        transparent 64deg,
+        rgba(245, 158, 11, 0.06) 120deg,
+        transparent 155deg,
+        rgba(252, 211, 77, 0.09) 210deg,
+        transparent 246deg,
+        rgba(245, 158, 11, 0.06) 300deg,
+        transparent 336deg,
+        transparent 360deg),
+      radial-gradient(ellipse 75% 60% at 50% 46%,
+        rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+  }
+
+  /* DIVINE — aurora fissa + halo, avorio prismatico */
+  body[data-current-skin-rarity="divine"] #clicker-ambient {
+    background:
+      radial-gradient(circle at 50% 46%,
+        transparent 0 30%,
+        rgba(255, 238, 180, 0.20) 31% 32%,
+        transparent 33.5%),
+      linear-gradient(135deg,
+        transparent 8%,
+        rgba(255, 240, 180, 0.09) 22%,
+        transparent 40%,
+        rgba(172, 225, 255, 0.05) 56%,
+        transparent 70%,
+        rgba(255, 220, 160, 0.10) 86%,
+        transparent 100%),
+      radial-gradient(ellipse 80% 64% at 50% 44%,
+        rgba(255, 238, 144, 0.17) 0%, transparent 70%);
+  }
+
+  /* CHRISTMAS — neve/tema dedicati; resta la sola tinta base. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body #clicker-ambient {
+    animation: none !important;
+  }
+}

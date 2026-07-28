@@ -18,15 +18,32 @@ jobs:
       - name: Checkout del codice sorgente
         uses: actions/checkout@v4 # Scarica i file dalla repository
 
+      # Step 1b: Build bundle (dist/ è gitignored → va generato qui)
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 📦 Install dipendenze
+        run: npm ci
+
+      - name: 🏗️ Build (legacy esbuild + v3 Vite)
+        run: npm run build
+
       - name: 🔧 Set config to DEV
         run: |
           sed -i 's/"instanceName" => "production"/"instanceName" => "dev"/' php/config.php
+          # Cheatboard SEMPRE attiva in test: svuota prodHost cosi' HTTP_HOST != prodHost
+          # e' sempre vero (il test gira sullo stesso dominio della prod).
+          sed -i 's/"prodHost" => "[^"]*"/"prodHost" => ""/' php/config.php
+          grep "prodHost" php/config.php
 
       # Step 2: Caricamento FTP
       # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
       # L'azione FTP caricherà direttamente tutti i file scaricati.
       - name: Caricamento FTP su Server
-        uses: SamKirkland/FTP-Deploy-Action@master
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -37,3 +54,24 @@ jobs:
             **/.git*
             **/.git*/**
             .github/**
+            node_modules/**
+            **/*.map
+            dev/**
+            src/**
+            scripts/**
+            assets/sounds/music/**
+            assets/video/**
+            music/songs/**
+            package.json
+            package-lock.json
+            vite.config.ts
+            tsconfig.json
+            playwright.config.ts
+            test-results/**
+            .lighthouserc.json
+            deploy.bat
+            deploy-ui.bat
+            README.md
+            php/config.example.php
+            php/r2-config.example.php
+            php/r2-cors-policy.json

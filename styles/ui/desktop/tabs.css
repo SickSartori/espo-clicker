@@ -1,0 +1,279 @@
+/* =====================================================================
+   v3 desktop — Tabs (CLICK / AUTO / LAB / Q-LAB) HUD pro
+   =====================================================================
+   Pattern: pillola-pannello con tab attiva clip-path angolato + neon
+   underline + label JetBrains Mono uppercase.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ---------------- Container tabs ---------------- */
+  html body .tabs-header {
+    position: relative;
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.7) 0%,
+      rgba(10, 15, 28, 0.5) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 4px;
+    padding: 4px;
+    gap: 2px;
+    overflow: hidden;
+  }
+
+  /* Pulse line bottom container */
+  html body .tabs-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent, rgba(0, 217, 255, 0.4), transparent);
+    pointer-events: none;
+  }
+
+  /* ---------------- Tab buttons ---------------- */
+  html body .tabs-header .tab-btn {
+    position: relative;
+    border: 0;
+    background: transparent;
+    color: rgba(248, 250, 252, 0.5);
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 600;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 10px 18px;
+    border-radius: 2px;
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-glide, cubic-bezier(0.16,1,0.3,1));
+    overflow: hidden;
+  }
+
+  html body .tabs-header .tab-btn i {
+    margin-right: 6px;
+    font-size: 0.85rem;
+    transition: filter var(--v3-dur-base, 220ms);
+  }
+
+  html body .tabs-header .tab-btn:hover {
+    color: var(--v3-fg-primary, #f8fafc);
+    background: rgba(0, 217, 255, 0.06);
+  }
+
+  html body .tabs-header .tab-btn:hover i {
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.6));
+  }
+
+  html body .tabs-header .tab-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* ---------------- Tab attiva ---------------- */
+  html body .tabs-header .tab-btn.active {
+    color: #fff;
+    background: linear-gradient(180deg,
+      rgba(0, 217, 255, 0.18) 0%,
+      rgba(0, 217, 255, 0.08) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.35);
+    box-shadow:
+      0 0 0 1px rgba(0, 217, 255, 0.1),
+      0 0 16px rgba(0, 217, 255, 0.2),
+      inset 0 1px 0 rgba(0, 217, 255, 0.15);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
+  }
+
+  html body .tabs-header .tab-btn.active i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.8));
+  }
+
+  /* Underline neon attivo */
+  html body .tabs-header .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--v3-accent-cyan, #00d9ff),
+      transparent);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.8);
+    animation: v3-tab-underline 320ms var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+  }
+
+  /* Tab Promozione (LAB) — viola */
+  html body .tabs-header .tab-btn.tab_promozione.active {
+    background: linear-gradient(180deg,
+      rgba(168, 85, 247, 0.22) 0%,
+      rgba(168, 85, 247, 0.08) 100%);
+    border-color: rgba(168, 85, 247, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(168, 85, 247, 0.12),
+      0 0 18px rgba(168, 85, 247, 0.25),
+      inset 0 1px 0 rgba(168, 85, 247, 0.18);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.7);
+  }
+
+  html body .tabs-header .tab-btn.tab_promozione.active i {
+    color: var(--v3-tier-epic, #a855f7);
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
+  }
+
+  html body .tabs-header .tab-btn.tab_promozione.active::after {
+    background: linear-gradient(90deg,
+      transparent, var(--v3-tier-epic, #a855f7), transparent);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
+  }
+
+  /* Tab Q-Lab (atomo) — gradient cyan→purple iridescente */
+  html body .tabs-header #tab-quantum.active {
+    background: linear-gradient(135deg,
+      rgba(0, 217, 255, 0.18) 0%,
+      rgba(168, 85, 247, 0.18) 100%);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+
+  html body .tabs-header #tab-quantum.active::after {
+    background: linear-gradient(90deg,
+      transparent, var(--v3-accent-cyan, #00d9ff),
+      var(--v3-tier-epic, #a855f7), transparent);
+  }
+
+  @keyframes v3-tab-underline {
+    0%   { width: 0; opacity: 0; }
+    100% { width: 60%; opacity: 1; }
+  }
+
+  /* ---------------- Filtro globale (Da Comprare / Locked / Purchased) ---------------- */
+  html body #global-filter-section {
+    margin: 14px 0;
+  }
+
+  html body #global-filter-select {
+    width: 100%;
+    background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.7) 0%,
+      rgba(10, 15, 28, 0.5) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 4px;
+    padding: 12px 16px;
+    color: var(--v3-fg-primary, #f8fafc);
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-glide, cubic-bezier(0.16,1,0.3,1));
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--v3-accent-cyan, #00d9ff) 50%),
+      linear-gradient(-45deg, transparent 50%, var(--v3-accent-cyan, #00d9ff) 50%);
+    background-position:
+      calc(100% - 18px) 50%,
+      calc(100% - 12px) 50%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+  }
+
+  html body #global-filter-select:hover {
+    border-color: rgba(0, 217, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(0, 217, 255, 0.1), 0 4px 16px rgba(0, 217, 255, 0.15);
+  }
+
+  html body #global-filter-select:focus-visible {
+    outline: 2px solid var(--v3-accent-cyan, #00d9ff);
+    outline-offset: 2px;
+  }
+
+  html body #global-filter-select option {
+    background: var(--v3-bg-deep, #0a0f1c);
+    color: var(--v3-fg-primary, #f8fafc);
+  }
+
+  /* ---------------- Section header (POTENZIAMENTI CLICK ecc.) ---------------- */
+  html body #upgrade-store > h2,
+  html body #enhancement-store > h2,
+  html body .store-section-title,
+  html body [id*="store"] > h3 {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(0, 217, 255, 0.7);
+    padding: 12px 0 8px;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  html body #upgrade-store > h2::before,
+  html body #enhancement-store > h2::before {
+    content: '>';
+    color: var(--v3-accent-cyan, #00d9ff);
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
+  }
+
+  /* ────────────────────────────────────────────────────
+     TAB NOTIFY — icon glow pulse (NO dot badge)
+     Il JS legacy aggiunge .notify su .tab-btn.
+     Override: nascondi dot ::after, usa glow su icona.
+     ──────────────────────────────────────────────────── */
+  html body .tabs-header .tab-btn.notify {
+    animation: none; /* rimuovi pulse legacy */
+    border-bottom-color: transparent;
+  }
+
+  /* Nascondi dot legacy */
+  html body .tabs-header .tab-btn.notify::after {
+    display: none !important;
+  }
+
+  /* Icona pulsa verde per segnalare "novità" */
+  html body .tabs-header .tab-btn.notify i {
+    color: var(--v3-tier-uncommon, #10b981);
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.8));
+    animation: v3-icon-notify-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes v3-icon-notify-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); transform: scale(1); }
+    50%      { filter: drop-shadow(0 0 14px rgba(16, 185, 129, 1)); transform: scale(1.15); }
+  }
+
+  /* ────────────────────────────────────────────────────
+     TAB SWITCH ANIMATION — content fade/slide
+     ──────────────────────────────────────────────────── */
+  html body #upgrade-store,
+  html body #enhancement-store,
+  html body #prestige-wrapper,
+  html body #quantum-wrapper {
+    animation: v3-tab-content-in 280ms var(--v3-ease-glide, cubic-bezier(0.16,1,0.3,1)) both;
+  }
+
+  @keyframes v3-tab-content-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .tabs-header .tab-btn,
+  html body .tabs-header .tab-btn.active::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  html body .tabs-header .tab-btn.notify i {
+    animation: none !important;
+  }
+}

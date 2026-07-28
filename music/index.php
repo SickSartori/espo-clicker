@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/espofy.css">
-    <link rel="icon" type="image/png" href="../assets/image/favicon.webp">
+    <link rel="icon" type="image/png" href="../assets/image/ui/favicon.webp">
 </head>
 <body>
 
@@ -72,9 +72,12 @@
         </div>
     </div>
 
+    <!-- gameData resta un oggetto vuoto: js/data/assets.js era un modulo dati della v2,
+         rimosso col passaggio alla v3 (i dati vivono nel bundle). espofy-config.js legge
+         gameData.assets.sounds solo per musicConfig.gameMusics, che espofy.js non usa:
+         le tracce arrivano da window.espofyConfig.externalMusics e da get_songs.php. -->
     <script>window.gameData = { assets: {} };</script>
-    <script src="../js/data/assets.js"></script>
-    
+
     <script src="js/espofy-config.js"></script>
     <script src="js/espofy.js"></script>
 </body>

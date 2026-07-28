@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espò Clicker — Deploy Console</title>
+<style>
+  :root{
+    --bg:#0a0e16; --panel:#111827; --panel2:#0e1420; --line:#1e2a3a;
+    --cyan:#00d9ff; --cyan-dim:#0a8fb0; --txt:#c8d3e0; --mut:#7689a3;
+    --danger:#ff3d5c; --ok:#2ecc71; --warn:#f1c40f;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#10203a 0,var(--bg) 60%);
+    color:var(--txt);font-family:system-ui,"Segoe UI",sans-serif;min-height:100vh}
+  header{display:flex;align-items:center;gap:18px;padding:16px 24px;border-bottom:1px solid var(--line);
+    background:rgba(8,12,20,.7);backdrop-filter:blur(6px);position:sticky;top:0;z-index:5}
+  header h1{font-size:1.05rem;margin:0;letter-spacing:2px;text-transform:uppercase}
+  header h1 b{color:var(--cyan)}
+  .meta{display:flex;gap:10px;margin-left:auto;font-family:var(--mono);font-size:.82rem;align-items:center}
+  .chip{padding:4px 10px;border:1px solid var(--line);border-radius:20px;background:var(--panel2)}
+  .chip b{color:var(--cyan)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .clean .dot{background:var(--ok)} .dirty .dot{background:var(--warn)}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px;max-width:1200px;margin:0 auto}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:18px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:16px 16px 18px}
+  .card h2{margin:0 0 12px;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--cyan-dim);
+    display:flex;align-items:center;gap:8px}
+  .btns{display:flex;flex-direction:column;gap:8px}
+  button.act{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+    background:#0c1322;border:1px solid var(--line);color:var(--txt);border-radius:10px;
+    padding:11px 13px;font-size:.92rem;font-family:inherit;transition:.15s}
+  button.act:hover:not(:disabled){border-color:var(--cyan);background:#0e1a2c;transform:translateY(-1px)}
+  button.act:disabled{opacity:.4;cursor:not-allowed}
+  button.act .ic{width:22px;text-align:center;font-size:1rem}
+  button.act .sub{margin-left:auto;color:var(--mut);font-size:.72rem;font-family:var(--mono)}
+  button.act.danger{border-color:#3a2030}
+  button.act.danger:hover:not(:disabled){border-color:var(--danger);background:#1c1016}
+  button.act.danger .ic{color:var(--danger)}
+  /* Tooltip descrizione al passaggio del mouse */
+  button.act[data-desc]{position:relative}
+  button.act[data-desc]:hover{z-index:31}
+  button.act[data-desc]:hover::after{content:attr(data-desc);position:absolute;left:0;right:0;top:100%;margin-top:7px;
+    background:#070b12;border:1px solid var(--cyan-dim);border-radius:8px;padding:9px 11px;font-size:.78rem;line-height:1.45;
+    color:var(--txt);z-index:30;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.55);font-family:system-ui;
+    text-transform:none;letter-spacing:normal;pointer-events:none}
+  /* Output terminale */
+  #out-card{grid-column:1/-1}
+  .term-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .term-head .st{font-family:var(--mono);font-size:.8rem;color:var(--mut)}
+  .term-head .st.run{color:var(--cyan)} .term-head .st.ok{color:var(--ok)} .term-head .st.err{color:var(--danger)}
+  .spin{width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--cyan);border-radius:50%;
+    animation:sp .7s linear infinite;display:none} .spin.on{display:inline-block}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #clear{margin-left:auto;background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;
+    padding:5px 10px;cursor:pointer;font-size:.75rem}
+  #term{background:#05080e;border:1px solid var(--line);border-radius:10px;padding:14px;height:340px;
+    overflow:auto;font-family:var(--mono);font-size:.82rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  #term .cmd{color:var(--cyan)} #term .err{color:var(--danger)} #term .done{color:var(--ok)}
+  #term .mut{color:var(--mut)}
+  /* Modale */
+  .backdrop{position:fixed;inset:0;background:rgba(2,5,10,.7);display:none;align-items:center;justify-content:center;z-index:20}
+  .backdrop.on{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:420px;width:90%}
+  .modal h3{margin:0 0 8px;font-size:1.05rem}
+  .modal p{color:var(--mut);font-size:.9rem;margin:0 0 16px}
+  .modal input{width:100%;background:#05080e;border:1px solid var(--line);color:var(--txt);border-radius:8px;
+    padding:10px;font-family:var(--mono);margin-bottom:16px}
+  .modal .row{display:flex;gap:10px;justify-content:flex-end}
+  .modal button{padding:9px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.9rem;border:1px solid var(--line);background:#0c1322;color:var(--txt)}
+  .modal button.go{background:var(--cyan);border-color:var(--cyan);color:#04121a;font-weight:700}
+  .modal button.go.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  footer{text-align:center;color:var(--mut);font-size:.72rem;padding:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚀 <b>Espò</b> Deploy Console</h1>
+  <div class="meta">
+    <span class="chip">v<b id="m-ver">…</b></span>
+    <span class="chip">branch <b id="m-branch">…</b></span>
+    <span class="chip" id="m-state"><span class="dot"></span><span id="m-state-txt">…</span></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="col">
+    <div class="card">
+      <h2>⚡ Quick</h2>
+      <div class="btns" id="g-quick"></div>
+    </div>
+    <div class="card">
+      <h2>🏷️ Versioning</h2>
+      <div class="btns" id="g-ver"></div>
+    </div>
+    <div class="card">
+      <h2>🌿 Git deploy</h2>
+      <div class="btns" id="g-git"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>☁️ Cloudflare R2</h2>
+      <div class="btns" id="g-r2"></div>
+    </div>
+    <div class="card">
+      <h2>🧰 Utility</h2>
+      <div class="btns" id="g-util"></div>
+    </div>
+  </div>
+
+  <div class="card" id="out-card">
+    <div class="term-head">
+      <span class="spin" id="spin"></span>
+      <span class="st" id="st">pronto</span>
+      <button id="clear">pulisci</button>
+    </div>
+    <div id="term"><span class="mut">L'output dei comandi apparirà qui in tempo reale…</span></div>
+  </div>
+</div>
+
+<footer>Server locale 127.0.0.1 · solo sul tuo PC · <b>test → main</b> arriva fino a tag+push; il deploy FTP di produzione resta su GitHub Actions</footer>
+
+<div class="backdrop" id="bd">
+  <div class="modal">
+    <h3 id="md-title">Conferma</h3>
+    <p id="md-msg"></p>
+    <input id="md-input" placeholder="Messaggio commit…" style="display:none">
+    <div class="row">
+      <button id="md-cancel">Annulla</button>
+      <button id="md-ok" class="go">Procedi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ACTIONS = [
+  {g:'g-quick', id:'release_patch',     ic:'📦', label:'Release patch',        sub:'bump+cache+build', danger:true},
+  {g:'g-quick', id:'build_commit_push', ic:'⬆️', label:'Build + Commit + Push',sub:'→ develop-v3', input:true},
+  {g:'g-quick', id:'build',             ic:'🔨', label:'Build veloce',         sub:'no bump'},
+  {g:'g-ver',   id:'bump_major',        ic:'⏫', label:'Bump MAJOR',           sub:'x.0.0', danger:true},
+  {g:'g-ver',   id:'bump_minor',        ic:'🔼', label:'Bump MINOR',           sub:'3.x.0', danger:true},
+  {g:'g-ver',   id:'cache_bump',        ic:'🔄', label:'Cache bump',           sub:'no build'},
+  {g:'g-git',   id:'push_test',         ic:'🛠️', label:'develop-v3 → test',   sub:'deploy FTP', danger:true},
+  {g:'g-git',   id:'push_main',         ic:'🏭', label:'test → main',          sub:'release+tag', danger:true},
+  {g:'g-git',   id:'git_status',        ic:'🔎', label:'Stato Git',            sub:'status+log'},
+  {g:'g-r2',    id:'r2_all',            ic:'☁️', label:'Sync TUTTI gli asset', sub:'sounds+video+songs', danger:true},
+  {g:'g-r2',    id:'r2_sounds',         ic:'🔊', label:'Sync sounds'},
+  {g:'g-r2',    id:'r2_video',          ic:'🎬', label:'Sync video'},
+  {g:'g-r2',    id:'r2_songs',          ic:'🎵', label:'Sync songs'},
+  {g:'g-r2',    id:'r2_list',           ic:'📊', label:'Verifica bucket'},
+  {g:'g-util',  id:'release_notes',     ic:'📰', label:'Release notes (IT)'},
+  {g:'g-util',  id:'__open_test',       ic:'🌐', label:'Apri test nel browser', external:'https://espooclicker.altervista.org/test/'},
+  {g:'g-util',  id:'clean_rebuild',     ic:'🧹', label:'Pulisci dist + rebuild', danger:true},
+];
+
+const DESC = {
+  release_patch:     "Incrementa la patch (es. 3.0.13 → 3.0.14), aggiorna sw.js e config, invalida la cache e ricompila legacy + V3. Tutto in un passo.",
+  build_commit_push: "Compila, poi git add + commit (chiede il messaggio) e push su develop-v3.",
+  build:             "Ricompila i bundle (esbuild legacy + Vite V3) senza toccare versione o cache.",
+  bump_major:        "Versione MAJOR (es. 3.x → 4.0.0): cambi grossi o incompatibili. Esegue bump + build.",
+  bump_minor:        "Versione MINOR (es. 3.0 → 3.1.0): nuove funzioni o fix. Esegue bump + build.",
+  cache_bump:        "Solo bump patch + sw.js/config per forzare il refresh della cache, senza ricompilare.",
+  push_test:         "Forza test = develop-v3 e avvia il deploy FTP automatico sul server di test (via GitHub Actions).",
+  push_main:         "Merge test → main + tag della versione. NON fa il deploy di produzione (resta manuale su GitHub Actions).",
+  git_status:        "Mostra stato, branch e ultimi commit del repository.",
+  r2_all:            "Carica su Cloudflare R2 tutti gli asset pesanti: suoni, video e canzoni.",
+  r2_sounds:         "Carica su R2 solo assets/sounds (effetti + musica di gioco).",
+  r2_video:          "Carica su R2 solo assets/video.",
+  r2_songs:          "Carica su R2 solo music/songs (le tracce del player Espofy).",
+  r2_list:           "Elenca le cartelle e la dimensione totale del bucket R2.",
+  release_notes:     "Mostra il contenuto di release-notes_it.md nel pannello qui sotto.",
+  __open_test:       "Apre il sito di test (espooclicker.altervista.org/test/) in una nuova scheda.",
+  clean_rebuild:     "Cancella dist/ e ricompila tutto da zero.",
+};
+
+const term = document.getElementById('term');
+const st = document.getElementById('st');
+const spin = document.getElementById('spin');
+let running = false;
+
+function out(text, cls){
+  const atBottom = term.scrollHeight - term.scrollTop - term.clientHeight < 40;
+  const s = document.createElement('span'); if(cls) s.className=cls; s.textContent=text; term.appendChild(s);
+  if(atBottom) term.scrollTop = term.scrollHeight;
+}
+function setState(s, cls){ st.textContent=s; st.className='st '+(cls||''); spin.classList.toggle('on', cls==='run'); }
+function setBusy(b){ running=b; document.querySelectorAll('button.act').forEach(x=>x.disabled=b); }
+
+function buildButtons(){
+  for(const a of ACTIONS){
+    const b=document.createElement('button'); b.className='act'+(a.danger?' danger':'');
+    b.innerHTML=`<span class="ic">${a.ic}</span><span>${a.label}</span>`+(a.sub?`<span class="sub">${a.sub}</span>`:'');
+    if(DESC[a.id]) b.setAttribute('data-desc', DESC[a.id]);
+    b.onclick=()=>onClick(a); document.getElementById(a.g).appendChild(b);
+  }
+}
+
+function onClick(a){
+  if(a.external){ window.open(a.external,'_blank'); return; }
+  if(running) return;
+  if(a.input){ askInput(a); return; }
+  if(a.danger){ confirmRun(a); return; }
+  exec(a);
+}
+
+// --- Modale ---
+const bd=document.getElementById('bd'), mdTitle=document.getElementById('md-title'),
+      mdMsg=document.getElementById('md-msg'), mdInput=document.getElementById('md-input'),
+      mdOk=document.getElementById('md-ok'), mdCancel=document.getElementById('md-cancel');
+function closeModal(){ bd.classList.remove('on'); mdInput.style.display='none'; mdOk.className='go'; }
+mdCancel.onclick=closeModal;
+bd.onclick=e=>{ if(e.target===bd) closeModal(); };
+
+function confirmRun(a){
+  mdTitle.textContent='Confermi?'; mdMsg.textContent=`Sto per eseguire: ${a.label}.`+(a.danger?' Azione delicata.':'');
+  mdOk.textContent='Procedi'; mdOk.className='go'+(a.danger?' danger':'');
+  mdOk.onclick=()=>{ closeModal(); exec(a); }; bd.classList.add('on');
+}
+function askInput(a){
+  mdTitle.textContent='Build + Commit + Push'; mdMsg.textContent='Messaggio del commit (verrà pushato su develop-v3):';
+  mdInput.style.display='block'; mdInput.value=''; mdOk.textContent='Procedi'; mdOk.className='go';
+  mdOk.onclick=()=>{ const msg=mdInput.value; closeModal(); exec(a, msg); };
+  bd.classList.add('on'); setTimeout(()=>mdInput.focus(),50);
+}
+
+function exec(a, msg){
+  setBusy(true); setState('in corso: '+a.label,'run');
+  out(`\n──────── ${a.label} ────────\n`,'mut');
+  let url='/api/run?action='+encodeURIComponent(a.id);
+  if(msg!=null) url+='&msg='+encodeURIComponent(msg);
+  const es=new EventSource(url);
+  es.addEventListener('step', e=>{ out('\n$ '+JSON.parse(e.data).cmd+'\n','cmd'); });
+  es.addEventListener('out',  e=>{ out(JSON.parse(e.data).line); });
+  es.addEventListener('done', e=>{
+    const code=JSON.parse(e.data).code; es.close(); setBusy(false);
+    if(code===0){ out('\n✓ completato\n','done'); setState('✓ '+a.label,'ok'); }
+    else { out('\n✗ uscita con codice '+code+'\n','err'); setState('✗ errore ('+code+')','err'); }
+    loadStatus();
+  });
+  es.onerror=()=>{ if(running){ es.close(); setBusy(false); out('\n✗ connessione interrotta\n','err'); setState('✗ interrotto','err'); } };
+}
+
+async function loadStatus(){
+  try{
+    const r=await fetch('/api/status'); const d=await r.json();
+    document.getElementById('m-ver').textContent=d.version;
+    document.getElementById('m-branch').textContent=d.branch;
+    const el=document.getElementById('m-state'); el.className='chip '+(d.dirty?'dirty':'clean');
+    document.getElementById('m-state-txt').textContent=d.dirty?'modifiche non committate':'pulito';
+  }catch(e){ document.getElementById('m-state-txt').textContent='server offline'; }
+}
+
+document.getElementById('clear').onclick=()=>{ term.innerHTML=''; setState('pronto'); };
+buildButtons(); loadStatus(); setInterval(()=>{ if(!running) loadStatus(); }, 8000);
+</script>
+</body>
+</html>

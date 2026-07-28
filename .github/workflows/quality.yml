@@ -1,0 +1,48 @@
+name: Quality (V3)
+
+on:
+  # Valida OGNI pull request (verso qualsiasi branch) e OGNI push tranne il
+  # mirror di deploy 'test' (gia' validato a monte su develop-v3). Cosi' i check
+  # coprono develop-v3 e qualunque nuovo branch futuro senza dover toccare il file.
+  pull_request:
+  push:
+    branches-ignore:
+      - test
+
+jobs:
+  test-and-budget:
+    name: 🧪 Test + Bundle Budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build legacy + v3
+        run: npm run build
+
+      # Warning non bloccante: segnala i bundle fuori soglia ma non fa fallire il workflow.
+      - name: Bundle budget check (warning)
+        continue-on-error: true
+        run: node scripts/bundle-budget.js
+
+      - name: Upload bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundles
+          path: |
+            dist/
+          retention-days: 7

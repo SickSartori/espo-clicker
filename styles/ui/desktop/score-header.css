@@ -1,0 +1,515 @@
+/* =====================================================================
+   v3 desktop — Score header HUD pro
+   =====================================================================
+   Approccio HUD/FUI: corner brackets + scanline overlay + JetBrains Mono labels +
+   numero score gigante con stroke + drop-shadow neon + tabular-nums.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ---------------- Container HUD ---------------- */
+  html body .column-header-center {
+    position: relative;
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    background:
+      radial-gradient(ellipse 100% 100% at 50% 0%,
+        rgba(255, 61, 92, 0.06) 0%,
+        transparent 60%),
+      linear-gradient(180deg,
+        rgba(15, 23, 42, 0.92) 0%,
+        rgba(10, 15, 28, 0.7) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 4px;
+    padding: 12px 16px;
+    height: 88px;
+    min-height: 88px;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: visible;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  /* Score area: KEEP position: absolute from legacy (centered via transform).
+     Only add max-width so large numbers don't overlap side panels. */
+  html body .header-main-score {
+    /* position: absolute + transform: translate(-50%,-50%) inherited from legacy */
+    max-width: calc(100% - 220px); /* leave room for both side panels */
+    gap: 4px;
+    overflow: visible; /* tooltip must escape */
+  }
+
+  /* Scanline overlay sopra il container */
+  html body .column-header-center::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 217, 255, 0.025) 4px,
+      transparent 5px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Pulse line bottom (HUD active indicator) */
+  html body .column-header-center::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 25%;
+    right: 25%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 61, 92, 0.7),
+      rgba(0, 217, 255, 0.7),
+      transparent);
+    box-shadow: 0 0 12px rgba(255, 61, 92, 0.4);
+    animation: v3-hud-pulse 3s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes v3-hud-pulse {
+    0%, 100% { opacity: 0.6; transform: scaleX(1); }
+    50%      { opacity: 1; transform: scaleX(1.05); }
+  }
+
+  /* ---------------- Score principale ---------------- */
+  html body .header-main-score {
+    text-align: center;
+    padding: 0 16px;
+    /* KEEP position: absolute from legacy — do NOT override to relative.
+       z-index works on absolute elements too. */
+    z-index: 3;
+  }
+
+  html body .header-main-score .header-label-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: rgba(248, 250, 252, 0.5);
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  html body .header-main-score .header-label-main::before,
+  html body .header-main-score .header-label-main::after {
+    content: '[';
+    color: rgba(0, 217, 255, 0.4);
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+
+  html body .header-main-score .header-label-main::after {
+    content: ']';
+  }
+
+  html body .header-main-score .header-label-main i {
+    color: var(--v3-accent-red, #ff3d5c);
+    font-size: 0.85rem;
+    filter: drop-shadow(0 0 6px rgba(255, 61, 92, 0.7));
+  }
+
+  html body #score-display {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: clamp(1.35rem, 1.85vw, 2rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    background: linear-gradient(180deg,
+      #ffffff 0%,
+      #ff8a9d 30%,
+      var(--v3-accent-red, #ff3d5c) 65%,
+      #b91c1c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 18px rgba(255, 61, 92, 0.3);
+    letter-spacing: -0.02em;
+    transition: transform var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    filter: drop-shadow(0 2px 8px rgba(255, 61, 92, 0.2));
+    display: block;
+    text-align: center;
+    min-height: 1.2em;
+    max-width: 100%;
+    white-space: nowrap;
+    position: relative;
+    /* NO overflow:hidden — clips the hover tooltip (::after) */
+    overflow: visible;
+    cursor: help;
+    /* Fallback color */
+    color: var(--v3-accent-red, #ff3d5c);
+  }
+
+  /* Gradient text SOLO se supportato */
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    html body #score-display {
+      color: transparent;
+    }
+  }
+
+  html body #score-display.score-bump {
+    transform: scale(1.06);
+    filter: drop-shadow(0 6px 24px rgba(255, 61, 92, 0.6));
+  }
+
+  /* ---------- Tooltip hover: mostra valore completo ---------- */
+  html body #score-display[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+    white-space: nowrap;
+    background: rgba(10, 15, 28, 0.96);
+    color: #fff !important; /* override color:transparent da gradient text */
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    -webkit-text-fill-color: #fff;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 217, 255, 0.25);
+    font-size: 0.85rem;
+    font-weight: 700;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 217, 255, 0.15);
+    pointer-events: none;
+  }
+
+  html body #score-display[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: rgba(0, 217, 255, 0.4);
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  /* ---------------- Stat boxes laterali ---------------- */
+  html body #header-left-panel,
+  html body #header-right-panel {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 4px;
+    padding: 10px 14px;
+    max-width: 150px;
+    transition: all var(--v3-dur-base, 220ms) var(--v3-ease-snap, cubic-bezier(0.34,1.56,0.64,1));
+    position: relative;
+    overflow: visible; /* mai clip: i valori (nowrap) restano sempre leggibili */
+    z-index: 3;
+  }
+
+  /* Status LED dots rimossi su richiesta */
+  html body #header-left-panel::before,
+  html body #header-right-panel::before {
+    display: none !important;
+    content: none !important;
+    animation: none !important;
+  }
+
+  html body #header-left-panel:hover,
+  html body #header-right-panel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 217, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 217, 255, 0.15);
+  }
+
+  html body .header-stat-box .header-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.75; /* 0.5 scendeva sotto AA 4.5:1 */
+    font-weight: 700;
+    color: var(--v3-fg-secondary, #cbd5e1);
+  }
+
+  html body .header-stat-box .header-label i {
+    color: var(--v3-accent-cyan, #00d9ff);
+    margin-right: 4px;
+    font-size: 0.7rem;
+  }
+
+  html body .header-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    /* Secondari (MOLT/TOKEN/Q-BITS): piu' piccoli dello score (gerarchia) +
+       nowrap, cosi' non vanno mai a capo -> eliminato il taglio nel box. */
+    font-size: 1.02rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  /* Color per tipo */
+  html body #display-career-bonus {
+    background: linear-gradient(135deg, #fbbf24 0%, var(--v3-tier-legendary, #f59e0b) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+  }
+
+  html body #prestige-points-display {
+    background: linear-gradient(135deg, #60a5fa 0%, var(--v3-tier-rare, #3b82f6) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+
+  html body #header-qbit-display {
+    background: linear-gradient(135deg, #c084fc 0%, var(--v3-tier-epic, #a855f7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+  }
+
+  /* =====================================================================
+     VIDEO EVENT (rick-rolling) — sopra 1024px la testata NON è display:none
+     (resta nel DOM solo per ospitare lo score riposizionato in alto a destra),
+     quindi il suo "chrome" v3 trapelava sul video: la linea orizzontale
+     (::after pulse + ::before scanline), lo sfondo/bordo/blur, e la label
+     "BUG RISOLTI". Qui li azzeriamo lasciando solo lo score.
+     ===================================================================== */
+  body.rick-rolling .column-header-center {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  body.rick-rolling .column-header-center::before,
+  body.rick-rolling .column-header-center::after {
+    display: none !important;
+  }
+  body.rick-rolling .header-main-score .header-label-main {
+    display: none !important;
+  }
+
+  /* Sfondo dinamico della skin (skin-ambient.css su #clicker-section): durante i
+     video event diventava un riquadro colorato (dorato per le skin legendary/divine
+     come Rick) che leggeva come "box giallo". Spento: nell'evento il video e' il
+     protagonista. */
+  body.rick-rolling #clicker-section {
+    background: none !important;
+    animation: none !important;
+  }
+
+  /* --- HUD video event: PANNELLO UNICO in alto a destra ---
+     Score+BPS vengono spostati via JS (moveHudIntoEvent) dentro #event-hud, un
+     contenitore fisso a livello body -> layout sempre relativo al viewport (immune
+     ai transform intermittenti degli antenati che prima clippavano/scollegavano il
+     BPS). Un solo riquadro dark-glass v3, valori neutri: score bianco-ghiaccio,
+     BPS ciano. Niente piu' oro/giallo. */
+  #event-hud {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10020;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+    min-width: 130px;
+    padding: 9px 16px;
+    background: rgba(10, 15, 28, 0.82);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  }
+  #event-hud:not(:empty) { display: flex; animation: v3-event-hud-in 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  #event-hud #score-display,
+  #event-hud #cps-display {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    transition: none !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-align: right !important;
+    font-family: inherit !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  #event-hud #score-display::before {
+    content: 'BUG';
+    display: block;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: rgba(0, 217, 255, 0.7);
+    margin-bottom: 1px;
+  }
+  #event-hud #score-display {
+    font-size: 1.55rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.01em !important;
+    color: #f1f5f9 !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5) !important;
+  }
+  #event-hud #cps-display {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.3px !important;
+    color: #00d9ff !important;
+    -webkit-text-fill-color: #00d9ff !important;
+    text-shadow: none !important;
+    opacity: 0.95 !important;
+  }
+  /* Moltiplicatore evento attivo: badge sotto i wallet, con divisore. Tenuto
+     visibile per tutta la durata (il toast invece sparisce dopo 8s). Accent rosso
+     v3 = "boost", non giallo. */
+  #event-hud #event-multiplier-display {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 6px 0 0 0 !important;
+    padding: 4px 0 0 0 !important;
+    background: none !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 217, 255, 0.14) !important;
+    border-radius: 0 !important;
+    text-align: right !important;
+    font-family: inherit !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: none !important;
+    color: #ff5566 !important;
+    -webkit-text-fill-color: #ff5566 !important;
+    text-shadow: 0 0 10px rgba(255, 85, 102, 0.45) !important;
+  }
+}
+
+@keyframes v3-event-hud-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .column-header-center::after,
+  html body #header-left-panel::before,
+  html body #header-right-panel::before {
+    animation: none !important;
+  }
+}
+
+/* =====================================================================
+   DESKTOP STRETTO (769-1100px) — layout HUD a DUE righe.
+   A finestra ridotta la colonna centrale e' molto stretta (~320px @ 800px):
+   le 3 sezioni in fila singola schiacciavano lo score (hero) a ~110px e, con
+   due box laterali di larghezza diversa (MOLT vs TOKEN+Q-BITS) e lo spazio
+   distribuito a space-between, lo score finiva pure scentrato (~33px a sx).
+   Soluzione: griglia 2 righe → riga 1 lo SCORE a tutta larghezza (centrato,
+   protagonista), riga 2 i due wallet bilanciati 50/50. Sopra i 1100px torna
+   il layout HUD pieno (score absolute-centered).
+   ===================================================================== */
+@media (min-width: 769px) and (max-width: 1100px) {
+  html body .column-header-center {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "score score"
+      "mult  wallet";
+    align-items: stretch;
+    gap: 5px 10px;
+    padding: 6px 12px;
+    height: auto;
+    min-height: 88px;
+  }
+
+  /* Riga 1 — SCORE hero: esce dal centering assoluto e occupa tutta la riga */
+  html body .header-main-score {
+    grid-area: score;
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    max-width: none;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0;
+  }
+  html body .header-main-score .header-label-main {
+    gap: 6px;
+    font-size: 0.56rem;
+    margin-bottom: 2px;
+  }
+  /* Parentesi decorative [ ] rimosse: allargavano la label centrale */
+  html body .header-main-score .header-label-main::before,
+  html body .header-main-score .header-label-main::after {
+    content: '';
+  }
+  html body #score-display {
+    font-size: clamp(1.3rem, 2.9vw, 1.7rem);
+  }
+
+  /* Riga 2 — due wallet bilanciati, stessa larghezza (50/50) */
+  html body #header-left-panel,
+  html body #header-right-panel {
+    max-width: none;
+    min-width: 0;
+    flex: none;
+    justify-self: stretch;
+    padding: 5px 12px;
+  }
+  html body #header-left-panel {
+    grid-area: mult;
+    align-items: center;   /* centra l'unica stat MOLT */
+    text-align: center;
+  }
+  html body #header-right-panel {
+    grid-area: wallet;
+    margin-left: 0;        /* annulla il margin-left:auto legacy */
+  }
+  /* TOKEN + Q-BITS distribuiti nello spazio del box wallet */
+  html body #header-right-panel > div {
+    width: 100%;
+    gap: 16px !important;
+    justify-content: space-evenly !important;
+  }
+
+  html body #header-left-panel .header-value,
+  html body #header-right-panel .header-value {
+    font-size: 1.05rem;
+  }
+  html body .header-stat-box .header-label {
+    font-size: 0.54rem;
+    white-space: nowrap;   /* evita il wrap "Q-/BITS" che sbilanciava i box */
+  }
+}

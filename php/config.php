@@ -6,7 +6,8 @@ return [
     "dbname" => "my_espooclicker",
     "port" => 3306,
     "instanceName" => "dev", // 'dev' o 'production'
-    "devVersion" => "2.1.0",
-    "prodVersion" => "2.1"
+    "prodHost" => "espooclicker.altervista.org", // dominio prod: dev-mode (errori/cheatboard) disattivato qui anche se instanceName='dev'. Aggiornare se si migra dominio.
+    "devVersion" => "3.0.13",
+    "prodVersion" => "3.0.13"
 ];
 ?>

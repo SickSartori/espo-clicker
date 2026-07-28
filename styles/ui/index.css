@@ -1,0 +1,71 @@
+/* =====================================================================
+   UI moderna — entry (importato da main.ts, bundle Vite).
+   Ordine: tokens → tokens-hud → lucide → prestige-hub → mobile → desktop.
+   Nota: gli stub tema opt-in [data-theme] (8bit/super/christmas) erano
+   scoped sotto [data-v3], mai impostato su alcun elemento → inerti,
+   rimossi. I temi reali restano i legacy styles/themes/*-theme.css,
+   caricati dinamicamente all'equip skin.
+   ===================================================================== */
+
+@import './tokens.css';
+@import './tokens-hud.css';
+@import './lucide.css';
+@import './prestige-hub.css';
+
+/* Mobile fixes — override su mobile.css legacy */
+@import './mobile/modal-close.css';
+@import './mobile/skins-modal.css';
+@import './mobile/achievements-modal.css';
+@import './mobile/score-header.css';
+@import './mobile/clicker-button.css';
+@import './mobile/skin-ambient.css';
+
+/* Desktop refresh — HUD/FUI cyberpunk-tech identity (>= 769px) */
+@import './desktop/background.css';
+@import './desktop/layout-shell.css';
+@import './desktop/skin-ambient.css';
+@import './desktop/signature-effects.css';
+@import './desktop/header-navbar.css';
+@import './desktop/score-header.css';
+@import './desktop/clicker-button.css';
+@import './desktop/clicker-3d.css';
+@import './desktop/tabs.css';
+@import './desktop/cards.css';
+@import './desktop/skins-modal.css';
+@import './desktop/modals-shell.css';
+@import './desktop/modals-content.css';
+@import './desktop/golden-bug.css';
+@import './desktop/toasts.css';
+@import './desktop/fury-flames.css';
+@import './desktop/login-modal.css';
+@import './desktop/settings-modal.css';
+@import './desktop/account-modal.css';
+@import './desktop/super-theme.css';
+
+/* =====================================================================
+   Stili globali a11y critici (non scoped [data-v3]).
+   ===================================================================== */
+
+.v3-skip-link {
+  position: fixed;
+  top: -100px;
+  left: 8px;
+  background: #3498db;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  z-index: 9999;
+  transition: top 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.v3-skip-link:focus,
+.v3-skip-link:focus-visible {
+  top: 8px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

@@ -1,0 +1,318 @@
+/* ============================================================
+   TEMA NATALIZIO: ESPÒ NATALE
+   Scoped: si applica solo alla UI di gioco (Container e Navbar).
+   Caricato raw da loadThemeCSS quando la skin christmas è equipaggiata.
+   Fonte di verità unica per i visual natalizi (l'ambient christmas è
+   stato rimosso da skin-ambient.css per evitare la doppia neve).
+   ============================================================ */
+
+/* --- PALETTE UNIFICATA --- */
+body.theme-christmas {
+    --xmas-green-deep: #0b3c28;
+    --xmas-green: #145a32;
+    --xmas-red: #c0392b;
+    --xmas-red-bright: #e74c3c;
+    --xmas-gold: #f1c40f;
+    --xmas-cream: #f7f1e6;
+}
+
+/* --- GAME CONTAINER --- */
+/* Verde scuro trasparente con bordi rossi + brina smerigliata agli angoli.
+   La brina è parte del background del container → resta sempre dietro al
+   contenuto (le colonne sono quasi trasparenti, la lascia trasparire). */
+body.theme-christmas #game-container {
+    position: relative;
+    /* serve su mobile (su desktop layout-shell lo imposta già) per ancorare
+       le luci ::before correttamente su tutti i viewport */
+    background-color: rgba(11, 60, 40, 0.92);
+    background-image:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.13) 0%, transparent 16%),
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.13) 0%, transparent 16%),
+        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.08) 0%, transparent 13%),
+        radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08) 0%, transparent 13%);
+    border: 2px solid var(--xmas-red);
+    box-shadow: 0 0 30px rgba(192, 57, 43, 0.45);
+}
+
+/* --- LUCI NATALIZIE --- */
+/* Ghirlanda di lucine soffuse multicolore strung lungo la striscia bassa
+   (vuota) della navbar — la navbar è alta 65px col contenuto centrato, quindi
+   i ~10px in fondo sono liberi: niente sovrapposizione coi tab del container.
+   Layer decorativo, non interattivo.
+   NB: la navbar legacy è già position:fixed → contesto di posizionamento per
+   ::before. NON impostare qui `position` sulla navbar: scavalcherebbe il fixed
+   (vedi layout-shell.css). */
+body.theme-christmas #game-navbar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    pointer-events: none;
+    z-index: 2;
+    background:
+        radial-gradient(circle 3px at 12px 5px, var(--xmas-red) 60%, transparent 62%),
+        radial-gradient(circle 3px at 36px 5px, var(--xmas-gold) 60%, transparent 62%),
+        radial-gradient(circle 3px at 60px 5px, var(--xmas-green) 60%, transparent 62%),
+        radial-gradient(circle 3px at 84px 5px, var(--xmas-cream) 60%, transparent 62%);
+    background-repeat: repeat-x;
+    background-size: 96px 10px;
+    animation: xmasLights 2.4s ease-in-out infinite;
+}
+
+@keyframes xmasLights {
+    0%, 100% {
+        filter: drop-shadow(0 0 3px rgba(255, 210, 140, 0.45));
+        opacity: 0.9;
+    }
+    50% {
+        filter: drop-shadow(0 0 7px rgba(255, 225, 160, 0.9));
+        opacity: 1;
+    }
+}
+
+/* Colonne laterali */
+body.theme-christmas #game-container .game-column {
+    border-right: 1px solid rgba(192, 57, 43, 0.3);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- NAVBAR --- */
+body.theme-christmas #game-navbar {
+    background: #1a0a0a;
+    border-bottom: 2px solid var(--xmas-green);
+}
+
+/* --- TITOLI SEZIONI --- */
+body.theme-christmas #game-container .store-section h2,
+body.theme-christmas #game-container .section-header h2 {
+    color: var(--xmas-red-bright);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+}
+
+/* --- BOTTONI COMPRA (Verdi con bordo rosso) --- */
+body.theme-christmas #game-container .buy-btn:not(:disabled) {
+    background: linear-gradient(to bottom, var(--xmas-green), var(--xmas-green-deep));
+    border: 1px solid var(--xmas-red);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.theme-christmas #game-container .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #2ecc71, #1e8449);
+    box-shadow: 0 0 15px var(--xmas-red);
+}
+
+/* --- PUNTEGGI --- */
+body.theme-christmas #game-container #score-display {
+    color: #ecf0f1;
+    text-shadow: 2px 2px 0 #000, 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+body.theme-christmas #game-container #cps-display {
+    color: var(--xmas-gold);
+    /* Oro */
+}
+
+/* --- MAIN BUTTON BACKGROUND --- */
+/* Sfondo dietro al personaggio principale: rosso profondo → oro con alone
+   morbido e rim bianco tenue; pulse lento e gentile (rosso ↔ oro). */
+body.theme-christmas .bg-christmas {
+    background: radial-gradient(circle, var(--xmas-gold) 6%, var(--xmas-red) 62%, #6e1b14 100%);
+    box-shadow: 0 0 32px rgba(192, 57, 43, 0.5), inset 0 0 22px rgba(255, 255, 255, 0.18);
+    border: 4px solid rgba(255, 255, 255, 0.85);
+    animation: xmasBgPulse 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes xmasBgPulse {
+    from {
+        box-shadow: 0 0 24px rgba(192, 57, 43, 0.4), inset 0 0 18px rgba(255, 255, 255, 0.15);
+    }
+    to {
+        box-shadow: 0 0 40px rgba(241, 196, 15, 0.45), inset 0 0 24px rgba(255, 255, 255, 0.22);
+    }
+}
+
+/* --- CARD MENU LATERALI (Potenziamenti / Auto / Lab / Teams) --- */
+/* Le card legacy (store.css) sono pannelli scuri-bluastri: sul verde del
+   container risultano in un verde spento e i team hanno accenti BLU che
+   stonano. Qui le rendo "dark caldo" (staccano dal verde) con accento rosso a
+   sinistra, costo oro e hover oro — niente più blu/ciano. */
+body.theme-christmas #game-container .click-upgrade,
+body.theme-christmas #game-container .enhancement-upgrade,
+body.theme-christmas #game-container .prestige-upgrade,
+body.theme-christmas #building-list-container .upgrade {
+    background: linear-gradient(150deg, rgba(36, 22, 20, 0.72) 0%, rgba(20, 12, 11, 0.64) 100%);
+    border: 1px solid rgba(192, 57, 43, 0.28);
+    border-left: 3px solid var(--xmas-red);
+}
+
+body.theme-christmas #game-container .click-upgrade:hover,
+body.theme-christmas #game-container .enhancement-upgrade:hover,
+body.theme-christmas #game-container .prestige-upgrade:hover,
+body.theme-christmas #building-list-container .upgrade:hover:not(.locked-item) {
+    border-color: rgba(241, 196, 15, 0.45);
+    border-left-color: var(--xmas-gold);
+    background: linear-gradient(150deg, rgba(48, 28, 24, 0.78) 0%, rgba(24, 14, 12, 0.68) 100%);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 16px rgba(241, 196, 15, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Costo in oro su tutte le card laterali */
+body.theme-christmas #game-container .upgrade-cost,
+body.theme-christmas #building-list-container .upgrade-cost {
+    color: var(--xmas-gold);
+}
+
+/* Badge conteggio team: da blu → rosso/oro */
+body.theme-christmas #building-list-container .upgrade-count {
+    background: rgba(192, 57, 43, 0.15);
+    border: 1px solid rgba(241, 196, 15, 0.30);
+    color: var(--xmas-gold);
+}
+
+/* --- COMPATIBILITÀ RICK ROLL --- */
+body.theme-christmas.rick-rolling #game-container {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+}
+
+body.theme-christmas.rick-rolling #game-navbar::before {
+    display: none;
+}
+
+body.theme-christmas.rick-rolling .game-column {
+    border: none;
+    background: transparent;
+}
+
+
+
+
+/* --- EFFETTO NEVE (Overlay Globale — unico sistema, anche su mobile) --- */
+/* I fiocchi sono generati da VFXManager.spawnSnow (60 div). Qui solo lo stile:
+   tono cream, lieve blur/alone per renderli morbidi, e 3 pattern di deriva
+   (fall / fall-b / fall-c) assegnati via :nth-child per un movimento naturale
+   senza toccare il JS. */
+.snow_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+    display: none;
+}
+
+.snow_container_block {
+    display: block;
+}
+
+.snowflake {
+    position: absolute;
+    top: -20px;
+    background-color: var(--xmas-cream, #f7f1e6);
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    filter: blur(0.4px);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+/* Varianti di deriva: la base .snowflake usa `fall`; le altre sovrascrivono
+   SOLO animation-name (longhand) per non azzerare duration/delay inline. */
+.snowflake:nth-child(3n) {
+    animation-name: fall-b;
+}
+
+.snowflake:nth-child(3n + 1) {
+    animation-name: fall-c;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-20px) translateX(0px);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translateY(50vh) translateX(24px);
+    }
+    100% {
+        transform: translateY(105vh) translateX(40px);
+        opacity: 0.2;
+    }
+}
+
+@keyframes fall-b {
+    0% {
+        transform: translateY(-20px) translateX(0px);
+        opacity: 0.85;
+    }
+    50% {
+        transform: translateY(50vh) translateX(-22px);
+    }
+    100% {
+        transform: translateY(105vh) translateX(-36px);
+        opacity: 0.15;
+    }
+}
+
+@keyframes fall-c {
+    0% {
+        transform: translateY(-20px) translateX(0px);
+        opacity: 0.95;
+    }
+    40% {
+        transform: translateY(40vh) translateX(18px);
+    }
+    70% {
+        transform: translateY(72vh) translateX(-12px);
+    }
+    100% {
+        transform: translateY(105vh) translateX(8px);
+        opacity: 0.2;
+    }
+}
+
+.christmas_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #c0392b;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+}
+
+.christmas_overlay_flex {
+    display: flex;
+    animation: fadeIn 0.5s;
+}
+
+/* prefers-reduced-motion: i :not(#_) alzano la specificità così il reset
+   batte le animazioni del tema su selettori con ID, non scavalcabili dal
+   reset globale di base.css. */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-christmas:not(#_),
+    body.theme-christmas:not(#_)::before,
+    body.theme-christmas:not(#_)::after,
+    body.theme-christmas:not(#_) *:not(#_),
+    body.theme-christmas:not(#_) *:not(#_)::before,
+    body.theme-christmas:not(#_) *:not(#_)::after {
+        animation: none !important;
+    }
+}

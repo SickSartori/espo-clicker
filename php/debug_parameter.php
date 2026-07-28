@@ -2,7 +2,7 @@
 	$config = require(__DIR__ . "/config.php");
 
 	// Test/sviluppo
-	if($config['instanceName'] === 'dev')
+	if($config['instanceName'] === 'dev' && ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? ''))
 	{
 		error_reporting(E_ALL); // Setta il livello di errore php da visualizzare a schermo (0 -> nessuno, E_ALL -> tutti)
 		ini_set('ignore_repeated_errors', TRUE); // always use TRUE

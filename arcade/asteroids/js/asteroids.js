@@ -75,9 +75,10 @@
             <button class="arcade-btn secondary" onclick="window.exitAsteroidsGame()">
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
+            <span class="topbar-game-label" style="color:#e67e22">ESPO-ROIDS</span>
             <div class="arcade-stats-box" id="asteroids-score-ui">
-                <span class="stat">PUNTI: <span class="val-score">0</span></span>
-                <span class="stat">ONDATA: <span class="val-hp">1</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA'}: <span class="val-hp">1</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
         `;
@@ -91,10 +92,10 @@
         canvas = document.createElement('canvas');
         canvas.id = 'asteroids-canvas';
 
-        // Responsività
-        const maxWidth = Math.min(800, window.innerWidth - 40);
+        // Responsività — canvas più grande per fullscreen arcade
+        const maxWidth = Math.min(1100, window.innerWidth - 60);
         canvas.width = maxWidth;
-        canvas.height = 400;
+        canvas.height = 540;
 
         ctx = canvas.getContext('2d');
         canvasWrapper.appendChild(canvas);
@@ -105,7 +106,7 @@
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
             <div style="color:#e67e22; font-family:'Rajdhani'; font-size:2.5rem; margin-bottom:10px; font-weight:900; letter-spacing:3px; text-shadow: 0 0 15px #e67e22;">
-                ESPÒ-ROIDS
+                ESPO-ROIDS
             </div>
             <div style="color:#bdc3c7; margin-bottom:20px; font-family:monospace; font-size: 0.9rem;">
                 Su / Destra / Sinistra per muoverti <br> SPAZIO per sparare
@@ -126,6 +127,12 @@
     window.exitAsteroidsGame = function () {
         isRunning = false;
         cancelAnimationFrame(gameInterval);
+
+        // Rimuove i listener globali e riarma il flag init: alla prossima entrata init()
+        // li riaggancia (prima restavano attaccati a window per sempre dopo l'uscita).
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        window.asteroidsInitialized = false;
 
         const selector = document.getElementById('arcade-game-selector');
         const gameContainer = document.getElementById('arcade-active-game-container');
@@ -214,6 +221,7 @@
             life: BULLET_LIFE
         });
         if (window.EspooClicker) window.EspooClicker.playSound('sound-space-shoot');
+        if (window.arcadeSfx) window.arcadeSfx.shoot();
     }
 
     function createExplosion(x, y, color) {
@@ -307,11 +315,13 @@
             if (a.y > canvas.height + a.r) a.y = 0 - a.r;
 
             // Collisione con Proiettili
+            let destroyed = false;
             for (let j = bullets.length - 1; j >= 0; j--) {
                 if (distBetweenPoints(a.x, a.y, bullets[j].x, bullets[j].y) < a.r) {
 
                     createExplosion(a.x, a.y, '#e67e22');
                     if (window.EspooClicker) window.EspooClicker.playSound('sound-space-boom');
+                    if (window.arcadeSfx) window.arcadeSfx.explode();
                     bullets.splice(j, 1);
 
                     score += (4 - a.size) * 10;
@@ -323,20 +333,24 @@
                         createAsteroid(a.x, a.y, a.size - 1);
                     }
                     asteroids.splice(i, 1);
+                    destroyed = true;
                     break;
                 }
             }
+            if (destroyed) continue; // asteroide rimosso: niente collisione-nave con 'a' stale
 
             // Collisione Nave
-            if (asteroids[i] && distBetweenPoints(ship.x, ship.y, a.x, a.y) < ship.radius + a.r) {
+            if (distBetweenPoints(ship.x, ship.y, a.x, a.y) < ship.radius + a.r) {
                 createExplosion(ship.x, ship.y, '#3498db');
                 gameOver();
+                return; // un solo gameOver per frame -> niente reward doppio
             }
         }
 
         // Vittoria Livello
         if (asteroids.length === 0) {
             level++;
+            if (window.arcadeSfx) window.arcadeSfx.levelup();
             spawnAsteroids();
             updateUI();
         }
@@ -429,21 +443,24 @@
 
         if (el) {
             el.innerHTML = `
-                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
-                <span class="stat">ONDATA: <span class="val-hp" style="color:#e67e22">${level}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">${score}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA'}: <span class="val-hp" style="color:#e67e22">${level}</span></span>
                 <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
             `;
         }
     }
 
     function gameOver() {
+        if (!isRunning) return; // guard rientranza: niente reward/record doppi
         isRunning = false;
         cancelAnimationFrame(gameInterval);
 
         if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
+        if (window.arcadeSfx) window.arcadeSfx.gameover();
 
         // CALCOLO RICOMPENSA (SCALING BPS)
         let reward = new Decimal(0);
+        let isNewRecord = false;
         if (typeof bps !== 'undefined') {
             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
             reward = bpsVal.mul(score).mul(0.04);
@@ -451,35 +468,26 @@
 
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
-
-            if (score > 0) {
-                gs.score = gs.score.add(reward);
-                window.EspooClicker.showToast(`🌌 NAVE DISTRUTTA! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
-            }
-
+            if (score > 0) gs.score = gs.score.add(reward);
             if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
-
             if (score > (gs.arcadeHighScores.asteroids || 0)) {
                 gs.arcadeHighScores.asteroids = score;
-                window.EspooClicker.showToast(`🏆 NUOVO RECORD: ${score}!`, 'achievement');
+                isNewRecord = true;
             }
-
             window.EspooClicker.saveGame();
-            if (typeof updateGameUI === 'function') updateGameUI(); // Sicurezza
+            if (typeof updateGameUI === 'function') updateGameUI();
         }
 
-        // Mostra Overlay Game Over
-        const overlay = document.getElementById('asteroids-overlay');
-        overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div style="color:#e74c3c; font-size:2rem; font-weight:900; font-family:'Rajdhani'; margin-bottom: 10px;">GAME OVER</div>
-            <div style="margin-bottom:10px; color:#bdc3c7;">Ondate superate: <span style="color:#e67e22">${level}</span></div>
-            <div style="margin-bottom:20px; font-size:1.2rem;">Punteggio: <span style="color:#fff">${score}</span></div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button class="arcade-btn secondary" onclick="window.exitAsteroidsGame()">MENU</button>
-                <button class="arcade-btn" onclick="window.startAsteroidsRun()">RIPROVA</button>
-            </div>
-        `;
+        // Game Over animato condiviso (stile Snake)
+        window.showArcadeGameOver({
+            overlay: document.getElementById('asteroids-overlay'),
+            score: score,
+            rewardStr: (window.EspooClicker && score > 0) ? window.EspooClicker.formatNumber(reward) : null,
+            isNewRecord: isNewRecord,
+            statLabel: 'ONDATE', statValue: level, statColor: '#e67e22',
+            onReturn: window.exitAsteroidsGame,
+            onRetry: window.startAsteroidsRun
+        });
     }
 
 })();

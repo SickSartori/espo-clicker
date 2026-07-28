@@ -1,0 +1,1255 @@
+/* =====================================================================
+   v3 — Guardaroba unificato (Skins Modal)
+   =====================================================================
+   Single grid view (no più toggle / carousel / legacy).
+   Card cyberpunk-tech con:
+   - rarity tier stripe + glow
+   - sfondo dinamico tinted by equipped skin rarity
+   - hover lift + scale
+   - equipped pill green animata
+   ===================================================================== */
+
+/* ── Modal container override (desktop + mobile) ── */
+.skins-modal-v3 {
+  background: linear-gradient(180deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(10, 15, 28, 0.95) 100%) !important;
+  border: 1px solid rgba(0, 217, 255, 0.18) !important;
+  border-radius: 8px !important;
+  position: relative;
+  overflow: hidden;
+  /* Stable size on open → no flash. Min altezza fissa. */
+  min-height: 70vh !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Animazione gestita da GSAP in openModal — niente CSS keyframes */
+html body div#skins-modal.modal-backdrop > .modal-content.skins-modal-v3,
+html body div#skins-modal.modal-backdrop {
+  animation: none !important;
+}
+
+/* Modal title */
+.skins-modal-v3 h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 16px 60px;
+  margin: 0;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+  background: linear-gradient(180deg,
+    rgba(0, 217, 255, 0.06) 0%,
+    transparent 100%);
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.skins-modal-v3 h2 i {
+  color: var(--v3-accent-cyan, #00d9ff);
+  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.6));
+}
+
+/* Close X button — compatto, allineato verticalmente al pill rarità */
+.skins-modal-v3 .modal-close-btn,
+.skin-preview-content .modal-close-btn {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  background: linear-gradient(135deg,
+    rgba(255, 61, 92, 0.22) 0%,
+    rgba(255, 61, 92, 0.10) 100%) !important;
+  border: 1px solid rgba(255, 61, 92, 0.45) !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+  width: 28px !important; /* 20px era sotto il minimo WCAG 2.5.8 (24px) */
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.7rem !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  padding: 0 !important;
+  transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease;
+  z-index: 100;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 6px rgba(255, 61, 92, 0.18);
+  text-shadow: 0 0 3px rgba(255, 61, 92, 0.5);
+}
+
+.skins-modal-v3 .modal-close-btn:hover,
+.skin-preview-content .modal-close-btn:hover {
+  background: linear-gradient(135deg,
+    rgba(255, 61, 92, 0.5) 0%,
+    rgba(255, 61, 92, 0.3) 100%) !important;
+  border-color: var(--v3-accent-red, #ff3d5c) !important;
+  transform: rotate(90deg) scale(1.05);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(255, 61, 92, 0.5);
+}
+
+.skins-modal-v3 .modal-close-btn:active,
+.skin-preview-content .modal-close-btn:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+/* ── Controls bar (filtri) ── */
+.skins-modal-v3 .skins-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
+}
+
+.skins-modal-v3 .skins-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skins-modal-v3 .skin-filter-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(0, 217, 255, 0.15);
+  color: rgba(248, 250, 252, 0.6);
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.skins-modal-v3 .skin-filter-btn:hover:not(:disabled) {
+  background: rgba(0, 217, 255, 0.1);
+  border-color: rgba(0, 217, 255, 0.4);
+  color: #fff;
+}
+
+.skins-modal-v3 .skin-filter-btn.active {
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.4) 0%,
+    rgba(16, 185, 129, 0.2) 100%);
+  border-color: var(--v3-tier-uncommon, #10b981);
+  color: #fff;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 0 18px rgba(16, 185, 129, 0.3);
+}
+
+.skins-modal-v3 .skin-filter-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.skins-modal-v3 .skin-select-filter {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(0, 217, 255, 0.15);
+  color: var(--v3-fg-primary, #f8fafc);
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════
+   UNIFIED GRID — sfondo dinamico + cards
+   ══════════════════════════════════════════════ */
+/* Specificità massima per sovrascrivere legacy css/skins-modern.css */
+html body div#skins-modal #skins-grid-modern.skins-unified-grid,
+.skins-unified-grid {
+  position: relative;
+  display: grid !important;
+  /* 6 colonne fisse — niente auto-fill che dà overlap weirdness */
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  grid-auto-rows: 248px !important;
+  flex-direction: unset !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  gap: 14px !important;
+  padding: 20px !important;
+  max-width: 100% !important;
+  width: auto !important;
+  margin: 0 !important;
+  max-height: 72vh;
+  min-height: 60vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  contain: layout paint;
+
+  /* Sfondo dinamico — tinta della skin equipaggiata (no transition, evita flash) */
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%,
+      var(--bg-glow-color, rgba(0, 217, 255, 0.15)) 0%,
+      transparent 60%),
+    radial-gradient(ellipse 80% 40% at 50% 100%,
+      var(--bg-glow-color, rgba(0, 217, 255, 0.08)) 0%,
+      transparent 60%);
+}
+
+/* Modal viewport più stretto → 5 col */
+@media (max-width: 1400px) {
+  html body div#skins-modal #skins-grid-modern.skins-unified-grid,
+  .skins-unified-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 1100px) {
+  html body div#skins-modal #skins-grid-modern.skins-unified-grid,
+  .skins-unified-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+/* Phone: senza questo step restavano 4 colonne anche a 375px (card da 68px) */
+@media (max-width: 768px) {
+  html body div#skins-modal #skins-grid-modern.skins-unified-grid,
+  .skins-unified-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Override legacy ::before/::after carousel artifacts */
+html body #skins-modal #skins-grid-modern.skins-unified-grid::before,
+html body #skins-modal #skins-grid-modern.skins-unified-grid::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Scrollbar cyan */
+.skins-unified-grid::-webkit-scrollbar {
+  width: 8px;
+}
+.skins-unified-grid::-webkit-scrollbar-track {
+  background: rgba(0, 217, 255, 0.04);
+}
+.skins-unified-grid::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.3);
+  border-radius: 999px;
+}
+.skins-unified-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 217, 255, 0.5);
+}
+
+/* Empty state */
+.skins-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(248, 250, 252, 0.4);
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════════════
+   SKIN CARD V3
+   ══════════════════════════════════════════════ */
+.skin-card-v3 {
+  position: relative;
+  /* GRID interno: img-area (1fr) + name (auto). Bulletproof contro overflow. */
+  display: grid !important;
+  grid-template-rows: 1fr auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  background: #0a0f1a;
+  border: 1px solid var(--r-color, rgba(0, 217, 255, 0.2));
+  border-radius: 6px;
+  overflow: hidden !important;
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+  isolation: isolate;
+  z-index: 1;
+  box-sizing: border-box;
+  contain: layout paint;
+}
+
+/* Top tier stripe */
+.skin-card-v3::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--r-color, #bdc3c7);
+  box-shadow: 0 0 12px var(--r-color, #bdc3c7);
+  z-index: 3;
+}
+
+/* Pattern bg layer (HUD per rarità) */
+.skin-card-v3::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%,
+      var(--r-glow, transparent) 0%,
+      transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+/* ════════════════════════════════════════════════
+   PATTERN BACKGROUNDS PER RARITÀ (card v3)
+   ════════════════════════════════════════════════ */
+
+/* Firme allineate all'ambient in-game (skin-ambient.css):
+   stessa forma+colore per tier, condensate in card. Tutte STATICHE:
+   con 30+ card in griglia la performance viene prima del movimento. */
+
+/* COMMON — "calibrazione": griglia HUD slate, quasi neutra */
+.skin-card-v3.rarity-common {
+  background:
+    linear-gradient(0deg,
+      transparent 0,
+      transparent calc(50% - 0.5px),
+      rgba(148, 163, 184, 0.045) 50%,
+      transparent calc(50% + 0.5px),
+      transparent 100%) 0 0/100% 24px repeat-y,
+    linear-gradient(90deg,
+      transparent 0,
+      transparent calc(50% - 0.5px),
+      rgba(148, 163, 184, 0.045) 50%,
+      transparent calc(50% + 0.5px),
+      transparent 100%) 0 0/24px 100% repeat-x,
+    radial-gradient(ellipse 80% 45% at 50% 0%,
+      rgba(148, 163, 184, 0.07) 0%,
+      transparent 65%),
+    linear-gradient(180deg,
+      rgba(19, 26, 44, 0.75) 0%,
+      rgba(9, 13, 24, 0.96) 100%);
+}
+
+/* RARE — "sonar": anello cyan dietro l'arte + tracce circuito */
+.skin-card-v3.rarity-rare {
+  background:
+    radial-gradient(circle at 50% 30%,
+      transparent 0 26%,
+      rgba(0, 217, 255, 0.14) 27% 28%,
+      transparent 29% 38%,
+      rgba(0, 217, 255, 0.06) 39% 40%,
+      transparent 41%),
+    repeating-linear-gradient(45deg,
+      transparent 0,
+      transparent 18px,
+      rgba(0, 217, 255, 0.05) 19px,
+      transparent 20px),
+    radial-gradient(ellipse 65% 42% at 50% 8%,
+      rgba(0, 217, 255, 0.13) 0%,
+      transparent 62%),
+    linear-gradient(180deg,
+      rgba(7, 30, 52, 0.85) 0%,
+      rgba(4, 14, 27, 0.96) 100%);
+}
+
+/* EPIC — "radar": mesh esagonale + cono di sweep viola */
+.skin-card-v3.rarity-epic {
+  background:
+    conic-gradient(from 300deg at 50% 30%,
+      transparent 0deg,
+      rgba(192, 132, 252, 0.12) 20deg,
+      rgba(168, 85, 247, 0.04) 38deg,
+      transparent 55deg,
+      transparent 360deg),
+    repeating-linear-gradient(60deg,
+      transparent 0, transparent 14px,
+      rgba(192, 132, 252, 0.055) 15px, transparent 16px),
+    repeating-linear-gradient(-60deg,
+      transparent 0, transparent 14px,
+      rgba(192, 132, 252, 0.055) 15px, transparent 16px),
+    radial-gradient(ellipse 70% 50% at 50% 0%,
+      rgba(168, 85, 247, 0.15) 0%,
+      transparent 65%),
+    linear-gradient(180deg,
+      rgba(29, 17, 52, 0.85) 0%,
+      rgba(14, 9, 27, 0.96) 100%);
+}
+
+/* LEGENDARY — "corona": raggi dorati + scintille sparse */
+.skin-card-v3.rarity-legendary {
+  background:
+    radial-gradient(circle 1px at 22% 35%,
+      rgba(252, 211, 77, 0.6) 50%, transparent 51%),
+    radial-gradient(circle 1.5px at 65% 22%,
+      rgba(252, 211, 77, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1px at 80% 70%,
+      rgba(252, 211, 77, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1.5px at 38% 78%,
+      rgba(255, 226, 130, 0.6) 50%, transparent 51%),
+    radial-gradient(circle 1px at 12% 58%,
+      rgba(255, 226, 130, 0.45) 50%, transparent 51%),
+    conic-gradient(from 20deg at 50% 28%,
+      transparent 0deg,
+      rgba(252, 211, 77, 0.08) 30deg,
+      transparent 62deg,
+      rgba(245, 158, 11, 0.11) 118deg,
+      transparent 165deg,
+      rgba(252, 211, 77, 0.08) 215deg,
+      transparent 258deg,
+      rgba(245, 158, 11, 0.09) 310deg,
+      transparent 348deg,
+      transparent 360deg),
+    linear-gradient(180deg,
+      rgba(41, 29, 8, 0.85) 0%,
+      rgba(21, 15, 7, 0.96) 100%);
+}
+
+/* DIVINE — "aurora + halo": arco avorio + controbanda prismatica */
+.skin-card-v3.rarity-divine {
+  background:
+    radial-gradient(circle at 50% 28%,
+      transparent 0 30%,
+      rgba(255, 238, 180, 0.20) 31% 32.5%,
+      transparent 34%),
+    linear-gradient(135deg,
+      transparent 0%,
+      rgba(255, 240, 180, 0.09) 22%,
+      transparent 42%,
+      rgba(172, 225, 255, 0.05) 58%,
+      transparent 72%,
+      rgba(255, 220, 160, 0.11) 88%,
+      transparent 100%),
+    radial-gradient(ellipse 80% 55% at 50% 24%,
+      rgba(255, 238, 144, 0.16) 0%,
+      transparent 70%),
+    linear-gradient(180deg,
+      rgba(41, 34, 17, 0.85) 0%,
+      rgba(23, 19, 11, 0.96) 100%);
+}
+
+/* CHRISTMAS — fiocchi + calore rosso/oro dal basso */
+.skin-card-v3.rarity-christmas {
+  background:
+    radial-gradient(circle 1.5px at 18% 25%,
+      rgba(250, 250, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(circle 1px at 55% 35%,
+      rgba(250, 250, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1.5px at 75% 60%,
+      rgba(250, 250, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(circle 1px at 30% 75%,
+      rgba(250, 250, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1px at 88% 18%,
+      rgba(250, 250, 255, 0.45) 50%, transparent 51%),
+    radial-gradient(ellipse 100% 50% at 50% 100%,
+      rgba(239, 68, 68, 0.17) 0%,
+      rgba(245, 158, 11, 0.07) 50%,
+      transparent 80%),
+    radial-gradient(ellipse 70% 40% at 50% 0%,
+      rgba(120, 200, 150, 0.06) 0%,
+      transparent 65%),
+    linear-gradient(180deg,
+      rgba(41, 12, 19, 0.85) 0%,
+      rgba(21, 8, 11, 0.96) 100%);
+}
+
+/* Hover: pattern intensifica leggermente */
+.skin-card-v3:hover::after {
+  opacity: 1;
+}
+
+/* Hover */
+.skin-card-v3:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--r-color, #00d9ff);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 32px var(--r-glow, rgba(0, 217, 255, 0.3));
+}
+
+/* Equipped state */
+.skin-card-v3.equipped {
+  border-color: var(--v3-tier-uncommon, #10b981) !important;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.4),
+    0 0 24px rgba(16, 185, 129, 0.3);
+  animation: v3-skin-equipped-pulse 3s ease-in-out infinite;
+}
+
+.skin-card-v3.equipped::before {
+  background: var(--v3-tier-uncommon, #10b981);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+}
+
+@keyframes v3-skin-equipped-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(16,185,129,0.4), 0 0 24px rgba(16,185,129,0.3); }
+  50%      { box-shadow: 0 0 0 1px rgba(16,185,129,0.6), 0 0 36px rgba(16,185,129,0.5); }
+}
+
+/* Locked state */
+.skin-card-v3.locked {
+  opacity: 0.6;
+  filter: saturate(0.5);
+}
+.skin-card-v3.locked:hover {
+  opacity: 0.9;
+  filter: saturate(0.7);
+}
+
+/* Rarity badge top-right */
+.skin-rarity-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(10, 15, 28, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--r-color, rgba(189, 195, 199, 0.4));
+  color: var(--r-color, #bdc3c7);
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-shadow: 0 0 6px var(--r-color, transparent);
+  z-index: 3;
+}
+
+/* Image area: griglia row 1, riempie altezza disponibile */
+html body #skins-modal .skin-card-v3 .skin-img-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.4), rgba(10, 15, 28, 0.6)) !important;
+  z-index: 1 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  contain: strict !important;
+}
+
+html body #skins-modal .skin-card-v3 .skin-img-wrap img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 25% !important;
+  display: block !important;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html body #skins-modal .skin-card-v3.locked .skin-img-wrap img {
+  object-position: center 15% !important;
+}
+
+/* Locked: shift img up così la testa è dove sta il lock icon */
+.skin-card-v3.locked .skin-img-wrap img {
+  object-position: center 15%;
+}
+
+.skin-img-wrap .skin-lock-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.skin-card-v3:hover .skin-img-wrap img {
+  transform: scale(1.06);
+}
+
+/* Lock overlay (locked skins) */
+.skin-lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.4rem !important;
+  color: rgba(248, 250, 252, 0.5);
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  z-index: 2;
+}
+
+/* ──────────────────────────────────────────────
+   In-game: sfondo body tinted by current skin rarity
+   Due variabili: --skin-rarity-glow (forte, statico visibile)
+                  --skin-rarity-accent (per bordi/colonne)
+   ────────────────────────────────────────────── */
+body[data-current-skin-rarity] {
+  --skin-rarity-glow: rgba(189, 195, 199, 0.18);
+  --skin-rarity-accent: rgba(189, 195, 199, 0.4);
+  --skin-rarity-base: #0a0e18;
+}
+body[data-current-skin-rarity="common"] {
+  --skin-rarity-glow: rgba(148, 163, 184, 0.25);
+  --skin-rarity-accent: rgba(203, 213, 225, 0.50);
+  --skin-rarity-base: #0c111c;
+}
+body[data-current-skin-rarity="rare"] {
+  --skin-rarity-glow: rgba(0, 200, 255, 0.32);
+  --skin-rarity-accent: rgba(0, 217, 255, 0.65);
+  --skin-rarity-base: #051422;
+}
+body[data-current-skin-rarity="epic"] {
+  --skin-rarity-glow: rgba(180, 80, 255, 0.32);
+  --skin-rarity-accent: rgba(192, 132, 252, 0.65);
+  --skin-rarity-base: #14072a;
+}
+body[data-current-skin-rarity="legendary"] {
+  --skin-rarity-glow: rgba(251, 191, 36, 0.32);
+  --skin-rarity-accent: rgba(252, 211, 77, 0.65);
+  --skin-rarity-base: #1f1606;
+}
+body[data-current-skin-rarity="divine"] {
+  --skin-rarity-glow: rgba(255, 240, 180, 0.36);
+  --skin-rarity-accent: rgba(255, 232, 200, 0.65);
+  --skin-rarity-base: #1f1d12;
+}
+body[data-current-skin-rarity="christmas"] {
+  --skin-rarity-glow: rgba(239, 68, 68, 0.32);
+  --skin-rarity-accent: rgba(248, 113, 113, 0.65);
+  --skin-rarity-base: #1f0608;
+}
+
+/* ════════════════════════════════════════════════
+   SKIN PREVIEW MODAL (apre on click su card)
+   ════════════════════════════════════════════════ */
+.skin-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: v3-preview-fade-in 220ms ease;
+}
+
+@keyframes v3-preview-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.skin-preview-content {
+  background: linear-gradient(180deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(10, 15, 28, 0.98) 100%) !important;
+  border: 1px solid var(--r-color, rgba(0, 217, 255, 0.4)) !important;
+  border-radius: 8px !important;
+  width: min(380px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  /* Stable scrollbar gutter su entrambi i lati → niente shift orizzontale */
+  scrollbar-gutter: stable both-edges;
+  position: relative;
+  box-shadow:
+    0 0 0 1px var(--r-glow, rgba(0, 217, 255, 0.2)),
+    0 24px 60px rgba(0, 0, 0, 0.7),
+    0 0 60px var(--r-glow, rgba(0, 217, 255, 0.15));
+  animation: v3-preview-scale-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes v3-preview-scale-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Banner header: contenitore stretto con pill centrata "chiusa" */
+.preview-rarity-banner {
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  padding: 12px;
+  color: var(--r-color, #fff);
+  text-shadow: 0 0 10px var(--r-color, transparent);
+  background: transparent;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Pill interna che racchiude il testo rarità */
+.preview-rarity-banner::before {
+  content: attr(data-rarity);
+  display: inline-block;
+  padding: 5px 16px;
+  background: linear-gradient(135deg,
+    rgba(15, 23, 42, 0.9),
+    rgba(10, 15, 28, 0.8));
+  border: 1px solid var(--r-color, rgba(0, 217, 255, 0.4));
+  border-radius: 999px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 0 10px var(--r-glow, rgba(0, 217, 255, 0.15));
+}
+
+/* Nascondi text content originale (mostriamo via ::before data-rarity) */
+.preview-rarity-banner {
+  font-size: 0;
+  line-height: 0;
+}
+.preview-rarity-banner::before {
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+/* Stage: aspect quadrato → mostra intera skin portrait/landscape */
+.preview-img-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 320px;
+  overflow: hidden;
+  display: grid !important;
+  place-items: center !important;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%,
+      var(--r-glow, rgba(0, 217, 255, 0.1)) 0%,
+      transparent 70%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.6), rgba(10, 15, 28, 0.9));
+}
+
+/* Img: object-fit contain → skin SEMPRE intera (no crop) */
+.preview-img-stage img {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  inset: auto !important;
+  width: 95% !important;
+  height: 95% !important;
+  max-width: 95% !important;
+  max-height: 95% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  display: block !important;
+  grid-row: 1;
+  grid-column: 1;
+  transform: none !important;
+}
+
+/* Lock overlay anche in grid cell 1/1 → centrato */
+.preview-img-stage .preview-lock-overlay {
+  grid-row: 1;
+  grid-column: 1;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
+.preview-img-stage.locked img {
+  filter: grayscale(0.8) brightness(0.4);
+}
+
+.preview-lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.6rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+}
+
+.preview-equipped-flag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border: 1px solid #10b981;
+  color: #fff;
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.6);
+}
+
+.preview-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-name {
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 0 10px var(--r-glow, rgba(0, 217, 255, 0.3));
+}
+
+.preview-desc {
+  font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif);
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: rgba(248, 250, 252, 0.75);
+  text-align: center;
+  padding: 8px 12px;
+  background: rgba(0, 217, 255, 0.04);
+  border-left: 2px solid var(--r-color, rgba(0, 217, 255, 0.4));
+  border-radius: 2px;
+}
+
+.preview-requirement {
+  font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(248, 250, 252, 0.7);
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 2px solid var(--v3-tier-legendary, #f59e0b);
+  border-radius: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.preview-requirement i {
+  color: var(--v3-tier-legendary, #f59e0b);
+  margin-top: 2px;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+}
+
+.preview-cost,
+.preview-cost-value {
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.preview-cost-value.afford {
+  color: var(--v3-tier-legendary, #f59e0b);
+  background: rgba(245, 158, 11, 0.1);
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+.preview-cost-value.noafford {
+  color: var(--v3-accent-red, #ff3d5c);
+  background: rgba(255, 61, 92, 0.1);
+}
+.preview-cost.format {
+  color: var(--v3-tier-epic, #a855f7);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.preview-action {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.preview-btn {
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 0;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  text-align: center;
+  transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.preview-btn.equipped-btn {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.15));
+  border-color: var(--v3-tier-uncommon, #10b981);
+  color: var(--v3-tier-uncommon, #10b981);
+  cursor: default;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.preview-btn.equip-btn {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.25), rgba(0, 217, 255, 0.1));
+  border-color: var(--v3-accent-cyan, #00d9ff);
+  color: var(--v3-accent-cyan, #00d9ff);
+  text-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+}
+.preview-btn.equip-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.45), rgba(0, 217, 255, 0.2));
+  color: #fff;
+  box-shadow: 0 0 24px rgba(0, 217, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.preview-btn.buy-btn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(245, 158, 11, 0.18));
+  border-color: var(--v3-tier-legendary, #f59e0b);
+  color: var(--v3-tier-legendary, #f59e0b);
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+.preview-btn.buy-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.55), rgba(245, 158, 11, 0.28));
+  color: #fff;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.5);
+  transform: translateY(-2px);
+}
+
+.preview-btn.disabled-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(248, 250, 252, 0.4);
+  cursor: not-allowed;
+}
+
+.preview-btn:active:not(.disabled-btn):not(.equipped-btn) {
+  transform: scale(0.97);
+}
+
+/* ──────────────────────────────────────────────
+   SKIN CARD V3 — fix layout (specificità alta)
+   ────────────────────────────────────────────── */
+html body #skins-modal .skin-card-v3 .skin-name-display {
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  color: #fff !important;
+  text-align: center !important;
+  padding: 8px 6px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  background: rgba(10, 15, 28, 0.95) !important;
+  border-top: 1px solid var(--r-color, rgba(0, 217, 255, 0.25)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  flex: 0 0 auto !important;
+  position: relative !important;
+  z-index: 5 !important;
+  box-sizing: border-box !important;
+  line-height: 1.2 !important;
+}
+
+html body #skins-modal .skin-card-v3.locked .skin-name-display {
+  color: rgba(248, 250, 252, 0.55) !important;
+}
+
+/* Lock overlay più grande visibile */
+.skin-card-v3 .skin-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 4;
+}
+.skin-card-v3 .skin-lock-overlay i {
+  font-size: 2.4rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ──────────────────────────────────────────────
+   QUICK-EQUIP TOGGLE — equip diretto senza preview
+   ────────────────────────────────────────────── */
+html body #skins-modal .skin-card-v3 .skin-equip-toggle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 217, 255, 0.5);
+  background: rgba(10, 15, 28, 0.85);
+  backdrop-filter: blur(6px);
+  color: var(--v3-accent-cyan, #00d9ff);
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 6;
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.2);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 180ms ease,
+              border-color 180ms ease,
+              box-shadow 180ms ease,
+              color 180ms ease;
+  opacity: 0.85;
+}
+
+html body #skins-modal .skin-card-v3 .skin-equip-toggle:hover {
+  transform: scale(1.18);
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.4), rgba(0, 217, 255, 0.18));
+  border-color: var(--v3-accent-cyan, #00d9ff);
+  color: #fff;
+  box-shadow:
+    0 0 0 2px rgba(0, 217, 255, 0.18),
+    0 0 18px rgba(0, 217, 255, 0.6);
+  opacity: 1;
+}
+
+html body #skins-modal .skin-card-v3 .skin-equip-toggle:active {
+  transform: scale(0.92);
+}
+
+html body #skins-modal .skin-card-v3 .skin-equip-toggle.equipped {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border-color: #10b981;
+  color: #fff;
+  cursor: default;
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+  font-size: 0.62rem;
+  animation: v3-equip-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes v3-equip-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.5); }
+  50%      { box-shadow: 0 0 20px rgba(16, 185, 129, 0.85); }
+}
+
+html body #skins-modal .skin-card-v3 .skin-equip-toggle i {
+  pointer-events: none;
+  line-height: 1;
+}
+
+.skin-card-v3 {
+  cursor: pointer;
+}
+
+/* ──────────────────────────────────────────────
+   STATUS CHIP — stato skin a colpo d'occhio sulla card
+   (prezzo / gratis / formatta / obiettivo / in uso)
+   ────────────────────────────────────────────── */
+html body #skins-modal .skin-card-v3 .skin-status-chip {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 12px);
+  padding: 3px 7px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+  box-sizing: border-box;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 200ms ease;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip i {
+  font-size: 0.62rem;
+  flex-shrink: 0;
+}
+
+/* GRATIS — verde pieno, cliccabile (riscatto 1-tap dalla card) */
+html body #skins-modal .skin-card-v3 button.skin-status-chip {
+  cursor: pointer;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.8);
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.free:active {
+  transform: scale(0.94);
+}
+
+/* PREZZO — verde se puoi permettertela, rosso se token insufficienti */
+html body #skins-modal .skin-card-v3 .skin-status-chip.price.afford {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.7);
+  color: #4ade9f;
+}
+html body #skins-modal .skin-card-v3 .skin-status-chip.price.noafford {
+  background: rgba(255, 61, 92, 0.16);
+  border-color: rgba(255, 61, 92, 0.7);
+  color: #ff92a5;
+}
+
+/* FORMATTA — viola (skin post-formattazione) */
+html body #skins-modal .skin-card-v3 .skin-status-chip.format {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.7);
+  color: #cba6f5;
+}
+
+/* OBIETTIVO — ambra (si sblocca giocando, non si compra) */
+html body #skins-modal .skin-card-v3 .skin-status-chip.objective {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.7);
+  color: #fbbf24;
+}
+
+/* IN USO — verde pieno */
+html body #skins-modal .skin-card-v3 .skin-status-chip.inuse {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border-color: #10b981;
+  color: #fff;
+}
+
+/* Buyable: NON desaturata come le locked; dim leggero solo se non affordable */
+html body #skins-modal .skin-card-v3.buyable {
+  opacity: 1;
+  filter: none;
+}
+html body #skins-modal .skin-card-v3.buyable.noafford {
+  opacity: 0.9;
+}
+html body #skins-modal .skin-card-v3.buyable.noafford:hover {
+  opacity: 1;
+}
+
+/* Requisito in hover — slide-up sopra l'arte, solo card OBIETTIVO (desktop) */
+html body #skins-modal .skin-card-v3 .skin-req-hover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 9px 9px;
+  font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif);
+  font-size: 0.64rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #fff;
+  background: linear-gradient(0deg, rgba(6, 10, 20, 0.97) 55%, rgba(6, 10, 20, 0) 100%);
+  transform: translateY(101%);
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), opacity 240ms ease;
+  z-index: 6;
+  pointer-events: none;
+}
+html body #skins-modal .skin-card-v3 .skin-req-hover i {
+  color: var(--v3-tier-legendary, #f59e0b);
+  margin-top: 1px;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+}
+html body #skins-modal .skin-card-v3:hover .skin-req-hover,
+html body #skins-modal .skin-card-v3:focus-visible .skin-req-hover {
+  transform: translateY(0);
+  opacity: 1;
+}
+/* Su card OBIETTIVO in hover: piena leggibilità del requisito */
+html body #skins-modal .skin-card-v3.locked:hover {
+  opacity: 1;
+  filter: saturate(0.7);
+}
+
+/* Sagoma-mistero SCURA: multiply toglie il fondo bianco (mostra lo "stage" sotto),
+   la figura resta scura. Lo stage è una luce soffusa dietro la testa così la sagoma
+   nera si stacca dal buio senza formare un "quadrato". */
+html body #skins-modal .skin-card-v3.silhouette .skin-img-wrap {
+  background:
+    radial-gradient(ellipse 72% 64% at 50% 33%,
+      rgba(170, 182, 200, 0.34) 0%,
+      rgba(58, 72, 100, 0.22) 44%,
+      rgba(10, 15, 28, 0.9) 100%) !important;
+}
+html body #skins-modal .skin-card-v3 .skin-img-wrap img.is-silhouette {
+  mix-blend-mode: multiply;
+  opacity: 0.95;
+  object-position: center 14% !important;
+}
+/* Niente più scrim scuro pieno del lucchetto (era il "quadrato più scuro"):
+   resta solo l'icona centrata. */
+html body #skins-modal .skin-card-v3 .skin-lock-overlay {
+  background: transparent;
+  backdrop-filter: none;
+}
+/* Lucchetto ben visibile sopra arte B&N/silhouette (icona sibling → NON sfocata) */
+html body #skins-modal .skin-card-v3 .skin-lock-overlay i {
+  font-size: 2.6rem;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.65);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .skin-card-v3,
+  .skin-img-wrap img,
+  .skin-status-chip,
+  .skin-req-hover,
+  .skin-card-v3.equipped {
+    animation: none !important;
+    transition: none !important;
+  }
+}

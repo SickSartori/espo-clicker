@@ -1,12 +1,19 @@
 <?php
 require_once("php/check_language.php");
 require_once("php/check_version.php");
+require_once("php/launch-gate.php");
+// Gate lancio v3.0: prima del lancio, in produzione, serve SOLO il countdown.
+if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="<?php echo $lang; ?>">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<!-- v3 a11y: rimossi maximum-scale=1.0 e user-scalable=no (WCAG 1.4.4) -->
+
+		<!-- color-scheme dichiarato → riduce flash su prefers-color-scheme cambio -->
+		<meta name="color-scheme" content="dark light">
 
 		<!-- PWA Meta Tags -->
 		<meta name="theme-color" content="#3498db">	
@@ -45,10 +52,22 @@ require_once("php/check_version.php");
 		<!-- ============================================================ -->
 
 		<!-- Bundle Core + UI + all styles -->
-		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $cacheVer; ?>">
+		<!-- Cache-bust come il JS bundle: in dev (localhost) filemtime → CSS fresca a
+		     ogni `npm run build` (vite) senza bumpare la versione, in dev e in prod (come il bundle V3). -->
+		<?php
+		// $cacheVer resta solo come fallback se il file non esiste (build non ancora eseguita).
+		$stylesVer = assetVer(__DIR__ . '/dist/styles.bundle.min.css', $cacheVer);
+		$mobileVer = assetVer(__DIR__ . '/dist/styles.mobile.min.css', $cacheVer);
+		?>
+		<link rel="stylesheet" href="dist/styles.bundle.min.css?v=<?php echo $stylesVer; ?>">
 
 		<!-- Bundle Mobile: caricato solo sotto 768px -->
-		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $cacheVer; ?>" media="(max-width: 768px)">
+		<link rel="stylesheet" href="dist/styles.mobile.min.css?v=<?php echo $mobileVer; ?>" media="(max-width: 768px)">
+
+		<!-- V3 styles (tokens, primitives, skip-link a11y). V3 è l'app, sempre caricato.
+		     Cache buster via filemtime() — ogni rebuild Vite invalida cache SW automaticamente. -->
+		<?php $v3CssVer = assetVer(__DIR__ . '/dist/assets/styles.css', $cacheVer); ?>
+		<link rel="stylesheet" href="dist/assets/styles.css?v=<?php echo $v3CssVer; ?>">
 
 		<!-- CSS Arcade: NON caricato all'avvio → arcade-loader.js lo inietta on-demand -->
 
@@ -59,10 +78,11 @@ require_once("php/check_version.php");
 		<link rel="preload" as="image" href="assets/image/skins/espo.webp" fetchpriority="high">
 		<link rel="preload" as="image" href="assets/image/skins/espo-click.webp" fetchpriority="high" imagesrcset="assets/image/skins/espo-click.webp" imagesizes="(max-width: 768px) 120px, 240px">
 
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=<?php echo $cacheVer; ?>">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	</head>
 	<body>
-		<canvas id="matrix-canvas"></canvas>
+		<a href="#center-column" class="v3-skip-link"><?php echo $labels["idx_skip_content"]; ?></a>
+		<canvas id="matrix-canvas" aria-hidden="true"></canvas>
 
 		<div id="game-loader">
 			<div class="loader-content">
@@ -94,13 +114,13 @@ require_once("php/check_version.php");
 			</div>
 		</div>
 
-		<div id="toast-container"></div>
+		<div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
 		<div id="prestige-transition-overlay" class="prestige_transition_overlay prestige_transition_overlay_display_none">
 			<div class="prestige-anim-container" id="prestige-anim-container">
 				<i class="fa-solid fa-certificate fa-flip prestige-anim-icon"></i>
-				<h1 class="prestige-anim-title">Promozione in Corso</h1>
-				<p class="prestige-anim-subtitle fa-fade">Ristrutturazione Aziendale del Database...</p>
+				<h1 class="prestige-anim-title"><?php echo $labels["idx_promo_title"]; ?></h1>
+				<p class="prestige-anim-subtitle fa-fade"><?php echo $labels["idx_promo_subtitle"]; ?></p>
 
 				<div class="prestige-progress-track">
 					<div id="prestige-progress-bar" class="prestige-progress-fill"></div>
@@ -122,7 +142,7 @@ require_once("php/check_version.php");
 		<div id="offline-modal" class="modal-backdrop modal_backdrop_none">
 			<div class="modal-content offline_modal_content">
 				<h2>
-					💤 <?php echo $labels["offline_titolo"]; ?>
+					<i class="fa-solid fa-bed"></i> <?php echo $labels["offline_titolo"]; ?>
 				</h2>
 				<div class="offline_content">
 					<p class="offline_content_sottotitolo">
@@ -141,7 +161,7 @@ require_once("php/check_version.php");
 						</span>
 					</div>
 					<button id="btn-claim-offline" class="buy-btn offline_content_button">
-						💰 <?php echo $labels["offline_guadagni"]; ?>
+						<i class="fa-solid fa-sack-dollar"></i> <?php echo $labels["offline_guadagni"]; ?>
 					</button>
 				</div>
 			</div>
@@ -151,22 +171,22 @@ require_once("php/check_version.php");
 		<?php include 'includes/modals_arcade.php'; ?>
 		<?php include 'includes/modals_help.php'; ?>
 
-		<nav id="game-navbar">
+		<nav id="game-navbar" aria-label="<?php echo $labels["idx_main_menu_aria"]; ?>">
 			<div class="nav-group left">
-				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["navbar_guida"]; ?>">
-					<i class="nav-icon fa-solid fa-circle-question"></i>
+				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["help_menu_titolo"]; ?>">
+					<i class="nav-icon" data-lucide="info"></i>
 					<span class="nav-label">
-						<?php echo $labels["navbar_guida"]; ?>
+						<?php echo $labels["help_menu_titolo"]; ?>
 					</span>
 				</button>
 				<button id="open-stats-btn" class="nav-item" title="<?php echo $labels["navbar_stats"]; ?>">
-					<i class="nav-icon fa-solid fa-chart-pie"></i>
+					<i class="nav-icon" data-lucide="chart-line"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_stats"]; ?>
 					</span>
 				</button>
 				<button id="open-arcade-btn" class="nav-item" title="<?php echo $labels["navbar_arcade"]; ?>">
-					<i class="nav-icon fa-solid fa-gamepad"></i>
+					<i class="nav-icon" data-lucide="gamepad-2"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_arcade"]; ?>
 					</span>
@@ -175,19 +195,19 @@ require_once("php/check_version.php");
 
 			<div class="nav-group center">
 				<button id="open-achievements-btn" class="nav-item" title="<?php echo $labels["navbar_obiettivi"]; ?>">
-					<i class="nav-icon fa-solid fa-trophy"></i>
+					<i class="nav-icon" data-lucide="award"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_obiettivi"]; ?>
 					</span>
 				</button>
 				<button id="open-skins-btn" class="nav-item" title="<?php echo $labels["navbar_skin"]; ?>">
-					<i class="nav-icon fa-solid fa-shirt"></i>
+					<i class="nav-icon" data-lucide="shirt"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_skin"]; ?>
 					</span>
 				</button>
 				<button id="open-leaderboard-btn" class="nav-item" title="<?php echo $labels["navbar_classifica"]; ?>">
-					<i class="nav-icon fa-solid fa-medal"></i>
+					<i class="nav-icon" data-lucide="trophy"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_classifica"]; ?>
 					</span>
@@ -196,13 +216,18 @@ require_once("php/check_version.php");
 
 			<div class="nav-group right">
 				<button id="open-prestige-hub-btn" class="nav-special-btn">
-					<i class="nav-icon fa-solid fa-rocket"></i>
+					<i class="nav-icon" data-lucide="zap"></i>
 					<span>
 						<?php echo $labels["navbar_promozione"]; ?>
 					</span>
 				</button>
+				<button id="open-user-hub-btn" class="nav-item" title="<?php echo $labels["navbar_account_title"]; ?>">
+					<i class="nav-icon" data-lucide="users"></i>
+					<span class="nav-label" id="navbar-username-label"><?php echo $labels["account_default_name"]; ?></span>
+					<span id="user-hub-badge" class="user-hub-badge" hidden></span>
+				</button>
 				<button id="open-settings-btn" class="nav-item" title="<?php echo $labels["navbar_opzioni"]; ?>">
-					<i class="nav-icon fa-solid fa-gear"></i>
+					<i class="nav-icon" data-lucide="sliders"></i>
 					<span class="nav-label">
 						<?php echo $labels["navbar_opzioni"]; ?>
 					</span>
@@ -210,32 +235,34 @@ require_once("php/check_version.php");
 			</div>
 		</nav>
 
-		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>">
-			<i class="fa-solid fa-volume-high"></i>
+		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>" aria-label="<?php echo $labels["index_muta_audio"]; ?>">
+			<span class="qm-icon"><i class="fa-solid fa-volume-high"></i></span>
+			<!-- Etichetta sblocco audio (.is-blocked). TODO i18n: "Attiva audio" -> $labels. -->
+			<span class="qm-hint" aria-hidden="true">Attiva audio</span>
 		</button>
 
-		<div id="game-container">
-			<div id="left-column" class="game-column">
-				<div class="tabs-header">
-					<button class="tab-btn active" data-target="upgrade-store" id="tab-click">
-						<i class="fa-solid fa-computer-mouse"></i>
+		<div id="game-container"><h1 style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;">Espò Clicker</h1>
+			<div id="left-column" class="game-column" role="region" aria-label="<?php echo $labels["idx_upgrades_aria"]; ?>">
+				<div class="tabs-header" role="tablist" aria-label="<?php echo $labels["idx_shop_cat_aria"]; ?>">
+					<button class="tab-btn active" data-target="upgrade-store" id="tab-click" role="tab" aria-selected="true" aria-controls="upgrade-store">
+						<i data-lucide="mouse-pointer-2"></i>
 						<?php echo $labels["game_container_click_titolo"]; ?>
 					</button>
-					<button class="tab-btn" data-target="enhancement-store" id="tab-auto">
-						<i class="fa-solid fa-robot"></i>
+					<button class="tab-btn" data-target="enhancement-store" id="tab-auto" role="tab" aria-selected="false" aria-controls="enhancement-store">
+						<i data-lucide="cog"></i>
 						<?php echo $labels["game_container_auto_titolo"]; ?>
 					</button>
-					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige">
-						<i class="fa-solid fa-flask"></i>
+					<button class="tab-btn tab_promozione" data-target="prestige-wrapper" id="tab-prestige" role="tab" aria-selected="false" aria-controls="prestige-wrapper">
+						<i data-lucide="flask-conical"></i>
 						<?php echo $labels["game_container_lab_titolo"]; ?>
 					</button>
-					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" style="display:none; color: #9b59b6;">
-						<i class="fa-solid fa-atom"></i> Q-Lab
+					<button class="tab-btn" data-target="quantum-wrapper" id="tab-quantum" role="tab" aria-selected="false" aria-controls="quantum-wrapper" style="display:none; color: #9b59b6;">
+						<i data-lucide="atom"></i> Q-Lab
 					</button>
 				</div>
 				
 				<div id="global-filter-section">
-					<select id="global-filter-select">
+					<select id="global-filter-select" aria-label="<?php echo $labels["idx_shop_filter_aria"]; ?>">
 						<option value="available"><?php echo $labels["game_container_da_comprare"]; ?></option>
 						<option value="locked"><?php echo $labels["game_container_in_arrivo"]; ?></option>
 						<option value="purchased"><?php echo $labels["game_container_gia_presi"]; ?></option>
@@ -253,9 +280,9 @@ require_once("php/check_version.php");
 			<?php include 'includes/col_buildings.php'; ?>
 		</div>
 
-		<div id="golden-bug" title="<?php echo $labels["index_golden_bug_title"]; ?>">
-			<i class="fa-solid fa-bug"></i>
-		</div> 
+		<div id="golden-bug" role="button" tabindex="0" aria-label="<?php echo $labels["index_golden_bug_title"]; ?>" title="<?php echo $labels["index_golden_bug_title"]; ?>">
+			<i class="fa-solid fa-bug" aria-hidden="true"></i>
+		</div>
 
 		<div id="github-link-container">
 			<a href="https://github.com/SickSartori/espo-clicker" target="_blank" title="<?php echo $labels["index_github_title"]; ?>">
@@ -267,7 +294,7 @@ require_once("php/check_version.php");
 		<div id="crunch-overlay"></div>
 		<div id="fire-particles-container"></div>
 
-		<div id="mobile-nav-bar">
+		<div id="mobile-nav-bar" role="navigation" aria-label="<?php echo $labels['idx_mobile_nav_aria']; ?>">
 			<button class="mobile-nav-btn" data-target="left-column">
 				<i class="fa-solid fa-bolt"></i>
 				<span><?php echo $labels["mobile_tab_upgrade"]; ?></span>
@@ -280,49 +307,76 @@ require_once("php/check_version.php");
 				<i class="fa-solid fa-users"></i>
 				<span><?php echo $labels["mobile_tab_team"]; ?></span>
 			</button>
+			<button id="mobile-arcade-btn" class="mobile-nav-btn mobile-nav-arcade" title="<?php echo $labels["navbar_arcade"]; ?>">
+				<i class="fa-solid fa-ghost"></i>
+				<span><?php echo $labels["navbar_arcade"]; ?></span>
+			</button>
 		</div>
 
 		<!-- ============================================================ -->
 		<!-- LIBRERIE ESTERNE (solo quelle necessarie all'avvio)        -->
-		<!-- lz-string: ora bundlato in game.bundle.min.js              -->
+		<!-- lz-string: dipendenza npm, riesposta su window da src/main.ts -->
 		<!-- Phaser.js rimosso: caricato on-demand da arcade-loader.js  -->
 		<!-- ============================================================ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-		<script src="https://cdn.jsdelivr.net/npm/break_infinity.js@2" defer></script>
+		<?php $biVer = assetVer(__DIR__ . '/dist/break_infinity.min.js', $cacheVer); ?>
+		<script src="dist/break_infinity.min.js?v=<?php echo $biVer; ?>" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js" defer></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
 		<!-- Phaser (~1.5 MB) → caricato SOLO all'apertura dell'Arcade -->
 
 		<!-- ============================================================ -->
-		<!-- GAME BUNDLE (esbuild minificato)                            -->
-		<!-- 15 file JS → 1 bundle (~90 KB minificato, ~30 KB gzip)      -->
-		<!-- Contiene: asset-system, gamedata, game logic, save system   -->
+		<!-- V3 MODULES (Vite ESM) — bundle dell'app                      -->
+		<!-- Espone window.EspoV3 con i moduli TS del gioco                -->
+		<!-- Cache buster via filemtime() per invalidare SW ad ogni build -->
+		<!--                                                              -->
+		<!-- ORDINE: defer e module eseguono in ordine di documento,       -->
+		<!-- quindi qui — DOPO la CDN break_infinity, PRIMA del bundle     -->
+		<!-- legacy — vale il contratto:                                   -->
+		<!--  1. window.Decimal = break_infinity (CDN); se la CDN fallisce  -->
+		<!--     installGlobalDecimal() installa break_eternity (fallback)  -->
+		<!--  2. window.EspoV3 è GIÀ pronto quando il legacy esegue → le    -->
+		<!--     deleghe `window.EspoV3?.x ?? legacy` sono sync e sicure    -->
+		<!-- ============================================================ -->
+		<?php $v3JsVer = assetVer(__DIR__ . '/dist/game.modules.js', $cacheVer); ?>
+		<script type="module" src="dist/game.modules.js?v=<?php echo $v3JsVer; ?>"></script>
+
 		<!-- ============================================================ -->
 		<!-- Cache buster condiviso: usato per i theme CSS lazy-load
 		     (loadThemeCSS in ui-functions.js). Senza questo gli aggiornamenti
 		     ai temi non venivano serviti perché ?v=2 (solo major) restava fisso. -->
 		<script>window.CACHE_VER = '<?php echo $cacheVer; ?>';</script>
-		<script src="dist/game.bundle.min.js?v=<?php echo $cacheVer; ?>" defer></script>
-		
+		<!-- Lingua attiva: cookie validato da checkLanguage() in php/check_language.php.
+		     Letta dal bridge i18n del modulo V3 (src/lib/i18n.ts) per applicare EN sui dati. -->
+		<script>window.APP_LANG = '<?php echo $lang; ?>';</script>
+		<script src="js/feedback.js?v=<?php echo $cacheVer; ?>" defer></script>
+
 		<!-- ============================================================ -->
 		<!-- ARCADE LAZY LOADER                                          -->
 		<!-- Carica Phaser + CSS + JS arcade solo all'apertura Arcade   -->
 		<!-- Risparmio: ~1.5 MB + 9 richieste HTTP sull'avvio          -->
-		<!-- ============================================================ -->
-		<script src="js/arcade-loader.js?v=<?php echo $cacheVer; ?>" defer></script>
+		<!-- Ora modulo ESM (src/lib/arcade-loader.ts), import side-effect -->
+		<!-- in main.ts → caricato dal tag V3 module sopra (riga ~351). -->
 		<!-- Gli script arcade (snake, space, asteroids, super-espo)    -->
-		<!-- vengono iniettati dinamicamente da arcade-loader.js        -->
+		<!-- vengono iniettati dinamicamente da ArcadeLoader            -->
 	
+		<!-- Cheatboard/Admin Console: ora caricata da src/lib/backend-config.ts (modulo V3)
+		     (gattata su EspoBackend.env === 'dev'), non più da PHP qui. -->
 		<?php
-// Uso la stessa variabile usata nella libreria check_version.php
-if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
-	echo '<script src="js/cheatboard.js" defer></script>';
-	echo "<script>console.warn('⚠️ DEV MODE (Config): Cheatboard attiva.');</script>";
-}
-?>
-		<!-- PWA Service Worker: auto-update + auto-reload -->
+		// DEV/TEST (instanceName=dev): NIENTE service worker. Evita che la cache
+		// stale del SW serva CSS/JS vecchi dopo ogni rebuild (causa #1 di "non
+		// vedo le modifiche" in sviluppo). In produzione il SW resta attivo.
+		$swIsDev = isset($config['instanceName']) && $config['instanceName'] === 'dev'
+			&& ($_SERVER['HTTP_HOST'] ?? '') !== ($config['prodHost'] ?? '');
+		?>
+		<!-- PWA Service Worker: auto-update + auto-reload (solo produzione) -->
 		<script>
 		if ('serviceWorker' in navigator) {
+		<?php if ($swIsDev): ?>
+			// DEV/TEST: disinstalla eventuali SW e svuota le cache → codice sempre fresco.
+			navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(function(){});
+			if (self.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(function(){});
+		<?php else: ?>
 			// Cattura se c'era già un controller PRIMA della registrazione.
 			// Se non c'era (prima installazione), non ricaricare quando il SW
 			// prende il controllo: la pagina è già stata caricata fresca.
@@ -352,7 +406,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 					sw.postMessage('SKIP_WAITING');
 				} else {
 					// Game UI attiva → chiedi consenso per non interrompere
-					if (confirm('🔄 Nuova versione disponibile! Ricarica per aggiornare?')) {
+					if (confirm(<?php echo json_encode($labels["idx_sw_update"], JSON_UNESCAPED_UNICODE); ?>)) {
 						sw.postMessage('SKIP_WAITING');
 					}
 				}
@@ -399,6 +453,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 				if (!_swHadController) return;
 				_doReload();
 			});
+		<?php endif; ?>
 		}
 		</script>
 		<!-- PWA Install Prompt -->
@@ -433,7 +488,7 @@ if (isset($config['instanceName']) && $config['instanceName'] === 'dev') {
 				showRow();
 				document.addEventListener('click', (e) => {
 					if (!e.target.closest('#pwa-install-btn')) return;
-					alert('Per installare l\'app: tocca l\'icona "Condividi" in Safari e poi "Aggiungi a schermata Home".');
+					alert(<?php echo json_encode($labels["idx_pwa_install"], JSON_UNESCAPED_UNICODE); ?>);
 				});
 			} else {
 				// Android / Desktop Chrome/Edge

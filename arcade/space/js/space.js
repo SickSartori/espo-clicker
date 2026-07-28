@@ -1,9 +1,13 @@
 // code/arcade/space/js/space.js
 
 (function () {
+    // Su mobile (portrait) una larghezza di gioco minore dà un canvas FIT più ALTO
+    // (riempie il vuoto verticale) mostrando meno mondo ai lati. Tutto il gioco usa
+    // CONFIG.width (canvas, clamp player, spawn nemici, stelle) → resta coerente.
+    const _isMobilePortrait = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
     const CONFIG = {
-        width: 800,
-        height: 400,
+        width: _isMobilePortrait ? 750 : 1100,
+        height: 540,
         playerSpeed: 2,
         bulletSpeed: 10,
         enemySpeed: 3,
@@ -91,9 +95,10 @@
             <button class="arcade-btn secondary" onclick="window.exitSpaceGame()">
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
+            <span class="topbar-game-label" style="color:#e74c3c">SPACE IMPACT</span>
             <div class="arcade-stats-box" id="space-score-ui">
-                <span class="stat">PUNTI: <span class="val-score">0</span></span>
-                <span class="stat">VITA: <span class="val-hp">3</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.life) || 'VITA'}: <span class="val-hp">3</span></span>
                 <span class="stat">RECORD: <span class="val-record">${highScore}</span></span>
             </div>
         `;
@@ -129,23 +134,11 @@
         canvasWrapper.appendChild(overlay);
         gameContainer.appendChild(canvasWrapper);
 
-        // Mobile Controls
-        const mobileControls = document.createElement('div');
-        mobileControls.id = 'space-mobile-controls';
-        mobileControls.innerHTML = `
-            <div class="d-pad">
-                <button class="ctrl-btn btn-up" data-key="ArrowUp"><i class="fa-solid fa-caret-up"></i></button>
-                <button class="ctrl-btn btn-left" data-key="ArrowLeft"><i class="fa-solid fa-caret-left"></i></button>
-                <button class="ctrl-btn btn-down" data-key="ArrowDown"><i class="fa-solid fa-caret-down"></i></button>
-                <button class="ctrl-btn btn-right" data-key="ArrowRight"><i class="fa-solid fa-caret-right"></i></button>
-            </div>
-            <div class="fire-btn-group">
-                <button class="ctrl-btn btn-fire" data-key="Space">FIRE</button>
-            </div>
-        `;
-        gameContainer.appendChild(mobileControls);
-
-        setupInputs(mobileControls);
+        // I controlli touch sono forniti dal virtual pad globale di arcade.php
+        // (sintetizza KeyboardEvent che handleKeyDown intercetta). Niente D-pad legacy:
+        // su mobile comparivano due controlli, e su desktop ≤1024px il vecchio pad
+        // appariva pure via media query width-based.
+        setupInputs();
         initStars();
         draw(); // Primo render statico
     };
@@ -169,7 +162,8 @@
         document.getElementById('space-overlay').style.display = 'none';
         resetGame();
         isRunning = true;
-        gameLoop();
+        spaceLastTime = 0;
+        gameInterval = requestAnimationFrame(gameLoop);
     };
 
     function resetGame() {
@@ -250,6 +244,7 @@
             bullets.push({ x: player.x + player.w, y: player.y + player.h / 2 - 2, w: 10, h: 4 });
             player.cooldown = 15; // Rate of fire
             if (window.EspooClicker) window.EspooClicker.playSound('sound-space-shoot');
+            if (window.arcadeSfx) window.arcadeSfx.shoot();
         }
 
         // Bullets
@@ -266,6 +261,7 @@
             e.x -= e.speed;
 
             // Collision Bullet-Enemy
+            let killed = false;
             for (let b = bullets.length - 1; b >= 0; b--) {
                 let bullet = bullets[b];
                 if (rectIntersect(bullet, e)) {
@@ -274,20 +270,24 @@
                     if (e.hp <= 0) {
                         createExplosion(e.x, e.y, CONFIG.colors.enemy1);
                         if (window.EspooClicker) window.EspooClicker.playSound('sound-space-boom');
+                        if (window.arcadeSfx) window.arcadeSfx.explode();
                         score += (e.type === 1 ? 10 : 50);
                         enemies.splice(i, 1);
+                        killed = true;
                         updateUI();
 
                     }
                     break;
                 }
             }
+            if (killed) continue; // nemico rimosso: niente collisione-player con 'e' stale (doppio splice/vita ingiusta)
 
             // Collision Player-Enemy
             if (rectIntersect(player, e)) {
                 createExplosion(player.x, player.y, CONFIG.colors.player);
                 enemies.splice(i, 1);
                 lives--;
+                if (window.arcadeSfx) window.arcadeSfx.die();
                 updateUI();
                 if (lives <= 0) {
                     gameOver();
@@ -340,20 +340,28 @@
         });
     }
 
-    function gameLoop() {
+    let spaceLastTime = 0;
+    function gameLoop(time) {
         if (!isRunning) return;
+        gameInterval = requestAnimationFrame(gameLoop);
+        // Cap a 60 FPS: senza, su monitor 120/144Hz il gioco gira 2-2.4x piu' veloce
+        // perche' i movimenti sono in px/frame fissi.
+        const delta = time - spaceLastTime;
+        if (delta < 1000 / 60) return;
+        spaceLastTime = time - (delta % (1000 / 60));
         update();
         draw();
-        gameInterval = requestAnimationFrame(gameLoop);
     }
 
     function gameOver() {
+        if (!isRunning) return; // guard rientranza: niente reward/record doppi
         isRunning = false;
         cancelAnimationFrame(gameInterval);
 
         // Usa l'ID condiviso definito in game-data
         if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
-        
+        if (window.arcadeSfx) window.arcadeSfx.gameover();
+
         // --- NUOVO CALCOLO RICOMPENSA (SCALING BPS) ---
         let reward = new Decimal(0);
         if (typeof bps !== 'undefined') {
@@ -364,33 +372,28 @@
         }
 
         // Save Highscore & Dai Ricompensa
+        let isNewRecord = false;
         if (window.EspooClicker) {
             const gs = window.EspooClicker.getGameState();
-            
-            if (score > 0) {
-                gs.score = gs.score.add(reward);
-                window.EspooClicker.showToast(`🚀 MISSIONE FALLITA! +${window.EspooClicker.formatNumber(reward)} BUG!`, 'reward');
-            }
-
+            if (score > 0) gs.score = gs.score.add(reward);
             if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
-
             if (score > (gs.arcadeHighScores.space || 0)) {
                 gs.arcadeHighScores.space = score;
-                window.EspooClicker.showToast(`🏆 RECORD SPACE: ${score}!`, 'achievement');
+                isNewRecord = true;
             }
-            
             window.EspooClicker.saveGame();
             if (typeof updateUI === 'function') updateUI();
         }
 
-        const overlay = document.getElementById('space-overlay');
-        overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div style="color:#e74c3c; font-size:2rem; font-weight:900;">GAME OVER</div>
-            <div style="margin-bottom:20px;">Score: <span style="color:#fff">${score}</span></div>
-            <button class="arcade-btn" onclick="window.startSpaceRun()">RIPROVA</button>
-            <button class="arcade-btn secondary" onclick="window.exitSpaceGame()" style="margin-top:10px">ESCI</button>
-        `;
+        // Game Over animato condiviso (stile Snake)
+        window.showArcadeGameOver({
+            overlay: document.getElementById('space-overlay'),
+            score: score,
+            rewardStr: (window.EspooClicker && score > 0) ? window.EspooClicker.formatNumber(reward) : null,
+            isNewRecord: isNewRecord,
+            onReturn: window.exitSpaceGame,
+            onRetry: window.startSpaceRun
+        });
     }
 
     function updateUI() {
@@ -401,8 +404,8 @@
         if (el) {
             const hpColor = lives > 1 ? '#f1c40f' : '#e74c3c';
             el.innerHTML = `
-                <span class="stat">PUNTI: <span class="val-score">${score}</span></span>
-                <span class="stat">VITA: <span class="val-hp" style="color:${hpColor}">${lives}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">${score}</span></span>
+                <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.life) || 'VITA'}: <span class="val-hp" style="color:${hpColor}">${lives}</span></span>
                 <span class="stat">RECORD: <span class="val-record">${Math.max(score, highScore)}</span></span>
             `;
         }
@@ -427,7 +430,7 @@
         // FIX stuck-key: include touchcancel + safety net, altrimenti su iOS
         // un touch interrotto (multi-touch, scroll, app switch) lascia il
         // tasto a true e l'astronave continua a muoversi all'infinito.
-        const btns = container.querySelectorAll('.ctrl-btn');
+        const btns = container ? container.querySelectorAll('.ctrl-btn') : [];
         const release = (key) => () => { keys[key] = false; };
         btns.forEach(btn => {
             const k = btn.dataset.key;

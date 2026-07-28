@@ -1,0 +1,220 @@
+/* =====================================================================
+   v3 — Toast slot-based (no layout shift)
+   =====================================================================
+   Container fixed, posizione absolute per ogni toast tramite --slot-index.
+   Niente flex stack che causa shift quando un toast si rimuove.
+   Ogni slot ha posizione fissa: nuovo toast occupa slot libero, vecchio
+   despawn libera slot. No spostamento visibile dei toast esistenti.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+  /* === Container: niente flex, uso absolute children con slot Y === */
+  body #toast-container {
+    position: fixed !important;
+    top: 80px !important;
+    right: 16px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    z-index: var(--z-toast, 9000);
+    width: 280px;
+    height: calc(5 * 46px); /* 5 slot × 46px (più stretti) */
+    pointer-events: none;
+    display: block !important;
+    flex: unset !important;
+    align-items: unset !important;
+    gap: 0 !important;
+  }
+
+  body.modal-open #toast-container {
+    top: 80px !important;
+    right: 20px !important;
+    left: auto !important;
+    transform: none !important;
+    align-items: unset !important;
+  }
+
+  /* Eventi video (rick-rolling): la HUD d'angolo (score/cps) si sposta in alto a
+     destra, quindi il toast top-right ci finiva sopra. Lo centriamo in alto.
+     transition:none è FONDAMENTALE: il container eredita 'transition: all' e viene
+     ritoccato di continuo dal sistema toast → la transizione su top/transform si
+     riavviava in eterno e i valori non si stabilizzavano mai (restavano allo start).
+     Azzerandola, top/transform si applicano subito. left funzionava già perché
+     auto→50% non è animabile (salto istantaneo). */
+  body.rick-rolling #toast-container {
+    transition: none !important;
+    top: 20px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+  body #toast-container .toast {
+    position: absolute !important;
+    top: calc(var(--slot-index, 0) * 46px) !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 100%;
+    box-sizing: border-box;
+    pointer-events: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 10px;
+    height: 38px;
+    border-radius: 6px;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    color: rgba(248, 250, 252, 0.92);
+
+    background: linear-gradient(135deg,
+      rgba(15, 23, 42, 0.88) 0%,
+      rgba(10, 15, 28, 0.82) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.14);
+    border-left-width: 2px;
+    backdrop-filter: blur(8px);
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.35);
+
+    /* Animation: slide-in da destra (no Y, niente shift) */
+    animation: v3-toast-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: right center;
+    will-change: transform, opacity;
+    overflow: hidden;
+  }
+
+  body #toast-container .toast.toast-leaving {
+    animation: v3-toast-leave 340ms cubic-bezier(0.4, 0, 0.7, 0) forwards;
+  }
+
+  @keyframes v3-toast-enter {
+    from {
+      transform: translateX(120%);
+      opacity: 0;
+      filter: blur(2px);
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes v3-toast-leave {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(120%);
+      opacity: 0;
+      filter: blur(3px);
+    }
+  }
+
+  /* === Icon === */
+  body #toast-container .toast .toast-icon {
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body #toast-container .toast .toast-msg {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+
+  /* === Progress bar (life timer) — sottile === */
+  body #toast-container .toast .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg,
+      rgba(0, 217, 255, 0.6),
+      rgba(168, 85, 247, 0.4));
+    transform-origin: left center;
+    animation: v3-toast-life var(--life, 3500ms) linear forwards;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  @keyframes v3-toast-life {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+  }
+
+  /* === Per-type accent (delicato, niente box-shadow heavy) === */
+  body #toast-container .toast.toast-success { border-left-color: #10b981; }
+  body #toast-container .toast.toast-success .toast-icon { color: #10b981; }
+  body #toast-container .toast.toast-success .toast-progress {
+    background: linear-gradient(90deg, #10b981, rgba(16, 185, 129, 0.4));
+  }
+
+  body #toast-container .toast.toast-error { border-left-color: #ff3d5c; }
+  body #toast-container .toast.toast-error .toast-icon { color: #ff3d5c; }
+  body #toast-container .toast.toast-error .toast-progress {
+    background: linear-gradient(90deg, #ff3d5c, rgba(255, 61, 92, 0.4));
+  }
+
+  body #toast-container .toast.toast-warning { border-left-color: #f59e0b; }
+  body #toast-container .toast.toast-warning .toast-icon { color: #f59e0b; }
+  body #toast-container .toast.toast-warning .toast-progress {
+    background: linear-gradient(90deg, #f59e0b, rgba(245, 158, 11, 0.4));
+  }
+
+  body #toast-container .toast.toast-info { border-left-color: #00d9ff; }
+  body #toast-container .toast.toast-info .toast-icon { color: #00d9ff; }
+
+  body #toast-container .toast.toast-achievement {
+    border-left-color: #fbbf24;
+  }
+  body #toast-container .toast.toast-achievement .toast-icon { color: #fbbf24; }
+  body #toast-container .toast.toast-achievement .toast-progress {
+    background: linear-gradient(90deg, #fbbf24, rgba(245, 158, 11, 0.4));
+  }
+
+  body #toast-container .toast.toast-reward {
+    border-left-color: #c084fc;
+  }
+  body #toast-container .toast.toast-reward .toast-icon { color: #c084fc; }
+  body #toast-container .toast.toast-reward .toast-progress {
+    background: linear-gradient(90deg, #c084fc, rgba(192, 132, 252, 0.4));
+  }
+
+  /* === Hover: lift sottile === */
+  body #toast-container .toast:hover {
+    transform: translateX(-3px);
+    border-color: rgba(0, 217, 255, 0.3);
+    background: linear-gradient(135deg,
+      rgba(15, 23, 42, 0.95) 0%,
+      rgba(10, 15, 28, 0.92) 100%);
+    cursor: pointer;
+  }
+  body #toast-container .toast:hover .toast-progress {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body #toast-container .toast,
+  body #toast-container .toast .toast-progress {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

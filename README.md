@@ -1,5 +1,5 @@
 # 🚨 Espòòò Clicker: The Ultimate Bug-Farming Simulator
-### (v16 Refactor: The Bugs Never Die)
+### (v3.0 Refactor: The Bugs Never Die)
 
 > A clicker game similar to Cookie Clicker, but with a lot of bugs... literally.
 
@@ -24,13 +24,23 @@ Every click solves a bug. Every solved bug gets you closer to buying an upgrade 
 
 ## 🛠️ Installation & Setup (For maximum misery)
 
-To run this locally and experience the full pain of its leaderboards, you'll need:
+A PHP front-end with a TypeScript/Vite game engine (bundled to `dist/`) and a **Supabase** backend for saves & leaderboard — **no local database required** (the old MySQL setup is gone). To run it locally you'll need a PHP server (**MAMP**/XAMPP) and **Node.js**:
 
-1.  A local PHP server environment (like MAMP or XAMPP).
-2.  A MySQL database named `my_espooclicker`.
-3.  The default database credentials set to `root` and `root`. *(Yes, really.)*
-4.  Run `index.php`.
-5.  Start clicking.
+1.  Install deps and build the game engine — **without this the game won't load**:
+    ```bash
+    npm install
+    npm run build          # Vite → dist/game.modules.js  (use `npm run dev:v3` for live reload)
+    ```
+2.  Create your local config from the templates:
+    ```bash
+    cp php/config.example.php php/config.php               # instanceName + versions
+    cp php/r2-config.example.php php/r2-config.php          # (optional) audio/video on Cloudflare R2
+    cp php/trello-config.example.php php/trello-config.php  # (optional) "Segnala" feedback → Trello
+    ```
+3.  Serve the folder with PHP and open **`index.php`** (e.g. MAMP → `http://localhost:8888/Espo-Clicker/`).
+4.  Start clicking.
+
+> Leaderboard ("Podio") and cloud saves run on **Supabase Edge Functions**; the public keys already live in the client (`src/lib/backend-config.ts`), so there's nothing else to wire up.
 
 **Disclaimer:** No actual QA or development teams were harmed in the making of this game. (We think.)
 

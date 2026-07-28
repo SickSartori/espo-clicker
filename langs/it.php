@@ -8,14 +8,21 @@
 	// HEAD
 	$labels["head_titolo"] = "Espòòò Clicker";
 
+	// COUNTDOWN LANCIO (pre-rilascio v3.0)
+	$labels["countdown_badge"] = "IN ARRIVO";
+	$labels["countdown_sub"] = "La grande 3.0 sta per arrivare.";
+	$labels["countdown_d"] = "Giorni";
+	$labels["countdown_h"] = "Ore";
+	$labels["countdown_m"] = "Min";
+	$labels["countdown_s"] = "Sec";
+	$labels["countdown_release"] = "Rilascio";
+	$labels["countdown_testing"] = "Server in preparazione — test in corso";
+	$labels["countdown_enter"] = "ENTRA";
+
 	// LOADER
 	$labels["loader_titolo"] = "Espòò Clicker";
 	$labels["loader_status"] = "Inizializzazione risorse...";
 	$labels["loader_slow_hint"] = "Connessione lenta — caricamento in corso, attendere...";
-
-	// PRESTIGIO
-	$labels["prestigio_titolo"] = "PROMOZIONE IN CORSO...";
-	$labels["prestigio_sottotitolo"] = "Ricalcolo dei benefit aziendali";
 
 	// NATALE
 	$labels["natale_titolo"] = "BUON NATALE!";
@@ -30,6 +37,25 @@
 
 	// NAVBAR
 	$labels["navbar_guida"] = "Guida";
+	$labels["navbar_segnala"] = "Segnala";
+
+	// --- Feedback / Segnalazioni (board Trello) ---
+	$labels["feedback_titolo"] = "Segnala un problema o un'idea";
+	$labels["feedback_intro"] = "Hai trovato un bug, hai un'idea o un suggerimento? Raccontacelo: finisce dritto nella nostra board interna.";
+	$labels["feedback_type_idea"] = "Idea";
+	$labels["feedback_type_bug"] = "Bug";
+	$labels["feedback_type_improvement"] = "Miglioramento";
+	$labels["feedback_label_titolo"] = "Titolo";
+	$labels["feedback_ph_titolo"] = "Riassumi in una frase";
+	$labels["feedback_label_desc"] = "Descrizione (opzionale)";
+	$labels["feedback_ph_desc"] = "Più dettagli dai, meglio è: come riprodurlo, cosa ti aspettavi…";
+	$labels["feedback_privacy"] = "Alleghiamo automaticamente versione, lingua e browser per aiutarci a diagnosticare. Nessun dato sensibile.";
+	$labels["feedback_invia"] = "Invia segnalazione";
+	$labels["feedback_toast_ok"] = "Grazie! Segnalazione inviata. 🎉";
+	$labels["feedback_toast_err"] = "Ops, invio non riuscito. Riprova più tardi.";
+	$labels["feedback_toast_validate"] = "Scrivi almeno un titolo (3+ caratteri).";
+	$labels["feedback_toast_sending"] = "Invio…";
+	$labels["help_menu_titolo"] = "Aiuto";
 	$labels["navbar_stats"] = "Statistiche";
 	$labels["navbar_arcade"] = "Sala Giochi";
 	$labels["navbar_obiettivi"] = "Obiettivi";
@@ -37,6 +63,9 @@
 	$labels["navbar_classifica"] = "Classifica";
 	$labels["navbar_promozione"] = "Promozione";
 	$labels["navbar_opzioni"] = "Opzioni";
+	$labels["navbar_account_title"] = "Account e Amici";
+	$labels["lb_scope_global"] = "Globale";
+	$labels["lb_scope_friends"] = "Amici";
 
 	// GAME CONTAINER
 	$labels["game_container_click_titolo"] = " Click";
@@ -66,7 +95,6 @@
 	*---------------------------------------------------------------------------------------- */
 
 	// LOGIN
-	$labels["modals_login_titolo"] = "Espòòò Clicker";
 	$labels["modals_login_label"] = "Accedi o crea un account per salvare i progressi nel cloud.";
 	$labels["modals_login_username_placeholder"] = "Nome Utente";
 	$labels["modals_login_password_placeholder"] = "Password";
@@ -89,25 +117,6 @@
 	$labels["modals_opzioni_account_utente_gestisci"] = "Gestisci";
 	$labels["modals_opzioni_salva"] = "Chiudi & Salva";
 
-	// PROFILO UTENTE
-	$labels["modals_profilo_utente_titolo"] = "Profilo Utente";
-	$labels["modals_profilo_utente_identita"] = "Identità";
-	$labels["modals_profilo_nuovo_utente_placeholder"] = "Nuovo Nome Utente";
-	$labels["modals_profilo_nuovo_utente_salva"] = "Salva Nome";
-	$labels["modals_profilo_sicurezza"] = "Sicurezza";
-	$labels["modals_profilo_sicurezza_vecchia_password"] = "Vecchia Password";
-	$labels["modals_profilo_sicurezza_nuova_password"] = "Nuova Password";
-	$labels["modals_profilo_sicurezza_aggiorna_password"] = "Aggiorna Password";
-	$labels["modals_profilo_disconnetti"] = "Disconnetti (Logout)";
-
-	// AREA CRITICA
-	$labels["modals_area_critica_titolo"] = "AREA CRITICA";
-	$labels["modals_area_critica_conferma_password"] = "Password per confermare";
-	$labels["modals_area_critica_resetta_progressi_placeholder"] = "Reset";
-	$labels["modals_area_critica_resetta_progressi"] = "Resetta Progressi";
-	$labels["modals_area_critica_elimina_account"] = "Elimina";
-	$labels["modals_area_critica_elimina_account_placeholder"] = "Elimina Account";
-
 	// OPZIONI AUDIO AVANZATE
 	$labels["modals_opzioni_audio_avanzate_indietro"] = "Indietro";
 	$labels["modals_opzioni_audio_avanzate_indietro_titolo"] = "Torna alle Opzioni";
@@ -120,57 +129,8 @@
 	// CLASSIFICA
 	$labels["modals_classifica_titolo"] = "Classifica";
 
-	// PROMOZIONE
-	$labels["modals_promozione_titolo"] = "Promozione";
-	$labels["modals_promozione_label"] = "Accettando la promozione, l'azienda resetterà i tuoi Bug e Teams per riassegnarti ad un nuovo progetto.";
-	$labels["modals_promozione_token_lab_label1"] = "OTTERRAI SUBITO";
-	$labels["modals_promozione_token_lab_label2"] = "Token Lab";
-	$labels["modals_promozione_carriera_label"] = "Bonus Carriera Totale";
-	$labels["modals_promozione_firma_accetta"] = "Firma e Accetta";
-	$labels["modals_promozione_label2"] = "I potenziamenti del Lab e le Skin rimarranno salvati.";
-
 	// GUARDAROBA
 	$labels["modals_guardaroba_titolo"] = "Guardaroba";
-	$labels["modals_guardaroba_label1"] = "Personalizza il tuo look.";
-	$labels["modals_guardaroba_label2"] = "Sblocca nuove skin completando obiettivi speciali!";
-
-	// MANUALE
-	$labels["modals_manuale_titolo"] = "Manuale del Dipendente";
-	$labels["modals_manuale_punto_1_titolo"] = "1. L'Obiettivo";
-	$labels["modals_manuale_punto_1_label"] = "Benvenuto alla <strong>Espò Solutions</strong>! Il tuo lavoro è semplice: risolvi i <strong>Bug</strong> cliccando sulla faccia del Manager. Più bug risolvi, più budget avrai per assumere aiuti.";
-	$labels["modals_manuale_punto_2_titolo"] = "2. Automazione (BPS)";
-	$labels["modals_manuale_punto_2_label1"] = "Cliccare è faticoso. Nel menu <strong>👥 Teams</strong> puoi assumere personale (Assistenti, Team QA, AI) che lavorerà per te.";
-	$labels["modals_manuale_punto_2_label2"] = "<strong>BPS (Bug Per Secondo):</strong> Indica quanti bug il tuo team risolve automaticamente ogni secondo, anche se non fai nulla.";
-	$labels["modals_manuale_punto_3_titolo"] = "3. Eventi & Anomalie";
-	$labels["modals_manuale_punto_3_label1"] = "Il sistema è instabile. Tieni gli occhi aperti per:";
-	$labels["modals_manuale_punto_3_label2"] = "<strong>Golden Bug:</strong> Appare casualmente. Cliccalo subito!";
-	$labels["modals_manuale_punto_3_label3"] = "<strong>Errore 404:</strong> Il sistema crasha! Produzione moltiplicata.";
-	$labels["modals_manuale_punto_3_label4"] = "<strong>Eventi Skin:</strong> Alcuni costumi leggendari scatenano eventi musicali.";
-	$labels["modals_manuale_punto_4_titolo"] = "4. Laboratorio (Prestigio)";
-	$labels["modals_manuale_punto_4_label1"] = "Quando il gioco diventa lento, puoi chiedere una <strong>Promozione</strong>.";
-	$labels["modals_manuale_punto_4_label2"] = "<strong>Attenzione:</strong> Resetter&agrave; i tuoi bug e i tuoi Teams, ma in cambio otterrai <strong>Token Lab</strong>. Usa i Token nel Laboratorio per comprare potenziamenti permanenti che renderanno la tua prossima partita velocissima.";
-	$labels["modals_manuale_punto_5_titolo"] = "5. Matematica dei Bonus";
-	$labels["modals_manuale_punto_5_label1"] = "Come faccio a fare numeri enormi? Semplice: <strong>I Moltiplicatori si sommano!</strong>";
-	$labels["modals_manuale_punto_5_label2"] = "<strong>Bonus Permanente:</strong> Deriva dai tuoi <em>Prestigio</em> e dagli <em>Obiettivi</em> sbloccati. È la tua base (es. x2.0).";
-	$labels["modals_manuale_punto_5_label3"] = "<strong>Bonus Temporanei:</strong> Eventi (es. 404) e Abilità (Crunch Time x7).";
-	$labels["modals_manuale_punto_5_label4"] = "Il Segreto:</strong> Se attivi tutto insieme, i bonus si moltiplicano!";
-	$labels["modals_manuale_punto_5_label5"] = "<em>Esempio:</em> Base (x2) * Crunch Time (x7) = <strong>x14 Totale!</strong>";
-	$labels["modals_manuale_punto_6_titolo"] = "6. Account & Salvataggi";
-	$labels["modals_manuale_punto_6_label1"] = "I tuoi dati sono al sicuro nel Cloud della Espò Solutions.";
-	$labels["modals_manuale_punto_6_label2"] = "Puoi fare <strong>Login</strong> da qualsiasi dispositivo per recuperare i tuoi progressi.";
-	$labels["modals_manuale_punto_6_label3"] = "Il gioco salva automaticamente ogni 10 secondi.";
-	$labels["modals_manuale_punto_6_label4"] = "Se esci dal sito, guadagnerai comunque bug (Efficienza ridotta) fino a 12 ore.";
-	$labels["modals_manuale_punto_7_titolo"] = "7. Consigli Utili";
-	$labels["modals_manuale_punto_7_label1"] = "Sblocca gli <strong>Obiettivi</strong> per ottenere premi e nuove <strong>Skin</strong>.";
-	$labels["modals_manuale_punto_7_label2"] = "Le Skin non sono solo estetiche: le Leggendarie hanno poteri nascosti.";
-	$labels["modals_manuale_punto_7_label3"] = "Controlla la <strong>Classifica</strong> per vedere chi è il manager migliore!";
-
-	// ARCADE
-	$labels["modals_arcade_titolo"] = "Espò Arcade";
-	$labels["modals_arcade_lavori_in_corso_titolo"] = "Area in Costruzione";
-	$labels["modals_arcade_lavori_in_corso_label1"] = "Stiamo installando i nuovi cabinati e cablando i server.";
-	$labels["modals_arcade_lavori_in_corso_label2"] = "La sala giochi aprirà presto le porte!";
-	$labels["modals_arcade_lavori_in_corso_status"] = "Status: Sviluppo";
 
 	/*----------------------------------------------------------------------------------------
 	* TAB PROMOZIONE
@@ -213,4 +173,187 @@
 
 	$labels["col_buildings_titolo"] = "Teams";
 	$labels["col_buildings_bug_label"] = "Bug:";
+
+	/*----------------------------------------------------------------------------------------
+	* MODALI EXTRA (format / filtri skin / release-notes — includes/modals.php)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["format_titolo"] = "Riavvio Sistema (NG+)";
+	$labels["format_warning"] = "ATTENZIONE: Questa azione distruggerà l'universo attuale. Perderai Bug, Teams, Upgrades e Token Lab. <br><br>Conserverai Skin, Obiettivi e Statistiche globali.";
+	$labels["format_gain"] = "OTTERRAI SUBITO";
+	$labels["format_qbits"] = "Quantum Bits";
+	$labels["format_subtitle"] = "Formatta l'universo &middot; NG+";
+	$labels["skins_filter_all"] = "Tutte";
+	$labels["skins_filter_unlocked"] = "Sbloccate";
+	$labels["skins_filter_locked"] = "Bloccate";
+	$labels["skins_rarity_all"] = "Tutte le Rarità";
+	$labels["skins_rarity_common"] = "Comune";
+	$labels["skins_rarity_rare"] = "Rara";
+	$labels["skins_rarity_epic"] = "Epica";
+	$labels["skins_rarity_legendary"] = "Leggendaria";
+	$labels["skins_rarity_divine"] = "Divina";
+	$labels["skins_rarity_christmas"] = "Festiva";
+	$labels["news_titolo"] = "Novità dell'Aggiornamento";
+	$labels["news_loading"] = "Caricamento novità...";
+
+	/*----------------------------------------------------------------------------------------
+	* ARCADE (arcade.php + js/arcade-page.js)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["arcade_page_title"] = "Espò Arcade — Sala Giochi";
+	$labels["arcade_actions"] = "AZIONI";
+	$labels["arcade_play"] = "GIOCA";
+	$labels["arcade_hud_points"] = "PUNTI";
+	$labels["arcade_hud_life"] = "VITA";
+	$labels["arcade_hud_lives"] = "VITE";
+	$labels["arcade_hud_wave"] = "ONDATA";
+	$labels["arcade_fire_flower"] = "🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco";
+	$labels["arcade_hint_move"] = "Muovi";
+	$labels["arcade_hint_move_snake"] = "Muovi il serpente";
+	$labels["arcade_hint_move_ship"] = "Muovi la nave";
+	$labels["arcade_hint_fire"] = "Spara";
+	$labels["arcade_hint_rotate"] = "Ruota";
+	$labels["arcade_hint_thrust"] = "Spinta";
+	$labels["arcade_hint_run"] = "Corri";
+	$labels["arcade_hint_jump"] = "Salta";
+	$labels["arcade_hint_crouch"] = "Abbassati";
+	$labels["arcade_hint_fireball"] = "Palla di fuoco";
+	$labels["arcade_hint_space"] = "SPAZIO";
+	$labels["arcade_hint_stuck"] = "Vai a destra e salta per superare l'ostacolo";
+	$labels["arcade_connecting"] = "CONNESSIONE…";
+	$labels["arcade_connecting_sub"] = "Collegamento al server CDN";
+	$labels["arcade_loading_phase"] = "CARICAMENTO…";
+	$labels["arcade_ctrl_up"] = "Su (W)";
+	$labels["arcade_ctrl_left"] = "Sinistra (A)";
+	$labels["arcade_ctrl_down"] = "Giù (S)";
+	$labels["arcade_ctrl_right"] = "Destra (D)";
+	$labels["arcade_ctrl_fire"] = "Spara / Salta (Spazio)";
+	$labels["arcade_ctrl_special"] = "Speciale (X / F)";
+	$labels["arcade_ctrl_start"] = "Start / Pausa";
+	$labels["arcade_gate_title"] = "SALA GIOCHI RISERVATA";
+	$labels["arcade_gate_msg"] = "Devi accedere a <b style=\"color:#00d9ff\">Espò Clicker</b> per entrare in Sala Giochi.";
+	$labels["arcade_gate_btn"] = "VAI AL GIOCO";
+	$labels["arcade_go_score"] = "PUNTEGGIO";
+	$labels["arcade_go_record"] = "★ NUOVO RECORD! ★";
+	$labels["arcade_go_return_retry"] = "▸ o torna al menu… ◂";
+	$labels["arcade_go_return"] = "▸ ritorno al menu ◂";
+	$labels["arcade_loading"] = "Caricamento in corso, riprova tra un istante…";
+	$labels["arcade_game_unavailable"] = "Gioco non disponibile (connessione assente?). Riprova più tardi.";
+
+	/*----------------------------------------------------------------------------------------
+	* MODALE ACCOUNT / OPZIONI EXTRA / PROMOZIONE (includes/modals.php)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["account_default_name"] = "Giocatore";
+	$labels["account_edit_name"] = "Modifica Nome";
+	$labels["account_new_name_ph"] = "Nuovo nome utente...";
+	$labels["account_save"] = "SALVA";
+	$labels["account_security"] = "Sicurezza";
+	$labels["account_old_pass_ph"] = "Password Attuale";
+	$labels["account_new_pass_ph"] = "Nuova Password";
+	$labels["account_update_pass"] = "Aggiorna Password";
+	$labels["account_critical"] = "Area Critica";
+	$labels["account_confirm_pass_ph"] = "Password per confermare";
+	$labels["account_delete"] = "Elimina";
+	$labels["account_logout"] = "Esci dall'account";
+	$labels["hub_tab_account"] = "Account";
+	$labels["hub_tab_amici"] = "Amici";
+	$labels["hub_amici_soon_title"] = "Amici in arrivo";
+	$labels["hub_amici_soon_desc"] = "Presto potrai aggiungere amici, scambiare emoji, vedere le loro statistiche e l'armadietto skin, e sfidarli in classifica.";
+	$labels["opt_bg_music"] = "Musica di Sfondo";
+	$labels["opt_music_locked"] = "Bloccato dalla Skin attuale";
+	$labels["opt_install_app"] = "Installa App";
+	$labels["prestige_titolo"] = "Promozione Aziendale";
+	$labels["prestige_sign"] = "Firma il contratto per diventare <b>Senior</b>.";
+	$labels["prestige_warning"] = "Perderai Bug, Teams e Upgrades, ma sbloccherai il Laboratorio per la ricerca avanzata.";
+	$labels["prestige_gain"] = "OTTERRAI SUBITO";
+	$labels["prestige_token"] = "Token Laboratorio";
+	$labels["prestige_new_mult"] = "Nuovo Moltiplicatore:";
+	$labels["prestige_sign_btn"] = "Firma Contratto";
+	$labels["hub_titolo"] = "Prestigio";
+	$labels["hub_counter_label"] = "Promozioni";
+	$labels["hub_promo_locked_btn"] = "Completa il progetto (100%)";
+
+	/*----------------------------------------------------------------------------------------
+	* MODALE ARCADE in-game (includes/modals_arcade.php)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["arcade_desc_snake"] = "Mangia i bug, evita i muri. Un classico intramontabile.";
+	$labels["arcade_desc_space"] = "Naviga nello spazio e distruggi gli sciami di bug alieni.";
+	$labels["arcade_desc_asteroids"] = "Sopravvivi al campo di asteroidi-bug. Attento ai frammenti!";
+	$labels["arcade_desc_superespo"] = "Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!";
+	$labels["arcade_desc_invaders"] = "Difendi i bunker, abbatti lo sciame di alieni-bug prima che ti raggiunga.";
+	$labels["arcade_desc_centipede"] = "Distruggi il centopiedi-bug nel campo dei funghi prima che ti raggiunga al suolo.";
+	$labels["arcade_keys_dir"] = "Tasti Direzionali:";
+	$labels["arcade_rotate"] = "Ruota / Accelera";
+	$labels["arcade_space_key"] = "Spazio:";
+	$labels["arcade_fire"] = "Spara";
+	$labels["arcade_start_mission"] = "AVVIA MISSIONE";
+	$labels["arcade_exit"] = "ESCI";
+	$labels["arcade_wallet_total"] = "Bug totali (saldo gioco principale + guadagni arcade)";
+	$labels["arcade_wallet_pending"] = "Bug guadagnati in questa sessione arcade, da incassare";
+
+	/*----------------------------------------------------------------------------------------
+	* INDEX (animazione promozione + aggiornamento/installazione)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["idx_promo_title"] = "Promozione in Corso";
+	$labels["idx_promo_subtitle"] = "Ristrutturazione Aziendale del Database...";
+	$labels["idx_sw_update"] = "🔄 Nuova versione disponibile! Ricarica per aggiornare?";
+	$labels["idx_pwa_install"] = "Per installare l'app: tocca l'icona \"Condividi\" in Safari e poi \"Aggiungi a schermata Home\".";
+
+	/*----------------------------------------------------------------------------------------
+	* ARCADE STANDALONE — griglia giochi (arcade.php) + aria-label (col_*, modals)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["arcade_select_game"] = "Seleziona un gioco";
+	$labels["arcade_coming_soon"] = "In arrivo prossimamente";
+	$labels["arcade_close_title"] = "Chiudi (torna al gioco)";
+	$labels["arcade_g_snake_short"] = "Mangia bug, evita i muri";
+	$labels["arcade_g_space_short"] = "Distruggi gli sciami alieni";
+	$labels["arcade_g_asteroids_short"] = "Sopravvivi agli asteroidi";
+	$labels["arcade_g_superespo_short"] = "Corri, salta, schiaccia!";
+	$labels["arcade_g_invaders_short"] = "Difendi dai bug invasori";
+	$labels["arcade_g_centipede_short"] = "Distruggi il centopiedi";
+	$labels["arcade_g_superespo_desc"] = "Endless platformer. Corri, salta, schiaccia i Goomba-Bug.";
+	$labels["arcade_g_invaders_desc"] = "Difendi i bunker, abbatti lo sciame di alieni-bug.";
+	$labels["arcade_g_centipede_desc"] = "Distruggi il centopiedi nel campo dei funghi.";
+	$labels["col_center_mult_aria"] = "Moltiplicatore";
+	$labels["col_center_bps_aria"] = "Bug per secondo";
+	$labels["col_buy_qty_aria"] = "Quantità acquisto";
+	$labels["col_buildings_region_aria"] = "Team e produzione automatica";
+	$labels["quantum_meta_tech"] = "Meta-Tecnologie";
+	$labels["quantum_empty"] = "Tutte le tecnologie quantiche sono state ricercate.";
+	$labels["idx_mobile_nav_aria"] = "Navigazione mobile";
+	$labels["idx_skip_content"] = "Salta al contenuto principale";
+	$labels["idx_shop_cat_aria"] = "Categorie negozio";
+	$labels["idx_shop_filter_aria"] = "Filtro negozio";
+	$labels["idx_main_menu_aria"] = "Menu principale";
+	$labels["idx_upgrades_aria"] = "Potenziamenti click e automazione";
+	$labels["prestige_madeheaven_aria"] = "Made in Heaven: formatta l'universo e ricomincia da capo (New Game Plus)";
+
+	/*----------------------------------------------------------------------------------------
+	* MANUALE DI ONBOARDING (includes/modals_help.php)
+	*---------------------------------------------------------------------------------------- */
+
+	$labels["help_titolo"] = "Manuale di Onboarding";
+	$labels["help_intro"] = "Benvenuto in <b>Espòòò Clicker</b>. Il tuo obiettivo è semplice: risolvere Bug, automatizzare i processi aziendali e scalare le gerarchie fino a piegare le leggi dell'informatica.";
+	$labels["help_s1_titolo"] = "1. Workflow Base";
+	$labels["help_s1_li1"] = "<b>Lavoro Manuale:</b> Clicca sull'immagine centrale per risolvere Bug istantaneamente.";
+	$labels["help_s1_li2"] = "<b>Automazione (Teams):</b> Usa i Bug raccolti per assumere dipendenti (es. Assistenti QA, Jira Ticket). Lavoreranno per te generando Bug al Secondo (BPS).";
+	$labels["help_s1_li3"] = "<b>Potenziamenti:</b> Acquista upgrade per rendere i tuoi click più forti o i tuoi Team più efficienti.";
+	$labels["help_s2_titolo"] = "2. Anomalie di Sistema";
+	$labels["help_s2_li1"] = "<b>Golden Bug:</b> Ogni tanto apparirà un insetto dorato sullo schermo. Cliccalo velocemente per un enorme bonus basato sulla tua produzione!";
+	$labels["help_s2_li2"] = "<b>Glitch e Blue Screen:</b> Il sistema è instabile. Se subisci un errore critico (404, Matrix, ecc.), non farti prendere dal panico: il caos genera enormi moltiplicatori di produzione temporanei.";
+	$labels["help_s2_li3"] = "<b>Espo Fury:</b> Una volta sbloccata nel Laboratorio, potrai scatenare la furia (Crunch Time) per decuplicare i guadagni per 30 secondi.";
+	$labels["help_s3_titolo"] = "3. Carriera & Laboratorio";
+	$labels["help_s3_p"] = "Quando accumulerai abbastanza Bug nella run attuale, il pulsante <b>Promozione</b> si illuminerà.";
+	$labels["help_s3_li1"] = "<b>Firma il contratto:</b> Resetterai Bug, Team e Upgrade base, ma otterrai un Moltiplicatore Globale permanente alla produzione.";
+	$labels["help_s3_li2"] = "<b>Laboratorio:</b> Otterrai <i>Token Lab</i> da spendere in tecnologie permanenti che sopravvivranno alle future promozioni.";
+	$labels["help_s4_titolo"] = "4. Extra e Personalizzazione";
+	$labels["help_s4_li1"] = "<b>Sala Giochi (Arcade):</b> Prenditi una pausa. Gioca ai minigiochi retrò per vincere Bug extra proporzionali al tuo BPS attuale e registra nuovi Record.";
+	$labels["help_s4_li2"] = "<b>Obiettivi:</b> Completa traguardi per sbloccare moltiplicatori permanenti o valute.";
+	$labels["help_s4_li3"] = "<b>Guardaroba (Skin):</b> Cambia l'aspetto di Espò. Alcune skin modificano la musica di sottofondo, gli sfondi e persino gli effetti visivi. Scopri come sbloccarle tutte!";
+	$labels["help_s5_titolo"] = "5. Oltre il Limite (NG+)";
+	$labels["help_s5_p"] = "\"Le leggende aziendali narrano che i Senior che hanno affrontato <b>troppe Promozioni</b> inizino a percepire il codice sorgente dell'universo. Se mai dovessi raggiungere quel punto di non ritorno, preparati a distruggere tutto ciò che conosci per raccogliere l'Energia Quantica. Il vero gioco inizia quando finisce.\"";
 ?>

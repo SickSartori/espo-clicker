@@ -1,0 +1,62 @@
+/* =====================================================================
+   v3 mobile — Espo Fury (allinea lo stile alla versione desktop)
+   =====================================================================
+   Controparte mobile di desktop-fixes/clicker-button.css: porta su mobile il
+   gradiente rosso/corallo + glow + shimmer della Fury, invece dell'ambra base.
+   Caricato dopo styles.mobile, quindi vince senza !important.
+   ===================================================================== */
+
+@media (max-width: 768px) {
+
+  html body #skill-crunchTime:not(.cooldown) {
+    background: linear-gradient(135deg,
+      #ff7f50 0%,
+      var(--v3-accent-red, #ff3d5c) 60%,
+      #c0392b 100%);
+    border: 1px solid rgba(255, 61, 92, 0.6);
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: none;
+    box-shadow:
+      0 6px 18px rgba(255, 61, 92, 0.45),
+      0 0 22px rgba(255, 61, 92, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    overflow: hidden;
+  }
+
+  /* L'icona fuoco base (::before assoluto) stona col gradiente pieno: rimossa */
+  html body #skill-crunchTime:not(.active):not(.cooldown)::before {
+    content: none;
+  }
+
+  /* Shimmer come desktop */
+  html body #skill-crunchTime:not(.cooldown)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 70%);
+    transform: translateX(-100%);
+    animation: v3-fury-shimmer-m 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  html body #skill-crunchTime:active {
+    transform: translateY(2px) scale(0.97);
+  }
+
+  @keyframes v3-fury-shimmer-m {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(150%); }
+    100% { transform: translateX(150%); }
+  }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  html body #skill-crunchTime::after { animation: none; }
+}

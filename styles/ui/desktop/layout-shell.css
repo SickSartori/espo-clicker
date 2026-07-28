@@ -1,0 +1,91 @@
+/* =====================================================================
+   v3 desktop — Layout shell (minimal, non-invasive)
+   =====================================================================
+   PRINCIPIO: NON modificare il flex grid esistente di #game-container.
+   Solo migliorie atmosferiche: body background + glow dietro clicker.
+   Colonne mantengono dimensioni legacy.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+  /* Body — multi-layer dark gradient + no horizontal overflow (3D tilt) */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  /* Game container + center column non devono permettere scroll orizzontale */
+  html body #game-container {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  html body #center-column {
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
+      #050810 !important;
+  }
+
+  /* ────────────────────────────────────────────────
+     Tint rarità skin: SOLO nel clicker-section
+     (sfondo locale dietro al clicker, non globale)
+     ──────────────────────────────────────────────── */
+  html body #clicker-section {
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 50%,
+        var(--skin-rarity-glow, rgba(0, 217, 255, 0.12)) 0%,
+        transparent 70%);
+  }
+
+  /* Mesh gradient overlay (dietro a tutto, layer 0) */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      conic-gradient(from 90deg at 50% 50%,
+        rgba(0, 217, 255, 0.025) 0deg,
+        transparent 60deg,
+        rgba(168, 85, 247, 0.02) 120deg,
+        transparent 180deg,
+        rgba(16, 185, 129, 0.02) 240deg,
+        transparent 300deg,
+        rgba(0, 217, 255, 0.025) 360deg);
+    animation: v3-mesh-rotate 60s linear infinite;
+    opacity: 0.5;
+  }
+
+  @keyframes v3-mesh-rotate {
+    from { transform: rotate(0deg) scale(1.5); }
+    to   { transform: rotate(360deg) scale(1.5); }
+  }
+
+  /* Matrix canvas più discreto */
+  html body #matrix-canvas {
+    opacity: 0.2 !important;
+  }
+
+  /* z-index: contenuto sopra mesh.
+     NB: NON impostare position su #game-navbar — legacy lo vuole fixed. */
+  html body #game-container {
+    position: relative;
+    z-index: 2;
+  }
+
+  html body #game-navbar {
+    z-index: 100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none !important;
+  }
+}

@@ -20,14 +20,53 @@ Thumbs.db
 *.sql
 *.sqlite
 dump.rdb
+# Eccezione: sql/ contiene lo SCHEMA Supabase (codice, va versionato).
+# I dump/backup con dati utente NON vanno messi in sql/.
+!sql/*.sql
 
 # Artefatti generati / non deployati
 code
 assets/packs
 
+# Build output legacy (rigenerato da `npm run build` in locale e in CI prima del deploy)
+/dist/
+
+# Vitest / TS cache
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Playwright E2E (output generati, non versionare)
+test-results/
+playwright-report/
+.playwright/
+blob-report/
+
 # Tool interni (non deployare)
 .superpowers
 .claude
 
+# Skill agent installate in locale (`skills add`, ripristinabili dal lock) + relativo lock.
+# Sono un aiuto di sviluppo, non fanno parte del gioco.
+.agents/
+skills-lock.json
+
+# Config MCP di progetto: locale per ora. Se vuoi condividerla nel repo (server
+# Supabase per il team) togli questa riga e committa .mcp.json (contiene solo il
+# project_ref pubblico, l'accesso passa dall'OAuth).
+.mcp.json
+
+# Bozza release notes non ancora pubblicata
+docs/release-notes-v3.0-beta2.md
+
 # Credenziali R2 (NON committare mai)
 php/r2-config.php
+
+# Credenziali Trello (NON committare il token)
+php/trello-config.php
+presentation
+
+.superpowers/
+
+# Artefatto locale del tooling RuVector (rigenerabile, non versionare)
+ruvector.db

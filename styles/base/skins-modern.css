@@ -1,0 +1,140 @@
+/* css/skins-modern.css */
+
+/* --- OVERRIDE MODALE GUARDAROBA (più scuro, coerente col tema) --- */
+#skins-modal .modal-content {
+    background-color: #0d1117;
+    border: 1px solid rgba(52, 73, 94, 0.3);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
+}
+
+#skins-modal .modal-content h2 {
+    background-color: #141b23;
+    border-bottom: 1px solid #1e2d3d;
+    color: #ecf0f1;
+}
+
+#skins-modal .modal-close-btn {
+    color: #7f8c8d;
+}
+
+#skins-modal .modal-close-btn:hover {
+    color: #ecf0f1;
+}
+
+/* --- BARRA CONTROLLI E FILTRI (Corretta) --- */
+.skins-controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: #0d1117;
+    border-bottom: 1px solid #1e2d3d;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.skins-filters {
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Stile bottoni filtro corretti */
+.skin-filter-btn {
+    background: #141b23;
+    border: 1px solid #1e2d3d;
+    color: #7f8c8d;
+    padding: 8px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.25s ease;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.skin-filter-btn:hover {
+    background: #1a252f;
+    color: #ecf0f1;
+    border-color: #34495e;
+}
+
+.skin-filter-btn.active {
+    background: #2ecc71;
+    border-color: #27ae60;
+    color: #000;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.3);
+}
+
+.skin-filter-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #555;
+    box-shadow: none;
+}
+
+.skin-select-filter {
+    background-color: #141b23;
+    color: #bdc3c7;
+    border: 1px solid #1e2d3d;
+    height: 34px;
+    padding: 0 30px 0 15px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    transition: border-color 0.2s ease;
+}
+
+.skin-select-filter:focus {
+    color: #fff;
+    border-color: #2ecc71;
+}
+
+/* --- CONTENITORE GRIGLIE --- */
+.skins-grid-container {
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 50vh;
+    max-height: 60vh;
+    background: #0d1117;
+}
+
+#skins-grid-modern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 30px 0;
+    overflow: visible;
+    position: relative;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+#skins-grid-modern::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, var(--bg-glow-color, rgba(255, 255, 255, 0.05)) 0%, transparent 70%);
+    z-index: 0;
+    pointer-events: none;
+    transition: background 0.4s ease;
+}
+
+@media (max-width: 768px) {
+    .skins-controls-bar {
+        padding: 10px;
+        justify-content: center;
+    }
+}

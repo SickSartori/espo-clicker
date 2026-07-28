@@ -104,9 +104,8 @@
     font-weight: bold;
 }
 
-/* Mostra controlli solo su schermi touch/piccoli */
-@media (max-width: 1024px) {
-    #space-mobile-controls {
-        display: flex;
-    }
-}
+/* Controlli touch locali DISATTIVATI: sostituiti dal pad virtuale globale
+   (#arcade-virtual-pad) che pilota tutti i giochi via KeyboardEvent sintetico.
+   Evita il doppione su touch e il bug dei controlli mostrati su desktop con
+   finestra <=1024px (la vecchia media query era width-based, non pointer-based). */
+#space-mobile-controls { display: none !important; }

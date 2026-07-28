@@ -1,0 +1,395 @@
+/* =====================================================================
+   v3 — Modals Content (achievement, stats, settings) cyberpunk-tech
+   =====================================================================
+   Modernizza il contenuto interno dei modal per coerenza visiva con
+   il guardaroba v3. Trophy rows, stat boxes, settings groups, account
+   profile, format/prestige/release-notes.
+   ===================================================================== */
+
+@media (min-width: 769px) {
+
+  /* ════════════════════════════════════════════════
+     ACHIEVEMENTS — trophy rows v3
+     ════════════════════════════════════════════════ */
+  html body #achievements-modal #achievement-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 12px;
+    padding: 20px 24px !important;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-row {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(10, 15, 28, 0.9)) !important;
+    border: 1px solid rgba(0, 217, 255, 0.12) !important;
+    border-left: 3px solid rgba(148, 163, 184, 0.4) !important;
+    border-radius: 6px !important;
+    padding: 14px 16px !important;
+    min-height: 78px !important;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-row::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.3), transparent);
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-row:hover {
+    transform: translateX(2px);
+    border-color: rgba(0, 217, 255, 0.35) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 217, 255, 0.12);
+  }
+  html body #achievements-modal #achievement-list .trophy-row:hover::before {
+    opacity: 1;
+  }
+
+  /* Locked */
+  html body #achievements-modal #achievement-list .trophy-row.locked {
+    opacity: 0.55 !important;
+    filter: saturate(0.4) !important;
+    border-left-color: rgba(127, 140, 141, 0.5) !important;
+  }
+
+  /* Completed (claimed) */
+  html body #achievements-modal #achievement-list .trophy-row.completed {
+    background: linear-gradient(90deg,
+      rgba(16, 185, 129, 0.10),
+      rgba(15, 23, 42, 0.85)) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    border-left: 3px solid #10b981 !important;
+  }
+
+  /* Unclaimed (golden glow + pulse) */
+  html body #achievements-modal #achievement-list .trophy-row.unclaimed {
+    background: linear-gradient(90deg,
+      rgba(245, 158, 11, 0.14),
+      rgba(15, 23, 42, 0.85)) !important;
+    border: 1px solid #f59e0b !important;
+    border-left: 3px solid #f59e0b !important;
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2), 0 0 24px rgba(245, 158, 11, 0.18) !important;
+    animation: v3-trophy-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes v3-trophy-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(245,158,11,0.2), 0 0 24px rgba(245,158,11,0.18); }
+    50%      { box-shadow: 0 0 0 1px rgba(245,158,11,0.4), 0 0 36px rgba(245,158,11,0.32); }
+  }
+
+  /* Trophy icon */
+  html body #achievements-modal #achievement-list .trophy-icon-wrapper {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(0, 217, 255, 0.18) !important;
+    color: rgba(148, 163, 184, 0.7) !important;
+    font-size: 1.3rem !important;
+    margin-right: 14px !important;
+  }
+
+  html body #achievements-modal .trophy-row.completed .trophy-icon-wrapper {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+  }
+
+  html body #achievements-modal .trophy-row.unclaimed .trophy-icon-wrapper {
+    background: rgba(245, 158, 11, 0.18) !important;
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+  }
+
+  /* Trophy title */
+  html body #achievements-modal #achievement-list .trophy-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    letter-spacing: 0.5px !important;
+    color: #fff !important;
+  }
+
+  html body #achievements-modal #achievement-list .trophy-desc,
+  html body #achievements-modal #achievement-list .trophy-flavor {
+    font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif) !important;
+    font-size: 0.78rem !important;
+    color: rgba(248, 250, 252, 0.6) !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Claim button */
+  html body #achievements-modal #achievement-list .trophy-row.unclaimed .trophy-claim-btn,
+  html body #achievements-modal .claim-btn {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.2)) !important;
+    border: 1px solid #f59e0b !important;
+    color: #fff !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    padding: 8px 14px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    text-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+    transition: all 200ms ease !important;
+  }
+  html body #achievements-modal .claim-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.5);
+  }
+
+  /* --- Tooltip "Sblocca: <skin>" del bottone claim ---
+     Il bottone usa [data-tooltip] (css/components.css) che mette il tooltip
+     SOPRA (bottom:100%). Ma .trophy-row ha overflow:hidden e gli obiettivi
+     riscattabili sono ordinati in cima alla lista → il tooltip veniva tagliato
+     dal bordo superiore della riga. Lo spostiamo a SINISTRA del bottone,
+     centrato in verticale: resta dentro la riga (niente clip) e la freccia
+     punta al premio. */
+  html body #achievements-modal #achievement-list .trophy-claim-btn[data-tooltip]:hover::after {
+    bottom: auto;
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    margin: 0 10px 0 0;
+  }
+  html body #achievements-modal #achievement-list .trophy-claim-btn[data-tooltip]:hover::before {
+    bottom: auto;
+    top: 50%;
+    left: auto;
+    right: 100%;
+    transform: translateY(-50%);
+    margin: 0 -2px 0 0;
+    border: 6px solid transparent;
+    border-left-color: #f1c40f;
+  }
+
+  /* ════════════════════════════════════════════════
+     STATS — stat boxes v3
+     ════════════════════════════════════════════════ */
+  html body #stats-modal #stats-list {
+    padding: 20px 24px !important;
+  }
+
+  html body #stats-modal #stats-list .stats-section {
+    margin-bottom: 22px;
+  }
+
+  html body #stats-modal #stats-list h3,
+  html body #stats-modal #stats-list .stats-section-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    color: var(--v3-accent-cyan, #00d9ff) !important;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.18) !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+  }
+
+  html body #stats-modal #stats-list .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  html body #stats-modal #stats-list .stat-box {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(10, 15, 28, 0.9)) !important;
+    border: 1px solid rgba(0, 217, 255, 0.15) !important;
+    border-radius: 6px !important;
+    padding: 12px 14px !important;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+
+  html body #stats-modal #stats-list .stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--v3-accent-cyan, #00d9ff), transparent);
+    opacity: 0.6;
+  }
+
+  html body #stats-modal #stats-list .stat-box:hover {
+    border-color: rgba(0, 217, 255, 0.4) !important;
+    transform: translateY(-2px);
+  }
+
+  html body #stats-modal #stats-list .stat-label {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    color: rgba(248, 250, 252, 0.55) !important;
+    margin-bottom: 4px;
+  }
+
+  html body #stats-modal #stats-list .stat-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+  }
+
+  /* ════════════════════════════════════════════════
+     SETTINGS — group + sliders + selects v3
+     ════════════════════════════════════════════════ */
+  html body #settings-modal .settings-content {
+    padding: 20px 22px !important;
+  }
+
+  html body #settings-modal .settings-group {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(0, 217, 255, 0.1);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
+  html body #settings-modal .settings-group .group-title {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--v3-accent-cyan, #00d9ff);
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+  }
+
+  html body #settings-modal .slider-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px;
+    padding: 10px 0;
+  }
+
+  html body #settings-modal .slider-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 217, 255, 0.08);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--v3-accent-cyan, #00d9ff);
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.15);
+  }
+
+  html body #settings-modal .slider-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  html body #settings-modal .slider-value {
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--v3-accent-cyan, #00d9ff);
+    min-width: 44px;
+    text-align: right;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+  }
+
+  /* ════════════════════════════════════════════════
+     USER HUB modal (Account + Amici) — profile cards
+     ════════════════════════════════════════════════ */
+  html body #user-hub-modal .modal-content {
+    max-width: 600px;
+  }
+
+  /* ════════════════════════════════════════════════
+     RELEASE NOTES modal
+     ════════════════════════════════════════════════ */
+  html body #release-notes-modal .modal-content {
+    max-width: 720px !important;
+  }
+
+  html body #release-notes-modal .modal-desc,
+  html body #release-notes-modal #release-notes-content {
+    padding: 20px 24px !important;
+    font-family: var(--v3-font-body, 'IBM Plex Sans', sans-serif) !important;
+    line-height: 1.55;
+    color: rgba(248, 250, 252, 0.85);
+  }
+
+  /* ════════════════════════════════════════════════
+     LEADERBOARD modal — table-style rows
+     ════════════════════════════════════════════════ */
+  html body #leaderboard-modal .leaderboard-row,
+  html body #leaderboard-modal .leaderboard-entry {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 10px 14px !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(0, 217, 255, 0.1) !important;
+    border-radius: 4px !important;
+    margin-bottom: 6px !important;
+    font-family: var(--v3-font-mono, 'JetBrains Mono', monospace) !important;
+    transition: all 200ms ease !important;
+  }
+  html body #leaderboard-modal .leaderboard-row:hover {
+    border-color: rgba(0, 217, 255, 0.3) !important;
+    transform: translateX(2px);
+  }
+
+  html body #leaderboard-modal .leaderboard-row.podium-1,
+  html body #leaderboard-modal .leaderboard-entry.rank-1 {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.8)) !important;
+    border-color: #f59e0b !important;
+    border-left: 3px solid #f59e0b !important;
+  }
+  html body #leaderboard-modal .leaderboard-row.podium-2,
+  html body #leaderboard-modal .leaderboard-entry.rank-2 {
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.15), rgba(15, 23, 42, 0.8)) !important;
+    border-color: rgba(203, 213, 225, 0.5) !important;
+    border-left: 3px solid rgba(203, 213, 225, 0.7) !important;
+  }
+  html body #leaderboard-modal .leaderboard-row.podium-3,
+  html body #leaderboard-modal .leaderboard-entry.rank-3 {
+    background: linear-gradient(90deg, rgba(217, 119, 6, 0.15), rgba(15, 23, 42, 0.8)) !important;
+    border-color: rgba(217, 119, 6, 0.6) !important;
+    border-left: 3px solid #d97706 !important;
+  }
+
+  /* ════════════════════════════════════════════════
+     LOGIN modal
+     ════════════════════════════════════════════════ */
+  html body #login-modal .modal-content {
+    max-width: 420px !important;
+    border-top: none !important;
+  }
+
+  html body #login-modal .modal-content .login-inputs,
+  html body #login-modal .modal-content > *:not(h2):not(.modal-close-btn):not(::before) {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  /* ════════════════════════════════════════════════
+     ADVANCED AUDIO modal — list of sound entries
+     ════════════════════════════════════════════════ */
+  html body #advanced-audio-modal .audio-entry,
+  html body #advanced-audio-modal .audio-row {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border: 1px solid rgba(168, 85, 247, 0.15) !important;
+    border-radius: 4px !important;
+    padding: 10px 12px !important;
+    margin-bottom: 6px !important;
+  }
+}
