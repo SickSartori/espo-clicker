@@ -40,8 +40,12 @@ jobs:
           grep "prodHost" php/config.php
 
       # Step 2: Caricamento FTP
-      # NOTA: Per un progetto PHP/JS come questo, non è richiesto un passo di build.
-      # L'azione FTP caricherà direttamente tutti i file scaricati.
+      # ⚠️ FTP_REMOTE_PATH e' il percorso dell'AREA DI TEST (sottocartella /test/),
+      #    non della produzione: quella sta nella root FTP e la gestisce main.yml
+      #    con server-dir "./". Ripuntare questo secret alla produzione significa
+      #    sovrascrivere il sito live al primo push su questo branch.
+      # NB: il build serve eccome (dist/ e' gitignored) ed e' lo step qui sopra;
+      #     la vecchia nota "non è richiesto un passo di build" era rimasta dalla v2.
       - name: Caricamento FTP su Server
         uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
@@ -72,6 +76,8 @@ jobs:
             deploy.bat
             deploy-ui.bat
             README.md
+            PRODUCT.md
             php/config.example.php
             php/r2-config.example.php
+            php/trello-config.example.php
             php/r2-cors-policy.json
