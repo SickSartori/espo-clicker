@@ -1589,20 +1589,26 @@
         this.tweens.add({ targets: victim, alpha: 0, angle: 180, y: victim.y + 40, duration: 450, onComplete: () => { if (victim.destroy) victim.destroy(); } });
     }
 
-    // Volumi di FALLBACK, calibrati sul livello reale dei file (misurato con
-    // ffmpeg volumedetect) e non a occhio: i sorgenti di Super Espò sono
-    // masterizzati molto più caldi degli altri SFX del gioco — star-collect
-    // tocca 0.0 dBFS e coin -0.5 — quindi a parità di volume di riproduzione
-    // uscivano molto più forti. Questi valori riportano tutti a ~-30 dB
-    // effettivi, allineati a sound-arcade-start che è il riferimento.
-    // Restano solo un ripiego: il valore vero arriva dal mixer (audioCustom).
+    // Volumi di FALLBACK (il valore vero arriva dal mixer, vedi sotto).
+    // I file sorgente sono stati normalizzati a ~-23.9 LUFS, lo stesso livello di
+    // sound-arcade-start: prima fra loro correvano 32 dB, con star-collect a
+    // -4.9 LUFS e picco oltre il fondo scala e goomba-stomp a -36.6 quasi
+    // inudibile. Nessun volume di riproduzione poteva raddrizzare una forbice
+    // simile, per questo si è intervenuti sui file.
+    // Ora che sono uniformi questi numeri esprimono solo l'intento di design:
+    // basso ciò che suona di continuo, alto ciò che è un evento.
+    // Devono restare allineati ai defaultVol in src/data/assets.ts.
     const SUPER_ESPO_VOLUMES = {
-        'snd-jump':         0.09,  // file -13.3 dB · spammato a ogni salto
-        'snd-coin':         0.09,  // file -12.7 dB · frequentissimo
-        'snd-stomp':        0.55,  // file -24.7 dB · era il più basso di tutti, alzato
-        'snd-gameover':     0.50,  // file -23.1 dB
-        'snd-star-appears': 0.27,  // file -18.7 dB
-        'snd-star-collect': 0.10,  // file  -9.3 dB · era ~15 dB sopra tutto il resto
+        'snd-jump':         0.13,  // ogni salto e ogni fireball: il più frequente in assoluto
+        'snd-coin':         0.22,
+        'snd-stomp':        0.30,  // nemici, blocchi rotti, colpi di guscio
+        'snd-star-appears': 0.35,  // comparsa di fungo, stella o fiore
+        'snd-star-collect': 0.45,  // raccolta power-up: momento premiante
+        // Non normalizzato: è lo stesso file di game-over.mp3, condiviso con
+        // asteroids/centipede/invaders/space. Toccarlo avrebbe cambiato il suono
+        // a 4 giochi estranei, quindi resta a -19.9 LUFS e allineato al
+        // defaultVol di sound-arcade-gameover.
+        'snd-gameover':     0.50,
     };
 
     // Chiave Phaser → id nel mixer del gioco principale (src/data/assets.ts).

@@ -101,55 +101,58 @@ export const assets: Record<string, any> = {
         // Registrati solo per comparire nel mixer: preload:false evita che il
         // gioco principale scarichi 6 file che non riprodurra' mai (l'unico caso
         // in cui vengono caricati e' il pulsante "prova" del mixer stesso).
-        // defaultVol calibrati a orecchio-macchina: i sorgenti sono masterizzati
-        // molto piu' caldi degli altri SFX (star-collect tocca 0.0 dBFS), quindi
-        // il volume compensa per portarli tutti a ~-30 dB effettivi, come
-        // sound-arcade-start. Il gameover di Super Espo NON e' qui: e' lo stesso
-        // file di sound-arcade-gameover (md5 identico) e ne riusa la voce.
+        // I file sono stati normalizzati a ~-23.9 LUFS, lo stesso livello di
+        // sound-arcade-start: prima la forbice fra loro era di 32 dB (star-collect
+        // a -4.9 LUFS con picco oltre il fondo scala, goomba-stomp a -36.6).
+        // Ora che sono uniformi, defaultVol esprime solo l'intento di design:
+        // piu' basso cio' che suona di continuo, piu' alto cio' che e' un evento.
+        // Il gameover di Super Espo NON e' qui: e' lo stesso identico file di
+        // sound-arcade-gameover (md5 uguale, condiviso con altri 4 giochi) e ne
+        // riusa la voce, cosi' resta un solo cursore per un solo suono.
         'espo-jump': {
             id: 'sound-espo-jump',
             file: 'assets/sounds/arcade/super-espo/jump.wav',
-            name: 'Super Espò — Salto',
+            name: 'Super Espò · Salto',
             type: 'sfx',
             category: 'effetti',
             preload: false,
-            defaultVol: 0.09
+            defaultVol: 0.13   // a ogni salto e a ogni fireball: il piu' frequente
         },
         'espo-coin': {
             id: 'sound-espo-coin',
             file: 'assets/sounds/arcade/super-espo/coin.mp3',
-            name: 'Super Espò — Moneta',
+            name: 'Super Espò · Moneta',
             type: 'sfx',
             category: 'effetti',
             preload: false,
-            defaultVol: 0.09
+            defaultVol: 0.22
         },
         'espo-stomp': {
             id: 'sound-espo-stomp',
             file: 'assets/sounds/arcade/super-espo/goomba-stomp.wav',
-            name: 'Super Espò — Goomba',
+            name: 'Super Espò · Impatto',
             type: 'sfx',
             category: 'effetti',
             preload: false,
-            defaultVol: 0.55
+            defaultVol: 0.30   // nemici schiacciati, blocchi rotti, colpi di guscio
         },
         'espo-star-appears': {
             id: 'sound-espo-star-appears',
             file: 'assets/sounds/arcade/super-espo/star-appears.mp3',
-            name: 'Super Espò — Stella appare',
+            name: 'Super Espò · Power-up appare',
             type: 'sfx',
             category: 'effetti',
             preload: false,
-            defaultVol: 0.27
+            defaultVol: 0.35   // comparsa di fungo, stella o fiore di fuoco
         },
         'espo-star-collect': {
             id: 'sound-espo-star-collect',
             file: 'assets/sounds/arcade/super-espo/star-collect.mp3',
-            name: 'Super Espò — Stella presa',
+            name: 'Super Espò · Power-up preso',
             type: 'sfx',
             category: 'effetti',
             preload: false,
-            defaultVol: 0.10
+            defaultVol: 0.45   // raccolta di fungo, stella o fiore: momento premiante
         },
         'snowball': {
             id: 'sound-snowball',
