@@ -38,23 +38,39 @@ export function initModals(): void {
     // dura 6'27") che restava a suonare sotto tutto il resto.
     const TEST_PREVIEW_MS = 3000;
     let testPreviewTimer: any = null;
+    // Bottone che possiede l'anteprima in corso. Serve a due cose: capire se un
+    // mouseleave riguarda l'anteprima attiva, e annullare un avvio ancora in
+    // caricamento se nel frattempo il puntatore se n'è andato.
+    let activePreviewBtn: any = null;
 
-    /** Fa partire il conto alla rovescia dei 3 s. Ogni nuova anteprima lo riarma. */
-    function armTestPreview() {
+    /** Segna l'inizio di un'anteprima e arma il taglio a 3 s. */
+    function armTestPreview(btn: any) {
+        activePreviewBtn = btn;
         clearTimeout(testPreviewTimer);
         testPreviewTimer = setTimeout(() => {
             testPreviewTimer = null;
-            w.stopAllTestAudio();
-            w.resetTestButtons();
+            stopTestPreview();
         }, TEST_PREVIEW_MS);
     }
 
-    /** Anteprima interrotta perché la finestra ha perso il focus o la scheda è
-     *  passata in secondo piano: continuerebbe a suonare senza che si veda da dove. */
-    function stopTestPreviewOnBlur() {
-        if (testPreviewTimer === null) return; // nessuna anteprima in corso
-        w.stopAllTestAudio();
+    /** Unico punto di uscita: ferma l'audio, resetta i bottoni, libera lo stato. */
+    function stopTestPreview() {
+        activePreviewBtn = null;
+        w.stopAllTestAudio();   // azzera anche testPreviewTimer
         w.resetTestButtons();
+    }
+
+    /** L'anteprima dura finché il puntatore resta sul bottone: appena esce, stop. */
+    function onTestBtnPointerLeave(btn: any) {
+        if (activePreviewBtn === btn) stopTestPreview();
+    }
+
+    // Rete di sicurezza per i casi in cui il mouseleave non arriva mai: finestra
+    // in secondo piano, scheda nascosta, o dispositivi touch (dove il puntatore
+    // non "esce" da nulla e a chiudere resta solo il taglio a 3 s).
+    function stopTestPreviewOnBlur() {
+        if (activePreviewBtn === null) return; // nessuna anteprima in corso
+        stopTestPreview();
     }
     window.addEventListener('blur', stopTestPreviewOnBlur);
     document.addEventListener('visibilitychange', () => {
@@ -65,6 +81,7 @@ export function initModals(): void {
     w.stopAllTestAudio = function () {
         clearTimeout(testPreviewTimer);
         testPreviewTimer = null;
+        activePreviewBtn = null;
         // Ferma TUTTO, musica compresa. Prima il ciclo saltava i type 'music':
         // erano proprio quelli a non fermarsi mai — in loop e sovrapposti fra
         // loro a ogni click. Qui dentro ogni suono in riproduzione e' comunque
@@ -533,6 +550,10 @@ export function initModals(): void {
         // Listener Test Buttons
         listAdvAudio.querySelectorAll('.mixer-test-btn').forEach(btn => {
             btn.addEventListener('click', () => handleTestAudioClick(btn));
+            // L'anteprima vive finché il puntatore resta sul bottone.
+            // pointerleave invece di mouseleave: copre anche penna e touch, e
+            // sul touch non spara comunque perché il puntatore non "esce".
+            btn.addEventListener('pointerleave', () => onTestBtnPointerLeave(btn));
         });
     }
 
@@ -564,7 +585,7 @@ export function initModals(): void {
                 btn.classList.add('playing');
                 icon.className = 'fa-solid fa-stop';
                 icon.style.marginLeft = '0';
-                armTestPreview();
+                armTestPreview(btn);
                 videoEl.onended = () => {
                     btn.classList.remove('playing');
                     icon.className = 'fa-solid fa-play';
@@ -595,20 +616,39 @@ export function initModals(): void {
         const type = (def && def.type === 'music') ? 'music' : 'sfx';
         const vol = w.AudioManager._calcVolume(targetId, type);
 
-        howl.volume(vol > 0 ? vol : 0.1);
-        howl.play();
-        btn.classList.add('playing');
-        icon.className = 'fa-solid fa-stop';
-        icon.style.marginLeft = '0';
-        armTestPreview();
+        const startPlayback = () => {
+            howl.volume(vol > 0 ? vol : 0.1);
+            howl.play();
+            btn.classList.add('playing');
+            icon.className = 'fa-solid fa-stop';
+            icon.style.marginLeft = '0';
+            armTestPreview(btn);
 
-        // Auto-reset a fine traccia, per i suoni piu' corti di 3 s che finiscono
-        // da soli prima del cap. Sui loop non scatta mai: li chiude il timer.
-        howl.once('end', () => {
-            btn.classList.remove('playing');
-            icon.className = 'fa-solid fa-play';
-            icon.style.marginLeft = '2px';
-        });
+            // Auto-reset a fine traccia, per i suoni piu' corti di 3 s che finiscono
+            // da soli prima del cap. Sui loop non scatta mai: li chiude il timer.
+            howl.once('end', () => {
+                btn.classList.remove('playing');
+                icon.className = 'fa-solid fa-play';
+                icon.style.marginLeft = '2px';
+            });
+        };
+
+        // Suoni con preload:false (quelli dell'arcade, registrati qui solo per
+        // comparire nel mixer) arrivano al primo click ancora scaricati.
+        // ⚠️ Howler 2.x NON scarica da solo in questo caso: play() accoda la
+        // richiesta e resta muto per sempre finche' non si chiama load() a mano.
+        if (howl.state() === 'unloaded') {
+            // Prenota subito il bottone: se il puntatore esce mentre scarica,
+            // stopTestPreview() azzera activePreviewBtn e il play non parte.
+            activePreviewBtn = btn;
+            howl.once('load', () => {
+                if (activePreviewBtn !== btn) return; // anteprima gia' annullata
+                startPlayback();
+            });
+            howl.load();
+            return;
+        }
+        startPlayback();
     }
 
     if (btnAdvAudio) {
