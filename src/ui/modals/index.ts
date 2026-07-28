@@ -32,16 +32,48 @@ export function initModals(): void {
         return Date.now() - lastTouchEnd < 500;
     }
 
-    // Funzione mancante: Ferma tutti i test audio
+    // ---- Anteprima audio del mixer: una alla volta, e mai oltre 3 secondi ----
+    // Il tester serve a regolare un cursore, non ad ascoltare il brano: senza
+    // cap, provare una traccia significava avviare un loop infinito (arcade-theme
+    // dura 6'27") che restava a suonare sotto tutto il resto.
+    const TEST_PREVIEW_MS = 3000;
+    let testPreviewTimer: any = null;
+
+    /** Fa partire il conto alla rovescia dei 3 s. Ogni nuova anteprima lo riarma. */
+    function armTestPreview() {
+        clearTimeout(testPreviewTimer);
+        testPreviewTimer = setTimeout(() => {
+            testPreviewTimer = null;
+            w.stopAllTestAudio();
+            w.resetTestButtons();
+        }, TEST_PREVIEW_MS);
+    }
+
+    /** Anteprima interrotta perché la finestra ha perso il focus o la scheda è
+     *  passata in secondo piano: continuerebbe a suonare senza che si veda da dove. */
+    function stopTestPreviewOnBlur() {
+        if (testPreviewTimer === null) return; // nessuna anteprima in corso
+        w.stopAllTestAudio();
+        w.resetTestButtons();
+    }
+    window.addEventListener('blur', stopTestPreviewOnBlur);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopTestPreviewOnBlur();
+    });
+
+    // Ferma tutte le anteprime del mixer.
     w.stopAllTestAudio = function () {
-        // Ferma tutti i suoni SFX gestiti da Howler (non la musica di background)
+        clearTimeout(testPreviewTimer);
+        testPreviewTimer = null;
+        // Ferma TUTTO, musica compresa. Prima il ciclo saltava i type 'music':
+        // erano proprio quelli a non fermarsi mai — in loop e sovrapposti fra
+        // loro a ogni click. Qui dentro ogni suono in riproduzione e' comunque
+        // un'anteprima: all'apertura il mixer silenzia il gioco e alla chiusura
+        // updateAmbience() rimette la musica giusta.
         if (typeof w.AudioManager !== 'undefined') {
             for (const id in w.AudioManager._sounds) {
-                const def = w.AudioManager._getSoundDef(id);
-                if (def && def.type !== 'music') {
-                    const howl = w.AudioManager._sounds[id];
-                    if (howl && howl.playing()) howl.stop();
-                }
+                const howl = w.AudioManager._sounds[id];
+                if (howl && howl.playing()) howl.stop();
             }
         }
         // Ferma video di test creati dinamicamente
@@ -511,12 +543,12 @@ export function initModals(): void {
         // Video: gestione diretta sull'elemento DOM
         const videoEl = document.getElementById(targetId) as HTMLMediaElement | null;
         if (videoEl && videoEl.tagName === 'VIDEO') {
+            // Secondo click sullo stesso bottone = stop. Passa da stopAllTestAudio
+            // cosi' il timer dei 3 s viene azzerato: altrimenti resterebbe armato
+            // e spegnerebbe l'anteprima successiva a meta'.
             if (!videoEl.paused && !videoEl.ended) {
-                videoEl.pause();
-                videoEl.currentTime = 0;
-                btn.classList.remove('playing');
-                icon.className = 'fa-solid fa-play';
-                icon.style.marginLeft = '2px';
+                w.stopAllTestAudio();
+                w.resetTestButtons();
                 return;
             }
             w.stopAllTestAudio();
@@ -532,6 +564,7 @@ export function initModals(): void {
                 btn.classList.add('playing');
                 icon.className = 'fa-solid fa-stop';
                 icon.style.marginLeft = '0';
+                armTestPreview();
                 videoEl.onended = () => {
                     btn.classList.remove('playing');
                     icon.className = 'fa-solid fa-play';
@@ -548,12 +581,10 @@ export function initModals(): void {
         const howl = w.AudioManager.getHowl(targetId);
         if (!howl) return;
 
-        // Se sta già suonando, ferma
+        // Secondo click sullo stesso bottone = stop (e disarma il timer dei 3 s)
         if (howl.playing()) {
-            howl.stop();
-            btn.classList.remove('playing');
-            icon.className = 'fa-solid fa-play';
-            icon.style.marginLeft = '2px';
+            w.stopAllTestAudio();
+            w.resetTestButtons();
             return;
         }
 
@@ -569,8 +600,10 @@ export function initModals(): void {
         btn.classList.add('playing');
         icon.className = 'fa-solid fa-stop';
         icon.style.marginLeft = '0';
+        armTestPreview();
 
-        // Auto-reset a fine traccia (per suoni non-loop)
+        // Auto-reset a fine traccia, per i suoni piu' corti di 3 s che finiscono
+        // da soli prima del cap. Sui loop non scatta mai: li chiude il timer.
         howl.once('end', () => {
             btn.classList.remove('playing');
             icon.className = 'fa-solid fa-play';
