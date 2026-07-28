@@ -1589,31 +1589,55 @@
         this.tweens.add({ targets: victim, alpha: 0, angle: 180, y: victim.y + 40, duration: 450, onComplete: () => { if (victim.destroy) victim.destroy(); } });
     }
 
-    // Volumi per-suono bilanciati per FREQUENZA d'uso: i suoni sparati
-    // continuamente (jump/coin) devono essere discreti per non saturare,
-    // mentre gli eventi rari (star/gameover) possono essere protagonisti.
+    // Volumi di FALLBACK, calibrati sul livello reale dei file (misurato con
+    // ffmpeg volumedetect) e non a occhio: i sorgenti di Super Espò sono
+    // masterizzati molto più caldi degli altri SFX del gioco — star-collect
+    // tocca 0.0 dBFS e coin -0.5 — quindi a parità di volume di riproduzione
+    // uscivano molto più forti. Questi valori riportano tutti a ~-30 dB
+    // effettivi, allineati a sound-arcade-start che è il riferimento.
+    // Restano solo un ripiego: il valore vero arriva dal mixer (audioCustom).
     const SUPER_ESPO_VOLUMES = {
-        'snd-jump':         0.25,  // spammato ad ogni salto → molto basso
-        'snd-coin':         0.18,  // monete frequenti → basso (-40% rispetto a 0.30)
-        'snd-stomp':        0.40,  // schiaccia goomba: meno frequente, evento "wow"
-        'snd-gameover':     0.55,  // jingle finale → protagonismo
-        'snd-star-appears': 0.45,  // raro ma da notare
-        'snd-star-collect': 0.55,  // momento celebrativo
+        'snd-jump':         0.09,  // file -13.3 dB · spammato a ogni salto
+        'snd-coin':         0.09,  // file -12.7 dB · frequentissimo
+        'snd-stomp':        0.55,  // file -24.7 dB · era il più basso di tutti, alzato
+        'snd-gameover':     0.50,  // file -23.1 dB
+        'snd-star-appears': 0.27,  // file -18.7 dB
+        'snd-star-collect': 0.10,  // file  -9.3 dB · era ~15 dB sopra tutto il resto
     };
 
+    // Chiave Phaser → id nel mixer del gioco principale (src/data/assets.ts).
+    // Il gameover riusa sound-arcade-gameover: è lo stesso identico file (md5
+    // uguale a assets/sounds/arcade/game-over.mp3), inutile una voce doppia.
+    const SUPER_ESPO_MIXER_IDS = {
+        'snd-jump':         'sound-espo-jump',
+        'snd-coin':         'sound-espo-coin',
+        'snd-stomp':        'sound-espo-stomp',
+        'snd-gameover':     'sound-arcade-gameover',
+        'snd-star-appears': 'sound-espo-star-appears',
+        'snd-star-collect': 'sound-espo-star-collect',
+    };
+
+    // master × canale SFX × livello del singolo suono — la stessa formula del
+    // gioco principale (AudioManager._calcVolume). I valori arrivano dallo stub
+    // di arcade-page.js, che li legge dalla fotografia in localStorage.
     function playSoundEffect(scene, key) {
-        const baseVol = SUPER_ESPO_VOLUMES[key] !== undefined ? SUPER_ESPO_VOLUMES[key] : 0.45;
-        if (window.EspooClicker) {
-            const gs = window.EspooClicker.getGameState();
-            if (gs && gs.user) {
-                const m = gs.user.masterVolume !== undefined ? gs.user.masterVolume : 1;
-                const s = gs.user.sfxVolume    !== undefined ? gs.user.sfxVolume    : 1;
-                const vol = m * s * baseVol;
-                if (vol > 0.01) scene.sound.play(key, { volume: vol });
-            }
-        } else {
-            scene.sound.play(key, { volume: baseVol });
+        const fallback = SUPER_ESPO_VOLUMES[key] !== undefined ? SUPER_ESPO_VOLUMES[key] : 0.2;
+        let master = 1, sfx = 1, custom = fallback;
+
+        const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        const u = gs && gs.user;
+        if (u) {
+            if (typeof u.masterVolume === 'number') master = u.masterVolume;
+            if (typeof u.sfxVolume === 'number') sfx = u.sfxVolume;
+            const id = SUPER_ESPO_MIXER_IDS[key];
+            const c = (id && u.audioCustom) ? u.audioCustom[id] : undefined;
+            if (typeof c === 'number') custom = c;
         }
+
+        // NB: prima, se lo stub non esponeva gs.user, questo ramo usciva senza
+        // suonare nulla; ora il fallback vale sempre e l'audio non sparisce mai.
+        const vol = Math.max(0, Math.min(1, master * sfx * custom));
+        if (vol > 0.005) scene.sound.play(key, { volume: vol });
     }
 
     function updateUI() {

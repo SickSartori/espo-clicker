@@ -239,7 +239,11 @@ const AudioManager = {
                 src: src,
                 volume: 0, // Impostato dinamicamente al play
                 loop: !!sound.loop,
-                preload: sound.type === 'sfx', // Preload tutti gli SFX (non musica)
+                // Preload tutti gli SFX (non musica), salvo override esplicito:
+                // gli SFX dell'arcade sono registrati solo per il mixer e li
+                // riproduce Phaser in un'altra pagina → preload:false, altrimenti
+                // il gioco principale scarica file che non usera' mai.
+                preload: (sound.preload !== undefined) ? sound.preload : (sound.type === 'sfx'),
                 html5: sound.type === 'music',  // Music via HTML5 (streaming, no decode)
                 pool: sound.type === 'sfx' ? 5 : 1, // Pool per SFX (max 5 copie simultanee)
                 onplayerror: () => {
@@ -413,7 +417,30 @@ const AudioManager = {
         this._ambienceTimer = setTimeout(() => this._applyAmbience(), 80);
     },
 
+    // Ponte audio verso la pagina arcade (arcade.php e' un documento separato,
+    // aperto con window.open: non condivide ne' lo store ne' gli Howl). Senza
+    // questo lo stub EspooClicker di js/arcade-page.js non conosce i volumi e
+    // Super Espo suona a volume pieno ignorando il mixer.
+    // localStorage e' condiviso fra le due finestre e l'evento 'storage' notifica
+    // l'arcade in tempo reale se l'utente muove i cursori a gioco aperto.
+    _publishArcadeAudio() {
+        try {
+            const u = store.gameState && store.gameState.user;
+            if (!u) return;
+            localStorage.setItem('espo_arcade_audio', JSON.stringify({
+                masterVolume: u.masterVolume,
+                sfxVolume: u.sfxVolume,
+                musicVolume: u.musicVolume,
+                audioCustom: u.audioCustom || {}
+            }));
+        } catch (e) { /* quota piena o modalita' privata: l'arcade usa i default */ }
+    },
+
     _applyAmbience() {
+        // Prima del gate di login: la fotografia dei volumi deve restare fresca
+        // anche quando questa funzione esce subito.
+        this._publishArcadeAudio();
+
         if (!sessionStorage.getItem('espooUser')) {
             // Ferma tutta la musica se non loggato
             for (const id in this._sounds) {
