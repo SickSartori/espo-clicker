@@ -60,9 +60,10 @@ export function initModals(): void {
         w.resetTestButtons();
     }
 
-    /** L'anteprima dura finché il puntatore resta sul bottone: appena esce, stop. */
-    function onTestBtnPointerLeave(btn: any) {
-        if (activePreviewBtn === btn) stopTestPreview();
+    /** Ferma l'anteprima solo se appartiene a questo bottone (chiamata dal
+     *  mouseleave della riga: uscire da una riga non deve zittirne un'altra). */
+    function stopPreviewIfOwnedBy(btn: any) {
+        if (btn && activePreviewBtn === btn) stopTestPreview();
     }
 
     // Rete di sicurezza per i casi in cui il mouseleave non arriva mai: finestra
@@ -432,9 +433,9 @@ export function initModals(): void {
         row.innerHTML = `
             <div class="mixer-label" title="${name}">${name}</div>
             <div class="mixer-controls">
-                <input type="range" class="mixer-slider" 
-                       data-target="${id}" 
-                       min="0" max="1" step="0.1" 
+                <input type="range" class="mixer-slider"
+                       data-target="${id}"
+                       min="0" max="1" step="0.05"
                        value="${val}">
                 <span class="mixer-value" style="color: ${color};">
                     ${Math.round(val * 100)}%
@@ -445,31 +446,15 @@ export function initModals(): void {
             </button>
         `;
 
-        // --- NUOVO: Stop Audio Automatico quando il mouse esce dalla riga ---
+        // L'anteprima vive finché il puntatore resta sulla RIGA, non solo sul
+        // bottone: così si arriva al cursore e si regola il volume mentre si
+        // ascolta. Si ferma solo uscendo dalla riga per intero.
+        // NB: la versione precedente cercava document.getElementById(targetId),
+        // che esiste solo per i <video>: sui suoni Howler `el` era null e questo
+        // handler non fermava niente. Ora passa dal controllo centralizzato,
+        // che copre Howler e video allo stesso modo.
         row.addEventListener('mouseleave', () => {
-            const btn = row.querySelector('.mixer-test-btn') as HTMLElement;
-            const targetId = btn.getAttribute('data-target')!;
-            const el = document.getElementById(targetId) as HTMLMediaElement | null;
-
-            // Se l'elemento esiste e (sta suonando OPPURE il bottone dice che sta suonando)
-            if (el && (!el.paused || btn.classList.contains('playing'))) {
-                // 1. Ferma l'audio
-                el.pause();
-                el.currentTime = 0;
-
-                // 2. Resetta graficamente il bottone
-                btn.classList.remove('playing');
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.className = 'fa-solid fa-play';
-                    icon.style.marginLeft = '2px';
-                }
-
-                // 3. Nascondi video se necessario (pulizia extra)
-                if (el.tagName === 'VIDEO') {
-                    el.style.display = 'none';
-                }
-            }
+            stopPreviewIfOwnedBy(row.querySelector('.mixer-test-btn'));
         });
 
         return row;
@@ -550,10 +535,10 @@ export function initModals(): void {
         // Listener Test Buttons
         listAdvAudio.querySelectorAll('.mixer-test-btn').forEach(btn => {
             btn.addEventListener('click', () => handleTestAudioClick(btn));
-            // L'anteprima vive finché il puntatore resta sul bottone.
-            // pointerleave invece di mouseleave: copre anche penna e touch, e
-            // sul touch non spara comunque perché il puntatore non "esce".
-            btn.addEventListener('pointerleave', () => onTestBtnPointerLeave(btn));
+            // Nessun listener di uscita sul bottone: lo stop è agganciato alla
+            // riga intera (vedi createMixerRow), altrimenti spostando il
+            // puntatore dal bottone al cursore l'anteprima si interromperebbe
+            // proprio mentre si sta regolando il volume.
         });
     }
 
@@ -578,6 +563,7 @@ export function initModals(): void {
             const userVol = Game.getGameState().user;
             const customVal = (Game.getGameState().user.audioCustom[targetId] ?? 1);
             const finalVol = Math.max(0, Math.min(1, userVol.masterVolume * userVol.musicVolume * customVal));
+            if (finalVol <= 0) return; // 0% = muto, come per i suoni Howler
             videoEl.volume = finalVol;
             videoEl.currentTime = 0;
             videoEl.style.display = 'none'; // Solo audio nel mixer
@@ -616,8 +602,14 @@ export function initModals(): void {
         const type = (def && def.type === 'music') ? 'music' : 'sfx';
         const vol = w.AudioManager._calcVolume(targetId, type);
 
+        // 0% deve essere muto davvero. Prima, quando il volume calcolato era 0,
+        // il tester lo forzava a 0.1 "così senti qualcosa": il risultato era che
+        // azzerare un cursore sembrava non avere effetto. Se è a zero non parte
+        // nulla — e il bottone resta su play, che è la lettura corretta.
+        if (vol <= 0) return;
+
         const startPlayback = () => {
-            howl.volume(vol > 0 ? vol : 0.1);
+            howl.volume(vol);
             howl.play();
             btn.classList.add('playing');
             icon.className = 'fa-solid fa-stop';
