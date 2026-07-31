@@ -202,7 +202,7 @@ export const assets: Record<string, any> = {
         'carmaespon-theme': {
             id: 'sound-bg-carmaespon',
             file: 'assets/sounds/music/bg-carmaespon.mp3',
-            name: 'Carmaespòn',
+            name: 'Carmaghespon',
             type: 'music',
             category: 'ambiente',
             loop: true,
