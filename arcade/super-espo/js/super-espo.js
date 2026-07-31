@@ -1471,8 +1471,11 @@
             return;
         }
 
-        // Iframes post-powerdown: ignora il contatto col nemico
-        if (inPowerDownIframes) return;
+        // Iframes post-powerdown: NON un return globale. Uscire qui annullava anche
+        // stomp e calcio al guscio, quindi per 1.5s non si poteva uccidere niente in
+        // nessun modo — nemmeno con le fireball, visto che il power-down porta
+        // fire→grown e le toglie. Gli iframes valgono solo sul DANNO: sotto, ogni
+        // playerTakeHit() è condizionato a !inPowerDownIframes.
 
         // Stomp grace: appena schiacciato un nemico, mentre si rimbalza in SU, ignora il
         // contatto ravvicinato con un secondo nemico → niente morte istantanea con 2
@@ -1491,8 +1494,8 @@
                     bonusScore += STOMP_SCORE;
                     showPopupScore(this, enemy.x, enemy.y - 16, '+' + STOMP_SCORE, '#fff');
                     playSoundEffect(this, 'snd-stomp');
-                } else {
-                    // Colpito di lato da un guscio in corsa → danno
+                } else if (!inPowerDownIframes) {
+                    // Colpito di lato da un guscio in corsa → danno (salvo iframes)
                     playerTakeHit(this);
                 }
             } else {
@@ -1525,7 +1528,7 @@
         }
 
         // Hit laterale/dal basso: downgrade forma (fire→grown→small→morte) + iframes invuln.
-        playerTakeHit(this);
+        if (!inPowerDownIframes) playerTakeHit(this);
     }
 
     // Player colpito di lato/dal basso: power-down (fire→grown→small) o morte.
