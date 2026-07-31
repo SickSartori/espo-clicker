@@ -677,6 +677,34 @@ export function initModals(): void {
             renderAudioMixer();
         });
     }
+    // Ripristino post-Mixer. DEVE girare su OGNI percorso di chiusura, non solo sul
+    // pulsante "indietro": chiudendo cliccando fuori (o con Esc, o dalla X) si passa
+    // solo da closeModal() e questo blocco veniva saltato. currentActiveEvent restava
+    // 'Audio Mixer' per sempre, con due conseguenze: _applyAmbience() teneva la musica
+    // a zero (il Mixer silenzia tutto in apertura) e checkEventConflict() rifiutava
+    // ogni nuovo evento con "⛔ Occupato". Chiamata da closeModal, vedi sotto.
+    function restoreAfterMixer() {
+        // Guard: se l'evento corrente non è il Mixer non c'è niente da ripristinare,
+        // e azzerarlo comunque spegnerebbe un evento legittimo in corso.
+        if (w.currentActiveEvent !== 'Audio Mixer') return;
+
+        if (typeof w.stopAllTestAudio === 'function') w.stopAllTestAudio();
+        if (typeof w.resetTestButtons === 'function') w.resetTestButtons();
+
+        // Ripristina lo stato precedente (es. Espo Fury che girava prima del Mixer)
+        w.currentActiveEvent = w.preMixerEvent || null;
+        w.preMixerEvent = null;
+
+        if (typeof w.AudioManager !== 'undefined' && w.AudioManager.updateAmbience) {
+            w.AudioManager.updateAmbience();
+        }
+
+        // Smart resume (fallback per la musica di background standard)
+        if (w.EspooClicker && typeof w.EspooClicker.tryStartAudio === 'function') {
+            w.EspooClicker.tryStartAudio();
+        }
+    }
+
     if (btnHeaderBack) {
         btnHeaderBack.addEventListener('click', () => {
             // Chiudi Mixer
@@ -685,22 +713,7 @@ export function initModals(): void {
             // Riapri Settings
             if (settingsModal) settingsModal.style.display = 'flex';
 
-            // Ferma test
-            w.stopAllTestAudio();
-            w.resetTestButtons();
-
-            // 6. RIPRISTINA LO STATO PRECEDENTE
-            w.currentActiveEvent = w.preMixerEvent || null;
-            w.preMixerEvent = null;
-
-            if (typeof w.AudioManager !== 'undefined' && w.AudioManager.updateAmbience) {
-                w.AudioManager.updateAmbience();
-            }
-
-            // 7. SMART RESUME (Fallback per musica background standard)
-            if (w.EspooClicker && typeof w.EspooClicker.tryStartAudio === 'function') {
-                w.EspooClicker.tryStartAudio();
-            }
+            restoreAfterMixer();
         });
     }
 
@@ -861,6 +874,11 @@ export function initModals(): void {
 
     function closeModal(modal: any) {
         if (modal) {
+            // Il Mixer silenzia tutto in apertura: qualunque via di uscita (sfondo, Esc,
+            // X) deve rimettere a posto audio ed evento, non solo il pulsante "indietro".
+            // Subito, non nell'onComplete: l'audio non deve aspettare l'animazione.
+            if (modal.id === 'advanced-audio-modal') restoreAfterMixer();
+
             const content = modal.querySelector('.modal-content');
 
             // Kill any open tweens prima di partire close

@@ -57,6 +57,11 @@ jobs:
           # Come in main.yml: gli SFX restano come fallback locale (~900 KB),
           # arcade-theme.mp3 no — 10 MB di musica in loop, l'unica traccia fuori
           # da assets/sounds/music/ e quindi l'unica che sfuggiva al filtro.
+          # assets/image/future/**: bozzetti delle skin non ancora cablate in
+          # src/data/skins.ts, ~30 MB di PNG che nessuna pagina richiede. Restano
+          # versionati, ma non hanno motivo di salire sul server a ogni deploy.
+          # NB: i commenti stanno QUI e non dentro `exclude: |` — in un blocco YAML
+          # letterale il '#' non commenta, finirebbe all'azione come pattern glob.
           exclude: |
             **/.git*
             **/.git*/**
@@ -69,6 +74,7 @@ jobs:
             assets/sounds/music/**
             assets/sounds/arcade/arcade-theme.mp3
             assets/video/**
+            assets/image/future/**
             music/songs/**
             package.json
             package-lock.json

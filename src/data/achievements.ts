@@ -426,7 +426,7 @@ export const achievements: Record<string, any> = {
         condition: () => gs().lifetimeScore.gte(10000000000)
     },
 
-    // ===== SBLOCCO SKIN v3.0 (Carmaespòn/Pablo/Leon ecc. comprate; queste guadagnate) =====
+    // ===== SBLOCCO SKIN v3.0 (Carmaghespon/Pablo/Leon ecc. comprate; queste guadagnate) =====
     pazienteZero: {
         name: 'Paziente Zero',
         desc: 'Raggiungi 250.000 click manuali.',

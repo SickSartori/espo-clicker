@@ -100,7 +100,7 @@ export const skins: Record<string, any> = {
     },
 
     carmaespon: {
-        name: "Carmaespòn",
+        name: "Carmaghespon",
         desc: "Nobody brakes at the red light."
     },
     leon: {

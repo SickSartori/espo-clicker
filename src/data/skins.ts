@@ -238,7 +238,7 @@ export const skins: Record<string, any> = {
     },
 
     carmaespon: {
-        name: "Carmaespòn",
+        name: "Carmaghespon",
         desc: "Al semaforo non frena nessuno.",
         img: "skins/carmaespon.webp",
         imgClick: "skins/carmaespon-click.webp",
