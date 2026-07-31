@@ -854,6 +854,13 @@
     text-align: center;
     font-family: 'Press Start 2P', monospace;
     font-size: 0.7rem;
+    /* Press Start 2P disegna OLTRE la propria font bounding box: a 0.7rem (root 14px
+       = 9.8px) l'ink sale a 11px contro una line box di 10px, e overflow:hidden — che
+       serve all'ellipsis — tagliava la riga alta delle lettere. Con un font a pixel a
+       ~10px quella riga è 1/10 del glifo: il titolo si vedeva mozzato. line-height
+       esplicito = headroom sopra e sotto (e meno glow tagliato). La topbar non si
+       muove: min-height 58px + align-items:center. */
+    line-height: 2;
     letter-spacing: 1px;
     text-shadow: 0 0 10px currentColor;
     opacity: 0.9;
