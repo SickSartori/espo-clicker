@@ -476,7 +476,12 @@ export function initModals(): void {
             'effetti': { title: store.gameData.texts.ui.audioCatEffetti, icon: 'fa-volume-high', items: [] }
         };
 
-        const allAssets: any = { ...assets.sounds, ...assets.videos };
+        // SOLO i suoni: i video (Rick, Ricardo, Britney, Big Bang) non sono più
+        // regolabili dal mixer — restano al loro defaultVol, governati da master +
+        // musica. Coerente con getCustomVolume(), che per gli id video ignora
+        // audioCustom: senza quello chi avesse lasciato un video a 0% resterebbe
+        // muto senza più uno slider per rimediare.
+        const allAssets: any = { ...assets.sounds };
 
         // Popola categorie
         for (const [key, data] of Object.entries(allAssets) as [string, any][]) {
@@ -651,9 +656,12 @@ export function initModals(): void {
             }
             w.currentActiveEvent = 'Audio Mixer';
 
-            // Chiudi settings e apri Mixer
+            // Chiudi settings e apri Mixer.
+            // openModal() e non `style.display = 'flex'`: solo lui fa il "reset stato
+            // pulito" (visibility/opacity/transform) di un modale reduce da un close.
+            // Con l'apertura raw il Mixer chiuso cliccando fuori si riapriva invisibile.
             if (settingsModal) settingsModal.style.display = 'none';
-            if (modalAdvAudio) modalAdvAudio.style.display = 'flex';
+            if (modalAdvAudio) openModal(modalAdvAudio);
 
             // STOP TOTALE: Silenzia tutto (Howler + video DOM)
             if (typeof w.AudioManager !== 'undefined') {
@@ -703,8 +711,8 @@ export function initModals(): void {
                 if (!Game) return;
 
                 const assets = store.gameData.assets;
-                // Unisci suoni e video per resettarli tutti
-                const allAssets: any = { ...assets.sounds, ...assets.videos };
+                // Solo i suoni: i video non hanno più uno slider da resettare
+                const allAssets: any = { ...assets.sounds };
 
                 // Ripristina i valori nel salvataggio usando il 'defaultVol' di game-data
                 for (const [key, data] of Object.entries(allAssets) as [string, any][]) {
@@ -877,7 +885,14 @@ export function initModals(): void {
                         finishClose();
                     }
                 });
-                w.gsap.to(modal, { opacity: 0, duration: 0.18 });
+                // clearProps OBBLIGATORIO: questo tween gira in parallelo a quello del
+                // contenuto e finisce nello stesso tick. Il contenuto renderizza per primo
+                // e il suo onComplete fa `modal.style.opacity = ''`, poi QUESTO riscriveva
+                // 0 inline e ce lo lasciava. Il modale restava display:none + opacity:0, e
+                // chi lo riapriva senza passare da openModal() (che resetta) se lo ritrovava
+                // invisibile ma cliccabile: backdrop trasparente a schermo intero che si
+                // mangiava i click. Vedi il Mixer Audio, sotto.
+                w.gsap.to(modal, { opacity: 0, duration: 0.18, clearProps: 'opacity' });
             } else {
                 modal.style.display = 'none';
                 if (content) { content.style.transform = ''; content.style.opacity = ''; }
