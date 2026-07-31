@@ -53,6 +53,18 @@
     display: none;
   }
 
+  /* Matrix: stesso trattamento dei temi totali. La tinta di rarità della skin
+     stendeva un velo colorato proprio sopra la pioggia di caratteri, che è
+     l'identità dell'evento. Spenta qui e su #clicker-section (che ne porta una
+     seconda copia, layout-shell.css). */
+  html body.matrix-active #clicker-ambient {
+    display: none;
+  }
+
+  html body.matrix-active #clicker-section {
+    background: none;
+  }
+
   /* ════════════════════════════════════════════════
      COMMON — "calibrazione": griglia HUD, quasi ferma
      ════════════════════════════════════════════════ */
