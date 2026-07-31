@@ -7,7 +7,12 @@
 ## v3.1 — metà settembre 2026 · «Migliorie e bugfix»
 
 - Coda hotfix post-lancio
-- ☁️ **Badge cloud-sync — rifacimento** (segnalazione QA 31/07/2026, pre-lancio è entrata solo la mitigazione: tap → nascondi badge + toast, `src/app/boot.ts`). Il problema di fondo resta:
+- ☁️ **Badge cloud-sync — rifacimento** (segnalazione QA 31/07/2026, pre-lancio è entrata solo la mitigazione: tap → nascondi badge + toast, `src/app/boot.ts`).
+
+  > 🐛 *Cliccando "Progressi dietro al cloud — tocca per sincronizzare" non succede niente.*
+  > *Il pulsante non sembra fare nulla al click da PC, né scompare il messaggio: rimane fisso.*
+
+  Verificato che il click **arriva** al badge (hit-test `elementFromPoint`: nessun overlay lo intercetta), quindi non è un problema di z-index. Il problema di fondo resta:
   1. `_resyncFromCloud` (`src/ui/modals/index.ts`) ha **cinque uscite silenziose** — `cheatNoCloudSync`, credenziali di sessione mancanti, `_resyncing` già in volo, login ≠ `success`, errore di rete col `catch` vuoto: nessuna di queste dice niente all'utente.
   2. Il badge non ha una via di uscita propria: `_setCloudBadge(false)` è raggiungibile **solo** da `markCloudSaved()`, cioè solo dopo un `save-progress` riuscito. In fase pre-wipe ogni push risponde `conflict` e `loadCloudData` esce sul ramo `schemaVersion < 3` senza ripulirlo → badge inchiodato.
   3. Serve uno stato esplicito (idle / sincronizzo… / riuscito / fallito-con-motivo) e la dismissione **disaccoppiata** dal push riuscito.
