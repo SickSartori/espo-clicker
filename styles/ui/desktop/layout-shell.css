@@ -67,9 +67,12 @@
     to   { transform: rotate(360deg) scale(1.5); }
   }
 
-  /* Matrix canvas più discreto */
+  /* Matrix canvas: attenuato quel tanto che basta a non coprire la UI.
+     Era 0.2 — con #game-container a rgba(0,10,0,0.92) sopra, della pioggia verde
+     restava solo un alone ai margini e l'evento sembrava senza sfondo (la media
+     query è desktop-only: su mobile è sempre stato a piena opacità). */
   html body #matrix-canvas {
-    opacity: 0.2 !important;
+    opacity: 0.85 !important;
   }
 
   /* z-index: contenuto sopra mesh.
