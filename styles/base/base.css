@@ -231,7 +231,10 @@ body.matrix-active #matrix-canvas {
 
 /* --- UI STILE MATRIX (Sovrascrive i colori durante l'evento) --- */
 body.matrix-active #game-container {
-    background-color: rgba(0, 10, 0, 0.92);
+    /* 0.92 -> 0.82: al 92% il pannello copriva quasi del tutto la pioggia proprio
+       al centro dello schermo. Non si scende oltre: il testo dell'evento è verde
+       su verde, e ogni punto di trasparenza in più se lo mangia la leggibilità. */
+    background-color: rgba(0, 10, 0, 0.82);
     animation: matrix-pulse-glow 2s infinite alternate ease-in-out;
     transform: none;
 }

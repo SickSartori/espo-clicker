@@ -313,6 +313,14 @@ const AudioManager = {
     },
 
     getCustomVolume(id: any) {
+        // I video non sono più regolabili dal mixer (vedi renderAudioMixer): ignorano
+        // audioCustom e valgono sempre il loro defaultVol. Senza questo guard un valore
+        // salvato in passato resterebbe applicato per sempre, senza slider per correggerlo.
+        const videoDef = store.gameData && store.gameData.assets && store.gameData.assets.videos
+            ? Object.values(store.gameData.assets.videos as Record<string, any>).find((v: any) => v.id === id)
+            : undefined;
+        if (videoDef) return (videoDef.defaultVol !== undefined) ? videoDef.defaultVol : 1.0;
+
         if (store.gameState && store.gameState.user && store.gameState.user.audioCustom) {
             const val = store.gameState.user.audioCustom[id];
             return (val !== undefined) ? val : 1.0;
