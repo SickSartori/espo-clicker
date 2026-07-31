@@ -119,7 +119,10 @@ export const clickUpgrades: Record<string, any> = {
         name: 'Click Divino',
         desc: 'La Mano Bionica ora guadagna il 2% dei BPS.',
         cost: new Decimal(1000000000),
-        requiredClicks: 50000,
+        // 100k e non 50k: con 50k si sbloccava nello stesso identico istante di
+        // Overclocking Cognitivo (ultimo gradino della scala 10→100→…→25k→50k) e le
+        // due card comparivano insieme, lasciando solo il costo a distinguerle.
+        requiredClicks: 100000,
         clickIncrease: new Decimal(0),
         effects: [{
             trigger: 'passive',
