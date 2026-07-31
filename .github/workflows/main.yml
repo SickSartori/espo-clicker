@@ -80,6 +80,11 @@ jobs:
           # e che quindi sfuggiva al filtro qui sotto. Da sola valeva il 92% dei
           # suoni spediti via FTP, e per la musica il fallback locale non esiste
           # comunque: se R2 non risponde tacciono anche tutti gli altri temi.
+          # assets/image/future/**: bozzetti delle skin non ancora cablate in
+          # src/data/skins.ts, ~30 MB di PNG che nessuna pagina richiede. Restano
+          # versionati, ma non hanno motivo di salire sul server a ogni deploy.
+          # NB: i commenti stanno QUI e non dentro `exclude: |` — in un blocco YAML
+          # letterale il '#' non commenta, finirebbe all'azione come pattern glob.
           exclude: |
             **/.git*
             **/.git*/**
@@ -93,6 +98,7 @@ jobs:
             assets/sounds/music/**
             assets/sounds/arcade/arcade-theme.mp3
             assets/video/**
+            assets/image/future/**
             music/songs/**
             package.json
             package-lock.json
