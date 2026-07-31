@@ -2,8 +2,8 @@ name: Quality (V3)
 
 on:
   # Valida OGNI pull request (verso qualsiasi branch) e OGNI push tranne il
-  # mirror di deploy 'test' (gia' validato a monte su develop-v3). Cosi' i check
-  # coprono develop-v3 e qualunque nuovo branch futuro senza dover toccare il file.
+  # mirror di deploy 'test' (gia' validato a monte su develop). Cosi' i check
+  # coprono develop e qualunque nuovo branch futuro senza dover toccare il file.
   pull_request:
   push:
     branches-ignore:

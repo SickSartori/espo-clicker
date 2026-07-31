@@ -468,7 +468,10 @@ const AudioManager = {
         // Risolvi quale traccia suonare (sistema priorità)
         let targetTrackId = null;
 
-        if (w.currentActiveEvent === 'Audio Mixer') {
+        // 'Formatting' come 'Audio Mixer': durante la sequenza di Formattazione la
+        // colonna sonora è Made in Heaven + il video, la musica di fondo deve tacere.
+        // Torna da sola a fine sequenza (currentActiveEvent = null → updateAmbience()).
+        if (w.currentActiveEvent === 'Audio Mixer' || w.currentActiveEvent === 'Formatting') {
             targetTrackId = null;
         } else if (document.body.classList.contains('rick-rolling')) {
             targetTrackId = null;
@@ -1928,12 +1931,16 @@ function executeFormattingSequence() {
     document.querySelectorAll<HTMLElement>('.modal-backdrop').forEach(m => m.style.display = 'none');
     document.body.classList.remove('modal-open');
 
-    // 2. Ferma la musica di sottofondo
-    const bgmId = store.gameState.user.bgMusicSelection || 'sound-bg-music';
-    const bgm = document.getElementById(bgmId) as HTMLAudioElement | null;
-    if (bgm) bgm.pause();
-
+    // 2. Ferma la musica di sottofondo.
+    // Il vecchio `document.getElementById(bgmId).pause()` era CODICE MORTO: la musica
+    // è passata a Howler (AudioManager) e in pagina non esiste più nessun <audio>, quindi
+    // getElementById tornava sempre null e la traccia di fondo continuava a suonare per
+    // tutti i 22s, sopra Made in Heaven e sopra il video Big Bang.
+    // Il flag va impostato PRIMA di updateAmbience(): _applyAmbience legge
+    // currentActiveEvent e con 'Formatting' azzera la traccia target — così nessuna
+    // chiamata successiva (mixer, updateUI, achievement) la fa ripartire a metà sequenza.
     w.currentActiveEvent = 'Formatting';
+    if (typeof AudioManager !== 'undefined') AudioManager.updateAmbience();
 
     // 3. Creazione Schermata Cinematografica (Testo Estetico + Contenitore Progress Bar)
     let prepOverlay = document.getElementById('format-prep-overlay');

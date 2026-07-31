@@ -140,12 +140,12 @@
 <script>
 const ACTIONS = [
   {g:'g-quick', id:'release_patch',     ic:'📦', label:'Release patch',        sub:'bump+cache+build', danger:true},
-  {g:'g-quick', id:'build_commit_push', ic:'⬆️', label:'Build + Commit + Push',sub:'→ develop-v3', input:true},
+  {g:'g-quick', id:'build_commit_push', ic:'⬆️', label:'Build + Commit + Push',sub:'→ develop', input:true},
   {g:'g-quick', id:'build',             ic:'🔨', label:'Build veloce',         sub:'no bump'},
   {g:'g-ver',   id:'bump_major',        ic:'⏫', label:'Bump MAJOR',           sub:'x.0.0', danger:true},
   {g:'g-ver',   id:'bump_minor',        ic:'🔼', label:'Bump MINOR',           sub:'3.x.0', danger:true},
   {g:'g-ver',   id:'cache_bump',        ic:'🔄', label:'Cache bump',           sub:'no build'},
-  {g:'g-git',   id:'push_test',         ic:'🛠️', label:'develop-v3 → test',   sub:'deploy FTP', danger:true},
+  {g:'g-git',   id:'push_test',         ic:'🛠️', label:'develop → test',       sub:'deploy FTP', danger:true},
   {g:'g-git',   id:'push_main',         ic:'🏭', label:'test → main',          sub:'release+tag', danger:true},
   {g:'g-git',   id:'git_status',        ic:'🔎', label:'Stato Git',            sub:'status+log'},
   {g:'g-r2',    id:'r2_all',            ic:'☁️', label:'Sync TUTTI gli asset', sub:'sounds+video+songs', danger:true},
@@ -160,12 +160,12 @@ const ACTIONS = [
 
 const DESC = {
   release_patch:     "Incrementa la patch (es. 3.0.13 → 3.0.14), aggiorna sw.js e config, invalida la cache e ricompila legacy + V3. Tutto in un passo.",
-  build_commit_push: "Compila, poi git add + commit (chiede il messaggio) e push su develop-v3.",
+  build_commit_push: "Compila, poi git add + commit (chiede il messaggio) e push su develop.",
   build:             "Ricompila i bundle (esbuild legacy + Vite V3) senza toccare versione o cache.",
   bump_major:        "Versione MAJOR (es. 3.x → 4.0.0): cambi grossi o incompatibili. Esegue bump + build.",
   bump_minor:        "Versione MINOR (es. 3.0 → 3.1.0): nuove funzioni o fix. Esegue bump + build.",
   cache_bump:        "Solo bump patch + sw.js/config per forzare il refresh della cache, senza ricompilare.",
-  push_test:         "Forza test = develop-v3 e avvia il deploy FTP automatico sul server di test (via GitHub Actions).",
+  push_test:         "Forza test = develop e avvia il deploy FTP automatico sul server di test (via GitHub Actions).",
   push_main:         "Merge test → main + tag della versione. NON fa il deploy di produzione (resta manuale su GitHub Actions).",
   git_status:        "Mostra stato, branch e ultimi commit del repository.",
   r2_all:            "Carica su Cloudflare R2 tutti gli asset pesanti: suoni, video e canzoni.",
@@ -222,7 +222,7 @@ function confirmRun(a){
   mdOk.onclick=()=>{ closeModal(); exec(a); }; bd.classList.add('on');
 }
 function askInput(a){
-  mdTitle.textContent='Build + Commit + Push'; mdMsg.textContent='Messaggio del commit (verrà pushato su develop-v3):';
+  mdTitle.textContent='Build + Commit + Push'; mdMsg.textContent='Messaggio del commit (verrà pushato su develop):';
   mdInput.style.display='block'; mdInput.value=''; mdOk.textContent='Procedi'; mdOk.className='go';
   mdOk.onclick=()=>{ const msg=mdInput.value; closeModal(); exec(a, msg); };
   bd.classList.add('on'); setTimeout(()=>mdInput.focus(),50);

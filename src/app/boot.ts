@@ -231,6 +231,19 @@ export function initBoot(): void {
             badge.id = 'cloud-sync-badge';
             badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;background:rgba(192,57,43,0.95);color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);cursor:pointer;max-width:90vw;text-align:center;';
             badge.addEventListener('click', () => {
+                // Feedback immediato (mitigazione — il rifacimento è in roadmap 3.1).
+                // Prima il tap era MUTO: _resyncFromCloud è async e ha cinque uscite
+                // silenziose (token/credenziali mancanti, resync già in volo, login non
+                // 'success', errore di rete col catch vuoto), e il badge si nasconde solo
+                // via markCloudSaved() — cioè solo dopo un push cloud riuscito. Risultato:
+                // "clicco e non succede niente, il messaggio resta fisso".
+                // Nasconderlo subito è sicuro: se il problema persiste, il prossimo save
+                // fallito lo rimostra da sé (markCloudUnsynced).
+                _setCloudBadge(false);
+                if (w.EspooClicker && typeof w.EspooClicker.showToast === 'function') {
+                    w.EspooClicker.showToast(isEn ? 'Syncing with the cloud…'
+                                                  : 'Sincronizzazione col cloud in corso…', 'info');
+                }
                 // Azione giusta per motivo: conflitto → adotta il cloud autoritativo;
                 // altrimenti (token/rete) → rinnova il token e ritenta.
                 if (_cloudBadgeReason === 'conflict' && typeof w._resyncFromCloud === 'function') {

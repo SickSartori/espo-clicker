@@ -42,16 +42,16 @@ function actions(input) {
                            npm('run', 'build'),
                            git('add', '-A'),
                            git('commit', '-m', (input.msg && input.msg.trim()) || 'Build aggiornamento'),
-                           git('push', 'origin', 'develop-v3'),
+                           git('push', 'origin', 'develop'),
                          ] },
     bump_major:        { steps: () => [npm('run', 'bump:major')] },
     bump_minor:        { steps: () => [npm('run', 'bump:minor')] },
     cache_bump:        { steps: () => [npm('run', 'cache:bump')] },
 
     push_test:         { steps: () => [
-                           git('checkout', 'develop-v3'),
-                           git('pull', 'origin', 'develop-v3'),
-                           git('push', '--force', 'origin', 'develop-v3:test'),
+                           git('checkout', 'develop'),
+                           git('pull', 'origin', 'develop'),
+                           git('push', '--force', 'origin', 'develop:test'),
                          ] },
     push_main:         { steps: () => [
                            git('checkout', 'main'),
@@ -59,7 +59,7 @@ function actions(input) {
                            git('tag', '-a', `v${v()}`, '-m', `Release v${v()}`),
                            git('push', 'origin', 'main'),
                            git('push', 'origin', `v${v()}`),
-                           git('checkout', 'develop-v3'),
+                           git('checkout', 'develop'),
                          ] },
     git_status:        { steps: () => [git('status', '-s'), git('branch', '-vv'), git('log', '--oneline', '-6')] },
 
