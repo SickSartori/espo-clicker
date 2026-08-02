@@ -791,11 +791,11 @@ function updateSkinsUI() {
         // Mostra sempre il nome skin (anche quando bloccata)
         const nameHtml = skin.data.name || '???';
 
-        // Doppio-click: equip diretto se sbloccata + non equipaggiata.
-        // Singolo click: apri preview modal con descrizione.
-        const dblHandler = (skin.isUnlocked && !skin.isEquipped)
-            ? `ondblclick="event.stopPropagation();equipSkin('${skin.id}')"`
-            : '';
+        // NIENTE doppio-click: era codice morto. showSkinPreview() (l'onclick qui
+        // sotto) appende subito un .modal-backdrop al body, quindi il secondo
+        // click cade sul modal e non sulla card — l'ondblclick non poteva mai
+        // scattare, mentre il tooltip lo prometteva. L'equip immediato resta sul
+        // bottone ▶ (.skin-equip-toggle, qui sotto) e su EQUIPAGGIA nel preview.
 
         // Quick-equip button: solo per skin sbloccate ma NON equipaggiate
         let quickEquipHtml = '';
@@ -833,8 +833,7 @@ function updateSkinsUI() {
             <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
                  style="--r-color:${skin.color};--r-glow:${skin.glow};"
                  onclick="showSkinPreview('${skin.id}')"
-                 ${dblHandler}
-                 title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — Doppio click: equipaggia' : 'Click per dettagli'}"
+                 title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — ▶ per equipaggiare' : 'Click per dettagli'}"
                  role="button" tabindex="0">
                 <div class="skin-rarity-badge">${skin.rarityLabel}</div>
                 ${quickEquipHtml}
