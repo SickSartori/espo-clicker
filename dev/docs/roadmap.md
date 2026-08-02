@@ -23,7 +23,9 @@
   > *Il video di Ricardo Milespo versione Metal è molto basso.*
   > *Il video del Rick Espley è molto basso.*
 
-  Chiuso prima del lancio: le due varianti Ricardo non avevano una voce propria in `src/data/assets.ts` (`EventHandlers.video` risolveva il volume con `config.audioId`, sempre `'ricardo-video'`) e `logic.ts` era in disaccordo con `boot.ts:1762`, che cercava già per id reale — toccare il master a metà video cambiava di colpo il volume. Ora ogni video ha la sua voce e i tre segnalati sono a `defaultVol: 1.0`.
+  Chiuso prima del lancio: le due varianti Ricardo non avevano una voce propria in `src/data/assets.ts` (`EventHandlers.video` risolveva il volume con `config.audioId`, sempre `'ricardo-video'`) e `logic.ts` era in disaccordo con `boot.ts:1762`, che cercava già per id reale — toccare il master a metà video cambiava di colpo il volume. Ora ogni video ha la sua voce e **tutti** sono a `defaultVol: 1.0`.
+
+  **Scelta di design da rispettare**: `defaultVol` dei video è livellato — stesso valore per tutti — così resta un guadagno di riproduzione uniforme. Conseguenza voluta: una differenza che si sente è per definizione una differenza della *traccia*, e va corretta nel file, non compensata con numeri diversi per video (che nasconderebbero il problema e renderebbero impossibile ragionare sui livelli). Se un video suona basso: misurarne i LUFS, non ritoccare `assets.ts`.
 
   **Quel che resta**: il volume finale è `master × musicVolume × defaultVol`, quindi col default (1.0 × 0.5) il tetto assoluto è **0.5** — dal punto di partenza il guadagno massimo era 2× (+6 dB) e l'abbiamo già speso tutto. Se all'ascolto restano bassi le strade sono due, entrambe da 3.1:
   1. **Normalizzare la traccia audio negli mp4** a un target LUFS comune, come già fatto per i suoni arcade (vedi il commento in `arcade/super-espo/js/super-espo.js:1597`). Va rifatto l'upload su R2.
