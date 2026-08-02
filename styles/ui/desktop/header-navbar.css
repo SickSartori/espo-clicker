@@ -59,6 +59,11 @@
     font-weight: 600;
   }
 
+  /* NB: #open-user-hub-btn resta una .nav-item da 72px come le altre. Mostrava
+     il nome utente — lunghezza libera, quindi sbordava sul bottone Opzioni — ma
+     ora la label e' fissa ("Profilo", langs/*.php): nessuna larghezza speciale
+     da concedere e nessuna ellissi. Il nome utente vive nell'hub e nel tooltip. */
+
   html body #game-navbar .nav-item:hover {
     background-color: rgba(0, 217, 255, 0.08);
   }

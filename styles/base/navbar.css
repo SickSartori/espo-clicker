@@ -95,6 +95,15 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     line-height: 1;
+    /* Contenimento: .nav-item e' una scatola FISSA da 72px con overflow visible,
+       quindi una label piu' larga debordava simmetrica (nowrap + align-items
+       center) finendo SOPRA i bottoni vicini — capitava col nome utente sul
+       bottone profilo (misurato: 12px di sovrapposizione a 20 caratteri, 45px a
+       33). Ora quella label e' fissa, ma il contenimento resta come rete: una
+       traduzione lunga non puo' piu' sfondare la scatola. */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Bottone Speciale (Promozione) */

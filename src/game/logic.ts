@@ -1355,8 +1355,13 @@ const EventHandlers = {
             video.currentTime = 0;
             video.muted = false;
 
-            // Calcolo Volume
-            const customVol = getCustomVolume(config.audioId || videoId);
+            // Calcolo Volume — la chiave è l'id del video EFFETTIVO, non
+            // config.audioId: quello è per evento, e l'evento Ricardo ne ha tre.
+            // Con audioId le varianti metal/dota prendevano il volume della
+            // standard, e per giunta in disaccordo con boot.ts (quick-mute), che
+            // già cercava per id reale: toccare il master a metà video cambiava
+            // di colpo il volume. getCustomVolume ha comunque il suo fallback.
+            const customVol = getCustomVolume(videoId || config.audioId);
             video.volume = (store.gameState.user.masterVolume * store.gameState.user.musicVolume) * customVol;
 
             // Play robusto: su mobile (iOS PWA / Chrome Android) gli eventi partono da timer

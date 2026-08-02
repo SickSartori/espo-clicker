@@ -223,7 +223,7 @@ if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 				</button>
 				<button id="open-user-hub-btn" class="nav-item" title="<?php echo $labels["navbar_account_title"]; ?>">
 					<i class="nav-icon" data-lucide="users"></i>
-					<span class="nav-label" id="navbar-username-label"><?php echo $labels["account_default_name"]; ?></span>
+					<span class="nav-label" id="navbar-account-label"><?php echo $labels["navbar_account_label"]; ?></span>
 					<span id="user-hub-badge" class="user-hub-badge" hidden></span>
 				</button>
 				<button id="open-settings-btn" class="nav-item" title="<?php echo $labels["navbar_opzioni"]; ?>">
