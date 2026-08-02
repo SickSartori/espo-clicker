@@ -17,6 +17,22 @@
   2. Il badge non ha una via di uscita propria: `_setCloudBadge(false)` è raggiungibile **solo** da `markCloudSaved()`, cioè solo dopo un `save-progress` riuscito. In fase pre-wipe ogni push risponde `conflict` e `loadCloudData` esce sul ramo `schemaVersion < 3` senza ripulirlo → badge inchiodato.
   3. Serve uno stato esplicito (idle / sincronizzo… / riuscito / fallito-con-motivo) e la dismissione **disaccoppiata** dal push riuscito.
   Da fare insieme al refactor cloud-sync di `boot.ts` (oggi previsto in 3.5): valutare se anticipare l'estrazione qui.
+- 🔊 **Volume dei video evento — normalizzazione delle tracce** (segnalazione QA 02/08/2026; pre-lancio è entrata solo la parte code-side).
+
+  > 🐛 *Il video di Ricardo Milespo versione U Got That è molto basso.*
+  > *Il video di Ricardo Milespo versione Metal è molto basso.*
+  > *Il video del Rick Espley è molto basso.*
+
+  Chiuso prima del lancio: le due varianti Ricardo non avevano una voce propria in `src/data/assets.ts` (`EventHandlers.video` risolveva il volume con `config.audioId`, sempre `'ricardo-video'`) e `logic.ts` era in disaccordo con `boot.ts:1762`, che cercava già per id reale — toccare il master a metà video cambiava di colpo il volume. Ora ogni video ha la sua voce e i tre segnalati sono a `defaultVol: 1.0`.
+
+  **Quel che resta**: il volume finale è `master × musicVolume × defaultVol`, quindi col default (1.0 × 0.5) il tetto assoluto è **0.5** — dal punto di partenza il guadagno massimo era 2× (+6 dB) e l'abbiamo già speso tutto. Se all'ascolto restano bassi le strade sono due, entrambe da 3.1:
+  1. **Normalizzare la traccia audio negli mp4** a un target LUFS comune, come già fatto per i suoni arcade (vedi il commento in `arcade/super-espo/js/super-espo.js:1597`). Va rifatto l'upload su R2.
+  2. **Disaccoppiare il canale video da `musicVolume`**: oggi è l'unica ragione del tetto a 0.5. Un canale dedicato (o il solo `master`) restituirebbe 6 dB di margine.
+
+  ⚠️ Non misurato: sulla macchina di sviluppo non c'è ffmpeg, quindi i LUFS reali dei tre file non sono noti. Primo passo della 3.1: misurarli.
+- 🖥️ **Obiettivi su mobile: titolo ancora troncato.** Il fix pre-lancio ha allargato solo il desktop (`#achievements-modal .modal-content` a 680px). Su mobile la finestra è già a tutta larghezza, quindi l'unica leva è il wrap: `styles/ui/mobile/achievements-modal.css:158` e `styles/mobile.css:1363` ridichiarano `white-space: nowrap` + ellissi. Non toccato la sera prima del rilascio perché fa crescere l'altezza delle righe in un layout a griglia tarato (`trophy-action` su `grid-column: 1 / -1`).
+- 🎬 **Anelli orbitali sopra il video evento.** Chiudendo il bug dello sfondo di rarità è emerso che anche i `::before`/`::after` di `#clicker-section` (`ui/desktop/clicker-3d.css:216`) viaggiano sopra il video, come tutto `#game-container` (z 9010 vs 9000). Sono cerchi da 500px al 4-6% di alfa, quindi ai limiti del percettibile: non toccati perché fuori dalla segnalazione. Da spegnere insieme all'ambient se si vuole il video davvero pulito.
+- 👕 **Guardaroba: doppio-click come gesto vero** (opzionale). Pre-lancio è stato rimosso l'`ondblclick`, che era codice morto — `showSkinPreview()` appende subito un `.modal-backdrop`, quindi il secondo click non arriva mai alla card — e corretto il tooltip che lo prometteva. Farlo funzionare davvero richiede di ritardare il click singolo di ~250ms, cioè peggiorare la reattività di *ogni* apertura per un gesto che il bottone ▶ già copre: da valutare, non scontato che convenga.
 - **Leaderboard season-aware server-side**: la Edge Function `get-leaderboard` deve ritornare la season (oggi il badge in `src/ui/podio.ts` è solo cosmetico/locale). Prerequisito di tutta la roadmap stagionale.
 - 2 skin già pronte in `assets/image/future/`: `espostino.png`, `TF2 Ingegnere.png` → cablarle in `src/data/skins.ts`
 - QoL piccoli a scelta dal backlog `dev/docs/ui.md`
