@@ -70,7 +70,7 @@
 
 **Fix collaterali da chiudere nello stesso giro**
 
-- ⚠️ `scripts/bump-version.js:62` — path costruito come `path.join(__dirname, 'php', 'config.php')` → risolve a `scripts/php/config.php`, che non esiste. Manca un `'..'`: `existsSync` è falso e **l'aggiornamento versione viene saltato in silenzio**, mentre il log stampa comunque "Cache invalidata: sw.js + php/config.php"
+- ~~⚠️ `scripts/bump-version.js` — path `php/config.php` risolto da `__dirname` invece che dalla root~~ **GIÀ CORRETTO** (verificato col bump 3.0.21 del 02/08/2026): lo script ora definisce `const ROOT = path.join(__dirname, '..')`, risolve ogni path da lì, e con `replaceOrFail` + `process.exit(1)` fallisce forte invece di saltare in silenzio. Nessun intervento da fare.
 - Commenti falsi da correggere: `php/config.example.php:7` e `scripts/e2e-server.js:6` dichiarano che `config.php` è gitignored (non lo è)
 - `main.yml:70-91` — la exclude-list FTP non esclude `php/trello-config.example.php` (innocuo, solo placeholder, ma incoerente con gli altri due template)
 - **Documentare** che i file di secret, essendo gitignored, non esistono nel checkout CI e vanno caricati a mano su Altervista: oggi non è scritto da nessuna parte
