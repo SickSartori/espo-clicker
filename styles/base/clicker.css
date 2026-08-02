@@ -672,6 +672,17 @@ body.rick-rolling #event-multiplier-display {
     text-align: right;
 }
 
+/* Golden Bug durante i video event: a --z-golden-bug (900) finiva SOTTO il video
+   (--z-overlay, 9000) — invisibile — e comunque sotto #video-click-overlay (9999,
+   logic.ts) che intercetta il pointerdown, quindi non era cliccabile.
+   Qui sale sopra entrambi, in linea col resto della HUD d'evento (clicker 10002,
+   score 10020). Il bug è FRATELLO di #game-container (index.php), quindi non
+   eredita il suo pointer-events:none; ascolta 'click' mentre l'overlay ascolta
+   'pointerdown' su se stesso, quindi i due handler non si pestano i piedi. */
+body.rick-rolling #golden-bug {
+    z-index: 10010;
+}
+
 body.rick-rolling #clicker-btn {
     position: fixed;
     bottom: 30px;

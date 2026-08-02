@@ -65,6 +65,16 @@
     background: none;
   }
 
+  /* Video event: #game-container sale sopra il video (z 9010 vs --z-overlay
+     9000, clicker.css) portandosi dietro anche l'ambient. Con #clicker-section
+     in overflow:hidden il risultato era un rettangolo colorato della rarità
+     sospeso sul video. Lo sfondo della section era già spento in
+     ui/desktop/score-header.css, ma non questo div figlio (né i suoi
+     pseudo-elementi animati): stesso trattamento di matrix. */
+  html body.rick-rolling #clicker-ambient {
+    display: none;
+  }
+
   /* ════════════════════════════════════════════════
      COMMON — "calibrazione": griglia HUD, quasi ferma
      ════════════════════════════════════════════════ */

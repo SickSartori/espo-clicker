@@ -64,6 +64,8 @@
 	$labels["navbar_promozione"] = "Promotion";
 	$labels["navbar_opzioni"] = "Options";
 	$labels["navbar_account_title"] = "Account & Friends";
+	// Fixed button label — see the note in langs/it.php. Keep it <= 8 chars.
+	$labels["navbar_account_label"] = "Profile";
 	$labels["lb_scope_global"] = "Global";
 	$labels["lb_scope_friends"] = "Friends";
 

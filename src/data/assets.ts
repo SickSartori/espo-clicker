@@ -406,19 +406,52 @@ export const assets: Record<string, any> = {
     },
 
     videos: {
+        // defaultVol dei video: TUTTI a 1.0, di proposito. Il volume finale è
+        // master × musicVolume × defaultVol, quindi con le impostazioni di default
+        // (1.0 × 0.5) il tetto reale è comunque 0.5 e 1.0 è il massimo che la catena
+        // consente. Segnalazione QA 02/08/2026: Rick Espley, Ricardo "U Got That"
+        // (la standard) e Ricardo Metal risultavano "molto bassi" (prima erano a
+        // 0.5, cioè 0.25 effettivo).
+        // Livellare qui TUTTI i video allo stesso valore è una scelta: questo campo
+        // torna a essere un guadagno di riproduzione uniforme, così una differenza
+        // che si sente è per definizione una differenza della TRACCIA, e si corregge
+        // dove sta davvero — normalizzando l'audio nel file (vedi roadmap 3.1) —
+        // invece di compensarla con numeri diversi per video che nascondono il
+        // problema. Se un video resta basso: misurarne i LUFS, non toccare questo.
+        // NB: la canzone nel `name` non è decorativa — è l'unico posto in cui le tre
+        // varianti Ricardo sono distinguibili, e senza di essa la segnalazione QA
+        // "versione U Got That" non era mappabile su un file.
         'rick-roll-video': {
             id: 'rick-roll-video',
             file: 'rick-espley-video.mp4',
             name: 'Video: Rick',
             category: 'eventi',
-            defaultVol: 0.5
+            defaultVol: 1.0
         },
         'ricardo-video': {
             id: 'ricardo-video',
             file: 'ricardo-milespo-video.mp4',
-            name: 'Video: Ricardo',
+            name: 'Video: Ricardo (U Got That)',
             category: 'eventi',
-            defaultVol: 0.5
+            defaultVol: 1.0
+        },
+        // Le due varianti Ricardo non avevano una voce propria: EventHandlers.video
+        // risolveva il volume con config.audioId (sempre 'ricardo-video'), quindi
+        // erano inchiodate al volume della versione standard e non c'era modo di
+        // alzarle. Ora hanno la loro, e logic.ts cerca per id del video effettivo.
+        'ricardo-metal-video': {
+            id: 'ricardo-metal-video',
+            file: 'ricardo-milespo-metal-video.mp4',
+            name: 'Video: Ricardo (Metal)',
+            category: 'eventi',
+            defaultVol: 1.0
+        },
+        'ricardo-dota-video': {
+            id: 'ricardo-dota-video',
+            file: 'ricardo-milespo-dota-video.mp4',
+            name: 'Video: Ricardo (Dota)',
+            category: 'eventi',
+            defaultVol: 1.0
         },
         'bigbang-video': {
             id: 'video-bigbang',
@@ -432,7 +465,7 @@ export const assets: Record<string, any> = {
             file: 'britney-espoars-video.mp4',
             name: 'Video: Britney Espears',
             category: 'eventi',
-            defaultVol: 0.5
+            defaultVol: 1.0
         }
     }
 };

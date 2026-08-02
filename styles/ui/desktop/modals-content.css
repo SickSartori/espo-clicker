@@ -11,6 +11,17 @@
   /* ════════════════════════════════════════════════
      ACHIEVEMENTS — trophy rows v3
      ════════════════════════════════════════════════ */
+
+  /* Larghezza dedicata: col max-width 500px di base (base/modals-core.css) la
+     riga lasciava ~240px al titolo, contro i ~344px del più lungo ("La
+     Principessa è in un Altro Castello", 37 char) → ellissi su mezza lista.
+     680px è il massimo utile: la griglia sotto è auto-fill minmax(360px), a
+     732px di spazio interno passerebbe a 2 colonne e i titoli tornerebbero
+     stretti. Restiamo a 1 colonna larga. */
+  html body #achievements-modal .modal-content {
+    max-width: 680px;
+  }
+
   html body #achievements-modal #achievement-list {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -114,6 +125,12 @@
     font-size: 0.92rem !important;
     letter-spacing: 0.5px !important;
     color: #fff !important;
+    /* Rete di sicurezza al max-width qui sopra: base/modals-content.css taglia
+       con nowrap+ellipsis, così un titolo lungo va a capo invece di sparire
+       (vale anche se in futuro la griglia torna a 2 colonne). */
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
   html body #achievements-modal #achievement-list .trophy-desc,
