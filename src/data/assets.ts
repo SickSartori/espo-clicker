@@ -406,12 +406,18 @@ export const assets: Record<string, any> = {
     },
 
     videos: {
+        // defaultVol dei video: il volume finale è master × musicVolume × defaultVol,
+        // quindi con le impostazioni di default (1.0 × 0.5) un video a 0.5 suona in
+        // realtà a 0.25. Segnalazione QA 02/08/2026: Rick, Ricardo Metal e Ricardo
+        // Dota risultavano "molto bassi" → portati a 1.0, il massimo che la catena
+        // consente (+6 dB). Se non basta, la traccia audio va normalizzata nel file
+        // (vedi roadmap 3.1): oltre 1.0 non si può salire.
         'rick-roll-video': {
             id: 'rick-roll-video',
             file: 'rick-espley-video.mp4',
             name: 'Video: Rick',
             category: 'eventi',
-            defaultVol: 0.5
+            defaultVol: 1.0
         },
         'ricardo-video': {
             id: 'ricardo-video',
@@ -419,6 +425,24 @@ export const assets: Record<string, any> = {
             name: 'Video: Ricardo',
             category: 'eventi',
             defaultVol: 0.5
+        },
+        // Le due varianti Ricardo non avevano una voce propria: EventHandlers.video
+        // risolveva il volume con config.audioId (sempre 'ricardo-video'), quindi
+        // erano inchiodate al volume della versione standard e non c'era modo di
+        // alzarle. Ora hanno la loro, e logic.ts cerca per id del video effettivo.
+        'ricardo-metal-video': {
+            id: 'ricardo-metal-video',
+            file: 'ricardo-milespo-metal-video.mp4',
+            name: 'Video: Ricardo Metal',
+            category: 'eventi',
+            defaultVol: 1.0
+        },
+        'ricardo-dota-video': {
+            id: 'ricardo-dota-video',
+            file: 'ricardo-milespo-dota-video.mp4',
+            name: 'Video: Ricardo Dota',
+            category: 'eventi',
+            defaultVol: 1.0
         },
         'bigbang-video': {
             id: 'video-bigbang',
