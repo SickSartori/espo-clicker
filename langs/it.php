@@ -64,6 +64,10 @@
 	$labels["navbar_promozione"] = "Promozione";
 	$labels["navbar_opzioni"] = "Opzioni";
 	$labels["navbar_account_title"] = "Account e Amici";
+	// Etichetta FISSA del bottone: prima mostrava il nome utente, che essendo di
+	// lunghezza libera sbordava dalla scatola da 72px sui nomi lunghi. Il nome
+	// resta nell'hub e nel tooltip. Tenerla corta (<= 8 caratteri).
+	$labels["navbar_account_label"] = "Profilo";
 	$labels["lb_scope_global"] = "Globale";
 	$labels["lb_scope_friends"] = "Amici";
 

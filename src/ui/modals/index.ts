@@ -978,8 +978,19 @@ export function initModals(): void {
     function setAccountIdentity(name: any) {
         const fallback = (store.gameData && store.gameData.texts && store.gameData.texts.ui && store.gameData.texts.ui.defaultPlayer) || 'Giocatore';
         const n = name || fallback;
-        const navLabel = document.getElementById('navbar-username-label');
-        if (navLabel) navLabel.textContent = n;
+        // La navbar NON mostra piu' il nome utente: la sua lunghezza e' libera e
+        // sforava la scatola fissa da 72px del .nav-item, finendo sopra il bottone
+        // Opzioni (e con l'ellissi restavano visibili si' e no 8 caratteri).
+        // Ora la label e' fissa ("Profilo"/"Profile", langs/*.php) e comunica il
+        // contenuto dell'hub — account + amici. Il nome vive nell'header dell'hub
+        // e nel tooltip, dove la lunghezza non impatta il layout.
+        const navBtn = document.getElementById('open-user-hub-btn');
+        if (navBtn) {
+            const base = navBtn.getAttribute('data-title-base')
+                || (navBtn.getAttribute('title') || '').split(' — ')[0];
+            if (base && !navBtn.hasAttribute('data-title-base')) navBtn.setAttribute('data-title-base', base);
+            navBtn.setAttribute('title', base ? `${base} — ${n}` : n);
+        }
         const big = document.getElementById('display-username-large');
         if (big) big.textContent = n;
     }
