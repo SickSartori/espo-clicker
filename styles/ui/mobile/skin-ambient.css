@@ -38,6 +38,13 @@
     display: none;
   }
 
+  /* Video event: l'ambient viaggia con #game-container, che durante l'evento
+     sta SOPRA il video → la tinta di rarità restava visibile in primo piano.
+     Gemella della regola desktop (ui/desktop/skin-ambient.css). */
+  html body.rick-rolling #clicker-ambient {
+    display: none;
+  }
+
   /* COMMON — griglia di calibrazione, slate */
   body[data-current-skin-rarity="common"] #clicker-ambient {
     background:
