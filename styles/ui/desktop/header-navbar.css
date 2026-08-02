@@ -59,10 +59,23 @@
     font-weight: 600;
   }
 
-  /* NB: #open-user-hub-btn resta una .nav-item da 72px come le altre. Mostrava
-     il nome utente — lunghezza libera, quindi sbordava sul bottone Opzioni — ma
-     ora la label e' fissa ("Profilo", langs/*.php): nessuna larghezza speciale
-     da concedere e nessuna ellissi. Il nome utente vive nell'hub e nel tooltip. */
+  /* Il bottone si dimensiona sulla PROPRIA etichetta, con 72px come minimo.
+     Perche': la .nav-item di base e' 72px FISSI in px, mentre .nav-label e' in
+     rem (0.6rem) — due unita' che non scalano insieme. Sopra i 1024px il root
+     font-size e' 16px e "Statistiche"/"Sala Giochi" chiedono 69px nei 64
+     disponibili: prima sbordavano di 2,5px per lato (invisibile), col
+     contenimento di base/navbar.css diventavano "STATISTIC…".
+     Un numero piu' grande non risolve: basta una lingua piu' lunga, un browser
+     con font base maggiore o un minimum-font-size per rimetterlo in crisi. Con
+     width:auto il troncamento non e' proprio raggiungibile, e il min-width tiene
+     l'aspetto uniforme di prima per le etichette corte.
+     NB: solo >=769px. Sotto, .nav-label e' nascosta e le .nav-item devono restare
+     compatte (35-50px, styles/mobile.css) — un min-width qui le sfonderebbe. */
+  html body #game-navbar .nav-item {
+    width: auto;
+    min-width: 72px;
+    flex: 0 0 auto;
+  }
 
   html body #game-navbar .nav-item:hover {
     background-color: rgba(0, 217, 255, 0.08);
