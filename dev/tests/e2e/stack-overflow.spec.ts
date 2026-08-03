@@ -202,6 +202,75 @@ test.describe('Stack Overflow', () => {
     expect(esito.overlay).toContain('STACK OVERFLOW');
   });
 
+  test('il badge IN GIOCO non copre né tronca il nome del gioco', async ({ page }) => {
+    // Regressione: il badge è in position:absolute, quindi non occupa spazio e
+    // finiva SOPRA i nomi lunghi (25px su SNAKE PROTOCOL, 23 su STACK
+    // OVERFLOW). Riservargli spazio sulla riga del nome non era una soluzione:
+    // i nomi più lunghi riempiono già tutta la larghezza disponibile, quindi
+    // sarebbero stati troncati. Ora sta sulla riga sotto.
+    //
+    // Qui NON si usa bootStack: quello avvia il gioco direttamente, mentre la
+    // classe .running la mette la shell, e solo per un gioco lanciato da lei.
+    await page.addInitScript(() => {
+      try { sessionStorage.setItem('espooUser', 'E2ETester'); } catch (e) {}
+    });
+    await page.goto('/arcade.php', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => { const w = window as any; if (w.ArcadeLoader) w.ArcadeLoader.load(); });
+    await page.waitForFunction(() => typeof (window as any).initStackGame === 'function', undefined, { timeout: 15_000 });
+    await page.evaluate(() => {
+      const w = window as any;
+      w._arcadeSelectedGame = 'stack';
+      w.launchArcadeGame();
+    });
+    await page.waitForFunction(
+      () => document.querySelector('.arcade-menu-item[data-game="stack"]')!.classList.contains('running'),
+      undefined, { timeout: 8_000 },
+    );
+
+    const r = await page.evaluate(() => {
+      const voci = Array.from(document.querySelectorAll('.arcade-menu-item[data-game]'));
+      const troncati: string[] = [];
+      const collisioni: string[] = [];
+      const altezze = new Set<number>();
+
+      for (const v of voci) {
+        const nome = v.querySelector('.item-name') as HTMLElement;
+        altezze.add(Math.round(v.getBoundingClientRect().height));
+        // Nessun nome deve essere tagliato dai puntini, in nessuno stato
+        if (nome.scrollWidth > nome.clientWidth + 1) troncati.push(v.getAttribute('data-game')!);
+
+        if (v.classList.contains('running')) {
+          const rn = nome.getBoundingClientRect();
+          const rv = v.getBoundingClientRect();
+          const badge = getComputedStyle(v, '::after');
+          // La posizione del badge va LETTA, non data per scontata: dando per
+          // buono "sta in basso" il test passava anche col badge rimesso in
+          // alto, cioè proprio nel caso che deve bocciare. Chrome risolve
+          // `top` in pixel anche quando il CSS dichiara solo `bottom`.
+          const badgeTop = rv.top + (parseFloat(badge.top) || 0);
+          const badgeBottom = badgeTop + (parseFloat(badge.height) || 0);
+          const badgeLeft = rv.right - (parseFloat(badge.right) || 0) - (parseFloat(badge.width) || 0);
+          // Si sovrappongono se i due rettangoli si intersecano su entrambi gli assi
+          const incrocioX = rn.right > badgeLeft + 1;
+          const incrocioY = rn.bottom > badgeTop + 1 && rn.top < badgeBottom - 1;
+          if (incrocioX && incrocioY) collisioni.push(v.getAttribute('data-game')!);
+        }
+      }
+
+      return {
+        troncati, collisioni,
+        inGioco: voci.filter((v) => v.classList.contains('running')).map((v) => v.getAttribute('data-game')),
+        altezzeDistinte: [...altezze],
+      };
+    });
+
+    expect(r.inGioco, 'il gioco avviato non risulta in esecuzione nel menu').toContain('stack');
+    expect(r.troncati, 'nomi troncati dai puntini').toEqual([]);
+    expect(r.collisioni, 'il badge copre il nome').toEqual([]);
+    // Il badge non deve far sobbalzare l'altezza delle righe
+    expect(r.altezzeDistinte.length, 'righe di altezze diverse fra loro').toBe(1);
+  });
+
   test('la rotazione resta nel campo e non perde celle', async ({ page }) => {
     await bootStack(page);
 

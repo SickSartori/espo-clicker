@@ -593,6 +593,12 @@
     font-family: 'Press Start 2P', 'Courier New', monospace;
     font-size: inherit;
     letter-spacing: inherit;
+    /* Come .item-desc qui sotto: se lo spazio non basta si taglia con i
+       puntini, invece di sbordare o mandare la riga a capo (cambierebbe
+       l'altezza della voce in un elenco a righe fisse). */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .item-desc {
     font-family: 'Rajdhani', sans-serif;
@@ -813,11 +819,23 @@
     box-shadow: 0 0 8px var(--game-color, #00d9ff), 0 0 18px var(--game-color, #00d9ff);
     animation: arcadeLedPulse 1.1s ease-in-out infinite;
 }
-/* Badge "IN GIOCO" — pill assoluta in alto a destra: non manda il nome a capo */
+/* Badge "IN GIOCO" — pill assoluta.
+   NON può stare sulla riga del nome: essendo in position:absolute non occupa
+   spazio, quindi ci finiva SOPRA (misurati 25px di sovrapposizione su SNAKE
+   PROTOCOL, 23 su STACK OVERFLOW). E non basta riservargli spazio: i nomi più
+   lunghi occupano già tutti i 182px disponibili, quindi qualunque riserva li
+   troncherebbe — e vedere troncato il nome del gioco che stai giocando è
+   peggio del problema di partenza.
+   Sta quindi sulla riga sotto, al posto della descrizione: mentre giochi è
+   l'informazione meno utile. `visibility` e non `display` per non far
+   sobbalzare l'altezza della riga all'avvio e alla chiusura del gioco. */
+.arcade-menu-item.running .item-desc {
+    visibility: hidden;
+}
 .arcade-menu-item.running::after {
     content: 'IN GIOCO';
     position: absolute;
-    top: 6px;
+    bottom: 8px;
     right: 8px;
     font-family: 'Press Start 2P', monospace;
     font-size: 10px; /* era 0.4rem (~5.6px a root 14px): illeggibile con Press Start 2P */
