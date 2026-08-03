@@ -90,13 +90,24 @@
   - ⚠️ **Vincolo sul formato**: la risposta è oggi un **array nudo** con i nomi campo compatibili col client PHP legacy. Incapsularla in `{season, entries}` lo romperebbe: usare un campo per riga o un header, oppure versionare l'endpoint.
 - Skin future in `assets/image/future/`: **7 bozzetti**, riorganizzati in cartelle per rarità (`comune/`, `rara/`, `epica/`, `leggendaria/`, `divina/`) — nessuno ancora cablato in `src/data/skins.ts`. I due della voce originale (`espostino.png`, `TF2 Ingegnere.png`) sono in `comune/`. ⚠️ Al 03/08/2026 la riorganizzazione è **non committata** (vecchie path risultanti cancellate, cartelle nuove untracked): committarla prima di cablare.
 - QoL piccoli a scelta dal backlog `dev/docs/ui.md`
-- 🔐 **Consolidamento secret in un file unico** (vedi dettaglio sotto)
+- ~~🔐 **Consolidamento secret in un file unico**~~ ✅ **FATTO il 03/08/2026** (dettaglio sotto). ⏳ Resta un passo **operativo**, non di codice: caricare `php/secrets.php` su Altervista e, solo dopo, togliere il fallback sui due file storici.
 - 🕹️ Arcade: **Stack Overflow** (variante falling-blocks) — riempie lo slot "??? COMING SOON" (`arcade.php`, `modals_arcade.php`).
   ⚠️ Legale: niente clone Tetris 1:1 (trade dress protetto, caso *Tetris v. Xio* 2012). Nome, estetica e almeno una meccanica propri (es. righe di "debito tecnico" che risalgono, blocchi-bug da schiacciare col click).
 
-### 3.1 · Consolidamento secret — dettaglio
+### 3.1 · Consolidamento secret — ✅ FATTO il 03/08/2026
 
-**Situazione attuale**: la configurazione è sparsa su **4 file** (non 3), con meccanismi e stati git diversi.
+> **Esito.** Tutti i punti del piano sono chiusi. Le sezioni sono `r2` e `trello`: **`app` non esiste**, ed è una conseguenza del piano stesso — i punti 5 e 6 lasciano in `config.php` i parametri d'ambiente e cancellano le credenziali DB, quindi da quel file non avanzava niente da unificare.
+>
+> **Due scelte prese strada facendo, entrambe da conoscere:**
+>
+> 1. **Fallback retrocompatibile** in `php/secrets-load.php`: se `secrets.php` non c'è, si usano ancora `r2-config.php` e `trello-config.php`. Senza, il primo deploy dopo il consolidamento avrebbe spento R2 in produzione (500 sul signer → asset 404) fino al caricamento manuale del file nuovo, perché quei file vivono **solo** sul server. Le due voci restano quindi in `.gitignore`. **Il fallback va rimosso** in una release successiva, una volta che Altervista è passata al file unico.
+> 2. **`allowed_referers` sale alla radice** di `secrets.php` e viene iniettata nelle sezioni che non ne dichiarino una propria: si scrive una volta sola invece di ricopiarla per endpoint. L'unione tiene la variante `www.` che aveva solo il template Trello.
+>
+> Migrazione: `php scripts/merge-secrets.php --write` genera `secrets.php` dai due file storici (deduplica i referer, non stampa mai i valori). Poi va caricato a mano su Altervista.
+>
+> Verificato: 18 test sul caricatore (fallback, precedenza del file unico, whitelist ereditata e sovrascritta, segnaposto) e prova end-to-end sugli endpoint veri in entrambe le configurazioni — URL R2 firmate, 9 brani dal jukebox, 403 su referer estraneo, 405 su metodo sbagliato.
+
+**Situazione di partenza**: la configurazione era sparsa su **4 file** (non 3), con meccanismi e stati git diversi.
 
 | File | Contiene | Git | Natura |
 |---|---|---|---|
@@ -123,10 +134,10 @@
 **Fix collaterali da chiudere nello stesso giro**
 
 - ~~⚠️ `scripts/bump-version.js` — path `php/config.php` risolto da `__dirname` invece che dalla root~~ **GIÀ CORRETTO** (verificato col bump 3.0.21 del 02/08/2026): lo script ora definisce `const ROOT = path.join(__dirname, '..')`, risolve ogni path da lì, e con `replaceOrFail` + `process.exit(1)` fallisce forte invece di saltare in silenzio. Nessun intervento da fare.
-- Commenti falsi da correggere: resta **solo** `scripts/e2e-server.js:6`, che dichiara `config.php` gitignored (non lo è). ~~`php/config.example.php:7`~~ **GIÀ CORRETTO** (verificato il 03/08/2026): il template ora dice esplicitamente che `config.php` è tracciato e che non ci vanno credenziali reali.
-- ~~`main.yml:70-91` — la exclude-list FTP non esclude `php/trello-config.example.php`~~ **GIÀ CORRETTO** (verificato il 03/08/2026): la voce c'è, `main.yml:116`, in fila con gli altri due template. Nessun intervento da fare.
-- **Documentare** che i file di secret, essendo gitignored, non esistono nel checkout CI e vanno caricati a mano su Altervista: oggi non è scritto da nessuna parte
-- Difesa in profondità: aggiungere un `<FilesMatch>` per i file di config. ⚠️ Precisazione (03/08/2026): la regola sui `.sql` sta nella `.htaccess` **di root** (riga 43), non in `php/.htaccess` — quel file contiene solo `mod_expires`/`mod_deflate`. Decidere quindi se estendere la regola di root (eredita già su `php/`) o creare la sezione in `php/.htaccess`.
+- ~~Commenti falsi da correggere (`php/config.example.php:7`, `scripts/e2e-server.js:6`)~~ ✅ **CHIUSI**: il primo era già stato corretto, il secondo lo è ora — dichiarava `config.php` gitignored e giustificava così la creazione da template; ora dice il vero (è tracciato, la creazione resta come rete di sicurezza per un checkout parziale).
+- ~~`main.yml:70-91` — la exclude-list FTP non esclude `php/trello-config.example.php`~~ **GIÀ CORRETTO**: la voce c'era già. Aggiunto ora `php/secrets.example.php` a `main.yml` e `test.yml`, per non ripetere l'incoerenza col template nuovo.
+- ~~**Documentare** il caricamento manuale dei secret~~ ✅ **FATTO**: nuova sezione «Two things the pipeline will never upload for you» in `README.md`, che copre sia `secrets.php` sia gli asset R2, con il sintomo da riconoscere (signer 500 → asset 404 → gioco muto) e l'avvertenza di verificare l'upload R2 con `rclone check --checksum` invece che col conteggio dei trasferimenti.
+- ~~Difesa in profondità: `<FilesMatch>` per i file di config~~ ✅ **FATTO**, nella `.htaccess` **di root** (il match è sul nome del file, quindi eredita in tutte le sottocartelle, come già la regola sui `.sql`; `php/.htaccess` contiene solo `mod_expires`/`mod_deflate`). Nega `secrets|config|r2-config|trello-config` con o senza `.example`, lasciando servibile `secrets-load.php`, che non contiene segreti. Serve al caso in cui PHP non giri: lì Apache servirebbe il sorgente in chiaro. ⚠️ **Non verificabile in locale**: il server PHP built-in ignora `.htaccess`, quindi il primo controllo vero va fatto in test.
 
 ---
 

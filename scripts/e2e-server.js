@@ -3,9 +3,11 @@
  *
  * Serve index.php via il server PHP built-in su 127.0.0.1:8899, gestendo i due
  * vincoli d'ambiente:
- *   1. php/config.php è gitignored (ha segreti) → in CI non esiste. Qui lo si
- *      crea da config.example.php forzato a instanceName=dev, così check_version.php
- *      (che fa require di config.php) non va in fatal.
+ *   1. php/config.php è TRACCIATO (parametri d'ambiente, nessun segreto: quelli
+ *      stanno in php/secrets.php, gitignored). Nel checkout c'è quindi già —
+ *      ma la creazione da config.example.php resta come rete di sicurezza per
+ *      un checkout parziale, così check_version.php, che ne fa require, non va
+ *      in fatal. Se esiste non viene toccato.
  *   2. Il binario PHP: su PATH in CI (setup-php); in locale MAMP fornisce PHP_BIN
  *      via env, altrimenti si prova 'php'.
  *
