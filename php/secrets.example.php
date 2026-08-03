@@ -88,6 +88,16 @@ return [
             'improvement' => '691c52209e3ceacc465bfe8f', // IMPROVED
         ],
 
+        // Etichette applicate in automatico (identificatori, non segreti).
+        // 'test' finisce sulle card create FUORI dalla produzione (locale e
+        // area di test): in produzione la card nasce senza etichette, il
+        // triage le mette a mano. Togli la voce per disattivare del tutto.
+        // Gli ID delle etichette esistenti si leggono aprendo nel browser:
+        // https://api.trello.com/1/boards/<board>/labels?key=<key>&token=<token>
+        'labels'  => [
+            'test' => '6990452738e3477fc17cbc81', // TEST
+        ],
+
         // Limiti anti-spam (troncamento server-side)
         'max_title_len' => 200,
         'max_desc_len'  => 4000,

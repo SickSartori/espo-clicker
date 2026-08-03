@@ -112,6 +112,12 @@
   **Scelte tecniche**: canvas a dimensione logica fissa (760×540) scalato dal CSS, così non serve ricalcolare il layout su resize/rotazione — è la trappola in cui era caduto `snake.js`. Ciclo a `requestAnimationFrame` con accumulatore (gli altri usano `setInterval`), con `dt` limitato a 250ms perché tornando da una scheda in background la pila non precipiti. Wall kick minimale sulla rotazione, senza il quale ruotare a ridosso del bordo sembra un gioco rotto.
 
   **Verifica**: `dev/tests/e2e/stack-overflow.spec.ts`, 8 test — le due meccaniche proprie hanno un test a testa, e quello sullo schiacciamento fa un **click vero** sul canvas, così copre anche la conversione delle coordinate (il canvas è scalato dal CSS, è lì che si rompe).
+- ~~📋 **Segnala → Trello: card più utili al triage**~~ ✅ **FATTO il 03/08/2026**. Tre ritocchi a `php/trello-submit.php`:
+  - **Etichetta automatica `TEST`** (`6990452738e3477fc17cbc81`, già esistente sulla board e usata a mano finora) sulle card che **non** arrivano dalla produzione. In produzione la card nasce **senza etichette**: la board le usa per il triage (versione, stato) e precompilarle sarebbe rumore. Il discriminante è `instanceName` di `php/config.php`, **non** l'host — l'area di test sta sullo stesso dominio della prod, in sottocartella, ed è la CI a ribaltare il valore.
+  - **Niente più User-Agent** nel contesto tecnico: 300 caratteri per card giudicati poco utili al triage. Versione, lingua e risoluzione restano. Tolto anche lato client (`js/feedback.js`), così il dato non parte proprio; aggiornata di conseguenza la riga privacy in `langs/it.php` e `langs/en.php`, che prometteva "browser".
+  - **Prefissi testuali al posto delle emoji** nel titolo: `NUOVO:` / `BUG:` / `MIGLIORIA:`. Cercabili da tastiera e leggibili ovunque Trello mostri il titolo in riga singola (notifiche, ricerca, export).
+
+  ⏳ **Passo operativo**: l'ID etichetta sta in `php/secrets.php`, che è gitignored e vive **solo** sul server. Va aggiunta la voce `labels` alla sezione `trello` del file **dell'area di test** (in produzione non serve: senza `labels` il codice non applica niente, che è già il comportamento voluto).
 
 ### 3.1 · Consolidamento secret — ✅ FATTO il 03/08/2026
 

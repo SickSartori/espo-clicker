@@ -81,7 +81,6 @@
                 version:  (window.GAME_VERSION && window.GAME_VERSION.toString) ? window.GAME_VERSION.toString() : (window.CACHE_VER || ''),
                 url:      location.href,
                 lang:     window.APP_LANG || navigator.language || '',
-                ua:       navigator.userAgent || '',
                 screen:   (window.screen ? (screen.width + 'x' + screen.height) : '')
             };
 

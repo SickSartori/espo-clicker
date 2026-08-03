@@ -49,7 +49,7 @@
 	$labels["feedback_ph_titolo"] = "Sum it up in one line";
 	$labels["feedback_label_desc"] = "Description (optional)";
 	$labels["feedback_ph_desc"] = "The more detail the better: steps to reproduce, what you expected…";
-	$labels["feedback_privacy"] = "We automatically attach version, language and browser to help us diagnose. No sensitive data.";
+	$labels["feedback_privacy"] = "We automatically attach version, language and screen size to help us diagnose. No sensitive data.";
 	$labels["feedback_invia"] = "Send feedback";
 	$labels["feedback_toast_ok"] = "Thanks! Your feedback was sent. 🎉";
 	$labels["feedback_toast_err"] = "Oops, sending failed. Please try again later.";

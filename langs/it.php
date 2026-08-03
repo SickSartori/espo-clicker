@@ -49,7 +49,7 @@
 	$labels["feedback_ph_titolo"] = "Riassumi in una frase";
 	$labels["feedback_label_desc"] = "Descrizione (opzionale)";
 	$labels["feedback_ph_desc"] = "Più dettagli dai, meglio è: come riprodurlo, cosa ti aspettavi…";
-	$labels["feedback_privacy"] = "Alleghiamo automaticamente versione, lingua e browser per aiutarci a diagnosticare. Nessun dato sensibile.";
+	$labels["feedback_privacy"] = "Alleghiamo automaticamente versione, lingua e risoluzione dello schermo per aiutarci a diagnosticare. Nessun dato sensibile.";
 	$labels["feedback_invia"] = "Invia segnalazione";
 	$labels["feedback_toast_ok"] = "Grazie! Segnalazione inviata. 🎉";
 	$labels["feedback_toast_err"] = "Ops, invio non riuscito. Riprova più tardi.";
