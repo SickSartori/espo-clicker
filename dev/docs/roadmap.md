@@ -70,7 +70,9 @@
   `ffmpeg -i in.mp4 -c:v copy -af "volume=<gain>dB" -c:a aac -b:a <bitrate originale> -ar 48000 -ac <canali originali> -movflags +faststart out.mp4`
   Video ricopiato bit per bit (`-c:v copy`): risoluzione, codec e numero di frame invariati su tutti e sei, verificato con ffprobe. L'unico scarto è il contenitore del Big Bang, +18 ms di padding AAC in coda — audio e video partono entrambi da pts 0, quindi **nessuno sfasamento A/V**.
 
-  ⏳ **Resta da fare**: **ri-caricare i sei file su R2** (`assets/video/**` è escluso dall'FTP, in produzione li serve il bucket — finché non si carica, in prod si sentono ancora i vecchi). Poi **ascoltare** e solo allora decidere se serve anche la strada 2.
+  ✅ **Caricati su R2 il 03/08/2026** e verificati con `rclone check --checksum`: 6 file corrispondenti, 0 differenze. La produzione serve l'audio normalizzato (`assets/video/**` è escluso dall'FTP, in prod li serve il bucket).
+
+  ⏳ **Resta aperta solo la strada 2**, da decidere all'ascolto: col tetto `master × musicVolume` = 0.5 i video si sentono a ~-22 LUFS effettivi. Se è il livello giusto, la voce si chiude qui; se restano bassi, l'unica leva rimasta è sganciare il canale video da `musicVolume` (+6 dB).
 
   🐛 **Difetto collaterale emerso**: `britney-espoars-video.mp4` è in clipping (**+0.23 dBTP**). La normalizzazione lo risolve da sé (-2.4 dB).
 
