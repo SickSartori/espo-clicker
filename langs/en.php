@@ -286,6 +286,7 @@
 	$labels["arcade_desc_superespo"] = "An endless platformer for true pros. Run, jump, stomp the Goomba-Bugs and survive the loops to farm tons of Bugs!";
 	$labels["arcade_desc_invaders"] = "Defend the bunkers, take down the swarm of alien-bugs before it reaches you.";
 	$labels["arcade_desc_centipede"] = "Destroy the centipede-bug in the mushroom field before it reaches you at the bottom.";
+	$labels["arcade_desc_stack"] = "Stack the code and ship the rows. Technical debt rises from below and bugs jam the rows: squash them with a click.";
 	$labels["arcade_keys_dir"] = "Arrow Keys:";
 	$labels["arcade_rotate"] = "Rotate / Thrust";
 	$labels["arcade_space_key"] = "Space:";
@@ -320,6 +321,22 @@
 	$labels["arcade_g_superespo_desc"] = "Endless platformer. Run, jump, stomp the Goomba-Bugs.";
 	$labels["arcade_g_invaders_desc"] = "Defend the bunkers, take down the swarm of alien-bugs.";
 	$labels["arcade_g_centipede_desc"] = "Destroy the centipede in the mushroom field.";
+	$labels["arcade_g_stack_short"] = "Stack, ship, squash";
+	$labels["arcade_g_stack_desc"] = "Stack the code and ship the rows before the debt buries you.";
+
+	/* Stack Overflow — HUD and instructions */
+	$labels["arcade_stack_tagline"] = "Stack the code, ship the rows";
+	$labels["arcade_stack_bug_hint"] = "Bugs jam the row: squash them with a click";
+	$labels["arcade_stack_level"] = "LEVEL";
+	$labels["arcade_stack_lines"] = "ROWS";
+	$labels["arcade_stack_bugs"] = "BUGS SQUASHED";
+	$labels["arcade_stack_bugs_short"] = "BUGS";
+	$labels["arcade_stack_next"] = "NEXT";
+	$labels["arcade_stack_debt"] = "TECHNICAL DEBT";
+	$labels["arcade_stack_pieces_left"] = "PIECES";
+	$labels["arcade_hint_soft_drop"] = "Soft drop";
+	$labels["arcade_hint_hard_drop"] = "Hard drop";
+	$labels["arcade_hint_squash"] = "Squash bugs";
 	$labels["col_center_mult_aria"] = "Multiplier";
 	$labels["col_center_bps_aria"] = "Bugs per second";
 	$labels["col_buy_qty_aria"] = "Purchase quantity";

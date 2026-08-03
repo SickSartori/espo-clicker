@@ -288,6 +288,7 @@
 	$labels["arcade_desc_superespo"] = "Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!";
 	$labels["arcade_desc_invaders"] = "Difendi i bunker, abbatti lo sciame di alieni-bug prima che ti raggiunga.";
 	$labels["arcade_desc_centipede"] = "Distruggi il centopiedi-bug nel campo dei funghi prima che ti raggiunga al suolo.";
+	$labels["arcade_desc_stack"] = "Impila il codice e spedisci le righe. Il debito tecnico risale dal fondo e i bug bloccano le righe: schiacciali col click.";
 	$labels["arcade_keys_dir"] = "Tasti Direzionali:";
 	$labels["arcade_rotate"] = "Ruota / Accelera";
 	$labels["arcade_space_key"] = "Spazio:";
@@ -322,6 +323,22 @@
 	$labels["arcade_g_superespo_desc"] = "Endless platformer. Corri, salta, schiaccia i Goomba-Bug.";
 	$labels["arcade_g_invaders_desc"] = "Difendi i bunker, abbatti lo sciame di alieni-bug.";
 	$labels["arcade_g_centipede_desc"] = "Distruggi il centopiedi nel campo dei funghi.";
+	$labels["arcade_g_stack_short"] = "Impila, spedisci, schiaccia";
+	$labels["arcade_g_stack_desc"] = "Impila il codice e spedisci le righe, prima che il debito ti sommerga.";
+
+	/* Stack Overflow — HUD e istruzioni */
+	$labels["arcade_stack_tagline"] = "Impila il codice, spedisci le righe";
+	$labels["arcade_stack_bug_hint"] = "I bug bloccano la riga: schiacciali col click";
+	$labels["arcade_stack_level"] = "LIVELLO";
+	$labels["arcade_stack_lines"] = "RIGHE";
+	$labels["arcade_stack_bugs"] = "BUG SCHIACCIATI";
+	$labels["arcade_stack_bugs_short"] = "BUG";
+	$labels["arcade_stack_next"] = "PROSSIMO";
+	$labels["arcade_stack_debt"] = "DEBITO TECNICO";
+	$labels["arcade_stack_pieces_left"] = "PEZZI";
+	$labels["arcade_hint_soft_drop"] = "Scendi";
+	$labels["arcade_hint_hard_drop"] = "Tuffo";
+	$labels["arcade_hint_squash"] = "Schiaccia i bug";
 	$labels["col_center_mult_aria"] = "Moltiplicatore";
 	$labels["col_center_bps_aria"] = "Bug per secondo";
 	$labels["col_buy_qty_aria"] = "Quantità acquisto";

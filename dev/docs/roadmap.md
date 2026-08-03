@@ -99,8 +99,17 @@
 - Skin future in `assets/image/future/`: **7 bozzetti**, riorganizzati in cartelle per rarità (`comune/`, `rara/`, `epica/`, `leggendaria/`, `divina/`) — nessuno ancora cablato in `src/data/skins.ts`. I due della voce originale (`espostino.png`, `TF2 Ingegnere.png`) sono in `comune/`. ⚠️ Al 03/08/2026 la riorganizzazione è **non committata** (vecchie path risultanti cancellate, cartelle nuove untracked): committarla prima di cablare.
 - QoL piccoli a scelta dal backlog `dev/docs/ui.md`
 - ~~🔐 **Consolidamento secret in un file unico**~~ ✅ **FATTO il 03/08/2026** (dettaglio sotto). ⏳ Resta un passo **operativo**, non di codice: caricare `php/secrets.php` su Altervista e, solo dopo, togliere il fallback sui due file storici.
-- 🕹️ Arcade: **Stack Overflow** (variante falling-blocks) — riempie lo slot "??? COMING SOON" (`arcade.php`, `modals_arcade.php`).
-  ⚠️ Legale: niente clone Tetris 1:1 (trade dress protetto, caso *Tetris v. Xio* 2012). Nome, estetica e almeno una meccanica propri (es. righe di "debito tecnico" che risalgono, blocchi-bug da schiacciare col click).
+- ~~🕹️ Arcade: **Stack Overflow** (variante falling-blocks)~~ ✅ **FATTO il 03/08/2026**. Riempie lo slot "??? COMING SOON" in `arcade.php` e `modals_arcade.php`; ora è il gioco 07 e lo slot bloccato resta per il prossimo.
+
+  **Come si tiene alla larga dal clone** (vincolo legale: trade dress Tetris, caso *Tetris v. Xio* 2012) — su tre piani, non solo il nome:
+  - **Set di pezzi diverso**: otto forme, di cui **due da 3 celle** (PATCH, HOTFIX). Non è la settima canonica di tetromini. Nomi e colori sono del gioco (PIPELINE, MERGE, BRANCH, REBASE, CONFLICT…).
+  - **Meccanica propria 1 — debito tecnico**: ogni N pezzi una riga risale dal fondo e spinge su la pila, con un varco e un bug dentro. Matura da sola, non arriva da un avversario. N cala col livello, con un minimo di 4 pezzi (sotto è ingiocabile).
+  - **Meccanica propria 2 — bug da schiacciare**: una riga completa che contiene un bug **non si chiude**; il bug va schiacciato **col click/tap**. Porta il verbo del gioco principale dentro al cabinato, ed è un'azione che nel genere non esiste.
+  - Il game over si chiama **STACK OVERFLOW**: la pila arriva in cima.
+
+  **Scelte tecniche**: canvas a dimensione logica fissa (760×540) scalato dal CSS, così non serve ricalcolare il layout su resize/rotazione — è la trappola in cui era caduto `snake.js`. Ciclo a `requestAnimationFrame` con accumulatore (gli altri usano `setInterval`), con `dt` limitato a 250ms perché tornando da una scheda in background la pila non precipiti. Wall kick minimale sulla rotazione, senza il quale ruotare a ridosso del bordo sembra un gioco rotto.
+
+  **Verifica**: `dev/tests/e2e/stack-overflow.spec.ts`, 8 test — le due meccaniche proprie hanno un test a testa, e quello sullo schiacciamento fa un **click vero** sul canvas, così copre anche la conversione delle coordinate (il canvas è scalato dal CSS, è lì che si rompe).
 
 ### 3.1 · Consolidamento secret — ✅ FATTO il 03/08/2026
 

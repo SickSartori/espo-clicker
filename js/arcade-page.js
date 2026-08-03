@@ -421,7 +421,10 @@
         asteroids: { dpad: ['up','left','right'],        actions: ['fire'],                    labels: { fire: 'FIRE', up: 'BOOST' } },
         superespo: { dpad: ['up','down','left','right'], actions: ['x'],                       labels: { x: 'FIRE' } },
         invaders:  { dpad: ['left','right'],             actions: ['fire'],                    labels: { fire: 'FIRE' } },
-        centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } }
+        centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } },
+        // Stack Overflow: ▲ ruota, ▼ scende, SPAZIO tuffo. I bug si schiacciano
+        // toccandoli direttamente sul campo, non serve un tasto sul pad.
+        stack:     { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'DROP', up: 'RUOTA' } }
     };
 
     // Legenda comandi da TASTIERA per la tabella desktop (a sinistra).
@@ -433,7 +436,8 @@
         asteroids: [['◀ ▶', _h.rotate || 'Ruota'], ['▲', _h.thrust || 'Spinta'], [_sp, _h.fire || 'Spara']],
         superespo: [['◀ ▶', _h.run || 'Corri'], ['▲', _h.jump || 'Salta'], ['▼', _h.crouch || 'Abbassati'], ['X / F', _h.fireball || 'Palla di fuoco']],
         invaders:  [['◀ ▶', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
-        centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']]
+        centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
+        stack:     [['◀ ▶', _h.move || 'Muovi'], ['▲', _h.rotate || 'Ruota'], ['▼', _h.softDrop || 'Scendi'], [_sp, _h.hardDrop || 'Tuffo'], ['CLICK', _h.squash || 'Schiaccia i bug']]
     };
 
     // Popola/aggiorna la tabella comandi (desktop). La visibilità è gestita via CSS
@@ -457,9 +461,9 @@
     window._arcadeRunningGame = null;    // gioco effettivamente avviato
 
     // Mappe funzioni per-gioco: build (costruisce schermo) + run (avvia) + exit (chiude)
-    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame' };
-    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun' };
-    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame' };
+    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame', stack: 'initStackGame' };
+    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun', stack: 'startStackRun' };
+    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame', stack: 'exitStackGame' };
 
     // Chiude il gioco attualmente in esecuzione (se presente).
     window.exitArcadeCurrentGame = function () {

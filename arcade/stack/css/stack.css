@@ -1,0 +1,18 @@
+/* arcade/stack/css/stack.css — STACK OVERFLOW */
+
+/* Il canvas ha dimensione logica fissa (760x540) e viene scalato da qui:
+   così il gioco non deve ricalcolare il layout su resize o rotazione. */
+#stack-canvas {
+    background-color: #050a10;
+    border: 3px solid #00d9ff;
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    image-rendering: pixelated;
+    /* I bug si schiacciano col dito: niente scroll/zoom sul campo, o il tap
+       diventa un pan e il gesto si perde. */
+    touch-action: none;
+}
