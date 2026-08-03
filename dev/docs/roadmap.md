@@ -55,7 +55,9 @@
 
   **Diagnosi**: i tre file segnalati dal QA sono esattamente i tre più bassi, e lo scarto tra l'estremo alto (Britney) e quello basso (Rick Espley) è di **~21 dB**. Nessun ritocco di `defaultVol` poteva colmarlo — erano già tutti a 1.0, cioè a saturazione. La scelta di design sopra (livellare la *traccia*, non il numero) è quindi confermata dai dati.
 
-  Le due strade non sono alternative, risolvono problemi diversi: la **1 è necessaria** (è l'unica che chiude i 21 dB di scarto *fra* i video), la **2 resta disponibile** per il livello assoluto — a -16 LUFS col tetto a 0.5 si ascolta a ~-22 LUFS effettivi, e sganciare il canale video da `musicVolume` restituirebbe quei 6 dB. Decidere la 2 **dopo** aver sentito i file normalizzati, non prima.
+  Le due strade non erano alternative, risolvevano problemi diversi: la **1 era necessaria** (è l'unica che chiude i 21 dB di scarto *fra* i video), la **2 restava disponibile** per il livello assoluto — a -16 LUFS col tetto a 0.5 si ascolta a ~-22 LUFS effettivi, e sganciare il canale video da `musicVolume` avrebbe restituito quei 6 dB.
+
+  ❌ **Strada 2 scartata all'ascolto** (03/08/2026): normalizzati i file, il livello in produzione convince così com'è. Il canale video resta agganciato a `musicVolume`, che è anche il comportamento più prevedibile per chi usa il mixer — abbassare la musica abbassa anche i video. Da riaprire solo se arriva una segnalazione di volume basso *dopo* la normalizzazione: a quel punto il margine c'è ed è documentato qui.
 
   **Target scelto: -16 LUFS** per tutti e sei, con **solo guadagno lineare, niente limiting** (la dinamica delle tracce resta quella originale). Da preferire a -23.9 LUFS (il target dei suoni arcade, `super-espo.js:1597`): lì c'era margine, qui il tetto di riproduzione è già 0.5 e abbassare tutti sarebbe controproducente.
 
@@ -80,7 +82,7 @@
 
   ✅ **Caricati su R2 il 03/08/2026** e verificati con `rclone check --checksum`: 6 file corrispondenti, 0 differenze. La produzione serve l'audio normalizzato (`assets/video/**` è escluso dall'FTP, in prod li serve il bucket).
 
-  ⏳ **Resta aperta solo la strada 2**, da decidere all'ascolto: col tetto `master × musicVolume` = 0.5 i video si sentono a ~-22 LUFS effettivi. Se è il livello giusto, la voce si chiude qui; se restano bassi, l'unica leva rimasta è sganciare il canale video da `musicVolume` (+6 dB).
+  ✅ **Voce chiusa il 03/08/2026**: livello approvato all'ascolto in produzione, strada 2 scartata (vedi sopra). Nessun lavoro residuo.
 
   🐛 **Difetto collaterale emerso**: `britney-espoars-video.mp4` è in clipping (**+0.23 dBTP**). La normalizzazione lo risolve da sé (-2.4 dB).
 
