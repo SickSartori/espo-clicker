@@ -155,13 +155,19 @@
     overflow: hidden;
   }
 
+  /* Il titolo va a capo invece di essere troncato: su mobile la finestra è già a
+     tutta larghezza, quindi l'ellissi non era una scelta di layout ma l'unica via
+     d'uscita rimasta — e i titoli lunghi diventavano illeggibili. La riga qui era
+     anche quella che vinceva su `white-space: normal` di styles/mobile.css (2 ID
+     contro 1); tolta, quella regola torna a valere e le due smettono di litigare.
+     La griglia regge la crescita in altezza: `.trophy-action` sta già su una riga
+     propria (grid-column: 1 / -1) e nessuna cella ha altezza fissa. */
   html body #achievements-modal #achievement-list .trophy-title {
     font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere; /* rete di sicurezza per un eventuale titolo con parola lunghissima */
   }
 
   /* -------------------------------------------------------------------
