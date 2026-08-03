@@ -550,8 +550,22 @@ export function initBoot(): void {
             (oldMajor === w.GAME_VERSION.major && oldMinor < w.GAME_VERSION.minor);
     }
 
-    // Onboarding audio "primo avvio nuova versione": eseguito UNA volta quando il
-    // save è di una versione precedente (stesso criterio delle release notes).
+    // Onboarding audio del passaggio alla V3: vale SOLO per chi arriva da un save
+    // pre-3.0 (major < 3), NON a ogni nuova versione.
+    //
+    // Prima era agganciato a shouldShowReleaseNotesFor(), che è vero anche solo con
+    // la minor più bassa: al primo bump di minor (3.0 → 3.1) sarebbe riscattato per
+    // TUTTI i giocatori 3.0.x, riaccendendo l'audio a chi l'aveva mutato di proposito
+    // e soprattutto riportando bgMusicSelection a 'sound-bg-music-v3' sopra la traccia
+    // scelta dall'utente (l'unica riga qui sotto senza guardia "se non impostato").
+    // Le release notes invece DEVONO continuare a comparire a ogni minor: i due criteri
+    // sono diversi e vanno tenuti separati.
+    function shouldApplyV3AudioOnboardingFor(savedVersion: any) {
+        if (!savedVersion || !w.GAME_VERSION) return false;
+        return (savedVersion.major || 0) < 3;
+    }
+
+    // Onboarding audio "passaggio alla V3": eseguito UNA volta per chi viene da pre-3.0.
     // Forza l'audio udibile anche se l'utente aveva mutato e imposta la musica di
     // sfondo V3 come traccia attiva (sovrascrive la scelta precedente, una volta).
     // Da qui in poi ogni modifica dell'utente viene salvata normalmente.
@@ -722,6 +736,9 @@ export function initBoot(): void {
                 if (localShowRN) {
                     w.shouldShowReleaseNotesOnLoad = true;
                 }
+                // Letto QUI, prima che gameState.version venga riscritto con la versione
+                // corrente più in basso: dopo non sarebbe più distinguibile da dove si viene.
+                const localV3Audio = !!(parsedState && shouldApplyV3AudioOnboardingFor(parsedState.version));
 
                 // === LANCIO PRODUZIONE: migrazione Season 1 / Fondatore (locale) ===
                 // Un save pre-lancio (schemaVersion < 3) viene azzerato a Season 1 e,
@@ -837,8 +854,8 @@ export function initBoot(): void {
                     };
                 }
 
-                // Onboarding audio one-time al primo avvio di una nuova versione (save locale).
-                if (localShowRN) applyV3AudioOnboarding();
+                // Onboarding audio one-time per chi arriva da un save pre-3.0 (save locale).
+                if (localV3Audio) applyV3AudioOnboarding();
 
                 // Inizializza Enhancements
                 if (!store.gameState.buildingEnhancements) store.gameState.buildingEnhancements = {};
@@ -2284,6 +2301,9 @@ export function initBoot(): void {
                     // eredita quella (vecchia) del cloud. Senza questo il messaggio novità
                     // non compariva al login da cloud (device nuovo / cache pulita).
                     const cloudShowRN = shouldShowReleaseNotesFor(cloudState.version);
+                    // Stesso motivo del percorso locale: la versione di provenienza va letta
+                    // prima del merge, che porta gameState.version su quella del cloud.
+                    const cloudV3Audio = shouldApplyV3AudioOnboardingFor(cloudState.version);
                     deepMerge(store.gameState, cloudState);
 
                     // 6. Ripristino oggetti Decimali
@@ -2332,11 +2352,9 @@ export function initBoot(): void {
                             stage: w.GAME_VERSION.stage
                         };
                     }
-                    if (cloudShowRN) {
-                        w.shouldShowReleaseNotesOnLoad = true;
-                        // Primo avvio nuova versione (save cloud, autoritativo): audio ON + musica V3, una volta.
-                        applyV3AudioOnboarding();
-                    }
+                    if (cloudShowRN) w.shouldShowReleaseNotesOnLoad = true;
+                    // Provenienza pre-3.0 (save cloud, autoritativo): audio ON + musica V3, una volta.
+                    if (cloudV3Audio) applyV3AudioOnboarding();
 
                     // Ricalcoli logica
                     w.calculatePrestigeBonus();
