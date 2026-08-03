@@ -7,7 +7,15 @@
 ## v3.1 — metà settembre 2026 · «Migliorie e bugfix»
 
 - Coda hotfix post-lancio
-- ☁️ **Badge cloud-sync — rifacimento** (segnalazione QA 31/07/2026, pre-lancio è entrata solo la mitigazione: tap → nascondi badge + toast, `src/app/boot.ts`).
+- ~~☁️ **Badge cloud-sync — rifacimento**~~ ✅ **FATTO il 03/08/2026** (segnalazione QA 31/07/2026; pre-lancio era entrata solo la mitigazione: tap → nascondi badge + toast).
+
+  **Com'è stato chiuso.** Le due cause sono state affrontate separatamente:
+  1. `_resyncFromCloud` e `_silentTokenRefresh` ora restituiscono **sempre** `{ ok, reason }` invece di uscire con un `return` nudo. Chi le chiama in automatico (`saveGame`) può ignorare l'esito; il tap sul badge ci costruisce sopra il messaggio.
+  2. Il badge ha un **ciclo proprio**: `problem → syncing → ok | failed`. Lo stato `ok` si nasconde da solo dopo 2.5s, quindi la dismissione non passa più da `markCloudSaved()` — cioè non dipende più da un push cloud riuscito, che era il punto della causa 2.
+
+  **Scelta presa strada facendo**: quando l'esito è `nocreds` o `login` non si mostra un errore da ritentare ma si apre direttamente il login, sia che lo si sappia già dal motivo del badge sia che lo si scopra dall'esito. Altrimenti servivano **due** tap — uno per scoprire il motivo, uno per agire — che è la stessa sensazione di "non succede niente" che il rifacimento elimina.
+
+  **Verifica**: `dev/tests/e2e/cloud-badge.spec.ts`, 6 test (comparsa, stato intermedio visibile, auto-nascondimento, fallimento che resta a schermo col motivo, login al primo tap, esiti di tutte le uscite prima mute). Usano l'orologio finto di Playwright perché il badge compare solo dopo 90s di fallimenti. ⚠️ Nota per chi ci metterà mano: le credenziali di sessione **non** vanno messe prima del boot, o parte l'auto-login vero e il test diventa intermittente.
 
   > 🐛 *Cliccando "Progressi dietro al cloud — tocca per sincronizzare" non succede niente.*
   > *Il pulsante non sembra fare nulla al click da PC, né scompare il messaggio: rimane fisso.*

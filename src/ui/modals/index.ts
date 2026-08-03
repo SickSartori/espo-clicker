@@ -1241,12 +1241,17 @@ export function initModals(): void {
     // della scadenza 24h). A differenza di _showLoginForTokenExpiry NON ricarica il cloud
     // né riapre modali: chiede solo un nuovo token riusando le credenziali di sessione.
     // Fail-safe: in caso di errore resta attivo il controllo reattivo alla scadenza.
+    // Restituisce SEMPRE un esito { ok, reason }: chi la chiama in automatico
+    // (saveGame) può ignorarlo, ma il tap sul badge ci costruisce sopra il
+    // messaggio da mostrare. Prima ogni uscita era un `return` nudo, quindi il
+    // chiamante non aveva modo di distinguere "fatto" da "non ho fatto niente".
     w._silentTokenRefresh = async () => {
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || w._tokenRefreshing) return;
+        if (!u || !p) return { ok: false, reason: 'nocreds' };
+        if (w._tokenRefreshing) return { ok: false, reason: 'busy' };
         const Game = getGameAPI();
-        if (!Game || typeof Game.setSaveToken !== 'function') return;
+        if (!Game || typeof Game.setSaveToken !== 'function') return { ok: false, reason: 'noapi' };
         w._tokenRefreshing = true;
         try {
             const res = await w.EspoBackend.call('refresh-token', { username: u, password: p });
@@ -1254,9 +1259,13 @@ export function initModals(): void {
             if (data.status === 'success' && data.save_token) {
                 Game.setSaveToken(data.save_token, data.token_expires_at);
                 w._tokenExpiredNotified = false;
+                return { ok: true, reason: 'token' };
             }
+            return { ok: false, reason: 'login' };
         } catch (e) {
-            // silenzioso: il fallback reattivo coprirà l'eventuale scadenza
+            // silenzioso verso l'automatismo: il fallback reattivo coprirà
+            // l'eventuale scadenza. Ma l'esito torna comunque a chi l'ha chiesto.
+            return { ok: false, reason: 'network' };
         } finally {
             w._tokenRefreshing = false;
         }
@@ -1267,30 +1276,40 @@ export function initModals(): void {
     // adottiamo in modo AUTORITATIVO (force) — il confronto solo-lifetimeScore del load
     // normale non basta a risolvere il conflitto. Così il client si riallinea e i
     // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
+    // Come _silentTokenRefresh, restituisce SEMPRE un esito { ok, reason }.
+    // Le cinque uscite mute di prima erano la causa diretta della segnalazione
+    // QA "clicco il badge e non succede niente": erano tutte plausibili al tap
+    // (credenziali di sessione assenti, resync già in volo, login rifiutato,
+    // rete giù) e nessuna diceva niente a chi aveva cliccato.
     w._resyncFromCloud = async () => {
         // DEV (Admin Console): se lo stato è stato alterato da un cheat NON riallinearlo al
         // cloud — annullerebbe lo scenario/cheat caricato. Coerente con saveGame, che in quel
         // caso salta del tutto il push (quindi non genera nemmeno il conflitto che porta qui).
-        if (w.cheatNoCloudSync) return;
+        if (w.cheatNoCloudSync) return { ok: false, reason: 'cheat' };
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || w._resyncing) return;
+        if (!u || !p) return { ok: false, reason: 'nocreds' };
+        if (w._resyncing) return { ok: false, reason: 'busy' };
         const Game = getGameAPI();
-        if (!Game || typeof Game.loadCloudData !== 'function') return;
+        if (!Game || typeof Game.loadCloudData !== 'function') return { ok: false, reason: 'noapi' };
         w._resyncing = true;
         try {
             const res = await w.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
-            if (data.status === 'success') {
-                if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
-                w._tokenExpiredNotified = false;
-                if (data.save_data) {
-                    Game.loadCloudData(data.save_data, { force: true });
-                    if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
-                }
+            if (data.status !== 'success') return { ok: false, reason: 'login' };
+
+            if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
+            w._tokenExpiredNotified = false;
+            if (!data.save_data) {
+                // Login riuscito ma niente da adottare: il conflitto non può
+                // essere risolto da qui, però il token è comunque rinnovato.
+                return { ok: true, reason: 'notdata' };
             }
+            Game.loadCloudData(data.save_data, { force: true });
+            if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
+            return { ok: true, reason: 'resynced' };
         } catch (e) {
-            // riprova al prossimo salvataggio / tap sul badge
+            return { ok: false, reason: 'network' };
         } finally {
             w._resyncing = false;
         }

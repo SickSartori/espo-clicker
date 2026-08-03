@@ -214,51 +214,143 @@ export function initBoot(): void {
         if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
         _setCloudBadge(true, reason);
     }
+    // --- BADGE CLOUD: stato esplicito ---
+    // Prima gli stati erano due e impliciti (visibile / nascosto) e l'unica via
+    // d'uscita era markCloudSaved(), cioè un push cloud riuscito. Al tap non
+    // cambiava nulla finché il salvataggio non andava a buon fine — e se non
+    // andava, mai: da qui la segnalazione QA "clicco e non succede niente, il
+    // messaggio resta fisso". Ora il ciclo è chiuso dal badge stesso:
+    //   problem → syncing → ok (si nasconde da solo) | failed (dice perché)
+    // La dismissione è quindi disaccoppiata dal push riuscito.
+    type CloudBadgeState = 'hidden' | 'problem' | 'syncing' | 'ok' | 'failed';
     let _cloudBadgeReason: any = null;
-    function _setCloudBadge(show: any, reason?: any) {
+    let _cloudBadgeState: CloudBadgeState = 'hidden';
+    let _cloudBadgeHideTimer: any = null;
+
+    // Motivo tecnico -> cosa è successo, detto all'utente. Le chiavi sono gli
+    // esiti restituiti da _resyncFromCloud / _silentTokenRefresh.
+    function _cloudBadgeText(state: CloudBadgeState, reason: any, isEn: boolean) {
+        if (state === 'syncing') return isEn ? '⏳ Syncing with the cloud…' : '⏳ Sincronizzazione in corso…';
+        if (state === 'ok') return isEn ? '✓ Progress synced' : '✓ Progressi sincronizzati';
+        if (state === 'problem') {
+            return reason === 'conflict'
+                ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
+                        : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
+                : (isEn ? '⚠ Progress not synced — tap to retry'
+                        : '⚠ Progressi non salvati — tocca per riprovare');
+        }
+        // failed: il motivo cambia l'azione utile, quindi va detto.
+        switch (reason) {
+            case 'nocreds':
+            case 'login':
+                return isEn ? '⚠ Sign in again to sync — tap' : '⚠ Rifai il login per sincronizzare — tocca';
+            case 'network':
+                return isEn ? '⚠ No connection — tap to retry' : '⚠ Connessione assente — tocca per riprovare';
+            case 'busy':
+                return isEn ? '⏳ Already syncing…' : '⏳ Sincronizzazione già in corso…';
+            case 'cheat':
+                return isEn ? '⚠ Sync off (dev console)' : '⚠ Sync disattivata (console dev)';
+            case 'noapi':
+                return isEn ? '⚠ Not ready yet — tap to retry' : '⚠ Non ancora pronto — tocca per riprovare';
+            default:
+                return isEn ? '⚠ Sync failed — tap to retry' : '⚠ Sincronizzazione fallita — tocca per riprovare';
+        }
+    }
+
+    function _cloudBadgeColor(state: CloudBadgeState) {
+        if (state === 'ok') return 'rgba(39,174,96,0.95)';
+        if (state === 'syncing') return 'rgba(41,128,185,0.95)';
+        return 'rgba(192,57,43,0.95)';
+    }
+
+    // Senza credenziali valide non c'è niente da ritentare: l'unica azione utile
+    // è il login. Vale sia quando lo si sa già (motivo del badge) sia quando lo
+    // si scopre dall'esito, altrimenti servirebbero DUE tap — il primo per
+    // scoprire il motivo, il secondo per agire — che è esattamente la sensazione
+    // di "non succede niente" che questo rifacimento toglie.
+    function _cloudBadgeNeedsLogin(reason: any) {
+        return reason === 'nocreds' || reason === 'login';
+    }
+    function _cloudBadgeGoToLogin(reason: any) {
+        if (typeof w._showLoginForTokenExpiry === 'function') {
+            _setCloudBadge('hidden');
+            w._showLoginForTokenExpiry();
+            return true;
+        }
+        // Senza il modale di login non si può fare nulla: meglio dirlo che
+        // lasciare il badge fermo su "sincronizzo…" per sempre.
+        _setCloudBadge('failed', reason);
+        return false;
+    }
+
+    // Il tap sceglie l'azione in base al motivo, aspetta l'esito e lo mostra.
+    async function _cloudBadgeRetry() {
+        if (_cloudBadgeState === 'syncing') return;
+        const wasReason = _cloudBadgeReason;
+        _setCloudBadge('syncing');
+
+        if (_cloudBadgeNeedsLogin(wasReason)) { _cloudBadgeGoToLogin(wasReason); return; }
+
+        let res: any = null;
+        try {
+            // Conflitto → adotta il cloud autoritativo; altrimenti (token/rete)
+            // → rinnova il token e ritenta.
+            if (wasReason === 'conflict' && typeof w._resyncFromCloud === 'function') {
+                res = await w._resyncFromCloud();
+            } else if (typeof w._silentTokenRefresh === 'function') {
+                res = await w._silentTokenRefresh();
+            }
+        } catch (e) {
+            res = { ok: false, reason: 'network' };
+        }
+
+        if (res && res.ok) { _setCloudBadge('ok'); return; }
+
+        const reason = (res && res.reason) || 'error';
+        if (_cloudBadgeNeedsLogin(reason)) { _cloudBadgeGoToLogin(reason); return; }
+        _setCloudBadge('failed', reason);
+    }
+
+    function _setCloudBadge(state: any, reason?: any) {
+        // Compatibilità con i due chiamanti storici: _setCloudBadge(false) e
+        // _setCloudBadge(true, reason).
+        if (state === false) state = 'hidden';
+        else if (state === true) state = 'problem';
+
         let badge = document.getElementById('cloud-sync-badge');
-        if (!show) { if (badge) badge.style.display = 'none'; return; }
-        _cloudBadgeReason = reason || null;
+        if (_cloudBadgeHideTimer) { clearTimeout(_cloudBadgeHideTimer); _cloudBadgeHideTimer = null; }
+
+        _cloudBadgeState = state;
+        if (state === 'hidden') {
+            _cloudBadgeReason = null;
+            if (badge) badge.style.display = 'none';
+            return;
+        }
+        // 'syncing' e 'ok' sono transitori: non sovrascrivono il motivo, che
+        // serve ancora se poi il tentativo fallisce e si torna a 'problem'.
+        if (state === 'problem' || state === 'failed') _cloudBadgeReason = reason || null;
+
         const isEn = w.APP_LANG === 'en';
-        const isConflict = reason === 'conflict';
-        const label = isConflict
-            ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
-                    : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
-            : (isEn ? '⚠ Progress not synced — tap to retry'
-                    : '⚠ Progressi non salvati — tocca per riprovare');
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'cloud-sync-badge';
-            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;background:rgba(192,57,43,0.95);color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);cursor:pointer;max-width:90vw;text-align:center;';
-            badge.addEventListener('click', () => {
-                // Feedback immediato (mitigazione — il rifacimento è in roadmap 3.1).
-                // Prima il tap era MUTO: _resyncFromCloud è async e ha cinque uscite
-                // silenziose (token/credenziali mancanti, resync già in volo, login non
-                // 'success', errore di rete col catch vuoto), e il badge si nasconde solo
-                // via markCloudSaved() — cioè solo dopo un push cloud riuscito. Risultato:
-                // "clicco e non succede niente, il messaggio resta fisso".
-                // Nasconderlo subito è sicuro: se il problema persiste, il prossimo save
-                // fallito lo rimostra da sé (markCloudUnsynced).
-                _setCloudBadge(false);
-                if (w.EspooClicker && typeof w.EspooClicker.showToast === 'function') {
-                    w.EspooClicker.showToast(isEn ? 'Syncing with the cloud…'
-                                                  : 'Sincronizzazione col cloud in corso…', 'info');
-                }
-                // Azione giusta per motivo: conflitto → adotta il cloud autoritativo;
-                // altrimenti (token/rete) → rinnova il token e ritenta.
-                if (_cloudBadgeReason === 'conflict' && typeof w._resyncFromCloud === 'function') {
-                    w._resyncFromCloud();
-                } else if (typeof w._silentTokenRefresh === 'function') {
-                    w._silentTokenRefresh();
-                } else if (typeof w._showLoginForTokenExpiry === 'function') {
-                    w._showLoginForTokenExpiry();
-                }
-            });
+            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);max-width:90vw;text-align:center;';
+            badge.addEventListener('click', () => { _cloudBadgeRetry(); });
             document.body.appendChild(badge);
         }
-        badge.textContent = label;
-        badge.title = reason ? ('cloud: ' + reason) : '';
+
+        badge.textContent = _cloudBadgeText(state, state === 'failed' ? reason : _cloudBadgeReason, isEn);
+        badge.style.background = _cloudBadgeColor(state);
+        // Durante il sync il tap non deve accodare un secondo tentativo.
+        badge.style.cursor = (state === 'syncing' || state === 'ok') ? 'default' : 'pointer';
+        badge.title = _cloudBadgeReason ? ('cloud: ' + _cloudBadgeReason) : '';
         badge.style.display = 'block';
+
+        // Riuscito: si toglie da solo. È il punto della segnalazione — la
+        // scomparsa non dipende più da un push andato a buon fine.
+        if (state === 'ok') {
+            _cloudBadgeHideTimer = setTimeout(() => _setCloudBadge('hidden'), 2500);
+        }
     }
 
     async function saveGame() {
