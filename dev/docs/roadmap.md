@@ -1,6 +1,6 @@
 # Roadmap post-3.0 — Espòòò Clicker
 
-> Stato: concordata il 21/07/2026. Orizzonte: fino alla **4.0** (aprile 2027). Cadenza mensile: ~1 settimana design, 1-2 implementazione, 1 buffer/hotfix.
+> Stato: concordata il 21/07/2026, **riverificata sul codice il 03/08/2026** (3.0.22, post-lancio). Orizzonte: fino alla **4.0** (aprile 2027). Cadenza mensile: ~1 settimana design, 1-2 implementazione, 1 buffer/hotfix.
 > Arcade: focus sui 3 giochi richiesti — **Stack Overflow** (falling blocks), **Q*Bert-like**, **BUGDOOM** — più **Flappy Espò** e il bonus multiplayer **Click Duel 1v1**.
 > Regola arcade: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne (lezione Phaser/Super Espò).
 
@@ -15,6 +15,9 @@
   Verificato che il click **arriva** al badge (hit-test `elementFromPoint`: nessun overlay lo intercetta), quindi non è un problema di z-index. Il problema di fondo resta:
   1. `_resyncFromCloud` (`src/ui/modals/index.ts`) ha **cinque uscite silenziose** — `cheatNoCloudSync`, credenziali di sessione mancanti, `_resyncing` già in volo, login ≠ `success`, errore di rete col `catch` vuoto: nessuna di queste dice niente all'utente.
   2. Il badge non ha una via di uscita propria: `_setCloudBadge(false)` è raggiungibile **solo** da `markCloudSaved()`, cioè solo dopo un `save-progress` riuscito. In fase pre-wipe ogni push risponde `conflict` e `loadCloudData` esce sul ramo `schemaVersion < 3` senza ripulirlo → badge inchiodato.
+
+     > 🔎 *Verifica 03/08/2026*: le due cause reggono ancora (le 5 uscite sono intatte in `_resyncFromCloud`; l'unico chiamante nuovo di `_setCloudBadge(false)` è la mitigazione al tap, `boot.ts:242`), **ma la premessa della causa 2 è decaduta in production**: il season-wipe è avvenuto (`leaderboard` ha solo righe season 1) e la RPC `save_progress` accetta il season-flip, quindi il push non risponde più `conflict` per quel motivo. Il ramo `_cloudPreWipe` **non è codice morto**: scatta ancora per chi rientra con un cloud save a `schemaVersion < 3`, cioè chi non fa login dal lancio. Il rifacimento va quindi progettato sul caso "token/rete", non più su quello di lancio.
+
   3. Serve uno stato esplicito (idle / sincronizzo… / riuscito / fallito-con-motivo) e la dismissione **disaccoppiata** dal push riuscito.
   Da fare insieme al refactor cloud-sync di `boot.ts` (oggi previsto in 3.5): valutare se anticipare l'estrazione qui.
 - 🔊 **Volume dei video evento — normalizzazione delle tracce** (segnalazione QA 02/08/2026; pre-lancio è entrata solo la parte code-side).
@@ -31,12 +34,38 @@
   1. **Normalizzare la traccia audio negli mp4** a un target LUFS comune, come già fatto per i suoni arcade (vedi il commento in `arcade/super-espo/js/super-espo.js:1597`). Va rifatto l'upload su R2.
   2. **Disaccoppiare il canale video da `musicVolume`**: oggi è l'unica ragione del tetto a 0.5. Un canale dedicato (o il solo `master`) restituirebbe 6 dB di margine.
 
-  ⚠️ Non misurato: sulla macchina di sviluppo non c'è ffmpeg, quindi i LUFS reali dei tre file non sono noti. Primo passo della 3.1: misurarli.
-- 🖥️ **Obiettivi su mobile: titolo ancora troncato.** Il fix pre-lancio ha allargato solo il desktop (`#achievements-modal .modal-content` a 680px). Su mobile la finestra è già a tutta larghezza, quindi l'unica leva è il wrap: `styles/ui/mobile/achievements-modal.css:158` e `styles/mobile.css:1363` ridichiarano `white-space: nowrap` + ellissi. Non toccato la sera prima del rilascio perché fa crescere l'altezza delle righe in un layout a griglia tarato (`trophy-action` su `grid-column: 1 / -1`).
+  ✅ **Misurati il 03/08/2026** (ffmpeg ora installato sulla macchina di sviluppo, `loudnorm=print_format=json` sui file in `assets/video/`):
+
+  | File | Integrated | True peak | LRA | QA |
+  |---|---|---|---|---|
+  | `britney-espoars-video.mp4` | **-13.59** LUFS | **+0.23** dBTP ⚠️ | 5.1 | — |
+  | `bigbang-espoclicker.mp4` | -13.68 LUFS | -3.09 dBTP | 2.8 | — |
+  | `ricardo-milespo-dota-video.mp4` | -20.39 LUFS | -8.25 dBTP | 9.5 | — |
+  | `ricardo-milespo-metal-video.mp4` | **-21.55** LUFS | -11.45 dBTP | 1.4 | 🐛 «molto basso» |
+  | `ricardo-milespo-video.mp4` (U Got That) | **-24.99** LUFS | -13.15 dBTP | 2.7 | 🐛 «molto basso» |
+  | `rick-espley-video.mp4` | **-34.48** LUFS | -19.95 dBTP | 4.4 | 🐛 «molto basso» |
+
+  **Diagnosi**: i tre file segnalati dal QA sono esattamente i tre più bassi, e lo scarto tra l'estremo alto (Britney) e quello basso (Rick Espley) è di **~21 dB**. Nessun ritocco di `defaultVol` poteva colmarlo — erano già tutti a 1.0, cioè a saturazione. La scelta di design sopra (livellare la *traccia*, non il numero) è quindi confermata dai dati.
+
+  Le due strade non sono alternative, risolvono problemi diversi: la **1 è necessaria** (è l'unica che chiude i 21 dB di scarto *fra* i video), la **2 resta disponibile** per il livello assoluto — a -16 LUFS col tetto a 0.5 si ascolta a ~-22 LUFS effettivi, e sganciare il canale video da `musicVolume` restituirebbe quei 6 dB. Decidere la 2 **dopo** aver sentito i file normalizzati, non prima.
+
+  **Target proposto: -16 LUFS** per tutti e sei. Verificato che sta in piedi con **solo guadagno lineare, senza limiting**: la correzione più aggressiva è Rick Espley (**+18.5 dB**), che porta il suo true peak a -1.45 dBTP, ancora sotto la soglia. Tutti gli altri restano ≤ -2.2 dBTP. Da preferire a -23.9 LUFS (il target dei suoni arcade, `super-espo.js:1597`): lì c'era margine, qui il tetto di riproduzione è già 0.5 e abbassare tutti sarebbe controproducente.
+
+  🐛 **Difetto collaterale emerso**: `britney-espoars-video.mp4` è in clipping (**+0.23 dBTP**). La normalizzazione lo risolve da sé (-2.4 dB).
+
+  ⚠️ **Vincoli del re-encode**: ricodificare **solo l'audio** (`-c:v copy`) per non perdere qualità video, e **mantenere il faststart** (`-movflags +faststart`, moov in testa) — senza, i video non partono in streaming da R2. Poi rifare l'upload su R2.
+- 🖥️ **Obiettivi su mobile: titolo ancora troncato.** Il fix pre-lancio ha allargato solo il desktop (`#achievements-modal .modal-content` a 680px). Su mobile la finestra è già a tutta larghezza, quindi l'unica leva è il wrap. Non toccato la sera prima del rilascio perché fa crescere l'altezza delle righe in un layout a griglia tarato (`trophy-action` su `grid-column: 1 / -1`).
+
+  > 🔎 *Verifica 03/08/2026 — correzione*: **è un file solo, non due**. `styles/mobile.css:1365` dichiara già `white-space: normal`, ma **perde per specificità** (`html body #achievement-list .trophy-title`, 1 ID) contro `styles/ui/mobile/achievements-modal.css:162` (`html body #achievements-modal #achievement-list .trophy-title` + `overflow:hidden` + `text-overflow:ellipsis`, 2 ID). Il fix è lì: togliere il `nowrap` nel file specifico, e la regola di `mobile.css` fa già il resto.
 - 🎬 **Anelli orbitali sopra il video evento.** Chiudendo il bug dello sfondo di rarità è emerso che anche i `::before`/`::after` di `#clicker-section` (`ui/desktop/clicker-3d.css:216`) viaggiano sopra il video, come tutto `#game-container` (z 9010 vs 9000). Sono cerchi da 500px al 4-6% di alfa, quindi ai limiti del percettibile: non toccati perché fuori dalla segnalazione. Da spegnere insieme all'ambient se si vuole il video davvero pulito.
 - 👕 **Guardaroba: doppio-click come gesto vero** (opzionale). Pre-lancio è stato rimosso l'`ondblclick`, che era codice morto — `showSkinPreview()` appende subito un `.modal-backdrop`, quindi il secondo click non arriva mai alla card — e corretto il tooltip che lo prometteva. Farlo funzionare davvero richiede di ritardare il click singolo di ~250ms, cioè peggiorare la reattività di *ogni* apertura per un gesto che il bottone ▶ già copre: da valutare, non scontato che convenga.
-- **Leaderboard season-aware server-side**: la Edge Function `get-leaderboard` deve ritornare la season (oggi il badge in `src/ui/podio.ts` è solo cosmetico/locale). Prerequisito di tutta la roadmap stagionale.
-- 2 skin già pronte in `assets/image/future/`: `espostino.png`, `TF2 Ingegnere.png` → cablarle in `src/data/skins.ts`
+- **Leaderboard season-aware server-side** — ⚠️ **quasi tutta già fatta**, la voce si riduce di molto (verifica 03/08/2026 sul progetto production):
+  - ✅ `get-leaderboard` (v2) filtra già server-side: `.eq("season", CURRENT_SEASON)` con `CURRENT_SEASON = 1` — le righe pre-lancio sono season 0 e restano invisibili. Bump manuale della costante a ogni nuova Season.
+  - ✅ `save-progress` inoltra `p_season` alla RPC `save_progress`, che gestisce il season-flip lato DB.
+  - ✅ Il wipe è avvenuto: la tabella `leaderboard` in production contiene **solo** righe season 1.
+  - ❌ **Quel che resta**: la Edge Function non *ritorna* la season, quindi il badge di `src/ui/podio.ts:53` la legge ancora da `gameState.season` (locale/cosmetico). Lavoro residuo: un campo in risposta + la lettura client-side.
+  - ⚠️ **Vincolo sul formato**: la risposta è oggi un **array nudo** con i nomi campo compatibili col client PHP legacy. Incapsularla in `{season, entries}` lo romperebbe: usare un campo per riga o un header, oppure versionare l'endpoint.
+- Skin future in `assets/image/future/`: **7 bozzetti**, riorganizzati in cartelle per rarità (`comune/`, `rara/`, `epica/`, `leggendaria/`, `divina/`) — nessuno ancora cablato in `src/data/skins.ts`. I due della voce originale (`espostino.png`, `TF2 Ingegnere.png`) sono in `comune/`. ⚠️ Al 03/08/2026 la riorganizzazione è **non committata** (vecchie path risultanti cancellate, cartelle nuove untracked): committarla prima di cablare.
 - QoL piccoli a scelta dal backlog `dev/docs/ui.md`
 - 🔐 **Consolidamento secret in un file unico** (vedi dettaglio sotto)
 - 🕹️ Arcade: **Stack Overflow** (variante falling-blocks) — riempie lo slot "??? COMING SOON" (`arcade.php`, `modals_arcade.php`).
@@ -71,10 +100,10 @@
 **Fix collaterali da chiudere nello stesso giro**
 
 - ~~⚠️ `scripts/bump-version.js` — path `php/config.php` risolto da `__dirname` invece che dalla root~~ **GIÀ CORRETTO** (verificato col bump 3.0.21 del 02/08/2026): lo script ora definisce `const ROOT = path.join(__dirname, '..')`, risolve ogni path da lì, e con `replaceOrFail` + `process.exit(1)` fallisce forte invece di saltare in silenzio. Nessun intervento da fare.
-- Commenti falsi da correggere: `php/config.example.php:7` e `scripts/e2e-server.js:6` dichiarano che `config.php` è gitignored (non lo è)
-- `main.yml:70-91` — la exclude-list FTP non esclude `php/trello-config.example.php` (innocuo, solo placeholder, ma incoerente con gli altri due template)
+- Commenti falsi da correggere: resta **solo** `scripts/e2e-server.js:6`, che dichiara `config.php` gitignored (non lo è). ~~`php/config.example.php:7`~~ **GIÀ CORRETTO** (verificato il 03/08/2026): il template ora dice esplicitamente che `config.php` è tracciato e che non ci vanno credenziali reali.
+- ~~`main.yml:70-91` — la exclude-list FTP non esclude `php/trello-config.example.php`~~ **GIÀ CORRETTO** (verificato il 03/08/2026): la voce c'è, `main.yml:116`, in fila con gli altri due template. Nessun intervento da fare.
 - **Documentare** che i file di secret, essendo gitignored, non esistono nel checkout CI e vanno caricati a mano su Altervista: oggi non è scritto da nessuna parte
-- Difesa in profondità: aggiungere un `<FilesMatch>` in `php/.htaccess` per i file di config (oggi protetti solo i `.sql`)
+- Difesa in profondità: aggiungere un `<FilesMatch>` per i file di config. ⚠️ Precisazione (03/08/2026): la regola sui `.sql` sta nella `.htaccess` **di root** (riga 43), non in `php/.htaccess` — quel file contiene solo `mod_expires`/`mod_deflate`. Decidere quindi se estendere la regola di root (eredita già su `php/`) o creare la sezione in `php/.htaccess`.
 
 ---
 
