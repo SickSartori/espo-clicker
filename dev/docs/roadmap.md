@@ -49,7 +49,28 @@
 
   Le due strade non sono alternative, risolvono problemi diversi: la **1 è necessaria** (è l'unica che chiude i 21 dB di scarto *fra* i video), la **2 resta disponibile** per il livello assoluto — a -16 LUFS col tetto a 0.5 si ascolta a ~-22 LUFS effettivi, e sganciare il canale video da `musicVolume` restituirebbe quei 6 dB. Decidere la 2 **dopo** aver sentito i file normalizzati, non prima.
 
-  **Target proposto: -16 LUFS** per tutti e sei. Verificato che sta in piedi con **solo guadagno lineare, senza limiting**: la correzione più aggressiva è Rick Espley (**+18.5 dB**), che porta il suo true peak a -1.45 dBTP, ancora sotto la soglia. Tutti gli altri restano ≤ -2.2 dBTP. Da preferire a -23.9 LUFS (il target dei suoni arcade, `super-espo.js:1597`): lì c'era margine, qui il tetto di riproduzione è già 0.5 e abbassare tutti sarebbe controproducente.
+  **Target scelto: -16 LUFS** per tutti e sei, con **solo guadagno lineare, niente limiting** (la dinamica delle tracce resta quella originale). Da preferire a -23.9 LUFS (il target dei suoni arcade, `super-espo.js:1597`): lì c'era margine, qui il tetto di riproduzione è già 0.5 e abbassare tutti sarebbe controproducente.
+
+  ✅ **FATTO il 03/08/2026** — strada 1 eseguita. Risultato misurato sui file in repo:
+
+  | File | Prima | Dopo | Guadagno | True peak |
+  |---|---|---|---|---|
+  | `britney-espoars-video.mp4` | -13.59 | **-15.91** | -2.41 dB | -1.94 dBTP |
+  | `bigbang-espoclicker.mp4` | -13.68 | **-16.09** | -2.32 dB | -5.53 dBTP |
+  | `ricardo-milespo-dota-video.mp4` | -20.39 | **-16.02** | +4.39 dB | -3.84 dBTP |
+  | `ricardo-milespo-metal-video.mp4` | -21.55 | **-16.04** | +5.55 dB | -5.87 dBTP |
+  | `ricardo-milespo-video.mp4` | -24.99 | **-16.04** | +8.99 dB | -4.05 dBTP |
+  | `rick-espley-video.mp4` | -34.48 | **-16.46** | +17.84 dB | -1.16 dBTP |
+
+  Lo scarto fra i video passa da **~21 dB a 0.55 dB**. Il clipping di Britney (+0.23 dBTP) è rientrato.
+
+  ⚠️ **Rick Espley ha avuto un guadagno più basso del previsto** (+17.84 invece di +18.5, quindi -16.46 anziché -16.00): a +18.48 dB chiudeva a **-0.36 dBTP**, formalmente sotto lo zero ma troppo tirato — l'encoder AAC introduce picchi inter-sample e alcuni decoder ci clippano sopra. Mezzo dB di target sacrificato per 1 dB di margine sui picchi: inudibile, e resta guadagno lineare (nessun limiter). Se un domani si rifà, non alzarlo "per arrivare a -16 preciso".
+
+  **Come sono stati prodotti** (da ripetere identico se si rifanno):
+  `ffmpeg -i in.mp4 -c:v copy -af "volume=<gain>dB" -c:a aac -b:a <bitrate originale> -ar 48000 -ac <canali originali> -movflags +faststart out.mp4`
+  Video ricopiato bit per bit (`-c:v copy`): risoluzione, codec e numero di frame invariati su tutti e sei, verificato con ffprobe. L'unico scarto è il contenitore del Big Bang, +18 ms di padding AAC in coda — audio e video partono entrambi da pts 0, quindi **nessuno sfasamento A/V**.
+
+  ⏳ **Resta da fare**: **ri-caricare i sei file su R2** (`assets/video/**` è escluso dall'FTP, in produzione li serve il bucket — finché non si carica, in prod si sentono ancora i vecchi). Poi **ascoltare** e solo allora decidere se serve anche la strada 2.
 
   🐛 **Difetto collaterale emerso**: `britney-espoars-video.mp4` è in clipping (**+0.23 dBTP**). La normalizzazione lo risolve da sé (-2.4 dB).
 
