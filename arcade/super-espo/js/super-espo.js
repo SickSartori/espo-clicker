@@ -1725,7 +1725,7 @@
                     score: currentScore,
                     rewardStr: rewardStr,
                     isNewRecord: isNewRecord,
-                    statLabel: 'LOOP', statValue: currentLevel, statColor: '#9b59b6',
+                    statLabel: (window.ARCADE_TXT && window.ARCADE_TXT.loop) || 'LOOP', statValue: currentLevel, statColor: '#9b59b6',
                     onReturn: window.exitSuperEspoGame,
                     onRetry: window.startSuperEspoRun
                 });

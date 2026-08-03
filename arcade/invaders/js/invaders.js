@@ -533,7 +533,7 @@
         let reward = (typeof Decimal !== 'undefined') ? new Decimal(0) : 0;
         if (typeof bps !== 'undefined' && typeof Decimal !== 'undefined') {
             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-            reward = bpsVal.mul(score).mul(0.04);
+            reward = bpsVal.mul(score).mul(0.05);
         }
 
         let isNewRecord = false;
@@ -554,7 +554,7 @@
             score: score,
             rewardStr: (window.EspooClicker && score > 0) ? window.EspooClicker.formatNumber(reward) : null,
             isNewRecord: isNewRecord,
-            statLabel: 'ONDATE', statValue: wave, statColor: '#2ecc71',
+            statLabel: (window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA', statValue: wave, statColor: '#2ecc71',
             onReturn: window.exitInvadersGame,
             onRetry: window.startInvadersRun
         });

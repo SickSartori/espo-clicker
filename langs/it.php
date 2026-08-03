@@ -211,6 +211,7 @@
 	$labels["arcade_hud_life"] = "VITA";
 	$labels["arcade_hud_lives"] = "VITE";
 	$labels["arcade_hud_wave"] = "ONDATA";
+	$labels["arcade_hud_loop"] = "LOOP";
 	$labels["arcade_fire_flower"] = "🔥 FIRE FLOWER! Premi X o F per sparare palle di fuoco";
 	$labels["arcade_hint_move"] = "Muovi";
 	$labels["arcade_hint_move_snake"] = "Muovi il serpente";

@@ -209,6 +209,7 @@
 	$labels["arcade_hud_life"] = "LIFE";
 	$labels["arcade_hud_lives"] = "LIVES";
 	$labels["arcade_hud_wave"] = "WAVE";
+	$labels["arcade_hud_loop"] = "LOOP";
 	$labels["arcade_fire_flower"] = "🔥 FIRE FLOWER! Press X or F to shoot fireballs";
 	$labels["arcade_hint_move"] = "Move";
 	$labels["arcade_hint_move_snake"] = "Move the snake";

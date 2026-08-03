@@ -822,6 +822,10 @@ window.showArcadeGameOver = function (opts) {
     var onReturn = (typeof opts.onReturn === 'function') ? opts.onReturn : function () {};
     var onRetry = (typeof opts.onRetry === 'function') ? opts.onRetry : null;
     var delay = opts.delay || 4500;
+    // Titolo personalizzabile: serve a chi ha una battuta finale propria
+    // (Stack Overflow si chiama così apposta). Chi non lo passa resta com'era.
+    var title = opts.title || 'GAME OVER';
+    var titleColor = opts.titleColor || '#e74c3c';
 
     if (!overlay) { onReturn(); return; }
 
@@ -833,10 +837,14 @@ window.showArcadeGameOver = function (opts) {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'text-align:center;width:100%;max-width:420px;';
 
-    var title = document.createElement('div');
-    title.textContent = 'GAME OVER';
-    title.style.cssText = "font-family:'Press Start 2P',monospace;font-size:1.6rem;color:#e74c3c;text-shadow:0 0 20px rgba(231,76,60,0.8),0 0 40px rgba(231,76,60,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:18px;letter-spacing:3px;";
-    wrap.appendChild(title);
+    var titleEl = document.createElement('div');
+    titleEl.textContent = title;
+    // I titoli lunghi (es. STACK OVERFLOW) non devono uscire dal riquadro:
+    // font leggermente più piccolo oltre i 10 caratteri.
+    var titleSize = title.length > 10 ? '1.25rem' : '1.6rem';
+    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:" + titleSize + ";color:" + titleColor +
+        ";text-shadow:0 0 20px " + titleColor + ",0 0 40px rgba(0,0,0,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:18px;letter-spacing:3px;";
+    wrap.appendChild(titleEl);
 
     var sep = document.createElement('div');
     sep.textContent = '════════════════';

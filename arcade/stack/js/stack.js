@@ -64,7 +64,7 @@
     var dropMs, dropAcc, lastFrame;
     var piecesToDebt;       // pezzi mancanti alla prossima riga di debito
     var isRunning, isPaused;
-    var rafId = null, _goTimer = null;
+    var rafId = null;
     var shakeUntil = 0;     // scossa quando risale il debito
     var flashRows = [];     // righe che lampeggiano perché bloccate da un bug
 
@@ -141,7 +141,6 @@
 
     window.exitStackGame = function () {
         stopLoop();
-        if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
         isRunning = false;
 
         var selector = document.getElementById('arcade-game-selector');
@@ -157,7 +156,6 @@
     };
 
     window.startStackRun = function () {
-        if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
         resetState();
 
         var ov = document.getElementById('stack-overlay');
@@ -676,13 +674,16 @@
         isRunning = false;
         stopLoop();
 
+        // Due suoni, come negli altri cabinati: il campione vero più il bip
+        // sintetizzato. Snake e questo gioco avevano solo il secondo.
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
         if (window.arcadeSfx) window.arcadeSfx.gameover();
 
         var reward = 0;
         var rewardStr = '0';
         if (typeof bps !== 'undefined' && typeof Decimal !== 'undefined') {
             var bpsVal = (bps && bps.gt && bps.gt(0)) ? bps : new Decimal(1);
-            reward = bpsVal.mul(score).mul(0.04);
+            reward = bpsVal.mul(score).mul(0.05);
             rewardStr = window.EspooClicker ? window.EspooClicker.formatNumber(reward) : String(Math.floor(parseFloat(reward.toString())));
         }
 
@@ -703,92 +704,22 @@
         ctx.fillStyle = 'rgba(231, 76, 60, 0.45)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-        var overlay = document.getElementById('stack-overlay');
-        if (!overlay) return;
-        overlay.style.display = 'flex';
-        overlay.style.background = 'rgba(5, 7, 9, 0.92)';
-        overlay.style.animation = 'arcadeGoFadeIn 0.4s ease forwards';
-        overlay.innerHTML = '';
-
-        var wrap = document.createElement('div');
-        wrap.style.cssText = 'text-align:center;width:100%;max-width:420px;';
-
-        var title = document.createElement('div');
-        title.textContent = 'STACK OVERFLOW';
-        title.style.cssText = "font-family:'Press Start 2P',monospace;font-size:1.25rem;color:#e74c3c;text-shadow:0 0 20px rgba(231,76,60,0.8),0 0 40px rgba(231,76,60,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:18px;letter-spacing:2px;";
-        wrap.appendChild(title);
-
-        var sep = document.createElement('div');
-        sep.textContent = '════════════════';
-        sep.style.cssText = 'color:rgba(231,76,60,0.25);letter-spacing:2px;margin-bottom:18px;font-family:monospace;';
-        wrap.appendChild(sep);
-
-        var sLabel = document.createElement('div');
-        sLabel.textContent = T('score', 'PUNTEGGIO');
-        sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.5rem;color:#5a6a7a;letter-spacing:3px;margin-bottom:6px;";
-        wrap.appendChild(sLabel);
-
-        var sVal = document.createElement('div');
-        sVal.id = 'stack-go-score';
-        sVal.textContent = '0';
-        sVal.style.cssText = "font-family:'Press Start 2P',monospace;font-size:2.2rem;color:#00d9ff;text-shadow:0 0 12px rgba(0,217,255,0.8);margin-bottom:12px;animation:arcadeGoCountPulse 1.2s ease-in-out infinite;";
-        wrap.appendChild(sVal);
-
-        var detail = document.createElement('div');
-        detail.textContent = lines + ' ' + T('stackLines', 'RIGHE') + '  ·  ' + bugsSquashed + ' ' + T('stackBugsShort', 'BUG');
-        detail.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:1rem;color:#7a8a9a;margin-bottom:14px;";
-        wrap.appendChild(detail);
-
-        if (score > 0) {
-            var rDiv = document.createElement('div');
-            rDiv.textContent = '+' + rewardStr + ' BUG';
-            rDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.75rem;color:#2ecc71;text-shadow:0 0 12px rgba(46,204,113,0.8);margin-bottom:14px;opacity:0;animation:arcadeGoFadeUp 0.4s ease 0.9s forwards;";
-            wrap.appendChild(rDiv);
-        }
-
-        if (isNewRecord) {
-            var recDiv = document.createElement('div');
-            recDiv.textContent = T('record', '★ NUOVO RECORD! ★');
-            recDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.65rem;color:#ffce15;animation:arcadeGoRecordShine 1s ease-in-out infinite,arcadeGoFadeUp 0.4s ease 1.2s forwards;opacity:0;margin-bottom:14px;";
-            wrap.appendChild(recDiv);
-        }
-
-        var bRetry = document.createElement('button');
-        bRetry.className = 'arcade-btn';
-        bRetry.innerHTML = '<i class="fa-solid fa-rotate-right"></i> RESTART';
-        bRetry.style.cssText = 'margin-top:14px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.0s forwards;';
-        bRetry.onclick = function () {
-            if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
-            window.startStackRun();
-        };
-        wrap.appendChild(bRetry);
-
-        var retLabel = document.createElement('div');
-        retLabel.textContent = '▸ ' + T('backToMenu', 'o torna al menu…') + ' ◂';
-        retLabel.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:0.85rem;color:#4a5a6a;letter-spacing:1px;margin-top:16px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;";
-        wrap.appendChild(retLabel);
-
-        var bar = document.createElement('div');
-        bar.style.cssText = 'width:50%;height:3px;background:#1a2530;border-radius:2px;margin:10px auto 0;overflow:hidden;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;';
-        var barFill = document.createElement('div');
-        barFill.style.cssText = 'width:0;height:100%;background:linear-gradient(90deg,#e74c3c,#e67e22);border-radius:2px;animation:arcadeGoBarFill 3s linear 1.5s forwards;';
-        bar.appendChild(barFill);
-        wrap.appendChild(bar);
-
-        overlay.appendChild(wrap);
-
-        var countTarget = score, countStart = Date.now(), countDuration = 700;
-        var countIv = setInterval(function () {
-            var progress = Math.min((Date.now() - countStart) / countDuration, 1);
-            var el = document.getElementById('stack-go-score');
-            if (el) el.textContent = Math.round(progress * countTarget);
-            if (progress >= 1) clearInterval(countIv);
-        }, 25);
-
-        _goTimer = setTimeout(function () {
-            _goTimer = null;
-            window.exitStackGame();
-        }, 4500);
+        // Riquadro di fine partita CONDIVISO (js/arcade-page.js): stessa
+        // struttura, stessi tempi e stessi testi tradotti di tutti gli altri
+        // cabinati. Prima era ricopiato qui — 90 righe che divergevano già
+        // dall'originale su colori, durata della barra e i18n.
+        // `title` è l'unico pezzo su misura: il game over di questo gioco si
+        // chiama come il gioco, ed è la battuta finale del nome.
+        window.showArcadeGameOver({
+            overlay: document.getElementById('stack-overlay'),
+            title: 'STACK OVERFLOW',
+            score: score,
+            rewardStr: (window.EspooClicker && score > 0) ? rewardStr : null,
+            isNewRecord: isNewRecord,
+            statLabel: T('stackLines', 'RIGHE'), statValue: lines, statColor: '#2ecc71',
+            onReturn: window.exitStackGame,
+            onRetry: window.startStackRun
+        });
     }
 
     // Esposto per i test: lo stato interno non è altrimenti osservabile.
