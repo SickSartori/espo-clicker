@@ -24,40 +24,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ── Config ──────────────────────────────────────────────────
-$configPath = __DIR__ . '/trello-config.php';
-if (!file_exists($configPath)) {
+require_once __DIR__ . '/secrets-load.php';
+
+$config = secrets('trello');
+if (!$config) {
     http_response_code(500);
     echo json_encode(['error' => 'Trello not configured']);
     exit;
 }
-$config = require $configPath;
 
+// Il kill-switch va prima del controllo credenziali: se la feature è spenta
+// di proposito, la risposta giusta è 503, non "credenziali mancanti".
 if (empty($config['enabled'])) {
     http_response_code(503);
     echo json_encode(['error' => 'Feedback disabled']);
     exit;
 }
-if (
-    empty($config['token']) || $config['token'] === 'INSERISCI_TRELLO_TOKEN_QUI' ||
-    empty($config['key'])   || $config['key']   === 'INSERISCI_TRELLO_KEY_QUI'
-) {
+
+if (!secrets_configured('trello')) {
     http_response_code(500);
     echo json_encode(['error' => 'Trello credentials missing']);
     exit;
 }
 
 // ── Anti-hotlink: Referer whitelist (stesso pattern di get_asset_urls.php) ──
-if (!empty($config['allowed_referers'])) {
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $ok = false;
-    foreach ($config['allowed_referers'] as $allowed) {
-        if (strpos($referer, $allowed) === 0) { $ok = true; break; }
-    }
-    if (!$ok) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden referer']);
-        exit;
-    }
+if (!secrets_referer_allowed($config)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Forbidden referer']);
+    exit;
 }
 
 // ── Parsing input ───────────────────────────────────────────

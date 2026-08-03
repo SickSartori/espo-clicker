@@ -59,10 +59,14 @@ skills-lock.json
 # Bozza release notes non ancora pubblicata
 docs/release-notes-v3.0-beta2.md
 
-# Credenziali R2 (NON committare mai)
-php/r2-config.php
+# Secret server-side, file unico (NON committare mai).
+# Template tracciato: php/secrets.example.php
+php/secrets.php
 
-# Credenziali Trello (NON committare il token)
+# Credenziali R2 e Trello — file storici, sostituiti da php/secrets.php.
+# Restano ignorati finché il fallback in php/secrets-load.php è in piedi:
+# sul server esistono ancora, e finché ci sono vengono usati.
+php/r2-config.php
 php/trello-config.php
 presentation
 

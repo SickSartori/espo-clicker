@@ -14,7 +14,7 @@ class R2Signer
     private $bucket;
 
     /**
-     * @param array $config Da php/r2-config.php
+     * @param array $config La sezione 'r2', da secrets('r2') in php/secrets-load.php
      */
     public function __construct(array $config)
     {

@@ -112,6 +112,7 @@ jobs:
             README.md
             PRODUCT.md
             php/config.example.php
+            php/secrets.example.php
             php/r2-config.example.php
             php/trello-config.example.php
             php/r2-cors-policy.json

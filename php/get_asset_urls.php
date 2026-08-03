@@ -10,19 +10,20 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$configPath = __DIR__ . '/r2-config.php';
-if (!file_exists($configPath)) {
+require_once __DIR__ . '/secrets-load.php';
+
+$config = secrets('r2');
+
+// I due casi restano distinti di proposito: "manca il file" e "il file c'è
+// ma non è compilato" hanno rimedi diversi, e questo endpoint è il primo
+// posto dove si guarda quando in produzione gli asset vanno in 404.
+if (!$config) {
     http_response_code(500);
     echo json_encode(['error' => 'R2 not configured']);
     exit;
 }
 
-$config = require $configPath;
-
-if (
-    empty($config['access_key']) || $config['access_key'] === 'INSERISCI_ACCESS_KEY_ID_QUI' ||
-    empty($config['secret_key']) || $config['secret_key'] === 'INSERISCI_SECRET_ACCESS_KEY_QUI'
-) {
+if (!secrets_configured('r2')) {
     http_response_code(500);
     echo json_encode(['error' => 'R2 credentials missing']);
     exit;
@@ -31,20 +32,10 @@ if (
 // ────────────────────────────────────────────────────────────
 // Anti-hotlink: validazione Referer
 // ────────────────────────────────────────────────────────────
-if (!empty($config['allowed_referers'])) {
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $ok = false;
-    foreach ($config['allowed_referers'] as $allowed) {
-        if (strpos($referer, $allowed) === 0) {
-            $ok = true;
-            break;
-        }
-    }
-    if (!$ok) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden referer']);
-        exit;
-    }
+if (!secrets_referer_allowed($config)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Forbidden referer']);
+    exit;
 }
 
 // ────────────────────────────────────────────────────────────
