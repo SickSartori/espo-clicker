@@ -57,8 +57,8 @@
 	$labels["feedback_toast_sending"] = "Sending…";
 
 	// "How to report" popup — one-off, right after the release notes
-	$labels["fbintro_titolo"] = "Found a bug?";
-	$labels["fbintro_intro"] = "For a few versions now you can tell us from inside the game: your report goes straight to the team's board. It takes twenty seconds.";
+	$labels["fbintro_titolo"] = "A bug? An idea? Tell us";
+	$labels["fbintro_intro"] = "Something broken, but also an idea or something you would like to see in the game: you can tell us right here, and it goes straight to the team's board. It takes twenty seconds.";
 	$labels["fbintro_p1"] = "Open <b style=\"color:#3498db\">Help</b> in the top bar, then the <b style=\"color:#3498db\">Feedback</b> tab.";
 	$labels["fbintro_p2"] = "Pick whether it is a <b>bug</b>, an <b>idea</b> or an <b>improvement</b>.";
 	$labels["fbintro_p3"] = "Sum it up in one line. If it is a bug, tell us <b>what you were doing</b> and <b>what you expected</b>: that is what lets us find it.";

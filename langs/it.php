@@ -57,8 +57,8 @@
 	$labels["feedback_toast_sending"] = "Invio…";
 
 	// Popup "come si segnala" — una tantum, dopo le note di rilascio
-	$labels["fbintro_titolo"] = "Hai trovato un bug?";
-	$labels["fbintro_intro"] = "Da qualche versione puoi scrivercelo dal gioco: la segnalazione finisce dritta nella board del team. Ci vogliono venti secondi.";
+	$labels["fbintro_titolo"] = "Un bug? Un'idea? Scrivici";
+	$labels["fbintro_intro"] = "Un problema da segnalare, ma anche un'idea o qualcosa che vorresti nel gioco: puoi dircelo da qui, e finisce dritto nella board del team. Ci vogliono venti secondi.";
 	$labels["fbintro_p1"] = "Apri <b style=\"color:#3498db\">Aiuto</b> nella barra in alto, poi la scheda <b style=\"color:#3498db\">Segnala</b>.";
 	$labels["fbintro_p2"] = "Scegli se è un <b>bug</b>, un'<b>idea</b> o un <b>miglioramento</b>.";
 	$labels["fbintro_p3"] = "Riassumi in una frase. Se è un bug, scrivi <b>cosa stavi facendo</b> e <b>cosa ti aspettavi</b>: è quello che ci fa trovare il problema.";
