@@ -83,6 +83,11 @@
 
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 400px;">
+        <!-- Unica finestra senza X: si chiudeva solo con «Chiudi & Salva» in
+             fondo, che su mobile richiede di scorrere tutta la lista. La X
+             equivale al salva (vedi ui/modals): niente due semantiche di
+             chiusura diverse nella stessa finestra. -->
+        <button class="modal-close-btn">&times;</button>
         <h2>
 			<i class="fa-solid fa-sliders"></i>
 			<?php echo $labels["modals_opzioni_titolo"]; ?>

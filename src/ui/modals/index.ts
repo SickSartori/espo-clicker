@@ -1065,6 +1065,16 @@ export function initModals(): void {
                     if (typeof w.exitStackGame === 'function') w.exitStackGame();
                 }
 
+                // La X delle impostazioni salva come «Chiudi & Salva»: le
+                // modifiche (volumi, lingua) sono già applicate live allo
+                // stato, quindi chiudere senza persistere creerebbe l'unico
+                // caso in cui una regolazione fatta si perde a fine sessione.
+                // Senza toast: la X è un gesto di uscita, non di conferma.
+                if (modal.id === 'settings-modal') {
+                    const Game = getGameAPI();
+                    if (Game && typeof Game.saveGame === 'function') Game.saveGame();
+                }
+
                 // Il popup "come si segnala" si accoda alle note di rilascio, mai
                 // sovrapposto: parte solo quando quelle vengono chiuse.
                 if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {

@@ -1138,9 +1138,12 @@ button img {
         pointer-events: none;
     }
 
-    html body div#settings-modal button.modal-close-btn {
-        display: none;
-    }
+    /* La X di Configurazione era nascosta qui, e a ragione: su mobile la X
+       diventa la pillola «CHIUDI» (::after sopra) e avrebbe convissuto con
+       «Chiudi & Salva» avendo un'altra semantica — chiudeva SENZA salvare.
+       Dalla 3.1 la X salva come il pulsante (vedi ui/modals), quindi le due
+       uscite sono equivalenti e la regola è stata rimossa: su mobile serve
+       un'uscita in testa, senza scorrere tutta la lista delle opzioni. */
 
     /* ---------------------------------------------------
        4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
@@ -1317,7 +1320,11 @@ button img {
        7. NASCONDIAMO IL SUPERFLUO
     --------------------------------------------------- */
 
-    html body nav#game-navbar button#open-help-btn,
+    /* #open-help-btn NON è più qui: nascosto quando l'Aiuto era solo una
+       guida, cioè davvero superfluo. Dalla 3.0 quel modale contiene la scheda
+       Segnala — nasconderlo significava che da mobile non si poteva segnalare
+       affatto, e il popup 3.1 dava un'istruzione impossibile («Apri Aiuto
+       nella barra in alto»). Lo spazio c'è: 6 icone da 35px = 210px su 375. */
     html body div#settings-modal button#open-advanced-audio-btn,
     html body div#achievements-modal div#achievement-list div.trophy-desc,
     html body div#achievements-modal div#achievement-list div.trophy-flavor {
