@@ -955,6 +955,18 @@ export function initModals(): void {
     });
 
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => openModal(helpModal));
+
+    // --- Popup "come si segnala" (una tantum) ---
+    const fbIntroModal = document.getElementById('feedback-intro-modal');
+    const fbIntroOk = document.getElementById('fbintro-ok');
+    const fbIntroOpen = document.getElementById('fbintro-open');
+    if (fbIntroOk) fbIntroOk.addEventListener('click', () => closeModal(fbIntroModal));
+    if (fbIntroOpen) fbIntroOpen.addEventListener('click', () => {
+        // Prima chiude, poi apre l'Aiuto: aprirlo sotto lascerebbe due
+        // fondali sovrapposti e il popup davanti al modulo da compilare.
+        closeModal(fbIntroModal);
+        setTimeout(() => { if (typeof w.openFeedbackTab === 'function') w.openFeedbackTab(); }, 260);
+    });
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
         openModal(skinsModal);
@@ -1048,6 +1060,19 @@ export function initModals(): void {
                     if (typeof w.exitAsteroidsGame === 'function') w.exitAsteroidsGame();
                     if (typeof w.exitInvadersGame === 'function') w.exitInvadersGame();
                     if (typeof w.exitCentipedeGame === 'function') w.exitCentipedeGame();
+                    // Senza questa, chiudendo la sala giochi mentre giri su Stack
+                    // Overflow il suo ciclo di disegno resta vivo in sottofondo.
+                    if (typeof w.exitStackGame === 'function') w.exitStackGame();
+                }
+
+                // Il popup "come si segnala" si accoda alle note di rilascio, mai
+                // sovrapposto: parte solo quando quelle vengono chiuse.
+                if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
+                    setTimeout(() => {
+                        if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
+                            w.EspooClicker.openFeedbackIntro();
+                        }
+                    }, 350);
                 }
 
             }

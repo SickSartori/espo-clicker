@@ -436,6 +436,53 @@
     </div>
 </div>
 
+<!-- POPUP "COME SI SEGNALA" — una tantum, subito DOPO le note di rilascio.
+     Serve a far scoprire la funzione a chi non sa che esiste: niente modulo qui
+     dentro, solo dove trovarlo e cosa scriverci. Chi vuole segnalare subito ha
+     il pulsante che lo porta dritto alla scheda giusta. -->
+<div id="feedback-intro-modal" class="modal-backdrop" style="display: none; z-index: 2600;">
+    <div class="modal-content" style="max-width: 520px; border-top: 4px solid #3498db;">
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background: #1a1a1a; color: #3498db; border-bottom: 1px solid rgba(52, 152, 219, 0.3);">
+            <i class="fa-solid fa-bullhorn"></i> <?php echo $labels["fbintro_titolo"]; ?>
+        </h2>
+        <div class="settings-content" style="padding: 22px 26px;">
+
+            <p style="color: #bdc3c7; font-size: 0.98rem; line-height: 1.6; margin: 0 0 20px;">
+                <?php echo $labels["fbintro_intro"]; ?>
+            </p>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">1</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p1"]; ?></p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">2</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p2"]; ?></p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 18px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">3</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p3"]; ?></p>
+            </div>
+
+            <p style="color: #7f8c8d; font-size: 0.78rem; line-height: 1.5; margin: 0 0 20px; display: flex; align-items: flex-start; gap: 6px;">
+                <i class="fa-solid fa-lock" style="margin-top: 2px;"></i>
+                <span><?php echo $labels["fbintro_privacy"]; ?></span>
+            </p>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="fbintro-open" style="flex: 1; min-width: 160px; padding: 12px; border: 1px solid rgba(52,152,219,0.5); border-radius: 8px; background: #3498db; color: #fff; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-bullhorn"></i> <?php echo $labels["fbintro_btn_apri"]; ?>
+                </button>
+                <button type="button" id="fbintro-ok" style="flex: 1; min-width: 130px; padding: 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.04); color: #ecf0f1; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+                    <?php echo $labels["fbintro_btn_ok"]; ?>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <div id="release-notes-modal" class="modal-backdrop" style="display: none; z-index: 2500;">
     <div class="modal-content" style="max-width: 700px; border-top: 4px solid #f1c40f;">
         <button class="modal-close-btn">&times;</button>

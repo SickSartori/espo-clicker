@@ -55,6 +55,16 @@
 	$labels["feedback_toast_err"] = "Oops, sending failed. Please try again later.";
 	$labels["feedback_toast_validate"] = "Please enter a title (3+ characters).";
 	$labels["feedback_toast_sending"] = "Sending…";
+
+	// "How to report" popup — one-off, right after the release notes
+	$labels["fbintro_titolo"] = "Found a bug?";
+	$labels["fbintro_intro"] = "For a few versions now you can tell us from inside the game: your report goes straight to the team's board. It takes twenty seconds.";
+	$labels["fbintro_p1"] = "Open <b style=\"color:#3498db\">Help</b> in the top bar, then the <b style=\"color:#3498db\">Feedback</b> tab.";
+	$labels["fbintro_p2"] = "Pick whether it is a <b>bug</b>, an <b>idea</b> or an <b>improvement</b>.";
+	$labels["fbintro_p3"] = "Sum it up in one line. If it is a bug, tell us <b>what you were doing</b> and <b>what you expected</b>: that is what lets us find it.";
+	$labels["fbintro_privacy"] = "We automatically attach version, language and browser. No sensitive data, no email required.";
+	$labels["fbintro_btn_apri"] = "Let me try";
+	$labels["fbintro_btn_ok"] = "Got it";
 	$labels["help_menu_titolo"] = "Help";
 	$labels["navbar_stats"] = "Statistics";
 	$labels["navbar_arcade"] = "Arcade";

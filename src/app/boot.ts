@@ -1650,6 +1650,12 @@ export function initBoot(): void {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
                         
+                        // Popup "come si segnala": una volta sola per giocatore.
+                        // Va deciso QUI, a save caricato, e non prima: il flag sta
+                        // nel save, quindi leggerlo troppo presto lo darebbe sempre
+                        // per non visto.
+                        w.shouldShowFeedbackIntro = !!(store.gameState && !store.gameState.seenFeedbackIntro);
+
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
@@ -1675,6 +1681,20 @@ export function initBoot(): void {
                             setTimeout(() => {
                                 if (w.EspooClicker.openReleaseNotes) w.EspooClicker.openReleaseNotes();
                             }, 800);
+                        } else if (w.shouldShowFeedbackIntro && store.gameState && store.gameState.totalClicks > 0) {
+                            // Nessuna nota di rilascio da mostrare: il popup parte da solo.
+                            // Quando invece le note ci sono, si accoda alla loro chiusura
+                            // (vedi ui/modals): mai due finestre sovrapposte.
+                            //
+                            // Il vincolo sui click esclude il giocatore appena arrivato:
+                            // questo popup serve a far scoprire una funzione a chi il gioco
+                            // già ce l'ha, non ad accogliere chi non ha ancora cliccato una
+                            // volta. Chi aggiorna lo vede comunque, dopo le note.
+                            setTimeout(() => {
+                                if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
+                                    w.EspooClicker.openFeedbackIntro();
+                                }
+                            }, 900);
                         }
                     }
 
@@ -2148,9 +2168,38 @@ export function initBoot(): void {
 
             content.innerHTML = w.simpleMarkdown(mdText);
             
-            w.shouldShowReleaseNotesOnLoad = false; 
+            w.shouldShowReleaseNotesOnLoad = false;
         } catch (e) {
             content.innerHTML = '<p style="color: #e74c3c; text-align: center;">' + store.gameData.texts.ui.newsLoadError + '</p>';
+        }
+    },
+
+    // --- POPUP "COME SI SEGNALA" — una tantum ---
+    // Il flag vive nel save (seenFeedbackIntro), non in localStorage: viaggia
+    // col cloud, quindi non ricompare cambiando dispositivo. Si segna come
+    // visto all'APERTURA e non alla chiusura: se l'utente ricarica la pagina
+    // con il popup aperto, non deve ritrovarselo per sempre.
+    openFeedbackIntro: () => {
+        const modal = document.getElementById('feedback-intro-modal');
+        if (!modal) return;
+        w.shouldShowFeedbackIntro = false;
+
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        const content = modal.querySelector('.modal-content') as HTMLElement | null;
+        if (typeof w.gsap !== 'undefined' && content) {
+            w.gsap.fromTo(content,
+                { scale: 0.85, opacity: 0, y: 20 },
+                { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.6)' });
+        } else if (content) {
+            content.style.opacity = '1';
+            content.style.transform = 'none';
+        }
+        document.body.classList.add('modal-open');
+
+        if (store.gameState) {
+            store.gameState.seenFeedbackIntro = true;
+            if (typeof w.EspooClicker.saveGame === 'function') w.EspooClicker.saveGame();
         }
     },
         tryStartAudio: () => {

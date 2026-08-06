@@ -344,6 +344,10 @@
                     <div class="cb-row"><button id="cb-combo-mult" class="cb-btn cyan"><i class="fa-solid fa-gauge-high"></i> Moltiplicatore Combo: <span id="cb-combo-mult-label">×1</span></button></div>
                 </div>
                 <div class="cb-group">
+                    <div class="cb-gt">Primo avvio</div>
+                    <div class="cb-row"><button id="cb-first-run" class="cb-btn cyan"><i class="fa-solid fa-bullhorn"></i> Simula primo avvio versione</button></div>
+                </div>
+                <div class="cb-group">
                     <div class="cb-gt">Zona pericolosa</div>
                     <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-v3" class="cb-btn purple"><i class="fa-solid fa-rocket"></i> Test Lancio V3</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
                 </div>
@@ -676,6 +680,41 @@
         localStorage.setItem('espotoolClickerSaveV9', compressed);
         gameState.isDeleting = true; location.reload();
     }
+    // Rigioca la sequenza di benvenuto di una nuova versione: note di rilascio
+    // e, subito dopo, il popup "come si segnala".
+    //
+    // NON tocca i progressi: abbassa solo la minor registrata nel save (è quella
+    // che shouldShowReleaseNotesFor confronta con GAME_VERSION) e rimette a zero
+    // il flag del popup. Se la minor è già 0 si scende di una major, perché con
+    // 0-1 = -1 il confronto non scatterebbe.
+    //
+    // NB: saveGame() spinge anche sul cloud, quindi la versione abbassata ci
+    // finisce pure. Non è un problema — al primo caricamento vero viene
+    // ristampata quella corrente — ma se sei loggato su piu' dispositivi le
+    // note di rilascio ricompariranno una volta anche là.
+    async function simulateFirstRun() {
+        const v = (gameState && gameState.version) || {};
+        const cur = { major: v.major || 3, minor: v.minor || 0 };
+        const back = cur.minor > 0
+            ? { major: cur.major, minor: cur.minor - 1 }
+            : { major: Math.max(1, cur.major - 1), minor: 0 };
+
+        if (!confirm(cbT('Simulare il primo avvio della versione?\n\nIl save torna a v' + back.major + '.' + back.minor +
+            ' (solo il numero di versione, i progressi restano) e ricompaiono le note di rilascio, poi il popup delle segnalazioni.\n\nLa pagina si ricarica.'))) return;
+
+        gameState.version = { major: back.major, minor: back.minor, stage: v.stage || '' };
+        gameState.seenFeedbackIntro = false;
+
+        try {
+            if (window.EspooClicker && typeof window.EspooClicker.saveGame === 'function') {
+                await window.EspooClicker.saveGame();
+            }
+        } catch (e) { /* il salvataggio locale sotto è comunque tentato */ }
+
+        toast('Primo avvio simulato: ricarico…');
+        setTimeout(() => location.reload(), 400);
+    }
+
     async function hardReset() {
         if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nAzzera progressi locali E cloud e ricarica (resti loggato).'))) return;
 
@@ -876,6 +915,7 @@
     on('cb-debug', debugToggle); on('cb-log', logState); on('cb-save', forceSave);
     on('cb-combo-mult', comboMultCycle);
     on('cb-v2', forceV2); on('cb-v3', forceV3); on('cb-hardreset', hardReset);
+    on('cb-first-run', simulateFirstRun);
 
     // --- 13. Init ---
     activate('risorse');
