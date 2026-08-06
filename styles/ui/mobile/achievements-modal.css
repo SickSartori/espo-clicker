@@ -200,6 +200,16 @@
   html body #achievements-modal #achievement-list .trophy-progress .t-prog-text {
     position: absolute;
     inset: 0;
+    /* `inset: 0` da solo non bastava: la regola base (.t-prog-text in
+       base/modals-content.css) porta `width: 140%` e
+       `transform: translateX(-50%)`, pensati per la centratura desktop su
+       `left: 50%`. Qui `left` diventa 0 ma quei due restavano, quindi
+       l'etichetta era larga il 140% e traslata a sinistra di meta' della
+       propria larghezza: sbordava di ~225px e il contenitore
+       (overflow: hidden) ne tagliava la testa — di "60% (3 / 5)" si leggeva
+       solo "3 / 5)". Vanno azzerati entrambi. */
+    width: auto;
+    transform: none;
     display: flex;
     align-items: center;
     justify-content: center;

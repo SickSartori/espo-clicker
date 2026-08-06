@@ -122,6 +122,44 @@ test.describe('Menu mobile', () => {
     expect(tardi.collide, 'Promozione non deve finire sopra al logo').toEqual([]);
   });
 
+  test('Obiettivi: la percentuale di avanzamento si legge tutta', async ({ page }) => {
+    // La regola mobile di .t-prog-text mette `inset: 0` ma la regola base
+    // porta `width: 140%` + `transform: translateX(-50%)` (centratura desktop
+    // su left:50%). Se non si azzerano, l'etichetta sborda di ~225px e il
+    // contenitore (overflow:hidden) ne taglia la testa: di "60% (3 / 5)" si
+    // legge solo "3 / 5)".
+    await boot(page);
+    await page.evaluate(() => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.totalClicks = 5000;
+      if (gs.skins) gs.skins.unlocked = ['default', 'espo3', 'espobit'];
+      w.updateUI();
+    });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => (document.getElementById('open-achievements-btn') as HTMLElement).click());
+    await page.waitForTimeout(700);
+
+    const etichette = await page.evaluate(() =>
+      [...document.querySelectorAll('#achievement-list .t-prog-text')].map((e) => {
+        const el = e as HTMLElement;
+        const p = el.parentElement!;
+        const r = el.getBoundingClientRect();
+        const rp = p.getBoundingClientRect();
+        return {
+          testo: (el.textContent || '').trim(),
+          fuori: Math.round(Math.max(0, rp.left - r.left, r.right - rp.right)),
+        };
+      }));
+
+    expect(etichette.length, 'servono obiettivi con barra di avanzamento').toBeGreaterThan(0);
+    for (const e of etichette) {
+      expect(e.fuori, `"${e.testo}" sborda dalla barra`).toBe(0);
+      // La percentuale iniziale non deve finire fuori dall'area visibile
+      expect(e.testo, 'il testo deve iniziare con la percentuale').toMatch(/^\d/);
+    }
+  });
+
   test('ogni voce apre la finestra giusta, e una sola', async ({ page }) => {
     await boot(page);
 

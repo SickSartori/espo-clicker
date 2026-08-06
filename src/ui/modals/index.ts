@@ -231,7 +231,18 @@ export function initModals(): void {
 
             const arcadeWin = window.open('arcade.php', 'espo-arcade',
                 'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
-            if (arcadeWin && arcadeWin.focus) arcadeWin.focus();
+            if (arcadeWin && arcadeWin.focus) {
+                arcadeWin.focus();
+            } else {
+                // Popup bloccato (comune sui browser mobile): window.open torna
+                // null e senza questo ramo il pulsante Sala Giochi non faceva
+                // NULLA — nessuna scheda, nessun messaggio. Si ripiega sulla
+                // stessa scheda: arcade.php lo prevede già, il suo pulsante di
+                // chiusura fa window.close() e, se la scheda non si chiude,
+                // torna a index.php (vedi arcade.php:63).
+                window.location.href = 'arcade.php';
+                return;
+            }
 
             if (w.EspooClicker && w.EspooClicker.playSound) {
                 w.EspooClicker.playSound('sound-click');
