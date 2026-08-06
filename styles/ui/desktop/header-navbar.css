@@ -276,3 +276,10 @@
     transition: none !important;
   }
 }
+
+/* Il menu ☰ è un ripiego per la barra stretta dei telefoni: su desktop, dove
+   le voci stanno tutte in barra CON etichetta, sarebbe un doppione. Acceso da
+   styles/mobile.css entro 768px. */
+#game-navbar #open-mobile-menu-btn {
+    display: none;
+}

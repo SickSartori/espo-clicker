@@ -1320,11 +1320,16 @@ button img {
        7. NASCONDIAMO IL SUPERFLUO
     --------------------------------------------------- */
 
-    /* #open-help-btn NON è più qui: nascosto quando l'Aiuto era solo una
-       guida, cioè davvero superfluo. Dalla 3.0 quel modale contiene la scheda
-       Segnala — nasconderlo significava che da mobile non si poteva segnalare
-       affatto, e il popup 3.1 dava un'istruzione impossibile («Apri Aiuto
-       nella barra in alto»). Lo spazio c'è: 6 icone da 35px = 210px su 375. */
+    /* Le voci secondarie non stanno più in barra: sono nel menu ☰, dove hanno
+       anche un nome. In barra restano solo le tre cose che devono essere a un
+       tap perché portano informazione che cambia: ☰ (con la pallina se c'è da
+       riscuotere), Promozione (mostra la %) e Profilo (badge amici/messaggi). */
+    html body nav#game-navbar button#open-help-btn,
+    html body nav#game-navbar button#open-stats-btn,
+    html body nav#game-navbar button#open-achievements-btn,
+    html body nav#game-navbar button#open-skins-btn,
+    html body nav#game-navbar button#open-leaderboard-btn,
+    html body nav#game-navbar button#open-settings-btn,
     html body div#settings-modal button#open-advanced-audio-btn,
     html body div#achievements-modal div#achievement-list div.trophy-desc,
     html body div#achievements-modal div#achievement-list div.trophy-flavor {
@@ -1415,4 +1420,78 @@ html body input[type="email"],
 html body .input-group-modern input,
 html body .clean-input input {
     font-size: 16px;
+}
+
+/* ==========================================================================
+   MENU MOBILE (☰) — voci secondarie della barra in alto
+   Fuori dalla media query 1024px di sopra apposta: le regole qui dentro
+   valgono solo entro 768px (il file è caricato con quel media), cioè sui
+   telefoni. Su tablet/desktop la barra ha spazio e resta com'era.
+   ========================================================================== */
+@media only screen and (max-width: 768px) {
+
+    /* Il ☰ esiste solo su mobile: su desktop la barra mostra tutto */
+    html body nav#game-navbar button#open-mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Voci del menu: bersagli comodi (56px > 44px minimo tocco), icona a
+       sinistra e nome accanto — il motivo per cui il menu esiste. */
+    #mobile-menu-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+    }
+
+    .mm-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 56px;
+        padding: 12px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        color: #ecf0f1;
+        font-family: var(--font-heading, inherit);
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .mm-item:active {
+        background: rgba(52, 152, 219, 0.15);
+        border-color: rgba(52, 152, 219, 0.45);
+    }
+
+    .mm-icon {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        color: var(--primary, #3498db);
+    }
+
+    .mm-label {
+        flex: 1;
+    }
+
+    /* Pallina "c'è qualcosa da riscuotere": accesa via .has-dot dallo stesso
+       punto che accende il badge sul pulsante Obiettivi (ui/render). Nascosta
+       di default, così non serve un secondo stato da tenere allineato. */
+    .mm-dot {
+        display: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #e74c3c;
+        box-shadow: 0 0 8px rgba(231, 76, 60, 0.9);
+        flex: 0 0 10px;
+    }
+
+    .mm-item.has-dot .mm-dot {
+        display: block;
+    }
 }

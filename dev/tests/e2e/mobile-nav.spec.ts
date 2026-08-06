@@ -4,18 +4,21 @@ import { test, expect } from '@playwright/test';
  * Navigazione mobile (viewport 375x812, touch).
  *
  * Guardie su due regressioni possibili:
- * 1. L'icona Aiuto DEVE restare visibile su mobile. Era nascosta in
- *    styles/mobile.css sotto "nascondiamo il superfluo" — sensato quando
- *    l'Aiuto era solo una guida, ma da quando contiene la scheda Segnala
- *    nasconderlo significa che da telefono non si puo' segnalare affatto
- *    (e il popup 3.1 istruisce ad aprire proprio quel menu).
+ * 1. La scheda Segnala DEVE restare raggiungibile da telefono. L'Aiuto era
+ *    nascosto in styles/mobile.css sotto "nascondiamo il superfluo" — sensato
+ *    quando era solo una guida, ma da quando contiene Segnala nasconderlo
+ *    significa che da telefono non si puo' segnalare affatto (e il popup 3.1
+ *    istruisce ad aprire proprio quel menu).
+ *    NB: il PERCORSO e' cambiato — l'Aiuto non e' piu' un'icona in barra ma
+ *    una voce del menu mobile. Qui si verifica l'ESITO (Segnala si apre),
+ *    non la strada: la strada la copre mobile-menu.spec.ts.
  * 2. La X di Configurazione deve chiudere E salvare: le regolazioni sono
  *    applicate live, chiudere senza persistere sarebbe l'unico caso in cui
  *    una modifica fatta si perde.
  */
 test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
 
-test('mobile: Aiuto raggiungibile dalla barra e X su Configurazione', async ({ page }) => {
+test('mobile: Segnala raggiungibile dal menu e X su Configurazione', async ({ page }) => {
   // Backend simulato: oggi il dev risponde 429 su login-register (limite
   // richieste) e il gioco apre il login sopra tutto, intercettando i tap.
   // La verifica e' di UI pura: non deve dipendere dallo stato del backend.
@@ -46,19 +49,22 @@ test('mobile: Aiuto raggiungibile dalla barra e X su Configurazione', async ({ p
 
   const barra = await page.evaluate(() => {
     const bar = document.getElementById('game-navbar')!;
-    const help = document.getElementById('open-help-btn')!;
-    const r = help.getBoundingClientRect();
+    const menu = document.getElementById('open-mobile-menu-btn')!;
+    const r = menu.getBoundingClientRect();
     return {
-      helpVisibile: getComputedStyle(help).display !== 'none',
-      helpDentro: r.left >= 0 && r.right <= window.innerWidth,
+      menuVisibile: getComputedStyle(menu).display !== 'none',
+      menuDentro: r.left >= 0 && r.right <= window.innerWidth,
       overflowBarra: bar.scrollWidth > bar.clientWidth + 1,
     };
   });
-  expect(barra.helpVisibile, 'icona Aiuto visibile su mobile').toBe(true);
-  expect(barra.helpDentro).toBe(true);
+  expect(barra.menuVisibile, 'il menu deve essere raggiungibile in barra').toBe(true);
+  expect(barra.menuDentro).toBe(true);
   expect(barra.overflowBarra, 'la barra non deve traboccare').toBe(false);
-  
-  await page.tap('#open-help-btn');
+
+  // Percorso reale su telefono: menu -> Aiuto -> scheda Segnala
+  await page.tap('#open-mobile-menu-btn');
+  await expect(page.locator('#mobile-menu-modal')).toBeVisible();
+  await page.tap('#mobile-menu-list .mm-item[data-opens="open-help-btn"]');
   await expect(page.locator('#help-modal')).toBeVisible();
   await page.tap('.help-tab[data-htab="segnala"]');
   await page.waitForTimeout(300);
@@ -68,7 +74,10 @@ test('mobile: Aiuto raggiungibile dalla barra e X su Configurazione', async ({ p
     await page.tap('#help-modal .modal-close-btn');
   await page.waitForTimeout(400);
 
-  await page.tap('#open-settings-btn');
+  // Anche Configurazione passa dal menu, come tutte le voci secondarie
+  await page.tap('#open-mobile-menu-btn');
+  await expect(page.locator('#mobile-menu-modal')).toBeVisible();
+  await page.tap('#mobile-menu-list .mm-item[data-opens="open-settings-btn"]');
   await expect(page.locator('#settings-modal')).toBeVisible();
   const x = await page.evaluate(() => {
     const b = document.querySelector('#settings-modal .modal-close-btn') as HTMLElement;

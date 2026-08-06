@@ -173,6 +173,12 @@ if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 
 		<nav id="game-navbar" aria-label="<?php echo $labels["idx_main_menu_aria"]; ?>">
 			<div class="nav-group left">
+				<!-- Solo mobile (CSS): raccoglie le voci secondarie, che in barra
+				     sarebbero 8 icone senza etichetta. Nel menu hanno un nome. -->
+				<button id="open-mobile-menu-btn" class="nav-item" title="<?php echo $labels['navbar_menu']; ?>" aria-haspopup="dialog">
+					<i class="nav-icon" data-lucide="menu"></i>
+					<span class="nav-label"><?php echo $labels['navbar_menu']; ?></span>
+				</button>
 				<button id="open-help-btn" class="nav-item" title="<?php echo $labels["help_menu_titolo"]; ?>">
 					<i class="nav-icon" data-lucide="info"></i>
 					<span class="nav-label">

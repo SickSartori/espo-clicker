@@ -72,6 +72,7 @@
 	$labels["navbar_skin"] = "Skins";
 	$labels["navbar_classifica"] = "Leaderboard";
 	$labels["navbar_promozione"] = "Promotion";
+	$labels["navbar_menu"] = "Menu";
 	$labels["navbar_opzioni"] = "Options";
 	$labels["navbar_account_title"] = "Account & Friends";
 	// Fixed button label — see the note in langs/it.php. Keep it <= 8 chars.

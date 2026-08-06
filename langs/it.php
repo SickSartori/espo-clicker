@@ -72,6 +72,7 @@
 	$labels["navbar_skin"] = "Skin";
 	$labels["navbar_classifica"] = "Classifica";
 	$labels["navbar_promozione"] = "Promozione";
+	$labels["navbar_menu"] = "Menu";
 	$labels["navbar_opzioni"] = "Opzioni";
 	$labels["navbar_account_title"] = "Account e Amici";
 	// Etichetta FISSA del bottone: prima mostrava il nome utente, che essendo di

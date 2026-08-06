@@ -441,6 +441,49 @@
     </div>
 </div>
 
+<!-- MENU MOBILE — raccoglie le voci secondarie della barra in alto.
+     Su mobile le icone sono senza etichetta e da 35px: otto affiancate erano
+     illeggibili. Qui ogni voce ha icona E nome.
+     Le voci NON duplicano logica: inoltrano il click al pulsante vero della
+     navbar (data-opens), che ha già il suo handler. Aggiungere una voce =
+     aggiungere un <button> qui. -->
+<div id="mobile-menu-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 420px;">
+        <button class="modal-close-btn">&times;</button>
+        <h2>
+            <i class="fa-solid fa-bars"></i>
+            <?php echo $labels["navbar_menu"]; ?>
+        </h2>
+        <div class="settings-content" id="mobile-menu-list">
+            <button type="button" class="mm-item" data-opens="open-achievements-btn">
+                <i class="mm-icon" data-lucide="award"></i>
+                <span class="mm-label"><?php echo $labels["navbar_obiettivi"]; ?></span>
+                <span class="mm-dot" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-skins-btn">
+                <i class="mm-icon" data-lucide="shirt"></i>
+                <span class="mm-label"><?php echo $labels["navbar_skin"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-leaderboard-btn">
+                <i class="mm-icon" data-lucide="trophy"></i>
+                <span class="mm-label"><?php echo $labels["navbar_classifica"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-stats-btn">
+                <i class="mm-icon" data-lucide="chart-line"></i>
+                <span class="mm-label"><?php echo $labels["navbar_stats"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-settings-btn">
+                <i class="mm-icon" data-lucide="sliders"></i>
+                <span class="mm-label"><?php echo $labels["navbar_opzioni"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-help-btn">
+                <i class="mm-icon" data-lucide="info"></i>
+                <span class="mm-label"><?php echo $labels["help_menu_titolo"]; ?></span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- POPUP "COME SI SEGNALA" — una tantum, subito DOPO le note di rilascio.
      Serve a far scoprire la funzione a chi non sa che esiste: niente modulo qui
      dentro, solo dove trovarlo e cosa scriverci. Chi vuole segnalare subito ha

@@ -2587,6 +2587,16 @@ function checkOverlayNotifications() {
         else
             achBtn.classList.remove('notify-overlay');
     }
+
+    // Su mobile il pulsante Obiettivi è nel menu ☰, quindi il suo badge non si
+    // vedrebbe: si rispecchia sulla voce di menu E sul ☰ stesso. Guidato dallo
+    // stesso `hasClaimable` del badge sopra — un solo stato, nessun rischio che
+    // barra e menu dicano cose diverse.
+    const mmAch = document.querySelector('#mobile-menu-list .mm-item[data-opens="open-achievements-btn"]');
+    if (mmAch) mmAch.classList.toggle('has-dot', hasClaimable);
+
+    const menuBtn = document.getElementById('open-mobile-menu-btn');
+    if (menuBtn) menuBtn.classList.toggle('notify-overlay', hasClaimable);
 }
 
 function updateStatsUI() {

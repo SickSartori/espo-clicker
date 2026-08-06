@@ -956,6 +956,28 @@ export function initModals(): void {
 
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => openModal(helpModal));
 
+    // --- Menu mobile (☰) ---
+    // Le voci NON riaprono i modali da sé: inoltrano il click al pulsante vero
+    // della navbar, che su mobile è nascosto ma resta nel DOM col suo handler.
+    // Così esiste un solo punto che sa come si apre ogni finestra: aggiungere
+    // una voce è aggiungere un <button data-opens> in modals.php, e niente
+    // può divergere fra menu e barra.
+    const mobileMenuModal = document.getElementById('mobile-menu-modal');
+    const openMobileMenuBtn = document.getElementById('open-mobile-menu-btn');
+    if (openMobileMenuBtn) openMobileMenuBtn.addEventListener('click', () => openModal(mobileMenuModal));
+
+    document.querySelectorAll('#mobile-menu-list .mm-item').forEach((voce) => {
+        voce.addEventListener('click', () => {
+            const targetId = voce.getAttribute('data-opens');
+            const target = targetId ? document.getElementById(targetId) : null;
+            closeModal(mobileMenuModal);
+            // Attesa breve: aprire la finestra nuova mentre il menu sta ancora
+            // chiudendo lascia due fondali sovrapposti (stesso motivo del
+            // popup segnalazioni → Aiuto).
+            if (target) setTimeout(() => target.click(), 240);
+        });
+    });
+
     // --- Popup "come si segnala" (una tantum) ---
     const fbIntroModal = document.getElementById('feedback-intro-modal');
     const fbIntroOk = document.getElementById('fbintro-ok');

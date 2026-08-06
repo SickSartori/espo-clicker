@@ -11,6 +11,7 @@
 import { createIcons,
   // Navbar
   BookOpen,
+  Menu,
   ChartLine,
   Gamepad2,
   Award,
@@ -66,6 +67,7 @@ import { createIcons,
    so keys MUST match the PascalCase component names. */
 const ICONS = {
   BookOpen,
+  Menu,
   ChartLine,
   Gamepad2,
   Award,
