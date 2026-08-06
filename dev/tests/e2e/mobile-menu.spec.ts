@@ -75,6 +75,53 @@ test.describe('Menu mobile', () => {
     expect(r.tagResiduo).toBe(false);
   });
 
+  test('il logo sta al centro e non finisce sotto ai pulsanti', async ({ page }) => {
+    await boot(page);
+
+    const misura = () => {
+      const bar = document.getElementById('game-navbar')!;
+      const logo = document.getElementById('navbar-logo')!;
+      const rb = bar.getBoundingClientRect();
+      const rl = logo.getBoundingClientRect();
+      const vis = [...bar.querySelectorAll('button')].filter((b) => getComputedStyle(b).display !== 'none');
+      return {
+        barraLarga: Math.round(rb.width),
+        // scarto fra il centro del logo e il centro della barra
+        scarto: Math.abs(Math.round(((rl.left + rl.right) / 2) - ((rb.left + rb.right) / 2))),
+        visibile: getComputedStyle(logo).display !== 'none',
+        // decorativo: non deve intercettare i tocchi
+        tocchi: getComputedStyle(logo).pointerEvents,
+        collide: vis.filter((b) => {
+          const r = b.getBoundingClientRect();
+          return !(r.right <= rl.left || r.left >= rl.right);
+        }).map((b) => b.id),
+      };
+    };
+
+    // Stato iniziale: Promozione ancora bloccata
+    const presto = await page.evaluate(misura);
+    // La barra è `position: fixed; width:100%`: se qualcuno le desse
+    // `position: relative` collasserebbe a larghezza-contenuto (successo:
+    // 192px invece di 375) e i pulsanti si ammasserebbero a sinistra.
+    expect(presto.barraLarga, 'la barra deve occupare tutta la larghezza').toBeGreaterThan(360);
+    expect(presto.visibile).toBe(true);
+    expect(presto.tocchi, 'il logo è decorativo, non un bersaglio').toBe('none');
+    expect(presto.scarto, 'logo centrato').toBeLessThanOrEqual(2);
+    expect(presto.collide).toEqual([]);
+
+    // Promozione sbloccata: è il caso in cui il centro era occupato
+    await page.evaluate(() => {
+      const w = window as any;
+      w.EspooClicker.getGameState().totalResets = 3;
+      w.updateUI();
+    });
+    await page.waitForTimeout(600);
+
+    const tardi = await page.evaluate(misura);
+    expect(tardi.scarto, 'centrato anche con Promozione in barra').toBeLessThanOrEqual(2);
+    expect(tardi.collide, 'Promozione non deve finire sopra al logo').toEqual([]);
+  });
+
   test('ogni voce apre la finestra giusta, e una sola', async ({ page }) => {
     await boot(page);
 

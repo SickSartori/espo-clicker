@@ -1494,4 +1494,64 @@ html body .clean-input input {
     .mm-item.has-dot .mm-dot {
         display: block;
     }
+
+    /* ------------------------------------------------------------------
+       LOGO AL CENTRO DELLA BARRA
+       Con le voci secondarie nel menu, in barra restano 2-3 pulsanti e il
+       centro resta vuoto. Il logo lo riempie — ma NON come elemento flex:
+       sarebbe centrato solo finche' i lati pesano uguale, e Promozione
+       compare/sparisce col progredire della partita.
+       Centratura assoluta + il gruppo di destra spinto a fine barra
+       (margin-left:auto su Promozione, che nell'ordine DOM precede il
+       Profilo): il centro resta libero in ENTRAMBI gli stati, con o senza
+       Promozione.
+       ------------------------------------------------------------------ */
+    /* NIENTE `position: relative` qui: la barra e' `position: fixed` con
+       `width: 100%` (styles/base/navbar.css). Sovrascriverla la faceva
+       collassare a larghezza-contenuto — misurati 192px invece di 375, con
+       tutti i pulsanti ammassati a sinistra. Un elemento `fixed` fa gia' da
+       riferimento per un figlio assoluto: non serviva. */
+    html body nav#game-navbar #navbar-logo {
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        /* La barra ha il padding di safe-area in alto: il centro ottico
+           segue l'area utile, non il bordo fisico dello schermo. */
+        margin-top: calc(env(safe-area-inset-top) / 2);
+        height: 30px;
+        width: auto;
+        opacity: 0.75;
+        /* Decorativo: non deve rubare tap ne' comparire nella navigazione */
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* I gruppi tornano contenitori VERI (sopra sono display:contents, scelta
+       fatta quando in barra c'erano molte icone da distribuire). Con pochi
+       pulsanti quel `contents` diventa un problema: sono figli diretti della
+       barra e space-between li sparpaglia, mettendo Promozione esattamente
+       sopra al logo. Come gruppi invece: sinistra ancorata a sinistra, destra
+       a destra, e il centro — vuoto su mobile — lascia il posto al logo.
+       Provato prima con margin-left:auto su Promozione: space-between ne
+       assorbe solo una parte (misurati 48px invece dell'intero spazio). */
+    html body nav#game-navbar .nav-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    html body nav#game-navbar .nav-group.left {
+        justify-content: flex-start;
+    }
+
+    /* Non nascosto: se un domani tornasse una voce al centro, deve comparire */
+    html body nav#game-navbar .nav-group.center {
+        justify-content: center;
+    }
+
+    html body nav#game-navbar .nav-group.right {
+        justify-content: flex-end;
+    }
 }

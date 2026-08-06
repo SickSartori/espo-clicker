@@ -283,3 +283,9 @@
 #game-navbar #open-mobile-menu-btn {
     display: none;
 }
+
+/* Il logo in barra è un riempitivo per il centro vuoto dei telefoni: su
+   desktop la barra è già piena di voci etichettate. Acceso da mobile.css. */
+#game-navbar #navbar-logo {
+    display: none;
+}

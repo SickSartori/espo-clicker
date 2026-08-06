@@ -239,6 +239,12 @@ if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 					</span>
 				</button>
 			</div>
+			<!-- Solo mobile (CSS): riempie il centro della barra, rimasto vuoto
+			     da quando le voci secondarie sono nel menu. Emblema SENZA scritta
+			     (ico.svg; logo.svg include il testo "ESPOO CLICKER").
+			     Decorativo: aria-hidden + pointer-events:none, cosi' non diventa
+			     un bersaglio di tocco misterioso in mezzo alla barra. -->
+			<img id="navbar-logo" src="assets/image/ico.svg" alt="" aria-hidden="true">
 		</nav>
 
 		<button id="quick-mute-btn" title="<?php echo $labels["index_muta_audio"]; ?>" aria-label="<?php echo $labels["index_muta_audio"]; ?>">
