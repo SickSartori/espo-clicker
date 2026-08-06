@@ -6,11 +6,27 @@ import { Page, expect } from '@playwright/test';
  * Il gioco mostra il login se manca sessionStorage.espooUser; con la sessione
  * iniettata PRIMA del load, initializeGame() boota direttamente nel gioco
  * (script.js: hasSession → startGameRoutines). Nessun backend reale è coinvolto:
- * le chiamate cloud falliscono in silenzio (best-effort) e il save resta locale.
+ * le chiamate cloud restano SOSPESE (vedi route qui sotto) e il save resta locale.
  */
 export async function bootGame(page: Page): Promise<void> {
   // Silenzia il rumore di rete atteso (Supabase EF non raggiungibili in E2E).
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+
+  // Le chiamate alle Edge Functions NON devono raggiungere il backend dev
+  // condiviso: il commento sopra lo prometteva, ma senza questa route ogni
+  // bootGame faceva un login-register VERO. Con ~10 boot a suite, le run
+  // ripetute hanno fatto scattare il rate limit (429) — che in cascata
+  // faceva fallire i test sugli errori console (kill-legacy) e disturbava
+  // chiunque stesse provando il gioco sul backend dev.
+  //
+  // Le richieste si lasciano IN SOSPESO, non abortite né simulate: l'abort
+  // produce un errore console (bocciando kill-legacy), una risposta finta di
+  // successo innesca side-effect (adozione save cloud / reset). Una richiesta
+  // sospesa non risolve mai: zero side-effect, zero rumore — esattamente il
+  // "best-effort che resta locale" descritto sopra. I test che vogliono un
+  // comportamento cloud specifico montano la PROPRIA route più specifica
+  // (cloud-badge, mobile-nav), che vince su questa.
+  await page.route('**/functions/v1/**', () => { /* mai risolta */ });
 
   await page.addInitScript(() => {
     try {

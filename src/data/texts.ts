@@ -104,6 +104,7 @@ export const texts: Record<string, any> = {
         arcadeWelcome: "Benvenuto nella Sala Server (Arcade)!",
         memoryWarn: "⚠️ Memoria quasi piena",
         sessionExpired24h: "⏰ Sessione scaduta (24h). Effettua nuovamente il login per salvare.",
+        serverBusy: "⏳ Server affollato in questo momento: i progressi restano salvati sul dispositivo, riprova tra qualche minuto.",
         cloudConflict: "⚠️ Conflitto Cloud! Ricarica la pagina per non perdere progressi.",
         sessionReload: "⚠️ Sessione scaduta! Ricarica la pagina per salvare.",
         skinNeedFormat: "⚠️ Devi eseguire almeno 1 Formattazione per sbloccare questa skin!",

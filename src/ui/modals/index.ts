@@ -1605,6 +1605,15 @@ export function initModals(): void {
                     if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
                     runPostLogin();
                 }
+            } else if (res.status === 429) {
+                // Limite richieste del backend: non è un errore dell'utente e
+                // il suo messaggio grezzo («Too many requests») in un alert
+                // bloccante non aiuta nessuno. Toast localizzato e basta: i
+                // progressi restano locali e, per chi era già in sessione, il
+                // badge cloud offre il riprova quando il limite scade.
+                if (typeof Game.showToast === 'function') {
+                    Game.showToast(store.gameData.texts.toasts.serverBusy, 'warning');
+                }
             } else {
                 alert(data.message);
             }

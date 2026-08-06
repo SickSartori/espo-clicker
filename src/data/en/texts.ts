@@ -100,6 +100,7 @@ export const texts: Record<string, any> = {
         arcadeWelcome: "Welcome to the Server Room (Arcade)!",
         memoryWarn: "⚠️ Memory almost full",
         sessionExpired24h: "⏰ Session expired (24h). Log in again to save.",
+        serverBusy: "⏳ The server is busy right now: your progress is safe on this device, try again in a few minutes.",
         cloudConflict: "⚠️ Cloud conflict! Reload the page so you don't lose progress.",
         sessionReload: "⚠️ Session expired! Reload the page to save.",
         skinNeedFormat: "⚠️ You must perform at least 1 Format to unlock this skin!",
