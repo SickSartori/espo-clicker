@@ -1681,18 +1681,16 @@ export function initBoot(): void {
                             setTimeout(() => {
                                 if (w.EspooClicker.openReleaseNotes) w.EspooClicker.openReleaseNotes();
                             }, 800);
-                        } else if (w.shouldShowFeedbackIntro && store.gameState && store.gameState.totalClicks > 0) {
-                            // Nessuna nota di rilascio da mostrare: il popup parte da solo.
-                            // Quando invece le note ci sono, si accoda alla loro chiusura
-                            // (vedi ui/modals): mai due finestre sovrapposte.
-                            //
-                            // Il vincolo sui click esclude il giocatore appena arrivato:
-                            // questo popup serve a far scoprire una funzione a chi il gioco
-                            // già ce l'ha, non ad accogliere chi non ha ancora cliccato una
-                            // volta. Chi aggiorna lo vede comunque, dopo le note.
+                        } else {
+                            // Nessuna nota di rilascio da mostrare: il popup può partire
+                            // da solo. Le condizioni però NON si valutano qui — le decide
+                            // maybeOpenFeedbackIntro quando il timer scatta, perché da qui
+                            // a lì il save cloud può ancora arrivare e cambiare le carte
+                            // (vedi il commento sulla funzione). Se le note spuntano nel
+                            // frattempo, il popup si accoda alla loro chiusura.
                             setTimeout(() => {
-                                if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
-                                    w.EspooClicker.openFeedbackIntro();
+                                if (w.EspooClicker && typeof w.EspooClicker.maybeOpenFeedbackIntro === 'function') {
+                                    w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
                                 }
                             }, 900);
                         }
@@ -2139,6 +2137,12 @@ export function initBoot(): void {
         const content = document.getElementById('release-notes-content');
         if (!modal || !content) return;
 
+        // Spento QUI e non a fetch riuscito: le note si stanno aprendo comunque,
+        // e da quando maybeOpenFeedbackIntro ci si appoggia per sapere se ci sono
+        // note in arrivo, lasciarlo acceso su un errore di rete terrebbe il popup
+        // bloccato per sempre.
+        w.shouldShowReleaseNotesOnLoad = false;
+
         // 1. Mostra il modale e avvia l'animazione di entrata (ripristinando l'opacità)
         modal.style.display = 'flex';
         
@@ -2167,8 +2171,6 @@ export function initBoot(): void {
             const mdText = await response.text();
 
             content.innerHTML = w.simpleMarkdown(mdText);
-            
-            w.shouldShowReleaseNotesOnLoad = false;
         } catch (e) {
             content.innerHTML = '<p style="color: #e74c3c; text-align: center;">' + store.gameData.texts.ui.newsLoadError + '</p>';
         }
@@ -2201,6 +2203,39 @@ export function initBoot(): void {
             store.gameState.seenFeedbackIntro = true;
             if (typeof w.EspooClicker.saveGame === 'function') w.EspooClicker.saveGame();
         }
+    },
+
+    // Unico punto che decide SE aprire il popup, e lo decide al momento di
+    // aprirlo invece che quando si programma il timer. Prima la condizione
+    // stava nel ramo `else if` della cascata di avvio, valutato a ~500ms dal
+    // caricamento: il save CLOUD arriva dopo il giro di rete e può accendere
+    // shouldShowReleaseNotesOnLoad più tardi (loadCloudData), quando il timer
+    // del popup è già in volo. Da lì la segnalazione «il popup appare sopra
+    // alle note di rilascio»: due decisioni prese in momenti diversi sullo
+    // stesso stato.
+    //
+    // Restituisce true solo se ha davvero aperto. Quando rifiuta NON consuma
+    // il flag: la finestra si riapre al passaggio buono (chiusura delle note).
+    // `standalone` = apertura per conto proprio, senza note di rilascio davanti.
+    // Solo in quel caso vale il vincolo sui click: il popup serve a far scoprire
+    // una funzione a chi il gioco ce l'ha già, non ad accogliere chi non ha
+    // ancora cliccato una volta. Dopo le note invece si apre comunque — chi
+    // aggiorna il gioco lo vede anche con zero click su questo save, ed è voluto.
+    maybeOpenFeedbackIntro: (opts?: { standalone?: boolean }) => {
+        if (!w.shouldShowFeedbackIntro) return false;
+        if (!store.gameState || store.gameState.seenFeedbackIntro) return false;
+        if (opts && opts.standalone && !(store.gameState.totalClicks > 0)) return false;
+        // Note di rilascio in arrivo (anche decise tardi, dal save cloud): il
+        // popup si accoda alla loro chiusura, non le anticipa.
+        if (w.shouldShowReleaseNotesOnLoad) return false;
+        // Qualunque finestra già a schermo: si riprova più tardi. È questo il
+        // controllo che rende l'ordine indipendente dai tempi di rete.
+        const modali = Array.from(document.querySelectorAll('.modal-backdrop'));
+        for (const m of modali) {
+            if (getComputedStyle(m).display !== 'none') return false;
+        }
+        w.EspooClicker.openFeedbackIntro();
+        return true;
     },
         tryStartAudio: () => {
             // 1. Controllo Sessione
