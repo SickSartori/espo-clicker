@@ -203,7 +203,7 @@ If it is missing in production the failure is indirect and easy to misread: the 
 
 ## 📅 Project status
 
-**v3.0.13**, on the runway. Public launch is **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
+**v3.1.0**, in development. The public launch happened on **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
 
 That launch starts **Season 1**, and anyone with a real pre-launch save (at least one Promozione, or one non-default skin) is migrated to **Fondatore** (Founder) status: an exclusive `divine` skin with no price and no achievement attached — permanently unobtainable for everyone who arrives after — plus up to 5 kept skins, with an interactive picker if they had more.
 

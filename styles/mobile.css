@@ -1063,7 +1063,14 @@ button img {
 
     html body .modal-content {
         width: 100%;
-        max-width: 100%;
+        /* !important perche' due finestre portano il tetto in uno style INLINE
+           (includes/modals.php: Configurazione 400px, Menu 420px) e uno stile
+           inline batte qualunque selettore. Senza, su schermi larghi — misurato
+           a 430x932 — Configurazione e Profilo restavano 400px e il Menu 420,
+           con strisce di gioco visibili ai lati e gli spigoli vivi di una
+           finestra pensata per essere piena. Sotto i 400px il difetto non si
+           vedeva, ed e' il motivo per cui era sfuggito. */
+        max-width: 100% !important;
         height: 100dvh;
         max-height: 100dvh;
         border-radius: 0;

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Route } from '@playwright/test';
 
 /**
  * Navigazione mobile (viewport 375x812, touch).
@@ -18,17 +18,57 @@ import { test, expect } from '@playwright/test';
  */
 test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
 
+/** URL che nessuna route della pagina ha preso: sarebbero usciti in rete. */
+let scappate: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  scappate = [];
+
+  // Filo d'inciampo, sul CONTEXT e non sulla pagina: in Playwright le route
+  // della PAGINA hanno la precedenza su quelle del context, quindi qui arriva
+  // solo ciò che nessun mock e nessuna catch-all ha intercettato — cioè
+  // esattamente il traffico diretto al backend dev condiviso. Contare gli
+  // eventi di rete non basterebbe: una richiesta lasciata sospesa emette
+  // 'requestfailed' quando la pagina si ricarica e la cancella, e sembrerebbe
+  // uscita davvero. Resta sospesa anche qui: se scappa qualcosa non deve
+  // comunque partire, e l'afterEach lo dice a voce alta.
+  await page.context().route((url) => url.hostname.endsWith('supabase.co'), (route) => {
+    scappate.push(route.request().url());
+  });
+
+  // Simulare login-register e save-progress non bastava: il test copriva i due
+  // endpoint che gli servivano e lasciava passare tutto il resto. Misurato: due
+  // friends-poll VERE per esecuzione verso il backend dev condiviso — la
+  // sessione finta ottiene un token finto, il polling amici parte lo stesso e
+  // va a bussare al server vero. Non è il 429 del login, ma è comunque traffico
+  // che una verifica di UI pura non deve generare, e la CI la ripete a ogni push.
+  //
+  // Qui il muro è generico: ogni chiamata a functions/v1 resta SOSPESA (come in
+  // helpers.ts — non abortita, che sporcherebbe la console, e non simulata in
+  // blocco, che innescherebbe side-effect sul save). I due mock specifici sotto
+  // sono registrati DOPO e in Playwright vince l'ultima registrata, quindi
+  // continuano a rispondere come prima.
+  await page.route('**/functions/v1/**', () => { /* mai risolta */ });
+});
+
+// Prova che il muro tiene, e che continuerà a tenere dopo la prossima modifica.
+test.afterEach(() => {
+  expect(scappate, 'richieste uscite verso il backend dev condiviso').toEqual([]);
+});
+
 test('mobile: Segnala raggiungibile dal menu e X su Configurazione', async ({ page }) => {
   // Backend simulato: oggi il dev risponde 429 su login-register (limite
   // richieste) e il gioco apre il login sopra tutto, intercettando i tap.
   // La verifica e' di UI pura: non deve dipendere dallo stato del backend.
-  await page.route('**/login-register', (r) => r.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ status: 'success', save_token: 'e2e-token', token_expires_at: Date.now() + 86_400_000 }),
-  }));
-  await page.route('**/save-progress', (r) => r.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'success' }),
-  }));
+  const servi = async (slug: string, body: unknown) => {
+    await page.route(`**/functions/v1/${slug}`, async (route: Route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    });
+  };
+  await servi('login-register', {
+    status: 'success', save_token: 'e2e-token', token_expires_at: Date.now() + 86_400_000,
+  });
+  await servi('save-progress', { status: 'success' });
 
   await page.addInitScript(() => { try {
     sessionStorage.setItem('espooUser', 'E2ETester');

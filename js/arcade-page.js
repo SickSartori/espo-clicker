@@ -381,6 +381,44 @@
         playClick(type === 'keydown' ? 'down' : 'up');
     }
 
+    // ----- Tasto START del pad: a cosa è collegato ------------------------
+    // Era un tasto finto. Sintetizzava un Enter su window/document, ma nessuno
+    // dei sette cabinati ascolta Enter (verificato: la stringa non compare in
+    // nessun arcade/*/js/*.js), e l'unico Enter gestito nella shell — quello
+    // che avvia il gioco dal menu — esce subito se si sta giocando. Risultato:
+    // su telefono il pad mostrava un bottone grosso e rosso che non faceva
+    // niente, cioè peggio di un bottone assente, perché insegna che i comandi
+    // non rispondono.
+    //
+    // Nasconderlo era la via corta, ma sul telefono serve davvero: è l'unico
+    // tasto che può ricominciare una partita senza costringere a centrare col
+    // dito il RESTART disegnato dentro al canvas, che a fine partita è
+    // rimpicciolito dalla scala del canvas stesso. Lo si collega quindi al
+    // bottone principale dell'overlay del gioco attivo — INIZIA PARTITA prima
+    // di cominciare, RESTART dopo il game over — che è esattamente ciò che un
+    // tasto START fa su un cabinato vero.
+    //
+    // Restava il caso "partita in corso": lì non c'è nessun overlay e quindi
+    // niente da premere. Invece di far finta di funzionare, il tasto si spegne
+    // (disabled + opacità ridotta) e si riaccende da solo quando compare
+    // l'overlay — lo stato viene rinfrescato da configurePad, che il polling
+    // di syncPadVisibility richiama ogni 400ms.
+    function overlayPrimaryBtn() {
+        const host = document.getElementById('arcade-active-game-container');
+        if (!host || !host.style.display || host.style.display === 'none') return null;
+        const overlays = host.querySelectorAll('.arcade-ui-overlay');
+        for (let i = 0; i < overlays.length; i++) {
+            const ov = overlays[i];
+            // I giochi nascondono l'overlay con style.display='none' quando si gioca.
+            if (getComputedStyle(ov).display === 'none') continue;
+            // .secondary è il MENU della topbar: non è dentro l'overlay, ma la
+            // esclusione costa nulla e protegge da futuri riusi della classe.
+            const btn = ov.querySelector('.arcade-btn:not(.secondary)');
+            if (btn) return btn;
+        }
+        return null;
+    }
+
     function bindBtn(btn) {
         const keyName = btn.getAttribute('data-key');
         const desc = KEY_TO_CODE[keyName];
@@ -394,6 +432,13 @@
             btn.classList.add('pressed');
             if (navigator.vibrate) navigator.vibrate(10); /* aptico; no-op dove non supportato (iOS) */
             fireKey('keydown', desc);
+            // START: l'Enter sintetico resta (se un domani un gioco lo ascolta,
+            // funziona da solo), ma l'azione vera è premere il bottone
+            // dell'overlay — lo stesso click che farebbe il dito sul canvas.
+            if (keyName === 'Enter') {
+                const target = overlayPrimaryBtn();
+                if (target) target.click();
+            }
         };
         const release = (e) => {
             if (e) e.preventDefault();
@@ -545,7 +590,16 @@
             xBtn.style.display = cfg.actions.includes('x') ? '' : 'none';
             xBtn.textContent = (cfg.labels && cfg.labels.x) || 'X';
         }
-        if (startBtn) startBtn.style.display = '';
+        if (startBtn) {
+            startBtn.style.display = '';
+            // Acceso solo quando c'è davvero qualcosa da avviare (vedi il
+            // commento su overlayPrimaryBtn): durante la partita non c'è
+            // overlay, e un tasto spento è un'informazione, non un guasto.
+            const armed = !!overlayPrimaryBtn();
+            startBtn.disabled = !armed;   // disabled = i pointer event non partono
+            startBtn.style.opacity = armed ? '' : '0.35';
+            startBtn.style.cursor = armed ? '' : 'default';
+        }
 
         // Update D-pad labels if custom
         if (cfg.labels) {

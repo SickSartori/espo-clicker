@@ -11,10 +11,19 @@
     background-size: 100% 4px, 6px 100%;
 }
 
+/* Vedi centipede.css: il canvas ha una dimensione logica sua (~752x620) e con
+   width/height al 100% veniva stirato per riempire il riquadro — su telefono in
+   verticale di 1,95x. Gli alieni si appiattivano e il colpo, mirato sul
+   rettangolo reale, non cadeva dove sembrava. width:auto è la parte che non si
+   può omettere: senza, la larghezza resta incollata al riquadro.
+   Stesso schema di arcade/stack/css/stack.css. */
 #invaders-canvas {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
 }
 
 #invaders-overlay {

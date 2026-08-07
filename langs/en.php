@@ -62,7 +62,7 @@
 	$labels["fbintro_p1"] = "Open <b style=\"color:#3498db\">Help</b> in the top bar, then the <b style=\"color:#3498db\">Feedback</b> tab.";
 	$labels["fbintro_p2"] = "Pick whether it is a <b>bug</b>, an <b>idea</b> or an <b>improvement</b>.";
 	$labels["fbintro_p3"] = "Sum it up in one line. If it is a bug, tell us <b>what you were doing</b> and <b>what you expected</b>: that is what lets us find it.";
-	$labels["fbintro_privacy"] = "We automatically attach version, language and browser. No sensitive data, no email required.";
+	$labels["fbintro_privacy"] = "We automatically attach version, language and screen size. No sensitive data, no email required.";
 	$labels["fbintro_btn_apri"] = "Let me try";
 	$labels["fbintro_btn_ok"] = "Got it";
 	$labels["help_menu_titolo"] = "Help";

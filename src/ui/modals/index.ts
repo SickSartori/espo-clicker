@@ -890,6 +890,33 @@ export function initModals(): void {
             // Subito, non nell'onComplete: l'audio non deve aspettare l'animazione.
             if (modal.id === 'advanced-audio-modal') restoreAfterMixer();
 
+            // I due comportamenti qui sotto stavano nel gestore della sola X.
+            // Sbagliato: da questa finestra si esce anche con ESC e col click sul
+            // fondale (vedi i due listener piu' in basso), e quelle vie facevano
+            // altro — le impostazioni non si salvavano e la sequenza «note di
+            // rilascio -> popup segnalazioni» saltava. closeModal e' la strada
+            // che TUTTE le uscite attraversano: e' qui che vanno.
+
+            // Configurazione: le modifiche (volumi, lingua) sono gia' applicate
+            // live allo stato, quindi uscire senza persistere sarebbe l'unico
+            // caso in cui una regolazione fatta si perde a fine sessione.
+            // Niente toast: quello resta al pulsante «Chiudi & Salva», che e'
+            // un gesto di conferma esplicita.
+            if (modal.id === 'settings-modal') {
+                const GameSave = getGameAPI();
+                if (GameSave && typeof GameSave.saveGame === 'function') GameSave.saveGame();
+            }
+
+            // Il popup "come si segnala" si accoda alle note di rilascio, mai
+            // sovrapposto: parte solo quando quelle vengono chiuse.
+            if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
+                setTimeout(() => {
+                    if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
+                        w.EspooClicker.openFeedbackIntro();
+                    }
+                }, 350);
+            }
+
             const content = modal.querySelector('.modal-content');
 
             // Kill any open tweens prima di partire close
@@ -1096,26 +1123,6 @@ export function initModals(): void {
                     // Senza questa, chiudendo la sala giochi mentre giri su Stack
                     // Overflow il suo ciclo di disegno resta vivo in sottofondo.
                     if (typeof w.exitStackGame === 'function') w.exitStackGame();
-                }
-
-                // La X delle impostazioni salva come «Chiudi & Salva»: le
-                // modifiche (volumi, lingua) sono già applicate live allo
-                // stato, quindi chiudere senza persistere creerebbe l'unico
-                // caso in cui una regolazione fatta si perde a fine sessione.
-                // Senza toast: la X è un gesto di uscita, non di conferma.
-                if (modal.id === 'settings-modal') {
-                    const Game = getGameAPI();
-                    if (Game && typeof Game.saveGame === 'function') Game.saveGame();
-                }
-
-                // Il popup "come si segnala" si accoda alle note di rilascio, mai
-                // sovrapposto: parte solo quando quelle vengono chiuse.
-                if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
-                    setTimeout(() => {
-                        if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
-                            w.EspooClicker.openFeedbackIntro();
-                        }
-                    }, 350);
                 }
 
             }
@@ -1493,11 +1500,12 @@ export function initModals(): void {
     }
 
     if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+        // Il salvataggio lo fa closeModal (vale per X, ESC e fondale): qui
+        // resta solo la conferma a schermo, che e' cio' che distingue il
+        // pulsante esplicito dalle altre uscite. Salvare anche qui
+        // significherebbe due push cloud per una sola chiusura.
         const Game = getGameAPI();
-        if (Game) {
-            Game.saveGame();
-            Game.showToast(store.gameData.texts.toasts.settingsSaved);
-        }
+        if (Game) Game.showToast(store.gameData.texts.toasts.settingsSaved);
         closeModal(settingsModal);
     });
 
@@ -1562,6 +1570,12 @@ export function initModals(): void {
 
                 closeModal(loginModal);
                 setAccountIdentity(u); // popola il nome utente nella navbar (anche su auto-login F5)
+
+                // Notifiche amici subito, senza aspettare il giro del polling: è
+                // appena comparso il token, che è la sola cosa che mancava al
+                // primo controllo di social.ts. Senza, la pallina su Profilo si
+                // faceva attendere fino al tick successivo.
+                if (w.EspoSocial && typeof w.EspoSocial.refreshBadge === 'function') w.EspoSocial.refreshBadge();
 
                 // Sblocca il contesto audio sfruttando il gesto di login: così gli SFX
                 // dell'intro e la musica partono senza dover premere "Attiva audio".

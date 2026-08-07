@@ -77,13 +77,18 @@ test('FIX 2: schiacciare i bug col dito perdona il quasi-centro', async ({ page 
   await attendiCrt(page);
   const g = await page.evaluate(() => (window as any).__stackDebug.fieldOrigin());
   const box = await page.locator('#stack-canvas').boundingBox();
+  // Le dimensioni LOGICHE si leggono dal canvas, non si danno per scontate:
+  // su mobile stack usa un layout compatto (296x520, solo campo) invece di
+  // quello largo (760x540, coi pannelli ai lati). Scrivere 760x540 qui
+  // significava calcolare una scala sbagliata e cliccare nel posto sbagliato.
   const cs = await page.evaluate(() => {
-    const c = document.getElementById('stack-canvas')!;
+    const c = document.getElementById('stack-canvas') as HTMLCanvasElement;
     const s = getComputedStyle(c);
-    return { bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth), w: c.getBoundingClientRect().width, h: c.getBoundingClientRect().height };
+    const r = c.getBoundingClientRect();
+    return { bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth), w: r.width, h: r.height, logW: c.width, logH: c.height };
   });
   const innerW = cs.w - cs.bl * 2, innerH = cs.h - cs.bt * 2;
-  const sx = innerW / 760, sy = innerH / 540;
+  const sx = innerW / cs.logW, sy = innerH / cs.logH;
   // Tocco DECENTRATO di ~0.8 celle rispetto al bug: prima mancava, ora deve prendere
   const lx = g.x + (4 + 0.5) * g.cell + g.cell * 0.8;
   const ly = g.y + (g.rows - 1 + 0.5) * g.cell;
@@ -109,10 +114,12 @@ test('FIX 2b: un tocco lontano NON schiaccia niente', async ({ page }) => {
   const g = await page.evaluate(() => (window as any).__stackDebug.fieldOrigin());
   const box = await page.locator('#stack-canvas').boundingBox();
   const cs = await page.evaluate(() => {
-    const c = document.getElementById('stack-canvas')!; const s = getComputedStyle(c);
-    return { bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth), w: c.getBoundingClientRect().width, h: c.getBoundingClientRect().height };
+    const c = document.getElementById('stack-canvas') as HTMLCanvasElement;
+    const s = getComputedStyle(c);
+    const r = c.getBoundingClientRect();
+    return { bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth), w: r.width, h: r.height, logW: c.width, logH: c.height };
   });
-  const sx = (cs.w - cs.bl * 2) / 760, sy = (cs.h - cs.bt * 2) / 540;
+  const sx = (cs.w - cs.bl * 2) / cs.logW, sy = (cs.h - cs.bt * 2) / cs.logH;
   const lx = g.x + (6 + 0.5) * g.cell;    // 6 colonne di distanza
   const ly = g.y + (g.rows - 1 + 0.5) * g.cell;
   await page.mouse.click(box!.x + cs.bl + lx * sx, box!.y + cs.bt + ly * sy);

@@ -24,12 +24,52 @@
     // CSS (max-width/height:100%), come negli altri cabinati. Così non serve
     // ricalcolare il layout su resize/rotazione — che è la trappola in cui
     // era caduto snake.js (vedi il suo commento sul wrapper).
+    //
+    // Le misure logiche però sono DUE, non una.
+    //
+    // Il layout LARGO tiene i due pannelli laterali dentro al canvas. Su un
+    // telefono da 375px quel canvas (760 logici) veniva scalato a 0,43, e la
+    // scala si porta dietro TUTTO il disegno: le etichette scritte a 8px
+    // finivano a 3,44px CSS — misurato — cioè macchie senza forma, e i valori
+    // a 16px a 6,88px. Non era un problema di font troppo piccolo: alzare i px
+    // logici avrebbe solo fatto crescere le etichette dentro a pannelli che già
+    // occupavano 2 x 103 = 207px dei 327 disponibili, il 63% della larghezza,
+    // lasciando al CAMPO 120px — una cella da 12px, metà del bersaglio minimo
+    // per un dito. Il fattore di scala è imposto dalla larghezza del canvas: si
+    // guadagna solo togliendo dal canvas quello che non è campo.
+    //
+    // Il layout COMPATTO disegna quindi SOLO il campo; livello, righe, bug,
+    // prossimo pezzo e debito passano in HTML (#stack-hud), dove il testo si
+    // rende alla dimensione che dichiara — esattamente come già fa la topbar
+    // con punteggio e record.
+    //
+    // Restano due numeri FISSI, scelti una volta sola in initStackGame: dentro
+    // al gioco non entra nessun calcolo che dipenda dalla finestra, nessun
+    // listener di resize, niente da rifare quando il telefono ruota. Rientrando
+    // nel gioco la scelta si rifà, ed è l'unico momento in cui può cambiare.
     var COLS = 10, ROWS = 18, CELL = 28;
-    var CANVAS_W = 760, CANVAS_H = 540;
     var FIELD_W = COLS * CELL;                       // 280
     var FIELD_H = ROWS * CELL;                       // 504
+
+    var WIDE_W = 760, WIDE_H = 540;
+    var COMPACT_W = FIELD_W + 16, COMPACT_H = FIELD_H + 16;   // 296 x 520
+
+    var isCompact = false;
+    var CANVAS_W = WIDE_W, CANVAS_H = WIDE_H;
     var FIELD_X = Math.floor((CANVAS_W - FIELD_W) / 2);
     var FIELD_Y = Math.floor((CANVAS_H - FIELD_H) / 2);
+
+    function pickLayout() {
+        // La soglia guarda anche l'ALTEZZA: col bordo il canvas largo è 546px,
+        // sotto quella misura verrebbe rimpicciolito comunque — anche su una
+        // finestra desktop bassa, dove il problema è identico.
+        var mq = window.matchMedia && window.matchMedia('(max-width: 900px), (max-height: 620px)');
+        isCompact = !!(mq && mq.matches);
+        CANVAS_W = isCompact ? COMPACT_W : WIDE_W;
+        CANVAS_H = isCompact ? COMPACT_H : WIDE_H;
+        FIELD_X = Math.floor((CANVAS_W - FIELD_W) / 2);
+        FIELD_Y = Math.floor((CANVAS_H - FIELD_H) / 2);
+    }
 
     var COLORS = {
         bg: '#050a10',
@@ -67,10 +107,89 @@
     var rafId = null;
     var shakeUntil = 0;     // scossa quando risale il debito
     var flashRows = [];     // righe che lampeggiano perché bloccate da un bug
+    var hud = null;         // riferimenti agli elementi HTML del layout compatto
+    var nextCanvas = null, nextCtx = null;
 
     function T(key, fallback) {
         var t = window.ARCADE_TXT;
         return (t && t[key]) || fallback;
+    }
+
+    // ---- HUD in HTML (solo layout compatto) ------------------------------
+    // Le stesse informazioni dei pannelli disegnati, ma fuori dal canvas: qui
+    // il testo non subisce la scala e resta della dimensione che dichiara.
+    // L'etichetta dei bug è la versione CORTA già presente in ARCADE_TXT
+    // ('BUG' invece di 'BUG SCHIACCIATI'): in una colonna da un terzo di
+    // schermo quella lunga andrebbe a capo o verrebbe tagliata.
+    function buildHud(container) {
+        var el = document.createElement('div');
+        el.id = 'stack-hud';
+        el.innerHTML =
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackLevel', 'LIVELLO') + '</span>' +
+                '<span class="hud-v" id="stack-hud-level" style="color:#ffce15">1</span>' +
+            '</div>' +
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackLines', 'RIGHE') + '</span>' +
+                '<span class="hud-v" id="stack-hud-lines" style="color:#2ecc71">0</span>' +
+            '</div>' +
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackBugsShort', 'BUG') + '</span>' +
+                '<span class="hud-v" id="stack-hud-bugs" style="color:#e74c3c">0</span>' +
+            '</div>' +
+            '<div class="hud-cell hud-next">' +
+                '<span class="hud-k">' + T('stackNext', 'PROSSIMO') + '</span>' +
+                '<canvas id="stack-next-canvas" width="' + (4 * CELL) + '" height="' + (2 * CELL) + '"></canvas>' +
+                '<span class="hud-id" id="stack-hud-nextid"></span>' +
+            '</div>' +
+            '<div class="hud-cell hud-debt">' +
+                '<span class="hud-k">' + T('stackDebt', 'DEBITO TECNICO') + '</span>' +
+                '<span class="hud-bar"><i id="stack-hud-debtbar"></i></span>' +
+                '<span class="hud-id" id="stack-hud-debtleft"></span>' +
+            '</div>';
+        container.appendChild(el);
+
+        nextCanvas = el.querySelector('#stack-next-canvas');
+        nextCtx = nextCanvas ? nextCanvas.getContext('2d') : null;
+        hud = {
+            level: el.querySelector('#stack-hud-level'),
+            lines: el.querySelector('#stack-hud-lines'),
+            bugs: el.querySelector('#stack-hud-bugs'),
+            nextId: el.querySelector('#stack-hud-nextid'),
+            debtBar: el.querySelector('#stack-hud-debtbar'),
+            debtLeft: el.querySelector('#stack-hud-debtleft')
+        };
+    }
+
+    function updateHud() {
+        if (!hud) return;
+        hud.level.textContent = String(level);
+        hud.lines.textContent = String(lines);
+        hud.bugs.textContent = String(bugsSquashed);
+
+        var total = debtInterval();
+        var filled = Math.max(0, Math.min(1, 1 - (piecesToDebt / total)));
+        hud.debtBar.style.width = Math.round(filled * 100) + '%';
+        hud.debtBar.style.background = filled > 0.75 ? '#e74c3c' : '#e67e22';
+        hud.debtLeft.textContent = piecesToDebt + ' ' + T('stackPiecesLeft', 'PEZZI');
+
+        hud.nextId.textContent = nextPiece ? nextPiece.id : '';
+        drawNextPreview();
+    }
+
+    function drawNextPreview() {
+        if (!nextCtx || !nextPiece) return;
+        nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+        var w = pieceWidth(nextPiece.cells), h = pieceHeight(nextPiece.cells);
+        var ox = Math.floor((nextCanvas.width - w * CELL) / 2);
+        var oy = Math.floor((nextCanvas.height - h * CELL) / 2);
+        for (var i = 0; i < nextPiece.cells.length; i++) {
+            drawCell(
+                ox + nextPiece.cells[i][0] * CELL,
+                oy + nextPiece.cells[i][1] * CELL,
+                nextPiece.color, false, false, 0, nextCtx
+            );
+        }
     }
 
     // ---- Costruzione schermo -------------------------------------------
@@ -85,6 +204,12 @@
             gameContainer.style.alignItems = 'center';
             gameContainer.innerHTML = '';
         } else return;
+
+        // innerHTML='' ha appena buttato via l'HUD della partita precedente:
+        // i riferimenti tenuti qui puntano a nodi staccati dal documento e
+        // vanno azzerati, o updateHud scriverebbe nel vuoto.
+        hud = null; nextCanvas = null; nextCtx = null;
+        pickLayout();
 
         var gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
         var highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.stack) ? gs.arcadeHighScores.stack : 0;
@@ -102,6 +227,11 @@
             '</div>';
         gameContainer.appendChild(headerDiv);
 
+        // L'HUD sta FUORI dal wrapper CRT, come la topbar: dentro prenderebbe
+        // scanline e vignettatura, e soprattutto l'animazione di accensione
+        // (scale(1, 0.001)) lo schiaccerebbe insieme al canvas.
+        if (isCompact) buildHud(gameContainer);
+
         var canvasWrapper = document.createElement('div');
         canvasWrapper.style.position = 'relative';
         canvasWrapper.className = 'crt-turn-on crt-effect';
@@ -110,6 +240,7 @@
         canvas.id = 'stack-canvas';
         canvas.width = CANVAS_W;
         canvas.height = CANVAS_H;
+        if (isCompact) canvas.classList.add('compact');
         ctx = canvas.getContext('2d');
         canvasWrapper.appendChild(canvas);
 
@@ -131,6 +262,7 @@
         gameContainer.appendChild(canvasWrapper);
 
         resetState();
+        updateHud();     // l'HUD nasce già coi valori della partita azzerata
         draw();
 
         document.removeEventListener('keydown', handleInput);
@@ -150,6 +282,7 @@
             gameContainer.innerHTML = '';
             gameContainer.style.display = 'none';
         }
+        hud = null; nextCanvas = null; nextCtx = null;
         if (selector) selector.style.display = 'flex';
 
         document.removeEventListener('keydown', handleInput);
@@ -243,6 +376,12 @@
     function pieceWidth(cells) {
         var max = 0;
         for (var i = 0; i < cells.length; i++) if (cells[i][0] > max) max = cells[i][0];
+        return max + 1;
+    }
+
+    function pieceHeight(cells) {
+        var max = 0;
+        for (var i = 0; i < cells.length; i++) if (cells[i][1] > max) max = cells[i][1];
         return max + 1;
     }
 
@@ -590,44 +729,53 @@
         }
     }
 
-    function drawCell(px, py, color, isBug, flashing, now) {
+    // `target` serve solo all'anteprima del prossimo pezzo dell'HUD compatto,
+    // che disegna su un canvas suo. Parametro opzionale in coda invece di
+    // scambiare il ctx del modulo a mano: uno scambio dimenticato lascerebbe
+    // il gioco a disegnare dentro al riquadrino da 112px.
+    function drawCell(px, py, color, isBug, flashing, now, target) {
+        var g = target || ctx;
         if (isBug) {
             // I bug pulsano: devono saltare all'occhio, sono l'unica cosa che
             // chiede un'azione diversa dai tasti.
             var pulse = 0.55 + 0.45 * Math.sin(now / 130);
-            ctx.fillStyle = COLORS.bug;
-            ctx.globalAlpha = pulse;
-            ctx.shadowColor = COLORS.bug;
-            ctx.shadowBlur = 12;
-            ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1;
+            g.fillStyle = COLORS.bug;
+            g.globalAlpha = pulse;
+            g.shadowColor = COLORS.bug;
+            g.shadowBlur = 12;
+            g.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+            g.shadowBlur = 0;
+            g.globalAlpha = 1;
             // Zampette, così è un bug e non un quadrato rosso
-            ctx.strokeStyle = '#2b0a08';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(px + 7, py + 9);  ctx.lineTo(px + CELL - 7, py + CELL - 9);
-            ctx.moveTo(px + CELL - 7, py + 9); ctx.lineTo(px + 7, py + CELL - 9);
-            ctx.stroke();
+            g.strokeStyle = '#2b0a08';
+            g.lineWidth = 2;
+            g.beginPath();
+            g.moveTo(px + 7, py + 9);  g.lineTo(px + CELL - 7, py + CELL - 9);
+            g.moveTo(px + CELL - 7, py + 9); g.lineTo(px + 7, py + CELL - 9);
+            g.stroke();
             return;
         }
 
         if (flashing) {
-            ctx.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(now / 110));
+            g.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(now / 110));
         }
-        ctx.fillStyle = color;
-        ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+        g.fillStyle = color;
+        g.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
         // Smusso: luce in alto a sinistra, ombra in basso a destra
-        ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        ctx.fillRect(px + 2, py + 2, CELL - 4, 3);
-        ctx.fillRect(px + 2, py + 2, 3, CELL - 4);
-        ctx.fillStyle = 'rgba(0,0,0,0.28)';
-        ctx.fillRect(px + 2, py + CELL - 5, CELL - 4, 3);
-        ctx.fillRect(px + CELL - 5, py + 2, 3, CELL - 4);
-        ctx.globalAlpha = 1;
+        g.fillStyle = 'rgba(255,255,255,0.22)';
+        g.fillRect(px + 2, py + 2, CELL - 4, 3);
+        g.fillRect(px + 2, py + 2, 3, CELL - 4);
+        g.fillStyle = 'rgba(0,0,0,0.28)';
+        g.fillRect(px + 2, py + CELL - 5, CELL - 4, 3);
+        g.fillRect(px + CELL - 5, py + 2, 3, CELL - 4);
+        g.globalAlpha = 1;
     }
 
     function drawPanels() {
+        // Nel layout compatto questi dati stanno in #stack-hud: qui non c'è
+        // spazio dove metterli, il canvas è largo quanto il campo.
+        if (isCompact) return;
+
         ctx.textAlign = 'left';
 
         // --- Pannello sinistro: statistiche ---
@@ -692,6 +840,11 @@
     }
 
     function updateScoreUI() {
+        // Ogni punto in cui cambia il punteggio cambia anche almeno uno degli
+        // altri contatori (righe, bug, livello, debito): agganciare l'HUD qui
+        // evita di doverlo richiamare sparso in mezza dozzina di funzioni.
+        updateHud();
+
         var el = document.getElementById('stack-score');
         if (!el) return;
         var gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;

@@ -62,7 +62,7 @@
 	$labels["fbintro_p1"] = "Apri <b style=\"color:#3498db\">Aiuto</b> nella barra in alto, poi la scheda <b style=\"color:#3498db\">Segnala</b>.";
 	$labels["fbintro_p2"] = "Scegli se è un <b>bug</b>, un'<b>idea</b> o un <b>miglioramento</b>.";
 	$labels["fbintro_p3"] = "Riassumi in una frase. Se è un bug, scrivi <b>cosa stavi facendo</b> e <b>cosa ti aspettavi</b>: è quello che ci fa trovare il problema.";
-	$labels["fbintro_privacy"] = "Alleghiamo in automatico versione, lingua e browser. Nessun dato sensibile, nessuna email richiesta.";
+	$labels["fbintro_privacy"] = "Alleghiamo in automatico versione, lingua e risoluzione dello schermo. Nessun dato sensibile, nessuna email richiesta.";
 	$labels["fbintro_btn_apri"] = "Provo subito";
 	$labels["fbintro_btn_ok"] = "Ho capito";
 	$labels["help_menu_titolo"] = "Aiuto";

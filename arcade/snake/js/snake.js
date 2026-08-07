@@ -1,6 +1,34 @@
 // arcade/snake/js/snake.js
 
 (function () {
+    // ---- Campo di gioco: dimensione LOGICA fissa ------------------------
+    // Il campo era ricavato dalla finestra (min(1100, innerWidth - 60)
+    // arrotondato alla griglia). Misurato: su un telefono da 375px restavano 15
+    // colonne, e siccome lo snake nasce lungo 3 e parte verso destra, una
+    // partita lasciata andare sbatteva nel muro in 1,1 secondi. Lo stesso codice
+    // su desktop dava 55 colonne e 3,3 secondi. Non era un gioco che si adattava
+    // allo schermo: erano giochi diversi, con record che finivano nella stessa
+    // classifica pur non essendo confrontabili.
+    //
+    // La soluzione ovvia — alzare il minimo su mobile — non basta, perché il
+    // campo resterebbe legato alla finestra: cambierebbe ancora fra telefono,
+    // tablet e desktop, e pure ruotando lo schermo o facendo comparire la barra
+    // dell'indirizzo a metà partita. Si fa invece come Stack Overflow
+    // (arcade/stack/js/stack.js, che nel suo commento indica proprio snake come
+    // "la trappola"): dimensione logica FISSA, scelta qui una volta sola, e a
+    // scalare il canvas ci pensa il CSS (#arcade-active-game-container canvas =
+    // max-width/height 100%). Nessun listener di resize, niente da ricalcolare.
+    //
+    // Quante colonne, però, non è libero. La scala si porta dietro tutto il
+    // disegno, ed è la LARGHEZZA a imporla: su quel telefono al canvas restano
+    // ~333px, quindi la cella a schermo misura 333/colonne. Con le 760 logiche
+    // di stack (38 colonne) la cella sarebbe 8,8px — misurato — cioè meno della
+    // metà dei 20px di prima: il campo sarebbe corretto e illeggibile insieme.
+    // 28 colonne tengono la cella a ~11,9px sul telefono e danno un campo quasi
+    // quadrato, che è anche la forma classica dello snake. L'altezza resta 540
+    // come negli altri cabinati 2D (space, asteroids, stack in layout largo).
+    const COLS = 28, ROWS = 27;
+
     const CONFIG = {
         gridSize: 20,
         speed: 110,
@@ -35,9 +63,6 @@
             gameContainer.innerHTML = '';
         } else return;
 
-        const maxWidth = Math.min(1100, window.innerWidth - 60);
-        const canvasWidth = Math.floor(maxWidth / CONFIG.gridSize) * CONFIG.gridSize;
-
         const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
         const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.snake) ? gs.arcadeHighScores.snake : 0;
 
@@ -63,8 +88,8 @@
 
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
-        canvas.width = canvasWidth;
-        canvas.height = 540;
+        canvas.width = COLS * CONFIG.gridSize;   // 560
+        canvas.height = ROWS * CONFIG.gridSize;  // 540
         // NON fissare width/height inline sul wrapper: lo lasciamo al layout flex condiviso
         // (.crt-effect = width:100% + flex:1) come gli altri giochi, così il canvas SCALA
         // sempre per stare nel contenitore (CSS max-width/height:100%) e si adatta al
@@ -113,8 +138,15 @@
 
     window.startSnakeRun = function () {
 
-        const startY = Math.floor((canvas.height / CONFIG.gridSize) / 2);
-        const startX = Math.floor((canvas.width / CONFIG.gridSize) / 2) - 2;
+        // Partenza a un quarto da sinistra, non al centro. Con il campo legato
+        // alla finestra il centro era l'unica scelta sensata (non si sapeva
+        // quanto fosse largo); ora che il campo è fisso si può dare allo snake
+        // una rincorsa vera: nasce lungo 3 e ha davanti quasi tutto il campo.
+        // È metà del difetto che si stava correggendo — "sbatte quasi subito" —
+        // e da sola la larghezza non la risolveva: al centro di 28 colonne la
+        // partita lasciata andare finiva comunque in 1,5s.
+        const startY = Math.floor(ROWS / 2);
+        const startX = Math.floor(COLS / 4);
         snake = [{ x: startX, y: startY }, { x: startX - 1, y: startY }, { x: startX - 2, y: startY }];
 
         direction = 'right';

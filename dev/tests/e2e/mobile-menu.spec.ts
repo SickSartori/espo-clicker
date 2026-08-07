@@ -314,4 +314,58 @@ test.describe('Finestre mobile: schermo pieno uniforme', () => {
 
     expect(parziali, 'finestre non a schermo pieno').toEqual([]);
   });
+
+  // Schermo LARGO: e' il caso che aveva fatto passare inosservato il difetto.
+  // Configurazione e Menu portano il tetto in uno style inline (400/420px):
+  // sotto i 400px di viewport quel tetto non morde e tutto sembra a posto,
+  // sopra restano strisce di gioco visibili ai lati.
+  test.describe('anche su schermo largo', () => {
+    test.use({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true });
+
+    test("nessuna finestra resta piu' stretta del viewport a 430x932", async ({ page }) => {
+      await boot(page);
+      await page.evaluate(() => {
+        const w = window as any;
+        const gs = w.EspooClicker.getGameState();
+        gs.seenFeedbackIntro = true; w.shouldShowFeedbackIntro = false;
+        gs.totalResets = 3;
+        w.updateUI();
+      });
+      await page.waitForTimeout(600);
+
+      const APRI: Record<string, string> = {
+        'settings-modal': 'open-settings-btn',
+        'user-hub-modal': 'open-user-hub-btn',
+        'achievements-modal': 'open-achievements-btn',
+        'skins-modal': 'open-skins-btn',
+        'help-modal': 'open-help-btn',
+      };
+      const stretti: string[] = [];
+      for (const [id, btn] of Object.entries(APRI)) {
+        await page.evaluate((b) => (document.getElementById(b) as HTMLElement).click(), btn);
+        await page.waitForTimeout(450);
+        const largo = await page.evaluate((mid) => {
+          const c = document.querySelector('#' + mid + ' .modal-content') as HTMLElement;
+          return Math.round(c.getBoundingClientRect().width) >= window.innerWidth - 1;
+        }, id);
+        if (!largo) stretti.push(id);
+        await page.evaluate(() => {
+          document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+          document.body.classList.remove('modal-open');
+        });
+        await page.waitForTimeout(180);
+      }
+
+      // Il menu mobile ha il proprio fondale: si apre a parte
+      await page.evaluate(() => (document.getElementById('open-mobile-menu-btn') as HTMLElement).click());
+      await page.waitForTimeout(450);
+      const menuLargo = await page.evaluate(() => {
+        const c = document.querySelector('#mobile-menu-modal .modal-content, #mobile-menu-modal .mm-sheet') as HTMLElement;
+        return Math.round(c.getBoundingClientRect().width) >= window.innerWidth - 1;
+      });
+      if (!menuLargo) stretti.push('mobile-menu-modal');
+
+      expect(stretti, "finestre piu' strette del viewport").toEqual([]);
+    });
+  });
 });
