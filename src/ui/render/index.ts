@@ -1958,11 +1958,13 @@ function renderPrestigeHubCards() {
     setCardState(formatCard, canFormat ? 'is-ready' : (isQ ? 'is-locked' : 'is-mystery'));
 
     if (canFormat) {
-        // Formula INVARIATA (era in updateWallets/openFormatHandler):
-        // qbit = 1 + floor(sqrt(prestigePoints / 10000))
-        const tokenDiv = (store.gameState.prestigePoints || new w.Decimal(0)).div(10000);
-        const bonusQbits = tokenDiv.gte(1) ? tokenDiv.sqrt().floor() : new w.Decimal(0);
-        const qBitsEarned = new w.Decimal(1).add(bonusQbits);
+        // Stessa funzione che esegue la formattazione (logic.ts): l'anteprima era
+        // una copia della formula scritta a mano qui, e due copie divergono. Base =
+        // token guadagnati nel ciclo, non il saldo spendibile — vedi prestige.ts.
+        const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(
+            w.Decimal,
+            store.gameState.lifetimePrestigePoints || new w.Decimal(0),
+        );
         setTextIfChanged('format-gain-qbit', `+${formatNumber(qBitsEarned)}`);
     } else {
         const counterText = `${Math.min(resets, 20)}/20`;

@@ -879,6 +879,12 @@ function buyPrestigeUpgrade(upgradeKey: any) {
     if (data.isCounted) {
         if (store.gameState.prestigePoints.lt(cost))
             return;
+        // maxLevel era rispettato solo dalla UI (il pulsante passa a "MAX" e non
+        // si preme più): il tetto non esisteva davvero, e la funzione resta
+        // esposta su window. Con un tetto che serve al bilanciamento — Bug Bounty
+        // — deve valere qui, dove i token vengono scalati.
+        if (data.maxLevel && ((state && state.count) || 0) >= data.maxLevel)
+            return;
     }
     else {
         if (store.gameState.prestigePoints.lt(cost) || state.purchased)
@@ -2000,7 +2006,13 @@ function executeFormattingSequence() {
 
     // Calcolo QBits da salvare
     // F6 -> F8: formula in EspoV3.prestige (1 garantito + sqrt(token/10k) floored).
-    const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(w.Decimal, store.gameState.prestigePoints);
+    // Base = token GUADAGNATI nel ciclo, non il saldo residuo: vedi prestige.ts.
+    // Deve restare identica a quella dell'anteprima (render/index.ts), altrimenti
+    // il numero promesso e quello incassato tornano a divergere.
+    const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(
+        w.Decimal,
+        store.gameState.lifetimePrestigePoints || new w.Decimal(0),
+    );
 
     // Salvataggio Dati Super-Persistenti
     const superPersistentData: any = {

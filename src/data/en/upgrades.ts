@@ -22,7 +22,7 @@ export const prestigeUpgrades: Record<string, any> = {
     outsourcing: { name: "Outsourcing", desc: "Reduces base costs by 5% per level." },
     accelerazione: { name: "Acceleration", desc: "Start with +1 QA Assistant." },
     crunchTime: { desc: "Active Ability: Espo flies into a rage! BPS x7 for 30s." },
-    bugBounty: { name: "Bug Bounty", desc: "Critical Tickets (Golden Bug) are worth +20% more per level." },
+    bugBounty: { name: "Bug Bounty", desc: "Critical Tickets (Golden Bug) are worth +10% more per level (max 10)." },
     ticketPremium: { name: "Ticket Premium", desc: "Critical Tickets appear 2x as often." },
     reteContatti: { name: "Contact Network", desc: "Reduces the ESPO FURY cooldown by 30s per level." },
     esperienzaAccumulata: { name: "Accumulated Experience", desc: "Raises click value by +2% per level (permanent)." },

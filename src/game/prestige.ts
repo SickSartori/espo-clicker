@@ -109,10 +109,19 @@ export function prestigeTeamCarryover(input: TeamCarryoverInput): Record<string,
 
 // --- Q-Bits guadagnati dalla Formattazione ---
 /**
- * 1 garantito + sqrt(prestigePoints/10000).floor() se il rapporto è ≥ 1.
+ * 1 garantito + sqrt(token/10000).floor() se il rapporto è ≥ 1.
+ *
+ * I token sono quelli GUADAGNATI dal ciclo corrente (`lifetimePrestigePoints`),
+ * non il saldo spendibile. Con il saldo la ricompensa scendeva ogni volta che si
+ * comprava qualcosa nel negozio Promozione — cioè spendere i token, che è il
+ * loro scopo, tagliava i Q-bit: da qui la segnalazione «alla prima formattazione
+ * ne prometteva 10, dopo qualche acquisto ne dava 3». La formattazione azzera
+ * `lifetimePrestigePoints` insieme al resto (non è fra i dati super-persistenti),
+ * quindi il conto riparte da zero a ogni NG+ e la ricompensa resta legata a
+ * quanto si è prodotto in questo ciclo.
  */
-export function formatQbitsEarned(D: DecimalCtor, prestigePoints: BigInput): Big {
-  const tokenDiv = new D(prestigePoints).div(10000);
+export function formatQbitsEarned(D: DecimalCtor, lifetimePrestigePoints: BigInput): Big {
+  const tokenDiv = new D(lifetimePrestigePoints).div(10000);
   let bonusQbits = new D(0);
   if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
   return new D(1).add(bonusQbits);
