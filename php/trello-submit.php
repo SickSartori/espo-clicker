@@ -127,8 +127,24 @@ $env      = require __DIR__ . '/config.php';
 $isProd   = (($env['instanceName'] ?? '') === 'production');
 $labels   = $config['labels'] ?? [];
 $idLabels = [];
-if (!$isProd && !empty($labels['test'])) {
-    $idLabels[] = $labels['test'];
+if (!$isProd) {
+    if (!empty($labels['test'])) {
+        $idLabels[] = $labels['test'];
+    } else {
+        // Fuori produzione l'etichetta e' attesa: se la voce manca, il ramo
+        // sopra non fa nulla e la card nasce nuda, indistinguibile da una di
+        // produzione. E' successo davvero (07/08/2026, area di test) senza
+        // lasciare traccia da nessuna parte, perche' "nessuna etichetta" e'
+        // anche il comportamento VOLUTO in produzione: da solo il codice non
+        // puo' distinguere "spento apposta" da "configurazione mancante".
+        // Percio' lo dice solo qui, dove l'assenza e' certamente un difetto.
+        // La voce vive in php/secrets.php (o nel vecchio php/trello-config.php,
+        // su cui secrets-load.php ripiega): entrambi gitignored e presenti SOLO
+        // sul server, quindi nessun deploy ce la porta — va caricata a mano.
+        error_log("[trello-submit] instanceName='" . ($env['instanceName'] ?? '?')
+            . "' ma labels['test'] non e' configurata: card creata senza etichetta."
+            . ' Aggiungere la voce alla sezione trello di php/secrets.php sul server.');
+    }
 }
 
 // ── Chiamata Trello ─────────────────────────────────────────
