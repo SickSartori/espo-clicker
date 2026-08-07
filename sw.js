@@ -1,10 +1,10 @@
 // ============================================================
-// ESPO CLICKER - Service Worker v3.1.0
+// ESPO CLICKER - Service Worker v3.1.1
 // Auto-update: rileva nuova versione → pulisce cache → ricarica
 // Bundle JS/CSS, IndexedDB save V9
 // ============================================================
 
-const CACHE_VERSION = 'espo-v3.1.0';
+const CACHE_VERSION = 'espo-v3.1.1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
