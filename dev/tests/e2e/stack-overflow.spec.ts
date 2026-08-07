@@ -36,6 +36,20 @@ async function bootStack(page: Page): Promise<void> {
     w.startStackRun();
     w.__stackDebug.setPiece(null);   // niente pezzo in caduta durante i test
   });
+
+  // Il wrapper .crt-turn-on parte da scale(1, 0.001): finche' l'animazione di
+  // accensione e' in corso il canvas e' schiacciato e le sue coordinate
+  // schermo sono sbagliate di un fattore ~6 (cella misurata 2px invece di 12).
+  // Chi fa click reali deve aspettare che l'altezza si stabilizzi, o il tocco
+  // cade nel posto sbagliato in modo intermittente.
+  await page.waitForFunction(() => {
+    const c = document.getElementById('stack-canvas');
+    if (!c) return false;
+    const h = c.getBoundingClientRect().height;
+    const prec = (window as any).__hPrec;
+    (window as any).__hPrec = h;
+    return h > 100 && prec !== undefined && Math.abs(h - prec) < 0.5;
+  }, undefined, { timeout: 10_000, polling: 100 });
 }
 
 /** Plancia vuota con, in fondo, una riga piena (opzionalmente con un bug). */

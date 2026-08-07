@@ -427,18 +427,52 @@
     function handleSquash(e) {
         if (!isRunning || !canvas) return;
         var rect = canvas.getBoundingClientRect();
-        // Il canvas è scalato dal CSS: riporta il click alle coordinate logiche.
-        var sx = CANVAS_W / rect.width;
-        var sy = CANVAS_H / rect.height;
-        var px = (e.clientX - rect.left) * sx;
-        var py = (e.clientY - rect.top) * sy;
+        // Il canvas è scalato dal CSS: riporta il tocco alle coordinate logiche.
+        // getBoundingClientRect misura il BORDER box, ma i pixel del disegno
+        // stanno nel content box: senza sottrarre il bordo (3px, stack.css) il
+        // tocco risulta spostato di ~7 unità logiche, cioè un quarto di cella.
+        var cs = window.getComputedStyle(canvas);
+        var bl = parseFloat(cs.borderLeftWidth) || 0;
+        var bt = parseFloat(cs.borderTopWidth) || 0;
+        var br = parseFloat(cs.borderRightWidth) || 0;
+        var bb = parseFloat(cs.borderBottomWidth) || 0;
+        var innerW = rect.width - bl - br;
+        var innerH = rect.height - bt - bb;
+        if (innerW <= 0 || innerH <= 0) return;
+
+        var px = (e.clientX - rect.left - bl) * (CANVAS_W / innerW);
+        var py = (e.clientY - rect.top - bt) * (CANVAS_H / innerH);
 
         var c = Math.floor((px - FIELD_X) / CELL);
         var r = Math.floor((py - FIELD_Y) / CELL);
-        if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return;
 
-        var cell = board[r][c];
-        if (!cell || !cell.bug) return;
+        var cell = (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? board[r][c] : null;
+
+        // Se il tocco non ha centrato un bug, si cerca il bug più vicino entro
+        // una cella. Su telefono il campo è scalato a ~0.43: una cella misura
+        // circa 12px sullo schermo, la metà del bersaglio minimo raccomandato
+        // (24px) e un quarto dei 44px che il progetto usa altrove. Senza questa
+        // tolleranza la meccanica propria del gioco — schiacciare i bug col
+        // dito — sarebbe un esercizio di mira, non di gioco.
+        if (!cell || !cell.bug) {
+            var mgx = FIELD_X + (c + 0.5) * CELL;   // centro della cella toccata
+            var mgy = FIELD_Y + (r + 0.5) * CELL;
+            var best = null, bestD = CELL * CELL * 1.5; // raggio ~1.2 celle
+            for (var rr = r - 1; rr <= r + 1; rr++) {
+                if (rr < 0 || rr >= ROWS) continue;
+                for (var cc = c - 1; cc <= c + 1; cc++) {
+                    if (cc < 0 || cc >= COLS) continue;
+                    var q = board[rr][cc];
+                    if (!q || !q.bug) continue;
+                    var dx = (FIELD_X + (cc + 0.5) * CELL) - mgx;
+                    var dy = (FIELD_Y + (rr + 0.5) * CELL) - mgy;
+                    var d = dx * dx + dy * dy;
+                    if (d < bestD) { bestD = d; best = q; }
+                }
+            }
+            if (!best) return;
+            cell = best;
+        }
 
         e.preventDefault();
         cell.bug = false;

@@ -467,6 +467,10 @@
 
     // Chiude il gioco attualmente in esecuzione (se presente).
     window.exitArcadeCurrentGame = function () {
+        // Il game over lascia un timer di ritorno automatico: se non lo si
+        // annulla qui, scade DOPO che l'utente ha avviato un altro cabinato e
+        // chiude quello, non questo.
+        if (typeof window._arcadeCancelGameOver === 'function') window._arcadeCancelGameOver();
         const k = window._arcadeRunningGame;
         if (k && GAME_EXIT[k] && typeof window[GAME_EXIT[k]] === 'function') {
             try { window[GAME_EXIT[k]](); } catch (e) {}
@@ -480,6 +484,9 @@
     // Avvia il gioco attualmente in ANTEPRIMA (chiamato dal bottone GIOCA).
     // build() costruisce lo schermo, run() avvia subito la partita (salta l'AVVIA).
     window.launchArcadeGame = function () {
+        // Come sopra: si puo' arrivare qui anche senza passare da exit (click
+        // diretto su un'altra voce del menu mentre e' a schermo un game over).
+        if (typeof window._arcadeCancelGameOver === 'function') window._arcadeCancelGameOver();
         const key = window._arcadeSelectedGame;
         if (!key || !GAME_BUILD[key]) return;
         const buildFn = window[GAME_BUILD[key]];
@@ -924,6 +931,21 @@ window.showArcadeGameOver = function (opts) {
         if (p >= 1) clearInterval(iv);
     }, 25);
 
-    // Ritorno automatico al menu (sempre): annullato solo se si clicca RESTART.
-    autoTimer = setTimeout(function () { try { onReturn(); } catch (e) {} }, delay);
+    // Ritorno automatico al menu. Annullabile da RESTART (sopra) e da chi
+    // cambia gioco: senza, il timer di una partita finita sopravvive
+    // all'uscita e, scadendo, chiude il cabinato avviato NEL FRATTEMPO
+    // rispedendo l'utente al menu senza spiegazione. Percorso reale:
+    // game over -> tocco un'altra voce -> dopo qualche secondo si chiude.
+    // Il conteggio del punteggio va fermato con lui, o continua a scrivere
+    // su un overlay che non e' piu' suo.
+    autoTimer = setTimeout(function () {
+        window._arcadeCancelGameOver = null;
+        try { onReturn(); } catch (e) {}
+    }, delay);
+
+    window._arcadeCancelGameOver = function () {
+        if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+        clearInterval(iv);
+        window._arcadeCancelGameOver = null;
+    };
 };

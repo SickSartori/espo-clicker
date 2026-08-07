@@ -1090,6 +1090,19 @@ button img {
        centra il proprio contenuto nello spazio che avanza.
        Non vale per le liste (Obiettivi, Skin, Classifica): quelle partono
        dall'alto e scorrono, ed e' giusto cosi'. */
+    /* BADGE CLOUD sopra la barra di navigazione.
+       Il badge e' creato via JS con 'bottom: 14px' inline (src/app/boot.ts),
+       valore pensato per il desktop dove in fondo non c'e' nulla. Su telefono
+       finisce SOPRA #mobile-nav-bar (z-index 11000 contro 2000) e copre i due
+       pulsanti centrali — CONSOLE e TEAM diventano intoccabili: misurati 45px
+       di sovrapposizione e il 76% dell'area dei due bottoni, con
+       elementFromPoint che restituisce il badge. Non c'e' via di fuga: nessuna
+       navigazione a swipe e il menu non porta a quelle due colonne.
+       58px di barra + 14 di margine originale + la safe-area del telefono. */
+    html body #cloud-sync-badge {
+        bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+
     html body div#feedback-intro-modal div.settings-content {
         /* `display: flex` serve davvero: la regola generica di .settings-content
            qui sotto imposta solo `flex: 1` + `overflow-y: auto`, cioe' lo rende
