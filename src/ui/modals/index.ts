@@ -908,11 +908,14 @@ export function initModals(): void {
             }
 
             // Il popup "come si segnala" si accoda alle note di rilascio, mai
-            // sovrapposto: parte solo quando quelle vengono chiuse.
+            // sovrapposto: parte solo quando quelle vengono chiuse. Passa da
+            // maybeOpenFeedbackIntro e non da openFeedbackIntro diretto, così i
+            // controlli (finestre a schermo, click fatti, note ancora in arrivo)
+            // sono gli stessi di ogni altra via d'ingresso.
             if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
                 setTimeout(() => {
-                    if (w.EspooClicker && typeof w.EspooClicker.openFeedbackIntro === 'function') {
-                        w.EspooClicker.openFeedbackIntro();
+                    if (w.EspooClicker && typeof w.EspooClicker.maybeOpenFeedbackIntro === 'function') {
+                        w.EspooClicker.maybeOpenFeedbackIntro();
                     }
                 }, 350);
             }
@@ -1635,6 +1638,14 @@ export function initModals(): void {
                         });
                     } else if (w.shouldShowReleaseNotesOnLoad) {
                         if (Game.openReleaseNotes) Game.openReleaseNotes();
+                    } else if (typeof Game.maybeOpenFeedbackIntro === 'function') {
+                        // Ramo che MANCAVA: qui ci si passa dopo un login esplicito, e
+                        // senza note di rilascio da mostrare la cascata finiva a vuoto.
+                        // Il popup "come si segnala" esisteva solo nel ramo gemello di
+                        // boot.ts, che copre il percorso F5-con-sessione — da cui la
+                        // segnalazione «al primo avvio non sempre appare»: dipendeva da
+                        // come eri entrato nel gioco.
+                        Game.maybeOpenFeedbackIntro({ standalone: true });
                     }
                 };
 

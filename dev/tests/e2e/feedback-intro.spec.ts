@@ -133,6 +133,98 @@ test.describe('Popup segnalazioni', () => {
     expect(r.popup, 'niente popup a chi non ha ancora cliccato').toBe('none');
   });
 
+  // --- Ordine indipendente dai tempi di rete (segnalazione 07/08/2026) ---
+  // I test qui sopra chiamano openFeedbackIntro, che è l'apertura nuda. La
+  // POLITICA (quando è lecito aprire) sta in maybeOpenFeedbackIntro, ed è
+  // l'unico punto da cui passano le due cascate di avvio. Serviva perché la
+  // decisione veniva presa quando si programmava il timer, non quando scattava:
+  // il save cloud arriva dopo il giro di rete e può accendere
+  // shouldShowReleaseNotesOnLoad quando il popup è già in volo.
+
+  test('a note aperte rifiuta, e non brucia il flag: riparte alla loro chiusura', async ({ page }) => {
+    await bootGame(page);
+
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
+      w.shouldShowFeedbackIntro = true;
+
+      w.EspooClicker.openReleaseNotes();
+      await new Promise((res) => setTimeout(res, 400));
+
+      // Il timer programmato dalla cascata scatta ORA, a note già a schermo.
+      const haAperto = w.EspooClicker.maybeOpenFeedbackIntro();
+      await new Promise((res) => setTimeout(res, 300));
+      const sovrapposto = getComputedStyle(document.getElementById('feedback-intro-modal')!).display;
+      const flagVivo = w.shouldShowFeedbackIntro;
+
+      (document.querySelector('#release-notes-modal .modal-close-btn') as HTMLElement).click();
+      await new Promise((res) => setTimeout(res, 900));
+
+      return {
+        haAperto, sovrapposto, flagVivo,
+        dopo: getComputedStyle(document.getElementById('feedback-intro-modal')!).display,
+      };
+    });
+
+    expect(r.haAperto, 'deve rifiutare').toBe(false);
+    expect(r.sovrapposto, 'mai sopra le note — era la segnalazione').toBe('none');
+    expect(r.flagVivo, 'il rifiuto non consuma il flag, o il popup sparirebbe per sempre').toBe(true);
+    expect(r.dopo, 'e alla chiusura delle note si apre').toBe('flex');
+  });
+
+  test('rifiuta anche se le note sono solo ANNUNCIATE, non ancora a schermo', async ({ page }) => {
+    await bootGame(page);
+
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
+      w.shouldShowFeedbackIntro = true;
+      // È lo stato che lascia loadCloudData quando il save cloud arriva tardi:
+      // niente ancora a schermo, ma note in arrivo.
+      w.shouldShowReleaseNotesOnLoad = true;
+
+      const haAperto = w.EspooClicker.maybeOpenFeedbackIntro();
+      await new Promise((res) => setTimeout(res, 300));
+      return { haAperto, popup: getComputedStyle(document.getElementById('feedback-intro-modal')!).display };
+    });
+
+    expect(r.haAperto).toBe(false);
+    expect(r.popup, 'le note devono venire prima, anche se tardano ad aprirsi').toBe('none');
+  });
+
+  test('a schermo libero e con le condizioni giuste, apre', async ({ page }) => {
+    await bootGame(page);
+
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
+      w.shouldShowFeedbackIntro = true;
+      w.shouldShowReleaseNotesOnLoad = false;
+      document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+
+      const conClick = w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
+      const aperto = getComputedStyle(document.getElementById('feedback-intro-modal')!).display;
+
+      // Il vincolo sui click vale SOLO per l'apertura autonoma...
+      gs.seenFeedbackIntro = false; w.shouldShowFeedbackIntro = true; gs.totalClicks = 0;
+      document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+      const senzaClickDaSolo = w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
+      // ...non dopo le note: chi aggiorna lo vede anche con zero click.
+      const senzaClickDopoNote = w.EspooClicker.maybeOpenFeedbackIntro();
+
+      return { conClick, aperto, senzaClickDaSolo, senzaClickDopoNote };
+    });
+
+    expect(r.conClick).toBe(true);
+    expect(r.aperto).toBe('flex');
+    expect(r.senzaClickDaSolo, 'da solo non disturba chi non ha ancora cliccato').toBe(false);
+    expect(r.senzaClickDopoNote, 'ma dopo le note si apre lo stesso').toBe(true);
+  });
+
   test('cheat «simula primo avvio»: riabbassa la versione senza toccare i progressi', async ({ page }) => {
     await bootGame(page);
     page.on('dialog', (d) => d.accept());
