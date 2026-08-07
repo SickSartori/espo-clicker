@@ -161,3 +161,48 @@ test.describe('Popup segnalazioni', () => {
     expect(dopo.click, 'i progressi non si toccano').toBe(1234);
   });
 });
+
+test.describe('Popup segnalazioni su mobile', () => {
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
+
+  test('a schermo pieno come le altre, ma col contenuto centrato', async ({ page }) => {
+    // Su mobile TUTTE le finestre sono a schermo pieno: coerenza voluta.
+    // Per un messaggio breve però il contenuto restava incollato sotto
+    // l'intestazione con mezzo schermo vuoto. Si centra il CORPO dentro la
+    // finestra piena, senza rimpicciolire la finestra.
+    // Il `display: flex` nella regola CSS non è decorativo: .settings-content
+    // è solo un flex ITEM (flex:1 + overflow), e senza renderlo CONTAINER
+    // `justify-content` non ha effetto.
+    await bootGame(page);
+    await page.evaluate(() => {
+      document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+      (window as any).EspooClicker.openFeedbackIntro();
+    });
+    await page.waitForTimeout(700);
+
+    const r = await page.evaluate(() => {
+      const c = document.querySelector('#feedback-intro-modal .modal-content') as HTMLElement;
+      const body = document.querySelector('#feedback-intro-modal .settings-content') as HTMLElement;
+      const rc = c.getBoundingClientRect();
+      const rb = body.getBoundingClientRect();
+      const primo = body.firstElementChild!.getBoundingClientRect();
+      const ultimo = body.lastElementChild!.getBoundingClientRect();
+      const ok = document.getElementById('fbintro-ok')!.getBoundingClientRect();
+      return {
+        w: Math.round(rc.width),
+        h: Math.round(rc.height),
+        sopraContenuto: Math.round(primo.top - rb.top),
+        sottoContenuto: Math.round(rb.bottom - ultimo.bottom),
+        bottoniDentro: ok.bottom <= window.innerHeight && ok.top >= 0,
+      };
+    });
+
+    // Schermo pieno, come tutte le altre finestre
+    expect(r.w, 'larghezza piena').toBeGreaterThanOrEqual(374);
+    expect(r.h, 'altezza piena').toBeGreaterThanOrEqual(810);
+    // ...ma il contenuto centrato nello spazio disponibile
+    expect(Math.abs(r.sopraContenuto - r.sottoContenuto), 'corpo centrato').toBeLessThanOrEqual(4);
+    expect(r.sopraContenuto, "non incollato sotto l'intestazione").toBeGreaterThan(20);
+    expect(r.bottoniDentro, 'i pulsanti restano nello schermo').toBe(true);
+  });
+});

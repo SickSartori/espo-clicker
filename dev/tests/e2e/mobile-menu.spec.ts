@@ -261,3 +261,57 @@ test.describe('Desktop invariato', () => {
     expect(r.opzioni).toBe(true);
   });
 });
+
+test.describe('Finestre mobile: schermo pieno uniforme', () => {
+  // Senza questa riga il blocco gira a viewport DESKTOP, dove le finestre non
+  // sono (giustamente) a schermo pieno: il test fallirebbe accusando il codice
+  // di un difetto che non ha.
+  test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
+
+  test('nessuna finestra fa eccezione alla regola dello schermo pieno', async ({ page }) => {
+    // Il Guardaroba era l'unica a restare 356x731 dentro uno schermo 375x812:
+    // `.skins-modal-v3` dichiara `max-height: 90vh !important` e
+    // `border-radius: 8px !important` SENZA media query, quindi valevano anche
+    // su telefono e battevano la regola generale `height: 100dvh`.
+    await boot(page);
+    await page.evaluate(() => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.seenFeedbackIntro = true; w.shouldShowFeedbackIntro = false;
+      gs.totalResets = 3;
+      if (gs.skins) gs.skins.unlocked = ['default', 'espo3', 'espobit'];
+      w.updateUI();
+    });
+    await page.waitForTimeout(700);
+
+    const APRI: Record<string, string> = {
+      'achievements-modal': 'open-achievements-btn',
+      'skins-modal': 'open-skins-btn',
+      'leaderboard-modal': 'open-leaderboard-btn',
+      'stats-modal': 'open-stats-btn',
+      'settings-modal': 'open-settings-btn',
+      'help-modal': 'open-help-btn',
+      'prestige-hub-modal': 'open-prestige-hub-btn',
+      'user-hub-modal': 'open-user-hub-btn',
+    };
+
+    const parziali: string[] = [];
+    for (const [id, btn] of Object.entries(APRI)) {
+      await page.evaluate((b) => (document.getElementById(b) as HTMLElement).click(), btn);
+      await page.waitForTimeout(500);
+      const pieno = await page.evaluate((mid) => {
+        const c = document.querySelector('#' + mid + ' .modal-content') as HTMLElement;
+        const r = c.getBoundingClientRect();
+        return Math.round(r.width) >= window.innerWidth - 1 && Math.round(r.height) >= window.innerHeight - 1;
+      }, id);
+      if (!pieno) parziali.push(id);
+      await page.evaluate(() => {
+        document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+        document.body.classList.remove('modal-open');
+      });
+      await page.waitForTimeout(200);
+    }
+
+    expect(parziali, 'finestre non a schermo pieno').toEqual([]);
+  });
+});

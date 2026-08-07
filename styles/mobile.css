@@ -1084,6 +1084,23 @@ button img {
         overflow: hidden;
     }
 
+    /* Finestre a schermo pieno con contenuto CORTO: il messaggio non deve
+       restare incollato sotto l'intestazione con mezzo schermo vuoto.
+       La finestra resta piena — coerente con tutte le altre — ma il corpo
+       centra il proprio contenuto nello spazio che avanza.
+       Non vale per le liste (Obiettivi, Skin, Classifica): quelle partono
+       dall'alto e scorrono, ed e' giusto cosi'. */
+    html body div#feedback-intro-modal div.settings-content {
+        /* `display: flex` serve davvero: la regola generica di .settings-content
+           qui sotto imposta solo `flex: 1` + `overflow-y: auto`, cioe' lo rende
+           un flex ITEM ma non un flex CONTAINER — e senza container
+           `justify-content` non ha alcun effetto (provato: il contenuto restava
+           incollato in alto). */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
     html body .settings-content,
     html body #achievement-list,
     html body #leaderboard-list,
