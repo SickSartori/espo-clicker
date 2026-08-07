@@ -175,6 +175,7 @@ export const texts: Record<string, any> = {
         removed: "Friend removed",
         removeConfirm: "Remove this friend?",
         removeFriend: "Remove friend",
+        openProfile: "Open profile",
         back: "Back",
         locker: "Skin locker",
         noSkins: "No skins unlocked",

@@ -179,6 +179,7 @@ export const texts: Record<string, any> = {
         removed: "Amico rimosso",
         removeConfirm: "Rimuovere questo amico?",
         removeFriend: "Rimuovi amico",
+        openProfile: "Apri il profilo",
         back: "Indietro",
         locker: "Armadietto skin",
         noSkins: "Nessuna skin sbloccata",
