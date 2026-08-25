@@ -1063,7 +1063,14 @@ button img {
 
     html body .modal-content {
         width: 100%;
-        max-width: 100%;
+        /* !important perche' due finestre portano il tetto in uno style INLINE
+           (includes/modals.php: Configurazione 400px, Menu 420px) e uno stile
+           inline batte qualunque selettore. Senza, su schermi larghi — misurato
+           a 430x932 — Configurazione e Profilo restavano 400px e il Menu 420,
+           con strisce di gioco visibili ai lati e gli spigoli vivi di una
+           finestra pensata per essere piena. Sotto i 400px il difetto non si
+           vedeva, ed e' il motivo per cui era sfuggito. */
+        max-width: 100% !important;
         height: 100dvh;
         max-height: 100dvh;
         border-radius: 0;
@@ -1082,6 +1089,36 @@ button img {
         border-radius: 16px;
         width: 92%;
         overflow: hidden;
+    }
+
+    /* Finestre a schermo pieno con contenuto CORTO: il messaggio non deve
+       restare incollato sotto l'intestazione con mezzo schermo vuoto.
+       La finestra resta piena — coerente con tutte le altre — ma il corpo
+       centra il proprio contenuto nello spazio che avanza.
+       Non vale per le liste (Obiettivi, Skin, Classifica): quelle partono
+       dall'alto e scorrono, ed e' giusto cosi'. */
+    /* BADGE CLOUD sopra la barra di navigazione.
+       Il badge e' creato via JS con 'bottom: 14px' inline (src/app/boot.ts),
+       valore pensato per il desktop dove in fondo non c'e' nulla. Su telefono
+       finisce SOPRA #mobile-nav-bar (z-index 11000 contro 2000) e copre i due
+       pulsanti centrali — CONSOLE e TEAM diventano intoccabili: misurati 45px
+       di sovrapposizione e il 76% dell'area dei due bottoni, con
+       elementFromPoint che restituisce il badge. Non c'e' via di fuga: nessuna
+       navigazione a swipe e il menu non porta a quelle due colonne.
+       58px di barra + 14 di margine originale + la safe-area del telefono. */
+    html body #cloud-sync-badge {
+        bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+
+    html body div#feedback-intro-modal div.settings-content {
+        /* `display: flex` serve davvero: la regola generica di .settings-content
+           qui sotto imposta solo `flex: 1` + `overflow-y: auto`, cioe' lo rende
+           un flex ITEM ma non un flex CONTAINER — e senza container
+           `justify-content` non ha alcun effetto (provato: il contenuto restava
+           incollato in alto). */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     html body .settings-content,
@@ -1138,9 +1175,12 @@ button img {
         pointer-events: none;
     }
 
-    html body div#settings-modal button.modal-close-btn {
-        display: none;
-    }
+    /* La X di Configurazione era nascosta qui, e a ragione: su mobile la X
+       diventa la pillola «CHIUDI» (::after sopra) e avrebbe convissuto con
+       «Chiudi & Salva» avendo un'altra semantica — chiudeva SENZA salvare.
+       Dalla 3.1 la X salva come il pulsante (vedi ui/modals), quindi le due
+       uscite sono equivalenti e la regola è stata rimossa: su mobile serve
+       un'uscita in testa, senza scorrere tutta la lista delle opzioni. */
 
     /* ---------------------------------------------------
        4. CENTRATURA PERFETTA CLICKER E FIX FLUIDITÀ
@@ -1317,7 +1357,16 @@ button img {
        7. NASCONDIAMO IL SUPERFLUO
     --------------------------------------------------- */
 
+    /* Le voci secondarie non stanno più in barra: sono nel menu ☰, dove hanno
+       anche un nome. In barra restano solo le tre cose che devono essere a un
+       tap perché portano informazione che cambia: ☰ (con la pallina se c'è da
+       riscuotere), Promozione (mostra la %) e Profilo (badge amici/messaggi). */
     html body nav#game-navbar button#open-help-btn,
+    html body nav#game-navbar button#open-stats-btn,
+    html body nav#game-navbar button#open-achievements-btn,
+    html body nav#game-navbar button#open-skins-btn,
+    html body nav#game-navbar button#open-leaderboard-btn,
+    html body nav#game-navbar button#open-settings-btn,
     html body div#settings-modal button#open-advanced-audio-btn,
     html body div#achievements-modal div#achievement-list div.trophy-desc,
     html body div#achievements-modal div#achievement-list div.trophy-flavor {
@@ -1408,4 +1457,138 @@ html body input[type="email"],
 html body .input-group-modern input,
 html body .clean-input input {
     font-size: 16px;
+}
+
+/* ==========================================================================
+   MENU MOBILE (☰) — voci secondarie della barra in alto
+   Fuori dalla media query 1024px di sopra apposta: le regole qui dentro
+   valgono solo entro 768px (il file è caricato con quel media), cioè sui
+   telefoni. Su tablet/desktop la barra ha spazio e resta com'era.
+   ========================================================================== */
+@media only screen and (max-width: 768px) {
+
+    /* Il ☰ esiste solo su mobile: su desktop la barra mostra tutto */
+    html body nav#game-navbar button#open-mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Voci del menu: bersagli comodi (56px > 44px minimo tocco), icona a
+       sinistra e nome accanto — il motivo per cui il menu esiste. */
+    #mobile-menu-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+    }
+
+    .mm-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 56px;
+        padding: 12px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        color: #ecf0f1;
+        font-family: var(--font-heading, inherit);
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .mm-item:active {
+        background: rgba(52, 152, 219, 0.15);
+        border-color: rgba(52, 152, 219, 0.45);
+    }
+
+    .mm-icon {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        color: var(--primary, #3498db);
+    }
+
+    .mm-label {
+        flex: 1;
+    }
+
+    /* Pallina "c'è qualcosa da riscuotere": accesa via .has-dot dallo stesso
+       punto che accende il badge sul pulsante Obiettivi (ui/render). Nascosta
+       di default, così non serve un secondo stato da tenere allineato. */
+    .mm-dot {
+        display: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #e74c3c;
+        box-shadow: 0 0 8px rgba(231, 76, 60, 0.9);
+        flex: 0 0 10px;
+    }
+
+    .mm-item.has-dot .mm-dot {
+        display: block;
+    }
+
+    /* ------------------------------------------------------------------
+       LOGO AL CENTRO DELLA BARRA
+       Con le voci secondarie nel menu, in barra restano 2-3 pulsanti e il
+       centro resta vuoto. Il logo lo riempie — ma NON come elemento flex:
+       sarebbe centrato solo finche' i lati pesano uguale, e Promozione
+       compare/sparisce col progredire della partita.
+       Centratura assoluta + il gruppo di destra spinto a fine barra
+       (margin-left:auto su Promozione, che nell'ordine DOM precede il
+       Profilo): il centro resta libero in ENTRAMBI gli stati, con o senza
+       Promozione.
+       ------------------------------------------------------------------ */
+    /* NIENTE `position: relative` qui: la barra e' `position: fixed` con
+       `width: 100%` (styles/base/navbar.css). Sovrascriverla la faceva
+       collassare a larghezza-contenuto — misurati 192px invece di 375, con
+       tutti i pulsanti ammassati a sinistra. Un elemento `fixed` fa gia' da
+       riferimento per un figlio assoluto: non serviva. */
+    html body nav#game-navbar #navbar-logo {
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        /* La barra ha il padding di safe-area in alto: il centro ottico
+           segue l'area utile, non il bordo fisico dello schermo. */
+        margin-top: calc(env(safe-area-inset-top) / 2);
+        height: 30px;
+        width: auto;
+        opacity: 0.75;
+        /* Decorativo: non deve rubare tap ne' comparire nella navigazione */
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* I gruppi tornano contenitori VERI (sopra sono display:contents, scelta
+       fatta quando in barra c'erano molte icone da distribuire). Con pochi
+       pulsanti quel `contents` diventa un problema: sono figli diretti della
+       barra e space-between li sparpaglia, mettendo Promozione esattamente
+       sopra al logo. Come gruppi invece: sinistra ancorata a sinistra, destra
+       a destra, e il centro — vuoto su mobile — lascia il posto al logo.
+       Provato prima con margin-left:auto su Promozione: space-between ne
+       assorbe solo una parte (misurati 48px invece dell'intero spazio). */
+    html body nav#game-navbar .nav-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    html body nav#game-navbar .nav-group.left {
+        justify-content: flex-start;
+    }
+
+    /* Non nascosto: se un domani tornasse una voce al centro, deve comparire */
+    html body nav#game-navbar .nav-group.center {
+        justify-content: center;
+    }
+
+    html body nav#game-navbar .nav-group.right {
+        justify-content: flex-end;
+    }
 }

@@ -590,7 +590,7 @@
             score: score,
             rewardStr: (window.EspooClicker && score > 0) ? window.EspooClicker.formatNumber(reward) : null,
             isNewRecord: isNewRecord,
-            statLabel: 'WAVE', statValue: wave, statColor: '#f472b6',
+            statLabel: (window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA', statValue: wave, statColor: '#f472b6',
             onReturn: window.exitCentipedeGame,
             onRetry: window.startCentipedeRun
         });

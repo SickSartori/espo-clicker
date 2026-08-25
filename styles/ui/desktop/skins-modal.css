@@ -574,6 +574,13 @@ html body #skins-modal .skin-card-v3.locked .skin-img-wrap img {
 }
 
 .skin-img-wrap .skin-lock-overlay {
+  /* Azzera il transform: translate(-50%,-50%) ereditato da
+     .skin-lock-overlay, resto della vecchia centratura su top/left 50%.
+     Qui l'overlay e' gia' ancorato con inset:0 e centrato con flex,
+     quindi quel transform lo spostava FUORI dalla card: misurato a
+     -84px, -106px, col lucchetto a cavallo dell'angolo e sopra la
+     card vicina. */
+  transform: none;
   position: absolute;
   inset: 0;
 }
@@ -991,6 +998,13 @@ html body #skins-modal .skin-card-v3.locked .skin-name-display {
 
 /* Lock overlay più grande visibile */
 .skin-card-v3 .skin-lock-overlay {
+  /* Azzera il transform: translate(-50%,-50%) ereditato da
+     .skin-lock-overlay, resto della vecchia centratura su top/left 50%.
+     Qui l'overlay e' gia' ancorato con inset:0 e centrato con flex,
+     quindi quel transform lo spostava FUORI dalla card: misurato a
+     -84px, -106px, col lucchetto a cavallo dell'angolo e sopra la
+     card vicina. */
+  transform: none;
   position: absolute;
   inset: 0;
   display: flex;

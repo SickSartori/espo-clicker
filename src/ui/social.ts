@@ -88,11 +88,13 @@ export function initSocial(): void {
         // Badge a cascata: navbar + tab Amici (stesso totale = messaggi + richieste).
         // Se il totale cambia mentre stai guardando la lista, la ricarico così i
         // badge per-amico compaiono/spariscono senza dover riaprire la tab.
-        async function updateBadge() {
+        // Restituisce 'notoken' quando non c'è stata nessuna chiamata: serve a
+        // badgeLoop per decidere fra tanto prima e fra un po'.
+        async function updateBadge(): Promise<'notoken' | 'done'> {
             const token = (typeof Game.getSaveToken === 'function') ? Game.getSaveToken() : null;
-            if (!token) return;
+            if (!token) return 'notoken';
             const data = await sb('friends-poll', {});
-            if (!data || data.status !== 'success') return;
+            if (!data || data.status !== 'success') return 'done';
             const total = (data.unseenMessages || 0) + (data.pendingRequests || 0);
             setBadge(badgeEl, total);
             setBadge(hubAmiciBadge, total);
@@ -101,6 +103,7 @@ export function initSocial(): void {
                 _lastBadgeTotal = total;
                 if (prev !== -1 && amiciListVisible()) loadFriends();
             }
+            return 'done';
         }
 
         // Chiamata a una Edge Function con il token di sessione iniettato
@@ -120,14 +123,26 @@ export function initSocial(): void {
         }
 
         // Riga amico/richiesta. context: 'friend' | 'incoming' | 'outgoing'
+        //
+        // Per gli amici il bersaglio del click è la RIGA INTERA, non più la sola
+        // freccia da 30px: aprire un profilo è l'unica azione della riga, quindi
+        // restringerla a un'icona era solo un bersaglio piccolo da centrare. La
+        // freccia resta come indizio visivo ma diventa decorativa (niente
+        // data-open, niente tab-stop): un solo elemento interattivo per riga,
+        // altrimenti il focus da tastiera passerebbe due volte sulla stessa cosa.
         function friendRowHTML(f: any, context: string) {
             const sv = skinVisual(f.equippedSkin);
             const on = onlineLabel(f.lastSeenSecondsAgo);
             let actions = '';
+            let rowAttrs = '';
+            let rowClass = 'friend-row';
             const unseen = (context === 'friend' && f.unseen > 0) ? f.unseen : 0;
             if (context === 'friend') {
                 const badge = unseen ? `<span class="friend-unseen" title="${T().chat || ''}">${unseen > 9 ? '9+' : unseen}</span>` : '';
-                actions = badge + `<button class="friend-open-btn" data-open="${escapeHTML(f.id)}" aria-label="${T().back || ''}"><i class="fa-solid fa-chevron-right"></i></button>`;
+                actions = badge + `<span class="friend-open-btn" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>`;
+                rowClass += ' is-openable';
+                const label = `${T().openProfile || 'Apri il profilo'} — ${f.username || ''}`;
+                rowAttrs = ` data-open="${escapeHTML(f.id)}" role="button" tabindex="0" aria-label="${escapeHTML(label)}"`;
             } else if (context === 'incoming') {
                 actions =
                     `<button class="friend-mini-btn accept" data-act="accept" data-id="${escapeHTML(f.id)}" title="${T().accept || ''}"><i class="fa-solid fa-check"></i></button>` +
@@ -136,7 +151,7 @@ export function initSocial(): void {
                 actions = `<span class="friend-pending-tag">${T().pending || 'in attesa'}</span>`;
             }
             return `
-                <div class="friend-row${unseen ? ' has-unseen' : ''}">
+                <div class="${rowClass}${unseen ? ' has-unseen' : ''}"${rowAttrs}>
                     <img src="${sv.img}" class="friend-avatar" style="border-color:${sv.border}" alt="">
                     <div class="friend-info">
                         <span class="friend-name">${escapeHTML(f.username)}</span>
@@ -220,7 +235,14 @@ export function initSocial(): void {
                 searchResult.innerHTML = `<div class="friends-error">${escapeHTML(data.message || '')}</div>`;
                 return;
             }
-            const results = data.results || [];
+            // Nei SUGGERIMENTI restano solo gli sconosciuti. Il backend scarta già
+            // gli amici accettati, ma non le richieste in ballo: chi avevi appena
+            // aggiunto tornava tra i "Suggeriti" con l'etichetta «in attesa», cioè
+            // un suggerimento che non si può seguire. Nella ricerca per nome
+            // invece quelle righe servono — è il modo per sapere a che punto sei
+            // con una persona che stai cercando apposta.
+            let results = data.results || [];
+            if (data.mode === 'suggestions') results = results.filter((r: any) => r.relation === 'none');
             if (!results.length) {
                 searchResult.innerHTML = q ? `<div class="friends-noresult">${T().notFound || 'Nessun utente.'}</div>` : '';
                 return;
@@ -374,7 +396,13 @@ export function initSocial(): void {
             const stashed = _friendsById[id];
             const preUnseen = (stashed && stashed.unseen > 0) ? stashed.unseen : 0;
             const fmt = (v: any) => (v === null || v === undefined) ? '—' : (Game.formatNumber ? Game.formatNumber(v) : v);
-            const playH = (p.totalPlayTime != null) ? (p.totalPlayTime / 3600000).toFixed(1) + 'h' : '—';
+            // totalPlayTime arriva in SECONDI: il loop di gioco fa
+            // `totalPlayTime += deltaTime` con deltaTime in secondi (boot.ts) e
+            // saveGame lo spedisce così com'è nello snapshot `profile`. Dividerlo
+            // per 3600000 (come fossero millisecondi) lo sbagliava di 1000x: anche
+            // 10 ore di partita uscivano "0.0h", da cui la segnalazione «il tempo
+            // di gioco è sempre zero».
+            const playH = (p.totalPlayTime != null) ? (p.totalPlayTime / 3600).toFixed(1) + 'h' : '—';
             const combo = (p.longestCombo != null) ? p.longestCombo : '—';
 
             const unlocked = Array.isArray(p.skinsUnlocked) ? p.skinsUnlocked : [];
@@ -465,6 +493,17 @@ export function initSocial(): void {
             if (pre) { sendEmoji(pre.getAttribute('data-preset') as string); return; }
         });
 
+        // La riga amico è un role="button": da tastiera deve rispondere a Invio e
+        // Spazio come farebbe un <button> vero (i <div> non lo fanno da soli).
+        (pane as Element).addEventListener('keydown', (e) => {
+            const ev = e as KeyboardEvent;
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            const row = (ev.target as HTMLElement).closest('.friend-row[data-open]');
+            if (!row) return;
+            ev.preventDefault();   // lo Spazio farebbe scorrere la lista
+            openProfile(row.getAttribute('data-open'));
+        });
+
         // Testi statici (placeholder + stato vuoto) dalla lingua attiva
         function applyStaticTexts() {
             const t = T();
@@ -486,14 +525,31 @@ export function initSocial(): void {
             loadFriends();
         });
 
+        // Aprire il Profilo ricontrolla subito: è il momento in cui l'utente
+        // guarda i badge, e aspettare il tick del polling avrebbe mostrato la
+        // pallina "in ritardo" proprio sotto gli occhi di chi la sta cercando.
+        const hubOpenBtn = document.getElementById('open-user-hub-btn');
+        if (hubOpenBtn) hubOpenBtn.addEventListener('click', () => { updateBadge(); });
+
         w.EspoSocial = { reload: loadFriends, refreshBadge: updateBadge };
         // Polling adattivo: ~15s mentre l'hub è aperto (lista sotto gli occhi),
         // 45s in background. Un solo timer che si ripianifica in base a cosa è visibile.
+        //
+        // Terzo caso, ed è la segnalazione «le notifiche compaiono solo dopo aver
+        // cliccato su Profilo»: al primo giro (3s dal caricamento) il login è
+        // spesso ancora in volo, quindi manca il token e updateBadge esce senza
+        // chiamare niente. Riprovando dopo 45s il badge restava muto per quasi un
+        // minuto dall'accesso, e nel frattempo l'unico modo di vederlo era aprire
+        // la tab Amici, che ricarica a mano. Senza token non c'è stata nessuna
+        // richiesta di rete: ritentare presto non costa niente.
         function badgeLoop() {
-            updateBadge().finally(() => {
-                const open = hub && getComputedStyle(hub).display !== 'none';
-                _badgeTimer = setTimeout(badgeLoop, open ? 15000 : 45000);
-            });
+            updateBadge()
+                .catch(() => 'done' as const)
+                .then((esito) => {
+                    const open = hub && getComputedStyle(hub).display !== 'none';
+                    const delay = esito === 'notoken' ? 2000 : (open ? 15000 : 45000);
+                    _badgeTimer = setTimeout(badgeLoop, delay);
+                });
         }
         setTimeout(badgeLoop, 3000);   // primo controllo poco dopo il login
     }

@@ -13,6 +13,7 @@
  * questo file, es. stopAllTestAudio) restano identici.
  */
 import { store } from '../../state/store';
+import { SAVE_KEY, BACKUP_KEY, clearAccountStorage } from '../../core/save/keys';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -231,7 +232,18 @@ export function initModals(): void {
 
             const arcadeWin = window.open('arcade.php', 'espo-arcade',
                 'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
-            if (arcadeWin && arcadeWin.focus) arcadeWin.focus();
+            if (arcadeWin && arcadeWin.focus) {
+                arcadeWin.focus();
+            } else {
+                // Popup bloccato (comune sui browser mobile): window.open torna
+                // null e senza questo ramo il pulsante Sala Giochi non faceva
+                // NULLA — nessuna scheda, nessun messaggio. Si ripiega sulla
+                // stessa scheda: arcade.php lo prevede già, il suo pulsante di
+                // chiusura fa window.close() e, se la scheda non si chiude,
+                // torna a index.php (vedi arcade.php:63).
+                window.location.href = 'arcade.php';
+                return;
+            }
 
             if (w.EspooClicker && w.EspooClicker.playSound) {
                 w.EspooClicker.playSound('sound-click');
@@ -879,6 +891,36 @@ export function initModals(): void {
             // Subito, non nell'onComplete: l'audio non deve aspettare l'animazione.
             if (modal.id === 'advanced-audio-modal') restoreAfterMixer();
 
+            // I due comportamenti qui sotto stavano nel gestore della sola X.
+            // Sbagliato: da questa finestra si esce anche con ESC e col click sul
+            // fondale (vedi i due listener piu' in basso), e quelle vie facevano
+            // altro — le impostazioni non si salvavano e la sequenza «note di
+            // rilascio -> popup segnalazioni» saltava. closeModal e' la strada
+            // che TUTTE le uscite attraversano: e' qui che vanno.
+
+            // Configurazione: le modifiche (volumi, lingua) sono gia' applicate
+            // live allo stato, quindi uscire senza persistere sarebbe l'unico
+            // caso in cui una regolazione fatta si perde a fine sessione.
+            // Niente toast: quello resta al pulsante «Chiudi & Salva», che e'
+            // un gesto di conferma esplicita.
+            if (modal.id === 'settings-modal') {
+                const GameSave = getGameAPI();
+                if (GameSave && typeof GameSave.saveGame === 'function') GameSave.saveGame();
+            }
+
+            // Il popup "come si segnala" si accoda alle note di rilascio, mai
+            // sovrapposto: parte solo quando quelle vengono chiuse. Passa da
+            // maybeOpenFeedbackIntro e non da openFeedbackIntro diretto, così i
+            // controlli (finestre a schermo, click fatti, note ancora in arrivo)
+            // sono gli stessi di ogni altra via d'ingresso.
+            if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
+                setTimeout(() => {
+                    if (w.EspooClicker && typeof w.EspooClicker.maybeOpenFeedbackIntro === 'function') {
+                        w.EspooClicker.maybeOpenFeedbackIntro();
+                    }
+                }, 350);
+            }
+
             const content = modal.querySelector('.modal-content');
 
             // Kill any open tweens prima di partire close
@@ -955,6 +997,40 @@ export function initModals(): void {
     });
 
     if (openHelpBtn) openHelpBtn.addEventListener('click', () => openModal(helpModal));
+
+    // --- Menu mobile (☰) ---
+    // Le voci NON riaprono i modali da sé: inoltrano il click al pulsante vero
+    // della navbar, che su mobile è nascosto ma resta nel DOM col suo handler.
+    // Così esiste un solo punto che sa come si apre ogni finestra: aggiungere
+    // una voce è aggiungere un <button data-opens> in modals.php, e niente
+    // può divergere fra menu e barra.
+    const mobileMenuModal = document.getElementById('mobile-menu-modal');
+    const openMobileMenuBtn = document.getElementById('open-mobile-menu-btn');
+    if (openMobileMenuBtn) openMobileMenuBtn.addEventListener('click', () => openModal(mobileMenuModal));
+
+    document.querySelectorAll('#mobile-menu-list .mm-item').forEach((voce) => {
+        voce.addEventListener('click', () => {
+            const targetId = voce.getAttribute('data-opens');
+            const target = targetId ? document.getElementById(targetId) : null;
+            closeModal(mobileMenuModal);
+            // Attesa breve: aprire la finestra nuova mentre il menu sta ancora
+            // chiudendo lascia due fondali sovrapposti (stesso motivo del
+            // popup segnalazioni → Aiuto).
+            if (target) setTimeout(() => target.click(), 240);
+        });
+    });
+
+    // --- Popup "come si segnala" (una tantum) ---
+    const fbIntroModal = document.getElementById('feedback-intro-modal');
+    const fbIntroOk = document.getElementById('fbintro-ok');
+    const fbIntroOpen = document.getElementById('fbintro-open');
+    if (fbIntroOk) fbIntroOk.addEventListener('click', () => closeModal(fbIntroModal));
+    if (fbIntroOpen) fbIntroOpen.addEventListener('click', () => {
+        // Prima chiude, poi apre l'Aiuto: aprirlo sotto lascerebbe due
+        // fondali sovrapposti e il popup davanti al modulo da compilare.
+        closeModal(fbIntroModal);
+        setTimeout(() => { if (typeof w.openFeedbackTab === 'function') w.openFeedbackTab(); }, 260);
+    });
     if (openSkinsBtn) openSkinsBtn.addEventListener('click', () => {
         if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
         openModal(skinsModal);
@@ -1048,6 +1124,9 @@ export function initModals(): void {
                     if (typeof w.exitAsteroidsGame === 'function') w.exitAsteroidsGame();
                     if (typeof w.exitInvadersGame === 'function') w.exitInvadersGame();
                     if (typeof w.exitCentipedeGame === 'function') w.exitCentipedeGame();
+                    // Senza questa, chiudendo la sala giochi mentre giri su Stack
+                    // Overflow il suo ciclo di disegno resta vivo in sottofondo.
+                    if (typeof w.exitStackGame === 'function') w.exitStackGame();
                 }
 
             }
@@ -1241,12 +1320,17 @@ export function initModals(): void {
     // della scadenza 24h). A differenza di _showLoginForTokenExpiry NON ricarica il cloud
     // né riapre modali: chiede solo un nuovo token riusando le credenziali di sessione.
     // Fail-safe: in caso di errore resta attivo il controllo reattivo alla scadenza.
+    // Restituisce SEMPRE un esito { ok, reason }: chi la chiama in automatico
+    // (saveGame) può ignorarlo, ma il tap sul badge ci costruisce sopra il
+    // messaggio da mostrare. Prima ogni uscita era un `return` nudo, quindi il
+    // chiamante non aveva modo di distinguere "fatto" da "non ho fatto niente".
     w._silentTokenRefresh = async () => {
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || w._tokenRefreshing) return;
+        if (!u || !p) return { ok: false, reason: 'nocreds' };
+        if (w._tokenRefreshing) return { ok: false, reason: 'busy' };
         const Game = getGameAPI();
-        if (!Game || typeof Game.setSaveToken !== 'function') return;
+        if (!Game || typeof Game.setSaveToken !== 'function') return { ok: false, reason: 'noapi' };
         w._tokenRefreshing = true;
         try {
             const res = await w.EspoBackend.call('refresh-token', { username: u, password: p });
@@ -1254,9 +1338,13 @@ export function initModals(): void {
             if (data.status === 'success' && data.save_token) {
                 Game.setSaveToken(data.save_token, data.token_expires_at);
                 w._tokenExpiredNotified = false;
+                return { ok: true, reason: 'token' };
             }
+            return { ok: false, reason: 'login' };
         } catch (e) {
-            // silenzioso: il fallback reattivo coprirà l'eventuale scadenza
+            // silenzioso verso l'automatismo: il fallback reattivo coprirà
+            // l'eventuale scadenza. Ma l'esito torna comunque a chi l'ha chiesto.
+            return { ok: false, reason: 'network' };
         } finally {
             w._tokenRefreshing = false;
         }
@@ -1267,30 +1355,40 @@ export function initModals(): void {
     // adottiamo in modo AUTORITATIVO (force) — il confronto solo-lifetimeScore del load
     // normale non basta a risolvere il conflitto. Così il client si riallinea e i
     // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
+    // Come _silentTokenRefresh, restituisce SEMPRE un esito { ok, reason }.
+    // Le cinque uscite mute di prima erano la causa diretta della segnalazione
+    // QA "clicco il badge e non succede niente": erano tutte plausibili al tap
+    // (credenziali di sessione assenti, resync già in volo, login rifiutato,
+    // rete giù) e nessuna diceva niente a chi aveva cliccato.
     w._resyncFromCloud = async () => {
         // DEV (Admin Console): se lo stato è stato alterato da un cheat NON riallinearlo al
         // cloud — annullerebbe lo scenario/cheat caricato. Coerente con saveGame, che in quel
         // caso salta del tutto il push (quindi non genera nemmeno il conflitto che porta qui).
-        if (w.cheatNoCloudSync) return;
+        if (w.cheatNoCloudSync) return { ok: false, reason: 'cheat' };
         const u = sessionStorage.getItem('espooUser');
         const p = sessionStorage.getItem('espooPass');
-        if (!u || !p || w._resyncing) return;
+        if (!u || !p) return { ok: false, reason: 'nocreds' };
+        if (w._resyncing) return { ok: false, reason: 'busy' };
         const Game = getGameAPI();
-        if (!Game || typeof Game.loadCloudData !== 'function') return;
+        if (!Game || typeof Game.loadCloudData !== 'function') return { ok: false, reason: 'noapi' };
         w._resyncing = true;
         try {
             const res = await w.EspoBackend.call('login-register', { username: u, password: p });
             const data = await res.json();
-            if (data.status === 'success') {
-                if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
-                w._tokenExpiredNotified = false;
-                if (data.save_data) {
-                    Game.loadCloudData(data.save_data, { force: true });
-                    if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
-                }
+            if (data.status !== 'success') return { ok: false, reason: 'login' };
+
+            if (typeof Game.setSaveToken === 'function') Game.setSaveToken(data.save_token, data.token_expires_at);
+            w._tokenExpiredNotified = false;
+            if (!data.save_data) {
+                // Login riuscito ma niente da adottare: il conflitto non può
+                // essere risolto da qui, però il token è comunque rinnovato.
+                return { ok: true, reason: 'notdata' };
             }
+            Game.loadCloudData(data.save_data, { force: true });
+            if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
+            return { ok: true, reason: 'resynced' };
         } catch (e) {
-            // riprova al prossimo salvataggio / tap sul badge
+            return { ok: false, reason: 'network' };
         } finally {
             w._resyncing = false;
         }
@@ -1302,8 +1400,8 @@ export function initModals(): void {
             if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                 try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
             }
-            localStorage.removeItem('espotoolClickerSaveV9');
-            localStorage.removeItem('espotoolClickerSaveV9_Backup');
+            localStorage.removeItem(SAVE_KEY);
+            localStorage.removeItem(BACKUP_KEY);
             location.reload();
         }
     });
@@ -1365,7 +1463,11 @@ export function initModals(): void {
 
                 alert(store.gameData.texts.dialogs.accountDeleted);
                 sessionStorage.clear();
-                localStorage.clear(); // Pulisce tutto il browser
+                // Piazza pulita del browser MA senza toccare il salvataggio
+                // dell'altro ambiente: /test/ e produzione condividono l'origine,
+                // e un localStorage.clear() secco qui cancellava anche la cache
+                // locale dell'account di produzione. (core/save/keys.ts)
+                clearAccountStorage();
                 if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                     try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                 }
@@ -1395,8 +1497,8 @@ export function initModals(): void {
                     if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                         try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                     }
-                    localStorage.removeItem('espotoolClickerSaveV9');
-                    localStorage.removeItem('espotoolClickerSaveV9_Backup');
+                    localStorage.removeItem(SAVE_KEY);
+                    localStorage.removeItem(BACKUP_KEY);
                     location.reload();
                 } else {
                     alert(data.message);
@@ -1406,11 +1508,12 @@ export function initModals(): void {
     }
 
     if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+        // Il salvataggio lo fa closeModal (vale per X, ESC e fondale): qui
+        // resta solo la conferma a schermo, che e' cio' che distingue il
+        // pulsante esplicito dalle altre uscite. Salvare anche qui
+        // significherebbe due push cloud per una sola chiusura.
         const Game = getGameAPI();
-        if (Game) {
-            Game.saveGame();
-            Game.showToast(store.gameData.texts.toasts.settingsSaved);
-        }
+        if (Game) Game.showToast(store.gameData.texts.toasts.settingsSaved);
         closeModal(settingsModal);
     });
 
@@ -1465,8 +1568,8 @@ export function initModals(): void {
                         Game.saveGame();
                     } else {
                         if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
-                        localStorage.removeItem('espotoolClickerSaveV9');
-                        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+                        localStorage.removeItem(SAVE_KEY);
+                        localStorage.removeItem(BACKUP_KEY);
                         Game.getGameState().user.username = u;
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
                         Game.saveGame();
@@ -1475,6 +1578,12 @@ export function initModals(): void {
 
                 closeModal(loginModal);
                 setAccountIdentity(u); // popola il nome utente nella navbar (anche su auto-login F5)
+
+                // Notifiche amici subito, senza aspettare il giro del polling: è
+                // appena comparso il token, che è la sola cosa che mancava al
+                // primo controllo di social.ts. Senza, la pallina su Profilo si
+                // faceva attendere fino al tick successivo.
+                if (w.EspoSocial && typeof w.EspoSocial.refreshBadge === 'function') w.EspoSocial.refreshBadge();
 
                 // Sblocca il contesto audio sfruttando il gesto di login: così gli SFX
                 // dell'intro e la musica partono senza dover premere "Attiva audio".
@@ -1534,6 +1643,14 @@ export function initModals(): void {
                         });
                     } else if (w.shouldShowReleaseNotesOnLoad) {
                         if (Game.openReleaseNotes) Game.openReleaseNotes();
+                    } else if (typeof Game.maybeOpenFeedbackIntro === 'function') {
+                        // Ramo che MANCAVA: qui ci si passa dopo un login esplicito, e
+                        // senza note di rilascio da mostrare la cascata finiva a vuoto.
+                        // Il popup "come si segnala" esisteva solo nel ramo gemello di
+                        // boot.ts, che copre il percorso F5-con-sessione — da cui la
+                        // segnalazione «al primo avvio non sempre appare»: dipendeva da
+                        // come eri entrato nel gioco.
+                        Game.maybeOpenFeedbackIntro({ standalone: true });
                     }
                 };
 
@@ -1550,6 +1667,15 @@ export function initModals(): void {
                     Game.tryStartAudio();
                     if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
                     runPostLogin();
+                }
+            } else if (res.status === 429) {
+                // Limite richieste del backend: non è un errore dell'utente e
+                // il suo messaggio grezzo («Too many requests») in un alert
+                // bloccante non aiuta nessuno. Toast localizzato e basta: i
+                // progressi restano locali e, per chi era già in sessione, il
+                // badge cloud offre il riprova quando il limite scade.
+                if (typeof Game.showToast === 'function') {
+                    Game.showToast(store.gameData.texts.toasts.serverBusy, 'warning');
                 }
             } else {
                 alert(data.message);

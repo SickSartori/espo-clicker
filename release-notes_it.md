@@ -1,178 +1,78 @@
 # 💥 Espòòò Clicker - Release Notes Ufficiali 💥
 
-## Versione 3.0: Rinascita Cyber-Tech ⚡
+## Versione 3.1: Un Cabinato Nuovo 🕹️
 
-Un restyling radicale di tutta l'interfaccia, animazioni rifatte da zero, modali più moderni e una marea di rifiniture che danno al gioco un'anima nuova senza tradire l'identità di sempre.
-
----
-
-### 👥 Amici, Chat e Classifiche Social
-
-* **🔎 Trova i Tuoi Amici:** Cerca altri giocatori per nome e inviagli una richiesta di amicizia direttamente dal tuo profilo.
-* **🏆 Classifica Globale o Amici:** Confronta i progressi con tutto il mondo, oppure passa alla vista "Amici" per una sfida più personale.
-* **💬 Chat a Emoji:** Sfotti e incoraggia i tuoi amici con una chat rapida a emoji, con cronologia e conferma di lettura.
-* **👤 Profilo Amico:** Apri il profilo di un amico per vedere le sue statistiche, il suo armadietto di skin e la chat, tutto in comode sotto-schede.
-* **🔔 Notifiche Amici:** Un badge ti avvisa quando ricevi una richiesta di amicizia o un nuovo messaggio.
+Lo slot "??? COMING SOON" in Sala Giochi non è più un mistero. E poi il solito giro di manutenzione: il gioco su telefono rimesso in ordine per bene, la scheda Amici che finalmente si comporta come dovrebbe, audio degli eventi uniforme e le segnalazioni che ci avete mandato chiuse una per una. Continuate a mandarle — è così che finiscono qui.
 
 ---
 
-### ⚡ Hub Promozione + Formattazione
+### 🕹️ Nuovo Gioco: STACK OVERFLOW
 
-* **🎛️ Due Poteri, Un Solo Hub:** Promozione e Formattazione ora convivono in un unico pannello elegante con due card affiancate: capisci al volo cosa è pronto e cosa manca ancora.
-* **🌈 Bottone che Sfuma per Stato:** Il pulsante in alto cambia colore in base alla situazione — oro quando la Promozione è pronta, viola per la Formattazione, e una sfumatura oro→viola che ti invita a "SCEGLI!" quando sono pronte entrambe.
-* **👀 Controlla i Progressi:** Apri l'hub quando vuoi per vedere a che punto sei, anche prima di poter agire.
-* **🎬 Cinematica più Fluida:** La sequenza cinematografica della Formattazione ora parte subito e scorre liscia, senza più blocchi.
-
----
-
-### 🎵 Nuove Skin e Musica Dedicata
-
-* **✨ Skin Espò 3.0 Gratis:** Un look cyber tutto nuovo, gratuito per tutti, con i colori allineati all'interfaccia 3.0.
-* **🎸 Musica su Misura:** Ora alcune skin portano con sé la loro atmosfera, con una traccia di sottofondo dedicata che parte quando le equipaggi.
-* **🤫 Da Scoprire:** Quali skin nascondono una sorpresa musicale? Equipaggiale e scoprilo!
+* **📦 Impila il Codice:** Il settimo cabinato della Sala Giochi. Incastra i pezzi di codice, completa le righe e spediscile in produzione. Fin qui sembra facile.
+* **📉 Il Debito Tecnico Risale:** Ogni tot pezzi una riga di debito spunta dal fondo e spinge su tutta la pila. Più sali di livello, più spesso arriva. Non si può ignorare: si può solo starle davanti.
+* **🐛 I Bug Bloccano la Riga:** Una riga completa che contiene un bug **non si chiude**. Va schiacciato — col click, come si fa in questo gioco da sempre. Ed è il motivo per cui una mano resta sempre sul mouse.
+* **🧩 Otto Pezzi, Non Quelli che Pensi:** PIPELINE, MERGE, BRANCH, REBASE, CONFLICT e compagnia. Ce ne sono anche un paio da tre sole caselle, che cambiano parecchio i conti.
+* **💀 Quando Finisce:** La pila tocca il soffitto e va in Stack Overflow. Il nome era un indizio.
 
 ---
 
-### ❓ Menu Aiuto e Segnalazioni
+### 📱 Su Telefono: Barra e Finestre Rimesse in Ordine
 
-* **📖 Guida a Portata di Click:** Un nuovo menu Aiuto raccoglie una guida rapida per orientarti tra le meccaniche del gioco.
-* **🐛 Segnala al Volo:** Hai trovato un bug o hai un'idea? Ora puoi segnalarcelo direttamente dal gioco, in pochi secondi.
-
----
-
-### 🎨 Interfaccia Cyberpunk-Tech (UI 3.0)
-
-* **🖼️ Restyling Completo:** Nuova identità visiva con tonalità cyan/neon, glow strategici, font monospace tech e dettagli HUD ovunque.
-* **🎯 Icone Moderne:** Le icone della navbar, tab, header e modali sono state sostituite con un set più pulito e leggibile.
-* **📐 Layout Più Pulito:** Spaziature riviste, gerarchia visiva più chiara e contrasto migliorato in tutti i pannelli.
+* **☰ Un Menu per le Voci Secondarie:** La barra era arrivata a otto icone mute, indistinguibili a colpo d'occhio. Ora restano in barra solo le voci che dicono qualcosa — Promozione con la sua percentuale, Profilo con le notifiche — e tutte le altre stanno in un menu ☰ dove ognuna ha **la sua icona e il suo nome**.
+* **🆘 Aiuto e Segnala Finalmente Raggiungibili:** Su telefono il pulsante Aiuto era nascosto, ed è da lì che si passa per segnalare qualcosa. In pratica chi giocava dal telefono non aveva modo di scriverci. Ora c'è.
+* **🖼️ Tutte le Finestre a Schermo Pieno:** Senza più eccezioni. E quando il contenuto è corto sta al centro, invece di restare incollato in alto con mezzo schermo vuoto.
+* **❌ La X anche su Configurazione:** Era l'unica finestra senza uscita in testa: si chiudeva solo col pulsante in fondo, dopo aver scorso tutto. Ora c'è la X — e salva esattamente come il pulsante.
+* **🎨 Il Logo al Centro:** Con le voci nel menu, il centro della barra era rimasto vuoto. Adesso c'è Espò.
 
 ---
 
-### 🚀 Clicker Rifatto
+### 👥 Amici: la Scheda si Comporta Come Dovrebbe
 
-* **🔘 Effetto 3D Reale:** Il bottone clicker ora ha un vero effetto profondità con bevel dinamico che segue la posizione del mouse.
-* **🌐 Parallax a Tutto Schermo:** Inclinazione del bottone in base al movimento del mouse sull'intera pagina, non solo nella zona del clicker.
-* **✨ Animazioni Più Fluide:** Click più reattivi, transizioni più naturali, feedback visivo immediato.
-
----
-
-### 👗 Guardaroba Completamente Riscritto
-
-* **🆕 Vista Unica:** Eliminato il toggle griglia/carousel. Ora un'unica vista con tutte le skin sempre visibili.
-* **🔍 Click per Anteprima:** Click su una skin apre un riquadro con la sua immagine ingrandita, descrizione, costo e bottone equipaggia.
-* **⚡ Equipaggia Rapido:** Un piccolo bottone su ogni skin sbloccata permette di equipaggiarla al volo, senza aprire l'anteprima.
-* **🎨 Sfondi a Tema Rarità:** Ogni carta skin ha uno sfondo HUD animato in base alla rarità (griglia, scan, hex, raggi, aurora, neve...).
-* **🏷️ Nomi Sempre Visibili:** Anche le skin bloccate mostrano il nome e una sagoma misteriosa, per stuzzicare la curiosità.
-* **🔒 Lucchetto Visivo:** Nuovo overlay con icona lock per le skin non ancora sbloccate.
+* **🕐 Tempo di Gioco Vero:** Nel profilo di un amico il tempo di gioco segnava sempre zero. Per chiunque, sempre. Ora dice le ore davvero giocate.
+* **🔔 Notifiche Puntuali:** La pallina di richieste e messaggi arrivava con parecchio ritardo dopo l'accesso, e spesso la si scopriva solo aprendo il Profilo. Ora compare appena entrate in partita.
+* **🖱️ Si Apre Tutta la Riga:** Per aprire il profilo di un amico bisognava centrare la freccetta a destra. Ora basta toccare la riga, in qualunque punto.
+* **🙋 Suggerimenti Sensati:** Chi avevate già invitato continuava a comparire fra i suggeriti con l'etichetta "in attesa" — un suggerimento che non si può seguire. Ora fra i suggeriti ci sono solo persone che potete davvero aggiungere. Cercandole per nome, invece, lo stato della richiesta resta visibile: lì serve.
 
 ---
 
-### 🆕 7 Nuove Skin da Collezionare
+### ⚖️ Formattazione e Bilanciamento
 
-* **👕 Sette Look Inediti:** Sette nuovi personaggi entrano nel Guardaroba, ognuno con la sua variante "click" animata.
-* **🎭 Omaggi Pop:** Strizzano l'occhio a cinema, videogiochi e icone della cultura nerd... ma niente spoiler: scoprili sbloccandoli!
-* **⭐ Varie Rarità:** Spaziano da Rare a Legendary, ben distribuite tra le categorie.
-* **🔓 Sblocchi per Tutti i Gusti:** Alcune si comprano con i Token Lab, altre si guadagnano con nuovi obiettivi a tema.
-
----
-
-### 🪟 Modali Rinnovati
-
-* **🔧 Finestre Stabili:** Risolto il "lampeggio" all'apertura: ora i modali compaiono con una transizione fluida e senza salti.
-* **💎 Login Cyber-Tech:** Schermata di accesso con halo del logo animato, input HUD con effetti focus e pulsante sweep luminoso.
-* **⚙️ Opzioni Più Compatte:** Layout settings ottimizzato con slider inline, card per ogni sezione e azioni più immediate.
-* **👤 Gestione Account Snella:** Modal account ridisegnato in formato compatto con sezione "Area Critica" più riconoscibile.
-* **🏆 Achievements & Stats Aggiornati:** Card trofei più eleganti, stat box con accent cyan, navigazione più chiara.
-* **🎨 Accent Colorato per Tipo:** Ogni modale ha una sottile barra colorata in cima (oro prestige, viola format, verde leaderboard...).
-* **🌫️ Sfondo Login Coprente:** Quando il login è aperto, il gioco dietro viene sfocato per maggiore focus.
+* **💎 Q-Bit come Promesso:** I Q-bit annunciati dalla Formattazione calavano man mano che spendevate i Token nel negozio Promozione: capitava di vedersene promettere 10 e incassarne 3. Il conto ora si basa sui Token **guadagnati** nel ciclo, non su quelli che vi restano in tasca — spenderli non vi toglie più niente.
+* **🐛 Bug Bounty Ridimensionato:** Il potenziamento valeva +20% per livello **senza tetto**, e i Ticket Critici diventavano in fretta più redditizi di qualsiasi altra cosa: da soli bastavano a comprare i team di fine partita molto prima del previsto. Ora vale +10% per livello e si ferma a 10 livelli. Chi era già andato oltre tiene i suoi livelli, ma il moltiplicatore è più contenuto: la corsa ai Ticket Critici resta conveniente, non più decisiva.
+* **💰 Bug Bounty Costa di Più:** Il tetto sistemava il finale, non l'inizio: il primo livello si pagava con gli spiccioli delle prime Promozioni, e a quel punto il grosso del bonus era già in tasca. Il costo base passa da 75 a 250 Token. Non cambia quanto vale — sempre +10% per livello, sempre fino a 10 — cambia **quando** ve lo potete permettere: circa due Promozioni più in là, a ogni livello.
+* **☄️ Il Pulsante MADE IN HEAVEN si Vede Tutto:** L'icona finiva su una riga sua, schiacciata contro il bordo alto del pulsante. Ora sta accanto alla scritta, come sul pulsante Firma Contratto.
+* **👑 Il Fondatore Tiene TUTTE le Sue Skin:** Al lancio il Fondatore ne salvava solo **cinque**, scelte con un elenco a mano: chi ne aveva trenta se ne ritrovava sette. Il tetto non c'è più. Le skin sono pura estetica — non danno bonus né moltiplicatori — quindi non c'era nessun equilibrio da difendere, e toglierle era solo un dispiacere. Chi deve ancora rientrare si ritroverà il guardaroba **intero**; il reset di Season 1 resta dov'è giusto che sia, cioè su punteggi, classifica e obiettivi.
 
 ---
 
-### 🔔 Notifiche (Toast) Rifatte
+### 🔊 Volume degli Eventi Finalmente Uniforme
 
-* **📍 Posizioni Fisse:** I toast non si spostano più quando ne arrivano di nuovi. Ogni notifica occupa uno slot dedicato.
-* **🎀 Design Compatto:** Toast più piccoli e delicati, con barra del tempo di vita e icona colorata per tipo.
-* **🖱️ Click per Chiudere:** Basta un click per far sparire un toast subito.
-* **⏸️ Pausa al Hover:** Passando sopra un toast il timer si ferma — comodo per leggere bene.
+* **📢 Basta Video Sussurrati:** Alcuni video evento si sentivano molto più bassi degli altri — il Rick Espley e le due versioni di Ricardo Milespo su tutti. Tutte le tracce sono state riportate allo stesso livello: passare da un evento all'altro non vi farà più correre alla manopola del volume.
+* **🎚️ Livelli in Ordine:** Sistemato anche il caso opposto, un video che nei punti più carichi rischiava di distorcere.
 
 ---
 
-### 🐛 Golden Bug Reinventato
+### 🎯 Obiettivi Leggibili su Mobile
 
-* **✨ Effetto Glitch:** Il bug ora ha un vero look glitch — distorsioni cromatiche, scanline e burst visivi che richiamano l'idea di "bug".
-* **⚡ Animazioni Veloci:** Visto che resta poco a schermo, tutte le animazioni sono più rapide e d'impatto.
-* **🚨 Avviso Sparizione:** Negli ultimi secondi prima di scomparire, lampeggia urgentemente per ricordartelo.
-* **💥 Click Esplosivo:** Cliccarlo scatena un'esplosione visiva soddisfacente.
+* **📱 Titoli per Intero:** Sul telefono i nomi degli obiettivi più lunghi venivano tagliati a metà con i puntini di sospensione. Ora vanno a capo e si leggono tutti, per intero.
+* **📊 Percentuale Non Più Tagliata:** L'etichetta di avanzamento sbordava dalla scheda e ne restava visibile solo la coda: di «60% (3 / 5)» si leggeva «3 / 5)». Ora ci sta tutta.
 
 ---
 
-### 🔥 Espo Fury — Vere Fiamme
+### 🎬 Eventi Video più Puliti
 
-* **🌋 Niente Più Palline:** Le fiamme della Fury non sembrano più semplici cerchi gialli. Ora hanno forma a goccia con gradiente naturale dal bianco al rosso.
-* **💨 Effetto Movimento:** Le fiamme si muovono in modo organico, con flicker e calore percepibile, alimentate da una foschia ondulata a terra.
-
----
-
-### 🍄 Super Espò — Look Retrò Autentico
-
-* **🌍 Scenario Animato:** Il pannello centrale ora ospita uno scenario Super Mario completo — cielo, nuvole, montagne, tubi, cespugli e pavimento di mattoni, tutti in scorrimento infinito senza salti.
-* **🎨 Estetica Pixel-Art:** Bordi spessi neri, ombre stepped, colori classici (rosso/giallo/verde/marrone) e font Press Start 2P. Tutto in pieno stile retrò.
-* **🎮 Componenti Tematizzati:** Navbar marrone mattone, tab gialli con attivo rosso, bottoni "compra" verde tubo, card upgrade blu sotterraneo. Ogni elemento del gioco respira Super Mario.
-* **🪙 Cubo `?` Rifatto:** Tornato il classico blocco mistery di Mario per il golden bug, con galleggiamento perfetto.
-* **🎯 Selettore Quantità Visibile:** Il moltiplicatore di acquisto (1x/5x/10x/MAX) ora mostra chiaramente quale è selezionato con stile rosso Mario.
+* **✨ Schermo Davvero Libero:** Durante i video evento spariscono anche gli ultimi elementi decorativi che restavano sovrapposti al filmato. Ora lo schermo è pulito sul serio.
 
 ---
 
-### 🎬 Intro Cinematica all'Avvio
+### 🚪 Sala Giochi: Entrata e Uscita
 
-* **💻 Benvenuto in Stile:** Una breve intro cinematica a tema hacker accompagna il login, con effetti sonori dedicati e musica che entra al momento giusto.
-* **⚡ Solo Quando Serve:** Parte solo al login vero e proprio — niente sequenza al refresh o al rientro automatico, così non rallenta mai.
-
----
-
-### 🌍 Gioca in Italiano o in Inglese
-
-* **🗣️ Selettore Lingua:** Ora puoi scegliere la lingua del gioco (Italiano / English) direttamente dal tuo profilo.
-* **🌐 Tradotto Ovunque:** Interfaccia, opzioni, sala giochi e persino queste note di rilascio seguono la lingua scelta.
+* **🪟 Si Apre Anche col Popup Bloccato:** La Sala Giochi si apre in una scheda nuova, e sul telefono capita spesso che il browser la blocchi. Quando succedeva non si apriva niente — e nessuno vi diceva perché. Ora ripiega sulla scheda corrente.
+* **🔇 Cabinati Davvero Spenti:** Uscendo dalla Sala Giochi alcuni giochi restavano a girare in sottofondo. Ora si fermano tutti.
 
 ---
 
-### 🏆 18 Nuovi Achievement (a tema meme & nerd)
+### ☁️ Progressi e Segnalazioni
 
-* **😎 Cultura Pop:** Una nuova ondata di obiettivi strizza l'occhio ai grandi classici del web e del gaming, con qualche omaggio a saghe leggendarie.
-* **🔍 Tutti da Scoprire:** Niente spoiler — li sblocchi giocando!
-* **🇮🇹🇬🇧 Bilingue:** Disponibili sia in Italiano che in Inglese.
-
----
-
-### 📊 HUD Eventi Video Rinnovata
-
-* **🖤 Pannello Elegante:** Durante gli eventi video, punteggio e Bug al secondo vivono ora in un unico pannello scuro ed elegante, pulito e leggibile (niente più riquadro giallo).
-* **✖️ Badge Moltiplicatore:** Quando un evento moltiplica i tuoi guadagni, un badge xN ben visibile resta a schermo per tutta la durata dell'evento.
-
----
-
-### 🎄 Tema Natalizio Rifinito
-
-* **❄️ Una Neve, Più Bella:** Un unico sistema di neve, più morbido e naturale, ora presente anche su mobile.
-* **🎀 Decori Festosi:** Lucine colorate sul bordo, brina agli angoli e uno sfondo rinnovato dietro a Espo.
-* **🟥 Menu più Caldi:** Le colonne laterali (potenziamenti e team) hanno ora accenti rosso/oro che staccano dal verde, per un look natalizio più coerente.
-
----
-
-### 🤖 Click Automatico & Progressione più Morbida
-
-* **🖱️ Nuovo Potenziamento — Click Automatico:** Sblocca i Bug al secondo automatici in base al numero di Assistenti QA: meno click ripetitivi, più strategia.
-* **⚖️ Curva Ribilanciata:** La progressione di fine partita è stata ammorbidita con rendimenti più equilibrati e meno "grind", per un endgame più piacevole.
-
----
-
-### 🛠️ Tante Piccole Rifiniture
-
-* **📍 Indicatori LED Rimossi:** Tolte le palline pulsanti accanto a moltiplicatore e token, per un look più pulito.
-* **🎵 Musica Arcade Opzionale:** Aprire la sala giochi non cambia più automaticamente la musica. Volete il tema Arcade come musica di sfondo? Selezionatelo dalle opzioni.
-* **📏 Score & Header:** Score principale evidenziato meglio, valori moltiplicatore e token più discreti.
-* **🎨 Coerenza Visiva:** Tutti i temi (Christmas, 8-bit, Super, Default) sono stati rivisti per coerenza con la nuova UI.
-* **⚡ Performance:** Animazioni ottimizzate, transizioni più leggere, esperienza più fluida ovunque.
-* **🕹️ Sala Giochi più Stabile:** Corretti vari piccoli bug dei minigiochi per sessioni più pulite.
-* **🔒 Account più Sicuri:** Password più robuste e protezioni extra lato server.
+* **🔄 L'Avviso di Sincronizzazione Risponde:** Quando i progressi non arrivavano al cloud compariva un avviso che al tocco sembrava non fare niente e restava lì fisso. Ora dice cosa sta facendo e com'è andata — e se il problema è la sessione scaduta, vi porta direttamente al login.
+* **📮 Dove si Segnala:** Una volta sola, dopo le note di rilascio, vi mostriamo dov'è la scheda Segnala e cosa conviene scriverci. Metà delle correzioni qui sopra arriva da lì.

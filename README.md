@@ -193,9 +193,17 @@ The two targets differ on purpose: the production job **deletes** the cheatboard
 
 There is also a local **Deploy Console** (`deploy-ui.bat`): a zero-dependency Node HTTP server bound to `127.0.0.1:4599` that opens your browser, streams command output over Server-Sent Events, and holds a global lock so you cannot fire two deploys at once. It runs everything with `shell: false` and argument arrays, and routes npm through `cmd /c` on Windows specifically to dodge CVE-2024-27980. A deploy tool with a threat model, for a game about clicking a man's face.
 
+### Two things the pipeline will never upload for you
+
+**1. Server secrets.** `php/secrets.php` holds the R2 keys and the Trello token. It is gitignored, so it is not in the repo, it does not exist in the CI checkout, and no deploy will ever push it. It lives on the Altervista server and **you put it there by hand, over FTP** — and again whenever it changes. Generate it from `php/secrets.example.php`, or migrate the older split files with `php scripts/merge-secrets.php --write`.
+
+If it is missing in production the failure is indirect and easy to misread: the signer returns 500, the client falls back to local asset paths, and those 404 — because sounds, videos and jukebox tracks are excluded from FTP and only exist on R2. Silent game, no obvious cause. `php/secrets-load.php` still falls back to the older `php/r2-config.php` and `php/trello-config.php` if they are on the server, so the switch to the single file can happen whenever you like; that fallback is meant to be removed once it has.
+
+**2. Media.** `assets/sounds/**`, `assets/video/**` and `music/songs/**` are excluded from FTP and served from Cloudflare R2. Changing a file in the repo changes nothing in production until it is synced — `deploy.bat` option 12 for video only, option 10 for everything. Verify with `rclone check --checksum` rather than trusting the transfer count: rclone reports "0 transferred" both when the upload already happened and when it silently matched the wrong thing.
+
 ## 📅 Project status
 
-**v3.0.13**, on the runway. Public launch is **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
+**v3.1.0**, in development. The public launch happened on **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
 
 That launch starts **Season 1**, and anyone with a real pre-launch save (at least one Promozione, or one non-default skin) is migrated to **Fondatore** (Founder) status: an exclusive `divine` skin with no price and no achievement attached — permanently unobtainable for everyone who arrives after — plus up to 5 kept skins, with an interactive picker if they had more.
 

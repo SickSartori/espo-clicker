@@ -83,6 +83,11 @@
 
 <div id="settings-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 400px;">
+        <!-- Unica finestra senza X: si chiudeva solo con «Chiudi & Salva» in
+             fondo, che su mobile richiede di scorrere tutta la lista. La X
+             equivale al salva (vedi ui/modals): niente due semantiche di
+             chiusura diverse nella stessa finestra. -->
+        <button class="modal-close-btn">&times;</button>
         <h2>
 			<i class="fa-solid fa-sliders"></i>
 			<?php echo $labels["modals_opzioni_titolo"]; ?>
@@ -370,7 +375,7 @@
                 </div>
 
                 <button id="btn-confirm-prestige" class="buy-btn hub-confirm hub-confirm-promo" disabled>
-                    <span class="hub-btn-ready"><i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?></span>
+                    <span class="hub-btn-ready"><span class="hub-btn-main"><i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?></span></span>
                     <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_promo_locked_btn"]; ?></span>
                 </button>
             </section>
@@ -395,7 +400,8 @@
                 </div>
 
                 <button id="btn-confirm-format" class="buy-btn quantum-btn hub-confirm hub-confirm-format" aria-label="<?php echo $labels['prestige_madeheaven_aria']; ?>" disabled>
-                    <span class="hub-btn-ready"><i class="fa-solid fa-meteor"></i>&nbsp;MADE IN HEAVEN
+                    <span class="hub-btn-ready">
+                        <span class="hub-btn-main"><i class="fa-solid fa-meteor"></i> MADE IN HEAVEN</span>
                         <span class="hub-btn-sub"><?php echo $labels["format_subtitle"]; ?></span>
                     </span>
                     <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_counter_label"]; ?> <span class="hub-format-counter-value">0/20</span></span>
@@ -433,6 +439,96 @@
 
         <!-- Singolo container unificato (no più toggle / carousel / legacy) -->
         <div id="skins-grid-modern" class="skins-grid-container skins-unified-grid"></div>
+    </div>
+</div>
+
+<!-- MENU MOBILE — raccoglie le voci secondarie della barra in alto.
+     Su mobile le icone sono senza etichetta e da 35px: otto affiancate erano
+     illeggibili. Qui ogni voce ha icona E nome.
+     Le voci NON duplicano logica: inoltrano il click al pulsante vero della
+     navbar (data-opens), che ha già il suo handler. Aggiungere una voce =
+     aggiungere un <button> qui. -->
+<div id="mobile-menu-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 420px;">
+        <button class="modal-close-btn">&times;</button>
+        <h2>
+            <i class="fa-solid fa-bars"></i>
+            <?php echo $labels["navbar_menu"]; ?>
+        </h2>
+        <div class="settings-content" id="mobile-menu-list">
+            <button type="button" class="mm-item" data-opens="open-achievements-btn">
+                <i class="mm-icon" data-lucide="award"></i>
+                <span class="mm-label"><?php echo $labels["navbar_obiettivi"]; ?></span>
+                <span class="mm-dot" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-skins-btn">
+                <i class="mm-icon" data-lucide="shirt"></i>
+                <span class="mm-label"><?php echo $labels["navbar_skin"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-leaderboard-btn">
+                <i class="mm-icon" data-lucide="trophy"></i>
+                <span class="mm-label"><?php echo $labels["navbar_classifica"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-stats-btn">
+                <i class="mm-icon" data-lucide="chart-line"></i>
+                <span class="mm-label"><?php echo $labels["navbar_stats"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-settings-btn">
+                <i class="mm-icon" data-lucide="sliders"></i>
+                <span class="mm-label"><?php echo $labels["navbar_opzioni"]; ?></span>
+            </button>
+            <button type="button" class="mm-item" data-opens="open-help-btn">
+                <i class="mm-icon" data-lucide="info"></i>
+                <span class="mm-label"><?php echo $labels["help_menu_titolo"]; ?></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP "COME SI SEGNALA" — una tantum, subito DOPO le note di rilascio.
+     Serve a far scoprire la funzione a chi non sa che esiste: niente modulo qui
+     dentro, solo dove trovarlo e cosa scriverci. Chi vuole segnalare subito ha
+     il pulsante che lo porta dritto alla scheda giusta. -->
+<div id="feedback-intro-modal" class="modal-backdrop" style="display: none; z-index: 2600;">
+    <div class="modal-content" style="max-width: 520px; border-top: 4px solid #3498db;">
+        <button class="modal-close-btn">&times;</button>
+        <h2 style="background: #1a1a1a; color: #3498db; border-bottom: 1px solid rgba(52, 152, 219, 0.3);">
+            <i class="fa-solid fa-bullhorn"></i> <?php echo $labels["fbintro_titolo"]; ?>
+        </h2>
+        <div class="settings-content" style="padding: 22px 26px;">
+
+            <p style="color: #bdc3c7; font-size: 0.98rem; line-height: 1.6; margin: 0 0 20px;">
+                <?php echo $labels["fbintro_intro"]; ?>
+            </p>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">1</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p1"]; ?></p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">2</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p2"]; ?></p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 18px; align-items: flex-start;">
+                <div style="flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(52,152,219,0.15); color: #3498db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">3</div>
+                <p style="color: #bdc3c7; font-size: 0.93rem; line-height: 1.5; margin: 3px 0 0;"><?php echo $labels["fbintro_p3"]; ?></p>
+            </div>
+
+            <p style="color: #7f8c8d; font-size: 0.78rem; line-height: 1.5; margin: 0 0 20px; display: flex; align-items: flex-start; gap: 6px;">
+                <i class="fa-solid fa-lock" style="margin-top: 2px;"></i>
+                <span><?php echo $labels["fbintro_privacy"]; ?></span>
+            </p>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="fbintro-open" style="flex: 1; min-width: 160px; padding: 12px; border: 1px solid rgba(52,152,219,0.5); border-radius: 8px; background: #3498db; color: #fff; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-bullhorn"></i> <?php echo $labels["fbintro_btn_apri"]; ?>
+                </button>
+                <button type="button" id="fbintro-ok" style="flex: 1; min-width: 130px; padding: 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.04); color: #ecf0f1; font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+                    <?php echo $labels["fbintro_btn_ok"]; ?>
+                </button>
+            </div>
+
+        </div>
     </div>
 </div>
 

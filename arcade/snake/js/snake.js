@@ -1,6 +1,34 @@
 // arcade/snake/js/snake.js
 
 (function () {
+    // ---- Campo di gioco: dimensione LOGICA fissa ------------------------
+    // Il campo era ricavato dalla finestra (min(1100, innerWidth - 60)
+    // arrotondato alla griglia). Misurato: su un telefono da 375px restavano 15
+    // colonne, e siccome lo snake nasce lungo 3 e parte verso destra, una
+    // partita lasciata andare sbatteva nel muro in 1,1 secondi. Lo stesso codice
+    // su desktop dava 55 colonne e 3,3 secondi. Non era un gioco che si adattava
+    // allo schermo: erano giochi diversi, con record che finivano nella stessa
+    // classifica pur non essendo confrontabili.
+    //
+    // La soluzione ovvia — alzare il minimo su mobile — non basta, perché il
+    // campo resterebbe legato alla finestra: cambierebbe ancora fra telefono,
+    // tablet e desktop, e pure ruotando lo schermo o facendo comparire la barra
+    // dell'indirizzo a metà partita. Si fa invece come Stack Overflow
+    // (arcade/stack/js/stack.js, che nel suo commento indica proprio snake come
+    // "la trappola"): dimensione logica FISSA, scelta qui una volta sola, e a
+    // scalare il canvas ci pensa il CSS (#arcade-active-game-container canvas =
+    // max-width/height 100%). Nessun listener di resize, niente da ricalcolare.
+    //
+    // Quante colonne, però, non è libero. La scala si porta dietro tutto il
+    // disegno, ed è la LARGHEZZA a imporla: su quel telefono al canvas restano
+    // ~333px, quindi la cella a schermo misura 333/colonne. Con le 760 logiche
+    // di stack (38 colonne) la cella sarebbe 8,8px — misurato — cioè meno della
+    // metà dei 20px di prima: il campo sarebbe corretto e illeggibile insieme.
+    // 28 colonne tengono la cella a ~11,9px sul telefono e danno un campo quasi
+    // quadrato, che è anche la forma classica dello snake. L'altezza resta 540
+    // come negli altri cabinati 2D (space, asteroids, stack in layout largo).
+    const COLS = 28, ROWS = 27;
+
     const CONFIG = {
         gridSize: 20,
         speed: 110,
@@ -21,7 +49,6 @@
     let nextDirection = 'right';
     let score = 0;
     let isGameRunning = false;
-    let _goTimer = null;
 
     // --- INIT ---
     window.initSnakeGame = function () {
@@ -35,9 +62,6 @@
             gameContainer.style.alignItems = 'center';
             gameContainer.innerHTML = '';
         } else return;
-
-        const maxWidth = Math.min(1100, window.innerWidth - 60);
-        const canvasWidth = Math.floor(maxWidth / CONFIG.gridSize) * CONFIG.gridSize;
 
         const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
         const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.snake) ? gs.arcadeHighScores.snake : 0;
@@ -64,8 +88,8 @@
 
         canvas = document.createElement('canvas');
         canvas.id = 'snake-canvas';
-        canvas.width = canvasWidth;
-        canvas.height = 540;
+        canvas.width = COLS * CONFIG.gridSize;   // 560
+        canvas.height = ROWS * CONFIG.gridSize;  // 540
         // NON fissare width/height inline sul wrapper: lo lasciamo al layout flex condiviso
         // (.crt-effect = width:100% + flex:1) come gli altri giochi, così il canvas SCALA
         // sempre per stare nel contenitore (CSS max-width/height:100%) e si adatta al
@@ -98,7 +122,6 @@
 
     window.exitSnakeGame = function () {
         if (gameInterval) clearInterval(gameInterval);
-        if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
         isGameRunning = false;
 
         const selector = document.getElementById('arcade-game-selector');
@@ -114,10 +137,16 @@
     };
 
     window.startSnakeRun = function () {
-        if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
 
-        const startY = Math.floor((canvas.height / CONFIG.gridSize) / 2);
-        const startX = Math.floor((canvas.width / CONFIG.gridSize) / 2) - 2;
+        // Partenza a un quarto da sinistra, non al centro. Con il campo legato
+        // alla finestra il centro era l'unica scelta sensata (non si sapeva
+        // quanto fosse largo); ora che il campo è fisso si può dare allo snake
+        // una rincorsa vera: nasce lungo 3 e ha davanti quasi tutto il campo.
+        // È metà del difetto che si stava correggendo — "sbatte quasi subito" —
+        // e da sola la larghezza non la risolveva: al centro di 28 colonne la
+        // partita lasciata andare finiva comunque in 1,5s.
+        const startY = Math.floor(ROWS / 2);
+        const startX = Math.floor(COLS / 4);
         snake = [{ x: startX, y: startY }, { x: startX - 1, y: startY }, { x: startX - 2, y: startY }];
 
         direction = 'right';
@@ -263,6 +292,9 @@
         clearInterval(gameInterval);
         isGameRunning = false;
 
+        // Due suoni, come negli altri cabinati: il campione vero più il bip
+        // sintetizzato. Qui mancava il primo.
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
         if (window.arcadeSfx) window.arcadeSfx.gameover();
 
         // Calculate reward
@@ -292,102 +324,19 @@
         ctx.fillStyle = 'rgba(231, 76, 60, 0.5)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Build game over overlay
-        var overlay = document.getElementById('snake-overlay');
-        overlay.style.display = 'flex';
-        overlay.style.background = 'rgba(5, 7, 9, 0.92)';
-        overlay.style.animation = 'arcadeGoFadeIn 0.4s ease forwards';
-        overlay.innerHTML = '';
-
-        var wrap = document.createElement('div');
-        wrap.style.cssText = 'text-align:center;width:100%;max-width:400px;';
-
-        // GAME OVER title
-        var title = document.createElement('div');
-        title.textContent = 'GAME OVER';
-        title.style.cssText = "font-family:'Press Start 2P',monospace;font-size:1.6rem;color:#e74c3c;text-shadow:0 0 20px rgba(231,76,60,0.8),0 0 40px rgba(231,76,60,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:20px;letter-spacing:3px;";
-        wrap.appendChild(title);
-
-        // Separator
-        var sep = document.createElement('div');
-        sep.textContent = '════════════════';
-        sep.style.cssText = 'color:rgba(231,76,60,0.25);letter-spacing:2px;margin-bottom:18px;font-family:monospace;';
-        wrap.appendChild(sep);
-
-        // Score label
-        var sLabel = document.createElement('div');
-        sLabel.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.score) || 'PUNTEGGIO';
-        sLabel.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.5rem;color:#5a6a7a;letter-spacing:3px;margin-bottom:6px;";
-        wrap.appendChild(sLabel);
-
-        // Score value (count-up)
-        var sVal = document.createElement('div');
-        sVal.id = 'snake-go-score';
-        sVal.textContent = '0';
-        sVal.style.cssText = "font-family:'Press Start 2P',monospace;font-size:2.2rem;color:#00d9ff;text-shadow:0 0 12px rgba(0,217,255,0.8);margin-bottom:18px;animation:arcadeGoCountPulse 1.2s ease-in-out infinite;";
-        wrap.appendChild(sVal);
-
-        // Reward (fade in after count-up)
-        if (score > 0) {
-            var rDiv = document.createElement('div');
-            rDiv.textContent = '+' + rewardStr + ' BUG';
-            rDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.75rem;color:#2ecc71;text-shadow:0 0 12px rgba(46,204,113,0.8);margin-bottom:14px;opacity:0;animation:arcadeGoFadeUp 0.4s ease 0.9s forwards;";
-            wrap.appendChild(rDiv);
-        }
-
-        // New record
-        if (isNewRecord) {
-            var recDiv = document.createElement('div');
-            recDiv.textContent = (window.ARCADE_TXT && window.ARCADE_TXT.record) || '★ NUOVO RECORD! ★';
-            recDiv.style.cssText = "font-family:'Press Start 2P',monospace;font-size:0.65rem;color:#ffce15;animation:arcadeGoRecordShine 1s ease-in-out infinite,arcadeGoFadeUp 0.4s ease 1.2s forwards;opacity:0;margin-bottom:14px;";
-            wrap.appendChild(recDiv);
-        }
-
-        // Bottone RESTART: ricomincia subito (annulla il ritorno automatico)
-        var bRetry = document.createElement('button');
-        bRetry.className = 'arcade-btn';
-        bRetry.innerHTML = '<i class="fa-solid fa-rotate-right"></i> RESTART';
-        bRetry.style.cssText = 'margin-top:18px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.0s forwards;';
-        bRetry.onclick = function () {
-            if (_goTimer) { clearTimeout(_goTimer); _goTimer = null; }
-            window.startSnakeRun();
-        };
-        wrap.appendChild(bRetry);
-
-        // Auto-return label + barra (ritorno al menu se non clicchi RESTART)
-        var retLabel = document.createElement('div');
-        retLabel.textContent = '▸ o torna al menu… ◂';
-        retLabel.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:0.85rem;color:#4a5a6a;letter-spacing:1px;margin-top:16px;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;";
-        wrap.appendChild(retLabel);
-
-        // Progress bar (3s, fino al ritorno automatico)
-        var bar = document.createElement('div');
-        bar.style.cssText = 'width:50%;height:3px;background:#1a2530;border-radius:2px;margin:10px auto 0;overflow:hidden;opacity:0;animation:arcadeGoFadeUp 0.3s ease 1.5s forwards;';
-        var barFill = document.createElement('div');
-        barFill.style.cssText = 'width:0;height:100%;background:linear-gradient(90deg,#e74c3c,#e67e22);border-radius:2px;animation:arcadeGoBarFill 3s linear 1.5s forwards;';
-        bar.appendChild(barFill);
-        wrap.appendChild(bar);
-
-        overlay.appendChild(wrap);
-
-        // Score count-up animation
-        var countTarget = score;
-        var countStart = Date.now();
-        var countDuration = 700;
-        var countIv = setInterval(function () {
-            var elapsed = Date.now() - countStart;
-            var progress = Math.min(elapsed / countDuration, 1);
-            var val = Math.round(progress * countTarget);
-            var el = document.getElementById('snake-go-score');
-            if (el) el.textContent = val;
-            if (progress >= 1) clearInterval(countIv);
-        }, 25);
-
-        // Ritorno automatico al menu dopo 4.5s (se non si clicca RESTART)
-        _goTimer = setTimeout(function () {
-            _goTimer = null;
-            window.exitSnakeGame();
-        }, 4500);
+        // Riquadro di fine partita CONDIVISO (js/arcade-page.js), come gli altri
+        // cabinati. Prima era ricopiato qui: ~95 righe che avevano gia' preso
+        // strade diverse dall'originale — colore delle etichette, barra a durata
+        // fissa invece che legata al delay, e i testi "torna al menu" in italiano
+        // fisso, quindi non tradotti.
+        window.showArcadeGameOver({
+            overlay: document.getElementById('snake-overlay'),
+            score: score,
+            rewardStr: (window.EspooClicker && score > 0) ? rewardStr : null,
+            isNewRecord: isNewRecord,
+            onReturn: window.exitSnakeGame,
+            onRetry: window.startSnakeRun
+        });
     }
 
     function updateScoreUI(val) {

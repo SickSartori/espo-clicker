@@ -12,19 +12,15 @@ header('Cache-Control: no-store');
 
 $songs = [];
 
-$r2ConfigPath = __DIR__ . '/../php/r2-config.php';
-$r2SignPath   = __DIR__ . '/../php/r2-sign.php';
+require_once __DIR__ . '/../php/secrets-load.php';
 
-$useR2 = false;
-if (file_exists($r2ConfigPath) && file_exists($r2SignPath)) {
-    $cfg = require $r2ConfigPath;
-    if (
-        !empty($cfg['access_key']) && $cfg['access_key'] !== 'INSERISCI_ACCESS_KEY_ID_QUI' &&
-        !empty($cfg['secret_key']) && $cfg['secret_key'] !== 'INSERISCI_SECRET_ACCESS_KEY_QUI'
-    ) {
-        $useR2 = true;
-    }
-}
+$r2SignPath = __DIR__ . '/../php/r2-sign.php';
+
+// Il controllo sui segnaposto sta in secrets_configured(): prima era una
+// copia verbatim di quello in get_asset_urls.php, con l'ovvio rischio di
+// aggiornarne una sola.
+$cfg   = secrets('r2');
+$useR2 = file_exists($r2SignPath) && secrets_configured('r2');
 
 if ($useR2) {
     // Modalità R2: lista da songs.json + signed URLs
@@ -34,18 +30,13 @@ if ($useR2) {
     if (is_array($list)) {
         require_once $r2SignPath;
 
-        // Anti-hotlink: stesso check di get_asset_urls.php
-        if (!empty($cfg['allowed_referers'])) {
-            $referer = $_SERVER['HTTP_REFERER'] ?? '';
-            $ok = false;
-            foreach ($cfg['allowed_referers'] as $allowed) {
-                if (strpos($referer, $allowed) === 0) { $ok = true; break; }
-            }
-            if (!$ok) {
-                http_response_code(403);
-                echo '[]';
-                exit;
-            }
+        // Anti-hotlink: stesso check di get_asset_urls.php, che però qui
+        // risponde con un array vuoto invece che con un JSON d'errore —
+        // per questo la decisione è condivisa ma la risposta no.
+        if (!secrets_referer_allowed($cfg)) {
+            http_response_code(403);
+            echo '[]';
+            exit;
         }
 
         try {

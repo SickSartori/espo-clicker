@@ -463,7 +463,7 @@
         let isNewRecord = false;
         if (typeof bps !== 'undefined') {
             const bpsVal = (bps && bps.gt(0)) ? bps : new Decimal(1);
-            reward = bpsVal.mul(score).mul(0.04);
+            reward = bpsVal.mul(score).mul(0.05);
         }
 
         if (window.EspooClicker) {
@@ -484,7 +484,7 @@
             score: score,
             rewardStr: (window.EspooClicker && score > 0) ? window.EspooClicker.formatNumber(reward) : null,
             isNewRecord: isNewRecord,
-            statLabel: 'ONDATE', statValue: level, statColor: '#e67e22',
+            statLabel: (window.ARCADE_TXT && window.ARCADE_TXT.wave) || 'ONDATA', statValue: level, statColor: '#e67e22',
             onReturn: window.exitAsteroidsGame,
             onRetry: window.startAsteroidsRun
         });

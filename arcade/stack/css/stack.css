@@ -1,0 +1,132 @@
+/* arcade/stack/css/stack.css — STACK OVERFLOW */
+
+/* Il canvas ha dimensione logica fissa e viene scalato da qui: così il gioco
+   non deve ricalcolare il layout su resize o rotazione.
+   Le dimensioni fisse sono DUE — 760x540 col pannelli inclusi, 296x520 col
+   solo campo — e stack.js ne sceglie una sola volta alla costruzione dello
+   schermo. Il perché è spiegato per esteso lì, in testa a "Campo e geometria". */
+#stack-canvas {
+    background-color: #050a10;
+    border: 3px solid #00d9ff;
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    image-rendering: pixelated;
+    /* I bug si schiacciano col dito: niente scroll/zoom sul campo, o il tap
+       diventa un pan e il gesto si perde. */
+    touch-action: none;
+}
+
+/* ============================================================
+   LAYOUT COMPATTO — l'HUD fuori dal canvas
+   ============================================================
+   Nel layout largo livello, righe, bug, prossimo pezzo e debito sono DISEGNATI
+   dentro al canvas, ai lati del campo. Su un telefono il canvas viene scalato
+   a 0,43 e la scala si applica anche a loro: le etichette a 8px finivano a
+   3,44px CSS, i valori a 6,88px — macchie, non parole (misurato a 375x812).
+   E i due pannelli si portavano via il 63% della larghezza, lasciando al campo
+   120px: celle da 12px, contro i 44px che il progetto usa altrove per un
+   bersaglio da dito.
+
+   Rimpicciolire o ingrandire il font non risolveva: il fattore di scala lo
+   detta la larghezza del canvas, quindi l'unico modo di guadagnare campo E
+   leggibilità era togliere dal canvas ciò che non è campo. Qui sotto quel
+   contenuto ridiventa testo HTML, che si rende alla dimensione dichiarata
+   qualunque cosa faccia il canvas accanto — la stessa ragione per cui la
+   topbar mostra punteggio e record in modo leggibile già oggi. */
+
+/* Nel layout largo il canvas è limitato dalla LARGHEZZA e gli avanza altezza,
+   quindi max-height non morde mai. In quello compatto il canvas è alto e
+   stretto e va a sbattere sull'ALTEZZA — e lì salta fuori che max-height:100%
+   limita il *content box*: i 3px di bordo si aggiungono dopo, il canvas esce
+   di 6px dal wrapper .crt-effect (che ha overflow:hidden) e la cornice al neon
+   viene tranciata sopra e sotto, angoli arrotondati compresi.
+   Togliere i 6px qui è l'unico modo per farci stare anche il bordo. La regola
+   resta sul solo .compact: nel layout largo cambierebbe la scala per niente. */
+#stack-canvas.compact {
+    max-width: calc(100% - 6px);
+    max-height: calc(100% - 6px);
+}
+
+#stack-hud {
+    flex: 0 0 auto;          /* la barra non si comprime: il canvas ha flex:1 */
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 10px;
+    margin: 0 auto 10px;
+    padding: 8px 10px;
+    background: #050505;
+    border: 1px solid #1a2530;
+    border-radius: 6px;
+}
+
+#stack-hud .hud-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;            /* senza, una cella lunga sfonda la colonna 1fr */
+}
+
+/* Press Start 2P disegna OLTRE la propria font bounding box (stesso inciampo
+   annotato sulla topbar in styles/arcade/arcade-fullscreen.css): line-height
+   stretti tagliano le maiuscole in cima. Qui sta largo apposta. */
+#stack-hud .hud-k {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+    color: #8b9aa8;          /* contrasto AA su #050505 a questa dimensione */
+}
+
+#stack-hud .hud-v {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    line-height: 1.25;
+    text-shadow: 0 0 8px currentColor;
+}
+
+#stack-hud .hud-id {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    line-height: 1.45;
+    color: #6d7d8b;
+}
+
+/* Riga 1: livello · righe · bug (tre colonne uguali).
+   Riga 2: prossimo pezzo a sinistra, debito sulle due colonne restanti —
+   "DEBITO TECNICO" a 9px è largo ~133px e in una colonna sola andrebbe a capo. */
+#stack-hud .hud-next { grid-column: 1 / 2; }
+#stack-hud .hud-debt { grid-column: 2 / 4; }
+
+/* L'anteprima è un canvas suo, disegnato dalla stessa drawCell del campo:
+   così il pezzo mostrato qui è identico a quello che poi cade. */
+#stack-hud #stack-next-canvas {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;         /* si restringe con la colonna, proporzioni salve */
+    image-rendering: pixelated;
+}
+
+#stack-hud .hud-bar {
+    display: block;
+    height: 12px;
+    background: #1a2530;
+    border: 1px solid rgba(230, 126, 34, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#stack-hud .hud-bar > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #e67e22;
+    transition: width 160ms linear;
+}

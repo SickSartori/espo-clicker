@@ -1,0 +1,930 @@
+// arcade/stack/js/stack.js
+//
+// STACK OVERFLOW — falling blocks, ma NON un clone.
+//
+// Vincolo di progetto (dev/docs/roadmap.md, 3.1): niente clone 1:1 di Tetris.
+// Il trade dress è protetto (caso *Tetris v. Xio*, 2012), quindi qui sono
+// diversi il nome, l'estetica, il set di pezzi — che include pezzi da 3 celle,
+// non è la settima canonica di tetromini — e soprattutto le meccaniche:
+//
+//   1. DEBITO TECNICO: ogni N pezzi una riga risale dal fondo e spinge su la
+//      pila. Non si accumula per colpa dell'avversario: matura da sola, come
+//      il debito vero. È la pressione del gioco.
+//   2. BUG DA SCHIACCIARE: alcune celle sono bug. Una riga completa che
+//      contiene un bug NON si chiude: prima il bug va schiacciato COL CLICK.
+//      È il verbo del gioco principale portato dentro il cabinato.
+//
+// Il game over si chiama STACK OVERFLOW: la pila arriva in cima.
+
+(function () {
+    'use strict';
+
+    // ---- Campo e geometria ---------------------------------------------
+    // Canvas a dimensione LOGICA fissa: il wrapper .crt-effect lo scala via
+    // CSS (max-width/height:100%), come negli altri cabinati. Così non serve
+    // ricalcolare il layout su resize/rotazione — che è la trappola in cui
+    // era caduto snake.js (vedi il suo commento sul wrapper).
+    //
+    // Le misure logiche però sono DUE, non una.
+    //
+    // Il layout LARGO tiene i due pannelli laterali dentro al canvas. Su un
+    // telefono da 375px quel canvas (760 logici) veniva scalato a 0,43, e la
+    // scala si porta dietro TUTTO il disegno: le etichette scritte a 8px
+    // finivano a 3,44px CSS — misurato — cioè macchie senza forma, e i valori
+    // a 16px a 6,88px. Non era un problema di font troppo piccolo: alzare i px
+    // logici avrebbe solo fatto crescere le etichette dentro a pannelli che già
+    // occupavano 2 x 103 = 207px dei 327 disponibili, il 63% della larghezza,
+    // lasciando al CAMPO 120px — una cella da 12px, metà del bersaglio minimo
+    // per un dito. Il fattore di scala è imposto dalla larghezza del canvas: si
+    // guadagna solo togliendo dal canvas quello che non è campo.
+    //
+    // Il layout COMPATTO disegna quindi SOLO il campo; livello, righe, bug,
+    // prossimo pezzo e debito passano in HTML (#stack-hud), dove il testo si
+    // rende alla dimensione che dichiara — esattamente come già fa la topbar
+    // con punteggio e record.
+    //
+    // Restano due numeri FISSI, scelti una volta sola in initStackGame: dentro
+    // al gioco non entra nessun calcolo che dipenda dalla finestra, nessun
+    // listener di resize, niente da rifare quando il telefono ruota. Rientrando
+    // nel gioco la scelta si rifà, ed è l'unico momento in cui può cambiare.
+    var COLS = 10, ROWS = 18, CELL = 28;
+    var FIELD_W = COLS * CELL;                       // 280
+    var FIELD_H = ROWS * CELL;                       // 504
+
+    var WIDE_W = 760, WIDE_H = 540;
+    var COMPACT_W = FIELD_W + 16, COMPACT_H = FIELD_H + 16;   // 296 x 520
+
+    var isCompact = false;
+    var CANVAS_W = WIDE_W, CANVAS_H = WIDE_H;
+    var FIELD_X = Math.floor((CANVAS_W - FIELD_W) / 2);
+    var FIELD_Y = Math.floor((CANVAS_H - FIELD_H) / 2);
+
+    function pickLayout() {
+        // La soglia guarda anche l'ALTEZZA: col bordo il canvas largo è 546px,
+        // sotto quella misura verrebbe rimpicciolito comunque — anche su una
+        // finestra desktop bassa, dove il problema è identico.
+        var mq = window.matchMedia && window.matchMedia('(max-width: 900px), (max-height: 620px)');
+        isCompact = !!(mq && mq.matches);
+        CANVAS_W = isCompact ? COMPACT_W : WIDE_W;
+        CANVAS_H = isCompact ? COMPACT_H : WIDE_H;
+        FIELD_X = Math.floor((CANVAS_W - FIELD_W) / 2);
+        FIELD_Y = Math.floor((CANVAS_H - FIELD_H) / 2);
+    }
+
+    var COLORS = {
+        bg: '#050a10',
+        grid: 'rgba(0, 217, 255, 0.07)',
+        frame: '#00d9ff',
+        debt: '#5a4a2a',
+        bug: '#e74c3c',
+        ghost: 'rgba(255, 255, 255, 0.13)',
+        panel: '#4a5a6a'
+    };
+
+    // ---- Set di pezzi ---------------------------------------------------
+    // Sette forme da 4 celle NON sono la lista canonica: qui ce ne sono due da
+    // 3 celle (PATCH, HOTFIX), e i nomi/colori sono di questo gioco.
+    var PIECES = [
+        { id: 'PIPELINE', color: '#00d9ff', cells: [[0, 0], [1, 0], [2, 0], [3, 0]] },
+        { id: 'STRUCT',   color: '#ffce15', cells: [[0, 0], [1, 0], [0, 1], [1, 1]] },
+        { id: 'MERGE',    color: '#9b59b6', cells: [[0, 0], [1, 0], [2, 0], [1, 1]] },
+        { id: 'BRANCH',   color: '#2ecc71', cells: [[0, 0], [0, 1], [1, 1], [2, 1]] },
+        { id: 'REBASE',   color: '#e67e22', cells: [[2, 0], [0, 1], [1, 1], [2, 1]] },
+        { id: 'CONFLICT', color: '#e84393', cells: [[1, 0], [2, 0], [0, 1], [1, 1]] },
+        { id: 'PATCH',    color: '#1abc9c', cells: [[0, 0], [0, 1], [1, 1]] },
+        { id: 'HOTFIX',   color: '#f39c12', cells: [[0, 0], [1, 0], [0, 1]] }
+    ];
+
+    // ---- Stato ----------------------------------------------------------
+    var canvas, ctx;
+    var board;              // board[r][c] = null | { color, bug }
+    var piece;              // { cells, color, id, x, y, bugAt }
+    var nextPiece;
+    var score, lines, level, bugsSquashed;
+    var dropMs, dropAcc, lastFrame;
+    var piecesToDebt;       // pezzi mancanti alla prossima riga di debito
+    var isRunning, isPaused;
+    var rafId = null;
+    var shakeUntil = 0;     // scossa quando risale il debito
+    var flashRows = [];     // righe che lampeggiano perché bloccate da un bug
+    var hud = null;         // riferimenti agli elementi HTML del layout compatto
+    var nextCanvas = null, nextCtx = null;
+
+    function T(key, fallback) {
+        var t = window.ARCADE_TXT;
+        return (t && t[key]) || fallback;
+    }
+
+    // ---- HUD in HTML (solo layout compatto) ------------------------------
+    // Le stesse informazioni dei pannelli disegnati, ma fuori dal canvas: qui
+    // il testo non subisce la scala e resta della dimensione che dichiara.
+    // L'etichetta dei bug è la versione CORTA già presente in ARCADE_TXT
+    // ('BUG' invece di 'BUG SCHIACCIATI'): in una colonna da un terzo di
+    // schermo quella lunga andrebbe a capo o verrebbe tagliata.
+    function buildHud(container) {
+        var el = document.createElement('div');
+        el.id = 'stack-hud';
+        el.innerHTML =
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackLevel', 'LIVELLO') + '</span>' +
+                '<span class="hud-v" id="stack-hud-level" style="color:#ffce15">1</span>' +
+            '</div>' +
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackLines', 'RIGHE') + '</span>' +
+                '<span class="hud-v" id="stack-hud-lines" style="color:#2ecc71">0</span>' +
+            '</div>' +
+            '<div class="hud-cell">' +
+                '<span class="hud-k">' + T('stackBugsShort', 'BUG') + '</span>' +
+                '<span class="hud-v" id="stack-hud-bugs" style="color:#e74c3c">0</span>' +
+            '</div>' +
+            '<div class="hud-cell hud-next">' +
+                '<span class="hud-k">' + T('stackNext', 'PROSSIMO') + '</span>' +
+                '<canvas id="stack-next-canvas" width="' + (4 * CELL) + '" height="' + (2 * CELL) + '"></canvas>' +
+                '<span class="hud-id" id="stack-hud-nextid"></span>' +
+            '</div>' +
+            '<div class="hud-cell hud-debt">' +
+                '<span class="hud-k">' + T('stackDebt', 'DEBITO TECNICO') + '</span>' +
+                '<span class="hud-bar"><i id="stack-hud-debtbar"></i></span>' +
+                '<span class="hud-id" id="stack-hud-debtleft"></span>' +
+            '</div>';
+        container.appendChild(el);
+
+        nextCanvas = el.querySelector('#stack-next-canvas');
+        nextCtx = nextCanvas ? nextCanvas.getContext('2d') : null;
+        hud = {
+            level: el.querySelector('#stack-hud-level'),
+            lines: el.querySelector('#stack-hud-lines'),
+            bugs: el.querySelector('#stack-hud-bugs'),
+            nextId: el.querySelector('#stack-hud-nextid'),
+            debtBar: el.querySelector('#stack-hud-debtbar'),
+            debtLeft: el.querySelector('#stack-hud-debtleft')
+        };
+    }
+
+    function updateHud() {
+        if (!hud) return;
+        hud.level.textContent = String(level);
+        hud.lines.textContent = String(lines);
+        hud.bugs.textContent = String(bugsSquashed);
+
+        var total = debtInterval();
+        var filled = Math.max(0, Math.min(1, 1 - (piecesToDebt / total)));
+        hud.debtBar.style.width = Math.round(filled * 100) + '%';
+        hud.debtBar.style.background = filled > 0.75 ? '#e74c3c' : '#e67e22';
+        hud.debtLeft.textContent = piecesToDebt + ' ' + T('stackPiecesLeft', 'PEZZI');
+
+        hud.nextId.textContent = nextPiece ? nextPiece.id : '';
+        drawNextPreview();
+    }
+
+    function drawNextPreview() {
+        if (!nextCtx || !nextPiece) return;
+        nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+        var w = pieceWidth(nextPiece.cells), h = pieceHeight(nextPiece.cells);
+        var ox = Math.floor((nextCanvas.width - w * CELL) / 2);
+        var oy = Math.floor((nextCanvas.height - h * CELL) / 2);
+        for (var i = 0; i < nextPiece.cells.length; i++) {
+            drawCell(
+                ox + nextPiece.cells[i][0] * CELL,
+                oy + nextPiece.cells[i][1] * CELL,
+                nextPiece.color, false, false, 0, nextCtx
+            );
+        }
+    }
+
+    // ---- Costruzione schermo -------------------------------------------
+    window.initStackGame = function () {
+        var selector = document.getElementById('arcade-game-selector');
+        var gameContainer = document.getElementById('arcade-active-game-container');
+
+        if (selector) selector.style.display = 'none';
+        if (gameContainer) {
+            gameContainer.style.display = 'flex';
+            gameContainer.style.flexDirection = 'column';
+            gameContainer.style.alignItems = 'center';
+            gameContainer.innerHTML = '';
+        } else return;
+
+        // innerHTML='' ha appena buttato via l'HUD della partita precedente:
+        // i riferimenti tenuti qui puntano a nodi staccati dal documento e
+        // vanno azzerati, o updateHud scriverebbe nel vuoto.
+        hud = null; nextCanvas = null; nextCtx = null;
+        pickLayout();
+
+        var gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        var highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.stack) ? gs.arcadeHighScores.stack : 0;
+
+        var headerDiv = document.createElement('div');
+        headerDiv.className = 'arcade-game-topbar';
+        headerDiv.innerHTML =
+            '<button class="arcade-btn secondary" onclick="window.exitStackGame()">' +
+                '<i class="fa-solid fa-arrow-left"></i> MENU' +
+            '</button>' +
+            '<span class="topbar-game-label" style="color:#00d9ff">STACK OVERFLOW</span>' +
+            '<div class="arcade-stats-box" id="stack-score">' +
+                '<span class="stat"><i class="fa-solid fa-crosshairs" style="color:#00d9ff;margin-right:4px"></i><span class="val-score">0</span></span>' +
+                '<span class="stat"><i class="fa-solid fa-trophy" style="color:#ffce15;margin-right:4px"></i><span class="val-record">' + highScore + '</span></span>' +
+            '</div>';
+        gameContainer.appendChild(headerDiv);
+
+        // L'HUD sta FUORI dal wrapper CRT, come la topbar: dentro prenderebbe
+        // scanline e vignettatura, e soprattutto l'animazione di accensione
+        // (scale(1, 0.001)) lo schiaccerebbe insieme al canvas.
+        if (isCompact) buildHud(gameContainer);
+
+        var canvasWrapper = document.createElement('div');
+        canvasWrapper.style.position = 'relative';
+        canvasWrapper.className = 'crt-turn-on crt-effect';
+
+        canvas = document.createElement('canvas');
+        canvas.id = 'stack-canvas';
+        canvas.width = CANVAS_W;
+        canvas.height = CANVAS_H;
+        if (isCompact) canvas.classList.add('compact');
+        ctx = canvas.getContext('2d');
+        canvasWrapper.appendChild(canvas);
+
+        var overlay = document.createElement('div');
+        overlay.id = 'stack-overlay';
+        overlay.className = 'arcade-ui-overlay';
+        overlay.innerHTML =
+            '<div style="font-family:\'Press Start 2P\',monospace;font-size:1.4rem;color:#00d9ff;text-shadow:0 0 12px rgba(0,217,255,0.8),0 0 30px rgba(0,217,255,0.3);margin-bottom:20px;letter-spacing:2px;">' +
+                'STACK OVERFLOW' +
+            '</div>' +
+            '<div style="font-family:\'Rajdhani\',sans-serif;font-size:1rem;color:#7a8a9a;margin-bottom:8px;">' +
+                T('stackTagline', 'Impila il codice, spedisci le righe') +
+            '</div>' +
+            '<div style="font-family:\'Rajdhani\',sans-serif;font-size:0.95rem;color:#e74c3c;margin-bottom:24px;">' +
+                T('stackBugHint', 'I bug bloccano la riga: schiacciali col click') +
+            '</div>' +
+            '<button class="arcade-btn" onclick="window.startStackRun()">' + T('start', 'INIZIA PARTITA') + '</button>';
+        canvasWrapper.appendChild(overlay);
+        gameContainer.appendChild(canvasWrapper);
+
+        resetState();
+        updateHud();     // l'HUD nasce già coi valori della partita azzerata
+        draw();
+
+        document.removeEventListener('keydown', handleInput);
+        document.addEventListener('keydown', handleInput);
+        canvas.removeEventListener('pointerdown', handleSquash);
+        canvas.addEventListener('pointerdown', handleSquash);
+    };
+
+    window.exitStackGame = function () {
+        stopLoop();
+        isRunning = false;
+
+        var selector = document.getElementById('arcade-game-selector');
+        var gameContainer = document.getElementById('arcade-active-game-container');
+
+        if (gameContainer) {
+            gameContainer.innerHTML = '';
+            gameContainer.style.display = 'none';
+        }
+        hud = null; nextCanvas = null; nextCtx = null;
+        if (selector) selector.style.display = 'flex';
+
+        document.removeEventListener('keydown', handleInput);
+    };
+
+    window.startStackRun = function () {
+        resetState();
+
+        var ov = document.getElementById('stack-overlay');
+        if (ov) ov.style.display = 'none';
+
+        isRunning = true;
+        spawnPiece();
+        updateScoreUI();
+
+        lastFrame = 0;
+        dropAcc = 0;
+        startLoop();
+    };
+
+    function resetState() {
+        board = [];
+        for (var r = 0; r < ROWS; r++) {
+            var row = [];
+            for (var c = 0; c < COLS; c++) row.push(null);
+            board.push(row);
+        }
+        score = 0; lines = 0; level = 1; bugsSquashed = 0;
+        dropMs = 700; dropAcc = 0;
+        piecesToDebt = debtInterval();
+        piece = null;
+        nextPiece = randomPiece();
+        isRunning = false; isPaused = false;
+        shakeUntil = 0; flashRows = [];
+    }
+
+    // ---- Ciclo ----------------------------------------------------------
+    function startLoop() {
+        stopLoop();
+        rafId = requestAnimationFrame(frame);
+    }
+    function stopLoop() {
+        if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    function frame(ts) {
+        rafId = requestAnimationFrame(frame);
+        if (!isRunning) { draw(); return; }
+
+        if (!lastFrame) lastFrame = ts;
+        var dt = ts - lastFrame;
+        lastFrame = ts;
+        // Salto temporale (tab in background): non far precipitare la pila
+        if (dt > 250) dt = 250;
+
+        dropAcc += dt;
+        while (dropAcc >= dropMs) {
+            dropAcc -= dropMs;
+            stepDown();
+        }
+        draw();
+    }
+
+    // ---- Pezzi ----------------------------------------------------------
+    function randomPiece() {
+        var def = PIECES[Math.floor(Math.random() * PIECES.length)];
+        var cells = def.cells.map(function (c) { return [c[0], c[1]]; });
+        // Un bug ogni tanto dentro al pezzo: la probabilità sale col livello,
+        // ma resta bassa — il grosso dei bug arriva col debito tecnico.
+        var bugAt = -1;
+        if (Math.random() < Math.min(0.05 + level * 0.02, 0.22)) {
+            bugAt = Math.floor(Math.random() * cells.length);
+        }
+        return { id: def.id, color: def.color, cells: cells, bugAt: bugAt, x: 0, y: 0 };
+    }
+
+    function spawnPiece() {
+        piece = nextPiece;
+        nextPiece = randomPiece();
+        var w = pieceWidth(piece.cells);
+        piece.x = Math.floor((COLS - w) / 2);
+        piece.y = 0;
+        // Non c'è spazio nemmeno per entrare: la pila ha toccato il tetto.
+        if (collides(piece.cells, piece.x, piece.y)) {
+            gameOver();
+            return false;
+        }
+        return true;
+    }
+
+    function pieceWidth(cells) {
+        var max = 0;
+        for (var i = 0; i < cells.length; i++) if (cells[i][0] > max) max = cells[i][0];
+        return max + 1;
+    }
+
+    function pieceHeight(cells) {
+        var max = 0;
+        for (var i = 0; i < cells.length; i++) if (cells[i][1] > max) max = cells[i][1];
+        return max + 1;
+    }
+
+    function rotateCells(cells) {
+        var maxY = 0;
+        for (var i = 0; i < cells.length; i++) if (cells[i][1] > maxY) maxY = cells[i][1];
+        var out = cells.map(function (c) { return [maxY - c[1], c[0]]; });
+        var minX = Infinity, minY = Infinity;
+        for (var j = 0; j < out.length; j++) {
+            if (out[j][0] < minX) minX = out[j][0];
+            if (out[j][1] < minY) minY = out[j][1];
+        }
+        return out.map(function (c) { return [c[0] - minX, c[1] - minY]; });
+    }
+
+    function collides(cells, px, py) {
+        for (var i = 0; i < cells.length; i++) {
+            var x = px + cells[i][0];
+            var y = py + cells[i][1];
+            if (x < 0 || x >= COLS || y >= ROWS) return true;
+            if (y >= 0 && board[y][x]) return true;
+        }
+        return false;
+    }
+
+    // ---- Movimento ------------------------------------------------------
+    function move(dx) {
+        if (!piece || !isRunning) return;
+        if (!collides(piece.cells, piece.x + dx, piece.y)) piece.x += dx;
+    }
+
+    function rotate() {
+        if (!piece || !isRunning) return;
+        var rotated = rotateCells(piece.cells);
+        // Wall kick minimale: prova sul posto, poi scostamenti laterali. Senza,
+        // ruotare contro il bordo o contro la pila semplicemente non funziona
+        // e il gioco sembra rotto.
+        var kicks = [0, -1, 1, -2, 2];
+        for (var i = 0; i < kicks.length; i++) {
+            if (!collides(rotated, piece.x + kicks[i], piece.y)) {
+                piece.cells = rotated;
+                piece.x += kicks[i];
+                return;
+            }
+        }
+    }
+
+    function stepDown() {
+        if (!piece || !isRunning) return;
+        if (!collides(piece.cells, piece.x, piece.y + 1)) {
+            piece.y++;
+        } else {
+            lockPiece();
+        }
+    }
+
+    function softDrop() {
+        if (!piece || !isRunning) return;
+        if (!collides(piece.cells, piece.x, piece.y + 1)) {
+            piece.y++;
+            score += 1;
+            dropAcc = 0;
+            updateScoreUI();
+        }
+    }
+
+    function hardDrop() {
+        if (!piece || !isRunning) return;
+        var dropped = 0;
+        while (!collides(piece.cells, piece.x, piece.y + 1)) { piece.y++; dropped++; }
+        score += dropped * 2;
+        lockPiece();
+    }
+
+    // ---- Fissaggio, righe, debito ---------------------------------------
+    function lockPiece() {
+        for (var i = 0; i < piece.cells.length; i++) {
+            var x = piece.x + piece.cells[i][0];
+            var y = piece.y + piece.cells[i][1];
+            if (y < 0) { gameOver(); return; }
+            board[y][x] = { color: piece.color, bug: (i === piece.bugAt) };
+        }
+        if (window.arcadeSfx) window.arcadeSfx.hit();
+
+        clearRows();
+
+        piecesToDebt--;
+        if (piecesToDebt <= 0) {
+            raiseDebtRow();
+            piecesToDebt = debtInterval();
+        }
+
+        if (isRunning) spawnPiece();
+        updateScoreUI();
+    }
+
+    function rowFull(r) {
+        for (var c = 0; c < COLS; c++) if (!board[r][c]) return false;
+        return true;
+    }
+    function rowHasBug(r) {
+        for (var c = 0; c < COLS; c++) if (board[r][c] && board[r][c].bug) return true;
+        return false;
+    }
+
+    function clearRows() {
+        var cleared = [];
+        var blocked = [];
+        for (var r = ROWS - 1; r >= 0; r--) {
+            if (!rowFull(r)) continue;
+            // Meccanica propria: la riga è completa ma un bug la tiene aperta.
+            // Non si chiude finché non lo schiacci col click.
+            if (rowHasBug(r)) { blocked.push(r); continue; }
+            cleared.push(r);
+        }
+
+        flashRows = blocked;
+
+        if (!cleared.length) return;
+
+        // Rimuove dall'alto verso il basso per non sfalsare gli indici
+        cleared.sort(function (a, b) { return a - b; });
+        for (var i = 0; i < cleared.length; i++) {
+            board.splice(cleared[i], 1);
+            var empty = [];
+            for (var c2 = 0; c2 < COLS; c2++) empty.push(null);
+            board.unshift(empty);
+        }
+
+        lines += cleared.length;
+        // Più righe insieme valgono di più: 1→100, 2→300, 3→600, 4→1000
+        var table = [0, 100, 300, 600, 1000];
+        var gain = (table[cleared.length] || (cleared.length * 250)) * level;
+        score += gain;
+
+        if (window.arcadeSfx) {
+            if (cleared.length >= 3) window.arcadeSfx.powerup();
+            else window.arcadeSfx.pickup();
+        }
+
+        var newLevel = Math.floor(lines / 10) + 1;
+        if (newLevel > level) {
+            level = newLevel;
+            dropMs = Math.max(120, 700 - (level - 1) * 55);
+            if (window.arcadeSfx) window.arcadeSfx.levelup();
+        }
+    }
+
+    function debtInterval() {
+        // Il debito matura più in fretta salendo di livello, ma non oltre un
+        // limite: sotto i 4 pezzi diventa ingiocabile.
+        return Math.max(4, 9 - Math.floor(level / 2));
+    }
+
+    function raiseDebtRow() {
+        // Tutto sale di una riga. Se la cima è occupata, la pila è arrivata
+        // in cima: STACK OVERFLOW.
+        for (var c = 0; c < COLS; c++) {
+            if (board[0][c]) { gameOver(); return; }
+        }
+        board.shift();
+
+        var gap = Math.floor(Math.random() * COLS);
+        var bugCol = gap;
+        while (bugCol === gap) bugCol = Math.floor(Math.random() * COLS);
+
+        var row = [];
+        for (var i = 0; i < COLS; i++) {
+            row.push(i === gap ? null : { color: COLORS.debt, bug: (i === bugCol), debt: true });
+        }
+        board.push(row);
+
+        // Il pezzo in volo deve salire con la pila, o si ritrova incastrato
+        // dentro alla riga appena comparsa.
+        if (piece && piece.y > 0 && !collides(piece.cells, piece.x, piece.y - 1)) piece.y--;
+
+        shakeUntil = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 260;
+        if (window.arcadeSfx) window.arcadeSfx.hit();
+    }
+
+    // ---- Schiacciare i bug ----------------------------------------------
+    function handleSquash(e) {
+        if (!isRunning || !canvas) return;
+        var rect = canvas.getBoundingClientRect();
+        // Il canvas è scalato dal CSS: riporta il tocco alle coordinate logiche.
+        // getBoundingClientRect misura il BORDER box, ma i pixel del disegno
+        // stanno nel content box: senza sottrarre il bordo (3px, stack.css) il
+        // tocco risulta spostato di ~7 unità logiche, cioè un quarto di cella.
+        var cs = window.getComputedStyle(canvas);
+        var bl = parseFloat(cs.borderLeftWidth) || 0;
+        var bt = parseFloat(cs.borderTopWidth) || 0;
+        var br = parseFloat(cs.borderRightWidth) || 0;
+        var bb = parseFloat(cs.borderBottomWidth) || 0;
+        var innerW = rect.width - bl - br;
+        var innerH = rect.height - bt - bb;
+        if (innerW <= 0 || innerH <= 0) return;
+
+        var px = (e.clientX - rect.left - bl) * (CANVAS_W / innerW);
+        var py = (e.clientY - rect.top - bt) * (CANVAS_H / innerH);
+
+        var c = Math.floor((px - FIELD_X) / CELL);
+        var r = Math.floor((py - FIELD_Y) / CELL);
+
+        var cell = (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? board[r][c] : null;
+
+        // Se il tocco non ha centrato un bug, si cerca il bug più vicino entro
+        // una cella. Su telefono il campo è scalato a ~0.43: una cella misura
+        // circa 12px sullo schermo, la metà del bersaglio minimo raccomandato
+        // (24px) e un quarto dei 44px che il progetto usa altrove. Senza questa
+        // tolleranza la meccanica propria del gioco — schiacciare i bug col
+        // dito — sarebbe un esercizio di mira, non di gioco.
+        if (!cell || !cell.bug) {
+            var mgx = FIELD_X + (c + 0.5) * CELL;   // centro della cella toccata
+            var mgy = FIELD_Y + (r + 0.5) * CELL;
+            var best = null, bestD = CELL * CELL * 1.5; // raggio ~1.2 celle
+            for (var rr = r - 1; rr <= r + 1; rr++) {
+                if (rr < 0 || rr >= ROWS) continue;
+                for (var cc = c - 1; cc <= c + 1; cc++) {
+                    if (cc < 0 || cc >= COLS) continue;
+                    var q = board[rr][cc];
+                    if (!q || !q.bug) continue;
+                    var dx = (FIELD_X + (cc + 0.5) * CELL) - mgx;
+                    var dy = (FIELD_Y + (rr + 0.5) * CELL) - mgy;
+                    var d = dx * dx + dy * dy;
+                    if (d < bestD) { bestD = d; best = q; }
+                }
+            }
+            if (!best) return;
+            cell = best;
+        }
+
+        e.preventDefault();
+        cell.bug = false;
+        bugsSquashed++;
+        score += 50;
+        if (window.arcadeSfx) window.arcadeSfx.explode();
+
+        // Schiacciato l'ultimo bug la riga può finalmente chiudersi.
+        clearRows();
+        updateScoreUI();
+    }
+
+    // ---- Input ----------------------------------------------------------
+    function handleInput(e) {
+        if (!isRunning) return;
+        var code = e.code || e.key;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].indexOf(code) > -1) e.preventDefault();
+
+        switch (code) {
+            case 'ArrowLeft':  case 'KeyA': move(-1); break;
+            case 'ArrowRight': case 'KeyD': move(1); break;
+            case 'ArrowDown':  case 'KeyS': softDrop(); break;
+            case 'ArrowUp':    case 'KeyW': rotate(); break;
+            case 'Space':      hardDrop(); break;
+        }
+    }
+
+    // ---- Disegno ---------------------------------------------------------
+    function draw() {
+        if (!ctx) return;
+        var now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = COLORS.bg;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Scossa quando risale il debito
+        if (now < shakeUntil) {
+            var k = (shakeUntil - now) / 260;
+            ctx.translate((Math.random() - 0.5) * 6 * k, (Math.random() - 0.5) * 6 * k);
+        }
+
+        drawField();
+        drawPanels();
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    function drawField() {
+        var now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+        // Cornice
+        ctx.strokeStyle = COLORS.frame;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = COLORS.frame;
+        ctx.shadowBlur = 10;
+        ctx.strokeRect(FIELD_X - 2, FIELD_Y - 2, FIELD_W + 4, FIELD_H + 4);
+        ctx.shadowBlur = 0;
+
+        // Griglia
+        ctx.strokeStyle = COLORS.grid;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (var x = 0; x <= COLS; x++) {
+            ctx.moveTo(FIELD_X + x * CELL, FIELD_Y);
+            ctx.lineTo(FIELD_X + x * CELL, FIELD_Y + FIELD_H);
+        }
+        for (var y = 0; y <= ROWS; y++) {
+            ctx.moveTo(FIELD_X, FIELD_Y + y * CELL);
+            ctx.lineTo(FIELD_X + FIELD_W, FIELD_Y + y * CELL);
+        }
+        ctx.stroke();
+
+        // Blocchi fissati
+        for (var r = 0; r < ROWS; r++) {
+            var flashing = flashRows.indexOf(r) > -1;
+            for (var c = 0; c < COLS; c++) {
+                var cell = board[r][c];
+                if (!cell) continue;
+                drawCell(FIELD_X + c * CELL, FIELD_Y + r * CELL, cell.color, cell.bug, flashing, now);
+            }
+        }
+
+        // Proiezione del pezzo (dove atterrerebbe)
+        if (piece && isRunning) {
+            var gy = piece.y;
+            while (!collides(piece.cells, piece.x, gy + 1)) gy++;
+            if (gy !== piece.y) {
+                // Contorno, non riempimento: riempita, la proiezione si legge
+                // come un blocco già posato e confonde la lettura della pila.
+                ctx.strokeStyle = piece.color;
+                ctx.globalAlpha = 0.45;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 3]);
+                for (var i = 0; i < piece.cells.length; i++) {
+                    ctx.strokeRect(
+                        FIELD_X + (piece.x + piece.cells[i][0]) * CELL + 3.5,
+                        FIELD_Y + (gy + piece.cells[i][1]) * CELL + 3.5,
+                        CELL - 7, CELL - 7
+                    );
+                }
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+            }
+            // Pezzo in volo
+            for (var j = 0; j < piece.cells.length; j++) {
+                var cy = piece.y + piece.cells[j][1];
+                if (cy < 0) continue;
+                drawCell(
+                    FIELD_X + (piece.x + piece.cells[j][0]) * CELL,
+                    FIELD_Y + cy * CELL,
+                    piece.color, j === piece.bugAt, false, now
+                );
+            }
+        }
+    }
+
+    // `target` serve solo all'anteprima del prossimo pezzo dell'HUD compatto,
+    // che disegna su un canvas suo. Parametro opzionale in coda invece di
+    // scambiare il ctx del modulo a mano: uno scambio dimenticato lascerebbe
+    // il gioco a disegnare dentro al riquadrino da 112px.
+    function drawCell(px, py, color, isBug, flashing, now, target) {
+        var g = target || ctx;
+        if (isBug) {
+            // I bug pulsano: devono saltare all'occhio, sono l'unica cosa che
+            // chiede un'azione diversa dai tasti.
+            var pulse = 0.55 + 0.45 * Math.sin(now / 130);
+            g.fillStyle = COLORS.bug;
+            g.globalAlpha = pulse;
+            g.shadowColor = COLORS.bug;
+            g.shadowBlur = 12;
+            g.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+            g.shadowBlur = 0;
+            g.globalAlpha = 1;
+            // Zampette, così è un bug e non un quadrato rosso
+            g.strokeStyle = '#2b0a08';
+            g.lineWidth = 2;
+            g.beginPath();
+            g.moveTo(px + 7, py + 9);  g.lineTo(px + CELL - 7, py + CELL - 9);
+            g.moveTo(px + CELL - 7, py + 9); g.lineTo(px + 7, py + CELL - 9);
+            g.stroke();
+            return;
+        }
+
+        if (flashing) {
+            g.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(now / 110));
+        }
+        g.fillStyle = color;
+        g.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+        // Smusso: luce in alto a sinistra, ombra in basso a destra
+        g.fillStyle = 'rgba(255,255,255,0.22)';
+        g.fillRect(px + 2, py + 2, CELL - 4, 3);
+        g.fillRect(px + 2, py + 2, 3, CELL - 4);
+        g.fillStyle = 'rgba(0,0,0,0.28)';
+        g.fillRect(px + 2, py + CELL - 5, CELL - 4, 3);
+        g.fillRect(px + CELL - 5, py + 2, 3, CELL - 4);
+        g.globalAlpha = 1;
+    }
+
+    function drawPanels() {
+        // Nel layout compatto questi dati stanno in #stack-hud: qui non c'è
+        // spazio dove metterli, il canvas è largo quanto il campo.
+        if (isCompact) return;
+
+        ctx.textAlign = 'left';
+
+        // --- Pannello sinistro: statistiche ---
+        var lx = 28, ly = FIELD_Y + 10;
+        panelLabel(T('stackLevel', 'LIVELLO'), lx, ly);
+        panelValue(String(level), lx, ly + 26, '#ffce15');
+
+        panelLabel(T('stackLines', 'RIGHE'), lx, ly + 76);
+        panelValue(String(lines), lx, ly + 102, '#2ecc71');
+
+        panelLabel(T('stackBugs', 'BUG SCHIACCIATI'), lx, ly + 152);
+        panelValue(String(bugsSquashed), lx, ly + 178, '#e74c3c');
+
+        panelLabel(T('score', 'PUNTEGGIO'), lx, ly + 228);
+        panelValue(String(score), lx, ly + 254, '#00d9ff');
+
+        // --- Pannello destro: prossimo pezzo + debito ---
+        var rx = FIELD_X + FIELD_W + 40, ry = FIELD_Y + 10;
+        panelLabel(T('stackNext', 'PROSSIMO'), rx, ry);
+        if (nextPiece) {
+            var w = pieceWidth(nextPiece.cells);
+            var ox = rx + Math.floor((4 - w) * CELL / 2);
+            for (var i = 0; i < nextPiece.cells.length; i++) {
+                drawCell(
+                    ox + nextPiece.cells[i][0] * CELL,
+                    ry + 22 + nextPiece.cells[i][1] * CELL,
+                    nextPiece.color, false, false, 0
+                );
+            }
+            ctx.fillStyle = COLORS.panel;
+            ctx.font = "9px 'Press Start 2P', monospace";
+            ctx.fillText(nextPiece.id, rx, ry + 120);
+        }
+
+        // Debito tecnico: quanti pezzi mancano alla prossima riga
+        panelLabel(T('stackDebt', 'DEBITO TECNICO'), rx, ry + 165);
+        var barW = 150, barH = 12;
+        var total = debtInterval();
+        var filled = Math.max(0, Math.min(1, 1 - (piecesToDebt / total)));
+        ctx.fillStyle = '#1a2530';
+        ctx.fillRect(rx, ry + 185, barW, barH);
+        ctx.fillStyle = filled > 0.75 ? '#e74c3c' : '#e67e22';
+        ctx.fillRect(rx, ry + 185, Math.floor(barW * filled), barH);
+        ctx.strokeStyle = 'rgba(230,126,34,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx + 0.5, ry + 185.5, barW, barH);
+
+        ctx.fillStyle = COLORS.panel;
+        ctx.font = "8px 'Press Start 2P', monospace";
+        ctx.fillText(piecesToDebt + ' ' + T('stackPiecesLeft', 'PEZZI'), rx, ry + 215);
+    }
+
+    function panelLabel(text, x, y) {
+        ctx.fillStyle = '#5a6a7a';
+        ctx.font = "8px 'Press Start 2P', monospace";
+        ctx.fillText(text, x, y);
+    }
+    function panelValue(text, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.font = "16px 'Press Start 2P', monospace";
+        ctx.fillText(text, x, y);
+    }
+
+    function updateScoreUI() {
+        // Ogni punto in cui cambia il punteggio cambia anche almeno uno degli
+        // altri contatori (righe, bug, livello, debito): agganciare l'HUD qui
+        // evita di doverlo richiamare sparso in mezza dozzina di funzioni.
+        updateHud();
+
+        var el = document.getElementById('stack-score');
+        if (!el) return;
+        var gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
+        var highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.stack) ? gs.arcadeHighScores.stack : 0;
+        var sEl = el.querySelector('.val-score');
+        var rEl = el.querySelector('.val-record');
+        if (sEl) sEl.textContent = score;
+        if (rEl) rEl.textContent = Math.max(score, highScore);
+    }
+
+    // ---- Game over -------------------------------------------------------
+    function gameOver() {
+        if (!isRunning) return;   // guard rientranza: niente record/reward doppi
+        isRunning = false;
+        stopLoop();
+
+        // Due suoni, come negli altri cabinati: il campione vero più il bip
+        // sintetizzato. Snake e questo gioco avevano solo il secondo.
+        if (window.EspooClicker) window.EspooClicker.playSound('sound-arcade-gameover');
+        if (window.arcadeSfx) window.arcadeSfx.gameover();
+
+        var reward = 0;
+        var rewardStr = '0';
+        if (typeof bps !== 'undefined' && typeof Decimal !== 'undefined') {
+            var bpsVal = (bps && bps.gt && bps.gt(0)) ? bps : new Decimal(1);
+            reward = bpsVal.mul(score).mul(0.05);
+            rewardStr = window.EspooClicker ? window.EspooClicker.formatNumber(reward) : String(Math.floor(parseFloat(reward.toString())));
+        }
+
+        var isNewRecord = false;
+        if (window.EspooClicker) {
+            var gs = window.EspooClicker.getGameState();
+            if (score > 0 && reward) gs.score = gs.score.add(reward);
+            if (!gs.arcadeHighScores) gs.arcadeHighScores = {};
+            var currentHigh = gs.arcadeHighScores.stack || 0;
+            if (score > currentHigh) {
+                gs.arcadeHighScores.stack = score;
+                isNewRecord = true;
+            }
+            window.EspooClicker.saveGame();
+        }
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.45)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Riquadro di fine partita CONDIVISO (js/arcade-page.js): stessa
+        // struttura, stessi tempi e stessi testi tradotti di tutti gli altri
+        // cabinati. Prima era ricopiato qui — 90 righe che divergevano già
+        // dall'originale su colori, durata della barra e i18n.
+        // `title` è l'unico pezzo su misura: il game over di questo gioco si
+        // chiama come il gioco, ed è la battuta finale del nome.
+        window.showArcadeGameOver({
+            overlay: document.getElementById('stack-overlay'),
+            title: 'STACK OVERFLOW',
+            score: score,
+            rewardStr: (window.EspooClicker && score > 0) ? rewardStr : null,
+            isNewRecord: isNewRecord,
+            statLabel: T('stackLines', 'RIGHE'), statValue: lines, statColor: '#2ecc71',
+            onReturn: window.exitStackGame,
+            onRetry: window.startStackRun
+        });
+    }
+
+    // Esposto per i test: lo stato interno non è altrimenti osservabile.
+    window.__stackDebug = {
+        state: function () {
+            return {
+                score: score, lines: lines, level: level, bugs: bugsSquashed,
+                piecesToDebt: piecesToDebt, running: isRunning,
+                board: board, piece: piece
+            };
+        },
+        setBoard: function (b) { board = b; },
+        setPiece: function (p) { piece = p; },
+        clearRows: clearRows,
+        raiseDebt: raiseDebtRow,
+        lock: lockPiece,
+        rotateCells: rotateCells,
+        collides: collides,
+        fieldOrigin: function () { return { x: FIELD_X, y: FIELD_Y, cell: CELL, cols: COLS, rows: ROWS }; }
+    };
+})();

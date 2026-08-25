@@ -21,7 +21,12 @@ function getInitialGameState() {
         // Season 1 e non passa mai dalla migrazione Fondatore (v2→v3).
         schemaVersion: 3,
         season: 1,
-        arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0 },
+        arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0, invaders: 0, centipede: 0, stack: 0 },
+        // Popup "come si segnala": una tantum, mostrato dopo le note di rilascio.
+        // Sta nel save (e non in localStorage) apposta: così viaggia col cloud e
+        // non ricompare cambiando dispositivo. I save vecchi non hanno il campo,
+        // che è undefined = falsy = lo vedono una volta, come voluto.
+        seenFeedbackIntro: false,
         score: new w.Decimal(0),
         baseClickValue: new w.Decimal(1),
         totalClicks: 0,

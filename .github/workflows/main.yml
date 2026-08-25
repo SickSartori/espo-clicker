@@ -54,6 +54,30 @@ jobs:
           grep "instanceName" php/config.php
           grep "CACHE_VERSION" sw.js
 
+      # php/secrets.php e' gitignored (il repo e' PUBBLICO e il file contiene la
+      # secret_key R2 e il token Trello) ma deve comunque arrivare sul server:
+      # senza, il signer R2 risponde 500 e gli asset — suoni, video, jukebox —
+      # vanno in 404, perche' quei file sono esclusi dall'FTP e stanno su R2.
+      # Finora si caricava a mano, ed e' il motivo per cui le voci aggiunte al
+      # template non arrivavano mai da sole. Qui viene generato dai secret del
+      # repo: i 5 valori segreti stanno li', la struttura resta in
+      # php/secrets.example.php, tracciato e reviewabile. Lo step fallisce se un
+      # secret manca, cosi' non si carica un file coi segnaposto dentro.
+      # Verificato prima di introdurlo (07/08/2026) confrontando il file
+      # generato con la configurazione che gira oggi in produzione: la sezione
+      # `r2` e' identica campo per campo, `trello` differisce per la sola voce
+      # `labels`, che in produzione e' inerte — trello-submit.php applica le
+      # etichette solo nel ramo !isProd, quindi qui non scatta e le card
+      # continuano a nascere nude per il triage manuale.
+      - name: 🔐 Genera php/secrets.php dai secret del repo
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          TRELLO_KEY:    ${{ secrets.TRELLO_KEY }}
+          TRELLO_TOKEN:  ${{ secrets.TRELLO_TOKEN }}
+        run: node scripts/generate-secrets.js
+
       # Step 3: Rimuovi file di sviluppo/cheat
       - name: 🗑️ Rimuovi file di debug (cheatboard.js)
         run: rm -f js/cheatboard.js
@@ -112,6 +136,7 @@ jobs:
             README.md
             PRODUCT.md
             php/config.example.php
+            php/secrets.example.php
             php/r2-config.example.php
             php/trello-config.example.php
             php/r2-cors-policy.json
