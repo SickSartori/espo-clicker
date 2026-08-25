@@ -32,11 +32,18 @@
     const PLAYER_H = 16;
     const ENEMY_W = 24;
     const ENEMY_H = 18;
-    const ENEMY_COLS = 9;
+    const ENEMY_COLS = 9;          // massimo: su schermi stretti si scende
     const ENEMY_ROWS = 4;
-    const ENEMY_HSPACE = 38;
+    const ENEMY_HSPACE = 38;       // spaziatura piena, quando c'e' posto
+    const ENEMY_HSPACE_MIN = 30;   // sotto questa gli alieni (24px) si toccano
     const ENEMY_VSPACE = 32;
     const ENEMY_DROP_PX = 18;
+    const ENEMY_STEP_PX = 8;       // scatto orizzontale dello sciame
+    const ENEMY_MARGIN = 6;        // bordo su cui lo sciame inverte
+    const ENEMY_SWING_STEPS = 5;   // scatti liberi prima di toccare il bordo
+
+    // Formazione effettiva: ricavata dalla larghezza del canvas in spawnWave().
+    let enemyCols, enemyHSpace;
 
     function init() {
         window.addEventListener('keydown', handleKeyDown);
@@ -177,18 +184,28 @@
 
     function spawnWave() {
         enemies = [];
-        const totalW = (ENEMY_COLS - 1) * ENEMY_HSPACE;
+        // La formazione si taglia sulla larghezza LOGICA del canvas: e' quella che
+        // cambia col telefono (315px in verticale contro 1100 sul desktop). Con 9
+        // colonne fisse a 38px ne servivano 328 piu' i bordi, cosi' l'ultima
+        // colonna cadeva fuori dal riquadro e restava invisibile — e lo sciame,
+        // nato gia' oltre il bordo destro, invertiva e scendeva a ogni tick.
+        // Si tiene la spaziatura piena finche' entra, poi si tolgono colonne.
+        const libera = canvas.width - 2 * ENEMY_MARGIN - 2 * ENEMY_SWING_STEPS * ENEMY_STEP_PX;
+        enemyCols = Math.max(4, Math.min(ENEMY_COLS, Math.floor((libera - ENEMY_W) / ENEMY_HSPACE_MIN) + 1));
+        enemyHSpace = Math.min(ENEMY_HSPACE, (libera - ENEMY_W) / (enemyCols - 1));
+        const totalW = (enemyCols - 1) * enemyHSpace + ENEMY_W;
         const startX = (canvas.width - totalW) / 2;
         const startY = 60;
         for (let r = 0; r < ENEMY_ROWS; r++) {
-            for (let c = 0; c < ENEMY_COLS; c++) {
+            for (let c = 0; c < enemyCols; c++) {
                 const tier = r === 0 ? 3 : (r === 1 ? 2 : 1); // top row = highest pts
                 enemies.push({
-                    x: startX + c * ENEMY_HSPACE,
+                    x: startX + c * enemyHSpace,
                     y: startY + r * ENEMY_VSPACE,
                     w: ENEMY_W,
                     h: ENEMY_H,
                     tier: tier,
+                    col: c,
                     frame: 0
                 });
             }
@@ -232,8 +249,7 @@
         // Find columns with enemies, pick random
         const cols = {};
         enemies.forEach(e => {
-            const col = Math.round((e.x) / ENEMY_HSPACE);
-            if (!cols[col] || e.y > cols[col].y) cols[col] = e;
+            if (!cols[e.col] || e.y > cols[e.col].y) cols[e.col] = e;
         });
         const colKeys = Object.keys(cols);
         if (colKeys.length === 0) return;
@@ -318,16 +334,16 @@
         }
 
         // Enemy swarm move (tick-based for retro pulse feel)
-        const swarmSpeed = Math.max(40, 200 - wave * 18 - (ENEMY_COLS * ENEMY_ROWS - enemies.length) * 4);
+        const swarmSpeed = Math.max(40, 200 - wave * 18 - (enemyCols * ENEMY_ROWS - enemies.length) * 4);
         enemyTick += delta;
         if (enemyTick >= swarmSpeed) {
             enemyTick = 0;
             let hitEdge = false;
             for (let i = 0; i < enemies.length; i++) {
                 const e = enemies[i];
-                e.x += enemyDir * 8;
+                e.x += enemyDir * ENEMY_STEP_PX;
                 e.frame = (e.frame + 1) % 2;
-                if (e.x < 6 || e.x + e.w > canvas.width - 6) hitEdge = true;
+                if (e.x < ENEMY_MARGIN || e.x + e.w > canvas.width - ENEMY_MARGIN) hitEdge = true;
             }
             if (hitEdge) {
                 enemyDir *= -1;

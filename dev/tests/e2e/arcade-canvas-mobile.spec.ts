@@ -141,3 +141,99 @@ test('telefono ruotato: vale anche senza la classe di fallback touch-device', as
   });
   expect(area).toBeGreaterThan(250);
 });
+
+/**
+ * 3. CAMPO DISEGNATO OLTRE IL BORDO (difetto vecchio, non del 5d5f1ba).
+ *
+ *    Invaders costruisce la formazione con numeri fissi — 9 colonne ogni 38px —
+ *    invece di ricavarli dalla larghezza LOGICA del canvas, che sul telefono in
+ *    verticale e' 315px (innerWidth-60) contro i 1100 del desktop. La formazione
+ *    ne chiede 328 piu' i bordi: l'ultima colonna cade oltre il riquadro e resta
+ *    invisibile.
+ *
+ *    Non e' solo estetica. Lo sciame nasce gia' oltre il bordo destro, quindi il
+ *    controllo del rimbalzo scatta a ogni tick: inverte e scende, inverte e
+ *    scende. Misurato prima del fix: 162px di discesa (9 scalini) in 61
+ *    fotogrammi, cioe' addosso al giocatore in pochi secondi.
+ *
+ *    Il test prende in mano il loop del gioco (rAF) e misura i pixel davvero
+ *    disegnati: e' l'unico modo di vedere una colonna che esce dal riquadro.
+ */
+
+// tier 3 / 2 / 1: sono colori esclusivi degli alieni (bunker, colpi, particelle
+// e giocatore usano altro), quindi bastano a isolare la formazione.
+async function sciameInvaders(page: any, fotogrammi: number) {
+  return page.evaluate((n: number) => {
+    const c = document.querySelector('#invaders-canvas') as HTMLCanvasElement;
+    const ctx = c.getContext('2d')!;
+    const w = window as any;
+
+    function riquadro() {
+      const d = ctx.getImageData(0, 0, c.width, c.height).data;
+      let minX = Infinity, maxX = -1, minY = Infinity, maxY = -1, n = 0;
+      for (let y = 0; y < c.height; y++) {
+        for (let x = 0; x < c.width; x++) {
+          const i = (y * c.width + x) * 4;
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          if (!((r === 168 && g === 85 && b === 247) ||
+                (r === 16 && g === 185 && b === 129) ||
+                (r === 251 && g === 191 && b === 36))) continue;
+          n++;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+      return { n, minX, maxX, minY, maxY };
+    }
+
+    // Il loop e' un rAF privato del gioco: qui lo si guida a mano, cosi' la
+    // misura non dipende da quanto il browser decide di disegnare.
+    const raf = window.requestAnimationFrame;
+    let atteso: any = null;
+    (window as any).requestAnimationFrame = (cb: any) => { atteso = cb; return 1; };
+    try {
+      w.startInvadersRun();
+      let t = performance.now();
+      const passo = () => { const cb = atteso; atteso = null; if (cb) { t += 20; cb(t); } };
+      passo();
+      const nascita = riquadro();
+      for (let i = 0; i < n; i++) passo();
+      return { larghezza: c.width, nascita, dopo: riquadro() };
+    } finally {
+      (window as any).requestAnimationFrame = raf;
+    }
+  }, fotogrammi);
+}
+
+const MARGINE = 6;              // il bordo su cui lo sciame rimbalza
+const SCATTO = 8;               // di quanto si sposta a ogni tick
+
+test('invaders: lo sciame nasce dentro la larghezza del canvas', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await apriEAvvia(page, 'invaders', '#invaders-canvas');
+  const m = await sciameInvaders(page, 0);
+
+  expect(m.nascita.n, 'gli alieni devono essere disegnati').toBeGreaterThan(0);
+  // il bordo destro della colonna piu' a destra e' maxX+1
+  expect(m.nascita.maxX + 1, 'colonna piu\' a destra dentro il riquadro')
+    .toBeLessThanOrEqual(m.larghezza - MARGINE);
+  expect(m.nascita.minX, 'colonna piu\' a sinistra dentro il riquadro')
+    .toBeGreaterThanOrEqual(MARGINE);
+  // e con spazio per oscillare: se la formazione riempie tutto, lo sciame
+  // rimbalza al primo scatto e scende senza sosta
+  expect(m.nascita.minX - MARGINE, 'spazio per oscillare a sinistra')
+    .toBeGreaterThanOrEqual(SCATTO);
+  expect(m.larghezza - MARGINE - (m.nascita.maxX + 1), 'spazio per oscillare a destra')
+    .toBeGreaterThanOrEqual(SCATTO);
+});
+
+test('invaders: lo sciame non precipita appena nato', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await apriEAvvia(page, 'invaders', '#invaders-canvas');
+  const m = await sciameInvaders(page, 60);
+  const sceso = m.dopo.minY - m.nascita.minY;
+  expect(sceso, 'discesa in 61 fotogrammi (prima del fix: 162px, 9 scalini)')
+    .toBeLessThanOrEqual(54);
+});
