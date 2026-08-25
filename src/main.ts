@@ -17,7 +17,9 @@ import {
   decideRollback,
   decideRollbackFromSaves,
   compareDecimalStrings,
+  saveBelongsToOtherUser,
 } from './core/save/anti-rollback';
+import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY, clearAccountStorage } from './core/save/keys';
 import { migrate, detectSchemaVersion } from './core/migrations';
 import { CURRENT_SCHEMA_VERSION } from './types/save';
 import { Scheduler } from './core/loop';
@@ -124,7 +126,12 @@ const EspoV3 = {
       decide: decideRollback,
       decideFromSaves: decideRollbackFromSaves,
       compare: compareDecimalStrings,
+      belongsToOtherUser: saveBelongsToOtherUser,
     },
+    // Chiavi dello slot locale, separate per ambiente (test vs produzione stanno
+    // sulla stessa origine). Esposte perché le usa anche js/cheatboard.js, che
+    // non è bundlato e non può importare il modulo.
+    keys: { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY, clearAccountStorage },
   },
   migrations: { migrate },
   bignum: { Decimal, gt, gte, eq },

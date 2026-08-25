@@ -25,6 +25,50 @@
  */
 const w = window as any;
 import { store } from '../state/store';
+import { RIPARAZIONI_SKIN } from '../data/founder-grants';
+import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
+import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
+
+/**
+ * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
+ * di ognuna). Idempotente: l'id applicato resta nel save, quindi non si ripete
+ * a ogni caricamento.
+ *
+ * Va chiamata DOPO che username e skin sono nello stato — cioè negli stessi due
+ * punti in cui gira il recupero skin da achievement (percorso locale e percorso
+ * cloud). Ritorna true se ha cambiato qualcosa, così il chiamante salva.
+ */
+function applyRiparazioniSkin(): boolean {
+    const gs: any = store.gameState;
+    const nome = (gs.user && gs.user.username) || '';
+    const rip = RIPARAZIONI_SKIN[nome];
+    if (!rip) return false;
+
+    const fatte: string[] = Array.isArray(gs.riparazioniSkin) ? gs.riparazioniSkin : [];
+    if (fatte.includes(rip.id)) return false;
+
+    if (!gs.skins || !Array.isArray(gs.skins.unlocked))
+        gs.skins = { current: 'default', unlocked: ['default'] };
+
+    const daDare = rip.skins === 'all' ? Object.keys(store.gameData.skins) : rip.skins;
+    let aggiunte = 0;
+    daDare.forEach((id: string) => {
+        // Filtro al catalogo: un id rimosso dal gioco lascerebbe una cella rotta
+        // nel guardaroba invece di una skin.
+        if (!store.gameData.skins[id]) return;
+        if (gs.skins.unlocked.includes(id)) return;
+        gs.skins.unlocked.push(id);
+        aggiunte++;
+    });
+    if (rip.fondatore) gs.isFounder = true;
+
+    // Marcata anche se `aggiunte` è 0: la riparazione è stata valutata, e senza
+    // marker ripartirebbe a ogni caricamento per sempre.
+    fatte.push(rip.id);
+    gs.riparazioniSkin = fatte;
+    console.log(`🎁 Riparazione "${rip.id}" applicata a ${nome}: +${aggiunte} skin.`);
+    return true;
+}
 
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton: any, scoreDisplay: any, cpsDisplay: any, feedbackContainer: any, achievementList: any;
@@ -168,8 +212,9 @@ export function initBoot(): void {
     w.statsList = statsList;
 
     // --------- SALVATAGGIO V9 (IndexedDB) ---------
-    const SAVE_KEY = 'espotoolClickerSaveV9';
-    const BACKUP_KEY = 'espotoolClickerSaveV9_Backup';
+    // Le chiavi arrivano da core/save/keys.ts perché cambiano con l'ambiente:
+    // `/test/` e la produzione sono la stessa ORIGINE e prima si contendevano un
+    // record solo. In produzione il valore è quello storico, invariato.
 
     // --------- CHECK STORAGE DISPONIBILE ---------
     (function checkStorageAvailable() {
@@ -732,21 +777,17 @@ export function initBoot(): void {
         store.gameState.season = (m && m.season) || 1;
         if (w.GAME_VERSION) store.gameState.version = JSON.parse(JSON.stringify(w.GAME_VERSION));
 
-        // Skin: default + (founder) + fino a 5 salvate
+        // Skin: default + (founder) + TUTTO il guardaroba pre-lancio.
+        // Il tetto a 5 e il picker sono stati tolti il 25/08/2026: le skin non
+        // portano effetti né bonus (sono estetica pura), quindi non c'era niente
+        // da riequilibrare — e il picker, alla conferma, cancellava per sempre la
+        // lista originale. Il reset di Season 1 resta su economia e classifica.
         const kept: string[] = ['default'];
         if (founder) {
             kept.push('founder');
             store.gameState.isFounder = true;
             store.gameState.foundedAt = (m && m.foundedAt) || 0;
-
-            if (salvageable.length <= 5) {
-                // ≤5: le tiene tutte in automatico (nessun picker)
-                salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
-            } else {
-                // >5: scelta interattiva rimandata al modale (picker max 5)
-                store.gameState.pendingFounderChoice = true;
-                store.gameState.founderCandidateSkins = salvageable.slice();
-            }
+            salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
         }
         store.gameState.skins.unlocked = kept;
         store.gameState.skins.current = kept.includes(oldCurrent) ? oldCurrent : (founder ? 'founder' : 'default');
@@ -849,7 +890,7 @@ export function initBoot(): void {
 
                     // 1. Backup di sicurezza
                     try {
-                        localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
+                        localStorage.setItem(LEGACY_BACKUP_KEY, savedState);
                     } catch (e) { }
 
                     // 2. Resetta la cache
@@ -1061,6 +1102,10 @@ export function initBoot(): void {
                 }
             }
         }
+
+        // Riparazioni una tantum: stesso momento del recupero da achievement,
+        // cioe' a stato caricato e username noto.
+        if (applyRiparazioniSkin()) saveGame();
 
         // I passivi 'hacking' (goldenBugChance x2) e 'ticketPremium' (goldenBugSpawnTime x0.5)
         // sono GIÀ applicati da reapplyAllEffects() qui sopra (effetti trigger:'passive').
@@ -1292,7 +1337,7 @@ export function initBoot(): void {
                     store.gameState.lastSaveTimestamp = Date.now();
                 }
                 const compressed = w.LZString.compressToUTF16(JSON.stringify(store.gameState));
-                localStorage.setItem('espotoolClickerSaveV9', compressed);
+                localStorage.setItem(SAVE_KEY, compressed);
             }
             // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
             saveGame();
@@ -2292,6 +2337,25 @@ export function initBoot(): void {
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
+                    // --- 0. DI CHI È IL SAVE LOCALE? ---
+                    // Lo slot locale è UNO per origine e lo scrive chiunque: l'area di
+                    // test /test/ (stesso host della produzione), o un secondo account
+                    // sullo stesso browser. Se quello che abbiamo in memoria è intestato
+                    // a un ALTRO utente non è materiale da confrontare: l'unica fonte
+                    // valida è il cloud dell'account che sta entrando.
+                    // Senza questa domanda l'anti-rollback qui sotto confrontava i numeri
+                    // di due account diversi, teneva il più alto, lo ribattezzava con
+                    // l'utente loggato e lo ri-pushava — progressi e skin di chi entrava
+                    // sovrascritti, sul cloud e per sempre (users.save_data non ha storico).
+                    const _sessionUser = sessionStorage.getItem('espooUser');
+                    const _localeEstraneo = saveBelongsToOtherUser(
+                        store.gameState && store.gameState.user && store.gameState.user.username,
+                        _sessionUser
+                    );
+                    if (_localeEstraneo) {
+                        console.warn(`⚠️ Save locale di un altro account ("${store.gameState.user.username}" ≠ "${_sessionUser}"): adotto il cloud.`);
+                    }
+
                     // === LANCIO PRODUZIONE: Season 1 / Fondatore (cloud) ===
                     // Un cloud save pre-lancio (schemaVersion < 3) va azzerato a Season 1.
                     // Gestito PRIMA dell'anti-rollback: dopo il reset i lifetime locali
@@ -2303,7 +2367,7 @@ export function initBoot(): void {
                     // (vedi markCloudUnsynced). Si azzera al primo push riuscito.
                     w._cloudPreWipe = _cloudSchema < 3;
                     if (_cloudSchema < 3) {
-                        if (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated)) {
+                        if (!_localeEstraneo && (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated))) {
                             // Già migrato in locale — in QUESTA sessione (flag window) o in una
                             // precedente (marker `launchMigrated` persistito nel save): il cloud
                             // pre-lancio è stale. Tieni il locale (Season 1) e ri-pushalo.
@@ -2327,7 +2391,9 @@ export function initBoot(): void {
                     // stabilito che il cloud è autoritativo (Format>Prestige>Score); il
                     // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
                     // prestige/format, e senza questo by-pass il client resterebbe bloccato.
-                    if (!(opts && opts.force) && store.gameState && store.gameState.lifetimeScore) {
+                    // Save locale di un altro account (_localeEstraneo): idem, niente
+                    // confronto — non è un rollback, è roba di qualcun altro.
+                    if (!(opts && opts.force) && !_localeEstraneo && store.gameState && store.gameState.lifetimeScore) {
                         // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
                         // (Format > Prestige > Score, EF Supabase save-progress) → client e
                         // server decidono allo stesso modo anche nei casi limite in cui il
@@ -2415,7 +2481,7 @@ export function initBoot(): void {
 
                         // G. Salva subito in cloud per allineare il DB
                         saveGame();
-                        localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                        localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
                         w.calculatePrestigeBonus();
@@ -2541,7 +2607,7 @@ export function initBoot(): void {
                     if (typeof w.updateUI === 'function') w.updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                    localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in store.gameData.achievements) {
@@ -2554,6 +2620,8 @@ export function initBoot(): void {
                             }
                         }
                     }
+
+                    if (applyRiparazioniSkin()) saveGame();
 
                     checkOfflineProgress();
                     if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();

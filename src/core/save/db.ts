@@ -6,10 +6,14 @@
  * codice e viceversa, finché lo schemaVersion del JSON è coerente.
  */
 
+import { SAVE_KEY } from './keys';
+
 const DB_NAME = 'EspoClickerDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'saves';
-const DEFAULT_KEY = 'espotoolClickerSaveV9';
+// Chiave separata per ambiente: il DB è per ORIGINE, quindi /test/ e la
+// produzione ci scrivevano dentro lo stesso identico record. Vedi keys.ts.
+const DEFAULT_KEY = SAVE_KEY;
 
 let _db: IDBDatabase | null = null;
 

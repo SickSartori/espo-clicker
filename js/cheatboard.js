@@ -638,6 +638,14 @@
         c.log('--- AUDIO ---', typeof AudioManager !== 'undefined' ? AudioManager._sounds : 'N/A');
         toast('Stato stampato in console (F12)');
     }
+    // Chiavi dello slot di salvataggio: separate per ambiente (vedi
+    // src/core/save/keys.ts). La cheatboard gira solo in dev, quindi qui cadono
+    // sulle chiavi __dev: senza questo, i suoi scenari finivano nello slot della
+    // PRODUZIONE, che sta sulla stessa origine.
+    function saveKeys() {
+        const k = window.EspoV3 && window.EspoV3.save && window.EspoV3.save.keys;
+        return k || { SAVE_KEY: 'espotoolClickerSaveV9', BACKUP_KEY: 'espotoolClickerSaveV9_Backup' };
+    }
     async function forceSave() { if (window.EspooClicker && window.EspooClicker.saveGame) { await window.EspooClicker.saveGame(); toast('Salvataggio forzato'); } else toast('saveGame non disponibile'); }
     function forceV2() {
         if (!confirm(cbT('Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.'))) return;
@@ -677,7 +685,7 @@
         };
         const compressed = LZString.compressToUTF16(JSON.stringify(fake));
         try { await window.EspoV3.save.db.write(compressed); } catch (e) { /* IDB ko → fallback sotto */ }
-        localStorage.setItem('espotoolClickerSaveV9', compressed);
+        localStorage.setItem(saveKeys().SAVE_KEY, compressed);
         gameState.isDeleting = true; location.reload();
     }
     // Rigioca la sequenza di benvenuto di una nuova versione: note di rilascio
@@ -748,8 +756,8 @@
         // logout: la sessione resta, al reload l'auto-login ricarica lo stato fresco.
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
-        localStorage.removeItem('espotoolClickerSaveV9');
-        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+        localStorage.removeItem(saveKeys().SAVE_KEY);
+        localStorage.removeItem(saveKeys().BACKUP_KEY);
         location.reload();
     }
 

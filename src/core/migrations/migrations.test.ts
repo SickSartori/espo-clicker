@@ -118,18 +118,24 @@ describe('migrate v2→v3 (lancio Season 1)', () => {
     expect(out.state?.foundedAt).toBeGreaterThan(0);
   });
 
-  it('≥1 skin non-default → Fondatore, ≤5 salvate senza picker', () => {
+  it('≥1 skin non-default → Fondatore, e le salva tutte', () => {
     const out = migrate(baseV2({ skins: { current: 'gold', unlocked: ['default', 'gold', 'rick'] } }));
     expect(out.report?.founderReward).toBe(true);
     expect(out.report?.salvageableSkins).toEqual(['gold', 'rick']);
     expect(out.state?.pendingFounderChoice).toBe(false);
   });
 
-  it('>5 skin non-default → picker pendente', () => {
+  // Il tetto a 5 e il picker sono stati tolti il 25/08/2026: le skin sono estetica
+  // pura (nessun effetto in `data/skins.ts`), quindi non c'era equilibrio da
+  // difendere. Questo test prima pretendeva il picker; ora presidia il contrario,
+  // cioe' che con un guardaroba grande NON venga chiesto di scegliere.
+  it('guardaroba grande → nessun picker, nessuna candidata da scegliere', () => {
     const many = ['default', 'a', 'b', 'c', 'd', 'e', 'f'];
     const out = migrate(baseV2({ skins: { current: 'a', unlocked: many } }));
     expect(out.report?.founderReward).toBe(true);
-    expect(out.state?.pendingFounderChoice).toBe(true);
-    expect(out.state?.founderCandidateSkins).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+    expect(out.state?.pendingFounderChoice).toBe(false);
+    expect(out.state?.founderCandidateSkins).toBeUndefined();
+    // Il salvabile e' TUTTO: e' boot.ts a travasarlo in skins.unlocked.
+    expect(out.report?.salvageableSkins).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
 });
