@@ -78,4 +78,42 @@ test.describe('Bilanciamento', () => {
     // Il tetto era rispettato solo dalla UI: la funzione scalava i token comunque.
     expect(r.tokenInvariati).toBe(true);
   });
+
+  test('Bug Bounty non è più un acquisto da inizio partita', async ({ page }) => {
+    await bootGame(page);
+    await seedRichState(page);
+
+    const r = await page.evaluate(() => {
+      const w = window as any;
+      const D = w.Decimal;
+      const base = w.gameData.prestigeUpgrades.bugBounty.baseCost;
+
+      // Costo reale, dalla stessa funzione che usa il negozio (base × 1.5^liv).
+      const costi: number[] = [];
+      for (let liv = 0; liv < 10; liv++) {
+        costi.push(Number(String(w.EspoV3.economy.prestigeUpgradeCost(D, {
+          isCounted: true, baseCost: base, count: liv, qDiscount: false,
+        }))));
+      }
+
+      // Token massimi incassabili nelle prime 3 Promozioni, spendendo zero
+      // altrove: sqrt(min(score, soglia×4) / 250000) a soglia = 5e7 × 3^n.
+      let bottino = 0;
+      for (let n = 0; n < 3; n++) {
+        const soglia = Number(String(w.EspoV3.economy.prestigeThreshold(D, n)));
+        bottino += Math.floor(Math.sqrt((soglia * 4) / 250000));
+      }
+
+      return { primoLivello: costi[0], cumulativo: costi.reduce((a, b) => a + b, 0), bottino3Promozioni: bottino };
+    });
+
+    // A costo base 75 il primo livello ci stava DUE VOLTE nel bottino delle
+    // prime tre Promozioni (160 token): era un acquisto d'apertura, non una
+    // scelta. Ora il primo livello da solo costa più di quel bottino.
+    expect(r.bottino3Promozioni).toBeLessThan(r.primoLivello);
+
+    // Il costo scala 1.5^livello, quindi la base sposta tutta la scala: i 10
+    // livelli erano ~8.500 token cumulati, ora sono ~28.300.
+    expect(r.cumulativo).toBeGreaterThan(25_000);
+  });
 });
