@@ -26,6 +26,8 @@
 const w = window as any;
 import { store } from '../state/store';
 import { RIPARAZIONI_SKIN } from '../data/founder-grants';
+import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
+import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 
 /**
  * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
@@ -67,8 +69,6 @@ function applyRiparazioniSkin(): boolean {
     console.log(`🎁 Riparazione "${rip.id}" applicata a ${nome}: +${aggiunte} skin.`);
     return true;
 }
-import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
-import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton: any, scoreDisplay: any, cpsDisplay: any, feedbackContainer: any, achievementList: any;
