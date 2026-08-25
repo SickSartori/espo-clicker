@@ -41,6 +41,12 @@
     const ENEMY_STEP_PX = 8;       // scatto orizzontale dello sciame
     const ENEMY_MARGIN = 6;        // bordo su cui lo sciame inverte
     const ENEMY_SWING_STEPS = 5;   // scatti liberi prima di toccare il bordo
+    const BUNKERS = 4;             // massimo: su schermi stretti si scende
+    const BUNKERS_MIN = 3;         // sotto, il campo resta troppo scoperto
+    const BUNKER_W = 70;           // larghezza piena, quando c'e' posto
+    const BUNKER_W_MIN = 34;       // sotto, la cupola (w-12) e la tacca da 20px degenerano
+    const BUNKER_H = 32;
+    const BUNKER_GAP_MIN = 12;     // varco minimo fra un bunker e l'altro
 
     // Formazione effettiva: ricavata dalla larghezza del canvas in spawnWave().
     let enemyCols, enemyHSpace;
@@ -218,14 +224,25 @@
 
     function spawnBunkers() {
         bunkers = [];
-        const nBunkers = 4;
-        const bunkerW = 70;
-        const bunkerH = 32;
-        const gap = (canvas.width - nBunkers * bunkerW) / (nBunkers + 1);
+        // Stesso principio della formazione in spawnWave(): la geometria si taglia
+        // sulla larghezza LOGICA del canvas — 260px su un telefono da 320 contro i
+        // 1100 del desktop — invece che su numeri fissi. Con 4 bunker da 70px ne
+        // servivano 280 piu' i varchi: sotto i 340 il varco diventava NEGATIVO, i
+        // bunker si sovrapponevano e i due esterni finivano fuori dal riquadro.
+        // A differenza degli alieni pero' il bunker non e' uno sprite scalabile
+        // (cupola e tacca hanno offset fissi nel disegno), quindi qui si toglie
+        // prima un bunker e si stringe solo se non basta: meglio tre ripari veri
+        // che quattro monconi.
+        let n = BUNKERS;
+        while (n > BUNKERS_MIN && canvas.width < n * BUNKER_W + (n + 1) * BUNKER_GAP_MIN) n--;
+        const entra = Math.floor((canvas.width - (n + 1) * BUNKER_GAP_MIN) / n);
+        // l'ultimo termine e' la rete di sicurezza: la larghezza minima non deve
+        // poter rimettere i bunker uno sull'altro su un canvas assurdamente stretto
+        const w = Math.min(BUNKER_W, Math.max(BUNKER_W_MIN, entra), Math.floor(canvas.width / n));
+        const gap = (canvas.width - n * w) / (n + 1);
         const y = canvas.height - 100;
-        for (let i = 0; i < nBunkers; i++) {
-            const x = gap + i * (bunkerW + gap);
-            bunkers.push({ x, y, w: bunkerW, h: bunkerH, hp: 16 });
+        for (let i = 0; i < n; i++) {
+            bunkers.push({ x: gap + i * (w + gap), y, w, h: BUNKER_H, hp: 16 });
         }
     }
 

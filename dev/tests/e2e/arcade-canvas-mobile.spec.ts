@@ -237,3 +237,103 @@ test('invaders: lo sciame non precipita appena nato', async ({ page }) => {
   expect(sceso, 'discesa in 61 fotogrammi (prima del fix: 162px, 9 scalini)')
     .toBeLessThanOrEqual(54);
 });
+
+/**
+ * 4. BUNKER OLTRE IL BORDO — stesso difetto della formazione, altra funzione.
+ *
+ *    spawnBunkers() fissava quattro bunker da 70px e dalla larghezza del canvas
+ *    ricavava soltanto il varco: (larghezza - 280) / 5. Sotto i 280px di canvas,
+ *    cioe' da un telefono di 340px di viewport in giu', il varco diventava
+ *    NEGATIVO: i bunker si sovrapponevano e i due esterni uscivano dal riquadro.
+ *    Misurato a 320x740 prima del fix: un unico blocco verde da 0 a 259, tutta
+ *    la larghezza bordo a bordo, varco -4.
+ *
+ *    Il bunker non e' uno sprite scalabile (cupola e tacca hanno offset fissi nel
+ *    disegno), quindi la scelta e' togliere un bunker invece di stringerlo: tre
+ *    ripari veri battono quattro monconi. Il test non fissa il numero, fissa le
+ *    proprieta' che devono valere a qualunque larghezza.
+ */
+
+// rgb(46,204,113) e' il verde esclusivo del bunker a vita piena: alieni, colpi e
+// giocatore usano altri colori, quindi basta a isolarli sulla riga scansionata.
+async function bunkerInvaders(page: any) {
+  return page.evaluate(() => {
+    const c = document.querySelector('#invaders-canvas') as HTMLCanvasElement;
+    const ctx = c.getContext('2d')!;
+    const w = window as any;
+
+    // Come per lo sciame: il loop e' un rAF privato, qui lo si guida a mano.
+    const raf = window.requestAnimationFrame;
+    let atteso: any = null;
+    (window as any).requestAnimationFrame = (cb: any) => { atteso = cb; return 1; };
+    try {
+      w.startInvadersRun();
+      const cb = atteso; atteso = null;
+      if (cb) cb(performance.now() + 20);
+    } finally {
+      (window as any).requestAnimationFrame = raf;
+    }
+
+    // Riga nel corpo del bunker: sopra la tacca scura, che parte a y + h - 10.
+    const rowY = c.height - 100 + 16;
+    const d = ctx.getImageData(0, rowY, c.width, 1).data;
+    const acceso = (x: number) =>
+      d[x * 4] === 46 && d[x * 4 + 1] === 204 && d[x * 4 + 2] === 113;
+
+    const segmenti: { da: number; a: number; w: number }[] = [];
+    let s = -1;
+    for (let x = 0; x <= c.width; x++) {
+      if (x < c.width && acceso(x)) { if (s < 0) s = x; }
+      else if (s >= 0) { segmenti.push({ da: s, a: x - 1, w: x - s }); s = -1; }
+    }
+
+    const varchi: number[] = [];
+    if (segmenti.length) {
+      varchi.push(segmenti[0].da);
+      for (let i = 1; i < segmenti.length; i++) varchi.push(segmenti[i].da - segmenti[i - 1].a - 1);
+      varchi.push(c.width - 1 - segmenti[segmenti.length - 1].a);
+    }
+    return { larghezza: c.width, segmenti, varchi };
+  });
+}
+
+const BUNKER_W_MAX = 70;   // larghezza piena: non deve mai crescere oltre
+const BUNKER_MIN = 3;      // sotto questo il campo resta troppo scoperto
+
+for (const vp of [
+  { w: 320, h: 740 },   // il caso rotto: canvas logico 260
+  { w: 375, h: 812 },   // canvas 315, il difetto non si vedeva a occhio
+  { w: 430, h: 932 },   // canvas 370: qui i quattro bunker tornano a entrare
+]) {
+  test(`invaders: i bunker restano dentro il riquadro a ${vp.w}px`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await apriEAvvia(page, 'invaders', '#invaders-canvas');
+    const m = await bunkerInvaders(page);
+
+    expect(m.segmenti.length, 'bunker disegnati').toBeGreaterThanOrEqual(BUNKER_MIN);
+    // nessun varco negativo o nullo: e' esattamente il difetto di partenza
+    // (a 320px erano quattro bunker fusi in un blocco solo, varco -4)
+    for (const v of m.varchi) {
+      expect(v, `varchi a ${vp.w}px: ${JSON.stringify(m.varchi)}`).toBeGreaterThan(0);
+    }
+    // nessun bunker fuori dal riquadro
+    expect(m.segmenti[0].da, 'primo bunker dentro il bordo sinistro').toBeGreaterThanOrEqual(0);
+    expect(m.segmenti[m.segmenti.length - 1].a, 'ultimo bunker dentro il bordo destro')
+      .toBeLessThan(m.larghezza);
+    // e nessuno piu' largo del bunker pieno (il tondeggiamento dei pixel vale 1px)
+    for (const s of m.segmenti) {
+      expect(s.w, `larghezze a ${vp.w}px: ${JSON.stringify(m.segmenti.map((x) => x.w))}`)
+        .toBeLessThanOrEqual(BUNKER_W_MAX + 1);
+    }
+  });
+}
+
+test('invaders: su desktop i quattro bunker restano dove erano', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await apriEAvvia(page, 'invaders', '#invaders-canvas');
+  const m = await bunkerInvaders(page);
+  // canvas 1100: la formula vecchia dava varco 164 e x = 164/398/632/866.
+  // Il fix non deve spostare di un pixel il caso che gia' funzionava.
+  expect(m.segmenti.map((s: any) => s.da)).toEqual([164, 398, 632, 866]);
+  expect(m.varchi).toEqual([164, 164, 164, 164, 164]);
+});
