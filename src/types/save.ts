@@ -83,9 +83,14 @@ export interface SaveStateV3 extends Omit<SaveStateV2, 'schemaVersion'> {
   isFounder?: boolean;
   /** Timestamp del cutover di lancio in cui è stato coniato lo status Fondatore. */
   foundedAt?: number;
-  /** Scelta skin Fondatore ancora da compiere: il picker (max 5) è pendente. */
+  /**
+   * Scelta skin Fondatore ancora da compiere.
+   * ⚠️ Storico: col tetto tolto (25/08/2026) la migrazione non lo imposta più.
+   * Resta nel tipo perché i save di chi si era fermato a metà picker lo portano
+   * ancora, e il modale lo usa per assegnare d'ufficio tutte le candidate.
+   */
   pendingFounderChoice?: boolean;
-  /** Skin non-default possedute pre-lancio, candidate al picker (max 5 salvabili). */
+  /** Skin non-default possedute pre-lancio, candidate al picker. Vedi sopra. */
   founderCandidateSkins?: string[];
   /**
    * True se questo save è passato dalla migrazione di lancio (v2→v3).

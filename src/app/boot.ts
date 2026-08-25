@@ -735,21 +735,17 @@ export function initBoot(): void {
         store.gameState.season = (m && m.season) || 1;
         if (w.GAME_VERSION) store.gameState.version = JSON.parse(JSON.stringify(w.GAME_VERSION));
 
-        // Skin: default + (founder) + fino a 5 salvate
+        // Skin: default + (founder) + TUTTO il guardaroba pre-lancio.
+        // Il tetto a 5 e il picker sono stati tolti il 25/08/2026: le skin non
+        // portano effetti né bonus (sono estetica pura), quindi non c'era niente
+        // da riequilibrare — e il picker, alla conferma, cancellava per sempre la
+        // lista originale. Il reset di Season 1 resta su economia e classifica.
         const kept: string[] = ['default'];
         if (founder) {
             kept.push('founder');
             store.gameState.isFounder = true;
             store.gameState.foundedAt = (m && m.foundedAt) || 0;
-
-            if (salvageable.length <= 5) {
-                // ≤5: le tiene tutte in automatico (nessun picker)
-                salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
-            } else {
-                // >5: scelta interattiva rimandata al modale (picker max 5)
-                store.gameState.pendingFounderChoice = true;
-                store.gameState.founderCandidateSkins = salvageable.slice();
-            }
+            salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
         }
         store.gameState.skins.unlocked = kept;
         store.gameState.skins.current = kept.includes(oldCurrent) ? oldCurrent : (founder ? 'founder' : 'default');
