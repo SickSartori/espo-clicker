@@ -26,6 +26,7 @@
 const w = window as any;
 import { store } from '../state/store';
 import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
+import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton: any, scoreDisplay: any, cpsDisplay: any, feedbackContainer: any, achievementList: any;
@@ -2294,6 +2295,25 @@ export function initBoot(): void {
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
+                    // --- 0. DI CHI È IL SAVE LOCALE? ---
+                    // Lo slot locale è UNO per origine e lo scrive chiunque: l'area di
+                    // test /test/ (stesso host della produzione), o un secondo account
+                    // sullo stesso browser. Se quello che abbiamo in memoria è intestato
+                    // a un ALTRO utente non è materiale da confrontare: l'unica fonte
+                    // valida è il cloud dell'account che sta entrando.
+                    // Senza questa domanda l'anti-rollback qui sotto confrontava i numeri
+                    // di due account diversi, teneva il più alto, lo ribattezzava con
+                    // l'utente loggato e lo ri-pushava — progressi e skin di chi entrava
+                    // sovrascritti, sul cloud e per sempre (users.save_data non ha storico).
+                    const _sessionUser = sessionStorage.getItem('espooUser');
+                    const _localeEstraneo = saveBelongsToOtherUser(
+                        store.gameState && store.gameState.user && store.gameState.user.username,
+                        _sessionUser
+                    );
+                    if (_localeEstraneo) {
+                        console.warn(`⚠️ Save locale di un altro account ("${store.gameState.user.username}" ≠ "${_sessionUser}"): adotto il cloud.`);
+                    }
+
                     // === LANCIO PRODUZIONE: Season 1 / Fondatore (cloud) ===
                     // Un cloud save pre-lancio (schemaVersion < 3) va azzerato a Season 1.
                     // Gestito PRIMA dell'anti-rollback: dopo il reset i lifetime locali
@@ -2305,7 +2325,7 @@ export function initBoot(): void {
                     // (vedi markCloudUnsynced). Si azzera al primo push riuscito.
                     w._cloudPreWipe = _cloudSchema < 3;
                     if (_cloudSchema < 3) {
-                        if (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated)) {
+                        if (!_localeEstraneo && (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated))) {
                             // Già migrato in locale — in QUESTA sessione (flag window) o in una
                             // precedente (marker `launchMigrated` persistito nel save): il cloud
                             // pre-lancio è stale. Tieni il locale (Season 1) e ri-pushalo.
@@ -2329,7 +2349,9 @@ export function initBoot(): void {
                     // stabilito che il cloud è autoritativo (Format>Prestige>Score); il
                     // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
                     // prestige/format, e senza questo by-pass il client resterebbe bloccato.
-                    if (!(opts && opts.force) && store.gameState && store.gameState.lifetimeScore) {
+                    // Save locale di un altro account (_localeEstraneo): idem, niente
+                    // confronto — non è un rollback, è roba di qualcun altro.
+                    if (!(opts && opts.force) && !_localeEstraneo && store.gameState && store.gameState.lifetimeScore) {
                         // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
                         // (Format > Prestige > Score, EF Supabase save-progress) → client e
                         // server decidono allo stesso modo anche nei casi limite in cui il

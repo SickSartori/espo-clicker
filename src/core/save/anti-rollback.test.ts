@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compareDecimalStrings, decideRollback } from './anti-rollback';
+import { compareDecimalStrings, decideRollback, saveBelongsToOtherUser } from './anti-rollback';
 
 describe('compareDecimalStrings', () => {
   it('numeri uguali → 0', () => expect(compareDecimalStrings('100', '100')).toBe(0));
@@ -68,4 +68,30 @@ describe('decideRollback', () => {
     expect(decideRollback({}, { lifetimeScore: '100' })).toBe('cloud');
     expect(decideRollback({ lifetimeScore: '100' }, {})).toBe('local');
   });
+});
+
+describe('saveBelongsToOtherUser', () => {
+  it('due account diversi → estraneo (e' + "'" + ' il bug delle due schede: /test/ e produzione condividono lo slot locale)', () =>
+    expect(saveBelongsToOtherUser('utente-test', 'ufficiale')).toBe(true));
+
+  it('stesso account → non estraneo', () =>
+    expect(saveBelongsToOtherUser('ufficiale', 'ufficiale')).toBe(false));
+
+  it('spazi ai bordi: il backend trimma, il client mette in sessione la stringa grezza', () =>
+    expect(saveBelongsToOtherUser('Mario', ' Mario ')).toBe(false));
+
+  it('differenza di sole maiuscole → non estraneo (meglio non disarmare l' + "'" + 'anti-rollback per un dubbio)', () =>
+    expect(saveBelongsToOtherUser('MARIO', 'mario')).toBe(false));
+
+  it('stato di default (segnaposto) → intestatario ignoto, non estraneo', () =>
+    expect(saveBelongsToOtherUser('Giocatore', 'ufficiale')).toBe(false));
+
+  it('save senza username → non estraneo', () => {
+    expect(saveBelongsToOtherUser('', 'ufficiale')).toBe(false);
+    expect(saveBelongsToOtherUser(null, 'ufficiale')).toBe(false);
+    expect(saveBelongsToOtherUser(undefined, 'ufficiale')).toBe(false);
+  });
+
+  it('nessun utente loggato → non estraneo (niente con cui confrontare)', () =>
+    expect(saveBelongsToOtherUser('utente-test', null)).toBe(false));
 });
