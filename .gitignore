@@ -13,6 +13,9 @@ Thumbs.db
 # File dell'Editor e dell'IDE
 .idea/
 .vscode/
+# Visual Studio (≠ VS Code): stato locale per-utente, e .wsuo/slnx.sqlite
+# portano dentro percorsi e cronologia dei file aperti. Ovunque, non solo in root.
+.vs/
 *.swp
 *~
 
