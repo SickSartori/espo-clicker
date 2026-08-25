@@ -39,6 +39,8 @@ The "??? COMING SOON" slot in the Arcade is a mystery no longer. Plus the usual 
 
 * **💎 Q-Bits as Promised:** The Q-bits announced by Formatting dropped as you spent Tokens in the Promotion shop: you could be promised 10 and collect 3. The count is now based on the Tokens **earned** during the cycle, not on what is left in your pocket — spending them no longer costs you anything.
 * **🐛 Bug Bounty Toned Down:** The upgrade was worth +20% per level with **no ceiling**, and Critical Tickets quickly became more profitable than anything else: on their own they were enough to buy the endgame teams far sooner than intended. It is now +10% per level and stops at 10 levels. Anyone already past that keeps their levels, but the multiplier is smaller: chasing Critical Tickets is still worth it, just no longer decisive.
+* **💰 Bug Bounty Costs More:** The ceiling fixed the endgame, not the opening: the first level was paid for with the loose change of your first few Promotions, and by then most of the bonus was already yours. The base cost goes from 75 to 250 Tokens. What it is worth has not changed — still +10% per level, still up to 10 — what changes is **when** you can afford it: roughly two Promotions later, at every level.
+* **☄️ The MADE IN HEAVEN Button Is All There:** The icon ended up on a line of its own, squashed against the top edge of the button. It now sits next to the label, the way it does on the Sign Contract button.
 
 ---
 

@@ -39,6 +39,8 @@ Lo slot "??? COMING SOON" in Sala Giochi non è più un mistero. E poi il solito
 
 * **💎 Q-Bit come Promesso:** I Q-bit annunciati dalla Formattazione calavano man mano che spendevate i Token nel negozio Promozione: capitava di vedersene promettere 10 e incassarne 3. Il conto ora si basa sui Token **guadagnati** nel ciclo, non su quelli che vi restano in tasca — spenderli non vi toglie più niente.
 * **🐛 Bug Bounty Ridimensionato:** Il potenziamento valeva +20% per livello **senza tetto**, e i Ticket Critici diventavano in fretta più redditizi di qualsiasi altra cosa: da soli bastavano a comprare i team di fine partita molto prima del previsto. Ora vale +10% per livello e si ferma a 10 livelli. Chi era già andato oltre tiene i suoi livelli, ma il moltiplicatore è più contenuto: la corsa ai Ticket Critici resta conveniente, non più decisiva.
+* **💰 Bug Bounty Costa di Più:** Il tetto sistemava il finale, non l'inizio: il primo livello si pagava con gli spiccioli delle prime Promozioni, e a quel punto il grosso del bonus era già in tasca. Il costo base passa da 75 a 250 Token. Non cambia quanto vale — sempre +10% per livello, sempre fino a 10 — cambia **quando** ve lo potete permettere: circa due Promozioni più in là, a ogni livello.
+* **☄️ Il Pulsante MADE IN HEAVEN si Vede Tutto:** L'icona finiva su una riga sua, schiacciata contro il bordo alto del pulsante. Ora sta accanto alla scritta, come sul pulsante Firma Contratto.
 
 ---
 
