@@ -13,6 +13,7 @@
  * questo file, es. stopAllTestAudio) restano identici.
  */
 import { store } from '../../state/store';
+import { SAVE_KEY, BACKUP_KEY, clearAccountStorage } from '../../core/save/keys';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1399,8 +1400,8 @@ export function initModals(): void {
             if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                 try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
             }
-            localStorage.removeItem('espotoolClickerSaveV9');
-            localStorage.removeItem('espotoolClickerSaveV9_Backup');
+            localStorage.removeItem(SAVE_KEY);
+            localStorage.removeItem(BACKUP_KEY);
             location.reload();
         }
     });
@@ -1462,7 +1463,11 @@ export function initModals(): void {
 
                 alert(store.gameData.texts.dialogs.accountDeleted);
                 sessionStorage.clear();
-                localStorage.clear(); // Pulisce tutto il browser
+                // Piazza pulita del browser MA senza toccare il salvataggio
+                // dell'altro ambiente: /test/ e produzione condividono l'origine,
+                // e un localStorage.clear() secco qui cancellava anche la cache
+                // locale dell'account di produzione. (core/save/keys.ts)
+                clearAccountStorage();
                 if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                     try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                 }
@@ -1492,8 +1497,8 @@ export function initModals(): void {
                     if (w.SaveDB && typeof w.SaveDB.clearIndexedDB === 'function') {
                         try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                     }
-                    localStorage.removeItem('espotoolClickerSaveV9');
-                    localStorage.removeItem('espotoolClickerSaveV9_Backup');
+                    localStorage.removeItem(SAVE_KEY);
+                    localStorage.removeItem(BACKUP_KEY);
                     location.reload();
                 } else {
                     alert(data.message);
@@ -1563,8 +1568,8 @@ export function initModals(): void {
                         Game.saveGame();
                     } else {
                         if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
-                        localStorage.removeItem('espotoolClickerSaveV9');
-                        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+                        localStorage.removeItem(SAVE_KEY);
+                        localStorage.removeItem(BACKUP_KEY);
                         Game.getGameState().user.username = u;
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
                         Game.saveGame();

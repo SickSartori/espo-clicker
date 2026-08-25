@@ -25,6 +25,7 @@
  */
 const w = window as any;
 import { store } from '../state/store';
+import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton: any, scoreDisplay: any, cpsDisplay: any, feedbackContainer: any, achievementList: any;
@@ -168,8 +169,9 @@ export function initBoot(): void {
     w.statsList = statsList;
 
     // --------- SALVATAGGIO V9 (IndexedDB) ---------
-    const SAVE_KEY = 'espotoolClickerSaveV9';
-    const BACKUP_KEY = 'espotoolClickerSaveV9_Backup';
+    // Le chiavi arrivano da core/save/keys.ts perché cambiano con l'ambiente:
+    // `/test/` e la produzione sono la stessa ORIGINE e prima si contendevano un
+    // record solo. In produzione il valore è quello storico, invariato.
 
     // --------- CHECK STORAGE DISPONIBILE ---------
     (function checkStorageAvailable() {
@@ -849,7 +851,7 @@ export function initBoot(): void {
 
                     // 1. Backup di sicurezza
                     try {
-                        localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
+                        localStorage.setItem(LEGACY_BACKUP_KEY, savedState);
                     } catch (e) { }
 
                     // 2. Resetta la cache
@@ -1292,7 +1294,7 @@ export function initBoot(): void {
                     store.gameState.lastSaveTimestamp = Date.now();
                 }
                 const compressed = w.LZString.compressToUTF16(JSON.stringify(store.gameState));
-                localStorage.setItem('espotoolClickerSaveV9', compressed);
+                localStorage.setItem(SAVE_KEY, compressed);
             }
             // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
             saveGame();
@@ -2415,7 +2417,7 @@ export function initBoot(): void {
 
                         // G. Salva subito in cloud per allineare il DB
                         saveGame();
-                        localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                        localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
                         w.calculatePrestigeBonus();
@@ -2541,7 +2543,7 @@ export function initBoot(): void {
                     if (typeof w.updateUI === 'function') w.updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                    localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in store.gameData.achievements) {
