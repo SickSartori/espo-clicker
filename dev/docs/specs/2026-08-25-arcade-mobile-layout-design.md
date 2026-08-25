@@ -87,6 +87,21 @@ pezzo (`max-height: 30px`) e la barra del debito: 145px → 113px, senza toglier
 Specifico di Stack, che è **l'unico gioco con un HUD fuori dal canvas**: gli altri sei
 disegnano i loro dati dentro il canvas.
 
+
+### 6. La barra dei punteggi resta dentro lo schermo
+
+`.arcade-stats-box` è `flex: 0 0 auto` (riga 869): non si stringe mai. In colonna non si
+notava, perché aveva tutta la larghezza della topbar; rimessa in riga ne restano 239px, e
+i giochi con quattro voci ne chiedono 338 — "PUNTI: 0 VITE: 3 WAVE: 1 RECORD: 0" usciva
+tagliata fuori schermo su 5 giochi su 7 (tutti tranne snake e stack, che mostrano solo
+monete e trofeo).
+
+Ora può restringersi e mandare le voci a capo: una riga quando ci stanno, due quando no.
+Costa 10px di altezza ai tre giochi che vanno a capo — asteroids, invaders, centipede
+passano da 447 a 437px di campo — ed è il prezzo giusto per non perdere il punteggio.
+
+Difetto trovato **guardando gli screenshot**, non misurando: le metriche controllavano il
+canvas e i tasti, non il contenuto della topbar.
 ## Risultato misurato
 
 Telaio, identico per tutti e 7 i giochi: topbar 126 → **51px**, riserva 232 → **210px**,
@@ -97,9 +112,9 @@ Campo di gioco a 375×812, prima → dopo:
 | Gioco | prima | dopo | superficie |
 |---|---:|---:|---:|
 | stack | 105 × 184 | **182 × 320** | **+201%** |
-| invaders | 167 × 329 | **227 × 447** | **+85%** |
-| centipede | 154 × 329 | **210 × 447** | **+85%** |
-| asteroids | 201 × 345 | **261 × 447** | **+68%** |
+| invaders | 167 × 329 | **222 × 437** | **+77%** |
+| centipede | 154 × 329 | **205 × 437** | **+77%** |
+| asteroids | 201 × 345 | **255 × 437** | **+61%** |
 | snake | 327 × 315 | 327 × 315 | invariato |
 | space | 327 × 235 | 327 × 235 | invariato |
 | superespo | 327 × 229 | 327 × 229 | invariato |
