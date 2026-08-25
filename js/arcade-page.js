@@ -612,6 +612,39 @@
         }
     }
 
+    // Sul telefono in verticale lo spazio è tutto altezza, e il nome del gioco
+    // costava una riga intera di topbar: dentro la barra ha 79px, mentre
+    // "STACK OVERFLOW" ne chiede 132 e uscirebbe troncato. Nell'header, dove il
+    // portafoglio si toglie di mezzo mentre si gioca, ce ne sono 299 e ci sta
+    // intero. Lo scambio vale ovunque, non solo su telefono: l'header che dice
+    // a cosa stai giocando è un miglioramento anche su desktop.
+    let fsTitleOrig = null;
+    function syncHeaderTitle(gameActive) {
+        const fsTitle = document.querySelector('.fs-title');
+        if (!fsTitle) return;
+        // L'originale si conserva una volta sola: syncPadVisibility gira ogni
+        // 400ms e rileggerlo a ogni giro salverebbe il nome del gioco come
+        // "originale", lasciando l'header sbagliato per sempre dopo l'uscita.
+        if (fsTitleOrig === null) fsTitleOrig = fsTitle.innerHTML;
+
+        if (gameActive) {
+            const label = document.querySelector('.topbar-game-label');
+            const nome = label ? label.textContent.trim() : '';
+            if (!nome || fsTitle.dataset.game === nome) return;
+            // textContent e non innerHTML: il nome arriva dal markup del gioco,
+            // e non c'è motivo di reinterpretarlo come HTML.
+            fsTitle.textContent = nome;
+            const ico = document.createElement('i');
+            ico.className = 'fa-solid fa-gamepad';
+            ico.style.color = '#00d9ff';
+            fsTitle.prepend(ico, ' ');
+            fsTitle.dataset.game = nome;
+        } else if (fsTitle.dataset.game) {
+            fsTitle.innerHTML = fsTitleOrig;
+            delete fsTitle.dataset.game;
+        }
+    }
+
     function syncPadVisibility() {
         const pad = document.getElementById('arcade-virtual-pad');
         const gc = document.getElementById('arcade-active-game-container');
@@ -638,6 +671,9 @@
 
         // Tabella comandi (desktop): aggiorna col gioco attivo
         updateCmdTable(!!gameActive, activeGame);
+
+        // Header: mentre si gioca dice il nome del gioco, fuori torna il marchio
+        syncHeaderTitle(!!gameActive);
 
         if (gameActive && window._arcadeActiveGame) {
             configurePad(window._arcadeActiveGame);

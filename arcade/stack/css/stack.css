@@ -130,3 +130,20 @@
     background: #e67e22;
     transition: width 160ms linear;
 }
+
+/* Telefono in verticale: l'HUD è informazione di contorno e si prendeva 145px,
+   quasi quanto il campo di gioco (190px). Qui scende a ~113px senza togliere
+   una sola voce: a stringersi sono i respiri interni, l'anteprima del pezzo e
+   la barra del debito, non il contenuto. Vedi il blocco gemello in
+   styles/arcade/arcade-fullscreen.css per il resto del telaio. */
+@media (max-width: 768px) and (orientation: portrait) {
+    #stack-hud {
+        gap: 6px 10px;
+        padding: 6px 10px;
+        margin: 0 auto 8px;
+    }
+    #stack-hud .hud-cell { gap: 3px; }
+    #stack-hud .hud-v { font-size: 14px; }
+    #stack-hud #stack-next-canvas { max-height: 30px; }
+    #stack-hud .hud-bar { height: 10px; }
+}
