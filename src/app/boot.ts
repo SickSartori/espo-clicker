@@ -25,6 +25,48 @@
  */
 const w = window as any;
 import { store } from '../state/store';
+import { RIPARAZIONI_SKIN } from '../data/founder-grants';
+
+/**
+ * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
+ * di ognuna). Idempotente: l'id applicato resta nel save, quindi non si ripete
+ * a ogni caricamento.
+ *
+ * Va chiamata DOPO che username e skin sono nello stato — cioè negli stessi due
+ * punti in cui gira il recupero skin da achievement (percorso locale e percorso
+ * cloud). Ritorna true se ha cambiato qualcosa, così il chiamante salva.
+ */
+function applyRiparazioniSkin(): boolean {
+    const gs: any = store.gameState;
+    const nome = (gs.user && gs.user.username) || '';
+    const rip = RIPARAZIONI_SKIN[nome];
+    if (!rip) return false;
+
+    const fatte: string[] = Array.isArray(gs.riparazioniSkin) ? gs.riparazioniSkin : [];
+    if (fatte.includes(rip.id)) return false;
+
+    if (!gs.skins || !Array.isArray(gs.skins.unlocked))
+        gs.skins = { current: 'default', unlocked: ['default'] };
+
+    const daDare = rip.skins === 'all' ? Object.keys(store.gameData.skins) : rip.skins;
+    let aggiunte = 0;
+    daDare.forEach((id: string) => {
+        // Filtro al catalogo: un id rimosso dal gioco lascerebbe una cella rotta
+        // nel guardaroba invece di una skin.
+        if (!store.gameData.skins[id]) return;
+        if (gs.skins.unlocked.includes(id)) return;
+        gs.skins.unlocked.push(id);
+        aggiunte++;
+    });
+    if (rip.fondatore) gs.isFounder = true;
+
+    // Marcata anche se `aggiunte` è 0: la riparazione è stata valutata, e senza
+    // marker ripartirebbe a ogni caricamento per sempre.
+    fatte.push(rip.id);
+    gs.riparazioniSkin = fatte;
+    console.log(`🎁 Riparazione "${rip.id}" applicata a ${nome}: +${aggiunte} skin.`);
+    return true;
+}
 import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 
@@ -1060,6 +1102,10 @@ export function initBoot(): void {
                 }
             }
         }
+
+        // Riparazioni una tantum: stesso momento del recupero da achievement,
+        // cioe' a stato caricato e username noto.
+        if (applyRiparazioniSkin()) saveGame();
 
         // I passivi 'hacking' (goldenBugChance x2) e 'ticketPremium' (goldenBugSpawnTime x0.5)
         // sono GIÀ applicati da reapplyAllEffects() qui sopra (effetti trigger:'passive').
@@ -2574,6 +2620,8 @@ export function initBoot(): void {
                             }
                         }
                     }
+
+                    if (applyRiparazioniSkin()) saveGame();
 
                     checkOfflineProgress();
                     if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();

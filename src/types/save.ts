@@ -93,6 +93,11 @@ export interface SaveStateV3 extends Omit<SaveStateV2, 'schemaVersion'> {
   /** Skin non-default possedute pre-lancio, candidate al picker. Vedi sopra. */
   founderCandidateSkins?: string[];
   /**
+   * Id delle riparazioni skin una tantum già applicate a questo save
+   * (`src/data/founder-grants.ts`). Serve a non riapplicarle a ogni caricamento.
+   */
+  riparazioniSkin?: string[];
+  /**
    * True se questo save è passato dalla migrazione di lancio (v2→v3).
    * Persistito (≠ `window._launchMigrationDone`, che vive solo una sessione):
    * serve a distinguere, al login con cloud ancora pre-wipe, un locale Season 1
