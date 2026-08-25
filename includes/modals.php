@@ -375,7 +375,7 @@
                 </div>
 
                 <button id="btn-confirm-prestige" class="buy-btn hub-confirm hub-confirm-promo" disabled>
-                    <span class="hub-btn-ready"><i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?></span>
+                    <span class="hub-btn-ready"><span class="hub-btn-main"><i class="fa-solid fa-pen-nib"></i> <?php echo $labels["prestige_sign_btn"]; ?></span></span>
                     <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_promo_locked_btn"]; ?></span>
                 </button>
             </section>
@@ -400,7 +400,8 @@
                 </div>
 
                 <button id="btn-confirm-format" class="buy-btn quantum-btn hub-confirm hub-confirm-format" aria-label="<?php echo $labels['prestige_madeheaven_aria']; ?>" disabled>
-                    <span class="hub-btn-ready"><i class="fa-solid fa-meteor"></i>&nbsp;MADE IN HEAVEN
+                    <span class="hub-btn-ready">
+                        <span class="hub-btn-main"><i class="fa-solid fa-meteor"></i> MADE IN HEAVEN</span>
                         <span class="hub-btn-sub"><?php echo $labels["format_subtitle"]; ?></span>
                     </span>
                     <span class="hub-btn-locked"><i class="fa-solid fa-lock"></i> <?php echo $labels["hub_counter_label"]; ?> <span class="hub-format-counter-value">0/20</span></span>

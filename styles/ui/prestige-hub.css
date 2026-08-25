@@ -27,6 +27,20 @@
 #prestige-hub-modal .hub-card.is-ready .hub-btn-ready { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 #prestige-hub-modal .hub-card.is-ready .hub-btn-locked { display: none; }
 
+/* Riga del titolo. A tenere icona e label sulla stessa riga e' il wrapper in
+   se': `.hub-btn-ready` sta in colonna per appendere il sottotitolo sotto, e
+   in colonna anche l'<i> diventava un flex item per conto suo, a capo SOPRA il
+   testo. Dentro `.hub-btn-main` tornano due inline sulla stessa riga.
+   Questa regola ci mette solo la spaziatura (prima era un `&nbsp;`) e
+   l'allineamento verticale al centro invece che alla baseline. */
+#prestige-hub-modal .hub-btn-main { display: inline-flex; align-items: center; gap: 8px; }
+
+/* `.buy-btn` impone `height: 40px` + `overflow: hidden`. Il `min-height` dei
+   blocchi qui sotto tiene su il bottone, ma l'altezza resta inchiodata a 40px
+   e quello che sborda viene tagliato senza dirlo. Con `auto` il min-height
+   torna a essere un pavimento e il bottone cresce se il testo va a capo. */
+#prestige-hub-modal .hub-confirm { height: auto; padding-top: 8px; padding-bottom: 8px; }
+
 /* Mystery (solo format): titolo "???", velo, niente warning */
 #prestige-hub-modal .hub-format-title-mystery { display: none; }
 #prestige-hub-modal .hub-card-format.is-mystery .hub-format-title-mystery { display: inline; letter-spacing: 4px; }
