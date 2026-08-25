@@ -1297,6 +1297,22 @@ html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pa
        troncato in "STACK OVE…". */
     body.playing #arcade-fullscreen .topbar-game-label { display: none; }
 
+    /* La casella dei punteggi è `flex: 0 0 auto` (riga 869): non si stringe mai.
+       In colonna non si notava, perché aveva tutta la larghezza della topbar; in
+       riga ne restano 239px e i giochi che mostrano quattro voci ne chiedono 338
+       — "PUNTI: 0 VITE: 3 WAVE: 1 RECORD: 0" finiva tagliato fuori schermo.
+       Qui può restringersi e mandare le voci a capo: una riga sola quando ci
+       stanno (snake, stack, che mostrano solo monete e trofeo), due quando no. */
+    .arcade-game-topbar > .arcade-stats-box {
+        flex: 0 1 auto;
+        min-width: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 2px 10px;
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
     /* ---------- L'header dice che gioco è ---------- */
     /* Il portafoglio non serve mentre si gioca, e la larghezza che libera è
        esattamente quella che serve al nome del gioco, che ce lo mette
