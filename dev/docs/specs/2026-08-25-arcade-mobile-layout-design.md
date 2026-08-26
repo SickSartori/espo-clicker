@@ -149,6 +149,123 @@ quattro che crescono sono quelli vincolati in altezza.
    headless: distorsione 1,000 ovunque, `overlap` 0 ovunque, 0 tasti fuori schermo, tasto
    minimo 54-56px, pad largo quanto il viewport, titolo mai troncato.
 
+---
+
+# Seguito del 26/08 — quello che ha trovato la verifica finale
+
+La verifica di chiusura ha rimisurato i 7 giochi su 3 formati verticali (375×812,
+360×640, 320×568) invece che su uno solo. Il telaio ha retto — distorsione 1,000
+ovunque, zero tasti fuori schermo, zero sovrapposizioni, tasto minimo 54px, barra dei
+punteggi sempre dentro, titolo mai troncato — e Super Espò, che la misura del 25/08
+non aveva coperto perché dipende dalla CDN di Phaser, sta a 327×229 come gli altri due
+vincolati in larghezza.
+
+Sono venute fuori tre cose che le metriche di prima non guardavano, tutte figlie dello
+stesso difetto: **avevamo misurato un formato e scritto il numero che ne usciva.**
+
+## 7. La riserva non è un numero: è il pad
+
+I 210px erano esatti in un punto solo — D-pad a tre righe su uno schermo largo 375.
+Fuori di lì erano una stima, e sbagliava in due modi.
+
+- La griglia del D-pad è 3×3 anche quando il gioco usa due tasti soli. **BUG INVADERS**
+  ha solo ◀ ▶: le altre due righe restavano celle vuote, e sotto al campo si apriva una
+  fascia nera alta **71px a 375×812 e 89 a 320×568** che non conteneva niente. Stesso
+  difetto, più piccolo, su ESPO-ROIDS, che ha ▲ ma non ▼: 66px.
+- Le celle sono `clamp(52px, 17vw, 64px)`, cioè 64px da 375 in su ma **54 a 320**. Lì il
+  pad è alto 179px e i 210 riservati ne buttavano 31 — per tutti e sette i giochi.
+
+Adesso la riserva è l'altezza del pad, calcolata:
+
+    --arcade-pad-reserve: calc(max(
+        righe × cella + (righe − 1) × 4px,   /* il D-pad */
+        azione                                /* o il tasto tondo, se è più alto */
+    ) + 12px);                                /* 8px di stacco dal bordo + 4 d'aria */
+
+Le due misure (`--arcade-pad-cella`, `--arcade-pad-azione`) sono le stesse che disegnano
+i tasti: erano gli identici due `clamp` scritti in due punti del file, ed è esattamente
+così che 130, 200 e 232 erano andati fuori sincrono la volta scorsa.
+
+Le righe le pubblica `configurePad` in `js/arcade-page.js`, che già sa quali direzioni
+accende, su `body[data-dpad]`: `lr` per il D-pad a una riga, `ulr` per quello a due. Si
+nominano una per una **le due forme che esistono davvero**, invece di dedurre il numero:
+un gioco futuro con ▼ ma senza ▲ non scriverebbe l'attributo e resterebbe a tre righe,
+cioè al comportamento di oggi, invece di finire in un caso mai provato.
+
+Effetto voluto: i tasti direzione scendono in fondo, allineati al tasto azione, dove
+cade il pollice — prima galleggiavano a mezz'aria sopra una riga di celle vuote.
+
+Solo in verticale. In orizzontale il pad sta ai lati, l'altezza gli avanza e la riserva
+sotto vale già 0: non c'era niente da recuperare e non si tocca niente.
+
+## 8. A 320px la fila in fondo era piena
+
+Con il D-pad ridotto alle sue righe, direzione e azione finiscono sulla **stessa riga**.
+In altezza è un guadagno, in larghezza a 320px non avanzava niente: D-pad 171 + FIRE 60
++ 10 di gap + START 56 fanno 297 su 320, e fra ▶ e FIRE restavano **2px**. Prima non si
+notava perché i due gruppi erano su righe diverse.
+
+Gli 8px li cede START, che durante la partita è spento e si preme una volta a partita
+(56 → 48px, sempre sopra i 44 di WCAG 2.5.8), più 4px di respiro fra i due cerchi: lo
+stacco torna a 14px. Solo sotto i 360px di larghezza, dove il problema esiste.
+
+## 9. L'HUD di Stack sugli schermi corti
+
+Stack Overflow è l'unico gioco con un HUD fuori dal canvas, ed è una griglia 3×2. A
+375×812 sta comodo (113px contro 320 di campo). A **320×568 si prendeva 113px e al campo
+ne restavano 77**: l'informazione di contorno era più grande del gioco, e il campo era
+un francobollo da 44×77.
+
+Sotto i **700px di altezza** — che prende 320×568, 360×640 e i 375×667 dei telefoni
+piccoli — l'HUD passa a una riga sola: 113px → **45px**. I tre contatori restano
+identici; spariscono le etichette di anteprima e debito, e le due scritte piccole sotto.
+Non è una perdita di informazione: "PROSSIMO" nomina un pezzo che è lì disegnato,
+"DEBITO TECNICO" nomina la barra arancione che gli sta sotto, il nome del pezzo è quello
+che l'anteprima mostra, e i pezzi che mancano al debito sono quanto manca alla barra per
+riempirsi. Sono 133px di etichetta su 288 di riga, e su quello schermo valgono di più al
+campo. La soglia è l'altezza e non la larghezza, quindi a 375×812 non cambia un pixel.
+
+## Risultato misurato, secondo giro
+
+Campo di gioco, prima → dopo il seguito del 26/08:
+
+| Gioco | 375×812 | 360×640 | 320×568 |
+|---|---|---|---|
+| stack | 182×320 → 181×318 | 85×149 → **127×223** | 44×77 → **98×172** (+398%) |
+| invaders | 222×437 → **286×564** (+66%) | 128×265 → **191×395** | 81×193 → **138×330** (+191%) |
+| asteroids | 255×437 → **294×503** (+33%) | 147×265 → **187×337** | 93×193 → **134×278** (+108%) |
+| centipede | 205×437 → 204×436 | 124×265 → 127×271 | 78×193 → **89×220** |
+| snake | invariato | 286×276 → 293×282 | 212×204 → **239×231** |
+| space | invariato | invariato | 268×193 → 272×196 |
+| superespo | invariato | invariato | invariato |
+
+Riserva: 210px fissi → **83-211px** secondo il pad che c'è. Fascia vuota sotto al campo:
+71-89px su invaders e 31 su tutti a 320 → **4px ovunque**, che è lo stacco dal bordo.
+
+I tre giochi a tre righe di D-pad perdono **1px** a 375×812 (211 invece di 210): è la
+formula che dice il vero al posto del numero arrotondato, e si vede su centipede e stack
+che erano vincolati in altezza.
+
+## Stime sbagliate, secondo giro
+
+- **"Nessun gioco usa più di un tasto azione, quindi la larghezza regge."** Regge in
+  larghezza, sì — ma il conto non teneva che a 320px quei tasti finiscono a 2px l'uno
+  dall'altro appena stanno sulla stessa riga.
+- **L'HUD di Stack a 113px era "compatto".** Lo era rispetto ai 145 di partenza, non
+  rispetto allo schermo su cui gira: a 568px di altezza restava più grande del campo.
+- Anche stavolta i difetti sono usciti **guardando gli screenshot e cambiando formato**,
+  non ripetendo la misura sul formato che avevamo già misurato.
+
+## Verifica eseguita, secondo giro
+
+1. `dev/tests/e2e/arcade-canvas-mobile.spec.ts`: **26 test verdi** (16 di prima + 10
+   nuovi: riserva pari al pad per le tre forme di D-pad su due formati, stacco fra
+   direzione e azione a 320, HUD di Stack a una riga sotto i 700px e a due sopra).
+2. Gli altri spec della Sala Giochi — `arcade-open`, `arcade-regressioni`, `arcade`,
+   `stack-overflow` — restano verdi: 15 test.
+3. Misura diretta di nuovo su 7 giochi × 3 formati: distorsione 1,000, overlap 0, 0 tasti
+   fuori schermo, tasto minimo 54px, fascia vuota 4px ovunque.
+
 ## Da fare al rilascio
 
 In produzione `arcade.php` versiona `arcade-fullscreen.css` e `arcade-page.js` con
