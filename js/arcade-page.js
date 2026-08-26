@@ -579,6 +579,19 @@
             if (btn) btn.style.display = cfg.dpad.includes(dir) ? '' : 'none';
         });
 
+        // Che forma ha il D-pad, per chi deve saperlo da fuori. La griglia è
+        // 3x3 e le celle spente restano riservate: in verticale quelle righe
+        // vuote sono campo di gioco in meno, e la riserva sotto al canvas è
+        // tarata sull'altezza del pad. Il CSS legge questo token
+        // (body[data-dpad], in styles/arcade/arcade-fullscreen.css) e stringe
+        // griglia e riserva insieme. Si nominano solo le due forme ridotte che
+        // esistono davvero — invaders e asteroids: ogni altro layout non scrive
+        // l'attributo e resta a tre righe, com'è sempre stato.
+        const su = cfg.dpad.includes('up'), giu = cfg.dpad.includes('down');
+        const forma = (!su && !giu) ? 'lr' : (su && !giu) ? 'ulr' : '';
+        if (forma) document.body.dataset.dpad = forma;
+        else delete document.body.dataset.dpad;
+
         const fireBtn = pad.querySelector('.vp-action-btn.cyan');
         const xBtn = pad.querySelector('.vp-action-btn.yellow');
         const startBtn = pad.querySelector('.vp-action-btn[data-key="Enter"]');
@@ -612,6 +625,39 @@
         }
     }
 
+    // Sul telefono in verticale lo spazio è tutto altezza, e il nome del gioco
+    // costava una riga intera di topbar: dentro la barra ha 79px, mentre
+    // "STACK OVERFLOW" ne chiede 132 e uscirebbe troncato. Nell'header, dove il
+    // portafoglio si toglie di mezzo mentre si gioca, ce ne sono 299 e ci sta
+    // intero. Lo scambio vale ovunque, non solo su telefono: l'header che dice
+    // a cosa stai giocando è un miglioramento anche su desktop.
+    let fsTitleOrig = null;
+    function syncHeaderTitle(gameActive) {
+        const fsTitle = document.querySelector('.fs-title');
+        if (!fsTitle) return;
+        // L'originale si conserva una volta sola: syncPadVisibility gira ogni
+        // 400ms e rileggerlo a ogni giro salverebbe il nome del gioco come
+        // "originale", lasciando l'header sbagliato per sempre dopo l'uscita.
+        if (fsTitleOrig === null) fsTitleOrig = fsTitle.innerHTML;
+
+        if (gameActive) {
+            const label = document.querySelector('.topbar-game-label');
+            const nome = label ? label.textContent.trim() : '';
+            if (!nome || fsTitle.dataset.game === nome) return;
+            // textContent e non innerHTML: il nome arriva dal markup del gioco,
+            // e non c'è motivo di reinterpretarlo come HTML.
+            fsTitle.textContent = nome;
+            const ico = document.createElement('i');
+            ico.className = 'fa-solid fa-gamepad';
+            ico.style.color = '#00d9ff';
+            fsTitle.prepend(ico, ' ');
+            fsTitle.dataset.game = nome;
+        } else if (fsTitle.dataset.game) {
+            fsTitle.innerHTML = fsTitleOrig;
+            delete fsTitle.dataset.game;
+        }
+    }
+
     function syncPadVisibility() {
         const pad = document.getElementById('arcade-virtual-pad');
         const gc = document.getElementById('arcade-active-game-container');
@@ -624,7 +670,11 @@
         document.body.classList.toggle('playing', !!gameActive);
 
         // Partita finita (es. game over → ritorno automatico): azzera il gioco in corso
-        if (!gameActive) window._arcadeRunningGame = null;
+        if (!gameActive) {
+            window._arcadeRunningGame = null;
+            // …e la forma del D-pad, che vale per il gioco che se n'è andato.
+            delete document.body.dataset.dpad;
+        }
 
         // Keep selector visible (games try to hide it) — toggle preview instead
         if (selector && selector.style.display === 'none') selector.style.display = '';
@@ -638,6 +688,9 @@
 
         // Tabella comandi (desktop): aggiorna col gioco attivo
         updateCmdTable(!!gameActive, activeGame);
+
+        // Header: mentre si gioca dice il nome del gioco, fuori torna il marchio
+        syncHeaderTitle(!!gameActive);
 
         if (gameActive && window._arcadeActiveGame) {
             configurePad(window._arcadeActiveGame);
