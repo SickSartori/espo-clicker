@@ -147,3 +147,36 @@
     #stack-hud #stack-next-canvas { max-height: 30px; }
     #stack-hud .hud-bar { height: 10px; }
 }
+
+/* Schermo verticale CORTO — 320x568, 360x640, i 375x667 dei telefoni piccoli.
+   Lì l'HUD a due righe non ci sta: a 320x568 si prendeva 113px e al campo ne
+   restavano 77, cioè l'informazione di contorno era più grande del gioco.
+   Passa a una riga sola. I tre contatori restano identici; a sparire sono le
+   etichette di anteprima e debito — "PROSSIMO" e "DEBITO TECNICO" sono 133px
+   su 304 di schermo, e il pezzo che cade e la barra arancione si spiegano da
+   soli — più le due scritte piccole sotto: il nome del pezzo è quello che
+   l'anteprima disegna, e i pezzi che mancano al prossimo debito sono quanto
+   manca alla barra per riempirsi. Su 288px di riga quelle scritte non stanno
+   in piedi comunque: "9 PEZZI" andava a capo e la barra si riduceva a un
+   moncone. 113px → 43px, tutti al campo. La soglia è l'altezza, non la
+   larghezza: a 375x812 l'HUD a due righe ci sta comodo e non si tocca. */
+@media (max-width: 768px) and (orientation: portrait) and (max-height: 700px) {
+    #stack-hud {
+        /* I tre contatori larghi quanto la loro etichetta, l'anteprima quanto
+           il pezzo, e alla barra tutto quello che resta. */
+        grid-template-columns: auto auto auto auto 1fr;
+        align-items: center;
+        /* 6px e non 10 fra le colonne: i 16px che si risparmiano finiscono
+           tutti nella barra, che a 320px è l'ultima della fila e si prende
+           quel che avanza — 28px di barra, o 44. */
+        gap: 4px 6px;
+        padding: 5px 8px;
+    }
+    #stack-hud .hud-next { grid-column: 4; }
+    #stack-hud .hud-debt { grid-column: 5; }
+    #stack-hud .hud-next .hud-k,
+    #stack-hud .hud-debt .hud-k,
+    #stack-hud .hud-id { display: none; }
+    #stack-hud .hud-k { white-space: nowrap; }
+    #stack-hud #stack-next-canvas { max-height: 22px; }
+}

@@ -432,3 +432,50 @@ test('a 320px i tasti direzione non si sfiorano con quelli azione', async ({ pag
   expect(m.stacco, 'stacco fra destra e FIRE (prima del fix: 2px)').toBeGreaterThanOrEqual(10);
   expect(m.minTasto, 'WCAG 2.5.8: 44px minimi').toBeGreaterThanOrEqual(44);
 });
+
+/**
+ * 6. HUD DI STACK SU SCHERMO CORTO.
+ *
+ *    Stack Overflow e' l'unico gioco con un HUD fuori dal canvas, ed e' una
+ *    griglia 3x2 alta 113px. Su uno schermo da 568px, dove il contorno resta
+ *    quello che e', al campo restavano 77px: l'informazione di contorno era
+ *    piu' grande del gioco. Sotto i 700px di altezza l'HUD passa a una riga
+ *    sola — i contatori restano, spariscono le etichette di anteprima e
+ *    debito — e scende a ~45px.
+ */
+async function hudStack(page: any) {
+  return page.evaluate(() => {
+    const hud = document.getElementById('stack-hud') as HTMLElement;
+    const c = document.querySelector('#stack-canvas') as HTMLElement;
+    return {
+      hud: hud.getBoundingClientRect().height,
+      campo: c.getBoundingClientRect().height,
+      sborda: hud.scrollWidth > hud.clientWidth + 1,
+      // le voci restano tutte: nessuna e' stata tolta, solo stretta
+      voci: hud.querySelectorAll('.hud-cell').length,
+    };
+  });
+}
+
+for (const vp of [{ w: 320, h: 568 }, { w: 375, h: 667 }]) {
+  test(`stack: su uno schermo alto ${vp.h} l'HUD sta in una riga`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await apriEAvvia(page, 'stack', '#stack-canvas');
+    const m = await hudStack(page);
+    expect(m.voci, 'le cinque voci restano tutte').toBe(5);
+    expect(m.hud, `HUD a ${vp.w}x${vp.h} (prima del fix: 113px)`).toBeLessThanOrEqual(60);
+    expect(m.sborda, 'niente deve uscire dalla riga').toBe(false);
+    // a 320x568 il campo era 77px e l'HUD 113: il contorno piu' grande del gioco
+    expect(m.campo, "il campo deve essere piu' alto del suo HUD").toBeGreaterThan(m.hud);
+  });
+}
+
+test("stack: su uno schermo alto 812 l'HUD resta a due righe", async ({ page }) => {
+  // La soglia e' l'altezza, non la larghezza: dove l'HUD pieno ci sta comodo
+  // non si tocca, etichette comprese.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await apriEAvvia(page, 'stack', '#stack-canvas');
+  const m = await hudStack(page);
+  expect(m.hud, 'HUD a due righe').toBeGreaterThan(90);
+  expect(m.voci).toBe(5);
+});
