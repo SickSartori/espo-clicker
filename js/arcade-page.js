@@ -579,6 +579,19 @@
             if (btn) btn.style.display = cfg.dpad.includes(dir) ? '' : 'none';
         });
 
+        // Che forma ha il D-pad, per chi deve saperlo da fuori. La griglia è
+        // 3x3 e le celle spente restano riservate: in verticale quelle righe
+        // vuote sono campo di gioco in meno, e la riserva sotto al canvas è
+        // tarata sull'altezza del pad. Il CSS legge questo token
+        // (body[data-dpad], in styles/arcade/arcade-fullscreen.css) e stringe
+        // griglia e riserva insieme. Si nominano solo le due forme ridotte che
+        // esistono davvero — invaders e asteroids: ogni altro layout non scrive
+        // l'attributo e resta a tre righe, com'è sempre stato.
+        const su = cfg.dpad.includes('up'), giu = cfg.dpad.includes('down');
+        const forma = (!su && !giu) ? 'lr' : (su && !giu) ? 'ulr' : '';
+        if (forma) document.body.dataset.dpad = forma;
+        else delete document.body.dataset.dpad;
+
         const fireBtn = pad.querySelector('.vp-action-btn.cyan');
         const xBtn = pad.querySelector('.vp-action-btn.yellow');
         const startBtn = pad.querySelector('.vp-action-btn[data-key="Enter"]');
@@ -657,7 +670,11 @@
         document.body.classList.toggle('playing', !!gameActive);
 
         // Partita finita (es. game over → ritorno automatico): azzera il gioco in corso
-        if (!gameActive) window._arcadeRunningGame = null;
+        if (!gameActive) {
+            window._arcadeRunningGame = null;
+            // …e la forma del D-pad, che vale per il gioco che se n'è andato.
+            delete document.body.dataset.dpad;
+        }
 
         // Keep selector visible (games try to hide it) — toggle preview instead
         if (selector && selector.style.display === 'none') selector.style.display = '';

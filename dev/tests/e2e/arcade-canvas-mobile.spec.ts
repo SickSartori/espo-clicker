@@ -337,3 +337,98 @@ test('invaders: su desktop i quattro bunker restano dove erano', async ({ page }
   expect(m.segmenti.map((s: any) => s.da)).toEqual([164, 398, 632, 866]);
   expect(m.varchi).toEqual([164, 164, 164, 164, 164]);
 });
+
+/**
+ * 5. RISERVA SOTTO AL CAMPO — un numero fisso per pad di forme diverse.
+ *
+ *    Lo spazio riservato in basso al flipper era un valore scritto a mano
+ *    (210px), tarato sul D-pad a tre righe di uno schermo da 375. Ma la
+ *    griglia del D-pad e' 3x3 anche quando il gioco usa due tasti soli: chi
+ *    non ha su' e giu' si portava dietro due righe di celle vuote, e sotto al
+ *    campo restava una fascia nera che non conteneva niente. Misurato prima
+ *    del fix: BUG INVADERS lasciava 71px vuoti a 375x812 e 89 a 320x568; e a
+ *    320, dove i tasti si rimpiccioliscono, i 210px erano 31 di troppo per
+ *    TUTTI i giochi.
+ *
+ *    Ora la riserva E' l'altezza del pad: righe reali x cella piu' i gap,
+ *    oppure il tasto azione se e' piu' alto, piu' lo stacco dal bordo. Il test
+ *    misura la fascia fra il fondo del telaio e il primo tasto: e' quella la
+ *    fascia che prima era vuota.
+ */
+async function telaioPad(page: any, sel: string) {
+  return page.evaluate((s: string) => {
+    const pad = document.getElementById('arcade-virtual-pad') as HTMLElement;
+    const dpad = pad.querySelector('.vp-dpad') as HTMLElement;
+    const box = (b: Element) => b.getBoundingClientRect();
+    const tasti = (Array.from(pad.querySelectorAll('button')) as HTMLElement[])
+      .filter((b) => { const r = box(b); return r.width > 1 && r.height > 1; });
+    const dir = tasti.filter((b) => b.classList.contains('vp-btn')).map(box);
+    const azi = tasti.filter((b) => b.classList.contains('vp-action-btn')).map(box);
+    const cella = dir.length ? dir[0].height : 0;
+    const telaio = box(document.querySelector('.arcade-screen-container') as HTMLElement);
+    const c = document.querySelector(s) as HTMLCanvasElement;
+    const rc = box(c);
+
+    let overlap = 0;
+    pad.querySelectorAll('.vp-dpad, .vp-actions').forEach((el) => {
+      const r = box(el);
+      const ox = Math.min(r.right, rc.right) - Math.max(r.left, rc.left);
+      const oy = Math.min(r.bottom, rc.bottom) - Math.max(r.top, rc.top);
+      if (ox > 0 && oy > 0) overlap += ox * oy;
+    });
+
+    return {
+      forma: document.body.dataset.dpad || '',
+      // altezza della griglia diviso il passo di una cella: quante righe occupa
+      righeDpad: cella ? Math.round((box(dpad).height + 4) / (cella + 4)) : 0,
+      // la fascia fra il fondo del telaio e il primo tasto: quella che prima
+      // restava vuota
+      spazioMorto: Math.min.apply(null, tasti.map((b) => box(b).top)) - telaio.bottom,
+      // quanto passa fra l'ultimo tasto direzione e il primo tasto azione: ora
+      // stanno sulla stessa riga, e a 320px si sfioravano (2px)
+      stacco: (azi.length && dir.length)
+        ? Math.min.apply(null, azi.map((r) => r.left)) - Math.max.apply(null, dir.map((r) => r.right))
+        : Infinity,
+      minTasto: Math.min.apply(null, tasti.map((b) => Math.min(box(b).width, box(b).height))),
+      overlap,
+    };
+  }, sel);
+}
+
+const FORME = [
+  { key: 'invaders',  canvas: '#invaders-canvas',  forma: 'lr',  righe: 1 },  // sinistra/destra
+  { key: 'asteroids', canvas: '#asteroids-canvas', forma: 'ulr', righe: 2 },  // su' + sinistra/destra
+  { key: 'snake',     canvas: '#snake-canvas',     forma: '',    righe: 3 },  // quattro direzioni: invariato
+];
+
+for (const g of FORME) {
+  for (const vp of [{ w: 375, h: 812 }, { w: 320, h: 568 }]) {
+    test(`${g.key}: sotto al campo si riserva il pad che c'e' davvero (${vp.w}x${vp.h})`, async ({ page }) => {
+      await page.setViewportSize({ width: vp.w, height: vp.h });
+      await apriEAvvia(page, g.key, g.canvas);
+      const m = await telaioPad(page, g.canvas);
+
+      expect(m.forma, 'forma del D-pad pubblicata da configurePad').toBe(g.forma);
+      expect(m.righeDpad, 'righe di griglia occupate').toBe(g.righe);
+      // il difetto di partenza: 71-89px di fascia vuota su invaders, 31 su
+      // tutti gli altri a 320. Sotto i 12px c'e' solo lo stacco dal bordo.
+      expect(m.spazioMorto, 'fascia vuota fra il campo e i tasti').toBeLessThanOrEqual(12);
+      expect(m.spazioMorto, 'i tasti non devono risalire sul telaio').toBeGreaterThanOrEqual(0);
+      // e la riserva piu' stretta non deve portare i tasti sul campo
+      expect(m.overlap, 'i tasti non coprono il canvas').toBe(0);
+      expect(m.minTasto, 'WCAG 2.5.8: 44px minimi').toBeGreaterThanOrEqual(44);
+    });
+  }
+}
+
+test('a 320px i tasti direzione non si sfiorano con quelli azione', async ({ page }) => {
+  // Con il D-pad ridotto alle sue righe, direzione e azione finiscono sulla
+  // STESSA riga in fondo: in larghezza pero' a 320 non avanza niente, e fra
+  // destra e FIRE restavano 2px. START cede gli 8px che servono, e resta
+  // comunque sopra i 44 di WCAG.
+  await page.setViewportSize({ width: 320, height: 568 });
+  await apriEAvvia(page, 'invaders', '#invaders-canvas');
+  const m = await telaioPad(page, '#invaders-canvas');
+  expect(m.stacco, 'stacco fra destra e FIRE (prima del fix: 2px)').toBeGreaterThanOrEqual(10);
+  expect(m.minTasto, 'WCAG 2.5.8: 44px minimi').toBeGreaterThanOrEqual(44);
+});

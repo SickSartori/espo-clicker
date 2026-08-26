@@ -1221,10 +1221,47 @@ html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pa
    D-pad da 196px dentro un viewport alto 360. */
 @media (max-width: 768px) and (orientation: portrait) {
 
-    /* Riserva sotto al campo, pari all'altezza vera del pad (196px di D-pad più
-       l'offset dal bordo). I 232px di prima erano tarati su un pad che non è
-       mai esistito: 57px riservati e mai occupati. */
-    :root { --arcade-pad-reserve: 210px; }
+    /* Misure del flipper, dichiarate qui una volta e usate sia dai tasti sia
+       dalla riserva qui sotto: erano gli stessi due clamp scritti in due punti,
+       ed è così che i valori vanno fuori sincrono. */
+    body {
+        --arcade-pad-cella: clamp(52px, 17vw, 64px);
+        --arcade-pad-azione: clamp(60px, 19vw, 72px);
+        --arcade-pad-righe: 3;
+    }
+
+    /* Riserva sotto al campo. Non è più un numero scritto a mano — i 210px
+       erano tarati sul D-pad a tre righe a 375px di schermo, e valevano quello
+       solo lì: a 320px il pad ne occupa 179 e i 31px di troppo li pagava il
+       campo, e BUG INVADERS, che ha solo ◀ ▶, ne lasciava vuoti 71.
+       Qui la riserva È l'altezza del pad: la colonna più alta fra il D-pad
+       (righe × cella + i gap da 4px) e il tasto azione, più 8px di stacco dal
+       bordo (`bottom` del pad) e 4px d'aria fra i tasti e il telaio. */
+    body {
+        --arcade-pad-reserve: calc(max(
+            var(--arcade-pad-righe) * var(--arcade-pad-cella) + (var(--arcade-pad-righe) - 1) * 4px,
+            var(--arcade-pad-azione)
+        ) + 12px);
+    }
+
+    /* Quante righe di D-pad servono davvero. La griglia è 3x3 con le celle
+       vuote riservate lo stesso: chi non ha ▲ e ▼ si porta dietro due righe
+       di niente, e sono due righe di campo in meno. Il token lo scrive
+       js/arcade-page.js da GAME_CONTROLS (`configurePad`); un layout che non
+       sia uno di questi due resta a tre righe, cioè al comportamento di prima.
+       Solo in verticale: in orizzontale il pad sta ai lati, l'altezza gli
+       avanza e la riserva sotto vale 0. */
+    body[data-dpad="lr"]  { --arcade-pad-righe: 1; }   /* ◀ ▶ — invaders */
+    body[data-dpad="ulr"] { --arcade-pad-righe: 2; }   /* ▲ sopra ◀ ▶ — asteroids */
+
+    body[data-dpad="lr"] .vp-dpad  { grid-template-rows: var(--arcade-pad-cella); }
+    body[data-dpad="ulr"] .vp-dpad { grid-template-rows: repeat(2, var(--arcade-pad-cella)); }
+    /* ▲ sta già in riga 1; ◀ ▶ risalgono all'ultima riga rimasta, così i tasti
+       finiscono in fondo, allineati al tasto azione, dove cadono i pollici. */
+    body[data-dpad="lr"] .vp-dpad .vp-left,
+    body[data-dpad="lr"] .vp-dpad .vp-right { grid-row: 1; }
+    body[data-dpad="ulr"] .vp-dpad .vp-left,
+    body[data-dpad="ulr"] .vp-dpad .vp-right { grid-row: 2; }
 
     /* ---------- Il flipper occupa tutta la larghezza ---------- */
     #arcade-virtual-pad {
@@ -1261,13 +1298,13 @@ html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pa
        azione (GAME_CONTROLS in js/arcade-page.js): a destra ci sono al massimo
        due cerchi, l'azione e START, mai tre. */
     .vp-dpad {
-        grid-template-columns: repeat(3, clamp(52px, 17vw, 64px));
-        grid-template-rows: repeat(3, clamp(52px, 17vw, 64px));
+        grid-template-columns: repeat(3, var(--arcade-pad-cella));
+        grid-template-rows: repeat(3, var(--arcade-pad-cella));
         gap: 4px;
     }
     .vp-action-btn {
-        width: clamp(60px, 19vw, 72px);
-        height: clamp(60px, 19vw, 72px);
+        width: var(--arcade-pad-azione);
+        height: var(--arcade-pad-azione);
         font-size: 0.78rem;
     }
     /* START è spento durante la partita (js/arcade-page.js lo disabilita finché
@@ -1335,6 +1372,21 @@ html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pa
         white-space: nowrap;
     }
     body.playing #arcade-fullscreen .fs-title i { display: none; }
+}
+
+/* Schermo verticale STRETTO — 320-360px.
+   Con il D-pad ridotto alle righe che usa davvero, i tasti direzione e quelli
+   azione finiscono sulla STESSA riga in fondo. In larghezza però lì non
+   avanza niente: D-pad 171 + FIRE 60 + 10 + START 56 fanno 297 su 320, e fra
+   ▶ e FIRE restavano 2px. I pixel li cede START, che durante la partita è
+   spento e si preme una volta sola — resta comunque sopra i 44px di WCAG
+   2.5.8 — più 4px di respiro fra i due cerchi: lo stacco torna a ~15px. */
+@media (max-width: 360px) and (orientation: portrait) {
+    #arcade-virtual-pad .vp-actions { gap: 6px; }
+    #arcade-virtual-pad .vp-action-btn[data-key="Enter"] {
+        width: 48px;
+        height: 48px;
+    }
 }
 
 /* ============================================================ */
