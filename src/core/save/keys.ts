@@ -34,23 +34,31 @@ const BASE_KEY = 'espotoolClickerSaveV9';
 export interface SaveKeys {
     /** Record principale: stessa chiave in localStorage e in IndexedDB. */
     save: string;
-    /** Copia di sicurezza letta se il record principale manca. */
-    backup: string;
-    /** Save incompatibile messo da parte prima di un reset forzato. */
+    /**
+     * Save incompatibile messo da parte prima di un reset forzato. Solo scritto,
+     * mai riletto dal gioco: serve a un recupero manuale. Il suffisso `_Backup_Legacy`
+     * è quello storico e resta tale.
+     */
     legacyBackup: string;
 }
+
+/**
+ * Non esiste una chiave di backup: la copia casuale (`Math.random() < 0.2`)
+ * dell'era solo-localStorage è stata tolta col passaggio a IndexedDB (V9) e
+ * nessun client ha mai scritto `<save>_Backup`. La ridondanza locale oggi è
+ * IndexedDB (autosave) + localStorage[save] (scritto in sincrono alla chiusura
+ * e se IndexedDB fallisce); la copia autoritativa è il cloud.
+ */
 
 /** PURA (ambiente come parametro) → testabile. */
 export function saveKeysFor(env: 'dev' | 'production'): SaveKeys {
     const save = env === 'dev' ? BASE_KEY + '__dev' : BASE_KEY;
-    const backup = save + '_Backup';
-    return { save, backup, legacyBackup: backup + '_Legacy' };
+    return { save, legacyBackup: save + '_Backup_Legacy' };
 }
 
 const KEYS = saveKeysFor(currentEnv());
 
 export const SAVE_KEY = KEYS.save;
-export const BACKUP_KEY = KEYS.backup;
 export const LEGACY_BACKUP_KEY = KEYS.legacyBackup;
 
 /**
@@ -61,7 +69,7 @@ export const LEGACY_BACKUP_KEY = KEYS.legacyBackup;
  */
 export const OTHER_ENV_SAVE_KEYS: string[] = (() => {
     const altro = saveKeysFor(currentEnv() === 'dev' ? 'production' : 'dev');
-    return [altro.save, altro.backup, altro.legacyBackup];
+    return [altro.save, altro.legacyBackup];
 })();
 
 /**

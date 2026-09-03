@@ -9,7 +9,6 @@ describe('saveKeysFor', () => {
   it('produzione: chiavi storiche, INVARIATE', () => {
     expect(saveKeysFor('production')).toEqual({
       save: 'espotoolClickerSaveV9',
-      backup: 'espotoolClickerSaveV9_Backup',
       legacyBackup: 'espotoolClickerSaveV9_Backup_Legacy',
     });
   });
@@ -19,14 +18,21 @@ describe('saveKeysFor', () => {
     const prod = saveKeysFor('production');
     expect(dev.save).toBe('espotoolClickerSaveV9__dev');
     expect(dev.save).not.toBe(prod.save);
-    expect(dev.backup).not.toBe(prod.backup);
     expect(dev.legacyBackup).not.toBe(prod.legacyBackup);
   });
 
-  it('le tre chiavi di un ambiente sono distinte fra loro', () => {
+  it('le due chiavi di un ambiente sono distinte fra loro', () => {
     for (const env of ['dev', 'production'] as const) {
       const k = saveKeysFor(env);
-      expect(new Set([k.save, k.backup, k.legacyBackup]).size).toBe(3);
+      expect(new Set([k.save, k.legacyBackup]).size).toBe(2);
+    }
+  });
+
+  // Lo slot `<save>_Backup` non esiste più: nessun client lo ha mai scritto
+  // dal passaggio a IndexedDB, quindi non deve tornare per sbaglio.
+  it('nessuna chiave di backup accanto al record principale', () => {
+    for (const env of ['dev', 'production'] as const) {
+      expect(Object.keys(saveKeysFor(env)).sort()).toEqual(['legacyBackup', 'save']);
     }
   });
 
