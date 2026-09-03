@@ -724,6 +724,10 @@
         if (inStar) {
             const i = Math.floor(this.time.now / 80) % STAR_TINT_CYCLE.length;
             player.setTint(STAR_TINT_CYCLE[i]);
+            // La stella prevale sul lampeggio post-colpo: se viene raccolta nel
+            // frame in cui l'alpha è a 0.4, senza questo reset resterebbe
+            // congelata a 0.4 per tutti i 12 secondi (il ramo iframes non gira più).
+            if (player.alpha !== 1) player.setAlpha(1);
         } else if (this.time.now < firePowerDownUntil) {
             // Lampeggio post power-down: alpha alterna 0.4/1.0 ogni 80ms
             player.setAlpha(Math.floor(this.time.now / 80) % 2 === 0 ? 0.4 : 1.0);
