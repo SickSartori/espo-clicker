@@ -26,7 +26,7 @@
 const w = window as any;
 import { store } from '../state/store';
 import { RIPARAZIONI_SKIN } from '../data/founder-grants';
-import { SAVE_KEY, BACKUP_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
+import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 
 /**
@@ -820,20 +820,12 @@ export function initBoot(): void {
     async function loadGame() {
         // Carica da IndexedDB V9
         let savedState = await w.SaveDB.loadFromIndexedDB();
-        let loadedFromBackup = false;
 
-        // Fallback localStorage V9
+        // Fallback localStorage V9: è la copia scritta in sincrono da handleAppClose
+        // (e da saveGame quando IndexedDB fallisce). Non c'è un terzo slot di backup,
+        // vedi core/save/keys.ts.
         if (!savedState) {
             savedState = localStorage.getItem(SAVE_KEY);
-        }
-
-        // Fallback backup
-        if (!savedState) {
-            savedState = localStorage.getItem(BACKUP_KEY);
-            if (savedState) {
-                loadedFromBackup = true;
-                console.warn("⚠️ Main save non trovato. Caricamento dal BACKUP.");
-            }
         }
 
         if (savedState) {
@@ -965,16 +957,6 @@ export function initBoot(): void {
                 }
                 } // fine if(!launchMigrated): la migrazione lancio salta merge/compat
 
-                // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
-                if (loadedFromBackup) {
-                    setTimeout(() => {
-                        if (w.EspooClicker)
-                            w.EspooClicker.showToast(store.gameData.texts.toasts.backupRestored, "warning");
-                    }, 1000);
-
-                    saveGame(); // Salva subito nel main slot per rigenerarlo
-                }
-
                 // --- INIZIALIZZAZIONE STRUTTURE MANCANTI ---
 
                 // Aggiorna versione save alla versione attuale del codice
@@ -1044,34 +1026,9 @@ export function initBoot(): void {
                         w.applySkinVisuals(store.gameState.skins.current);
             }
             catch (e) {
+                // Si prosegue con lo stato in memoria (default + quanto il merge ha
+                // applicato); al login il cloud rimette a posto la cache.
                 console.error("❌ Errore critico in loadGame:", e);
-
-                // TENTATIVO DISPERATO: Se il main è corrotto e non abbiamo ancora provato il backup
-                if (!loadedFromBackup) {
-                    console.log("Il salvataggio principale è corrotto. Tento il backup...");
-                    const backupState = localStorage.getItem(BACKUP_KEY);
-
-                    if (backupState) {
-                        try {
-                            const decompBackup = w.LZString.decompressFromUTF16(backupState);
-                            const parsedBackup = JSON.parse(decompBackup);
-                            deepMerge(store.gameState, parsedBackup);
-
-                            setTimeout(() => {
-                                if (w.EspooClicker) w.EspooClicker.showToast(store.gameData.texts.toasts.fileCorrupt, "error");
-                            }, 1000);
-
-                            // Ripariamo il file principale
-                            saveGame();
-
-                            // Rilanciamo la funzione di caricamento per applicare le logiche (skins, ecc)
-                            // Nota: Evitiamo ricorsione infinita grazie al fatto che ora lo stato è in memoria
-                        }
-                        catch (bkErr) {
-                            console.error("Anche il backup è inutilizzabile.", bkErr);
-                        }
-                    }
-                }
             }
         }
 

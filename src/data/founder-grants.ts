@@ -45,6 +45,19 @@ export interface RiparazioneSkin {
  *   in un punto solo, dentro `applyLaunchMigration`. Non è più dimostrabile al 100%
  *   perché il suo save pre-lancio è stato sovrascritto il 3 agosto, ma il sintomo
  *   coincide con quello di `Fuzzuca`, dove invece è verificato.
+ *
+ * Le due voci del 03/09/2026 vengono dal controllo pre-rilascio 3.1, con i blob
+ * della stessa tabella decompressi e confrontati con il save attuale:
+ *
+ * - **Aleh1771** è rientrato il 27/08, quando in produzione girava ancora la 3.0.22
+ *   col picker a 5. Nel backup (v2.0, pre-lancio) aveva 18 skin oltre a `default`;
+ *   oggi ne ha 5 più `founder`. Le 13 mancanti sono elencate una per una: non
+ *   riceve il catalogo intero, riceve quello che aveva.
+ *
+ * - **Fuzzuca** ha il save pre-lancio intatto e identico a quello attuale: già
+ *   `schemaVersion 3` (client di prova di luglio) con `totalResets` 1, quindi
+ *   idoneo Fondatore ma mai passato dal cancello. Le sue 5 skin non sono mai state
+ *   toccate: manca solo `founder` e lo status.
  */
 export const RIPARAZIONI_SKIN: Record<string, RiparazioneSkin> = {
     'Dario Moccia': {
@@ -57,5 +70,19 @@ export const RIPARAZIONI_SKIN: Record<string, RiparazioneSkin> = {
         skins: 'all',
         fondatore: true,
         motivo: 'Account pre-lancio mai passato dalla migrazione: save gia\' schemaVersion 3, cancello mai aperto.',
+    },
+    'Aleh1771': {
+        id: 'lancio-2026-08-tetto-skin-aleh1771',
+        skins: [
+            'dictator', 'ricardo', 'jesus', 'unicorn', 'espobit', 'christmas', 'esportia',
+            'king', 'bob', 'espory', 'superespo', 'britneyEspears', 'espoKiss',
+        ],
+        motivo: 'Rientrato il 27/08 col picker a 5 ancora in produzione: 18 skin pre-lancio, tenute 5. Lista presa dal backup intatto.',
+    },
+    'Fuzzuca': {
+        id: 'lancio-2026-08-fondatore-mancato-fuzzuca',
+        skins: ['founder'],
+        fondatore: true,
+        motivo: 'Save pre-lancio gia\' schemaVersion 3 con totalResets 1: idoneo, cancello mai aperto. Le sue skin sono intatte, manca solo founder.',
     },
 };

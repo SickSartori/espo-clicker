@@ -13,7 +13,7 @@
  * questo file, es. stopAllTestAudio) restano identici.
  */
 import { store } from '../../state/store';
-import { SAVE_KEY, BACKUP_KEY, clearAccountStorage } from '../../core/save/keys';
+import { SAVE_KEY, clearAccountStorage } from '../../core/save/keys';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1401,7 +1401,6 @@ export function initModals(): void {
                 try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
             }
             localStorage.removeItem(SAVE_KEY);
-            localStorage.removeItem(BACKUP_KEY);
             location.reload();
         }
     });
@@ -1498,7 +1497,6 @@ export function initModals(): void {
                         try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
                     }
                     localStorage.removeItem(SAVE_KEY);
-                    localStorage.removeItem(BACKUP_KEY);
                     location.reload();
                 } else {
                     alert(data.message);
@@ -1569,7 +1567,6 @@ export function initModals(): void {
                     } else {
                         if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
                         localStorage.removeItem(SAVE_KEY);
-                        localStorage.removeItem(BACKUP_KEY);
                         Game.getGameState().user.username = u;
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals('default');
                         Game.saveGame();

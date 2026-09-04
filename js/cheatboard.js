@@ -644,7 +644,7 @@
     // PRODUZIONE, che sta sulla stessa origine.
     function saveKeys() {
         const k = window.EspoV3 && window.EspoV3.save && window.EspoV3.save.keys;
-        return k || { SAVE_KEY: 'espotoolClickerSaveV9', BACKUP_KEY: 'espotoolClickerSaveV9_Backup' };
+        return k || { SAVE_KEY: 'espotoolClickerSaveV9' };
     }
     async function forceSave() { if (window.EspooClicker && window.EspooClicker.saveGame) { await window.EspooClicker.saveGame(); toast('Salvataggio forzato'); } else toast('saveGame non disponibile'); }
     function forceV2() {
@@ -757,7 +757,6 @@
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
         localStorage.removeItem(saveKeys().SAVE_KEY);
-        localStorage.removeItem(saveKeys().BACKUP_KEY);
         location.reload();
     }
 

@@ -91,8 +91,6 @@ export const texts: Record<string, any> = {
         furyEnded: "Espo si è calmato.",
         promoSuccess: "Promozione completata! Buon lavoro!",
         cloudSync: "Progressi scaricati dal Cloud!",
-        backupRestored: "Dati ripristinati dal Backup di sicurezza!",
-        fileCorrupt: "File principale corrotto. Caricato Backup.",
         versionMismatch: "⚠️ Versione salvataggio incompatibile!",
         memoryFull: "Memoria piena! Impossibile salvare in locale.",
         bugCrit: "Bug Critico Risolto! +{amount} bug!",

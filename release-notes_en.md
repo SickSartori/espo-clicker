@@ -65,10 +65,11 @@ The "??? COMING SOON" slot in the Arcade is a mystery no longer. Plus the usual 
 
 ---
 
-### 🚪 The Arcade: Getting In and Out
+### 🚪 The Arcade: Getting In, Getting Out, and Super Espò
 
 * **🪟 It Opens Even When Popups Are Blocked:** The Arcade opens in a new tab, and on phones browsers often block it. When that happened nothing opened — and nobody told you why. It now falls back to the current tab.
 * **🔇 Cabinets Properly Switched Off:** Leaving the Arcade left some games running in the background. They all stop now.
+* **⭐ The Star No Longer Leaves You See-Through:** In Super Espò, grabbing a Super Star right after a hit — while Espò was still flashing — left the character half-transparent for the whole twelve seconds of invincibility. It now snaps back to full opacity.
 
 ---
 

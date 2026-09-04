@@ -65,10 +65,11 @@ Lo slot "??? COMING SOON" in Sala Giochi non è più un mistero. E poi il solito
 
 ---
 
-### 🚪 Sala Giochi: Entrata e Uscita
+### 🚪 Sala Giochi: Entrata, Uscita e Super Espò
 
 * **🪟 Si Apre Anche col Popup Bloccato:** La Sala Giochi si apre in una scheda nuova, e sul telefono capita spesso che il browser la blocchi. Quando succedeva non si apriva niente — e nessuno vi diceva perché. Ora ripiega sulla scheda corrente.
 * **🔇 Cabinati Davvero Spenti:** Uscendo dalla Sala Giochi alcuni giochi restavano a girare in sottofondo. Ora si fermano tutti.
+* **⭐ La Stella Non Lascia Trasparenti:** In Super Espò, presa una Super Stella subito dopo un colpo — mentre Espò lampeggiava ancora — il personaggio restava semitrasparente per tutti i dodici secondi di invincibilità. Ora torna pieno all'istante.
 
 ---
 
