@@ -14,6 +14,45 @@ import type { AnySaveState, DecimalString } from '../../types/save';
 
 export type RollbackChoice = 'local' | 'cloud' | 'equal';
 
+/**
+ * Nome che lo stato di default porta finché nessuno ha fatto login: non è
+ * l'intestatario di niente. (`state/game-state.ts`)
+ */
+const SEGNAPOSTO = 'giocatore';
+
+/**
+ * Il salvataggio locale è di un ALTRO account rispetto a chi sta entrando?
+ *
+ * Serve perché lo slot locale è uno solo per origine e chiunque può averlo
+ * scritto per ultimo: l'area di test `/test/` (stesso host della produzione, vedi
+ * `keys.ts`), oppure un secondo account usato sullo stesso browser. Senza questa
+ * domanda l'anti-rollback confrontava i NUMERI di due account diversi, teneva il
+ * più alto e lo ribattezzava con l'utente appena loggato — che si ritrovava i
+ * progressi (e il guardaroba) di qualcun altro, ri-pushati sul suo cloud.
+ *
+ * Risponde true SOLO con una prova positiva: due nomi reali e diversi. Se il save
+ * locale non dichiara un intestatario (stato di default, save legacy senza
+ * username) l'anti-rollback resta in piedi come prima — non si disarma una
+ * protezione per un dubbio.
+ *
+ * Confronto trim + case-insensitive: il backend cerca l'utente su username
+ * trimmato (EF login-register) mentre il client mette in sessione la stringa
+ * grezza digitata, quindi " Mario" e "Mario" sono lo stesso account. Un falso
+ * "estraneo" costerebbe i progressi locali di chi ha il cloud indietro: meglio
+ * sbagliare verso il non-intervento.
+ */
+export function saveBelongsToOtherUser(localUsername: unknown, loggedUsername: unknown): boolean {
+  const a = normalizzaNome(localUsername);
+  const b = normalizzaNome(loggedUsername);
+  if (!a || !b) return false;
+  if (a === SEGNAPOSTO) return false;
+  return a !== b;
+}
+
+function normalizzaNome(v: unknown): string {
+  return typeof v === 'string' ? v.trim().toLowerCase() : '';
+}
+
 interface Comparable {
   totalFormattazioni?: number;
   lifetimePrestigePoints?: DecimalString | number;

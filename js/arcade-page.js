@@ -381,6 +381,44 @@
         playClick(type === 'keydown' ? 'down' : 'up');
     }
 
+    // ----- Tasto START del pad: a cosa è collegato ------------------------
+    // Era un tasto finto. Sintetizzava un Enter su window/document, ma nessuno
+    // dei sette cabinati ascolta Enter (verificato: la stringa non compare in
+    // nessun arcade/*/js/*.js), e l'unico Enter gestito nella shell — quello
+    // che avvia il gioco dal menu — esce subito se si sta giocando. Risultato:
+    // su telefono il pad mostrava un bottone grosso e rosso che non faceva
+    // niente, cioè peggio di un bottone assente, perché insegna che i comandi
+    // non rispondono.
+    //
+    // Nasconderlo era la via corta, ma sul telefono serve davvero: è l'unico
+    // tasto che può ricominciare una partita senza costringere a centrare col
+    // dito il RESTART disegnato dentro al canvas, che a fine partita è
+    // rimpicciolito dalla scala del canvas stesso. Lo si collega quindi al
+    // bottone principale dell'overlay del gioco attivo — INIZIA PARTITA prima
+    // di cominciare, RESTART dopo il game over — che è esattamente ciò che un
+    // tasto START fa su un cabinato vero.
+    //
+    // Restava il caso "partita in corso": lì non c'è nessun overlay e quindi
+    // niente da premere. Invece di far finta di funzionare, il tasto si spegne
+    // (disabled + opacità ridotta) e si riaccende da solo quando compare
+    // l'overlay — lo stato viene rinfrescato da configurePad, che il polling
+    // di syncPadVisibility richiama ogni 400ms.
+    function overlayPrimaryBtn() {
+        const host = document.getElementById('arcade-active-game-container');
+        if (!host || !host.style.display || host.style.display === 'none') return null;
+        const overlays = host.querySelectorAll('.arcade-ui-overlay');
+        for (let i = 0; i < overlays.length; i++) {
+            const ov = overlays[i];
+            // I giochi nascondono l'overlay con style.display='none' quando si gioca.
+            if (getComputedStyle(ov).display === 'none') continue;
+            // .secondary è il MENU della topbar: non è dentro l'overlay, ma la
+            // esclusione costa nulla e protegge da futuri riusi della classe.
+            const btn = ov.querySelector('.arcade-btn:not(.secondary)');
+            if (btn) return btn;
+        }
+        return null;
+    }
+
     function bindBtn(btn) {
         const keyName = btn.getAttribute('data-key');
         const desc = KEY_TO_CODE[keyName];
@@ -394,6 +432,13 @@
             btn.classList.add('pressed');
             if (navigator.vibrate) navigator.vibrate(10); /* aptico; no-op dove non supportato (iOS) */
             fireKey('keydown', desc);
+            // START: l'Enter sintetico resta (se un domani un gioco lo ascolta,
+            // funziona da solo), ma l'azione vera è premere il bottone
+            // dell'overlay — lo stesso click che farebbe il dito sul canvas.
+            if (keyName === 'Enter') {
+                const target = overlayPrimaryBtn();
+                if (target) target.click();
+            }
         };
         const release = (e) => {
             if (e) e.preventDefault();
@@ -421,7 +466,10 @@
         asteroids: { dpad: ['up','left','right'],        actions: ['fire'],                    labels: { fire: 'FIRE', up: 'BOOST' } },
         superespo: { dpad: ['up','down','left','right'], actions: ['x'],                       labels: { x: 'FIRE' } },
         invaders:  { dpad: ['left','right'],             actions: ['fire'],                    labels: { fire: 'FIRE' } },
-        centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } }
+        centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } },
+        // Stack Overflow: ▲ ruota, ▼ scende, SPAZIO tuffo. I bug si schiacciano
+        // toccandoli direttamente sul campo, non serve un tasto sul pad.
+        stack:     { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'DROP', up: 'RUOTA' } }
     };
 
     // Legenda comandi da TASTIERA per la tabella desktop (a sinistra).
@@ -433,7 +481,8 @@
         asteroids: [['◀ ▶', _h.rotate || 'Ruota'], ['▲', _h.thrust || 'Spinta'], [_sp, _h.fire || 'Spara']],
         superespo: [['◀ ▶', _h.run || 'Corri'], ['▲', _h.jump || 'Salta'], ['▼', _h.crouch || 'Abbassati'], ['X / F', _h.fireball || 'Palla di fuoco']],
         invaders:  [['◀ ▶', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
-        centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']]
+        centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
+        stack:     [['◀ ▶', _h.move || 'Muovi'], ['▲', _h.rotate || 'Ruota'], ['▼', _h.softDrop || 'Scendi'], [_sp, _h.hardDrop || 'Tuffo'], ['CLICK', _h.squash || 'Schiaccia i bug']]
     };
 
     // Popola/aggiorna la tabella comandi (desktop). La visibilità è gestita via CSS
@@ -457,12 +506,16 @@
     window._arcadeRunningGame = null;    // gioco effettivamente avviato
 
     // Mappe funzioni per-gioco: build (costruisce schermo) + run (avvia) + exit (chiude)
-    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame' };
-    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun' };
-    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame' };
+    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame', stack: 'initStackGame' };
+    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun', stack: 'startStackRun' };
+    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame', stack: 'exitStackGame' };
 
     // Chiude il gioco attualmente in esecuzione (se presente).
     window.exitArcadeCurrentGame = function () {
+        // Il game over lascia un timer di ritorno automatico: se non lo si
+        // annulla qui, scade DOPO che l'utente ha avviato un altro cabinato e
+        // chiude quello, non questo.
+        if (typeof window._arcadeCancelGameOver === 'function') window._arcadeCancelGameOver();
         const k = window._arcadeRunningGame;
         if (k && GAME_EXIT[k] && typeof window[GAME_EXIT[k]] === 'function') {
             try { window[GAME_EXIT[k]](); } catch (e) {}
@@ -476,6 +529,9 @@
     // Avvia il gioco attualmente in ANTEPRIMA (chiamato dal bottone GIOCA).
     // build() costruisce lo schermo, run() avvia subito la partita (salta l'AVVIA).
     window.launchArcadeGame = function () {
+        // Come sopra: si puo' arrivare qui anche senza passare da exit (click
+        // diretto su un'altra voce del menu mentre e' a schermo un game over).
+        if (typeof window._arcadeCancelGameOver === 'function') window._arcadeCancelGameOver();
         const key = window._arcadeSelectedGame;
         if (!key || !GAME_BUILD[key]) return;
         const buildFn = window[GAME_BUILD[key]];
@@ -523,6 +579,19 @@
             if (btn) btn.style.display = cfg.dpad.includes(dir) ? '' : 'none';
         });
 
+        // Che forma ha il D-pad, per chi deve saperlo da fuori. La griglia è
+        // 3x3 e le celle spente restano riservate: in verticale quelle righe
+        // vuote sono campo di gioco in meno, e la riserva sotto al canvas è
+        // tarata sull'altezza del pad. Il CSS legge questo token
+        // (body[data-dpad], in styles/arcade/arcade-fullscreen.css) e stringe
+        // griglia e riserva insieme. Si nominano solo le due forme ridotte che
+        // esistono davvero — invaders e asteroids: ogni altro layout non scrive
+        // l'attributo e resta a tre righe, com'è sempre stato.
+        const su = cfg.dpad.includes('up'), giu = cfg.dpad.includes('down');
+        const forma = (!su && !giu) ? 'lr' : (su && !giu) ? 'ulr' : '';
+        if (forma) document.body.dataset.dpad = forma;
+        else delete document.body.dataset.dpad;
+
         const fireBtn = pad.querySelector('.vp-action-btn.cyan');
         const xBtn = pad.querySelector('.vp-action-btn.yellow');
         const startBtn = pad.querySelector('.vp-action-btn[data-key="Enter"]');
@@ -534,7 +603,16 @@
             xBtn.style.display = cfg.actions.includes('x') ? '' : 'none';
             xBtn.textContent = (cfg.labels && cfg.labels.x) || 'X';
         }
-        if (startBtn) startBtn.style.display = '';
+        if (startBtn) {
+            startBtn.style.display = '';
+            // Acceso solo quando c'è davvero qualcosa da avviare (vedi il
+            // commento su overlayPrimaryBtn): durante la partita non c'è
+            // overlay, e un tasto spento è un'informazione, non un guasto.
+            const armed = !!overlayPrimaryBtn();
+            startBtn.disabled = !armed;   // disabled = i pointer event non partono
+            startBtn.style.opacity = armed ? '' : '0.35';
+            startBtn.style.cursor = armed ? '' : 'default';
+        }
 
         // Update D-pad labels if custom
         if (cfg.labels) {
@@ -544,6 +622,39 @@
                     btn.setAttribute('title', cfg.labels[dir]);
                 }
             });
+        }
+    }
+
+    // Sul telefono in verticale lo spazio è tutto altezza, e il nome del gioco
+    // costava una riga intera di topbar: dentro la barra ha 79px, mentre
+    // "STACK OVERFLOW" ne chiede 132 e uscirebbe troncato. Nell'header, dove il
+    // portafoglio si toglie di mezzo mentre si gioca, ce ne sono 299 e ci sta
+    // intero. Lo scambio vale ovunque, non solo su telefono: l'header che dice
+    // a cosa stai giocando è un miglioramento anche su desktop.
+    let fsTitleOrig = null;
+    function syncHeaderTitle(gameActive) {
+        const fsTitle = document.querySelector('.fs-title');
+        if (!fsTitle) return;
+        // L'originale si conserva una volta sola: syncPadVisibility gira ogni
+        // 400ms e rileggerlo a ogni giro salverebbe il nome del gioco come
+        // "originale", lasciando l'header sbagliato per sempre dopo l'uscita.
+        if (fsTitleOrig === null) fsTitleOrig = fsTitle.innerHTML;
+
+        if (gameActive) {
+            const label = document.querySelector('.topbar-game-label');
+            const nome = label ? label.textContent.trim() : '';
+            if (!nome || fsTitle.dataset.game === nome) return;
+            // textContent e non innerHTML: il nome arriva dal markup del gioco,
+            // e non c'è motivo di reinterpretarlo come HTML.
+            fsTitle.textContent = nome;
+            const ico = document.createElement('i');
+            ico.className = 'fa-solid fa-gamepad';
+            ico.style.color = '#00d9ff';
+            fsTitle.prepend(ico, ' ');
+            fsTitle.dataset.game = nome;
+        } else if (fsTitle.dataset.game) {
+            fsTitle.innerHTML = fsTitleOrig;
+            delete fsTitle.dataset.game;
         }
     }
 
@@ -559,7 +670,11 @@
         document.body.classList.toggle('playing', !!gameActive);
 
         // Partita finita (es. game over → ritorno automatico): azzera il gioco in corso
-        if (!gameActive) window._arcadeRunningGame = null;
+        if (!gameActive) {
+            window._arcadeRunningGame = null;
+            // …e la forma del D-pad, che vale per il gioco che se n'è andato.
+            delete document.body.dataset.dpad;
+        }
 
         // Keep selector visible (games try to hide it) — toggle preview instead
         if (selector && selector.style.display === 'none') selector.style.display = '';
@@ -573,6 +688,9 @@
 
         // Tabella comandi (desktop): aggiorna col gioco attivo
         updateCmdTable(!!gameActive, activeGame);
+
+        // Header: mentre si gioca dice il nome del gioco, fuori torna il marchio
+        syncHeaderTitle(!!gameActive);
 
         if (gameActive && window._arcadeActiveGame) {
             configurePad(window._arcadeActiveGame);
@@ -818,6 +936,10 @@ window.showArcadeGameOver = function (opts) {
     var onReturn = (typeof opts.onReturn === 'function') ? opts.onReturn : function () {};
     var onRetry = (typeof opts.onRetry === 'function') ? opts.onRetry : null;
     var delay = opts.delay || 4500;
+    // Titolo personalizzabile: serve a chi ha una battuta finale propria
+    // (Stack Overflow si chiama così apposta). Chi non lo passa resta com'era.
+    var title = opts.title || 'GAME OVER';
+    var titleColor = opts.titleColor || '#e74c3c';
 
     if (!overlay) { onReturn(); return; }
 
@@ -829,10 +951,14 @@ window.showArcadeGameOver = function (opts) {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'text-align:center;width:100%;max-width:420px;';
 
-    var title = document.createElement('div');
-    title.textContent = 'GAME OVER';
-    title.style.cssText = "font-family:'Press Start 2P',monospace;font-size:1.6rem;color:#e74c3c;text-shadow:0 0 20px rgba(231,76,60,0.8),0 0 40px rgba(231,76,60,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:18px;letter-spacing:3px;";
-    wrap.appendChild(title);
+    var titleEl = document.createElement('div');
+    titleEl.textContent = title;
+    // I titoli lunghi (es. STACK OVERFLOW) non devono uscire dal riquadro:
+    // font leggermente più piccolo oltre i 10 caratteri.
+    var titleSize = title.length > 10 ? '1.25rem' : '1.6rem';
+    titleEl.style.cssText = "font-family:'Press Start 2P',monospace;font-size:" + titleSize + ";color:" + titleColor +
+        ";text-shadow:0 0 20px " + titleColor + ",0 0 40px rgba(0,0,0,0.3);animation:arcadeGoGlitch 0.4s ease;margin-bottom:18px;letter-spacing:3px;";
+    wrap.appendChild(titleEl);
 
     var sep = document.createElement('div');
     sep.textContent = '════════════════';
@@ -912,6 +1038,21 @@ window.showArcadeGameOver = function (opts) {
         if (p >= 1) clearInterval(iv);
     }, 25);
 
-    // Ritorno automatico al menu (sempre): annullato solo se si clicca RESTART.
-    autoTimer = setTimeout(function () { try { onReturn(); } catch (e) {} }, delay);
+    // Ritorno automatico al menu. Annullabile da RESTART (sopra) e da chi
+    // cambia gioco: senza, il timer di una partita finita sopravvive
+    // all'uscita e, scadendo, chiude il cabinato avviato NEL FRATTEMPO
+    // rispedendo l'utente al menu senza spiegazione. Percorso reale:
+    // game over -> tocco un'altra voce -> dopo qualche secondo si chiude.
+    // Il conteggio del punteggio va fermato con lui, o continua a scrivere
+    // su un overlay che non e' piu' suo.
+    autoTimer = setTimeout(function () {
+        window._arcadeCancelGameOver = null;
+        try { onReturn(); } catch (e) {}
+    }, delay);
+
+    window._arcadeCancelGameOver = function () {
+        if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+        clearInterval(iv);
+        window._arcadeCancelGameOver = null;
+    };
 };

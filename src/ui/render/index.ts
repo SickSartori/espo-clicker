@@ -11,6 +11,10 @@
  */
 const w = window as any;
 import { store } from '../../state/store';
+// Il tetto delle skin salvate dal Fondatore ha UNA sola definizione: quella della
+// migrazione. Riscriverlo qui come letterale vorrebbe dire due numeri che possono
+// divergere — in questo repo è già successo con la formula dei Q-bit.
+import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
 const domCache = new Map<string, any>();
@@ -1426,9 +1430,13 @@ function showV2MigrationModal(onConfirm: any) {
 // --- MODALE LANCIO PRODUZIONE V3 (Season 1 + Fondatore + skin-picker) ---
 // Mostrato dal cascade di boot/modals quando `triggerLaunchMigrationModal` è true
 // oppure quando è rimasta pendente una scelta skin Fondatore (`pendingFounderChoice`,
-// es. reload a metà scelta). Se ci sono più di 5 skin non-default da salvare, rende
-// un picker (max 5) e FINALIZZA la scelta al conferma; altrimenti è solo un benvenuto.
-const FOUNDER_MAX_KEPT = 5;
+// es. reload a metà scelta). Col tetto tolto (25/08/2026) il picker non compare più:
+// il Fondatore tiene tutto e il modale è solo un benvenuto.
+// Alias locale della costante della migrazione: oggi vale Infinity (nessun
+// tetto), quindi `needsPicker` e' sempre false e il picker non viene mai reso.
+// Il ramo resta in piedi apposta per i save rimasti a meta' scelta: la` sotto
+// `autoGrant` assegna d'ufficio TUTTE le candidate, che e' il nuovo premio.
+const FOUNDER_MAX_KEPT = MAX_FOUNDER_KEPT_SKINS;
 function showLaunchMigrationModal(onConfirm: any) {
     const t = store.gameData.texts.launch || {};
     const gs: any = store.gameState;
@@ -1958,11 +1966,13 @@ function renderPrestigeHubCards() {
     setCardState(formatCard, canFormat ? 'is-ready' : (isQ ? 'is-locked' : 'is-mystery'));
 
     if (canFormat) {
-        // Formula INVARIATA (era in updateWallets/openFormatHandler):
-        // qbit = 1 + floor(sqrt(prestigePoints / 10000))
-        const tokenDiv = (store.gameState.prestigePoints || new w.Decimal(0)).div(10000);
-        const bonusQbits = tokenDiv.gte(1) ? tokenDiv.sqrt().floor() : new w.Decimal(0);
-        const qBitsEarned = new w.Decimal(1).add(bonusQbits);
+        // Stessa funzione che esegue la formattazione (logic.ts): l'anteprima era
+        // una copia della formula scritta a mano qui, e due copie divergono. Base =
+        // token guadagnati nel ciclo, non il saldo spendibile — vedi prestige.ts.
+        const qBitsEarned = window.EspoV3.prestige.formatQbitsEarned(
+            w.Decimal,
+            store.gameState.lifetimePrestigePoints || new w.Decimal(0),
+        );
         setTextIfChanged('format-gain-qbit', `+${formatNumber(qBitsEarned)}`);
     } else {
         const counterText = `${Math.min(resets, 20)}/20`;
@@ -2587,6 +2597,16 @@ function checkOverlayNotifications() {
         else
             achBtn.classList.remove('notify-overlay');
     }
+
+    // Su mobile il pulsante Obiettivi è nel menu ☰, quindi il suo badge non si
+    // vedrebbe: si rispecchia sulla voce di menu E sul ☰ stesso. Guidato dallo
+    // stesso `hasClaimable` del badge sopra — un solo stato, nessun rischio che
+    // barra e menu dicano cose diverse.
+    const mmAch = document.querySelector('#mobile-menu-list .mm-item[data-opens="open-achievements-btn"]');
+    if (mmAch) mmAch.classList.toggle('has-dot', hasClaimable);
+
+    const menuBtn = document.getElementById('open-mobile-menu-btn');
+    if (menuBtn) menuBtn.classList.toggle('notify-overlay', hasClaimable);
 }
 
 function updateStatsUI() {

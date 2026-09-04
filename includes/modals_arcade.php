@@ -41,6 +41,9 @@
                     <div class="arcade-menu-item" data-game="centipede" data-title="BUG CRAWLER" data-color="#f472b6" data-desc="<?php echo $labels['arcade_desc_centipede']; ?>" onclick="if(window.startCentipedeGame) window.startCentipedeGame()">
                         <span class="item-num">06</span><span>BUG CRAWLER</span>
                     </div>
+                    <div class="arcade-menu-item" data-game="stack" data-title="STACK OVERFLOW" data-color="#00d9ff" data-desc="<?php echo $labels['arcade_desc_stack']; ?>" onclick="if(window.initStackGame) window.initStackGame()">
+                        <span class="item-num">07</span><span>STACK OVERFLOW</span>
+                    </div>
                     <div class="arcade-menu-item locked">
                         <span class="item-num">--</span><span>??? COMING SOON</span>
                     </div>

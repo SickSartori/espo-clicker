@@ -593,6 +593,12 @@
     font-family: 'Press Start 2P', 'Courier New', monospace;
     font-size: inherit;
     letter-spacing: inherit;
+    /* Come .item-desc qui sotto: se lo spazio non basta si taglia con i
+       puntini, invece di sbordare o mandare la riga a capo (cambierebbe
+       l'altezza della voce in un elenco a righe fisse). */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .item-desc {
     font-family: 'Rajdhani', sans-serif;
@@ -813,11 +819,23 @@
     box-shadow: 0 0 8px var(--game-color, #00d9ff), 0 0 18px var(--game-color, #00d9ff);
     animation: arcadeLedPulse 1.1s ease-in-out infinite;
 }
-/* Badge "IN GIOCO" — pill assoluta in alto a destra: non manda il nome a capo */
+/* Badge "IN GIOCO" — pill assoluta.
+   NON può stare sulla riga del nome: essendo in position:absolute non occupa
+   spazio, quindi ci finiva SOPRA (misurati 25px di sovrapposizione su SNAKE
+   PROTOCOL, 23 su STACK OVERFLOW). E non basta riservargli spazio: i nomi più
+   lunghi occupano già tutti i 182px disponibili, quindi qualunque riserva li
+   troncherebbe — e vedere troncato il nome del gioco che stai giocando è
+   peggio del problema di partenza.
+   Sta quindi sulla riga sotto, al posto della descrizione: mentre giochi è
+   l'informazione meno utile. `visibility` e non `display` per non far
+   sobbalzare l'altezza della riga all'avvio e alla chiusura del gioco. */
+.arcade-menu-item.running .item-desc {
+    visibility: hidden;
+}
 .arcade-menu-item.running::after {
     content: 'IN GIOCO';
     position: absolute;
-    top: 6px;
+    bottom: 8px;
     right: 8px;
     font-family: 'Press Start 2P', monospace;
     font-size: 10px; /* era 0.4rem (~5.6px a root 14px): illeggibile con Press Start 2P */
@@ -1170,9 +1188,9 @@ body.playing #arcade-fs-header::after {
 /* Spazio per il virtual pad ingrandito: il pad reale è ~218px + 8px di
    offset → i 200px riservati sopra lo facevano sovrapporre al canvas. */
 @media (max-width: 768px) and (pointer: coarse) {
-    body.playing #arcade-fs-body { padding-bottom: 232px; }
+    body.playing #arcade-fs-body { padding-bottom: var(--arcade-pad-reserve, 232px); }
 }
-html.touch-device body.playing #arcade-fs-body { padding-bottom: 232px; }
+html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pad-reserve, 232px); }
 
 /* Caso più largo dell'header mobile: pending visibile (premio in attesa).
    Senza questo, a 360px la pill gialla collideva col titolo (−46px).
@@ -1185,4 +1203,291 @@ html.touch-device body.playing #arcade-fs-body { padding-bottom: 232px; }
         font-size: 12px;
         letter-spacing: 1px;
     }
+}
+
+/* ============================================================ */
+/* TELEFONO IN VERTICALE — comandi larghi, telaio sottile       */
+/* ============================================================ */
+/* Lo schermo verticale è tutto altezza, e la spendevamo in contorno: a 375x812
+   header 63px, topbar 126px e HUD 145px lasciavano al campo 190px, meno di un
+   quarto dello schermo. Il flipper, per giunta, era un'isola larga 291px
+   centrata in 375, con 84px di margini morti ai lati e tasti da 44px.
+   Qui si fa il contrario: il contorno si stringe e i tasti si allargano fino ai
+   bordi, dove cadono i pollici. È lo stesso trattamento che l'orizzontale
+   riceve più sotto — le due modalità ora ragionano allo stesso modo.
+
+   `orientation: portrait` non è decorativo: un telefono ruotato da 640x360
+   soddisfa anche `max-width: 768px`, e senza quel vincolo si prenderebbe il
+   D-pad da 196px dentro un viewport alto 360. */
+@media (max-width: 768px) and (orientation: portrait) {
+
+    /* Misure del flipper, dichiarate qui una volta e usate sia dai tasti sia
+       dalla riserva qui sotto: erano gli stessi due clamp scritti in due punti,
+       ed è così che i valori vanno fuori sincrono. */
+    body {
+        --arcade-pad-cella: clamp(52px, 17vw, 64px);
+        --arcade-pad-azione: clamp(60px, 19vw, 72px);
+        --arcade-pad-righe: 3;
+    }
+
+    /* Riserva sotto al campo. Non è più un numero scritto a mano — i 210px
+       erano tarati sul D-pad a tre righe a 375px di schermo, e valevano quello
+       solo lì: a 320px il pad ne occupa 179 e i 31px di troppo li pagava il
+       campo, e BUG INVADERS, che ha solo ◀ ▶, ne lasciava vuoti 71.
+       Qui la riserva È l'altezza del pad: la colonna più alta fra il D-pad
+       (righe × cella + i gap da 4px) e il tasto azione, più 8px di stacco dal
+       bordo (`bottom` del pad) e 4px d'aria fra i tasti e il telaio. */
+    body {
+        --arcade-pad-reserve: calc(max(
+            var(--arcade-pad-righe) * var(--arcade-pad-cella) + (var(--arcade-pad-righe) - 1) * 4px,
+            var(--arcade-pad-azione)
+        ) + 12px);
+    }
+
+    /* Quante righe di D-pad servono davvero. La griglia è 3x3 con le celle
+       vuote riservate lo stesso: chi non ha ▲ e ▼ si porta dietro due righe
+       di niente, e sono due righe di campo in meno. Il token lo scrive
+       js/arcade-page.js da GAME_CONTROLS (`configurePad`); un layout che non
+       sia uno di questi due resta a tre righe, cioè al comportamento di prima.
+       Solo in verticale: in orizzontale il pad sta ai lati, l'altezza gli
+       avanza e la riserva sotto vale 0. */
+    body[data-dpad="lr"]  { --arcade-pad-righe: 1; }   /* ◀ ▶ — invaders */
+    body[data-dpad="ulr"] { --arcade-pad-righe: 2; }   /* ▲ sopra ◀ ▶ — asteroids */
+
+    body[data-dpad="lr"] .vp-dpad  { grid-template-rows: var(--arcade-pad-cella); }
+    body[data-dpad="ulr"] .vp-dpad { grid-template-rows: repeat(2, var(--arcade-pad-cella)); }
+    /* ▲ sta già in riga 1; ◀ ▶ risalgono all'ultima riga rimasta, così i tasti
+       finiscono in fondo, allineati al tasto azione, dove cadono i pollici. */
+    body[data-dpad="lr"] .vp-dpad .vp-left,
+    body[data-dpad="lr"] .vp-dpad .vp-right { grid-row: 1; }
+    body[data-dpad="ulr"] .vp-dpad .vp-left,
+    body[data-dpad="ulr"] .vp-dpad .vp-right { grid-row: 2; }
+
+    /* ---------- Il flipper occupa tutta la larghezza ---------- */
+    #arcade-virtual-pad {
+        left: 0;
+        right: 0;
+        width: 100%;
+        box-sizing: border-box;
+        transform: none;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 0;
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: 0;
+        padding-bottom: 0;
+        /* Niente scatola: i tasti hanno già il loro rilievo, e un pannello largo
+           quanto lo schermo sarebbe solo inchiostro in più. */
+        background: none;
+        border: none;
+        box-shadow: none;
+        /* Attraversando tutta la larghezza, il contenitore si mangerebbe i
+           tocchi diretti al campo che ha in mezzo. */
+        pointer-events: none;
+    }
+    #arcade-virtual-pad .vp-section { pointer-events: auto; }
+    /* A gioco avviato i tasti si riconoscono da soli, e le etichette costano
+       16px di altezza che vanno al campo. */
+    #arcade-virtual-pad .vp-label { display: none; }
+
+    /* Misure fluide e non fisse: su un iPhone SE da 320px i 64px secchi
+       sfonderebbero il bordo. Da 375px in su si ottiene la misura piena.
+       Il conto in larghezza regge perché nessun gioco usa più di un tasto
+       azione (GAME_CONTROLS in js/arcade-page.js): a destra ci sono al massimo
+       due cerchi, l'azione e START, mai tre. */
+    .vp-dpad {
+        grid-template-columns: repeat(3, var(--arcade-pad-cella));
+        grid-template-rows: repeat(3, var(--arcade-pad-cella));
+        gap: 4px;
+    }
+    .vp-action-btn {
+        width: var(--arcade-pad-azione);
+        height: var(--arcade-pad-azione);
+        font-size: 0.78rem;
+    }
+    /* START è spento durante la partita (js/arcade-page.js lo disabilita finché
+       non c'è un overlay da confermare): non merita lo stesso spazio del tasto
+       che si preme davvero. Resta comunque sopra i 44px di WCAG 2.5.8. */
+    #arcade-virtual-pad .vp-action-btn[data-key="Enter"] {
+        width: 56px;
+        height: 56px;
+        font-size: 0.58rem;
+    }
+
+    /* ---------- La topbar torna in riga ---------- */
+    /* styles/base/modals-arcade.css la mette in colonna sotto i 768px: serve al
+       modal dell'arcade dentro il gioco, dove la larghezza è quella di una
+       finestra stretta, ma quel foglio arriva anche qui dentro. La regola a
+       inizio file ridichiara tutto il contratto flex con !important — display,
+       align-items, justify-content, gap — tranne proprio flex-direction. Così
+       tre elementi da 80, 79 e 118px occupavano tre righe invece di una. */
+    .arcade-game-topbar {
+        flex-direction: row !important;
+        gap: 8px !important;
+        min-height: 0 !important;
+        margin: 0 auto 8px !important;
+    }
+    /* Il nome del gioco si legge nell'header mentre si gioca (vedi sotto): qui
+       dentro avrebbe 79px e "STACK OVERFLOW", che ne chiede 132, uscirebbe
+       troncato in "STACK OVE…". */
+    body.playing #arcade-fullscreen .topbar-game-label { display: none; }
+
+    /* La casella dei punteggi è `flex: 0 0 auto` (riga 869): non si stringe mai.
+       In colonna non si notava, perché aveva tutta la larghezza della topbar; in
+       riga ne restano 239px e i giochi che mostrano quattro voci ne chiedono 338
+       — "PUNTI: 0 VITE: 3 WAVE: 1 RECORD: 0" finiva tagliato fuori schermo.
+       Qui può restringersi e mandare le voci a capo: una riga sola quando ci
+       stanno (snake, stack, che mostrano solo monete e trofeo), due quando no. */
+    .arcade-game-topbar > .arcade-stats-box {
+        flex: 0 1 auto;
+        min-width: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 2px 10px;
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    /* ---------- L'header dice che gioco è ---------- */
+    /* Il portafoglio non serve mentre si gioca, e la larghezza che libera è
+       esattamente quella che serve al nome del gioco, che ce lo mette
+       js/arcade-page.js. L'altezza dell'header non cambia di un pixel: la fissa
+       la X da 44x44 (WCAG 2.5.8), non quello che le sta accanto. */
+    body.playing #arcade-fullscreen .fs-wallet { display: none; }
+    /* "SNAKE PROTOCOL" e "STACK OVERFLOW" sono i nomi più lunghi, 14 caratteri:
+       a 14px con 2px di spaziatura e l'icona chiedono 258px. A 375 e 360 ne
+       hanno esattamente 258 — margine zero, cioè un nome più lungo in futuro
+       si troncherebbe — e a 320px solo 244, quindi lì si troncavano già.
+       Togliendo l'icona (decorativa: la stessa cosa fa già la regola del premio
+       in attesa) e dimezzando la spaziatura si scende a ~216px, che entra
+       ovunque con 28px di margine. L'ellipsis resta come rete, perché un titolo
+       che sborda andrebbe a sbattere contro la X. */
+    body.playing #arcade-fullscreen .fs-title {
+        letter-spacing: 1px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    body.playing #arcade-fullscreen .fs-title i { display: none; }
+}
+
+/* Schermo verticale STRETTO — 320-360px.
+   Con il D-pad ridotto alle righe che usa davvero, i tasti direzione e quelli
+   azione finiscono sulla STESSA riga in fondo. In larghezza però lì non
+   avanza niente: D-pad 171 + FIRE 60 + 10 + START 56 fanno 297 su 320, e fra
+   ▶ e FIRE restavano 2px. I pixel li cede START, che durante la partita è
+   spento e si preme una volta sola — resta comunque sopra i 44px di WCAG
+   2.5.8 — più 4px di respiro fra i due cerchi: lo stacco torna a ~15px. */
+@media (max-width: 360px) and (orientation: portrait) {
+    #arcade-virtual-pad .vp-actions { gap: 6px; }
+    #arcade-virtual-pad .vp-action-btn[data-key="Enter"] {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ============================================================ */
+/* TELEFONO RUOTATO — orizzontale corto (812x375 & simili)      */
+/* ============================================================ */
+/* Girare il telefono davanti a un cabinato è il gesto più naturale che ci
+   sia, ed era esattamente il caso rotto: a 812x375 l'area di gioco si
+   riduceva a 58px e il canvas a 6x6 px — non "scomodo", proprio
+   inutilizzabile. Non c'è una regola colpevole, c'è una somma: header 71px,
+   padding del corpo, e soprattutto i 232px riservati in basso al flipper
+   (le regole qui sopra e alle righe ~348 e ~707). Quei 232px erano tarati
+   sul verticale, dove valgono un quinto degli 812px di schermo; in
+   orizzontale sono i due terzi dei 375 disponibili.
+   Il rimedio ovvio — riservare meno spazio — non basta: il flipper è alto
+   182px, e sotto al gioco non ci sta comunque. In orizzontale però lo
+   spazio che manca è SOLO l'altezza: la larghezza avanza, e il canvas
+   (che ora mantiene il rapporto, vedi i css dei giochi) sta al centro
+   lasciando due margini vuoti. Il flipper va lì, ai lati.
+   Soglia 540px di altezza: prende i telefoni ruotati (375-430) e i vecchi
+   800x480, non i tablet (600+), dove la barra in basso continua a starci. */
+@media (orientation: landscape) and (max-height: 540px) {
+
+    /* Header 71px → ~52px. La X resta 44x44 (WCAG 2.5.8): si taglia solo il
+       padding e si toglie quello che mentre si gioca non si guarda. */
+    #arcade-fullscreen #arcade-fs-header {
+        padding: 4px 12px;
+        padding-top: max(4px, env(safe-area-inset-top));
+    }
+    #arcade-fullscreen .fs-title { font-size: 14px; letter-spacing: 2px; gap: 8px; }
+    #arcade-fullscreen .fs-info-bar { display: none; }
+
+    #arcade-fs-body { padding: 6px 12px; }
+
+    /* Cornice + topbar del gioco a dieta: 24px di padding/bordo e 70px di
+       barra su 375 di schermo erano un quarto dell'altezza spesa in contorno. */
+    #arcade-active-game-container { padding: 4px; }
+    .arcade-game-topbar {
+        min-height: 0 !important;
+        margin: 0 auto 4px !important;
+    }
+
+    /* --- Il flipper diventa due gruppi ai bordi dello schermo --- */
+    #arcade-virtual-pad {
+        left: 0;
+        right: 0;
+        width: 100%;
+        box-sizing: border-box;
+        transform: none;
+        bottom: max(6px, env(safe-area-inset-bottom));
+        justify-content: space-between;
+        gap: 0;
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+        padding-top: 0;
+        padding-bottom: 0;
+        /* Niente più scatola: i tasti hanno già il loro rilievo, e un pannello
+           largo quanto lo schermo coprirebbe il gioco invece di incorniciarlo. */
+        background: none;
+        border: none;
+        box-shadow: none;
+        /* …e siccome ora attraversa tutta la larghezza, se restasse cliccabile
+           si mangerebbe i tocchi diretti al canvas che sta in mezzo. */
+        pointer-events: none;
+    }
+    #arcade-virtual-pad .vp-section { pointer-events: auto; }
+    /* Le etichette D-PAD/AZIONI costano 16px di altezza che qui non ci sono;
+       a gioco avviato i tasti si riconoscono da soli. */
+    #arcade-virtual-pad .vp-label { display: none; }
+    /* Tre tasti in fila fanno 212px: troppo per un margine laterale. Su due
+       colonne stanno in 138px, cioè dentro l'arco del pollice destro. */
+    #arcade-virtual-pad .vp-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 138px;
+    }
+
+    /* Larghezza dei due margini riservati al flipper. Vale 0 di default:
+       su un desktop con la finestra bassa il pad non compare (è gated su
+       touch), e togliere spazio al gioco per un pad invisibile sarebbe
+       assurdo. Le due regole qui sotto lo accendono dove il pad esiste
+       davvero — pointer:coarse, e la classe di fallback per i telefoni che
+       coarse non lo riportano. */
+    :root { --arcade-lands-gutter: 0px; }
+    html.touch-device { --arcade-lands-gutter: 152px; }
+
+    body.playing #arcade-fs-body,
+    html.touch-device body.playing #arcade-fs-body {
+        /* I 232px sotto sono il difetto: qui vanno azzerati. */
+        padding-bottom: 0;
+        padding-left: var(--arcade-lands-gutter);
+        padding-right: var(--arcade-lands-gutter);
+    }
+
+    /* Con il flipper ai lati, la lista giochi (340px a sinistra) finirebbe
+       sotto al D-pad. Si nasconde mentre si gioca, come già fa il mobile
+       verticale: il ritorno resta il tasto MENU della topbar, che su touch
+       è visibile. Su desktop NO — lì il MENU della topbar è nascosto e
+       toglierei l'unica via d'uscita. */
+    html.touch-device body.playing .arcade-menu-list { display: none; }
+}
+@media (orientation: landscape) and (max-height: 540px) and (pointer: coarse) {
+    :root { --arcade-lands-gutter: 152px; }
+    body.playing .arcade-menu-list { display: none; }
 }

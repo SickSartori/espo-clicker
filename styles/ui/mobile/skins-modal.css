@@ -8,6 +8,26 @@
 @media (max-width: 768px) {
 
   /* -------------------------------------------------------------------
+     0. SCHERMO PIENO come tutte le altre finestre.
+     `.skins-modal-v3` (styles/ui/desktop/skins-modal.css) dichiara
+     `max-height: 90vh !important` e `border-radius: 8px !important` SENZA
+     media query, quindi valeva anche su telefono e batteva la regola
+     generale `height: 100dvh` di mobile.css: il Guardaroba restava
+     356x731 dentro uno schermo da 375x812, l'unica finestra a non essere
+     a pieno schermo. Serve !important per pareggiare quello desktop.
+     ------------------------------------------------------------------- */
+  html body div#skins-modal div.modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+
+  /* -------------------------------------------------------------------
      1. CHIUDI button — meno aggressivo del rosso pieno fixed bottom.
      Diventa pillola ghost in alto a destra, no più barra fissa.
      ------------------------------------------------------------------- */

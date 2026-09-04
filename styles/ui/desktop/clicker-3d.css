@@ -243,6 +243,18 @@
     animation: v3-orbit-cw 75s linear infinite;
   }
 
+  /* Video event: gemella della regola su #clicker-ambient in
+     ui/desktop/skin-ambient.css. Gli anelli sono pseudo-elementi di
+     #clicker-section, quindi viaggiano con #game-container, che durante
+     l'evento sta SOPRA il video (z 9010 vs --z-overlay 9000, base/clicker.css):
+     restavano due cerchi che ruotavano davanti al video. Alfa 4-6%, quindi ai
+     limiti del percettibile — ma spegnerli è l'ultimo pezzo per avere il video
+     davvero pulito, e toglie due animazioni infinite mentre gira un mp4. */
+  html body.rick-rolling #clicker-section::before,
+  html body.rick-rolling #clicker-section::after {
+    display: none;
+  }
+
   @keyframes v3-orbit-cw {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to   { transform: translate(-50%, -50%) rotate(360deg); }

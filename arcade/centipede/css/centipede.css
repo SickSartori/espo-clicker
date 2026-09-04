@@ -11,10 +11,22 @@
     background-size: 100% 4px, 6px 100%;
 }
 
+/* Il canvas ha una dimensione logica propria (~740x640, decisa in centipede.js)
+   e va SCALATO, non deformato: con width/height al 100% riempiva il riquadro
+   qualunque forma avesse. Su telefono in verticale il riquadro è largo e basso
+   (327x329) mentre il campo è stretto e alto: il canvas veniva schiacciato di
+   2,12x — i bug tondi diventavano ovali e la mira, che si calcola sul rettangolo
+   reale, sballava. Non basta togliere height:100%: senza width:auto il canvas
+   resta ancorato alla larghezza del riquadro e si allunga lo stesso.
+   È lo stesso schema di arcade/stack/css/stack.css: dimensione naturale +
+   i due max, così il rapporto lo mantiene il browser. */
 #centipede-canvas {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
 }
 
 #centipede-overlay {

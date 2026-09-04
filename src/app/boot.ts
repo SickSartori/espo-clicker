@@ -25,6 +25,50 @@
  */
 const w = window as any;
 import { store } from '../state/store';
+import { RIPARAZIONI_SKIN } from '../data/founder-grants';
+import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
+import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
+
+/**
+ * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
+ * di ognuna). Idempotente: l'id applicato resta nel save, quindi non si ripete
+ * a ogni caricamento.
+ *
+ * Va chiamata DOPO che username e skin sono nello stato — cioè negli stessi due
+ * punti in cui gira il recupero skin da achievement (percorso locale e percorso
+ * cloud). Ritorna true se ha cambiato qualcosa, così il chiamante salva.
+ */
+function applyRiparazioniSkin(): boolean {
+    const gs: any = store.gameState;
+    const nome = (gs.user && gs.user.username) || '';
+    const rip = RIPARAZIONI_SKIN[nome];
+    if (!rip) return false;
+
+    const fatte: string[] = Array.isArray(gs.riparazioniSkin) ? gs.riparazioniSkin : [];
+    if (fatte.includes(rip.id)) return false;
+
+    if (!gs.skins || !Array.isArray(gs.skins.unlocked))
+        gs.skins = { current: 'default', unlocked: ['default'] };
+
+    const daDare = rip.skins === 'all' ? Object.keys(store.gameData.skins) : rip.skins;
+    let aggiunte = 0;
+    daDare.forEach((id: string) => {
+        // Filtro al catalogo: un id rimosso dal gioco lascerebbe una cella rotta
+        // nel guardaroba invece di una skin.
+        if (!store.gameData.skins[id]) return;
+        if (gs.skins.unlocked.includes(id)) return;
+        gs.skins.unlocked.push(id);
+        aggiunte++;
+    });
+    if (rip.fondatore) gs.isFounder = true;
+
+    // Marcata anche se `aggiunte` è 0: la riparazione è stata valutata, e senza
+    // marker ripartirebbe a ogni caricamento per sempre.
+    fatte.push(rip.id);
+    gs.riparazioniSkin = fatte;
+    console.log(`🎁 Riparazione "${rip.id}" applicata a ${nome}: +${aggiunte} skin.`);
+    return true;
+}
 
 // --------- RIFERIMENTI HTML (Globali) ---------
 let clickerButton: any, scoreDisplay: any, cpsDisplay: any, feedbackContainer: any, achievementList: any;
@@ -168,8 +212,9 @@ export function initBoot(): void {
     w.statsList = statsList;
 
     // --------- SALVATAGGIO V9 (IndexedDB) ---------
-    const SAVE_KEY = 'espotoolClickerSaveV9';
-    const BACKUP_KEY = 'espotoolClickerSaveV9_Backup';
+    // Le chiavi arrivano da core/save/keys.ts perché cambiano con l'ambiente:
+    // `/test/` e la produzione sono la stessa ORIGINE e prima si contendevano un
+    // record solo. In produzione il valore è quello storico, invariato.
 
     // --------- CHECK STORAGE DISPONIBILE ---------
     (function checkStorageAvailable() {
@@ -214,51 +259,143 @@ export function initBoot(): void {
         if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
         _setCloudBadge(true, reason);
     }
+    // --- BADGE CLOUD: stato esplicito ---
+    // Prima gli stati erano due e impliciti (visibile / nascosto) e l'unica via
+    // d'uscita era markCloudSaved(), cioè un push cloud riuscito. Al tap non
+    // cambiava nulla finché il salvataggio non andava a buon fine — e se non
+    // andava, mai: da qui la segnalazione QA "clicco e non succede niente, il
+    // messaggio resta fisso". Ora il ciclo è chiuso dal badge stesso:
+    //   problem → syncing → ok (si nasconde da solo) | failed (dice perché)
+    // La dismissione è quindi disaccoppiata dal push riuscito.
+    type CloudBadgeState = 'hidden' | 'problem' | 'syncing' | 'ok' | 'failed';
     let _cloudBadgeReason: any = null;
-    function _setCloudBadge(show: any, reason?: any) {
+    let _cloudBadgeState: CloudBadgeState = 'hidden';
+    let _cloudBadgeHideTimer: any = null;
+
+    // Motivo tecnico -> cosa è successo, detto all'utente. Le chiavi sono gli
+    // esiti restituiti da _resyncFromCloud / _silentTokenRefresh.
+    function _cloudBadgeText(state: CloudBadgeState, reason: any, isEn: boolean) {
+        if (state === 'syncing') return isEn ? '⏳ Syncing with the cloud…' : '⏳ Sincronizzazione in corso…';
+        if (state === 'ok') return isEn ? '✓ Progress synced' : '✓ Progressi sincronizzati';
+        if (state === 'problem') {
+            return reason === 'conflict'
+                ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
+                        : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
+                : (isEn ? '⚠ Progress not synced — tap to retry'
+                        : '⚠ Progressi non salvati — tocca per riprovare');
+        }
+        // failed: il motivo cambia l'azione utile, quindi va detto.
+        switch (reason) {
+            case 'nocreds':
+            case 'login':
+                return isEn ? '⚠ Sign in again to sync — tap' : '⚠ Rifai il login per sincronizzare — tocca';
+            case 'network':
+                return isEn ? '⚠ No connection — tap to retry' : '⚠ Connessione assente — tocca per riprovare';
+            case 'busy':
+                return isEn ? '⏳ Already syncing…' : '⏳ Sincronizzazione già in corso…';
+            case 'cheat':
+                return isEn ? '⚠ Sync off (dev console)' : '⚠ Sync disattivata (console dev)';
+            case 'noapi':
+                return isEn ? '⚠ Not ready yet — tap to retry' : '⚠ Non ancora pronto — tocca per riprovare';
+            default:
+                return isEn ? '⚠ Sync failed — tap to retry' : '⚠ Sincronizzazione fallita — tocca per riprovare';
+        }
+    }
+
+    function _cloudBadgeColor(state: CloudBadgeState) {
+        if (state === 'ok') return 'rgba(39,174,96,0.95)';
+        if (state === 'syncing') return 'rgba(41,128,185,0.95)';
+        return 'rgba(192,57,43,0.95)';
+    }
+
+    // Senza credenziali valide non c'è niente da ritentare: l'unica azione utile
+    // è il login. Vale sia quando lo si sa già (motivo del badge) sia quando lo
+    // si scopre dall'esito, altrimenti servirebbero DUE tap — il primo per
+    // scoprire il motivo, il secondo per agire — che è esattamente la sensazione
+    // di "non succede niente" che questo rifacimento toglie.
+    function _cloudBadgeNeedsLogin(reason: any) {
+        return reason === 'nocreds' || reason === 'login';
+    }
+    function _cloudBadgeGoToLogin(reason: any) {
+        if (typeof w._showLoginForTokenExpiry === 'function') {
+            _setCloudBadge('hidden');
+            w._showLoginForTokenExpiry();
+            return true;
+        }
+        // Senza il modale di login non si può fare nulla: meglio dirlo che
+        // lasciare il badge fermo su "sincronizzo…" per sempre.
+        _setCloudBadge('failed', reason);
+        return false;
+    }
+
+    // Il tap sceglie l'azione in base al motivo, aspetta l'esito e lo mostra.
+    async function _cloudBadgeRetry() {
+        if (_cloudBadgeState === 'syncing') return;
+        const wasReason = _cloudBadgeReason;
+        _setCloudBadge('syncing');
+
+        if (_cloudBadgeNeedsLogin(wasReason)) { _cloudBadgeGoToLogin(wasReason); return; }
+
+        let res: any = null;
+        try {
+            // Conflitto → adotta il cloud autoritativo; altrimenti (token/rete)
+            // → rinnova il token e ritenta.
+            if (wasReason === 'conflict' && typeof w._resyncFromCloud === 'function') {
+                res = await w._resyncFromCloud();
+            } else if (typeof w._silentTokenRefresh === 'function') {
+                res = await w._silentTokenRefresh();
+            }
+        } catch (e) {
+            res = { ok: false, reason: 'network' };
+        }
+
+        if (res && res.ok) { _setCloudBadge('ok'); return; }
+
+        const reason = (res && res.reason) || 'error';
+        if (_cloudBadgeNeedsLogin(reason)) { _cloudBadgeGoToLogin(reason); return; }
+        _setCloudBadge('failed', reason);
+    }
+
+    function _setCloudBadge(state: any, reason?: any) {
+        // Compatibilità con i due chiamanti storici: _setCloudBadge(false) e
+        // _setCloudBadge(true, reason).
+        if (state === false) state = 'hidden';
+        else if (state === true) state = 'problem';
+
         let badge = document.getElementById('cloud-sync-badge');
-        if (!show) { if (badge) badge.style.display = 'none'; return; }
-        _cloudBadgeReason = reason || null;
+        if (_cloudBadgeHideTimer) { clearTimeout(_cloudBadgeHideTimer); _cloudBadgeHideTimer = null; }
+
+        _cloudBadgeState = state;
+        if (state === 'hidden') {
+            _cloudBadgeReason = null;
+            if (badge) badge.style.display = 'none';
+            return;
+        }
+        // 'syncing' e 'ok' sono transitori: non sovrascrivono il motivo, che
+        // serve ancora se poi il tentativo fallisce e si torna a 'problem'.
+        if (state === 'problem' || state === 'failed') _cloudBadgeReason = reason || null;
+
         const isEn = w.APP_LANG === 'en';
-        const isConflict = reason === 'conflict';
-        const label = isConflict
-            ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
-                    : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
-            : (isEn ? '⚠ Progress not synced — tap to retry'
-                    : '⚠ Progressi non salvati — tocca per riprovare');
         if (!badge) {
             badge = document.createElement('div');
             badge.id = 'cloud-sync-badge';
-            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;background:rgba(192,57,43,0.95);color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);cursor:pointer;max-width:90vw;text-align:center;';
-            badge.addEventListener('click', () => {
-                // Feedback immediato (mitigazione — il rifacimento è in roadmap 3.1).
-                // Prima il tap era MUTO: _resyncFromCloud è async e ha cinque uscite
-                // silenziose (token/credenziali mancanti, resync già in volo, login non
-                // 'success', errore di rete col catch vuoto), e il badge si nasconde solo
-                // via markCloudSaved() — cioè solo dopo un push cloud riuscito. Risultato:
-                // "clicco e non succede niente, il messaggio resta fisso".
-                // Nasconderlo subito è sicuro: se il problema persiste, il prossimo save
-                // fallito lo rimostra da sé (markCloudUnsynced).
-                _setCloudBadge(false);
-                if (w.EspooClicker && typeof w.EspooClicker.showToast === 'function') {
-                    w.EspooClicker.showToast(isEn ? 'Syncing with the cloud…'
-                                                  : 'Sincronizzazione col cloud in corso…', 'info');
-                }
-                // Azione giusta per motivo: conflitto → adotta il cloud autoritativo;
-                // altrimenti (token/rete) → rinnova il token e ritenta.
-                if (_cloudBadgeReason === 'conflict' && typeof w._resyncFromCloud === 'function') {
-                    w._resyncFromCloud();
-                } else if (typeof w._silentTokenRefresh === 'function') {
-                    w._silentTokenRefresh();
-                } else if (typeof w._showLoginForTokenExpiry === 'function') {
-                    w._showLoginForTokenExpiry();
-                }
-            });
+            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);max-width:90vw;text-align:center;';
+            badge.addEventListener('click', () => { _cloudBadgeRetry(); });
             document.body.appendChild(badge);
         }
-        badge.textContent = label;
-        badge.title = reason ? ('cloud: ' + reason) : '';
+
+        badge.textContent = _cloudBadgeText(state, state === 'failed' ? reason : _cloudBadgeReason, isEn);
+        badge.style.background = _cloudBadgeColor(state);
+        // Durante il sync il tap non deve accodare un secondo tentativo.
+        badge.style.cursor = (state === 'syncing' || state === 'ok') ? 'default' : 'pointer';
+        badge.title = _cloudBadgeReason ? ('cloud: ' + _cloudBadgeReason) : '';
         badge.style.display = 'block';
+
+        // Riuscito: si toglie da solo. È il punto della segnalazione — la
+        // scomparsa non dipende più da un push andato a buon fine.
+        if (state === 'ok') {
+            _cloudBadgeHideTimer = setTimeout(() => _setCloudBadge('hidden'), 2500);
+        }
     }
 
     async function saveGame() {
@@ -550,8 +687,22 @@ export function initBoot(): void {
             (oldMajor === w.GAME_VERSION.major && oldMinor < w.GAME_VERSION.minor);
     }
 
-    // Onboarding audio "primo avvio nuova versione": eseguito UNA volta quando il
-    // save è di una versione precedente (stesso criterio delle release notes).
+    // Onboarding audio del passaggio alla V3: vale SOLO per chi arriva da un save
+    // pre-3.0 (major < 3), NON a ogni nuova versione.
+    //
+    // Prima era agganciato a shouldShowReleaseNotesFor(), che è vero anche solo con
+    // la minor più bassa: al primo bump di minor (3.0 → 3.1) sarebbe riscattato per
+    // TUTTI i giocatori 3.0.x, riaccendendo l'audio a chi l'aveva mutato di proposito
+    // e soprattutto riportando bgMusicSelection a 'sound-bg-music-v3' sopra la traccia
+    // scelta dall'utente (l'unica riga qui sotto senza guardia "se non impostato").
+    // Le release notes invece DEVONO continuare a comparire a ogni minor: i due criteri
+    // sono diversi e vanno tenuti separati.
+    function shouldApplyV3AudioOnboardingFor(savedVersion: any) {
+        if (!savedVersion || !w.GAME_VERSION) return false;
+        return (savedVersion.major || 0) < 3;
+    }
+
+    // Onboarding audio "passaggio alla V3": eseguito UNA volta per chi viene da pre-3.0.
     // Forza l'audio udibile anche se l'utente aveva mutato e imposta la musica di
     // sfondo V3 come traccia attiva (sovrascrive la scelta precedente, una volta).
     // Da qui in poi ogni modifica dell'utente viene salvata normalmente.
@@ -626,21 +777,17 @@ export function initBoot(): void {
         store.gameState.season = (m && m.season) || 1;
         if (w.GAME_VERSION) store.gameState.version = JSON.parse(JSON.stringify(w.GAME_VERSION));
 
-        // Skin: default + (founder) + fino a 5 salvate
+        // Skin: default + (founder) + TUTTO il guardaroba pre-lancio.
+        // Il tetto a 5 e il picker sono stati tolti il 25/08/2026: le skin non
+        // portano effetti né bonus (sono estetica pura), quindi non c'era niente
+        // da riequilibrare — e il picker, alla conferma, cancellava per sempre la
+        // lista originale. Il reset di Season 1 resta su economia e classifica.
         const kept: string[] = ['default'];
         if (founder) {
             kept.push('founder');
             store.gameState.isFounder = true;
             store.gameState.foundedAt = (m && m.foundedAt) || 0;
-
-            if (salvageable.length <= 5) {
-                // ≤5: le tiene tutte in automatico (nessun picker)
-                salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
-            } else {
-                // >5: scelta interattiva rimandata al modale (picker max 5)
-                store.gameState.pendingFounderChoice = true;
-                store.gameState.founderCandidateSkins = salvageable.slice();
-            }
+            salvageable.forEach((s) => { if (!kept.includes(s)) kept.push(s); });
         }
         store.gameState.skins.unlocked = kept;
         store.gameState.skins.current = kept.includes(oldCurrent) ? oldCurrent : (founder ? 'founder' : 'default');
@@ -673,20 +820,12 @@ export function initBoot(): void {
     async function loadGame() {
         // Carica da IndexedDB V9
         let savedState = await w.SaveDB.loadFromIndexedDB();
-        let loadedFromBackup = false;
 
-        // Fallback localStorage V9
+        // Fallback localStorage V9: è la copia scritta in sincrono da handleAppClose
+        // (e da saveGame quando IndexedDB fallisce). Non c'è un terzo slot di backup,
+        // vedi core/save/keys.ts.
         if (!savedState) {
             savedState = localStorage.getItem(SAVE_KEY);
-        }
-
-        // Fallback backup
-        if (!savedState) {
-            savedState = localStorage.getItem(BACKUP_KEY);
-            if (savedState) {
-                loadedFromBackup = true;
-                console.warn("⚠️ Main save non trovato. Caricamento dal BACKUP.");
-            }
         }
 
         if (savedState) {
@@ -722,6 +861,9 @@ export function initBoot(): void {
                 if (localShowRN) {
                     w.shouldShowReleaseNotesOnLoad = true;
                 }
+                // Letto QUI, prima che gameState.version venga riscritto con la versione
+                // corrente più in basso: dopo non sarebbe più distinguibile da dove si viene.
+                const localV3Audio = !!(parsedState && shouldApplyV3AudioOnboardingFor(parsedState.version));
 
                 // === LANCIO PRODUZIONE: migrazione Season 1 / Fondatore (locale) ===
                 // Un save pre-lancio (schemaVersion < 3) viene azzerato a Season 1 e,
@@ -740,7 +882,7 @@ export function initBoot(): void {
 
                     // 1. Backup di sicurezza
                     try {
-                        localStorage.setItem(BACKUP_KEY + "_Legacy", savedState);
+                        localStorage.setItem(LEGACY_BACKUP_KEY, savedState);
                     } catch (e) { }
 
                     // 2. Resetta la cache
@@ -815,16 +957,6 @@ export function initBoot(): void {
                 }
                 } // fine if(!launchMigrated): la migrazione lancio salta merge/compat
 
-                // Se abbiamo caricato un backup, notifichiamo l'utente e ripariamo il main slot
-                if (loadedFromBackup) {
-                    setTimeout(() => {
-                        if (w.EspooClicker)
-                            w.EspooClicker.showToast(store.gameData.texts.toasts.backupRestored, "warning");
-                    }, 1000);
-
-                    saveGame(); // Salva subito nel main slot per rigenerarlo
-                }
-
                 // --- INIZIALIZZAZIONE STRUTTURE MANCANTI ---
 
                 // Aggiorna versione save alla versione attuale del codice
@@ -837,8 +969,8 @@ export function initBoot(): void {
                     };
                 }
 
-                // Onboarding audio one-time al primo avvio di una nuova versione (save locale).
-                if (localShowRN) applyV3AudioOnboarding();
+                // Onboarding audio one-time per chi arriva da un save pre-3.0 (save locale).
+                if (localV3Audio) applyV3AudioOnboarding();
 
                 // Inizializza Enhancements
                 if (!store.gameState.buildingEnhancements) store.gameState.buildingEnhancements = {};
@@ -894,34 +1026,9 @@ export function initBoot(): void {
                         w.applySkinVisuals(store.gameState.skins.current);
             }
             catch (e) {
+                // Si prosegue con lo stato in memoria (default + quanto il merge ha
+                // applicato); al login il cloud rimette a posto la cache.
                 console.error("❌ Errore critico in loadGame:", e);
-
-                // TENTATIVO DISPERATO: Se il main è corrotto e non abbiamo ancora provato il backup
-                if (!loadedFromBackup) {
-                    console.log("Il salvataggio principale è corrotto. Tento il backup...");
-                    const backupState = localStorage.getItem(BACKUP_KEY);
-
-                    if (backupState) {
-                        try {
-                            const decompBackup = w.LZString.decompressFromUTF16(backupState);
-                            const parsedBackup = JSON.parse(decompBackup);
-                            deepMerge(store.gameState, parsedBackup);
-
-                            setTimeout(() => {
-                                if (w.EspooClicker) w.EspooClicker.showToast(store.gameData.texts.toasts.fileCorrupt, "error");
-                            }, 1000);
-
-                            // Ripariamo il file principale
-                            saveGame();
-
-                            // Rilanciamo la funzione di caricamento per applicare le logiche (skins, ecc)
-                            // Nota: Evitiamo ricorsione infinita grazie al fatto che ora lo stato è in memoria
-                        }
-                        catch (bkErr) {
-                            console.error("Anche il backup è inutilizzabile.", bkErr);
-                        }
-                    }
-                }
             }
         }
 
@@ -952,6 +1059,10 @@ export function initBoot(): void {
                 }
             }
         }
+
+        // Riparazioni una tantum: stesso momento del recupero da achievement,
+        // cioe' a stato caricato e username noto.
+        if (applyRiparazioniSkin()) saveGame();
 
         // I passivi 'hacking' (goldenBugChance x2) e 'ticketPremium' (goldenBugSpawnTime x0.5)
         // sono GIÀ applicati da reapplyAllEffects() qui sopra (effetti trigger:'passive').
@@ -1183,7 +1294,7 @@ export function initBoot(): void {
                     store.gameState.lastSaveTimestamp = Date.now();
                 }
                 const compressed = w.LZString.compressToUTF16(JSON.stringify(store.gameState));
-                localStorage.setItem('espotoolClickerSaveV9', compressed);
+                localStorage.setItem(SAVE_KEY, compressed);
             }
             // Avvia il salvataggio Cloud (il parametro keepalive: true nel fetch aiuta a finire la richiesta)
             saveGame();
@@ -1541,6 +1652,12 @@ export function initBoot(): void {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
                         
+                        // Popup "come si segnala": una volta sola per giocatore.
+                        // Va deciso QUI, a save caricato, e non prima: il flag sta
+                        // nel save, quindi leggerlo troppo presto lo darebbe sempre
+                        // per non visto.
+                        w.shouldShowFeedbackIntro = !!(store.gameState && !store.gameState.seenFeedbackIntro);
+
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
@@ -1566,6 +1683,18 @@ export function initBoot(): void {
                             setTimeout(() => {
                                 if (w.EspooClicker.openReleaseNotes) w.EspooClicker.openReleaseNotes();
                             }, 800);
+                        } else {
+                            // Nessuna nota di rilascio da mostrare: il popup può partire
+                            // da solo. Le condizioni però NON si valutano qui — le decide
+                            // maybeOpenFeedbackIntro quando il timer scatta, perché da qui
+                            // a lì il save cloud può ancora arrivare e cambiare le carte
+                            // (vedi il commento sulla funzione). Se le note spuntano nel
+                            // frattempo, il popup si accoda alla loro chiusura.
+                            setTimeout(() => {
+                                if (w.EspooClicker && typeof w.EspooClicker.maybeOpenFeedbackIntro === 'function') {
+                                    w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
+                                }
+                            }, 900);
                         }
                     }
 
@@ -2010,6 +2139,12 @@ export function initBoot(): void {
         const content = document.getElementById('release-notes-content');
         if (!modal || !content) return;
 
+        // Spento QUI e non a fetch riuscito: le note si stanno aprendo comunque,
+        // e da quando maybeOpenFeedbackIntro ci si appoggia per sapere se ci sono
+        // note in arrivo, lasciarlo acceso su un errore di rete terrebbe il popup
+        // bloccato per sempre.
+        w.shouldShowReleaseNotesOnLoad = false;
+
         // 1. Mostra il modale e avvia l'animazione di entrata (ripristinando l'opacità)
         modal.style.display = 'flex';
         
@@ -2038,11 +2173,71 @@ export function initBoot(): void {
             const mdText = await response.text();
 
             content.innerHTML = w.simpleMarkdown(mdText);
-            
-            w.shouldShowReleaseNotesOnLoad = false; 
         } catch (e) {
             content.innerHTML = '<p style="color: #e74c3c; text-align: center;">' + store.gameData.texts.ui.newsLoadError + '</p>';
         }
+    },
+
+    // --- POPUP "COME SI SEGNALA" — una tantum ---
+    // Il flag vive nel save (seenFeedbackIntro), non in localStorage: viaggia
+    // col cloud, quindi non ricompare cambiando dispositivo. Si segna come
+    // visto all'APERTURA e non alla chiusura: se l'utente ricarica la pagina
+    // con il popup aperto, non deve ritrovarselo per sempre.
+    openFeedbackIntro: () => {
+        const modal = document.getElementById('feedback-intro-modal');
+        if (!modal) return;
+        w.shouldShowFeedbackIntro = false;
+
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        const content = modal.querySelector('.modal-content') as HTMLElement | null;
+        if (typeof w.gsap !== 'undefined' && content) {
+            w.gsap.fromTo(content,
+                { scale: 0.85, opacity: 0, y: 20 },
+                { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.6)' });
+        } else if (content) {
+            content.style.opacity = '1';
+            content.style.transform = 'none';
+        }
+        document.body.classList.add('modal-open');
+
+        if (store.gameState) {
+            store.gameState.seenFeedbackIntro = true;
+            if (typeof w.EspooClicker.saveGame === 'function') w.EspooClicker.saveGame();
+        }
+    },
+
+    // Unico punto che decide SE aprire il popup, e lo decide al momento di
+    // aprirlo invece che quando si programma il timer. Prima la condizione
+    // stava nel ramo `else if` della cascata di avvio, valutato a ~500ms dal
+    // caricamento: il save CLOUD arriva dopo il giro di rete e può accendere
+    // shouldShowReleaseNotesOnLoad più tardi (loadCloudData), quando il timer
+    // del popup è già in volo. Da lì la segnalazione «il popup appare sopra
+    // alle note di rilascio»: due decisioni prese in momenti diversi sullo
+    // stesso stato.
+    //
+    // Restituisce true solo se ha davvero aperto. Quando rifiuta NON consuma
+    // il flag: la finestra si riapre al passaggio buono (chiusura delle note).
+    // `standalone` = apertura per conto proprio, senza note di rilascio davanti.
+    // Solo in quel caso vale il vincolo sui click: il popup serve a far scoprire
+    // una funzione a chi il gioco ce l'ha già, non ad accogliere chi non ha
+    // ancora cliccato una volta. Dopo le note invece si apre comunque — chi
+    // aggiorna il gioco lo vede anche con zero click su questo save, ed è voluto.
+    maybeOpenFeedbackIntro: (opts?: { standalone?: boolean }) => {
+        if (!w.shouldShowFeedbackIntro) return false;
+        if (!store.gameState || store.gameState.seenFeedbackIntro) return false;
+        if (opts && opts.standalone && !(store.gameState.totalClicks > 0)) return false;
+        // Note di rilascio in arrivo (anche decise tardi, dal save cloud): il
+        // popup si accoda alla loro chiusura, non le anticipa.
+        if (w.shouldShowReleaseNotesOnLoad) return false;
+        // Qualunque finestra già a schermo: si riprova più tardi. È questo il
+        // controllo che rende l'ordine indipendente dai tempi di rete.
+        const modali = Array.from(document.querySelectorAll('.modal-backdrop'));
+        for (const m of modali) {
+            if (getComputedStyle(m).display !== 'none') return false;
+        }
+        w.EspooClicker.openFeedbackIntro();
+        return true;
     },
         tryStartAudio: () => {
             // 1. Controllo Sessione
@@ -2099,6 +2294,25 @@ export function initBoot(): void {
                         console.log("☁️ Cloud: Salvataggio legacy rilevato.");
                     }
 
+                    // --- 0. DI CHI È IL SAVE LOCALE? ---
+                    // Lo slot locale è UNO per origine e lo scrive chiunque: l'area di
+                    // test /test/ (stesso host della produzione), o un secondo account
+                    // sullo stesso browser. Se quello che abbiamo in memoria è intestato
+                    // a un ALTRO utente non è materiale da confrontare: l'unica fonte
+                    // valida è il cloud dell'account che sta entrando.
+                    // Senza questa domanda l'anti-rollback qui sotto confrontava i numeri
+                    // di due account diversi, teneva il più alto, lo ribattezzava con
+                    // l'utente loggato e lo ri-pushava — progressi e skin di chi entrava
+                    // sovrascritti, sul cloud e per sempre (users.save_data non ha storico).
+                    const _sessionUser = sessionStorage.getItem('espooUser');
+                    const _localeEstraneo = saveBelongsToOtherUser(
+                        store.gameState && store.gameState.user && store.gameState.user.username,
+                        _sessionUser
+                    );
+                    if (_localeEstraneo) {
+                        console.warn(`⚠️ Save locale di un altro account ("${store.gameState.user.username}" ≠ "${_sessionUser}"): adotto il cloud.`);
+                    }
+
                     // === LANCIO PRODUZIONE: Season 1 / Fondatore (cloud) ===
                     // Un cloud save pre-lancio (schemaVersion < 3) va azzerato a Season 1.
                     // Gestito PRIMA dell'anti-rollback: dopo il reset i lifetime locali
@@ -2110,7 +2324,7 @@ export function initBoot(): void {
                     // (vedi markCloudUnsynced). Si azzera al primo push riuscito.
                     w._cloudPreWipe = _cloudSchema < 3;
                     if (_cloudSchema < 3) {
-                        if (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated)) {
+                        if (!_localeEstraneo && (w._launchMigrationDone || (store.gameState && store.gameState.launchMigrated))) {
                             // Già migrato in locale — in QUESTA sessione (flag window) o in una
                             // precedente (marker `launchMigrated` persistito nel save): il cloud
                             // pre-lancio è stale. Tieni il locale (Season 1) e ri-pushalo.
@@ -2134,7 +2348,9 @@ export function initBoot(): void {
                     // stabilito che il cloud è autoritativo (Format>Prestige>Score); il
                     // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
                     // prestige/format, e senza questo by-pass il client resterebbe bloccato.
-                    if (!(opts && opts.force) && store.gameState && store.gameState.lifetimeScore) {
+                    // Save locale di un altro account (_localeEstraneo): idem, niente
+                    // confronto — non è un rollback, è roba di qualcun altro.
+                    if (!(opts && opts.force) && !_localeEstraneo && store.gameState && store.gameState.lifetimeScore) {
                         // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
                         // (Format > Prestige > Score, EF Supabase save-progress) → client e
                         // server decidono allo stesso modo anche nei casi limite in cui il
@@ -2222,7 +2438,7 @@ export function initBoot(): void {
 
                         // G. Salva subito in cloud per allineare il DB
                         saveGame();
-                        localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                        localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                         if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(store.gameState.skins.current);
                         w.calculatePrestigeBonus();
@@ -2284,6 +2500,9 @@ export function initBoot(): void {
                     // eredita quella (vecchia) del cloud. Senza questo il messaggio novità
                     // non compariva al login da cloud (device nuovo / cache pulita).
                     const cloudShowRN = shouldShowReleaseNotesFor(cloudState.version);
+                    // Stesso motivo del percorso locale: la versione di provenienza va letta
+                    // prima del merge, che porta gameState.version su quella del cloud.
+                    const cloudV3Audio = shouldApplyV3AudioOnboardingFor(cloudState.version);
                     deepMerge(store.gameState, cloudState);
 
                     // 6. Ripristino oggetti Decimali
@@ -2332,11 +2551,9 @@ export function initBoot(): void {
                             stage: w.GAME_VERSION.stage
                         };
                     }
-                    if (cloudShowRN) {
-                        w.shouldShowReleaseNotesOnLoad = true;
-                        // Primo avvio nuova versione (save cloud, autoritativo): audio ON + musica V3, una volta.
-                        applyV3AudioOnboarding();
-                    }
+                    if (cloudShowRN) w.shouldShowReleaseNotesOnLoad = true;
+                    // Provenienza pre-3.0 (save cloud, autoritativo): audio ON + musica V3, una volta.
+                    if (cloudV3Audio) applyV3AudioOnboarding();
 
                     // Ricalcoli logica
                     w.calculatePrestigeBonus();
@@ -2347,7 +2564,7 @@ export function initBoot(): void {
                     if (typeof w.updateUI === 'function') w.updateUI();
 
                     // Sovrascrivi cache locale per allinearla al cloud caricato
-                    localStorage.setItem('espotoolClickerSaveV9', w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
+                    localStorage.setItem(SAVE_KEY, w.LZString.compressToUTF16(JSON.stringify(store.gameState)));
 
                     // Recupero Skin mancanti da achievement (Fix retroattivo)
                     for (const key in store.gameData.achievements) {
@@ -2360,6 +2577,8 @@ export function initBoot(): void {
                             }
                         }
                     }
+
+                    if (applyRiparazioniSkin()) saveGame();
 
                     checkOfflineProgress();
                     if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();

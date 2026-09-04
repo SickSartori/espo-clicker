@@ -6,6 +6,7 @@
  * la cheatboard (script separato, non bundlato).
  */
 import { installCheatboardBridge } from '../state/cheatboard-bridge';
+import { detectEnv } from './env';
 
 const BACKENDS = {
     dev: {
@@ -19,19 +20,11 @@ const BACKENDS = {
 } as const;
 
 /**
- * Ambiente auto-rilevato dall'URL (UN solo build per dev e prod):
- *   - localhost / 127.0.0.1 / ::1 / *.local / *.test (MAMP, Laragon) → dev
- *   - path che contiene /test/ (Altervista)                          → dev
- *   - qualsiasi altra cosa (root prod)                               → production
- * PURA (host/path come parametri) → testabile.
+ * Ambiente auto-rilevato dall'URL (UN solo build per dev e prod). La funzione è
+ * stata spostata in lib/env.ts — la decide anche core/save/keys.ts, che non può
+ * importare questo modulo. Ri-esportata qui: i call-site (e il test) restano.
  */
-export function detectEnv(hostname: string, pathname: string): 'dev' | 'production' {
-    var h = hostname || '';
-    var p = pathname || '';
-    if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.slice(-6) === '.local' || h.slice(-5) === '.test') return 'dev';
-    if (p.indexOf('/test/') !== -1) return 'dev';
-    return 'production';
-}
+export { detectEnv };
 
 export function installBackend(): void {
     if (typeof window === 'undefined') return;

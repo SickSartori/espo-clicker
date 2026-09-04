@@ -70,6 +70,10 @@
 
     window.exitSuperEspoGame = function () {
         espoRunToken++; // invalida eventuali prefetch/run in volo
+        // La sentinella del fit misura un wrapper che qui sotto viene rimosso:
+        // spegnerla subito evita un ultimo giro a vuoto e lascia staccato
+        // l'ascoltatore 'animationend' sull'elemento buttato via.
+        _espoStopAdattamento();
         if (_suDieTimer) { clearTimeout(_suDieTimer); _suDieTimer = null; }
         if (window._espoLoaderTimeout) { clearTimeout(window._espoLoaderTimeout); window._espoLoaderTimeout = null; }
         if (espoGame) { espoGame.destroy(true); espoGame = null; }
@@ -133,6 +137,106 @@
     function _hideLoader() {
         const overlay = document.getElementById('super-espo-overlay');
         if (overlay) overlay.style.display = 'none';
+    }
+
+    // ---- Adattamento del canvas alla fine dell'accensione CRT ----------------
+    // Il wrapper #phaser-espo-container porta la classe .crt-turn-on: l'animazione
+    // "turn-on" (modals-arcade.css) lo schiaccia a transform:scale(1, 0.001) e lo
+    // riapre solo al 70% della sua mezza secondata. Se Phaser nasce dentro quella
+    // finestra — e con launchArcadeGame ci nasce SEMPRE, perché build e run sono
+    // chiamati di fila — Scale.FIT misura un genitore alto mezzo pixel e ne ricava
+    // un canvas di 0,88 x 0,61 px. Il gioco gira davvero (rAF attivi, input vivo),
+    // solo che è invisibile: Super Espò risulta rotto senza dare un errore.
+    //
+    // La prima cura erano tre refresh() a rAF / 150ms / 650ms. Non basta: con la
+    // CPU lenta l'animazione parte più tardi e quei tre colpi cadono tutti mentre
+    // il wrapper mente ancora sulla propria altezza (misurati a t=355 e t=444).
+    // E dopo non arriva nessun soccorso — misurato: il polling interno di Phaser
+    // NON recupera da solo, il canvas resta 0,88 x 0,61 anche sei secondi dopo
+    // l'avvio (12 avvii su 12 rotti, con CPU throttling 6x, sia a 375x812 sia a
+    // 1280x800). Non è quindi un problema di "aspettare abbastanza": è che
+    // nessuno chiede più il ricalcolo.
+    //
+    // Quindi niente più ritardi indovinati. Ci si aggancia alla FINE
+    // dell'animazione ('animationend' sul wrapper), che è il momento in cui la
+    // misura diventa vera; e siccome quell'evento può non arrivare mai
+    // (animazione già conclusa quando ci si registra, prefers-reduced-motion,
+    // browser che non la emette), resta accesa una sentinella che ricontrolla a
+    // intervalli. A fermarla è la VERIFICA del risultato, non un timer: se un
+    // refresh non propaga, il giro dopo si riprova.
+    const ESPO_FIT_BUDGET_MS = 6000; // oltre questo si rinuncia (e si logga)
+    const ESPO_FIT_POLL_MS   = 100;
+    let _espoFitTimer = null;
+    let _espoFitCleanup = null;
+
+    function _espoStopAdattamento() {
+        if (_espoFitTimer) { clearTimeout(_espoFitTimer); _espoFitTimer = null; }
+        if (_espoFitCleanup) { try { _espoFitCleanup(); } catch (e) { /* no-op */ } _espoFitCleanup = null; }
+    }
+
+    // Confronta quanto il canvas DOVREBBE essere grande (il FIT del gameSize
+    // dentro il wrapper) con quanto è davvero. Ritorna { pronto:false } finché
+    // il wrapper è ancora schiacciato: in quello stato non c'è niente da
+    // giudicare, si aspetta soltanto.
+    function _espoStatoFit() {
+        if (!espoGame || !espoGame.scale) return null;
+        const wrap = document.getElementById('phaser-espo-container');
+        const canvas = espoGame.canvas;
+        if (!wrap || !canvas) return null;
+        const r = wrap.getBoundingClientRect();
+        if (r.width < 50 || r.height < 50) return { pronto: false };
+        const g = espoGame.scale.gameSize;
+        const zoom = Math.min(r.width / g.width, r.height / g.height);
+        const attesa = g.width * zoom;
+        const reale = canvas.getBoundingClientRect().width;
+        // Tolleranza larga (0.9): bordi, arrotondamenti e padding non contano.
+        // Il guasto vero è di un fattore ~600, non serve essere pignoli.
+        return { pronto: true, ok: reale >= attesa * 0.9, reale: reale, attesa: attesa, w: r.width, h: r.height };
+    }
+
+    function _espoAvviaAdattamento(token) {
+        _espoStopAdattamento();
+        const ora = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+        const scadenza = ora() + ESPO_FIT_BUDGET_MS;
+        const wrap = document.getElementById('phaser-espo-container');
+
+        const controlla = () => {
+            _espoFitTimer = null;
+            // Run invalidata (MENU / riavvio): la sentinella muore con lei.
+            if (token !== espoRunToken || !espoGame) { _espoStopAdattamento(); return; }
+            const st = _espoStatoFit();
+            if (st && st.pronto) {
+                if (st.ok) { _espoStopAdattamento(); return; }
+                const sc = espoGame.scale;
+                // setParentSize() infila la misura buona dentro Phaser e poi chiama
+                // refresh() da sé. È il punto chiave: scavalca getParentBounds(),
+                // che sull'istanza rotta risponde "non è cambiato niente" e quindi
+                // non fa mai ripartire il ricalcolo (per questo aggiungerlo dentro
+                // il vecchio refit era un no-op).
+                if (typeof sc.setParentSize === 'function') sc.setParentSize(st.w, st.h);
+                else if (typeof sc.refresh === 'function') sc.refresh();
+                const dopo = _espoStatoFit();
+                if (dopo && dopo.pronto && dopo.ok) { _espoStopAdattamento(); return; }
+            }
+            if (ora() >= scadenza) {
+                console.warn('[super-espo] adattamento canvas non riuscito entro il budget', st);
+                _espoStopAdattamento();
+                return;
+            }
+            _espoFitTimer = setTimeout(controlla, ESPO_FIT_POLL_MS);
+        };
+
+        if (wrap) {
+            const onEnd = (e) => {
+                if (e.target !== wrap || e.animationName !== 'turn-on') return;
+                if (_espoFitTimer) { clearTimeout(_espoFitTimer); _espoFitTimer = null; }
+                controlla();
+            };
+            wrap.addEventListener('animationend', onEnd);
+            _espoFitCleanup = function () { wrap.removeEventListener('animationend', onEnd); };
+        }
+
+        _espoFitTimer = setTimeout(controlla, ESPO_FIT_POLL_MS);
     }
 
     window.startSuperEspoRun = function () {
@@ -253,14 +357,11 @@
             // non ancora assestato), il canvas nasce a ~0px e resta NERO finché un
             // resize della finestra non forza il ricalcolo. Nessun evento resize
             // arriva da solo → restava nero fino a quando l'utente ridimensionava.
-            // Ri-applichiamo noi il fit appena il layout è assestato: stesso effetto
-            // del resize manuale, ma automatico. Più tentativi coprono sia il boot
-            // rapido sia la fine dell'animazione CRT (0.5s).
-            const _refitEspo = () => { if (espoGame && espoGame.scale) espoGame.scale.refresh(); };
-            espoGame.events.once('ready', _refitEspo);
-            requestAnimationFrame(_refitEspo);
-            setTimeout(_refitEspo, 150);
-            setTimeout(_refitEspo, 650); // oltre la fine dell'animazione crt-turn-on
+            // Il rimedio non è più una raffica di refresh() a tempo (vedi il perché
+            // sopra _espoAvviaAdattamento): si aspetta la fine dell'accensione CRT e
+            // si verifica il risultato, riprovando finché il canvas non ha davvero
+            // la misura che Scale.FIT gli deve.
+            _espoAvviaAdattamento(myToken);
         });
     };
 
@@ -623,6 +724,10 @@
         if (inStar) {
             const i = Math.floor(this.time.now / 80) % STAR_TINT_CYCLE.length;
             player.setTint(STAR_TINT_CYCLE[i]);
+            // La stella prevale sul lampeggio post-colpo: se viene raccolta nel
+            // frame in cui l'alpha è a 0.4, senza questo reset resterebbe
+            // congelata a 0.4 per tutti i 12 secondi (il ramo iframes non gira più).
+            if (player.alpha !== 1) player.setAlpha(1);
         } else if (this.time.now < firePowerDownUntil) {
             // Lampeggio post power-down: alpha alterna 0.4/1.0 ogni 80ms
             player.setAlpha(Math.floor(this.time.now / 80) % 2 === 0 ? 0.4 : 1.0);
@@ -1725,7 +1830,7 @@
                     score: currentScore,
                     rewardStr: rewardStr,
                     isNewRecord: isNewRecord,
-                    statLabel: 'LOOP', statValue: currentLevel, statColor: '#9b59b6',
+                    statLabel: (window.ARCADE_TXT && window.ARCADE_TXT.loop) || 'LOOP', statValue: currentLevel, statColor: '#9b59b6',
                     onReturn: window.exitSuperEspoGame,
                     onRetry: window.startSuperEspoRun
                 });

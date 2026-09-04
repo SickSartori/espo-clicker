@@ -5,7 +5,7 @@
 // Input  (POST JSON): { "type": "idea|bug|improvement",
 //                       "title": "...", "description": "...",
 //                       "website": "" (honeypot anti-bot),
-//                       "meta": { username, version, url, lang, ua, screen } }
+//                       "meta": { username, version, url, lang, screen } }
 // Output (JSON):      { "ok": true, "url": "https://trello.com/c/..." }
 //                  o  { "error": "..." } con status HTTP >= 400
 // ------------------------------------------------------------
@@ -24,40 +24,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ── Config ──────────────────────────────────────────────────
-$configPath = __DIR__ . '/trello-config.php';
-if (!file_exists($configPath)) {
+require_once __DIR__ . '/secrets-load.php';
+
+$config = secrets('trello');
+if (!$config) {
     http_response_code(500);
     echo json_encode(['error' => 'Trello not configured']);
     exit;
 }
-$config = require $configPath;
 
+// Il kill-switch va prima del controllo credenziali: se la feature è spenta
+// di proposito, la risposta giusta è 503, non "credenziali mancanti".
 if (empty($config['enabled'])) {
     http_response_code(503);
     echo json_encode(['error' => 'Feedback disabled']);
     exit;
 }
-if (
-    empty($config['token']) || $config['token'] === 'INSERISCI_TRELLO_TOKEN_QUI' ||
-    empty($config['key'])   || $config['key']   === 'INSERISCI_TRELLO_KEY_QUI'
-) {
+
+if (!secrets_configured('trello')) {
     http_response_code(500);
     echo json_encode(['error' => 'Trello credentials missing']);
     exit;
 }
 
 // ── Anti-hotlink: Referer whitelist (stesso pattern di get_asset_urls.php) ──
-if (!empty($config['allowed_referers'])) {
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $ok = false;
-    foreach ($config['allowed_referers'] as $allowed) {
-        if (strpos($referer, $allowed) === 0) { $ok = true; break; }
-    }
-    if (!$ok) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden referer']);
-        exit;
-    }
+if (!secrets_referer_allowed($config)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Forbidden referer']);
+    exit;
 }
 
 // ── Parsing input ───────────────────────────────────────────
@@ -100,14 +94,16 @@ $title = mb_substr($title, 0, $maxTitle);
 $desc  = mb_substr($desc, 0, $maxDesc);
 
 // ── Composizione card ───────────────────────────────────────
-$emoji    = ['idea' => '💡', 'bug' => '🐛', 'improvement' => '⬆️'];
-$cardName = trim(($emoji[$type] ?? '') . ' ' . $title);
+// Prefisso testuale e non emoji: il titolo resta leggibile ovunque Trello lo
+// mostri in riga singola (notifiche, ricerca, export) e si puo' cercare per
+// "BUG:" senza copiare un carattere che dalla tastiera non si scrive.
+$prefix   = ['idea' => 'NUOVO:', 'bug' => 'BUG:', 'improvement' => 'MIGLIORIA:'];
+$cardName = trim(($prefix[$type] ?? '') . ' ' . $title);
 
 $ctxUser   = _fbClean($meta['username'] ?? '', 80);
 $ctxVer    = _fbClean($meta['version']  ?? '', 40);
 $ctxUrl    = _fbClean($meta['url']      ?? '', 500);
 $ctxLang   = _fbClean($meta['lang']     ?? '', 16);
-$ctxUa     = _fbClean($meta['ua']       ?? '', 300);
 $ctxScreen = _fbClean($meta['screen']   ?? '', 24);
 
 $cardDesc  = $desc . "\n\n";
@@ -118,11 +114,41 @@ if ($ctxVer    !== '') $cardDesc .= "- 🎮 Versione: `" . $ctxVer . "`\n";
 if ($ctxLang   !== '') $cardDesc .= "- 🗣️ Lingua: `" . $ctxLang . "`\n";
 if ($ctxScreen !== '') $cardDesc .= "- 🖥️ Schermo: `" . $ctxScreen . "`\n";
 if ($ctxUrl    !== '') $cardDesc .= "- 🌐 URL: " . $ctxUrl . "\n";
-if ($ctxUa     !== '') $cardDesc .= "- 🧭 UA: `" . $ctxUa . "`\n";
 $cardDesc .= "- 🕒 Ricevuto: `" . (new DateTime('now', new DateTimeZone('Europe/Rome')))->format('Y-m-d H:i:s T') . "`\n";
 
+// ── Etichette ───────────────────────────────────────────────
+// Una card che arriva dalla produzione non porta etichette: la board le usa
+// per il triage manuale (versione, stato) e precompilarle sarebbe rumore.
+// Fuori dalla produzione invece si', cosi' le prove non si confondono con le
+// segnalazioni vere. Discrimina instanceName e non l'host: l'area di test sta
+// sullo stesso dominio della prod, in sottocartella, ed e' la CI a ribaltare
+// il valore (test.yml -> 'dev', main.yml -> 'production').
+$env      = require __DIR__ . '/config.php';
+$isProd   = (($env['instanceName'] ?? '') === 'production');
+$labels   = $config['labels'] ?? [];
+$idLabels = [];
+if (!$isProd) {
+    if (!empty($labels['test'])) {
+        $idLabels[] = $labels['test'];
+    } else {
+        // Fuori produzione l'etichetta e' attesa: se la voce manca, il ramo
+        // sopra non fa nulla e la card nasce nuda, indistinguibile da una di
+        // produzione. E' successo davvero (07/08/2026, area di test) senza
+        // lasciare traccia da nessuna parte, perche' "nessuna etichetta" e'
+        // anche il comportamento VOLUTO in produzione: da solo il codice non
+        // puo' distinguere "spento apposta" da "configurazione mancante".
+        // Percio' lo dice solo qui, dove l'assenza e' certamente un difetto.
+        // La voce vive in php/secrets.php (o nel vecchio php/trello-config.php,
+        // su cui secrets-load.php ripiega): entrambi gitignored e presenti SOLO
+        // sul server, quindi nessun deploy ce la porta — va caricata a mano.
+        error_log("[trello-submit] instanceName='" . ($env['instanceName'] ?? '?')
+            . "' ma labels['test'] non e' configurata: card creata senza etichetta."
+            . ' Aggiungere la voce alla sezione trello di php/secrets.php sul server.');
+    }
+}
+
 // ── Chiamata Trello ─────────────────────────────────────────
-$result = _fbTrelloCreateCard($config, $idList, $cardName, $cardDesc);
+$result = _fbTrelloCreateCard($config, $idList, $cardName, $cardDesc, $idLabels);
 
 if (!$result['ok']) {
     http_response_code(502);
@@ -151,7 +177,7 @@ function _fbClean($s, $max) {
 }
 
 /** Crea una card via API Trello. Preferisce cURL, fallback stream context. */
-function _fbTrelloCreateCard(array $cfg, $idList, $name, $desc) {
+function _fbTrelloCreateCard(array $cfg, $idList, $name, $desc, array $idLabels = []) {
     $url    = 'https://api.trello.com/1/cards';
     // CA bundle nel repo (php/cacert.pem): su MAMP/Windows curl.cainfo è vuoto e la
     // verifica SSL fallirebbe ("unable to get local issuer certificate"). Con questo
@@ -165,6 +191,12 @@ function _fbTrelloCreateCard(array $cfg, $idList, $name, $desc) {
         'desc'   => $desc,
         'pos'    => 'top',
     ];
+    // "Card senza etichette" si esprime omettendo il parametro, non mandandolo
+    // vuoto: una stringa vuota e' un valore che l'API puo' rifiutare e che
+    // comunque non direbbe niente di diverso.
+    if ($idLabels) {
+        $params['idLabels'] = implode(',', $idLabels);
+    }
     $payload = http_build_query($params);
 
     // cURL (disponibile su MAMP e Altervista).

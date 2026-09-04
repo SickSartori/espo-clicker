@@ -31,6 +31,15 @@ return [
         'improvement' => '691c52209e3ceacc465bfe8f', // IMPROVED
     ],
 
+    // Etichette applicate in automatico (identificatori, non segreti).
+    // 'test' finisce solo sulle card create FUORI dalla produzione: in
+    // produzione la card nasce senza etichette. Gli ID delle etichette
+    // esistenti si leggono aprendo nel browser:
+    // https://api.trello.com/1/boards/<board>/labels?key=<key>&token=<token>
+    'labels' => [
+        'test' => '6990452738e3477fc17cbc81', // TEST
+    ],
+
     // Anti-abuse: accetta solo richieste da questi Referer (come get_asset_urls.php).
     // Lascia [] per disabilitare il check (sconsigliato in produzione).
     'allowed_referers' => [

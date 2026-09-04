@@ -563,6 +563,28 @@
     background: rgba(52, 152, 219, 0.06);
 }
 
+/* Riga amico: il bersaglio è tutta la riga, non la sola freccia. Va quindi
+   detto — cursore e hover — altrimenti resta un'area cliccabile che non
+   sembra tale, e si continua a mirare l'icona. */
+.friend-row.is-openable {
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.friend-row.is-openable:hover {
+    background: rgba(52, 152, 219, 0.10);
+    border-color: rgba(52, 152, 219, 0.30);
+}
+
+.friend-row.is-openable:hover .friend-open-btn {
+    color: #3498db;
+}
+
+.friend-row.is-openable:focus-visible {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
 .friend-avatar {
     width: 40px;
     height: 40px;
@@ -674,19 +696,20 @@
     color: #fff;
 }
 
+/* Indizio visivo, non un pulsante: il click lo prende la riga (role="button").
+   Da <button> a <span> serve il display esplicito, o larghezza e altezza non
+   valgono. */
 .friend-open-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 30px;
     height: 30px;
     border: none;
     background: transparent;
     color: #64748b;
-    cursor: pointer;
     font-size: 0.85rem;
     transition: color 0.2s;
-}
-
-.friend-open-btn:hover {
-    color: #3498db;
 }
 
 .friend-pending-tag {

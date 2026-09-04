@@ -43,6 +43,19 @@
             t.addEventListener('click', function () { activateTab(t.getAttribute('data-htab')); });
         });
 
+        // Apre l'Aiuto direttamente sulla scheda Segnala. Serve al popup
+        // "come si segnala" (una tantum dopo le note di rilascio): senza,
+        // il suo pulsante potrebbe solo aprire l'Aiuto sulla Guida, cioè
+        // lasciare l'utente a un passo dal modulo.
+        // Passa dal pulsante Aiuto vero invece di aprire il modale a mano:
+        // l'apertura ha animazioni e stato suoi (openModal in ui/modals) che
+        // non sono esposti qui, e riscriverli sarebbe una seconda verità.
+        window.openFeedbackTab = function () {
+            var btn = document.getElementById('open-help-btn');
+            if (btn) btn.click();
+            activateTab('segnala');
+        };
+
         // --- Selettore tipo (Idea / Bug / Miglioramento) ---
         var typeInput = document.getElementById('fb-type');
         var typeBtns  = form.querySelectorAll('.fb-type');
@@ -81,7 +94,6 @@
                 version:  (window.GAME_VERSION && window.GAME_VERSION.toString) ? window.GAME_VERSION.toString() : (window.CACHE_VER || ''),
                 url:      location.href,
                 lang:     window.APP_LANG || navigator.language || '',
-                ua:       navigator.userAgent || '',
                 screen:   (window.screen ? (screen.width + 'x' + screen.height) : '')
             };
 

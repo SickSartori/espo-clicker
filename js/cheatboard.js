@@ -344,6 +344,10 @@
                     <div class="cb-row"><button id="cb-combo-mult" class="cb-btn cyan"><i class="fa-solid fa-gauge-high"></i> Moltiplicatore Combo: <span id="cb-combo-mult-label">×1</span></button></div>
                 </div>
                 <div class="cb-group">
+                    <div class="cb-gt">Primo avvio</div>
+                    <div class="cb-row"><button id="cb-first-run" class="cb-btn cyan"><i class="fa-solid fa-bullhorn"></i> Simula primo avvio versione</button></div>
+                </div>
+                <div class="cb-group">
                     <div class="cb-gt">Zona pericolosa</div>
                     <div class="cb-row"><button id="cb-v2" class="cb-btn purple"><i class="fa-solid fa-backward-fast"></i> Test Migrazione V2</button><button id="cb-v3" class="cb-btn purple"><i class="fa-solid fa-rocket"></i> Test Lancio V3</button><button id="cb-hardreset" class="cb-btn red" style="border-color:red;color:red;"><i class="fa-solid fa-triangle-exclamation"></i> RESET TOTALE</button></div>
                 </div>
@@ -634,6 +638,14 @@
         c.log('--- AUDIO ---', typeof AudioManager !== 'undefined' ? AudioManager._sounds : 'N/A');
         toast('Stato stampato in console (F12)');
     }
+    // Chiavi dello slot di salvataggio: separate per ambiente (vedi
+    // src/core/save/keys.ts). La cheatboard gira solo in dev, quindi qui cadono
+    // sulle chiavi __dev: senza questo, i suoi scenari finivano nello slot della
+    // PRODUZIONE, che sta sulla stessa origine.
+    function saveKeys() {
+        const k = window.EspoV3 && window.EspoV3.save && window.EspoV3.save.keys;
+        return k || { SAVE_KEY: 'espotoolClickerSaveV9' };
+    }
     async function forceSave() { if (window.EspooClicker && window.EspooClicker.saveGame) { await window.EspooClicker.saveGame(); toast('Salvataggio forzato'); } else toast('saveGame non disponibile'); }
     function forceV2() {
         if (!confirm(cbT('Simulare migrazione V2? Crea un falso salvataggio V1 e ricarica.'))) return;
@@ -673,9 +685,44 @@
         };
         const compressed = LZString.compressToUTF16(JSON.stringify(fake));
         try { await window.EspoV3.save.db.write(compressed); } catch (e) { /* IDB ko → fallback sotto */ }
-        localStorage.setItem('espotoolClickerSaveV9', compressed);
+        localStorage.setItem(saveKeys().SAVE_KEY, compressed);
         gameState.isDeleting = true; location.reload();
     }
+    // Rigioca la sequenza di benvenuto di una nuova versione: note di rilascio
+    // e, subito dopo, il popup "come si segnala".
+    //
+    // NON tocca i progressi: abbassa solo la minor registrata nel save (è quella
+    // che shouldShowReleaseNotesFor confronta con GAME_VERSION) e rimette a zero
+    // il flag del popup. Se la minor è già 0 si scende di una major, perché con
+    // 0-1 = -1 il confronto non scatterebbe.
+    //
+    // NB: saveGame() spinge anche sul cloud, quindi la versione abbassata ci
+    // finisce pure. Non è un problema — al primo caricamento vero viene
+    // ristampata quella corrente — ma se sei loggato su piu' dispositivi le
+    // note di rilascio ricompariranno una volta anche là.
+    async function simulateFirstRun() {
+        const v = (gameState && gameState.version) || {};
+        const cur = { major: v.major || 3, minor: v.minor || 0 };
+        const back = cur.minor > 0
+            ? { major: cur.major, minor: cur.minor - 1 }
+            : { major: Math.max(1, cur.major - 1), minor: 0 };
+
+        if (!confirm(cbT('Simulare il primo avvio della versione?\n\nIl save torna a v' + back.major + '.' + back.minor +
+            ' (solo il numero di versione, i progressi restano) e ricompaiono le note di rilascio, poi il popup delle segnalazioni.\n\nLa pagina si ricarica.'))) return;
+
+        gameState.version = { major: back.major, minor: back.minor, stage: v.stage || '' };
+        gameState.seenFeedbackIntro = false;
+
+        try {
+            if (window.EspooClicker && typeof window.EspooClicker.saveGame === 'function') {
+                await window.EspooClicker.saveGame();
+            }
+        } catch (e) { /* il salvataggio locale sotto è comunque tentato */ }
+
+        toast('Primo avvio simulato: ricarico…');
+        setTimeout(() => location.reload(), 400);
+    }
+
     async function hardReset() {
         if (!confirm(cbT('⚠️ RESET TOTALE DEV? ⚠️\nAzzera progressi locali E cloud e ricarica (resti loggato).'))) return;
 
@@ -709,8 +756,7 @@
         // logout: la sessione resta, al reload l'auto-login ricarica lo stato fresco.
         gameState.isDeleting = true;
         if (window.SaveDB && typeof window.SaveDB.clearIndexedDB === 'function') { try { await window.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); } }
-        localStorage.removeItem('espotoolClickerSaveV9');
-        localStorage.removeItem('espotoolClickerSaveV9_Backup');
+        localStorage.removeItem(saveKeys().SAVE_KEY);
         location.reload();
     }
 
@@ -876,6 +922,7 @@
     on('cb-debug', debugToggle); on('cb-log', logState); on('cb-save', forceSave);
     on('cb-combo-mult', comboMultCycle);
     on('cb-v2', forceV2); on('cb-v3', forceV3); on('cb-hardreset', hardReset);
+    on('cb-first-run', simulateFirstRun);
 
     // --- 13. Init ---
     activate('risorse');

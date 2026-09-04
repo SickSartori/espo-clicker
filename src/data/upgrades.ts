@@ -202,16 +202,31 @@ export const prestigeUpgrades: Record<string, any> = {
         furyImage: 'skins/espo-fury.webp',
         furyClickImage: 'skins/espo-fury-click.webp'
     },
+    // NERF 3.1 — era +20%/livello SENZA tetto. Il Ticket Critico paga
+    // `bps×30 + click×10`, quindi ogni livello aggiungeva 6 secondi di
+    // produzione a colpo, e senza cap il moltiplicatore cresceva finché
+    // c'erano token: si compravano i team di fascia alta molto prima del
+    // dovuto e i BPS scappavano via. Il tetto conta più della percentuale —
+    // è la crescita illimitata a rompere la curva, non il singolo livello.
+    // A livello 10: goldenBugMult 2.0 (era 3.0, e a livello 25 era 6.0).
+    //
+    // NERF 3.1.3 — costo base 75 -> 250. Il tetto sistemava il fine partita, non
+    // l'inizio: a 75 il primo livello si pagava gia' alla seconda Promozione e i
+    // primi tre costavano 357 token in tutto, cioe' il grosso del bonus arrivava
+    // prima ancora di aver visto la curva. Il costo scala 1.5^livello, quindi la
+    // base sposta TUTTA la scala: i 10 livelli passano da ~8.500 a ~28.300 token
+    // cumulati, e ogni traguardo slitta di circa due Promozioni.
     bugBounty: {
         name: 'Bug Bounty',
-        desc: 'I Ticket Critici (Golden Bug) valgono il +20% per livello.',
-        baseCost: new Decimal(75),
+        desc: 'I Ticket Critici (Golden Bug) valgono il +10% per livello (max 10).',
+        baseCost: new Decimal(250),
         isCounted: true,
+        maxLevel: 10,
         effects: [{
             trigger: 'passive',
             type: 'add_mult_per_level',
             stat: 'goldenBugMult',
-            val: new Decimal(0.2)
+            val: new Decimal(0.1)
         }]
     },
     ticketPremium: {

@@ -49,3 +49,25 @@
         Deny from all
     </IfModule>
 </FilesMatch>
+
+# Difesa in profondità: nega l'accesso diretto ai file di configurazione.
+# In condizioni normali non servirebbe — sono file che fanno solo `return [...]`,
+# quindi Apache li esegue e la risposta è vuota. Serve per il caso in cui PHP
+# non giri (modulo disattivato, handler sbagliato, errore di configurazione):
+# lì Apache servirebbe il SORGENTE, cioè le chiavi R2 e il token Trello in
+# chiaro. Vale anche per i .example, che non contengono segreti ma rivelano
+# la struttura.
+#
+# Non tocca i require/include fra file PHP: questa direttiva filtra le
+# richieste HTTP, non gli accessi da filesystem. La regola sta qui in root e
+# non in php/.htaccess perché il match è sul NOME del file ed eredita in tutte
+# le sottocartelle, come già fa quella sui .sql qui sopra.
+<FilesMatch "^(secrets|config|r2-config|trello-config)(\.example)?\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

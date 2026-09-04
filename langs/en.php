@@ -49,12 +49,22 @@
 	$labels["feedback_ph_titolo"] = "Sum it up in one line";
 	$labels["feedback_label_desc"] = "Description (optional)";
 	$labels["feedback_ph_desc"] = "The more detail the better: steps to reproduce, what you expected…";
-	$labels["feedback_privacy"] = "We automatically attach version, language and browser to help us diagnose. No sensitive data.";
+	$labels["feedback_privacy"] = "We automatically attach version, language and screen size to help us diagnose. No sensitive data.";
 	$labels["feedback_invia"] = "Send feedback";
 	$labels["feedback_toast_ok"] = "Thanks! Your feedback was sent. 🎉";
 	$labels["feedback_toast_err"] = "Oops, sending failed. Please try again later.";
 	$labels["feedback_toast_validate"] = "Please enter a title (3+ characters).";
 	$labels["feedback_toast_sending"] = "Sending…";
+
+	// "How to report" popup — one-off, right after the release notes
+	$labels["fbintro_titolo"] = "A bug? An idea? Tell us";
+	$labels["fbintro_intro"] = "Something broken, but also an idea or something you would like to see in the game: you can tell us right here, and it goes straight to the team's board. It takes twenty seconds.";
+	$labels["fbintro_p1"] = "Open <b style=\"color:#3498db\">Help</b> in the top bar, then the <b style=\"color:#3498db\">Feedback</b> tab.";
+	$labels["fbintro_p2"] = "Pick whether it is a <b>bug</b>, an <b>idea</b> or an <b>improvement</b>.";
+	$labels["fbintro_p3"] = "Sum it up in one line. If it is a bug, tell us <b>what you were doing</b> and <b>what you expected</b>: that is what lets us find it.";
+	$labels["fbintro_privacy"] = "We automatically attach version, language and screen size. No sensitive data, no email required.";
+	$labels["fbintro_btn_apri"] = "Let me try";
+	$labels["fbintro_btn_ok"] = "Got it";
 	$labels["help_menu_titolo"] = "Help";
 	$labels["navbar_stats"] = "Statistics";
 	$labels["navbar_arcade"] = "Arcade";
@@ -62,6 +72,7 @@
 	$labels["navbar_skin"] = "Skins";
 	$labels["navbar_classifica"] = "Leaderboard";
 	$labels["navbar_promozione"] = "Promotion";
+	$labels["navbar_menu"] = "Menu";
 	$labels["navbar_opzioni"] = "Options";
 	$labels["navbar_account_title"] = "Account & Friends";
 	// Fixed button label — see the note in langs/it.php. Keep it <= 8 chars.
@@ -209,6 +220,7 @@
 	$labels["arcade_hud_life"] = "LIFE";
 	$labels["arcade_hud_lives"] = "LIVES";
 	$labels["arcade_hud_wave"] = "WAVE";
+	$labels["arcade_hud_loop"] = "LOOP";
 	$labels["arcade_fire_flower"] = "🔥 FIRE FLOWER! Press X or F to shoot fireballs";
 	$labels["arcade_hint_move"] = "Move";
 	$labels["arcade_hint_move_snake"] = "Move the snake";
@@ -286,6 +298,7 @@
 	$labels["arcade_desc_superespo"] = "An endless platformer for true pros. Run, jump, stomp the Goomba-Bugs and survive the loops to farm tons of Bugs!";
 	$labels["arcade_desc_invaders"] = "Defend the bunkers, take down the swarm of alien-bugs before it reaches you.";
 	$labels["arcade_desc_centipede"] = "Destroy the centipede-bug in the mushroom field before it reaches you at the bottom.";
+	$labels["arcade_desc_stack"] = "Stack the code and ship the rows. Technical debt rises from below and bugs jam the rows: squash them with a click.";
 	$labels["arcade_keys_dir"] = "Arrow Keys:";
 	$labels["arcade_rotate"] = "Rotate / Thrust";
 	$labels["arcade_space_key"] = "Space:";
@@ -320,6 +333,22 @@
 	$labels["arcade_g_superespo_desc"] = "Endless platformer. Run, jump, stomp the Goomba-Bugs.";
 	$labels["arcade_g_invaders_desc"] = "Defend the bunkers, take down the swarm of alien-bugs.";
 	$labels["arcade_g_centipede_desc"] = "Destroy the centipede in the mushroom field.";
+	$labels["arcade_g_stack_short"] = "Stack, ship, squash";
+	$labels["arcade_g_stack_desc"] = "Stack the code and ship the rows before the debt buries you.";
+
+	/* Stack Overflow — HUD and instructions */
+	$labels["arcade_stack_tagline"] = "Stack the code, ship the rows";
+	$labels["arcade_stack_bug_hint"] = "Bugs jam the row: squash them with a click";
+	$labels["arcade_stack_level"] = "LEVEL";
+	$labels["arcade_stack_lines"] = "ROWS";
+	$labels["arcade_stack_bugs"] = "BUGS SQUASHED";
+	$labels["arcade_stack_bugs_short"] = "BUGS";
+	$labels["arcade_stack_next"] = "NEXT";
+	$labels["arcade_stack_debt"] = "TECHNICAL DEBT";
+	$labels["arcade_stack_pieces_left"] = "PIECES";
+	$labels["arcade_hint_soft_drop"] = "Soft drop";
+	$labels["arcade_hint_hard_drop"] = "Hard drop";
+	$labels["arcade_hint_squash"] = "Squash bugs";
 	$labels["col_center_mult_aria"] = "Multiplier";
 	$labels["col_center_bps_aria"] = "Bugs per second";
 	$labels["col_buy_qty_aria"] = "Purchase quantity";

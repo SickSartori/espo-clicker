@@ -39,6 +39,23 @@ jobs:
           sed -i 's/"prodHost" => "[^"]*"/"prodHost" => ""/' php/config.php
           grep "prodHost" php/config.php
 
+      # php/secrets.php e' gitignored (il repo e' PUBBLICO e il file contiene la
+      # secret_key R2 e il token Trello) ma deve comunque arrivare sul server:
+      # senza, il signer R2 risponde 500 e gli asset vanno in 404. Finora si
+      # caricava a mano via FTP, ed e' il motivo per cui le voci aggiunte al
+      # template — es. `labels` per l'etichetta TEST — non arrivavano mai.
+      # Qui viene generato dai secret del repo: i 5 valori segreti stanno li',
+      # la struttura resta in php/secrets.example.php, tracciato e reviewabile.
+      # Il file NON e' escluso dall'FTP, quindi lo step successivo lo carica.
+      - name: 🔐 Genera php/secrets.php dai secret del repo
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          TRELLO_KEY:    ${{ secrets.TRELLO_KEY }}
+          TRELLO_TOKEN:  ${{ secrets.TRELLO_TOKEN }}
+        run: node scripts/generate-secrets.js
+
       # Step 2: Caricamento FTP
       # ⚠️ FTP_REMOTE_PATH e' il percorso dell'AREA DI TEST (sottocartella /test/),
       #    non della produzione: quella sta nella root FTP e la gestisce main.yml
@@ -88,6 +105,7 @@ jobs:
             README.md
             PRODUCT.md
             php/config.example.php
+            php/secrets.example.php
             php/r2-config.example.php
             php/trello-config.example.php
             php/r2-cors-policy.json
