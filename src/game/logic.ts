@@ -11,6 +11,7 @@
  */
 const w = window as any;
 import { store } from '../state/store';
+import { PRESTIGE_PERSISTENT_KEYS } from './prestige';
 
 // --- GESTIONE CONFLITTI EVENTI (SEMAFORO) ---
 let lastRicardoVideoId = null;
@@ -1826,13 +1827,10 @@ async function executePrestige() {
     let newPrestigePoints = store.gameState.prestigePoints.add(gained);
     let newLifetime = store.gameState.lifetimePrestigePoints.add(gained);
 
-    // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game)
-    const persistentKeys = [
-        'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks',
-        'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
-        'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni', 'longestCombo',
-        'arcadeHighScores'
-    ];
+    // Salvataggio Dati Persistenti (Inclusi i dati Quantici e le valute End-Game).
+    // La lista sta in game/prestige.ts (pura, con test): è la regola su cosa
+    // attraversa il reset, non un dettaglio di questa procedura.
+    const persistentKeys = PRESTIGE_PERSISTENT_KEYS;
 
     const preservedData: Record<string, any> = {};
     persistentKeys.forEach(key => {

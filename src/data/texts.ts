@@ -91,6 +91,10 @@ export const texts: Record<string, any> = {
         furyEnded: "Espo si è calmato.",
         promoSuccess: "Promozione completata! Buon lavoro!",
         cloudSync: "Progressi scaricati dal Cloud!",
+        // Rientro normale: il locale è già avanti o uguale, quindi non si scarica
+        // niente — si conferma il push. Due testi e non uno perché dire "scaricati"
+        // quando il salvataggio va nell'altra direzione è una bugia visibile.
+        cloudSyncLocal: "Progressi sincronizzati col Cloud!",
         versionMismatch: "⚠️ Versione salvataggio incompatibile!",
         memoryFull: "Memoria piena! Impossibile salvare in locale.",
         bugCrit: "Bug Critico Risolto! +{amount} bug!",

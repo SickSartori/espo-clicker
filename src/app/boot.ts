@@ -28,6 +28,7 @@ import { store } from '../state/store';
 import { RIPARAZIONI_SKIN } from '../data/founder-grants';
 import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
+import { feedbackIntroDue } from '../ui/rules/feedback-intro';
 
 /**
  * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
@@ -1652,12 +1653,6 @@ export function initBoot(): void {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
                         
-                        // Popup "come si segnala": una volta sola per giocatore.
-                        // Va deciso QUI, a save caricato, e non prima: il flag sta
-                        // nel save, quindi leggerlo troppo presto lo darebbe sempre
-                        // per non visto.
-                        w.shouldShowFeedbackIntro = !!(store.gameState && !store.gameState.seenFeedbackIntro);
-
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
@@ -2178,15 +2173,15 @@ export function initBoot(): void {
         }
     },
 
-    // --- POPUP "COME SI SEGNALA" — una tantum ---
-    // Il flag vive nel save (seenFeedbackIntro), non in localStorage: viaggia
-    // col cloud, quindi non ricompare cambiando dispositivo. Si segna come
-    // visto all'APERTURA e non alla chiusura: se l'utente ricarica la pagina
-    // con il popup aperto, non deve ritrovarselo per sempre.
+    // --- POPUP "COME SI SEGNALA" — almeno una volta a settimana ---
+    // Nel save (feedbackIntroAt, ui/rules/feedback-intro.ts) sta il timestamp
+    // dell'ultima apertura, non in localStorage: viaggia col cloud, quindi il
+    // conto non riparte cambiando dispositivo. Si timbra all'APERTURA e non
+    // alla chiusura: se l'utente ricarica la pagina con il popup aperto, non
+    // deve ritrovarselo subito.
     openFeedbackIntro: () => {
         const modal = document.getElementById('feedback-intro-modal');
         if (!modal) return;
-        w.shouldShowFeedbackIntro = false;
 
         modal.style.display = 'flex';
         modal.style.opacity = '1';
@@ -2202,7 +2197,7 @@ export function initBoot(): void {
         document.body.classList.add('modal-open');
 
         if (store.gameState) {
-            store.gameState.seenFeedbackIntro = true;
+            store.gameState.feedbackIntroAt = Date.now();
             if (typeof w.EspooClicker.saveGame === 'function') w.EspooClicker.saveGame();
         }
     },
@@ -2216,16 +2211,18 @@ export function initBoot(): void {
     // alle note di rilascio»: due decisioni prese in momenti diversi sullo
     // stesso stato.
     //
-    // Restituisce true solo se ha davvero aperto. Quando rifiuta NON consuma
-    // il flag: la finestra si riapre al passaggio buono (chiusura delle note).
+    // Restituisce true solo se ha davvero aperto. Quando rifiuta NON timbra
+    // niente: la finestra si riapre al passaggio buono (chiusura delle note).
+    // Il "se" si legge dallo stato qui, non da un flag preso al boot: quel flag
+    // (shouldShowFeedbackIntro) veniva impostato solo nel ramo F5-con-sessione,
+    // quindi dopo un login esplicito il popup non usciva mai.
     // `standalone` = apertura per conto proprio, senza note di rilascio davanti.
     // Solo in quel caso vale il vincolo sui click: il popup serve a far scoprire
     // una funzione a chi il gioco ce l'ha già, non ad accogliere chi non ha
     // ancora cliccato una volta. Dopo le note invece si apre comunque — chi
     // aggiorna il gioco lo vede anche con zero click su questo save, ed è voluto.
     maybeOpenFeedbackIntro: (opts?: { standalone?: boolean }) => {
-        if (!w.shouldShowFeedbackIntro) return false;
-        if (!store.gameState || store.gameState.seenFeedbackIntro) return false;
+        if (!feedbackIntroDue(store.gameState, Date.now())) return false;
         if (opts && opts.standalone && !(store.gameState.totalClicks > 0)) return false;
         // Note di rilascio in arrivo (anche decise tardi, dal save cloud): il
         // popup si accoda alla loro chiusura, non le anticipa.
@@ -2356,7 +2353,7 @@ export function initBoot(): void {
                         // server decidono allo stesso modo anche nei casi limite in cui il
                         // solo lifetimeScore darebbe il verdetto opposto (es. cloud
                         // formattato di recente con lifetime più basso).
-                        const keepLocal = window.EspoV3.save.antiRollback.decide({
+                        const verdetto = window.EspoV3.save.antiRollback.decide({
                             totalFormattazioni: store.gameState.totalFormattazioni || 0,
                             lifetimePrestigePoints: String(store.gameState.lifetimePrestigePoints || 0),
                             lifetimeScore: String(store.gameState.lifetimeScore || 0),
@@ -2364,19 +2361,43 @@ export function initBoot(): void {
                             totalFormattazioni: cloudState.totalFormattazioni || 0,
                             lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
                             lifetimeScore: cloudState.lifetimeScore || 0,
-                        }) !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
+                        });
+                        const keepLocal = verdetto !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
 
                         if (keepLocal) {
-                            console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
+                            // 'equal' = locale e cloud coincidono, cioè il rientro NORMALE
+                            // sullo stesso dispositivo. Chiamarlo "cloud obsoleto" riempiva
+                            // la console di un allarme a ogni ricaricamento e faceva leggere
+                            // come rotta una sincronizzazione che invece funzionava.
+                            if (verdetto === 'local')
+                                console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
+                            else
+                                console.log("☁️ Cloud allineato al salvataggio locale.");
 
                             const currentSessionUser = sessionStorage.getItem('espooUser');
                             if (currentSessionUser && store.gameState.user.username !== currentSessionUser) {
                                 store.gameState.user.username = currentSessionUser;
                             }
 
+                            // Il rientro va valutato ANCHE quando vince il locale — cioè
+                            // sempre, per chi riapre il gioco sullo stesso browser. Prima
+                            // questo `return` scavalcava checkOfflineProgress() in fondo alla
+                            // funzione: il modale "Bentornato" non compariva mai e i guadagni
+                            // offline sparivano al primo autosave (30s), che riscrive
+                            // lastSaveTimestamp. Restava vivo solo il percorso "cloud
+                            // adottato" (dispositivo nuovo / cache pulita).
+                            // ⚠️ PRIMA di saveGame(): il salvataggio bumpa lastSaveTimestamp
+                            // a tab visibile e il calcolo troverebbe una pausa di ~0 secondi.
+                            checkOfflineProgress();
+
                             saveGame();
                             if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
                             w.updateUI();
+                            // Stesso motivo del modale: la conferma di sync viveva solo in
+                            // fondo alla funzione, quindi sul percorso normale non arrivava
+                            // mai. Testo diverso perché qui non si scarica niente: il locale
+                            // è autoritativo ed è il saveGame() qui sopra a spingerlo su.
+                            w.showToast(store.gameData.texts.toasts.cloudSyncLocal);
                             return;
                         }
                     }
@@ -2578,9 +2599,13 @@ export function initBoot(): void {
                         }
                     }
 
+                    // Il rientro si legge PRIMA di qualunque saveGame(): il salvataggio
+                    // bumpa lastSaveTimestamp a tab visibile, quindi una riparazione skin
+                    // applicata qui azzerava la pausa e con essa i guadagni offline.
+                    checkOfflineProgress();
+
                     if (applyRiparazioniSkin()) saveGame();
 
-                    checkOfflineProgress();
                     if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();
 
                     w.showToast(store.gameData.texts.toasts.cloudSync);
