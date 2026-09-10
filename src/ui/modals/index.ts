@@ -1385,7 +1385,14 @@ export function initModals(): void {
                 // essere risolto da qui, però il token è comunque rinnovato.
                 return { ok: true, reason: 'notdata' };
             }
-            Game.loadCloudData(data.save_data, { force: true });
+            // Il cloud può essere INDIETRO rispetto a noi anche quando il server dice
+            // il contrario: confronta la classifica, non il blob che consegna. In quel
+            // caso loadCloudData non adotta niente e lo dichiara — riprovare sarebbe
+            // solo un altro giro di giostra, con progressi persi ogni volta.
+            const esito = Game.loadCloudData(data.save_data, { force: true });
+            if (esito && esito.adopted === false && esito.reason === 'cloud-indietro') {
+                return { ok: false, reason: 'stale-cloud' };
+            }
             // Niente push "di conferma" subito dopo: il cloud HA già questo stato,
             // rispedirglielo non aggiunge niente ed era il carburante del loop —
             // ogni minima differenza fra il blob adottato e la riga di classifica

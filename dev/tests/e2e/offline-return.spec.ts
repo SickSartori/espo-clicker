@@ -18,7 +18,7 @@ import { bootGame } from './helpers';
 const MODALE = '#offline-modal';
 
 async function rientroDopoDueOre(page: import('@playwright/test').Page) {
-  return page.evaluate(async () => {
+  await page.evaluate(() => {
     const w = window as any;
     const gs = w.EspooClicker.getGameState();
     gs.user.username = 'E2ETester';
@@ -33,21 +33,26 @@ async function rientroDopoDueOre(page: import('@playwright/test').Page) {
     cloud.schemaVersion = 3;
     const blob = w.LZString.compressToUTF16(JSON.stringify(cloud));
 
-    const toasts: string[] = [];
+    w.__toasts = [];
     const origToast = w.showToast;
-    w.showToast = (m: unknown, ...rest: unknown[]) => { toasts.push(String(m)); return origToast.apply(w, [m, ...rest]); };
-    try {
-      w.EspooClicker.loadCloudData(blob);
-      await new Promise((res) => setTimeout(res, 800));
-    } finally {
-      w.showToast = origToast;
-    }
+    w.showToast = (m: unknown, ...rest: unknown[]) => { w.__toasts.push(String(m)); return origToast.apply(w, [m, ...rest]); };
+    w.EspooClicker.loadCloudData(blob);
+  });
+
+  // Il calcolo offline gira nel worker V3: la prima chiamata paga anche il
+  // fetch e la compilazione del worker, quindi un'attesa fissa è una scommessa.
+  await page.waitForFunction(
+    () => getComputedStyle(document.getElementById('offline-modal')!).display === 'flex',
+    undefined, { timeout: 15_000 },
+  );
+
+  return page.evaluate(() => {
     const m = document.getElementById('offline-modal')!;
     return {
       visibile: getComputedStyle(m).display,
       guadagno: document.getElementById('offline-earnings-display')!.textContent || '',
       efficienza: document.getElementById('offline-efficiency-display')!.textContent || '',
-      toasts,
+      toasts: ((window as any).__toasts || []) as string[],
     };
   });
 }
@@ -96,7 +101,9 @@ test.describe('Rientro: modale Bentornato', () => {
       const cloud = JSON.parse(JSON.stringify(gs));
       cloud.schemaVersion = 3;
       w.EspooClicker.loadCloudData(w.LZString.compressToUTF16(JSON.stringify(cloud)));
-      await new Promise((res) => setTimeout(res, 800));
+      // Qui si aspetta un NON-evento: l'attesa fissa è generosa apposta, e il
+      // worker offline è già caldo dai test precedenti.
+      await new Promise((res) => setTimeout(res, 2000));
       return getComputedStyle(document.getElementById('offline-modal')!).display;
     });
     expect(r).toBe('none');
