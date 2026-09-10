@@ -711,7 +711,7 @@
             ' (solo il numero di versione, i progressi restano) e ricompaiono le note di rilascio, poi il popup delle segnalazioni.\n\nLa pagina si ricarica.'))) return;
 
         gameState.version = { major: back.major, minor: back.minor, stage: v.stage || '' };
-        gameState.seenFeedbackIntro = false;
+        gameState.feedbackIntroAt = 0;
 
         try {
             if (window.EspooClicker && typeof window.EspooClicker.saveGame === 'function') {

@@ -87,6 +87,7 @@ export const texts: Record<string, any> = {
         furyEnded: "Espo has calmed down.",
         promoSuccess: "Promotion complete! Nice work!",
         cloudSync: "Progress downloaded from the Cloud!",
+        cloudSyncLocal: "Progress synced with the Cloud!",
         versionMismatch: "⚠️ Incompatible save version!",
         memoryFull: "Memory full! Can't save locally.",
         bugCrit: "Critical Bug Fixed! +{amount} bugs!",

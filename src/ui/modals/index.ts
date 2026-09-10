@@ -911,9 +911,9 @@ export function initModals(): void {
             // Il popup "come si segnala" si accoda alle note di rilascio, mai
             // sovrapposto: parte solo quando quelle vengono chiuse. Passa da
             // maybeOpenFeedbackIntro e non da openFeedbackIntro diretto, così i
-            // controlli (finestre a schermo, click fatti, note ancora in arrivo)
-            // sono gli stessi di ogni altra via d'ingresso.
-            if (modal.id === 'release-notes-modal' && w.shouldShowFeedbackIntro) {
+            // controlli (ritmo settimanale, finestre a schermo, note ancora in
+            // arrivo) sono gli stessi di ogni altra via d'ingresso.
+            if (modal.id === 'release-notes-modal') {
                 setTimeout(() => {
                     if (w.EspooClicker && typeof w.EspooClicker.maybeOpenFeedbackIntro === 'function') {
                         w.EspooClicker.maybeOpenFeedbackIntro();

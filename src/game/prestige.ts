@@ -126,3 +126,28 @@ export function formatQbitsEarned(D: DecimalCtor, lifetimePrestigePoints: BigInp
   if (tokenDiv.gte(1)) bonusQbits = tokenDiv.sqrt().floor();
   return new D(1).add(bonusQbits);
 }
+
+// --- Cosa sopravvive alla Formattazione ---
+/**
+ * Chiavi di `gameState` che la Formattazione porta oltre il reset. Tutto ciò che
+ * NON è elencato qui torna al valore di `getInitialGameState()`.
+ *
+ * Sta qui, e non inline nella sequenza di reset (game/logic.ts), perché è una
+ * REGOLA e non un dettaglio della procedura: sbagliarla non rompe niente subito,
+ * si vede giri dopo — un flag una-tantum che si riaccende, un premio che
+ * riparte, una stagione che indietreggia. Isolata è leggibile e testabile.
+ *
+ * Due famiglie:
+ *  - progressi che attraversano i cicli (achievement, negozio Promozione,
+ *    guardaroba, valute end-game, contatori storici);
+ *  - flag che descrivono l'ACCOUNT e non la partita — identità Fondatore,
+ *    stagione, popup già visti, riparazioni già valutate.
+ */
+export const PRESTIGE_PERSISTENT_KEYS: readonly string[] = [
+    'achievements', 'prestigeUpgrades', 'skins', 'user', 'totalClicks',
+    'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
+    'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni', 'longestCombo',
+    'arcadeHighScores',
+    'feedbackIntroAt', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
+    'riparazioniSkin',
+];
