@@ -243,9 +243,24 @@ export function initBoot(): void {
     let lastCloudSaveOkAt = Date.now();
     const CLOUD_STALE_MS = 90 * 1000; // avvisa solo dopo 90s di fallimenti (niente flicker)
 
+    // Conflitti consecutivi oltre i quali l'auto-resync si ferma (vedi saveGame).
+    const CLOUD_MAX_AUTO_RESYNC = 3;
+
+    // Canale "sempre acceso" per la traccia di sincronizzazione. Il gioco
+    // zittisce console.log/warn senza DEBUG_MODE (lib/version.ts), quindi un
+    // push respinto dal cloud non lasciava una riga: la segnalazione "in
+    // console non dice mai niente" del 10/09/2026. Da qui passa solo ciò che
+    // serve a capire un salvataggio NON andato (respinto, token, rete) e un
+    // riallineamento dal cloud — non il rumore di ogni push riuscito.
+    function cloudTrace(msg: string) {
+        const orig = (w._console && typeof w._console.warn === 'function') ? w._console.warn : null;
+        if (orig) orig(msg); else console.error(msg);
+    }
+
     function markCloudSaved() {
         lastCloudSaveOkAt = Date.now();
         w._cloudPreWipe = false; // push riuscito → il cloud ora contiene il nostro save Season 1
+        w._cloudConflictStreak = 0; // un push accettato chiude la serie di conflitti
         _setCloudBadge(false);
     }
     function markCloudUnsynced(reason: any) {
@@ -279,6 +294,13 @@ export function initBoot(): void {
         if (state === 'syncing') return isEn ? '⏳ Syncing with the cloud…' : '⏳ Sincronizzazione in corso…';
         if (state === 'ok') return isEn ? '✓ Progress synced' : '✓ Progressi sincronizzati';
         if (state === 'problem') {
+            // Conflitto che non si risolve da solo: il cloud viene riadottato e
+            // risulta di nuovo avanti al giro dopo. La causa è quasi sempre
+            // un'altra sessione dello stesso account, e va detto: "tocca per
+            // sincronizzare" da solo rimandava il giocatore nello stesso giro.
+            if (reason === 'conflict-loop')
+                return isEn ? '⚠ Another tab or device is saving on this account — close it, then tap'
+                            : '⚠ Un\'altra scheda o dispositivo sta salvando su questo account — chiudila, poi tocca';
             return reason === 'conflict'
                 ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
                         : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
@@ -340,8 +362,10 @@ export function initBoot(): void {
         let res: any = null;
         try {
             // Conflitto → adotta il cloud autoritativo; altrimenti (token/rete)
-            // → rinnova il token e ritenta.
-            if (wasReason === 'conflict' && typeof w._resyncFromCloud === 'function') {
+            // → rinnova il token e ritenta. Il tocco è una scelta del giocatore
+            // (ha chiuso l'altra scheda?): riapre anche i tentativi automatici.
+            if ((wasReason === 'conflict' || wasReason === 'conflict-loop') && typeof w._resyncFromCloud === 'function') {
+                w._cloudConflictStreak = 0;
                 res = await w._resyncFromCloud();
             } else if (typeof w._silentTokenRefresh === 'function') {
                 res = await w._silentTokenRefresh();
@@ -399,6 +423,32 @@ export function initBoot(): void {
         }
     }
 
+    // Istantanea dei campi del push cloud che il server confronta con la
+    // classifica e scrive accanto a save_data. Deve essere presa nello stesso
+    // tick della serializzazione del blob: vedi il commento in saveGame.
+    function snapshotCloudMeta() {
+        const gs = store.gameState;
+        let rawScore = new w.Decimal(gs.lifetimeScore);
+        if (rawScore.lt(0)) rawScore = new w.Decimal(0);
+        const season = gs.season || 1;
+        const unlocked = (gs.skins && Array.isArray(gs.skins.unlocked)) ? gs.skins.unlocked.slice() : [];
+        return {
+            score: rawScore.toFixed(0),
+            prestige: Math.floor(gs.totalResets || 0),
+            totalFormattazioni: gs.totalFormattazioni || 0,
+            season: season,
+            equippedSkin: gs.skins.current,
+            profile: {
+                totalClicks: Math.floor(gs.totalClicks || 0),
+                totalPlayTime: Math.floor(gs.totalPlayTime || 0),
+                longestCombo: Math.floor(gs.longestCombo || 0),
+                totalGolden: Math.floor(gs.totalGoldenBugsClicked || 0),
+                season: season,
+                skinsUnlocked: unlocked
+            }
+        };
+    }
+
     async function saveGame() {
         if (store.gameState.isDeleting) return;
 
@@ -414,6 +464,20 @@ export function initBoot(): void {
         if (document.visibilityState === 'visible') {
             store.gameState.lastSaveTimestamp = Date.now();
         }
+
+        // I campi che viaggiano ACCANTO al blob (score, prestige, formattazioni,
+        // season, skin, profilo) si leggono QUI, nello stesso tick del
+        // JSON.stringify. Tra qui e il payload ci sono tre await (worker, quota,
+        // IndexedDB) e nel frattempo il loop di gioco fa crescere lifetimeScore:
+        // letto dopo, dal vivo, `score` finiva in classifica un pelo più alto del
+        // lifetimeScore dentro save_data. Al riallineamento successivo (seconda
+        // scheda, altro dispositivo, resync da conflitto) il client adottava il
+        // blob, lo rispingeva e il server rispondeva conflict:Score — un
+        // conflitto auto-inflitto, che con produzione ferma non si sbloccava mai
+        // (segnalazione del 10/09/2026: "Progressi scaricati dal Cloud!" a ripetizione).
+        let snap: any = null;
+        try { snap = snapshotCloudMeta(); }
+        catch (e) { console.error('[Save✗ SNAPSHOT]', e); }
 
         // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
         const stateJSON = JSON.stringify(store.gameState);
@@ -487,12 +551,13 @@ export function initBoot(): void {
         // (modals.js), che su cheatNoCloudSync NON si riallinea al cloud. Quindi: cheat che
         // ALZA → push accettato → classifica aggiornata; scenario che ABBASSA → push rifiutato
         // dall'anti-rollback ma NIENTE revert. Il save LOCALE è già avvenuto sopra.
-        if (store.gameState.user.username && currentUserPassword && currentSaveToken) {
+        if (store.gameState.user.username && currentUserPassword && currentSaveToken && snap) {
             try {
-                let rawScore = new w.Decimal(store.gameState.lifetimeScore);
-                if (rawScore.lt(0)) rawScore = new w.Decimal(0);
-                let scoreToSend = rawScore.toFixed(0);
-                const prestigeToSend = Math.floor(store.gameState.totalResets || 0);
+                // Tutto dall'istantanea presa insieme al blob (vedi sopra): il server
+                // confronta questi numeri con la classifica e li salva ACCANTO a
+                // save_data, quindi devono descrivere lo stesso istante.
+                const scoreToSend = snap.score;
+                const prestigeToSend = snap.prestige;
 
                 // Genera la firma usando il token dinamico
                 const dataString = `${scoreToSend}-${prestigeToSend}-${currentSaveToken}`;
@@ -503,23 +568,16 @@ export function initBoot(): void {
                     saveData: compressed,
                     score: scoreToSend,
                     prestige: prestigeToSend,
-                    equippedSkin: store.gameState.skins.current,
-                    totalFormattazioni: store.gameState.totalFormattazioni || 0,
+                    equippedSkin: snap.equippedSkin,
+                    totalFormattazioni: snap.totalFormattazioni,
                     // Stagione classifica: il lancio produzione apre la Season 1. Il
                     // backend (Edge Function) la usa per partizionare la leaderboard e
                     // far ripartire il wipe pulito senza che l'anti-rollback resusciti
                     // i punteggi pre-lancio. Campo additivo: non entra nell'hash.
-                    season: store.gameState.season || 1,
+                    season: snap.season,
                     // Snapshot pubblico per la feature Amici (statistiche + armadietto skin).
                     // Inviato in chiaro perché saveData è compresso e non leggibile lato server.
-                    profile: {
-                        totalClicks: Math.floor(store.gameState.totalClicks || 0),
-                        totalPlayTime: Math.floor(store.gameState.totalPlayTime || 0),
-                        longestCombo: Math.floor(store.gameState.longestCombo || 0),
-                        totalGolden: Math.floor(store.gameState.totalGoldenBugsClicked || 0),
-                        season: store.gameState.season || 1,
-                        skinsUnlocked: (store.gameState.skins && Array.isArray(store.gameState.skins.unlocked)) ? store.gameState.skins.unlocked : []
-                    },
+                    profile: snap.profile,
                     hash: signature
                 };
 
@@ -530,7 +588,7 @@ export function initBoot(): void {
                             console.log(`[Save✓] score=${scoreToSend} prestige=${prestigeToSend} format=${savePayload.totalFormattazioni}`);
                             markCloudSaved();
                         } else if (data.status === 'token_expired') {
-                            console.warn(`[Save✗ TOKEN EXPIRED] ${data.message}`);
+                            cloudTrace(`[Save✗ TOKEN EXPIRED] ${data.message}`);
                             currentSaveToken = null;
                             markCloudUnsynced('token');
                             if (!w._tokenExpiredNotified) {
@@ -539,13 +597,38 @@ export function initBoot(): void {
                                 if (w._showLoginForTokenExpiry) w._showLoginForTokenExpiry();
                             }
                         } else if (data.status === 'conflict') {
-                            console.warn(`[Save✗ CONFLICT] ${data.message} | sent: score=${scoreToSend} prestige=${prestigeToSend}`);
+                            // Conflitti CONSECUTIVI: azzerati da un push accettato
+                            // (markCloudSaved) e dal tocco sul badge. Servono al freno qui
+                            // sotto e alla riga di console, che prima diceva solo "(Score)"
+                            // senza i numeri di nessuna delle due parti.
+                            w._cloudConflictStreak = (w._cloudConflictStreak || 0) + 1;
+                            const streak = w._cloudConflictStreak;
+                            const ad = w._cloudLastAdopted;
+                            cloudTrace(`[Save✗ CONFLICT #${streak}] ${data.message} | inviato: score=${scoreToSend} prestige=${prestigeToSend} format=${snap.totalFormattazioni} season=${snap.season}` +
+                                (ad ? ` | ultimo cloud adottato ${Math.round((Date.now() - ad.at) / 1000)}s fa: score=${ad.score} prestige=${ad.prestige} format=${ad.totalFormattazioni} season=${ad.season}`
+                                    : ' | nessun cloud adottato in questa sessione'));
                             // LANCIO: durante la fase pre-wipe il cloud pre-lancio è "più
                             // avanti" solo perché il season-wipe backend non è ancora attivo.
                             // NON riallineare (perderemmo la migrazione) e NON allarmare: il
                             // locale è autoritativo, il push riuscirà a wipe avvenuto.
                             if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) {
                                 console.warn('[Cloud] Conflitto ignorato in fase di lancio (Season 1 autoritativa lato client).');
+                            } else if (streak > CLOUD_MAX_AUTO_RESYNC) {
+                                // FRENO. Tre riallineamenti di fila e il server risponde ancora
+                                // "più avanti": non è un incidente, è un'altra sessione (scheda
+                                // o dispositivo) che salva sullo stesso account, e ogni resync
+                                // adotta il SUO stato per poi perderlo al giro dopo. Continuare
+                                // in automatico era "Progressi scaricati dal Cloud!" a ripetizione
+                                // (segnalazione del 10/09/2026). Si ferma, lo dice in console e
+                                // sul badge — scavalcando il filtro dei 90s di markCloudUnsynced,
+                                // perché qui l'ultimo push riuscito può essere di pochi secondi
+                                // fa — e lascia il riprova al tocco.
+                                if (streak === CLOUD_MAX_AUTO_RESYNC + 1) {
+                                    console.error(`[Cloud] Conflitto persistente: ${CLOUD_MAX_AUTO_RESYNC} riallineamenti dal cloud e il server risponde ancora "più avanti". ` +
+                                        'Quasi sempre è un\'altra scheda o un altro dispositivo che salva su questo account. ' +
+                                        'Auto-resync SOSPESO: chiudi le altre sessioni e tocca il badge.');
+                                }
+                                _setCloudBadge('problem', 'conflict-loop');
                             } else {
                                 // Auto-recovery SILENZIOSA: il cloud è più avanti (anti-rollback
                                 // Format>Prestige>Score) quindi lo adottiamo come autoritativo da
@@ -556,14 +639,14 @@ export function initBoot(): void {
                                 if (typeof w._resyncFromCloud === 'function' && !w._resyncing &&
                                     _nowCf - (w._lastAutoResyncAt || 0) > 15000) {
                                     w._lastAutoResyncAt = _nowCf;
-                                    console.log('[Cloud] Conflitto → auto-resync dal cloud (autoritativo)…');
+                                    cloudTrace(`[Cloud] Conflitto → auto-resync dal cloud (autoritativo), giro ${streak} di ${CLOUD_MAX_AUTO_RESYNC}…`);
                                     w._resyncFromCloud();
                                 } else {
                                     markCloudUnsynced('conflict');
                                 }
                             }
                         } else if (data.status === 'warning') {
-                            console.warn(`[Save✗ WARNING] ${data.message}`);
+                            cloudTrace(`[Save✗ WARNING] ${data.message}`);
                             // Hash/integrità: il token client non combacia col server. Auto:
                             // rinnovo il token in silenzio e ritento al prossimo save (niente
                             // "ricarica la pagina"). Fallback badge se il refresh è già in corso.
@@ -574,11 +657,11 @@ export function initBoot(): void {
                                 markCloudUnsynced('warning');
                             }
                         } else {
-                            console.warn(`[Save✗] status=${data.status} msg=${data.message}`);
+                            cloudTrace(`[Save✗] status=${data.status} msg=${data.message}`);
                             markCloudUnsynced('error');
                         }
                     })
-                    .catch((err: any) => { console.warn("[Save✗ NETWORK]", err); markCloudUnsynced('network'); });
+                    .catch((err: any) => { cloudTrace('[Save✗ NETWORK] ' + ((err && err.message) || err)); markCloudUnsynced('network'); });
             } catch (e) {
                 console.error("[Save✗ HASH]", e);
             }
@@ -2475,6 +2558,16 @@ export function initBoot(): void {
                     }
                     // ========================================================
 
+                    // Com'era il locale PRIMA di adottare il cloud: finisce nella riga di
+                    // console in fondo, così un riallineamento lascia traccia leggibile.
+                    // Letto prima del reset qui sotto, che azzera tutto.
+                    const _localePrima = {
+                        score: String(store.gameState.lifetimeScore || 0),
+                        prestige: Math.floor(store.gameState.totalResets || 0),
+                        format: store.gameState.totalFormattazioni || 0,
+                        season: store.gameState.season || 1,
+                    };
+
                     // 4. Reset preventivo della memoria per partire puliti (Solo se carichiamo davvero dal cloud)
                     if (typeof w.resetGameToDefault === 'function') w.resetGameToDefault();
 
@@ -2599,10 +2692,27 @@ export function initBoot(): void {
                         }
                     }
 
+                    // Cosa abbiamo appena adottato: lo legge il conflitto successivo in
+                    // saveGame per dire in console "inviato X, il cloud aveva Y".
+                    w._cloudLastAdopted = {
+                        score: String(store.gameState.lifetimeScore || 0),
+                        prestige: Math.floor(store.gameState.totalResets || 0),
+                        totalFormattazioni: store.gameState.totalFormattazioni || 0,
+                        season: store.gameState.season || 1,
+                        at: Date.now(),
+                    };
+                    cloudTrace(`☁️ Cloud adottato${(opts && opts.force) ? ' (riallineamento da conflitto)' : ''}: ` +
+                        `score=${w._cloudLastAdopted.score} prestige=${w._cloudLastAdopted.prestige} format=${w._cloudLastAdopted.totalFormattazioni} season=${w._cloudLastAdopted.season}` +
+                        ` | locale prima: score=${_localePrima.score} prestige=${_localePrima.prestige} format=${_localePrima.format} season=${_localePrima.season}`);
+
                     // Il rientro si legge PRIMA di qualunque saveGame(): il salvataggio
                     // bumpa lastSaveTimestamp a tab visibile, quindi una riparazione skin
                     // applicata qui azzerava la pausa e con essa i guadagni offline.
-                    checkOfflineProgress();
+                    // NON su un riallineamento da conflitto (opts.force): lì non si sta
+                    // rientrando, si sta adottando lo stato di un'altra sessione che ha
+                    // continuato a produrre — i "guadagni offline" sarebbero contati due
+                    // volte, e il modale "Bentornato" spuntava a ogni giro del loop.
+                    if (!(opts && opts.force)) checkOfflineProgress();
 
                     if (applyRiparazioniSkin()) saveGame();
 
