@@ -1,10 +1,155 @@
 # Roadmap post-3.0 — Espòòò Clicker
 
-> Stato: concordata il 21/07/2026, **riverificata sul codice il 03/08/2026** (3.0.22, post-lancio). Orizzonte: fino alla **4.0** (aprile 2027). Cadenza mensile: ~1 settimana design, 1-2 implementazione, 1 buffer/hotfix.
-> Arcade: focus sui 3 giochi richiesti — **Stack Overflow** (falling blocks), **Q*Bert-like**, **BUGDOOM** — più **Flappy Espò** e il bonus multiplayer **Click Duel 1v1**.
-> Regola arcade: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne (lezione Phaser/Super Espò).
+> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1**.
+> **Orizzonte**: fino alla **4.0** (aprile 2027). Le due date fisse sono il **17 novembre 2026** (primo compleanno) e **aprile 2027**.
+> **Regola arcade**: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne *(lezione Phaser/Super Espò)*.
+> **Dove si trova cosa**: le release future sono raggruppate per fase qui sotto; il consuntivo della 3.1 è in fondo, in Archivio.
 
-## v3.1 — metà settembre 2026 · «Migliorie e bugfix»
+## Quadro generale — 4 fasi
+
+**Due date sono fisse e non si toccano:**
+
+- 🔒 **17 novembre 2026** — primo compleanno di Espòòò Clicker. La data non è simbolica: il commit «Prima versione» è del **17/11/2025**.
+- 🔒 **aprile 2027** — la 4.0.
+
+Tutto il resto è stato ritarato per creare margine.
+
+| Fase | Periodo | Release | Data | Tema |
+|---|---|---|---|---|
+| **0** | 10 → 30 set 2026 | — | *nessuna release* | Fondamenta |
+| **1** | ott → dic 2026 | **3.2** | 20 ottobre | Halloween 🎃 |
+| | | **3.3** | 🔒 **17 novembre** | Primo compleanno 🎂 |
+| | | **3.4** | 15 dicembre | Natale 🎄 |
+| **2** | gen → feb 2027 | **3.5** | inizio febbraio | Season 2 |
+| **3** | feb → apr 2027 | **4.0** | 🔒 **aprile** | Il Mondo di Espo 🏢 |
+
+### Da dove arriva il margine
+
+Il piano precedente aveva due punti di rottura: **2,5 settimane** fra 3.3 e 3.4 (con la 3.3 inchiodata al compleanno), e una 3.5 **tripla** (Season 2 + multiplayer + refactor) piazzata subito dopo le feste. Quattro correzioni:
+
+1. **3.4 slitta dal ~5 al 15 dicembre.** `isChristmasSeason()` copre 1 dic → 8 gen: uscendo il 15 restano **3,5 settimane** di tema attivo, e il deploy sta lontano dalle feste. → *3.3 → 3.4 passa da 2,5 a 4 settimane.*
+2. **3.5 slitta da metà gennaio a inizio febbraio.** Gennaio post-feste è tempo morto, e Season 1 (dal 3 agosto) arriva così a **6 mesi tondi** — un ritmo stagionale naturale. → *3.4 → 3.5 passa da ~4 settimane effettive a ~6.*
+3. **Q\*Bert si sposta dalla 3.4 alla 3.5.** La 3.4 deve completare un mezzo-tema: è già una release piena senza un cabinato nuovo. La 3.5 è quella con più spazio.
+4. **Il refactor di `boot.ts` esce dalla 3.5 e diventa un filo continuo** dalla Fase 0 in poi. Era il blocco più grosso della release più affollata, ed è il prerequisito della 4.0: spalmarlo lo toglie dal percorso critico. ⚠️ Motivo d'urgenza: il file è **cresciuto** durante la 3.1, da 2394 a **2625 righe**.
+
+### Ritmo per release
+
+~1 settimana di design, 1-2 di implementazione e contenuti, **1 di buffer/test**. Lezione della 3.1: il buffer non è opzionale — era la release "leggera" ed è uscita a 98 commit. La coda di QA di ogni versione erode l'inizio della successiva.
+
+---
+
+## FASE 0 — Fondamenta · 10 → 30 settembre 2026
+
+*Nessuna release.* Si prepara il terreno di tutta la Fase 1, e si chiudono i debiti che la 3.1 ha lasciato aperti.
+
+- 🔴 **Generalizzare `src/data/season.ts`** — **il vero prerequisito della 3.2**, e l'unico bloccante rimasto. Oggi il file gestisce solo `christmas`: `isSeasonActive()` ritorna `false` per qualunque altro id. Serve una config unica (id, finestra di date, tema, skin gatate) capace di reggere `halloween` + `christmas`, sullo stesso principio con cui oggi `IS_XMAS_TIME` gata la skin natalizia in `src/data/skins.ts`.
+- ⏳ **Debiti operativi della 3.1** (minuti di lavoro, ma tengono aperte due voci):
+  - caricare `php/secrets.php` su Altervista e **solo dopo** togliere il fallback sui due file storici;
+  - aggiungere la voce `labels` alla sezione `trello` del secrets **dell'area di test**.
+- 🎨 **Cablare 2-3 skin** dei **7 bozzetti** fermi in `assets/image/future/` (ordinati per rarità, nessuno ancora in `src/data/skins.ts`). Da qui in avanti se ne cablano 2-3 per release invece di accumularle: è contenuto già disegnato che non costa nulla.
+- 🔧 **Prima estrazione da `boot.ts`**: il **cloud-sync**. È il candidato naturale — la nota sul badge cloud lo segnala già da luglio — ed è codice che la 3.1 ha appena messo a posto, quindi si estrae a logica fresca.
+- 🧹 **Aggiornare `dev/docs/ui.md`**: è stale. La voce P2 sulla navbar chiede ancora «servirebbe un overflow menu», che la 3.1 ha costruito (menu ☰, barra da 210 a 114px su 375).
+
+---
+
+## FASE 1 — La stagione dei temi · ottobre → dicembre 2026
+
+Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: un tema è un `themeConfig` su una skin (`cssFile`, `bodyClass`, `vfx`, `specialMusic`, `goldenBugIcon`, `goldenBugColor`), caricato da `loadThemeCSS()` (`src/ui/render/index.ts:2526`). Halloween lo rileva, compleanno e Natale lo riusano: il secondo e il terzo tema costano meno del primo.
+
+### v3.2 — 20 ottobre 2026 · «Halloween» 🎃
+
+*Live per la finestra 24 ottobre → 2 novembre.*
+
+- **Tema Halloween**: palette arancio/viola, 2-3 skin a tempo, Golden Bug → **«Bug Maledetto»**
+- **Debutto del sistema stagioni** costruito in Fase 0: è la prima stagione a calendario che non sia Natale
+- ✅ **Fondamenta CSS — la premessa era sovradimensionata** (verifica 10/09/2026). Il tema **non** richiede di rifondare il CSS prima: ci sono già **3 temi** su questo binario — `8bit-theme.css` (484 righe, 44 selettori), `christmas-theme.css` (318, 25), `super-theme.css` (610) — e **i file tema sono puliti**: `!important` = 1 in christmas, 1 in 8bit. La "guerra di `!important`" è altrove e non li tocca: `styles/ui/desktop/super-theme.css` (**182**) e `styles/ui/desktop/skins-modal.css` (**132**), due file specifici. Il consolidamento a custom properties (`dev/docs/ui.md` P1) resta lavoro utile ma **non bloccante**: si fa mirato, quando conviene.
+- 🕹️ Arcade: nessun cabinato nuovo — **retint Halloween di Bug Invaders** (invasori fantasma)
+- 🔧 Filo refactor: seconda estrazione da `boot.ts`
+
+### v3.3 — 🔒 17 novembre 2026 · «Primo compleanno» 🎂
+
+*Data fissa: un anno esatto dal commit «Prima versione» (17/11/2025).*
+
+- **Tema «Vintage v1»**: recupero di CSS e asset della prima versione dalla git history, impacchettato come tema equipaggiabile **permanente** — è un premio, non un evento a tempo
+- **Skin/badge celebrativo** + achievement anniversario
+- **Easter egg**: formattazione numeri "alla v1", suoni originali se esistono
+- ⚠️ **PWA — in gran parte già c'è** (verifica 10/09/2026): `manifest.json` esiste ed è linkato (`index.php:28`) con `display: standalone` e icone 192/512 `maskable` in `assets/image/icons/`; il service worker è registrato (`index.php:431`). **Il gioco è con ogni probabilità già installabile oggi.** Resta il solo `beforeinstallprompt` custom, cioè l'*invito* a installare — ~1 giorno, non una feature. Primo passo: provarlo da telefono, poi decidere se serve il prompt o basta comunicarlo come regalo di compleanno.
+- 🕹️ Arcade: **Flappy Espò** — un input, sessioni da 15 secondi, mobile-first (colma il buco: i cabinati attuali sono quasi tutti da tastiera). Grafica in tema v1 per l'occasione.
+- 🔧 Filo refactor: terza estrazione da `boot.ts`
+
+### v3.4 — 15 dicembre 2026 · «Natale» 🎄
+
+*Slittata dal ~5 dicembre per dare respiro dopo il compleanno. Restano 3,5 settimane di tema attivo (`isChristmasSeason()` copre fino all'8 gennaio) e il deploy sta lontano dalle feste.*
+
+- **Completamento del tema Christmas** — oggi è un mezzo-tema dichiarato (`dev/docs/ui.md` P2): 318 righe e 25 selettori contro i 484/44 di 8bit, quindi modali e store restano base. Sui binari ormai rodati da Halloween e v1.
+- **2-3 skin natalizie nuove** + evento a tempo
+- 🕹️ Arcade: nessun cabinato nuovo — **retint natalizio di Snake Protocol**. *(Q\*Bert spostato in 3.5: completare un mezzo-tema è già una release piena.)*
+- 🔧 Filo refactor: quarta estrazione da `boot.ts` — a fine Fase 1 il grosso deve essere fuori
+
+---
+
+## FASE 2 — Season 2 · gennaio → febbraio 2027
+
+Gennaio è tempo di sviluppo, non di release: le feste tolgono 2-3 settimane effettive. Si esce a inizio febbraio, quando Season 1 compie **6 mesi tondi** dal lancio del 3 agosto.
+
+### v3.5 — inizio febbraio 2027 · «Season 2»
+
+- **Primo rollover stagionale vero**: reset classifica (season-wipe su Supabase production), economia ritoccata (predisposizione "economia inflazionata" in `src/core/bignum.ts`), skin Season 2, badge **«veterano Season 1»**. ⚠️ La costante `CURRENT_SEASON` della Edge Function `get-leaderboard` va bumpata a mano a ogni nuova Season.
+- 🎮 **Click Duel 1v1 — multiplayer realtime**: sfida un amico, 60 secondi, chi fa più bug vince. Invito dal sistema amici esistente (`src/ui/social.ts`), match su **Supabase Realtime** (canali broadcast): il browser parla direttamente con Supabase, Altervista è fuori dal percorso, quindi i limiti dell'hosting non contano. Si sincronizzano solo contatori → **latency-proof** (100-300ms invisibili). Solo fra amici, niente matchmaking classificato — il client non è verificabile, coerente con la policy della classifica.
+- 🕹️ Arcade: **Q\*Bert-like** (spostato dalla 3.4) — nome e personaggio propri: Espò salta sui blocchi di una codebase "refactorandoli", i nemici sono bug e merge conflict. ⚠️ I controlli diagonali su mobile vanno prototipati subito (d-pad ruotato a 45° o swipe): è lì che il gioco si gioca o si rompe.
+- 🔧 **Chiusura del refactor `boot.ts`** — quel che resta dopo le estrazioni di Fase 1. Obiettivo collaterale: staccare progressivamente il frontend dai PHP includes, che sblocca la portabilità futura (PWA piena, Cloudflare Pages, wrapper nativi).
+
+---
+
+## FASE 3 — Il salto · febbraio → aprile 2027
+
+Dalla 3.5 alla 4.0 restano ~8 settimane piene, su una base già ripulita dal refactor. È la finestra più lunga della roadmap, ed è deliberato: la 4.0 è la cosa più grande mai fatta sul progetto.
+
+### v4.0 — 🔒 aprile 2027 · «Il Mondo di Espo» 🏢
+
+- **Ufficio 3D** (three.js): la scena cresce con gli acquisti — ogni team di `src/data/teams.ts` aggiunge elementi fisici (11 stadi di crescita). Promozione = cambio skybox/ora del giorno; Formattazione = ambiente "quantico".
+- **Bug 3D interattivi**: il Golden Bug migra nel mondo e diventa caccia attiva; la mascotte gira per l'ufficio con la skin equipaggiata
+- **Boss Bug 3D**: debutto del boss settimanale community-wide, barra vita globale condivisa su Supabase
+- 🕹️ Arcade: **BUGDOOM** — raycaster stile Wolfenstein 3D fatto in casa (~1000 righe di canvas vanilla, niente port WASM né asset id Software). Corridoi di un server in fiamme, bug demoniaci. Teaser tematico perfetto del salto al 3D. Mobile: stick virtuale + auto-fire.
+- **Vincoli tecnici** (non negoziabili):
+  1. three.js in **lazy-load** come chunk separato — mai nel bundle principale, per non regredire sui tempi di caricamento sistemati nella 3.0
+  2. **Fallback 2D sempre disponibile**: la vista 3D è un tab/toggle opzionale, il gioco resta identico senza
+  3. three.js **bundlato con Vite**, mai da CDN *(lezione Phaser/Super Espò)*
+  4. Scope: **low-poly, 11 stadi e basta**. Animazioni della mascotte, meteo, personalizzazione dell'ufficio → 4.x
+
+---
+
+## Riepilogo arcade e multiplayer
+
+| Release | Data | Cabinato / feature | Note |
+|---|---|---|---|
+| 3.1 ✅ | 04 set 2026 | **Stack Overflow** | uscito — variante non-clone, ha riempito lo slot COMING SOON |
+| 3.2 | 20 ott 2026 | — | retint Halloween di Bug Invaders |
+| 3.3 | 17 nov 2026 | **Flappy Espò** | mobile-first, grafica v1 |
+| 3.4 | 15 dic 2026 | — | retint natalizio di Snake |
+| 3.5 | feb 2027 | **Q\*Bert-like** + 🎮 **Click Duel 1v1** | Supabase Realtime, solo fra amici |
+| 4.0 | apr 2027 | **BUGDOOM** + Boss Bug 3D | compagni del mondo 3D |
+
+## Dopo la 4.0 (consapevolmente fuori orizzonte)
+
+- **Espò Pinball** — candidato headline naturale per una 4.x (fisica via matter.js bundlato o scritta a mano, 2-3 settimane: il tuning del game feel è il costo vero)
+- **Ghost mode Flappy Espò** (replay-fantasma degli amici, asincrono) e **Stack Overflow VS** (versus a eventi stile Tetris 99) — estensioni multiplayer economiche una volta rodato Realtime col Click Duel
+- **Presence sul Boss Bug** ("N giocatori stanno combattendo ora") — upgrade quasi gratis via canale presence Supabase
+- **Season pass**, **gilde** (sopra l'infrastruttura amici esistente), **English release** (destino di `langs/`, completamento overlay `src/data/en/`, traduzione modali)
+- **Consolidamento CSS a custom properties** (`dev/docs/ui.md` P1) sui due file caldi: `styles/ui/desktop/super-theme.css` (182 `!important`) e `skins-modal.css` (132)
+- **Agosto 2027 = primo anniversario del lancio**: Season 3 + grande evento sul mondo 3D
+- **Steam / wrapper nativi**: decisione dopo Season 2-3 con i dati in mano. Il prerequisito è già in lavorazione — il refactor di Fase 1-2 stacca il frontend dai PHP includes.
+
+---
+
+# Archivio
+
+## v3.1 — ✅ USCITA il 04/09/2026 (tag `v3.1-Release`, 3.1.6) · «Migliorie e bugfix»
+
+> **Consuntivo (10/09/2026).** 98 commit dal lancio, ~5 settimane, uscita **in anticipo** sulla data prevista (metà settembre).
+> Era pianificata come la release leggera: è stata la più grande del post-lancio. Lo scarto è quasi tutto **QA reale** arrivata coi giocatori veri — revisione mobile completa (menu ☰, tutte le finestre a schermo pieno, due audit da 12 finestre, arcade in verticale), 4 segnalazioni sugli Amici, 2 giri di bilanciamento, le riparazioni Fondatore.
+> **Dal piano originale è rimasto fuori un solo punto**: le skin di `assets/image/future/` (oggi **7 bozzetti** ordinati per rarità) non sono ancora cablate in `src/data/skins.ts`. La leaderboard season-aware si è rivelata già fatta server-side (resta il campo in risposta, voce minore).
+> ⏳ **Debiti operativi aperti** — non codice, ma bloccano la chiusura di due voci: caricare `php/secrets.php` su Altervista e poi togliere il fallback sui due file storici; aggiungere la voce `labels` alla sezione `trello` del secrets **dell'area di test**.
 
 - Coda hotfix post-lancio
 - ~~☁️ **Badge cloud-sync — rifacimento**~~ ✅ **FATTO il 03/08/2026** (segnalazione QA 31/07/2026; pre-lancio era entrata solo la mitigazione: tap → nascondi badge + toast).
@@ -219,70 +364,3 @@
 - ~~Difesa in profondità: `<FilesMatch>` per i file di config~~ ✅ **FATTO**, nella `.htaccess` **di root** (il match è sul nome del file, quindi eredita in tutte le sottocartelle, come già la regola sui `.sql`; `php/.htaccess` contiene solo `mod_expires`/`mod_deflate`). Nega `secrets|config|r2-config|trello-config` con o senza `.example`, lasciando servibile `secrets-load.php`, che non contiene segreti. Serve al caso in cui PHP non giri: lì Apache servirebbe il sorgente in chiaro. ⚠️ **Non verificabile in locale**: il server PHP built-in ignora `.htaccess`, quindi il primo controllo vero va fatto in test.
 
 ---
-
-## v3.2 — metà ottobre 2026 · «Halloween» 🎃
-
-- **Sistema stagioni minimo configurabile**: generalizzare `src/data/season.ts` (oggi gestisce solo `christmas`) con config id/date/tema — deve reggere `halloween` + `christmas`. Niente season pass (rimandato).
-- **Tema Halloween**: palette arancio/viola, 2-3 skin a tempo, Golden Bug → "Bug Maledetto"
-- ⚠️ **Fondamenta CSS**: il tema va costruito con custom properties per tema, NON come quarto strato sulla guerra di `!important` (3 sistemi skin paralleli, vedi `dev/docs/ui.md` P1). Halloween inaugura il pattern; v1 e Natale lo riusano. Con 3 temi in 3 release consecutive, saltare questo passo non è un'opzione.
-- 🕹️ Arcade: nessun gioco nuovo — **retint Halloween di Bug Invaders** (invasori fantasma)
-
-## v3.3 — metà novembre 2026 · «Anniversario — Tema v1» 🎂
-
-Il vero anniversario di Espòòò Clicker.
-
-- **Tema "Vintage v1"**: recupero CSS/asset della prima versione dalla git history, impacchettato come tema equipaggiabile **permanente** (è un premio, non un evento a tempo)
-- Skin/badge celebrativo + achievement anniversario
-- Easter egg: formattazione numeri "alla v1", suoni originali se esistono
-- **PWA installabile**: manifest + install prompt (il SW c'è già dalla 3.0) — "installa Espò sul telefono" come regalo d'anniversario
-- 🕹️ Arcade: **Flappy Espò** — un input, sessioni da 15s, mobile-first (colma il buco: i 6 giochi attuali sono quasi tutti da tastiera). Grafica in tema v1 per l'occasione.
-
-## v3.4 — inizio dicembre 2026 · «Natale» 🎄
-
-Target uscita **~5 dicembre** (non metà mese): `isChristmasSeason()` attiva da inizio dicembre, e niente deploy sotto le feste.
-
-- **Completamento tema Christmas** (oggi "mezzo-tema", copre solo modali/store — vedi `dev/docs/ui.md` P2), sui binari del sistema temi rodato con Halloween e v1
-- 2-3 skin natalizie nuove + evento a tempo
-- 🕹️ Arcade: **Q*Bert-like** (nome e personaggio propri: Espò che salta sui blocchi di una codebase "refactorandoli"; nemici = bug e merge conflict). ⚠️ Controlli diagonali su mobile da prototipare presto (d-pad a 45° o swipe). + retint natalizio di Snake Protocol.
-
-## v3.5 — metà gennaio 2027 · «Season 2»
-
-- **Primo rollover stagionale vero**: reset classifica (season-wipe su Supabase production), economia ritoccata (predisposizione "economia inflazionata" in `src/core/bignum.ts`), skin Season 2, badge "veterano Season 1"
-- 🎮 **Click Duel 1v1 (bonus multiplayer realtime)**: sfida un amico — 60 secondi, chi fa più bug vince. Invito via sistema amici esistente (`src/ui/social.ts`), match su **Supabase Realtime** (canali broadcast): il browser si collega direttamente a Supabase, Altervista fuori dal percorso, quindi i limiti hosting non contano. Si sincronizzano solo contatori → latency-proof (~100-300ms invisibili). Solo tra amici, niente matchmaking classificato (client non verificabile, coerente con la policy leaderboard). ⚠️ Fusibile: se il tempo stringe, slitta in 4.0.
-- **Refactor `boot.ts`** (~2400 righe) — NON negoziabile: estrarre cloud-sync e migrazione di lancio (post-lancio = codice morto isolabile). Prerequisito del 3D di aprile. Obiettivo collaterale: staccare progressivamente il frontend dai PHP includes (sblocca portabilità futura: PWA piena, Pages, wrapper nativi).
-- 🕹️ Arcade: nessun cabinato nuovo (release già tripla: Season 2 + multiplayer + refactor)
-
-## v4.0 — aprile 2027 · «Il Mondo di Espo» 🏢
-
-- **Ufficio 3D** (three.js): scena che cresce con gli acquisti — ogni team di `src/data/teams.ts` aggiunge elementi fisici (11 stadi di crescita). Promozione = cambio skybox/ora; Formattazione = ambiente "quantico".
-- **Bug 3D interattivi** nella scena (il Golden Bug migra nel mondo e diventa caccia attiva); mascotte Espo con la skin equipaggiata
-- **Boss Bug 3D**: debutto del boss settimanale community-wide direttamente nel mondo 3D (barra vita globale condivisa su Supabase)
-- Click Duel 1v1 se slittato dalla 3.5
-- 🕹️ Arcade: **BUGDOOM** — raycaster stile Wolfenstein 3D fatto in casa (~1000 righe canvas vanilla, niente port WASM/asset id Software). Corridoi di un server in fiamme, bug demoniaci. Teaser tematico perfetto del salto al 3D. Mobile: stick virtuale + auto-fire.
-- Vincoli tecnici:
-  1. three.js **lazy-load** come chunk separato (mai nel bundle principale — non regredire sui tempi di caricamento sistemati in 3.0)
-  2. **Fallback 2D sempre disponibile**: vista 3D = tab/toggle opzionale, il gioco resta identico senza
-  3. three.js **bundlato con Vite**, mai da CDN
-  4. Scope: low-poly, 11 stadi e basta. Animazioni mascotte, meteo, personalizzazione ufficio → 4.x
-
----
-
-## Riepilogo arcade e multiplayer
-
-| Release | Gioco / feature | Note |
-|---|---|---|
-| 3.1 | Stack Overflow (falling blocks) | riempie slot COMING SOON, variante non-clone |
-| 3.2 | — (retint Halloween Bug Invaders) | il piatto forte è il tema |
-| 3.3 | Flappy Espò | mobile-first, grafica v1 |
-| 3.4 | Q*Bert-like "refactoring" | + retint natalizio Snake |
-| 3.5 | 🎮 Click Duel 1v1 (multiplayer bonus) | Supabase Realtime, solo tra amici |
-| 4.0 | BUGDOOM (raycaster) + Boss Bug 3D | teaser/compagni del mondo 3D |
-
-## Dopo la 4.0 (consapevolmente fuori orizzonte)
-
-- **Espò Pinball** — candidato headline naturale per una 4.x (fisica via matter.js bundlato o a mano, 2-3 settimane, tuning del game feel è il costo vero)
-- **Ghost mode Flappy Espò** (replay-fantasma degli amici, asincrono) e **Stack Overflow VS** (versus a eventi stile Tetris 99) — estensioni multiplayer economiche una volta rodato Realtime col Click Duel
-- **Presence sul Boss Bug** ("N giocatori stanno combattendo ora") — upgrade quasi gratis via canale presence Supabase
-- Season pass, **gilde** (sopra l'infra friends), **English release** (destino `langs/`, overlay `src/data/en/`, modali)
-- **Agosto 2027 = primo anniversario del lancio**: Season 3 + grande evento sul mondo 3D
-- Steam/wrapper nativi: decisione dopo Season 2-3 con dati in mano; prerequisito già in lavorazione (frontend statico via refactor 3.5)
