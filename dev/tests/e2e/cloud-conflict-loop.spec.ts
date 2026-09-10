@@ -117,7 +117,8 @@ test.describe('Loop di conflitto cloud', () => {
     expect(login, 'ma almeno uno c\'è stato').toBeGreaterThanOrEqual(1);
     const dopoFreno = login;
     await expect(page.locator(badge)).toBeVisible();
-    await expect(page.locator(badge)).toContainText("Un'altra scheda o dispositivo");
+    // Il badge dice il fatto, non una causa che non può conoscere.
+    await expect(page.locator(badge)).toContainText('Il cloud resta più avanti');
     expect(errori.filter((t) => t.includes('Conflitto persistente')).length, 'la console deve dire perché, una volta sola').toBe(1);
 
     // Da qui in poi, per quanti conflitti arrivino, nessun altro login automatico.

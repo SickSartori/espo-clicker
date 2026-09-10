@@ -305,9 +305,13 @@ export function initBoot(): void {
             if (reason === 'stale-cloud')
                 return isEn ? '✓ Progress safe on this device — the leaderboard catches up shortly'
                             : '✓ Progressi al sicuro su questo dispositivo — la classifica si riallinea a breve';
+            // Si dice il FATTO, non la causa. La versione precedente affermava
+            // «un'altra scheda sta salvando»: per l'account T3tt3 (10/09/2026) era
+            // falso — finestra unica, il cloud era avanti per un difetto nostro —
+            // e mandava a caccia di una scheda che non esisteva.
             if (reason === 'conflict-loop')
-                return isEn ? '⚠ Another tab or device is saving on this account — close it, then tap'
-                            : '⚠ Un\'altra scheda o dispositivo sta salvando su questo account — chiudila, poi tocca';
+                return isEn ? '⚠ The cloud stays ahead — close any other tab, then tap'
+                            : '⚠ Il cloud resta più avanti — se giochi in un\'altra scheda chiudila, poi tocca';
             return reason === 'conflict'
                 ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
                         : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
@@ -653,8 +657,9 @@ export function initBoot(): void {
                                 // fa — e lascia il riprova al tocco.
                                 if (streak === CLOUD_MAX_AUTO_RESYNC + 1) {
                                     console.error(`[Cloud] Conflitto persistente: ${CLOUD_MAX_AUTO_RESYNC} riallineamenti dal cloud e il server risponde ancora "più avanti". ` +
-                                        'Quasi sempre è un\'altra scheda o un altro dispositivo che salva su questo account. ' +
-                                        'Auto-resync SOSPESO: chiudi le altre sessioni e tocca il badge.');
+                                        'Cause possibili: un\'altra scheda o dispositivo che salva su questo account, oppure la riga di ' +
+                                        'classifica avanti al salvataggio che il server consegna (vedi i numeri nelle righe CONFLICT qui sopra). ' +
+                                        'Auto-resync SOSPESO: si continua a salvare, il riallineamento riparte solo dal badge.');
                                 }
                                 _setCloudBadge('problem', 'conflict-loop');
                             } else {
