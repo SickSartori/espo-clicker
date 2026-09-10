@@ -148,6 +148,6 @@ export const PRESTIGE_PERSISTENT_KEYS: readonly string[] = [
     'totalGoldenBugsClicked', 'totalPlayTime', 'lifetimeScore', 'totalOfflineScore',
     'superUpgrades', 'qBits', 'lifetimeQBits', 'totalFormattazioni', 'longestCombo',
     'arcadeHighScores',
-    'seenFeedbackIntro', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
+    'feedbackIntroAt', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
     'riparazioniSkin',
 ];

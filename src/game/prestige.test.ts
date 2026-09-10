@@ -116,9 +116,9 @@ describe('PRESTIGE_PERSISTENT_KEYS', () => {
   // La Formattazione riparte da getInitialGameState(): quello che non è in lista
   // torna al default. Questi flag descrivono l'ACCOUNT, non la partita, e
   // azzerarli si vede solo giri dopo — il popup "come si segnala" ricompariva a
-  // ogni Format perché seenFeedbackIntro non era elencato.
+  // ogni Format perché il suo flag (allora seenFeedbackIntro) non era elencato.
   const flagDiAccount = [
-    'seenFeedbackIntro', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
+    'feedbackIntroAt', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
     'riparazioniSkin',
   ];
 

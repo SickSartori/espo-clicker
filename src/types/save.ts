@@ -104,6 +104,13 @@ export interface SaveStateV3 extends Omit<SaveStateV2, 'schemaVersion'> {
    * REALE da uno stato default — anche i nuovi giocatori nascono schemaVersion 3.
    */
   launchMigrated?: boolean;
+  /**
+   * Timestamp (ms) dell'ultima apertura del popup "come si segnala", 0 = mai.
+   * Torna almeno una volta a settimana (`ui/rules/feedback-intro.ts`). Ha
+   * sostituito il booleano `seenFeedbackIntro`, che nei save vecchi può ancora
+   * esserci ma non viene più letto.
+   */
+  feedbackIntroAt?: number;
 }
 
 /** Alias per lo schema corrente — aggiornare quando si bumpa. */
