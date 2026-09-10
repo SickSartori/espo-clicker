@@ -261,6 +261,7 @@ export function initBoot(): void {
         lastCloudSaveOkAt = Date.now();
         w._cloudPreWipe = false; // push riuscito → il cloud ora contiene il nostro save Season 1
         w._cloudConflictStreak = 0; // un push accettato chiude la serie di conflitti
+        w._cloudStaleServer = false; // classifica e salvataggio cloud sono tornati in pari
         _setCloudBadge(false);
     }
     function markCloudUnsynced(reason: any) {
@@ -298,9 +299,19 @@ export function initBoot(): void {
             // risulta di nuovo avanti al giro dopo. La causa è quasi sempre
             // un'altra sessione dello stesso account, e va detto: "tocca per
             // sincronizzare" da solo rimandava il giocatore nello stesso giro.
+            // Classifica e salvataggio cloud disallineati: il locale è la copia buona
+            // e non c'è niente da toccare. Si dice cosa succede, senza invitare a un
+            // gesto che riporterebbe indietro (vedi loadCloudData, ramo 'cloud-indietro').
+            if (reason === 'stale-cloud')
+                return isEn ? '✓ Progress safe on this device — the leaderboard catches up shortly'
+                            : '✓ Progressi al sicuro su questo dispositivo — la classifica si riallinea a breve';
+            // Si dice il FATTO, non la causa. La versione precedente affermava
+            // «un'altra scheda sta salvando»: per l'account T3tt3 (10/09/2026) era
+            // falso — finestra unica, il cloud era avanti per un difetto nostro —
+            // e mandava a caccia di una scheda che non esisteva.
             if (reason === 'conflict-loop')
-                return isEn ? '⚠ Another tab or device is saving on this account — close it, then tap'
-                            : '⚠ Un\'altra scheda o dispositivo sta salvando su questo account — chiudila, poi tocca';
+                return isEn ? '⚠ The cloud stays ahead — close any other tab, then tap'
+                            : '⚠ Il cloud resta più avanti — se giochi in un\'altra scheda chiudila, poi tocca';
             return reason === 'conflict'
                 ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
                         : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
@@ -309,6 +320,9 @@ export function initBoot(): void {
         }
         // failed: il motivo cambia l'azione utile, quindi va detto.
         switch (reason) {
+            case 'stale-cloud':
+                return isEn ? '✓ Progress safe on this device — the leaderboard catches up shortly'
+                            : '✓ Progressi al sicuro su questo dispositivo — la classifica si riallinea a breve';
             case 'nocreds':
             case 'login':
                 return isEn ? '⚠ Sign in again to sync — tap' : '⚠ Rifai il login per sincronizzare — tocca';
@@ -325,9 +339,12 @@ export function initBoot(): void {
         }
     }
 
-    function _cloudBadgeColor(state: CloudBadgeState) {
+    function _cloudBadgeColor(state: CloudBadgeState, reason?: any) {
         if (state === 'ok') return 'rgba(39,174,96,0.95)';
         if (state === 'syncing') return 'rgba(41,128,185,0.95)';
+        // 'stale-cloud' non è un guaio del giocatore: i progressi sono salvi qui e
+        // la classifica rientra da sola. Rosso allarme sarebbe una bugia.
+        if (reason === 'stale-cloud') return 'rgba(39,174,96,0.95)';
         return 'rgba(192,57,43,0.95)';
     }
 
@@ -364,7 +381,13 @@ export function initBoot(): void {
             // Conflitto → adotta il cloud autoritativo; altrimenti (token/rete)
             // → rinnova il token e ritenta. Il tocco è una scelta del giocatore
             // (ha chiuso l'altra scheda?): riapre anche i tentativi automatici.
-            if ((wasReason === 'conflict' || wasReason === 'conflict-loop') && typeof w._resyncFromCloud === 'function') {
+            if (wasReason === 'stale-cloud') {
+                // Niente da riallineare: il cloud è indietro. L'unica mossa utile è
+                // ritentare il push — se nel frattempo la produzione ha superato la
+                // classifica, passa e tutto rientra.
+                await saveGame();
+                res = w._cloudStaleServer ? { ok: false, reason: 'stale-cloud' } : { ok: true, reason: 'push' };
+            } else if ((wasReason === 'conflict' || wasReason === 'conflict-loop') && typeof w._resyncFromCloud === 'function') {
                 w._cloudConflictStreak = 0;
                 res = await w._resyncFromCloud();
             } else if (typeof w._silentTokenRefresh === 'function') {
@@ -409,10 +432,12 @@ export function initBoot(): void {
             document.body.appendChild(badge);
         }
 
-        badge.textContent = _cloudBadgeText(state, state === 'failed' ? reason : _cloudBadgeReason, isEn);
-        badge.style.background = _cloudBadgeColor(state);
-        // Durante il sync il tap non deve accodare un secondo tentativo.
-        badge.style.cursor = (state === 'syncing' || state === 'ok') ? 'default' : 'pointer';
+        const _motivoMostrato = state === 'failed' ? reason : _cloudBadgeReason;
+        badge.textContent = _cloudBadgeText(state, _motivoMostrato, isEn);
+        badge.style.background = _cloudBadgeColor(state, _motivoMostrato);
+        // Durante il sync il tap non deve accodare un secondo tentativo. Con
+        // 'stale-cloud' non c'è nessun gesto utile: è un avviso, non un pulsante.
+        badge.style.cursor = (state === 'syncing' || state === 'ok' || _motivoMostrato === 'stale-cloud') ? 'default' : 'pointer';
         badge.title = _cloudBadgeReason ? ('cloud: ' + _cloudBadgeReason) : '';
         badge.style.display = 'block';
 
@@ -613,6 +638,13 @@ export function initBoot(): void {
                             // locale è autoritativo, il push riuscirà a wipe avvenuto.
                             if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) {
                                 console.warn('[Cloud] Conflitto ignorato in fase di lancio (Season 1 autoritativa lato client).');
+                            } else if (w._cloudStaleServer) {
+                                // Già accertato in questa sessione: la riga di classifica ha
+                                // preso il largo rispetto al salvataggio cloud, quindi
+                                // riallinearsi porterebbe solo indietro. Si continua a
+                                // pushare a ogni autosave — è così che si rientra, quando la
+                                // produzione supera quel numero — ma senza più resync.
+                                _setCloudBadge('problem', 'stale-cloud');
                             } else if (streak > CLOUD_MAX_AUTO_RESYNC) {
                                 // FRENO. Tre riallineamenti di fila e il server risponde ancora
                                 // "più avanti": non è un incidente, è un'altra sessione (scheda
@@ -625,8 +657,9 @@ export function initBoot(): void {
                                 // fa — e lascia il riprova al tocco.
                                 if (streak === CLOUD_MAX_AUTO_RESYNC + 1) {
                                     console.error(`[Cloud] Conflitto persistente: ${CLOUD_MAX_AUTO_RESYNC} riallineamenti dal cloud e il server risponde ancora "più avanti". ` +
-                                        'Quasi sempre è un\'altra scheda o un altro dispositivo che salva su questo account. ' +
-                                        'Auto-resync SOSPESO: chiudi le altre sessioni e tocca il badge.');
+                                        'Cause possibili: un\'altra scheda o dispositivo che salva su questo account, oppure la riga di ' +
+                                        'classifica avanti al salvataggio che il server consegna (vedi i numeri nelle righe CONFLICT qui sopra). ' +
+                                        'Auto-resync SOSPESO: si continua a salvare, il riallineamento riparte solo dal badge.');
                                 }
                                 _setCloudBadge('problem', 'conflict-loop');
                             } else {
@@ -640,7 +673,16 @@ export function initBoot(): void {
                                     _nowCf - (w._lastAutoResyncAt || 0) > 15000) {
                                     w._lastAutoResyncAt = _nowCf;
                                     cloudTrace(`[Cloud] Conflitto → auto-resync dal cloud (autoritativo), giro ${streak} di ${CLOUD_MAX_AUTO_RESYNC}…`);
-                                    w._resyncFromCloud();
+                                    Promise.resolve(w._resyncFromCloud()).then((r: any) => {
+                                        // Il cloud consegnato è più povero del nostro stato: non è
+                                        // stato adottato (loadCloudData l'ha rifiutato) e insistere
+                                        // non serve. Da qui in poi niente più resync per questa
+                                        // sessione, e il badge lo dice senza allarmare.
+                                        if (r && r.reason === 'stale-cloud') {
+                                            w._cloudStaleServer = true;
+                                            _setCloudBadge('problem', 'stale-cloud');
+                                        }
+                                    }).catch(() => { /* l'esito lo racconta comunque il badge */ });
                                 } else {
                                     markCloudUnsynced('conflict');
                                 }
@@ -2424,27 +2466,45 @@ export function initBoot(): void {
                     }
 
                     // --- 2. PROTEZIONE ANTI-ROLLBACK ---
-                    // Recovery da conflitto (opts.force): salta il guard. Il server ha già
-                    // stabilito che il cloud è autoritativo (Format>Prestige>Score); il
-                    // confronto solo-lifetimeScore qui NON basta a risolvere i conflitti di
-                    // prestige/format, e senza questo by-pass il client resterebbe bloccato.
-                    // Save locale di un altro account (_localeEstraneo): idem, niente
-                    // confronto — non è un rollback, è roba di qualcun altro.
-                    if (!(opts && opts.force) && !_localeEstraneo && store.gameState && store.gameState.lifetimeScore) {
-                        // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
-                        // (Format > Prestige > Score, EF Supabase save-progress) → client e
-                        // server decidono allo stesso modo anche nei casi limite in cui il
-                        // solo lifetimeScore darebbe il verdetto opposto (es. cloud
-                        // formattato di recente con lifetime più basso).
-                        const verdetto = window.EspoV3.save.antiRollback.decide({
-                            totalFormattazioni: store.gameState.totalFormattazioni || 0,
-                            lifetimePrestigePoints: String(store.gameState.lifetimePrestigePoints || 0),
-                            lifetimeScore: String(store.gameState.lifetimeScore || 0),
-                        }, {
-                            totalFormattazioni: cloudState.totalFormattazioni || 0,
-                            lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
-                            lifetimeScore: cloudState.lifetimeScore || 0,
-                        });
+                    // Save locale di un altro account (_localeEstraneo): niente confronto —
+                    // non è un rollback, è roba di qualcun altro.
+                    // F2 → F8: delega a EspoV3 la STESSA gerarchia del server
+                    // (Format > Prestige > Score, EF Supabase save-progress) → client e
+                    // server decidono allo stesso modo anche nei casi limite in cui il
+                    // solo lifetimeScore darebbe il verdetto opposto (es. cloud
+                    // formattato di recente con lifetime più basso).
+                    const _confrontabile = !_localeEstraneo && store.gameState && store.gameState.lifetimeScore;
+                    const verdetto = _confrontabile ? window.EspoV3.save.antiRollback.decide({
+                        totalFormattazioni: store.gameState.totalFormattazioni || 0,
+                        lifetimePrestigePoints: String(store.gameState.lifetimePrestigePoints || 0),
+                        lifetimeScore: String(store.gameState.lifetimeScore || 0),
+                    }, {
+                        totalFormattazioni: cloudState.totalFormattazioni || 0,
+                        lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
+                        lifetimeScore: cloudState.lifetimeScore || 0,
+                    }) : null;
+
+                    // --- 2a. RIALLINEAMENTO DA CONFLITTO SU UN CLOUD PIÙ POVERO ---
+                    // opts.force salta il guard perché "il server ha già stabilito che il
+                    // cloud è autoritativo". Ma il server confronta la riga di CLASSIFICA
+                    // (leaderboard.score), non il blob che poi ci consegna (users.save_data):
+                    // se i due hanno preso strade diverse, ci arriva un blob INDIETRO
+                    // rispetto a noi mentre il server continua a dire "il cloud è più avanti".
+                    // Adottarlo butterebbe via progressi veri e non risolverebbe niente — al
+                    // push successivo il confronto è di nuovo sulla classifica. È il caso
+                    // dell'account T3tt3 (10/09/2026): classifica ~2.2e12 sopra il blob,
+                    // ogni resync lo riportava indietro e il badge lo invitava a ritoccare.
+                    // Qui ci si ferma: il locale resta, e la classifica si riallinea da sé
+                    // quando la produzione supera quel numero.
+                    if (opts && opts.force && verdetto === 'local') {
+                        cloudTrace('⛔ Riallineamento RIFIUTATO: il cloud è indietro rispetto a questo dispositivo ' +
+                            `(cloud lifetimeScore=${cloudState.lifetimeScore}, locale=${String(store.gameState.lifetimeScore)}). ` +
+                            'Il server confronta la riga di classifica, che è più avanti del salvataggio che consegna: ' +
+                            'adottarlo perderebbe progressi. Si tiene il locale, la classifica si riallinea al primo push accettato.');
+                        return { adopted: false, reason: 'cloud-indietro' };
+                    }
+
+                    if (!(opts && opts.force) && verdetto !== null) {
                         const keepLocal = verdetto !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
 
                         if (keepLocal) {
@@ -2481,7 +2541,7 @@ export function initBoot(): void {
                             // mai. Testo diverso perché qui non si scarica niente: il locale
                             // è autoritativo ed è il saveGame() qui sopra a spingerlo su.
                             w.showToast(store.gameData.texts.toasts.cloudSyncLocal);
-                            return;
+                            return { adopted: false, reason: 'locale-vince' };
                         }
                     }
 
