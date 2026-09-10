@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Decimal from 'break_eternity.js';
 import {
+  PRESTIGE_PERSISTENT_KEYS,
   prestigeGained,
   applyTokenDuplicator,
   prestigeStartingBugs,
@@ -108,5 +109,42 @@ describe('formatQbitsEarned', () => {
     expect(formatQbitsEarned(D, '40000').toString()).toBe('3');
     // 1M/10k = 100 → sqrt 10 → 11
     expect(formatQbitsEarned(D, '1000000').toString()).toBe('11');
+  });
+});
+
+describe('PRESTIGE_PERSISTENT_KEYS', () => {
+  // La Formattazione riparte da getInitialGameState(): quello che non è in lista
+  // torna al default. Questi flag descrivono l'ACCOUNT, non la partita, e
+  // azzerarli si vede solo giri dopo — il popup "come si segnala" ricompariva a
+  // ogni Format perché seenFeedbackIntro non era elencato.
+  const flagDiAccount = [
+    'seenFeedbackIntro', 'season', 'launchMigrated', 'isFounder', 'foundedAt',
+    'riparazioniSkin',
+  ];
+
+  it.each(flagDiAccount)('sopravvive alla Formattazione: %s', (chiave) => {
+    expect(PRESTIGE_PERSISTENT_KEYS).toContain(chiave);
+  });
+
+  it('i progressi che attraversano i cicli restano in lista', () => {
+    for (const k of ['achievements', 'prestigeUpgrades', 'skins', 'user',
+      'lifetimeScore', 'qBits', 'lifetimeQBits', 'totalFormattazioni',
+      'arcadeHighScores']) {
+      expect(PRESTIGE_PERSISTENT_KEYS).toContain(k);
+    }
+  });
+
+  it('la partita corrente NON sopravvive: si riparte davvero da capo', () => {
+    // Il senso della Formattazione. Se una di queste finisse in lista il reset
+    // smetterebbe di essere tale, e nessun altro test se ne accorgerebbe.
+    for (const k of ['score', 'totalScore', 'teams', 'clickUpgrades',
+      'buildingEnhancements', 'prestigePoints', 'lifetimePrestigePoints',
+      'totalResets', 'pendingFounderChoice']) {
+      expect(PRESTIGE_PERSISTENT_KEYS).not.toContain(k);
+    }
+  });
+
+  it('nessun duplicato', () => {
+    expect(new Set(PRESTIGE_PERSISTENT_KEYS).size).toBe(PRESTIGE_PERSISTENT_KEYS.length);
   });
 });
