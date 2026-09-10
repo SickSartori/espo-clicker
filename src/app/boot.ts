@@ -2356,7 +2356,7 @@ export function initBoot(): void {
                         // server decidono allo stesso modo anche nei casi limite in cui il
                         // solo lifetimeScore darebbe il verdetto opposto (es. cloud
                         // formattato di recente con lifetime più basso).
-                        const keepLocal = window.EspoV3.save.antiRollback.decide({
+                        const verdetto = window.EspoV3.save.antiRollback.decide({
                             totalFormattazioni: store.gameState.totalFormattazioni || 0,
                             lifetimePrestigePoints: String(store.gameState.lifetimePrestigePoints || 0),
                             lifetimeScore: String(store.gameState.lifetimeScore || 0),
@@ -2364,19 +2364,43 @@ export function initBoot(): void {
                             totalFormattazioni: cloudState.totalFormattazioni || 0,
                             lifetimePrestigePoints: cloudState.lifetimePrestigePoints || 0,
                             lifetimeScore: cloudState.lifetimeScore || 0,
-                        }) !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
+                        });
+                        const keepLocal = verdetto !== 'cloud'; // 'local' e 'equal' → tieni il locale (come il gte legacy)
 
                         if (keepLocal) {
-                            console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
+                            // 'equal' = locale e cloud coincidono, cioè il rientro NORMALE
+                            // sullo stesso dispositivo. Chiamarlo "cloud obsoleto" riempiva
+                            // la console di un allarme a ogni ricaricamento e faceva leggere
+                            // come rotta una sincronizzazione che invece funzionava.
+                            if (verdetto === 'local')
+                                console.warn("⚠️ Cloud Save obsoleto rilevato. Mantengo i dati locali più recenti.");
+                            else
+                                console.log("☁️ Cloud allineato al salvataggio locale.");
 
                             const currentSessionUser = sessionStorage.getItem('espooUser');
                             if (currentSessionUser && store.gameState.user.username !== currentSessionUser) {
                                 store.gameState.user.username = currentSessionUser;
                             }
 
+                            // Il rientro va valutato ANCHE quando vince il locale — cioè
+                            // sempre, per chi riapre il gioco sullo stesso browser. Prima
+                            // questo `return` scavalcava checkOfflineProgress() in fondo alla
+                            // funzione: il modale "Bentornato" non compariva mai e i guadagni
+                            // offline sparivano al primo autosave (30s), che riscrive
+                            // lastSaveTimestamp. Restava vivo solo il percorso "cloud
+                            // adottato" (dispositivo nuovo / cache pulita).
+                            // ⚠️ PRIMA di saveGame(): il salvataggio bumpa lastSaveTimestamp
+                            // a tab visibile e il calcolo troverebbe una pausa di ~0 secondi.
+                            checkOfflineProgress();
+
                             saveGame();
                             if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
                             w.updateUI();
+                            // Stesso motivo del modale: la conferma di sync viveva solo in
+                            // fondo alla funzione, quindi sul percorso normale non arrivava
+                            // mai. Testo diverso perché qui non si scarica niente: il locale
+                            // è autoritativo ed è il saveGame() qui sopra a spingerlo su.
+                            w.showToast(store.gameData.texts.toasts.cloudSyncLocal);
                             return;
                         }
                     }
@@ -2578,9 +2602,13 @@ export function initBoot(): void {
                         }
                     }
 
+                    // Il rientro si legge PRIMA di qualunque saveGame(): il salvataggio
+                    // bumpa lastSaveTimestamp a tab visibile, quindi una riparazione skin
+                    // applicata qui azzerava la pausa e con essa i guadagni offline.
+                    checkOfflineProgress();
+
                     if (applyRiparazioniSkin()) saveGame();
 
-                    checkOfflineProgress();
                     if (typeof w.updateAmbientVolume === 'function') w.updateAmbientVolume();
 
                     w.showToast(store.gameData.texts.toasts.cloudSync);
