@@ -1354,7 +1354,8 @@ export function initModals(): void {
     // più avanti (Format>Prestige>Score). Rifacciamo il fetch del save cloud e lo
     // adottiamo in modo AUTORITATIVO (force) — il confronto solo-lifetimeScore del load
     // normale non basta a risolvere il conflitto. Così il client si riallinea e i
-    // salvataggi riprendono. Niente auto-overwrite: parte solo su azione esplicita (badge).
+    // salvataggi riprendono. Parte dal tocco sul badge e, con freno (tre giri
+    // consecutivi, poi si ferma — vedi il conflitto in saveGame), in automatico.
     // Come _silentTokenRefresh, restituisce SEMPRE un esito { ok, reason }.
     // Le cinque uscite mute di prima erano la causa diretta della segnalazione
     // QA "clicco il badge e non succede niente": erano tutte plausibili al tap
@@ -1385,7 +1386,13 @@ export function initModals(): void {
                 return { ok: true, reason: 'notdata' };
             }
             Game.loadCloudData(data.save_data, { force: true });
-            if (typeof Game.saveGame === 'function') Game.saveGame(); // riconferma lo stato riallineato
+            // Niente push "di conferma" subito dopo: il cloud HA già questo stato,
+            // rispedirglielo non aggiunge niente ed era il carburante del loop —
+            // ogni minima differenza fra il blob adottato e la riga di classifica
+            // (o un'altra sessione che nel frattempo aveva salvato) faceva
+            // rispondere di nuovo conflict, cioè un altro resync, un altro toast.
+            // Il prossimo push arriva con l'autosave o con un'azione, a stato
+            // davvero avanzato.
             return { ok: true, reason: 'resynced' };
         } catch (e) {
             return { ok: false, reason: 'network' };
