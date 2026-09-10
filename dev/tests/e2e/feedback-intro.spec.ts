@@ -2,14 +2,16 @@ import { test, expect } from '@playwright/test';
 import { bootGame } from './helpers';
 
 /**
- * Popup "come si segnala" — una tantum, subito DOPO le note di rilascio.
+ * Popup "come si segnala" — almeno una volta a settimana, subito DOPO le note
+ * di rilascio.
  *
  * L'ordine conta: le due finestre non devono mai stare aperte insieme, quindi
  * il popup non parte all'avvio ma si accoda alla chiusura delle note (vedi
  * src/ui/modals). Quando non ci sono note da mostrare parte da solo.
  *
- * Il flag `seenFeedbackIntro` vive nel save e non in localStorage: viaggia col
- * cloud, così non ricompare cambiando dispositivo.
+ * Il timbro `feedbackIntroAt` (ultima apertura, 0 = mai) vive nel save e non in
+ * localStorage: viaggia col cloud, così il conto non riparte cambiando
+ * dispositivo. La regola è in src/ui/rules/feedback-intro.ts.
  */
 
 const POPUP = '#feedback-intro-modal';
@@ -21,8 +23,7 @@ test.describe('Popup segnalazioni', () => {
 
     const r = await page.evaluate(async () => {
       const w = window as any;
-      w.shouldShowFeedbackIntro = true;
-      w.EspooClicker.getGameState().seenFeedbackIntro = false;
+      w.EspooClicker.getGameState().feedbackIntroAt = 0; // mai visto
 
       w.EspooClicker.openReleaseNotes();
       await new Promise((res) => setTimeout(res, 500));
@@ -36,18 +37,16 @@ test.describe('Popup segnalazioni', () => {
         noteAperte,
         popupSotto,
         popupDopo: getComputedStyle(document.getElementById('feedback-intro-modal')!).display,
-        seen: w.EspooClicker.getGameState().seenFeedbackIntro,
-        flag: w.shouldShowFeedbackIntro,
+        timbrato: Date.now() - w.EspooClicker.getGameState().feedbackIntroAt < 5000,
       };
     });
 
     expect(r.noteAperte).toBe('flex');
     expect(r.popupSotto, 'il popup non deve stare aperto sotto le note').toBe('none');
     expect(r.popupDopo, 'il popup deve aprirsi quando le note si chiudono').toBe('flex');
-    // Segnato come visto all'APERTURA: un reload col popup a schermo non deve
-    // ripresentarlo per sempre.
-    expect(r.seen, 'deve segnarsi come visto').toBe(true);
-    expect(r.flag).toBe(false);
+    // Timbrato all'APERTURA: un reload col popup a schermo non deve
+    // ripresentarlo subito.
+    expect(r.timbrato, "deve timbrare l'apertura").toBe(true);
   });
 
   test('non si ripresenta una seconda volta', async ({ page }) => {
@@ -55,14 +54,13 @@ test.describe('Popup segnalazioni', () => {
 
     const r = await page.evaluate(async () => {
       const w = window as any;
-      w.EspooClicker.getGameState().seenFeedbackIntro = false;
-      w.shouldShowFeedbackIntro = true;
+      w.EspooClicker.getGameState().feedbackIntroAt = 0;
 
       w.EspooClicker.openFeedbackIntro();
       await new Promise((res) => setTimeout(res, 400));
       const primaVolta = getComputedStyle(document.getElementById('feedback-intro-modal')!).display;
 
-      // Chiude e prova a riaprire la catena: il flag ora è spento
+      // Chiude e prova a riaprire la catena: il timbro ora è di adesso
       (document.querySelector('#feedback-intro-modal .modal-close-btn') as HTMLElement).click();
       await new Promise((res) => setTimeout(res, 500));
 
@@ -78,7 +76,35 @@ test.describe('Popup segnalazioni', () => {
     });
 
     expect(r.primaVolta).toBe('flex');
-    expect(r.secondaVolta, 'il popup è una tantum: non deve tornare').toBe('none');
+    expect(r.secondaVolta, 'appena visto: non torna prima di una settimana').toBe('none');
+  });
+
+  test('torna dopo una settimana, non prima', async ({ page }) => {
+    await bootGame(page);
+
+    const r = await page.evaluate(() => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      const GIORNO = 24 * 60 * 60 * 1000;
+      gs.totalClicks = 50;
+      w.shouldShowReleaseNotesOnLoad = false;
+      const libera = () => document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
+
+      libera();
+      gs.feedbackIntroAt = Date.now() - 6 * GIORNO;
+      const seiGiorni = w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
+
+      libera();
+      gs.feedbackIntroAt = Date.now() - 8 * GIORNO;
+      const ottoGiorni = w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
+      const ritimbrato = Date.now() - gs.feedbackIntroAt < 5000;
+
+      return { seiGiorni, ottoGiorni, ritimbrato };
+    });
+
+    expect(r.seiGiorni, 'a sei giorni tace').toBe(false);
+    expect(r.ottoGiorni, 'a otto giorni torna').toBe(true);
+    expect(r.ritimbrato, 'e il conto riparte da questa apertura').toBe(true);
   });
 
   test('«Provo subito» porta dritto alla scheda Segnala', async ({ page }) => {
@@ -147,8 +173,7 @@ test.describe('Popup segnalazioni', () => {
     const r = await page.evaluate(async () => {
       const w = window as any;
       const gs = w.EspooClicker.getGameState();
-      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
-      w.shouldShowFeedbackIntro = true;
+      gs.feedbackIntroAt = 0; gs.totalClicks = 50;
 
       w.EspooClicker.openReleaseNotes();
       await new Promise((res) => setTimeout(res, 400));
@@ -157,7 +182,7 @@ test.describe('Popup segnalazioni', () => {
       const haAperto = w.EspooClicker.maybeOpenFeedbackIntro();
       await new Promise((res) => setTimeout(res, 300));
       const sovrapposto = getComputedStyle(document.getElementById('feedback-intro-modal')!).display;
-      const flagVivo = w.shouldShowFeedbackIntro;
+      const flagVivo = gs.feedbackIntroAt === 0;
 
       (document.querySelector('#release-notes-modal .modal-close-btn') as HTMLElement).click();
       await new Promise((res) => setTimeout(res, 900));
@@ -170,7 +195,7 @@ test.describe('Popup segnalazioni', () => {
 
     expect(r.haAperto, 'deve rifiutare').toBe(false);
     expect(r.sovrapposto, 'mai sopra le note — era la segnalazione').toBe('none');
-    expect(r.flagVivo, 'il rifiuto non consuma il flag, o il popup sparirebbe per sempre').toBe(true);
+    expect(r.flagVivo, 'il rifiuto non timbra niente, o il popup sparirebbe per una settimana').toBe(true);
     expect(r.dopo, 'e alla chiusura delle note si apre').toBe('flex');
   });
 
@@ -180,8 +205,7 @@ test.describe('Popup segnalazioni', () => {
     const r = await page.evaluate(async () => {
       const w = window as any;
       const gs = w.EspooClicker.getGameState();
-      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
-      w.shouldShowFeedbackIntro = true;
+      gs.feedbackIntroAt = 0; gs.totalClicks = 50;
       // È lo stato che lascia loadCloudData quando il save cloud arriva tardi:
       // niente ancora a schermo, ma note in arrivo.
       w.shouldShowReleaseNotesOnLoad = true;
@@ -201,8 +225,7 @@ test.describe('Popup segnalazioni', () => {
     const r = await page.evaluate(async () => {
       const w = window as any;
       const gs = w.EspooClicker.getGameState();
-      gs.seenFeedbackIntro = false; gs.totalClicks = 50;
-      w.shouldShowFeedbackIntro = true;
+      gs.feedbackIntroAt = 0; gs.totalClicks = 50;
       w.shouldShowReleaseNotesOnLoad = false;
       document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
 
@@ -210,7 +233,7 @@ test.describe('Popup segnalazioni', () => {
       const aperto = getComputedStyle(document.getElementById('feedback-intro-modal')!).display;
 
       // Il vincolo sui click vale SOLO per l'apertura autonoma...
-      gs.seenFeedbackIntro = false; w.shouldShowFeedbackIntro = true; gs.totalClicks = 0;
+      gs.feedbackIntroAt = 0; gs.totalClicks = 0;
       document.querySelectorAll('.modal-backdrop').forEach((e) => ((e as HTMLElement).style.display = 'none'));
       const senzaClickDaSolo = w.EspooClicker.maybeOpenFeedbackIntro({ standalone: true });
       // ...non dopo le note: chi aggiorna lo vede anche con zero click.
@@ -231,7 +254,7 @@ test.describe('Popup segnalazioni', () => {
 
     const prima = await page.evaluate(() => {
       const gs = (window as any).EspooClicker.getGameState();
-      gs.seenFeedbackIntro = true;
+      gs.feedbackIntroAt = Date.now();
       gs.totalClicks = 1234;
       return { minor: gs.version.minor, major: gs.version.major };
     });
@@ -244,12 +267,12 @@ test.describe('Popup segnalazioni', () => {
 
     const dopo = await page.evaluate(() => {
       const gs = (window as any).EspooClicker.getGameState();
-      return { minor: gs.version.minor, major: gs.version.major, seen: gs.seenFeedbackIntro, click: gs.totalClicks };
+      return { minor: gs.version.minor, major: gs.version.major, timbro: gs.feedbackIntroAt, click: gs.totalClicks };
     });
 
     expect(dopo.minor, 'la minor scende di uno, così le note di rilascio riscattano').toBe(prima.minor - 1);
     expect(dopo.major).toBe(prima.major);
-    expect(dopo.seen, 'il popup torna da vedere').toBe(false);
+    expect(dopo.timbro, 'il popup torna da vedere').toBe(0);
     expect(dopo.click, 'i progressi non si toccano').toBe(1234);
   });
 });

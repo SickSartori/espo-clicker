@@ -277,7 +277,7 @@ test.describe('Finestre mobile: schermo pieno uniforme', () => {
     await page.evaluate(() => {
       const w = window as any;
       const gs = w.EspooClicker.getGameState();
-      gs.seenFeedbackIntro = true; w.shouldShowFeedbackIntro = false;
+      gs.feedbackIntroAt = Date.now(); // popup segnala appena visto: non si intromette
       gs.totalResets = 3;
       if (gs.skins) gs.skins.unlocked = ['default', 'espo3', 'espobit'];
       w.updateUI();
@@ -327,7 +327,7 @@ test.describe('Finestre mobile: schermo pieno uniforme', () => {
       await page.evaluate(() => {
         const w = window as any;
         const gs = w.EspooClicker.getGameState();
-        gs.seenFeedbackIntro = true; w.shouldShowFeedbackIntro = false;
+        gs.feedbackIntroAt = Date.now(); // popup segnala appena visto: non si intromette
         gs.totalResets = 3;
         w.updateUI();
       });
