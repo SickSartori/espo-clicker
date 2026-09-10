@@ -47,7 +47,7 @@ Il piano precedente aveva due punti di rottura: **2,5 settimane** fra 3.3 e 3.4 
   - caricare `php/secrets.php` su Altervista e **solo dopo** togliere il fallback sui due file storici;
   - aggiungere la voce `labels` alla sezione `trello` del secrets **dell'area di test**.
 - 🎨 **Cablare 2-3 skin** dei **7 bozzetti** fermi in `assets/image/future/` (ordinati per rarità, nessuno ancora in `src/data/skins.ts`). Da qui in avanti se ne cablano 2-3 per release invece di accumularle: è contenuto già disegnato che non costa nulla.
-- 🔧 **Prima estrazione da `boot.ts`**: il **cloud-sync**. È il candidato naturale — la nota sul badge cloud lo segnala già da luglio — ed è codice che la 3.1 ha appena messo a posto, quindi si estrae a logica fresca.
+- 🔧 **Prima estrazione da `boot.ts`**: il **cloud-sync**. È il candidato naturale — la nota sul badge cloud lo segnala già da luglio — ed è codice che la 3.1 ha appena messo a posto, quindi si estrae a logica fresca. Dopo gli hotfix del 10/09 il blocco comprende anche `snapshotCloudMeta` (istantanea unica blob + metadati), il freno `CLOUD_MAX_AUTO_RESYNC` col badge `conflict-loop` e il canale `cloudTrace`: vanno estratti insieme, e la rete che li protegge è già lì — `cloud-badge`, `cloud-conflict-loop`, `offline-return` in `dev/tests/e2e`.
 - 🧹 **Aggiornare `dev/docs/ui.md`**: è stale. La voce P2 sulla navbar chiede ancora «servirebbe un overflow menu», che la 3.1 ha costruito (menu ☰, barra da 210 a 114px su 375).
 
 ---
@@ -65,6 +65,8 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 - ✅ **Fondamenta CSS — la premessa era sovradimensionata** (verifica 10/09/2026). Il tema **non** richiede di rifondare il CSS prima: ci sono già **3 temi** su questo binario — `8bit-theme.css` (484 righe, 44 selettori), `christmas-theme.css` (318, 25), `super-theme.css` (610) — e **i file tema sono puliti**: `!important` = 1 in christmas, 1 in 8bit. La "guerra di `!important`" è altrove e non li tocca: `styles/ui/desktop/super-theme.css` (**182**) e `styles/ui/desktop/skins-modal.css` (**132**), due file specifici. Il consolidamento a custom properties (`dev/docs/ui.md` P1) resta lavoro utile ma **non bloccante**: si fa mirato, quando conviene.
 - 🕹️ Arcade: nessun cabinato nuovo — **retint Halloween di Bug Invaders** (invasori fantasma)
 - 🔧 Filo refactor: seconda estrazione da `boot.ts`
+- 🛡️ **Guardia anti doppia scheda** — dalla segnalazione del 10/09/2026 (loop «Progressi scaricati dal Cloud!»): la 3.1.8 lo **frena** (tre riallineamenti automatici, poi badge che dice «un'altra scheda o dispositivo sta salvando»), questa lo **previene**. `BroadcastChannel` sulla stessa origine: la scheda che perde il focus smette di spingere sul cloud e lo dice a schermo; al ritorno riallinea una volta e riprende. Copre solo lo stesso browser — fra dispositivi diversi il canale non c'è, e lì resta il freno.
+- ☁️ **Conflitto con i numeri del server** — la EF `save-progress` risponde solo `(Score)`; deve restituire anche `score`, `prestige_level`, `total_formattazioni`, `season` della riga di classifica. La riga `[Save✗ CONFLICT #n]` in console (3.1.8, `cloudTrace`) stampa già i numeri del client e dell'ultimo cloud adottato: con quelli del server dice tutto senza dover indovinare. Modifica piccola — Edge Function (dev e prod tengono lo stesso sorgente) più una riga nel client.
 
 ### v3.3 — 🔒 17 novembre 2026 · «Primo compleanno» 🎂
 
@@ -144,12 +146,14 @@ Dalla 3.5 alla 4.0 restano ~8 settimane piene, su una base già ripulita dal ref
 
 # Archivio
 
-## v3.1 — ✅ USCITA il 04/09/2026 (tag `v3.1-Release`, 3.1.6) · «Migliorie e bugfix»
+## v3.1 — ✅ USCITA il 04/09/2026 (3.1.6) · hotfix 3.1.7 e 3.1.8 il 10/09 (tag `v3.1-Release`, che segue l'ultimo merge in `main`) · «Migliorie e bugfix»
 
 > **Consuntivo (10/09/2026).** 98 commit dal lancio, ~5 settimane, uscita **in anticipo** sulla data prevista (metà settembre).
 > Era pianificata come la release leggera: è stata la più grande del post-lancio. Lo scarto è quasi tutto **QA reale** arrivata coi giocatori veri — revisione mobile completa (menu ☰, tutte le finestre a schermo pieno, due audit da 12 finestre, arcade in verticale), 4 segnalazioni sugli Amici, 2 giri di bilanciamento, le riparazioni Fondatore.
 > **Dal piano originale è rimasto fuori un solo punto**: le skin di `assets/image/future/` (oggi **7 bozzetti** ordinati per rarità) non sono ancora cablate in `src/data/skins.ts`. La leaderboard season-aware si è rivelata già fatta server-side (resta il campo in risposta, voce minore).
 > ⏳ **Debiti operativi aperti** — non codice, ma bloccano la chiusura di due voci: caricare `php/secrets.php` su Altervista e poi togliere il fallback sui due file storici; aggiungere la voce `labels` alla sezione `trello` del secrets **dell'area di test**.
+>
+> 🩹 **Hotfix del 10/09/2026.** **3.1.7** — il modale «Bentornato» non compariva mai sul rientro normale: `loadCloudData` usciva con `return` sul ramo «vince il locale» prima di `checkOfflineProgress()`, e l'autosave riscriveva `lastSaveTimestamp` entro 30s (mai consegnati i guadagni offline, mai il toast di sync); la Formattazione azzerava i flag d'account — il popup «come si segnala» tornava a ogni Format — ora la lista è `PRESTIGE_PERSISTENT_KEYS` (`game/prestige.ts`, con test); il popup ha un ritmo settimanale (`feedbackIntroAt`) ed esce anche dopo il login esplicito. **3.1.8** — loop di riallineamento cloud (un giocatore, 30 save/min e un login ogni 2-5s nei log prod): lo `score` per la classifica era letto dopo tre `await` e finiva avanti al blob (`snapshotCloudMeta`), `_resyncFromCloud` rispingeva subito, e il tocco sul badge non aveva freno — ora tre riallineamenti automatici poi badge `conflict-loop`; la traccia `[Save✗ …]` esce in console anche senza `DEBUG_MODE` (`cloudTrace`). Rete: `offline-return`, `cloud-conflict-loop`, `feedback-intro` in `dev/tests/e2e`.
 
 - Coda hotfix post-lancio
 - ~~☁️ **Badge cloud-sync — rifacimento**~~ ✅ **FATTO il 03/08/2026** (segnalazione QA 31/07/2026; pre-lancio era entrata solo la mitigazione: tap → nascondi badge + toast).
