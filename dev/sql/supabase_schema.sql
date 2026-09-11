@@ -126,6 +126,10 @@ DECLARE
   cur_format INT;
   cur_season INT;
   v_username TEXT;
+  v_p_num NUMERIC;
+  v_cur_num NUMERIC;
+  -- Un numero non negativo, con eventuale parte decimale e/o esponente.
+  c_numero CONSTANT TEXT := '^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$';
 BEGIN
   SELECT username INTO v_username FROM users WHERE id = p_user_id;
   IF v_username IS NULL THEN
@@ -136,6 +140,20 @@ BEGIN
     INTO cur_score, cur_prestige, cur_format, cur_season
     FROM leaderboard WHERE username = v_username
     FOR UPDATE;
+
+  -- Punteggi in NUMERIC (precisione arbitraria) e non piu' in float8.
+  -- Migrazione save_progress_confronto_numeric, 10/09/2026 (dev+prod).
+  --   1. `::float8` SOLLEVA 22003 oltre ~1,8e308. Il client manda
+  --      Decimal.toFixed(0), cioe' l'espansione decimale completa (401 cifre per
+  --      1e400): a fine partita la RPC andava in eccezione, la Edge Function
+  --      rispondeva 500 e i salvataggi cloud si fermavano PER SEMPRE.
+  --   2. Anche sotto quella soglia float8 e' approssimato: a 5e20 non distingue
+  --      due punteggi a meno di ~65.000 di distanza. NUMERIC e' esatto.
+  -- Il cast e' protetto dal regex: un valore illeggibile vale 0 invece di far
+  -- fallire l'intero salvataggio. (NUMERIC regge 131.072 cifre intere: oltre
+  -- non si arriva, servirebbe un payload di quella lunghezza.)
+  v_p_num   := CASE WHEN p_score   ~ c_numero THEN p_score::NUMERIC   ELSE 0 END;
+  v_cur_num := CASE WHEN cur_score ~ c_numero THEN cur_score::NUMERIC ELSE 0 END;
 
   -- Gate stagione (PRIMA dell'anti-rollback):
   --   entrante > salvata            -> season-flip: accetta SEMPRE (reset atteso)
@@ -151,7 +169,7 @@ BEGIN
     ELSIF p_formattazioni = cur_format AND p_prestige < cur_prestige THEN
       RETURN 'conflict:Prestige';
     ELSIF p_formattazioni = cur_format AND p_prestige = cur_prestige
-      AND p_score::float8 < cur_score::float8 THEN
+      AND v_p_num < v_cur_num THEN
       RETURN 'conflict:Score';
     END IF;
   END IF;

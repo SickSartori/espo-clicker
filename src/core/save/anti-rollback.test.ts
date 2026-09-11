@@ -12,6 +12,53 @@ describe('compareDecimalStrings', () => {
     expect(compareDecimalStrings('2e+30', '1e+30')).toBe(1));
   it('zero vs numero', () => expect(compareDecimalStrings('0', '1')).toBe(-1));
   it('null/undefined → 0 vs 0', () => expect(compareDecimalStrings(null, undefined)).toBe(0));
+
+  // --- Oltre il range double (segnalazione 10/09/2026) ---
+  // Il client manda Decimal.toFixed(0), cioè l'espansione decimale COMPLETA:
+  // 401 cifre per 1e400. Number() la porta a Infinity e il vecchio confronto
+  // rispondeva "pari" a qualunque coppia là sopra, azzerando l'anti-rollback.
+  const pieno = (esp: number, guida = '1') => guida + '0'.repeat(esp);
+
+  it('oltre 1,8e308 in cifre piene: decide l\'ordine di grandezza', () => {
+    expect(compareDecimalStrings(pieno(400), pieno(399))).toBe(1);
+    expect(compareDecimalStrings(pieno(399), pieno(400))).toBe(-1);
+    expect(compareDecimalStrings(pieno(1000), pieno(400))).toBe(1);
+  });
+
+  it('oltre 1,8e308 a parità di grandezza: decide la prima cifra diversa', () => {
+    expect(compareDecimalStrings(pieno(400, '2'), pieno(400))).toBe(1);
+    expect(compareDecimalStrings(pieno(400), pieno(400, '2'))).toBe(-1);
+    expect(compareDecimalStrings(pieno(400), pieno(400))).toBe(0);
+    // Differenza sepolta in fondo a 400 cifre: float8 la perdeva, qui no.
+    expect(compareDecimalStrings('1' + '0'.repeat(399) + '1', '1' + '0'.repeat(400))).toBe(1);
+  });
+
+  it('cifre piene ed esponenziale sono la stessa cosa', () => {
+    expect(compareDecimalStrings(pieno(400), '1e400')).toBe(0);
+    expect(compareDecimalStrings('1e400', pieno(399))).toBe(1);
+    expect(compareDecimalStrings(pieno(20), '1e20')).toBe(0);
+  });
+
+  it('la precisione regge anche sotto il range double, dove float8 arrotonda', () => {
+    // A 5e20 float8 non distingue due valori a meno di ~65.000 di distanza.
+    expect(compareDecimalStrings('500000000000000000001', '500000000000000000000')).toBe(1);
+    expect(compareDecimalStrings('204500069255931000001', '204500069255931000000')).toBe(1);
+  });
+
+  it('zeri, decimali e segni non spostano il verdetto', () => {
+    expect(compareDecimalStrings('0007', '7')).toBe(0);
+    expect(compareDecimalStrings('7.0', '7')).toBe(0);
+    expect(compareDecimalStrings('0.5', '0.05')).toBe(1);
+    expect(compareDecimalStrings('0', '-1')).toBe(1);
+    expect(compareDecimalStrings('-5', '-10')).toBe(1); // fra negativi l'ordine si rovescia
+    expect(compareDecimalStrings('-0', '0')).toBe(0);
+  });
+
+  it('spazzatura → 0, cioè "non so", non un verdetto inventato', () => {
+    expect(compareDecimalStrings('abc', '100')).toBe(0);
+    expect(compareDecimalStrings('', '100')).toBe(0);
+    expect(compareDecimalStrings('1e', '100')).toBe(0);
+  });
 });
 
 describe('decideRollback', () => {

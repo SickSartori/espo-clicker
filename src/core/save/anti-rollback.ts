@@ -60,49 +60,86 @@ interface Comparable {
 }
 
 /**
- * Confronta due numeri rappresentati come stringhe (con eventuale notazione 1.5e+50).
- * Ritorna -1, 0, 1.
+ * Confronta due numeri rappresentati come stringhe. Ritorna -1, 0, 1.
+ *
+ * Accetta sia la notazione esponenziale (`1.5e+50`) sia l'espansione decimale
+ * completa, che è quella che il client MANDA davvero: `saveGame` spedisce
+ * `Decimal.toFixed(0)`, cioè 401 cifre per 1e400 e 9001 per 1e9000.
+ *
+ * ⚠️ Perché non si passa da `Number`: oltre ~1,8e308 diventa `Infinity`, e la
+ * vecchia implementazione lo faceva due volte — `expOf` ripiegava su
+ * `Math.log10(Number(s))` (Infinity → esponente 0 per ENTRAMBI) e `mantissaOf`
+ * su `Number(cifre)` (Infinity = Infinity). Risultato: `2e400` vs `1e400`
+ * rispondeva "pari", e con esso `1e1000` vs `1e400`. L'anti-rollback diventava
+ * cieco proprio dove serve — a fine partita, dove i progressi valgono di più.
+ * Qui il confronto è sulle CIFRE, quindi esatto a qualsiasi grandezza.
  */
 export function compareDecimalStrings(a: unknown, b: unknown): number {
-  const na = parseLoose(a);
-  const nb = parseLoose(b);
-  if (Number.isFinite(na) && Number.isFinite(nb)) {
-    if (na > nb) return 1;
-    if (na < nb) return -1;
-    return 0;
+  const na = normalizza(a);
+  const nb = normalizza(b);
+  if (!na || !nb) return 0; // illeggibile: non è un verdetto, è un non-so
+
+  if (na.segno !== nb.segno) return na.segno > nb.segno ? 1 : -1;
+  const verso = na.segno < 0 ? -1 : 1; // fra due negativi l'ordine si rovescia
+
+  if (na.cifre === '' || nb.cifre === '') {         // almeno uno è zero
+    if (na.cifre === '' && nb.cifre === '') return 0;
+    return (na.cifre === '' ? -1 : 1) * verso;
   }
-  // Fuori range double → confronto manuale exp+mantissa
-  const ea = expOf(a);
-  const eb = expOf(b);
-  if (ea !== eb) return ea > eb ? 1 : -1;
-  // stesso esponente → confronto mantissa
-  const ma = mantissaOf(a);
-  const mb = mantissaOf(b);
-  if (ma > mb) return 1;
-  if (ma < mb) return -1;
-  return 0;
+  if (na.potenza !== nb.potenza) return (na.potenza > nb.potenza ? 1 : -1) * verso;
+
+  // Stessa grandezza → decide la prima cifra diversa. Confronto lessicografico
+  // su stringhe di sole cifre allineate a sinistra: equivale al confronto
+  // numerico e non ha limiti di precisione.
+  const lung = Math.max(na.cifre.length, nb.cifre.length);
+  const ca = na.cifre.padEnd(lung, '0');
+  const cb = nb.cifre.padEnd(lung, '0');
+  if (ca === cb) return 0;
+  return (ca > cb ? 1 : -1) * verso;
 }
 
-function parseLoose(v: unknown): number {
-  if (typeof v === 'number') return v;
-  if (typeof v === 'string') return Number(v);
-  return NaN;
-}
+/**
+ * Numero scomposto in segno + cifre significative + potenza di 10, cioè
+ * `segno × 0.<cifre> × 10^potenza`. `cifre` non ha zeri né in testa né in coda,
+ * ed è vuota se il numero è zero.
+ */
+interface Scomposto { segno: number; cifre: string; potenza: number; }
 
-function expOf(v: unknown): number {
-  const s = typeof v === 'string' ? v : String(v ?? 0);
-  const m = /e([+-]?\d+)/i.exec(s);
-  if (m && m[1]) return Number(m[1]);
-  // calcola esponente dalla parte intera
-  const num = Number(s);
-  if (!Number.isFinite(num) || num === 0) return 0;
-  return Math.floor(Math.log10(Math.abs(num)));
-}
+function normalizza(v: unknown): Scomposto | null {
+  let s = (typeof v === 'string' ? v : String(v ?? 0)).trim();
+  if (!s) return null;
 
-function mantissaOf(v: unknown): number {
-  const s = typeof v === 'string' ? v : String(v ?? 0);
-  const m = /^(-?\d+(?:\.\d+)?)/.exec(s);
-  return m && m[1] ? Number(m[1]) : 0;
+  let segno = 1;
+  if (s[0] === '+') s = s.slice(1);
+  else if (s[0] === '-') { segno = -1; s = s.slice(1); }
+
+  let esponente = 0;
+  const e = /[eE]/.exec(s);
+  if (e) {
+    const coda = s.slice(e.index + 1);
+    // Serve un intero vero: `Number('')` è 0, quindi "1e" passerebbe per 1.
+    if (!/^[+-]?\d+$/.test(coda)) return null;
+    esponente = Number(coda);
+    s = s.slice(0, e.index);
+  }
+
+  const punto = s.indexOf('.');
+  const intere = punto >= 0 ? s.slice(0, punto) : s;
+  const decimali = punto >= 0 ? s.slice(punto + 1) : '';
+  if (!/^\d*$/.test(intere) || !/^\d*$/.test(decimali)) return null;
+
+  const tutte = intere + decimali;
+  if (tutte === '') return null;
+
+  const prima = tutte.search(/[1-9]/);
+  if (prima < 0) return { segno: 1, cifre: '', potenza: 0 }; // zero, senza segno
+
+  return {
+    segno,
+    cifre: tutte.slice(prima).replace(/0+$/, ''),
+    // Quante cifre stanno a sinistra della virgola, contate dalla prima significativa.
+    potenza: intere.length - prima + esponente,
+  };
 }
 
 /**
