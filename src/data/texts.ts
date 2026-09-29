@@ -72,7 +72,7 @@ export const texts: Record<string, any> = {
     },
     rarities: {
         common: "COMUNE", rare: "RARA", epic: "EPICA",
-        legendary: "LEGGENDARIA", divine: "DIVINA", christmas: "FESTIVA"
+        legendary: "LEGGENDARIA", divine: "DIVINA", festive: "FESTIVA"
     },
     toasts: {
         welcome: "Benvenuto",

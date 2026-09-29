@@ -233,6 +233,6 @@ export const texts: Record<string, any> = {
     },
     rarities: {
         common: "COMMON", rare: "RARE", epic: "EPIC",
-        legendary: "LEGENDARY", divine: "DIVINE", christmas: "FESTIVE"
+        legendary: "LEGENDARY", divine: "DIVINE", festive: "FESTIVE"
     }
 }

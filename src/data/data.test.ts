@@ -80,12 +80,42 @@ describe('data/season (fix B2)', () => {
       for (const id of s.skins) expect(gameData.skins[id], `skin ${id} di ${s.id}`).toBeDefined();
     }
   });
-  it('unlockHint natalizio EN valorizzato da season (non undefined)', () => {
-    const hint = en.skins.christmas.unlockHint;
-    expect([
-      "Redeem the 'Merry Christmas' achievement!",
-      'Available in the Shop for 5 Tokens.',
-    ]).toContain(hint);
+  it('unlockHint natalizio EN valorizzato (non undefined)', () => {
+    expect(en.skins.christmas.unlockHint).toBe("Redeem the 'Merry Christmas' achievement!");
+  });
+  it('rarità festive: ogni skin di stagione è festive con la sua season, e viceversa', () => {
+    for (const s of Object.values(CALENDAR_SEASONS)) {
+      for (const id of s.skins) {
+        expect(gameData.skins[id].rarity, `rarità di ${id}`).toBe('festive');
+        expect(gameData.skins[id].season, `season di ${id}`).toBe(s.id);
+      }
+    }
+    for (const [id, skin] of Object.entries<any>(gameData.skins)) {
+      if (skin.rarity !== 'festive') continue;
+      expect(CALENDAR_SEASONS[skin.season as keyof typeof CALENDAR_SEASONS]?.skins, `stagione di ${id}`).toContain(id);
+    }
+  });
+  it('skin festive: ottenibili sempre — obiettivo stagionale in finestra, negozio fuori', () => {
+    const rewarded = new Set(Object.values<any>(gameData.achievements)
+      .filter((a) => a.reward && a.reward.type === 'skin').map((a) => a.reward.id));
+    for (const [id, skin] of Object.entries<any>(gameData.skins)) {
+      if (skin.rarity !== 'festive') continue;
+      const open = isSeasonActive(skin.season);
+      if (skin.cost === undefined) {
+        expect(open, `${id} senza prezzo fuori stagione`).toBe(true);
+        expect(rewarded.has(id), `${id} senza prezzo né obiettivo`).toBe(true);
+      }
+    }
+    const trick = (gameData.achievements as any).dolcettoScherzetto;
+    expect(trick.season).toBe('halloween');
+    expect(trick.reward).toEqual({ type: 'skin', id: 'espostore' });
+    expect(trick.condition()).toBe(IS_HALLOWEEN_TIME);
+  });
+  it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
+    for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
+    expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');
+    expect(en.texts.rarities.festive).toBe('FESTIVE');
+    expect(gameData.texts.rarities.festive).toBe('FESTIVA');
   });
 });
 

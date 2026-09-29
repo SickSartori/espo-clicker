@@ -19,7 +19,7 @@
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    /* tinta base per qualsiasi rarità (christmas inclusa) */
+    /* tinta base per qualsiasi rarità (festive inclusa) */
     background:
       radial-gradient(ellipse 75% 60% at 50% 46%,
         var(--skin-rarity-glow, rgba(0, 217, 255, 0.12)) 0%,

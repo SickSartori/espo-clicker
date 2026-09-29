@@ -12,6 +12,7 @@
  * `window.*` (alias `w`) perché un modulo strict non li vede.
  * ===================================================================== */
 import { store } from '../state/store';
+import { skinAccent } from './rarity';
 
 export function initSocial(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -45,14 +46,13 @@ export function initSocial(): void {
             return str.replace(/[&<>"']/g, (m: string) => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' } as Record<string, string>)[m] || ''));
         }
 
-        // Avatar skin — stessa logica di podio.js (rarità → colore bordo)
-        const rColors: Record<string, string> = { common: '#bdc3c7', rare: '#3498db', epic: '#9b59b6', legendary: '#f1c40f', divine: '#ffee90', christmas: '#e74c3c' };
+        // Avatar skin — stessa logica del podio (rarità → colore bordo)
         function skinVisual(skinId: any) {
             const skins = (store.gameData && store.gameData.skins) || {};
             const sd = skins[skinId] || skins['default'] || {};
             return {
                 img: sd.img ? `assets/image/${sd.img}` : 'assets/image/espo.webp',
-                border: rColors[sd.rarity] || rColors.common,
+                border: skinAccent(sd).color,
                 name: sd.name || skinId
             };
         }

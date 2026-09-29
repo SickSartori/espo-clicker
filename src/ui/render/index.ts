@@ -15,6 +15,7 @@ import { store } from '../../state/store';
 // migrazione. Riscriverlo qui come letterale vorrebbe dire due numeri che possono
 // divergere — in questo repo è già successo con la formula dei Q-bit.
 import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
+import { RARITY_ORDER, skinAccent } from '../rarity';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
 const domCache = new Map<string, any>();
@@ -677,15 +678,7 @@ function updateSkinsUI() {
     // con fallback IT hardcoded se il dizionario non è disponibile.
     const rarityMap: any = (store.gameData.texts && store.gameData.texts.rarities) || {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
-    };
-    const rColors: any = {
-        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
-        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
-    };
-    const rGlows: any = {
-        'common': 'rgba(189,195,199,0.18)', 'rare': 'rgba(52,152,219,0.25)', 'epic': 'rgba(155,89,182,0.25)',
-        'legendary': 'rgba(241,196,15,0.3)', 'divine': 'rgba(255,238,144,0.4)', 'christmas': 'rgba(231,76,60,0.3)'
+        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'festive': 'FESTIVA'
     };
 
     const T = (store.gameData.texts && store.gameData.texts.ui) || {};
@@ -720,7 +713,6 @@ function updateSkinsUI() {
         }
     }
 
-    const rarityOrder: any = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
     const skinsArray: any[] = [];
     for (const key in store.gameData.skins) {
         const data = store.gameData.skins[key];
@@ -756,16 +748,17 @@ function updateSkinsUI() {
             ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
             : 'assets/image/ui/hidden.webp';
 
+        const accent = skinAccent(data);
         skinsArray.push({
             id: key, data, isUnlocked, isEquipped, isBuyable, canAfford, isFree, needsFormat,
             isSilhouette: !isUnlocked, showLock: !isUnlocked,
             rarityLabel: rarityMap[data.rarity] || rarityMap.common || 'COMUNE',
             requirement, baseText, imgSource,
-            color: rColors[data.rarity] || rColors['common'],
-            glow: rGlows[data.rarity] || rGlows['common']
+            color: accent.color,
+            glow: accent.glow
         });
     }
-    skinsArray.sort((a, b) => (rarityOrder[a.data.rarity] || 0) - (rarityOrder[b.data.rarity] || 0));
+    skinsArray.sort((a, b) => (RARITY_ORDER[a.data.rarity] || 0) - (RARITY_ORDER[b.data.rarity] || 0));
     modernSkinsArray = skinsArray;
 
     const equippedSkin = skinsArray.find(s => s.isEquipped) || skinsArray[0];
@@ -834,7 +827,7 @@ function updateSkinsUI() {
             : '';
 
         return `
-            <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
+            <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'}${skin.data.season ? ' season-' + skin.data.season : ''} ${stateClass}"
                  style="--r-color:${skin.color};--r-glow:${skin.glow};"
                  onclick="showSkinPreview('${skin.id}')"
                  title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — ▶ per equipaggiare' : 'Click per dettagli'}"
@@ -2348,12 +2341,18 @@ function equipSkin(skinId: any) {
     _refreshEquippedState(skinId);
 }
 
+// Rarità (e stagione, per le Festive) della skin attiva sul body: il CSS in-game
+// ne ricava tinta e accento (skins-modal.css, skin-ambient.css).
+function _setSkinBodyAttrs(skinData: any) {
+    if (!skinData || !skinData.rarity) return;
+    document.body.setAttribute('data-current-skin-rarity', skinData.rarity);
+    if (skinData.season) document.body.setAttribute('data-current-skin-season', skinData.season);
+    else document.body.removeAttribute('data-current-skin-season');
+}
+
 // Aggiorna stato equipped + sfondo dinamico body (rarità skin attiva)
 function _refreshEquippedState(newSkinId: any) {
-    // Set body data-attribute per CSS in-game tinted background
-    if (store.gameData?.skins?.[newSkinId]?.rarity) {
-        document.body.setAttribute('data-current-skin-rarity', store.gameData.skins[newSkinId].rarity);
-    }
+    _setSkinBodyAttrs(store.gameData?.skins?.[newSkinId]);
     // Re-render unified grid
     updateSkinsUI();
 }
@@ -2490,9 +2489,7 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
     const theme = skinData.themeConfig || {};
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
-    if (skinData.rarity) {
-        document.body.setAttribute('data-current-skin-rarity', skinData.rarity);
-    }
+    _setSkinBodyAttrs(skinData);
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');

@@ -32,8 +32,15 @@ export interface CalendarSeason {
   start: MonthDay;
   /** Ultimo giorno attivo, incluso. Se precede `start` la finestra scavalca il capodanno. */
   end: MonthDay;
-  /** Skin legate alla stagione: si ottengono solo a finestra aperta (vedi skins.ts). */
+  /**
+   * Skin della stagione, tutte di rarità `festive` con `season` = questo id.
+   * A finestra aperta costano poco (o arrivano da un obiettivo stagionale);
+   * fuori stagione restano in negozio a prezzo pieno: nessuna sparisce per
+   * sempre (vedi skins.ts).
+   */
   skins: string[];
+  /** Colore della rarità Festiva per le skin di questa stagione (bordi, podio, amici). */
+  accent: { color: string; glow: string };
 }
 
 export const CALENDAR_SEASONS: Record<CalendarSeasonId, CalendarSeason> = {
@@ -41,13 +48,15 @@ export const CALENDAR_SEASONS: Record<CalendarSeasonId, CalendarSeason> = {
     id: 'halloween',
     start: { month: 10, day: 24 },
     end: { month: 11, day: 2 },
-    skins: [],
+    skins: ['espostore', 'frankenespo', 'conteEspocula'],
+    accent: { color: '#f97316', glow: 'rgba(249,115,22,0.3)' },
   },
   christmas: {
     id: 'christmas',
     start: { month: 12, day: 1 },
     end: { month: 1, day: 8 },
     skins: ['christmas'],
+    accent: { color: '#e74c3c', glow: 'rgba(231,76,60,0.3)' },
   },
 };
 

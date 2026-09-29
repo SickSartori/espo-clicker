@@ -1,5 +1,4 @@
 /* EN overlay — skins. Stesse chiavi di js/data/skins.js. */
-import { IS_XMAS_TIME } from '../season';
 
 export const skins: Record<string, any> = {
     default: {
@@ -12,7 +11,20 @@ export const skins: Record<string, any> = {
     christmas: {
         name: "Espo Claus",
         desc: "Let's squash these bugs under the tree.",
-        unlockHint: IS_XMAS_TIME ? "Redeem the 'Merry Christmas' achievement!" : "Available in the Shop for 5 Tokens."
+        unlockHint: "Redeem the 'Merry Christmas' achievement!"
+    },
+    espostore: {
+        name: "The Espostor",
+        desc: "Relax, it's me. More or less.",
+        unlockHint: "Redeem the 'Trick or Treat' achievement!"
+    },
+    frankenespo: {
+        name: "Frankenespò",
+        desc: "Stitched together from Stack Overflow snippets. It works, nobody knows why."
+    },
+    conteEspocula: {
+        name: "Count Espòcula",
+        desc: "I don't drink blood, I drink RAM."
     },
 
     // --- RARE ---

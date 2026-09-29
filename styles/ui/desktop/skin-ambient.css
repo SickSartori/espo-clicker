@@ -13,7 +13,8 @@
      epic       mesh esagonale    viola     sweep radar 16s + doppio ping 7s
      legendary  raggi rotanti     oro       rotazione 55s + braci che salgono
      divine     aurora + halo     avorio    tende 22s + alone 9s
-     christmas  (neve via christmas-theme; qui solo la tinta base)
+     festive    (stagioni: neve via christmas-theme; qui solo la tinta base,
+                 colorata dalla stagione via data-current-skin-season)
    Principî (PRODUCT.md): il click è sacro (tutto dietro, bassa opacità);
    respiro lento (cicli ≥7s); premium, non urlato.
    ===================================================================== */
@@ -32,7 +33,7 @@
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    /* tinta base per QUALSIASI rarità (christmas inclusa): parità col
+    /* tinta base per QUALSIASI rarità (festive inclusa): parità col
        vecchio glow generico via variabile (definita in skins-modal.css) */
     background:
       radial-gradient(ellipse 70% 60% at 50% 50%,
