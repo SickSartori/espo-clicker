@@ -98,6 +98,7 @@ export const texts: Record<string, any> = {
         versionMismatch: "⚠️ Versione salvataggio incompatibile!",
         memoryFull: "Memoria piena! Impossibile salvare in locale.",
         bugCrit: "Bug Critico Risolto! +{amount} bug!",
+        bugCursed: "🕷️ Bug Maledetto esorcizzato! +{amount} bug!",
         offlineClaim: "Hai riscattato {amount} bug!",
         settingsSaved: "Preferenze Salvate",
         audioReset: "Audio ripristinato ai valori default",

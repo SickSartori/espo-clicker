@@ -2398,7 +2398,7 @@ const VFXManager: any = {
 
         // Pulisce il DOM
         const snow = document.getElementById('snow-container');
-        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block"); }
+        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block", "ghost_container_block"); }
 
         const fire = document.getElementById('fire-particles-container');
         if (fire) { fire.innerHTML = ''; fire.style.display = 'none'; }
@@ -2424,6 +2424,7 @@ const VFXManager: any = {
         }
 
         if (effectType === 'snow') this.spawnSnow();
+        if (effectType === 'ghosts') this.spawnGhosts();
         if (effectType === 'fire') this.spawnFire();
         if (effectType === 'matrix') this.spawnMatrix();
     },
@@ -2454,6 +2455,26 @@ const VFXManager: any = {
             flake.style.animationDelay = (Math.random() * -20) + 's';
             flake.style.opacity = (Math.random() * 0.7 + 0.3) as any;
             container.appendChild(flake);
+        }
+    },
+
+    // Tema Halloween: pochi fantasmini che salgono lenti. Stesso layer della neve
+    // (#snow-container), con classe propria: lo stile vive in halloween-theme.css.
+    spawnGhosts() {
+        const container = document.getElementById('snow-container');
+        if (!container) return;
+        container.classList.add("ghost_container_block");
+        if (container.children.length > 0) return; // Già generati
+
+        for (let i = 0; i < 12; i++) {
+            const ghost = document.createElement('i');
+            ghost.className = 'fa-solid fa-ghost halloween-ghost';
+            ghost.style.fontSize = (Math.random() * 12 + 12) + 'px';
+            ghost.style.left = Math.random() * 96 + 'vw';
+            ghost.style.animationDuration = (Math.random() * 10 + 16) + 's';
+            ghost.style.animationDelay = (Math.random() * -26) + 's';
+            ghost.style.setProperty('--ghost-opacity', String(Math.random() * 0.25 + 0.2));
+            container.appendChild(ghost);
         }
     },
 

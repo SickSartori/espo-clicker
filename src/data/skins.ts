@@ -1,6 +1,20 @@
 import { Decimal } from './decimal';
 import { IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
 
+/**
+ * Tema Halloween, condiviso dalle tre skin Festive della stagione. Il Golden
+ * Bug diventa il «Bug Maledetto»: ragno viola, e il toast di cattura standard
+ * letto da texts.toasts[goldenBugToast] invece di bugCrit.
+ */
+const HALLOWEEN_THEME = {
+    cssFile: 'halloween-theme.css',
+    vfx: 'ghosts',
+    bodyClass: 'theme-halloween',
+    goldenBugIcon: 'fa-spider',
+    goldenBugColor: '#a855f7',
+    goldenBugToast: 'bugCursed'
+};
+
 export const skins: Record<string, any> = {
     default: {
         name: "Espòòò",
@@ -61,7 +75,8 @@ export const skins: Record<string, any> = {
         rarity: "festive",
         season: "halloween",
         unlockHint: "Riscatta l'obiettivo 'Dolcetto o Scherzetto'!",
-        cost: IS_HALLOWEEN_TIME ? undefined : new Decimal(20)
+        cost: IS_HALLOWEEN_TIME ? undefined : new Decimal(20),
+        themeConfig: HALLOWEEN_THEME
     },
     frankenespo: {
         name: "Frankenespò",
@@ -70,7 +85,8 @@ export const skins: Record<string, any> = {
         imgClick: "skins/frankenespo-click.webp",
         rarity: "festive",
         season: "halloween",
-        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25)
+        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25),
+        themeConfig: HALLOWEEN_THEME
     },
     conteEspocula: {
         name: "Conte Espòcula",
@@ -79,7 +95,8 @@ export const skins: Record<string, any> = {
         imgClick: "skins/conte-espocula-click.webp",
         rarity: "festive",
         season: "halloween",
-        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25)
+        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25),
+        themeConfig: HALLOWEEN_THEME
     },
 
     // --- RARE ---

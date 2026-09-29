@@ -2343,7 +2343,12 @@ function clickGoldenBug() {
         if (typeof FX !== 'undefined' && FX.flash) FX.flash('rgba(231,76,60,0.15)', 0.25);
         toastMsg = store.gameData.texts.toasts.frenzy;
     } else {
-        toastMsg = store.gameData.texts.toasts.bugCrit.replace('{amount}', w.formatNumber(bonus));
+        // Un tema può ribattezzare il bug standard (Halloween: «Bug Maledetto»)
+        // indicando la chiave del suo toast; senza, o se il testo manca, bugCrit.
+        const skinTheme = store.gameData.skins[store.gameState.skins.current]?.themeConfig;
+        const toasts = store.gameData.texts.toasts;
+        const tpl = (skinTheme && skinTheme.goldenBugToast && toasts[skinTheme.goldenBugToast]) || toasts.bugCrit;
+        toastMsg = tpl.replace('{amount}', w.formatNumber(bonus));
     }
 
     store.gameState.score = store.gameState.score.add(bonus);

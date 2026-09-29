@@ -111,6 +111,16 @@ describe('data/season (fix B2)', () => {
     expect(trick.reward).toEqual({ type: 'skin', id: 'espostore' });
     expect(trick.condition()).toBe(IS_HALLOWEEN_TIME);
   });
+  it('tema Halloween: le skin della stagione lo portano, il CSS esiste e il Bug Maledetto ha i testi', async () => {
+    const { existsSync } = await import('node:fs');
+    for (const id of CALENDAR_SEASONS.halloween.skins) {
+      const theme = gameData.skins[id].themeConfig;
+      expect(theme?.bodyClass, `tema di ${id}`).toBe('theme-halloween');
+      expect(existsSync(`styles/themes/${theme.cssFile}`), `css di ${id}`).toBe(true);
+      expect(gameData.texts.toasts[theme.goldenBugToast], `toast IT di ${id}`).toContain('{amount}');
+      expect(en.texts.toasts[theme.goldenBugToast], `toast EN di ${id}`).toContain('{amount}');
+    }
+  });
   it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
     for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
     expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');
