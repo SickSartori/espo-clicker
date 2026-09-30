@@ -29,6 +29,8 @@ import { RIPARAZIONI_SKIN } from '../data/founder-grants';
 import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 import { feedbackIntroDue } from '../ui/rules/feedback-intro';
+import { TabGuard, tabChannelName } from './tab-guard';
+import { showTabPaused, showTabResuming } from '../ui/tab-paused';
 
 /**
  * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
@@ -236,6 +238,75 @@ export function initBoot(): void {
             document.body.prepend(banner);
         }
     })();
+
+    // --- GUARDIA ANTI DOPPIA SCHEDA (3.2, app/tab-guard.ts) ---
+    // Una sola scheda per volta salva. Questa si annuncia SUBITO, in parallelo al
+    // resto dell'avvio; loadGame aspetta l'esito prima di leggere il salvataggio,
+    // così legge quello che l'altra scheda ha appena scritto cedendo il comando.
+    // Una pagina che ha ceduto il comando anche una sola volta ha lo stato in
+    // memoria scaduto PER SEMPRE: non torna a salvare nemmeno quando si
+    // riprende il comando per ricaricarsi — il salvataggio di chiusura del
+    // reload scriverebbe il suo stato vecchio sopra quello appena ceduto
+    // dall'altra scheda. Solo la pagina ricaricata riparte pulita.
+    let _tabStateStale = false;
+    const TAB_CLAIM_FRESH_MS = 3000;
+    const tabSaveBlocked = () => _tabStateStale || tabGuard.isFollower();
+    const tabGuard = new TabGuard({
+        channel: typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(tabChannelName(SAVE_KEY)) : null,
+        flush: () => saveGame(),
+        // Nascosta = ha già salvato andando in secondo piano ed è ferma da allora;
+        // annuncio vecchio = eravamo congelati mentre l'altra giocava. In entrambi
+        // i casi scrivere peggiorerebbe il salvataggio (vedi tab-guard.ts).
+        canFlush: (claimAgeMs) => document.visibilityState === 'visible' && claimAgeMs < TAB_CLAIM_FRESH_MS,
+        onFollower: enterTabPause,
+        onLateRelease: reloadAfterLateRelease,
+    });
+    const _tabClaimStart = Date.now();
+    const tabGuardReady = tabGuard.claim()
+        .then((r) => { w._tabGuardBoot = { ...r, ms: Date.now() - _tabClaimStart }; })
+        .catch(() => undefined);
+    w._tabGuard = tabGuard; // debug/e2e
+
+    // Ceduto il comando: niente più salvataggi (le guardie in saveGame e alla
+    // chiusura), loop e audio fermi, avviso a schermo. Si riparte ricaricando.
+    function enterTabPause(info?: { claimAgeMs: number }) {
+        _tabStateStale = true;
+        try { if (w._espoScheduler) w._espoScheduler.stop(); } catch (e) { /* ignore */ }
+        try { if (w.Howler) w.Howler.mute(true); } catch (e) { /* ignore */ }
+        cloudTrace('[Schede] Il gioco è stato aperto in un\'altra scheda: qui è in pausa e non salva più.');
+        showTabPaused({ isEn: w.APP_LANG === 'en', onResume: resumeTabHere });
+        // Annuncio vecchio letto a scheda visibile: il browser ci ha appena
+        // risvegliati e il giocatore è QUI. Riprende da sola, come al ritorno su
+        // una scheda nascosta. (Con un annuncio fresco e due finestre affiancate,
+        // invece, si aspetta il bottone: riprendersi da soli farebbe ping-pong.)
+        if (info && info.claimAgeMs >= TAB_CLAIM_FRESH_MS && document.visibilityState === 'visible') resumeTabHere();
+    }
+
+    let _tabResuming = false;
+    async function resumeTabHere() {
+        if (_tabResuming) return;
+        _tabResuming = true;
+        showTabResuming(w.APP_LANG === 'en');
+        await tabGuard.claim().catch(() => undefined);
+        location.reload();
+    }
+
+    // L'altra scheda ha finito di salvare DOPO che il nostro avvio aveva già letto
+    // il salvataggio (scheda nascosta rallentata o congelata dal browser): lo stato
+    // caricato può essere più vecchio del suo. Appena aperti non si perde niente a
+    // ricaricare una volta; dopo 30 s il giocatore sta già giocando, e si lascia
+    // stare — resta la rete del conflitto cloud.
+    function reloadAfterLateRelease() {
+        if (Date.now() - _tabClaimStart > 30000) return;
+        cloudTrace('[Schede] L\'altra scheda ha salvato in ritardo: ricarico per partire dal suo stato.');
+        _tabStateStale = true; // il reload non deve salvare lo stato appena letto
+        location.reload();
+    }
+
+    // Tornare su una scheda in pausa vuol dire volerci giocare: riprende da sola.
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && _tabStateStale) resumeTabHere();
+    });
 
     // --- RETE DI SICUREZZA SYNC CLOUD: avviso visibile se i progressi non vengono
     //     salvati sul cloud per troppo tempo (es. token scaduto / conflitto). Puramente
@@ -476,6 +547,9 @@ export function initBoot(): void {
 
     async function saveGame() {
         if (store.gameState.isDeleting) return;
+        // In pausa (o in ripresa verso il reload): comanda un'altra scheda, e
+        // questo stato è più vecchio del suo.
+        if (tabSaveBlocked()) return;
 
         // Sanitizzazione
         if (isNaN(store.gameState.score) || store.gameState.score === null) store.gameState.score = 0;
@@ -944,6 +1018,9 @@ export function initBoot(): void {
     }
 
     async function loadGame() {
+        // Prima si prende il comando: se un'altra scheda stava giocando, ha appena
+        // salvato cedendolo e leggiamo il SUO stato (≤ ~0,25 s se si è soli).
+        await tabGuardReady;
         // Carica da IndexedDB V9
         let savedState = await w.SaveDB.loadFromIndexedDB();
 
@@ -1412,6 +1489,9 @@ export function initBoot(): void {
 
         // Salvataggio alla chiusura
         const handleAppClose = () => {
+            // Scheda in pausa (guardia anti doppia scheda): non deve scrivere niente,
+            // nemmeno la copia sincrona in localStorage.
+            if (tabSaveBlocked()) return;
             // Forza un salvataggio sincrono in localStorage (sempre garantito)
             if (store.gameState && !store.gameState.isDeleting) {
                 // Non bumpare il riferimento offline se stiamo andando in background
@@ -2798,7 +2878,8 @@ export function initBoot(): void {
         if (document.hidden) document.title = 'I bug si accumulano...';
         else document.title = originalTitle;
 
-        if (document.visibilityState === 'visible') {
+        // Scheda in pausa: al ritorno si ricarica (guardia anti doppia scheda), niente modale offline.
+        if (document.visibilityState === 'visible' && !tabSaveBlocked()) {
             lastFrameTime = Date.now(); // Resetta il timer per evitare salti
             checkOfflineProgress();       // Controlla se mostrare il modale offline
         }
