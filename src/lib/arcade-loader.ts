@@ -11,6 +11,7 @@
 // passano da `window.*` (alias `w`) perché un modulo strict non li vede.
 // ============================================================
 import { installCdn } from './version';
+import { isSeasonActive } from '../data/season';
 
 const w = window as any;
 
@@ -20,6 +21,12 @@ const w = window as any;
 // cadono sul path locale `assets/sounds/arcade/...` — 404 in produzione (quei file
 // vivono solo su R2). Idempotente: nel bundle gioco l'istanza è già presente.
 installCdn();
+
+// Stagioni a calendario sulla pagina arcade, per i retint stagionali dei cabinati
+// (Bug Invaders a Halloween). Stesso motivo di installCdn: arcade.php non carica il
+// bundle del gioco, dove installGameData() pubblica isSeasonActive. Nel bundle gioco
+// l'istanza c'è già e non va sovrascritta.
+if (typeof w.isSeasonActive !== 'function') w.isSeasonActive = isSeasonActive;
 
 // ---- Assets da caricare on-demand ----------------------
 

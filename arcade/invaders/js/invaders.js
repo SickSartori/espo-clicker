@@ -51,6 +51,31 @@
     // Formazione effettiva: ricavata dalla larghezza del canvas in spawnWave().
     let enemyCols, enemyHSpace;
 
+    // Retint stagionale (3.2): a Halloween lo sciame diventa di fantasmi e
+    // zucche, i bunker lapidi. Solo grafica: hitbox, tuning e punteggi restano
+    // quelli classici. La stagione arriva da window.isSeasonActive (pubblicata da
+    // arcade-loader sulla pagina arcade), scelta una volta a ogni apertura.
+    const PALETTES = {
+        classic: {
+            bg: '#050505', star: 'rgba(255,255,255,0.15)', starStatic: 'rgba(255,255,255,0.2)',
+            ground: '#2ecc71', bunkerRgb: '46, 204, 113', enemyBullet: '#ff3d5c', kill: '#2ecc71',
+            label: '#2ecc71', tiers: { 3: '#a855f7', 2: '#10b981', 1: '#fbbf24' }, halloween: false
+        },
+        halloween: {
+            bg: '#0b0612', star: 'rgba(245,240,230,0.14)', starStatic: 'rgba(245,240,230,0.2)',
+            ground: '#f97316', bunkerRgb: '148, 137, 168', enemyBullet: '#84cc16', kill: '#fb923c',
+            label: '#f97316', tiers: { 3: '#c084fc', 2: '#f5f0e6', 1: '#f97316' }, halloween: true
+        }
+    };
+    let pal = PALETTES.classic;
+
+    function seasonPalette() {
+        try {
+            if (typeof window.isSeasonActive === 'function' && window.isSeasonActive('halloween')) return PALETTES.halloween;
+        } catch (e) { /* calendario non disponibile: grafica classica */ }
+        return PALETTES.classic;
+    }
+
     function init() {
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
@@ -84,6 +109,7 @@
         gameContainer.style.flexDirection = 'column';
         gameContainer.style.alignItems = 'center';
         gameContainer.innerHTML = '';
+        pal = seasonPalette();
 
         const gs = window.EspooClicker ? window.EspooClicker.getGameState() : null;
         const highScore = (gs && gs.arcadeHighScores && gs.arcadeHighScores.invaders) ? gs.arcadeHighScores.invaders : 0;
@@ -94,7 +120,7 @@
             <button class="arcade-btn secondary" onclick="window.exitInvadersGame()">
                 <i class="fa-solid fa-arrow-left"></i> MENU
             </button>
-            <span class="topbar-game-label" style="color:#2ecc71">BUG INVADERS</span>
+            <span class="topbar-game-label" style="color:${pal.label}">BUG INVADERS</span>
             <div class="arcade-stats-box" id="invaders-score-ui">
                 <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.points) || 'PUNTI'}: <span class="val-score">0</span></span>
                 <span class="stat">${(window.ARCADE_TXT && window.ARCADE_TXT.lives) || 'VITE'}: <span class="val-hp">3</span></span>
@@ -121,7 +147,7 @@
         overlay.id = 'invaders-overlay';
         overlay.className = 'arcade-ui-overlay';
         overlay.innerHTML = `
-            <div style="color:#2ecc71; font-family:'Rajdhani'; font-size:2.5rem; margin-bottom:10px; font-weight:900; letter-spacing:3px; text-shadow: 0 0 15px #2ecc71;">
+            <div style="color:${pal.label}; font-family:'Rajdhani'; font-size:2.5rem; margin-bottom:10px; font-weight:900; letter-spacing:3px; text-shadow: 0 0 15px ${pal.label};">
                 BUG INVADERS
             </div>
             <div style="color:#bdc3c7; margin-bottom:20px; font-family:monospace; font-size: 0.9rem;">
@@ -327,7 +353,7 @@
                 if (rectsOverlap(b, enemies[j])) {
                     const e = enemies[j];
                     score += e.tier * 20;
-                    createExplosion(e.x + e.w / 2, e.y + e.h / 2, '#2ecc71');
+                    createExplosion(e.x + e.w / 2, e.y + e.h / 2, pal.kill);
                     if (window.EspooClicker) window.EspooClicker.playSound('sound-space-boom');
                     if (window.arcadeSfx) window.arcadeSfx.hit();
                     enemies.splice(j, 1);
@@ -437,32 +463,52 @@
     }
 
     function drawStaticScreen() {
-        ctx.fillStyle = '#050505';
+        ctx.fillStyle = pal.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         // stars
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillStyle = pal.starStatic;
         for (let i = 0; i < 40; i++) {
             const x = (i * 37 + 19) % canvas.width;
             const y = (i * 89 + 11) % canvas.height;
             ctx.fillRect(x, y, 1, 1);
         }
+        if (pal.halloween) drawMoon();
+    }
+
+    // Halloween: luna piena in alto a destra, dietro a tutto.
+    function drawMoon() {
+        const mx = canvas.width - 80, my = 70, r = 26;
+        ctx.save();
+        ctx.shadowColor = 'rgba(245, 240, 230, 0.45)';
+        ctx.shadowBlur = 24;
+        ctx.fillStyle = 'rgba(245, 240, 230, 0.85)';
+        ctx.beginPath();
+        ctx.arc(mx, my, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(148, 137, 168, 0.35)';
+        ctx.beginPath();
+        ctx.arc(mx - 8, my - 6, 5, 0, Math.PI * 2);
+        ctx.arc(mx + 9, my + 7, 4, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     function draw() {
         // bg
-        ctx.fillStyle = '#050505';
+        ctx.fillStyle = pal.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // stars (subtle parallax)
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillStyle = pal.star;
         for (let i = 0; i < 40; i++) {
             const x = (i * 37 + 19) % canvas.width;
             const y = (i * 89 + 11) % canvas.height;
             ctx.fillRect(x, y, 1, 1);
         }
+        if (pal.halloween) drawMoon();
 
         // ground line
-        ctx.strokeStyle = '#2ecc71';
+        ctx.strokeStyle = pal.ground;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, canvas.height - 10);
@@ -476,12 +522,25 @@
         for (const b of bunkers) {
             if (b.hp <= 0) continue;
             const alpha = Math.max(0.25, b.hp / 16);
-            ctx.fillStyle = `rgba(46, 204, 113, ${alpha})`;
-            // dome shape
-            ctx.fillRect(b.x, b.y + 6, b.w, b.h - 6);
-            ctx.fillRect(b.x + 6, b.y, b.w - 12, 8);
+            ctx.fillStyle = `rgba(${pal.bunkerRgb}, ${alpha})`;
+            if (pal.halloween) {
+                // lapide: fusto con la cima arrotondata, croce incisa. Stesso
+                // rettangolo di collisione del bunker classico.
+                const rTop = Math.min(10, b.w / 2);
+                ctx.fillRect(b.x, b.y + rTop, b.w, b.h - rTop);
+                ctx.beginPath();
+                ctx.ellipse(b.x + b.w / 2, b.y + rTop, b.w / 2, rTop, 0, Math.PI, 0);
+                ctx.fill();
+                ctx.fillStyle = `rgba(11, 6, 18, ${alpha * 0.8})`;
+                ctx.fillRect(b.x + b.w / 2 - 1.5, b.y + 6, 3, 14);
+                ctx.fillRect(b.x + b.w / 2 - 6, b.y + 10, 12, 3);
+            } else {
+                // dome shape
+                ctx.fillRect(b.x, b.y + 6, b.w, b.h - 6);
+                ctx.fillRect(b.x + 6, b.y, b.w - 12, 8);
+            }
             // notch under
-            ctx.fillStyle = '#050505';
+            ctx.fillStyle = pal.bg;
             ctx.fillRect(b.x + b.w / 2 - 10, b.y + b.h - 10, 20, 12);
         }
 
@@ -493,7 +552,7 @@
         // bullets
         ctx.fillStyle = '#fff';
         for (const b of bullets) ctx.fillRect(b.x, b.y, b.w, b.h);
-        ctx.fillStyle = '#ff3d5c';
+        ctx.fillStyle = pal.enemyBullet;
         for (const b of enemyBullets) ctx.fillRect(b.x, b.y, b.w, b.h);
 
         // particles
@@ -516,10 +575,14 @@
 
     function drawEnemy(e) {
         const f = e.frame;
-        let color;
-        if (e.tier === 3) color = '#a855f7';      // top row purple
-        else if (e.tier === 2) color = '#10b981'; // mid green
-        else color = '#fbbf24';                    // bottom yellow
+        // top row purple · mid green · bottom yellow (classico); a Halloween
+        // viola, bianco osso e zucca
+        const color = pal.tiers[e.tier] || pal.tiers[1];
+        if (pal.halloween) {
+            if (e.tier === 1) drawPumpkin(e, color, f);
+            else drawGhost(e, color, f);
+            return;
+        }
 
         ctx.fillStyle = color;
         const cx = e.x + e.w / 2;
@@ -540,6 +603,64 @@
         ctx.fillStyle = '#000';
         ctx.fillRect(e.x + 8, e.y + 8, 3, 3);
         ctx.fillRect(e.x + e.w - 11, e.y + 8, 3, 3);
+    }
+
+    // Halloween · fantasma: testa a cupola, orlo a denti che si sposta di mezzo
+    // dente a ogni frame (lo stesso passo delle zampe del bug classico).
+    function drawGhost(e, color, f) {
+        const cx = e.x + e.w / 2;
+        const r = e.w / 2 - 2;
+        const bottom = e.y + e.h;
+        const teeth = 4;
+        const tw = (r * 2) / teeth;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, e.y + r, r, Math.PI, 0);
+        ctx.lineTo(cx + r, bottom - 3);
+        for (let i = teeth; i > 0; i--) {
+            const x = cx - r + tw * i;
+            const up = (i + f) % 2 === 0;
+            ctx.lineTo(x - tw / 2, up ? bottom - 5 : bottom);
+            ctx.lineTo(x - tw, bottom - 3);
+        }
+        ctx.closePath();
+        ctx.fill();
+        // occhi ovali + bocca a "o"
+        ctx.fillStyle = '#1a0b24';
+        ctx.beginPath();
+        ctx.ellipse(cx - 4, e.y + 8, 2, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx + 4, e.y + 8, 2, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, e.y + 13, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Halloween · zucca intagliata: corpo a spicchi, gambo verde, occhi a
+    // triangolo che si accendono a frame alterni come una candela.
+    function drawPumpkin(e, color, f) {
+        const cx = e.x + e.w / 2;
+        const cy = e.y + e.h / 2 + 2;
+        const rx = e.w / 2;
+        const ry = e.h / 2 - 1;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // spicchi
+        ctx.fillStyle = 'rgba(124, 45, 18, 0.55)';
+        ctx.fillRect(cx - 5, cy - ry + 2, 1.5, ry * 2 - 4);
+        ctx.fillRect(cx + 3.5, cy - ry + 2, 1.5, ry * 2 - 4);
+        // gambo
+        ctx.fillStyle = '#65a30d';
+        ctx.fillRect(cx - 1.5, e.y, 3, 4);
+        // faccia
+        ctx.fillStyle = f === 0 ? '#fde047' : '#1a0a00';
+        ctx.beginPath();
+        ctx.moveTo(cx - 7, cy - 1); ctx.lineTo(cx - 3, cy - 1); ctx.lineTo(cx - 5, cy - 5);
+        ctx.moveTo(cx + 3, cy - 1); ctx.lineTo(cx + 7, cy - 1); ctx.lineTo(cx + 5, cy - 5);
+        ctx.fill();
+        ctx.fillRect(cx - 5, cy + 2, 10, 2);
     }
 
     function updateUI() {
