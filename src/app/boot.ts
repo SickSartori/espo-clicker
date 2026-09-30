@@ -703,7 +703,13 @@ export function initBoot(): void {
                             w._cloudConflictStreak = (w._cloudConflictStreak || 0) + 1;
                             const streak = w._cloudConflictStreak;
                             const ad = w._cloudLastAdopted;
+                            // 3.2: la EF restituisce anche la riga di classifica con cui
+                            // la RPC ha confrontato (assente con una EF vecchia).
+                            const sv = data.server;
                             cloudTrace(`[Save✗ CONFLICT #${streak}] ${data.message} | inviato: score=${scoreToSend} prestige=${prestigeToSend} format=${snap.totalFormattazioni} season=${snap.season}` +
+                                (sv ? ` | server: score=${sv.score} prestige=${sv.prestige} format=${sv.totalFormattazioni} season=${sv.season}` +
+                                      (sv.updatedAt ? ` (aggiornato ${Math.round((Date.now() - Date.parse(sv.updatedAt)) / 1000)}s fa)` : '')
+                                    : '') +
                                 (ad ? ` | ultimo cloud adottato ${Math.round((Date.now() - ad.at) / 1000)}s fa: score=${ad.score} prestige=${ad.prestige} format=${ad.totalFormattazioni} season=${ad.season}`
                                     : ' | nessun cloud adottato in questa sessione'));
                             // LANCIO: durante la fase pre-wipe il cloud pre-lancio è "più

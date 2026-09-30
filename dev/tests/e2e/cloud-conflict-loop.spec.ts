@@ -204,6 +204,26 @@ test.describe('Loop di conflitto cloud', () => {
     expect(r.modale, 'niente guadagni offline su uno stato preso da un\'altra sessione').toBe('none');
   });
 
+  test('la riga CONFLICT in console riporta anche i numeri del server (EF 3.2)', async ({ page }) => {
+    await boot(page);
+    const blob = await cloudBlob(page);
+    await page.route('**/login-register', loginRoute(blob, () => {}));
+    await page.route('**/save-progress', (route) => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'conflict', message: 'Cloud save is newer (Score). Please reload.', reason: 'Score',
+        server: { score: '987654321', prestige: 7, totalFormattazioni: 1, season: 1, updatedAt: new Date().toISOString() },
+      }),
+    }));
+    const righe: string[] = [];
+    page.on('console', (m) => { if (m.text().includes('[Save✗ CONFLICT')) righe.push(m.text()); });
+
+    await page.evaluate(async () => { await (window as any).EspooClicker.saveGame(); });
+    await expect.poll(() => righe.length, { timeout: 5_000 }).toBeGreaterThan(0);
+    expect(righe[0]).toContain('server: score=987654321 prestige=7 format=1 season=1');
+    expect(righe[0]).toContain('inviato: score=');
+  });
+
   test('lo score inviato è quello dentro il blob spedito insieme', async ({ page }) => {
     await boot(page);
     // Produzione altissima: fra la serializzazione e il payload il lifetimeScore
