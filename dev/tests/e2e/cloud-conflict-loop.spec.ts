@@ -30,7 +30,9 @@ async function boot(page: Page): Promise<void> {
   await page.clock.install();
   await page.goto('/index.php', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
-    () => !!(window as any).EspooClicker && !!(window as any).EspooClicker.getGameState(),
+    // _espoGameReady: il salvataggio locale è caricato (dal 3.2 loadGame aspetta la
+    // guardia anti doppia scheda: senza, il caricamento finiva DOPO il setup del test).
+    () => !!(window as any).EspooClicker && !!(window as any).EspooClicker.getGameState() && !!(window as any)._espoGameReady,
     undefined, { timeout: 15_000 },
   );
   await page.evaluate(() => {

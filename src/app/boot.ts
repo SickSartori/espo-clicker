@@ -2900,6 +2900,10 @@ export function initBoot(): void {
     Promise.resolve(initializeGame())
         .catch(e => console.error("Errore in initializeGame/loadGame:", e))
         .finally(() => {
+            // Flag leggibile anche a evento già passato (e2e): dal 3.2 loadGame
+            // aspetta la guardia anti doppia scheda, quindi "lo stato esiste" non
+            // vuol più dire "il salvataggio locale è stato caricato".
+            w._espoGameReady = true;
             document.dispatchEvent(new Event('EspoGameReady'));
             console.log("✅ Evento EspoGameReady inviato.");
         });
