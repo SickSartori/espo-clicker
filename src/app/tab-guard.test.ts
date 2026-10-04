@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { TabGuard, claimWins, tabChannelName, type TabChannel } from './tab-guard';
 
 /** Bus in memoria con la semantica di BroadcastChannel: consegna asincrona, mai al mittente. */
@@ -22,7 +22,9 @@ function makeBus() {
     };
 }
 
-const fast = { ackWindowMs: 20, releaseTimeoutMs: 400 };
+// Finestre strette per velocità, ma non troppo: con 20 ms l'ack di un'altra
+// "scheda" arrivava a volte in ritardo sotto il carico dell'intera suite.
+const fast = { ackWindowMs: 120, releaseTimeoutMs: 1500 };
 
 describe('app/tab-guard', () => {
     it('scheda sola: si annuncia e comanda subito, senza aspettare nessuno', async () => {
@@ -105,14 +107,15 @@ describe('app/tab-guard', () => {
     it('salvataggio arrivato DOPO il timeout: lo si segnala una volta sola', async () => {
         const open = makeBus();
         let lateCalls = 0;
-        const a = new TabGuard({ channel: open('k'), flush: () => new Promise((r) => setTimeout(r, 150)), ...fast, releaseTimeoutMs: 50, tabId: 'a' });
+        // Margini larghi: sotto il carico dell'intera suite i timer slittano, e con
+        // 150 ms il salvataggio arrivava a volte DENTRO l'attesa (test instabile).
+        const a = new TabGuard({ channel: open('k'), flush: () => new Promise((r) => setTimeout(r, 600)), ...fast, releaseTimeoutMs: 50, tabId: 'a' });
         await a.claim();
         const b = new TabGuard({ channel: open('k'), flush: () => {}, ...fast, releaseTimeoutMs: 50, tabId: 'b', onLateRelease: () => { lateCalls++; } });
         const r = await b.claim();
         expect(r).toMatchObject({ others: 1, released: 0 });
         expect(lateCalls).toBe(0);
-        await new Promise((res) => setTimeout(res, 250));
-        expect(lateCalls).toBe(1);
+        await vi.waitFor(() => expect(lateCalls).toBe(1), { timeout: 3000, interval: 20 });
         await new Promise((res) => setTimeout(res, 100));
         expect(lateCalls).toBe(1);
     });
