@@ -1178,12 +1178,14 @@ export function initModals(): void {
             if (lockMsg) lockMsg.style.display = isThemeLocked ? 'block' : 'none';
 
             // 4. Mappatura Sblocchi (Definizione regole)
-            const musicUnlockMap: Record<string, string | null> = {
+            // Una skin, o un elenco: basta averne sbloccata una.
+            const musicUnlockMap: Record<string, string | string[] | null> = {
                 'sound-bg-music': null,
                 'sound-bg-music-v2': null,
                 'sound-bg-music-v3': null,
                 'sound-bg-bit': 'espobit',
                 'sound-snowball': 'christmas',
+                'sound-bg-halloween': ['espostore', 'frankenespo', 'conteEspocula'],
                 'sound-bg-music-super': 'superespo',
                 'sound-bg-music-espory': 'espory',
                 'sound-bg-music-divine': 'jesus'
@@ -1197,7 +1199,9 @@ export function initModals(): void {
                 if (sound.type === 'music' && sound.category === 'ambiente' && !excludedTracks.includes(sound.id)) {
 
                     const requiredSkin = musicUnlockMap[sound.id];
-                    const isUnlocked = !requiredSkin || gameState.skins.unlocked.includes(requiredSkin);
+                    const isUnlocked = !requiredSkin || (Array.isArray(requiredSkin)
+                        ? requiredSkin.some((s) => gameState.skins.unlocked.includes(s))
+                        : gameState.skins.unlocked.includes(requiredSkin));
 
                     if (isUnlocked) {
                         const option = document.createElement('option');

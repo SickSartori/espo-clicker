@@ -9,6 +9,7 @@ import { IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
 const HALLOWEEN_THEME = {
     cssFile: 'halloween-theme.css',
     vfx: 'ghosts',
+    specialMusic: 'sound-bg-halloween',
     bodyClass: 'theme-halloween',
     goldenBugIcon: 'fa-spider',
     goldenBugColor: '#a855f7',
