@@ -1,86 +1,44 @@
 # 💥 Espòòò Clicker - Release Notes Ufficiali 💥
 
-## Versione 3.1: Un Cabinato Nuovo 🕹️
+## Versione 3.2: Dolcetto o Debito Tecnico? 🎃
 
-Lo slot "??? COMING SOON" in Sala Giochi non è più un mistero. E poi il solito giro di manutenzione: il gioco su telefono rimesso in ordine per bene, la scheda Amici che finalmente si comporta come dovrebbe, audio degli eventi uniforme e le segnalazioni che ci avete mandato chiuse una per una. Continuate a mandarle — è così che finiscono qui.
-
----
-
-### 🕹️ Nuovo Gioco: STACK OVERFLOW
-
-* **📦 Impila il Codice:** Il settimo cabinato della Sala Giochi. Incastra i pezzi di codice, completa le righe e spediscile in produzione. Fin qui sembra facile.
-* **📉 Il Debito Tecnico Risale:** Ogni tot pezzi una riga di debito spunta dal fondo e spinge su tutta la pila. Più sali di livello, più spesso arriva. Non si può ignorare: si può solo starle davanti.
-* **🐛 I Bug Bloccano la Riga:** Una riga completa che contiene un bug **non si chiude**. Va schiacciato — col click, come si fa in questo gioco da sempre. Ed è il motivo per cui una mano resta sempre sul mouse.
-* **🧩 Otto Pezzi, Non Quelli che Pensi:** PIPELINE, MERGE, BRANCH, REBASE, CONFLICT e compagnia. Ce ne sono anche un paio da tre sole caselle, che cambiano parecchio i conti.
-* **💀 Quando Finisce:** La pila tocca il soffitto e va in Stack Overflow. Il nome era un indizio.
+In ufficio è arrivato Halloween. Dal 24 ottobre al 2 novembre le luci si abbassano, tra le scrivanie si aggira qualcosa che non dovrebbe esserci e Espò ha tirato fuori i travestimenti. Sotto il costume, il solito lavoro di manutenzione: i salvataggi cloud reggono numeri di qualunque grandezza e due schede aperte non si pestano più i piedi.
 
 ---
 
-### 📱 Su Telefono: Barra e Finestre Rimesse in Ordine
+### 🎃 Halloween in Ufficio — dal 24 ottobre al 2 novembre
 
-* **☰ Un Menu per le Voci Secondarie:** La barra era arrivata a otto icone mute, indistinguibili a colpo d'occhio. Ora restano in barra solo le voci che dicono qualcosa — Promozione con la sua percentuale, Profilo con le notifiche — e tutte le altre stanno in un menu ☰ dove ognuna ha **la sua icona e il suo nome**.
-* **🆘 Aiuto e Segnala Finalmente Raggiungibili:** Su telefono il pulsante Aiuto era nascosto, ed è da lì che si passa per segnalare qualcosa. In pratica chi giocava dal telefono non aveva modo di scriverci. Ora c'è.
-* **🖼️ Tutte le Finestre a Schermo Pieno:** Senza più eccezioni. E quando il contenuto è corto sta al centro, invece di restare incollato in alto con mezzo schermo vuoto.
-* **❌ La X anche su Configurazione:** Era l'unica finestra senza uscita in testa: si chiudeva solo col pulsante in fondo, dopo aver scorso tutto. Ora c'è la X — e salva esattamente come il pulsante.
-* **🎨 Il Logo al Centro:** Con le voci nel menu, il centro della barra era rimasto vuoto. Adesso c'è Espò.
-
----
-
-### 👥 Amici: la Scheda si Comporta Come Dovrebbe
-
-* **🕐 Tempo di Gioco Vero:** Nel profilo di un amico il tempo di gioco segnava sempre zero. Per chiunque, sempre. Ora dice le ore davvero giocate.
-* **🔔 Notifiche Puntuali:** La pallina di richieste e messaggi arrivava con parecchio ritardo dopo l'accesso, e spesso la si scopriva solo aprendo il Profilo. Ora compare appena entrate in partita.
-* **🖱️ Si Apre Tutta la Riga:** Per aprire il profilo di un amico bisognava centrare la freccetta a destra. Ora basta toccare la riga, in qualunque punto.
-* **🙋 Suggerimenti Sensati:** Chi avevate già invitato continuava a comparire fra i suggeriti con l'etichetta "in attesa" — un suggerimento che non si può seguire. Ora fra i suggeriti ci sono solo persone che potete davvero aggiungere. Cercandole per nome, invece, lo stato della richiesta resta visibile: lì serve.
+* **🎭 Tre Travestimenti:** **L'Espostore**, **Frankenespò** e il **Conte Espòcula**. Come siano fatti lo scoprite sbloccandoli; possiamo dirvi che uno dei tre non è chi sembra. L'Espostore è un regalo: basta riscattare l'obiettivo **Dolcetto o Scherzetto**, attivo per tutta la durata dell'evento. Gli altri due stanno in negozio a **10 Token**.
+* **🕯️ L'Ufficio Cambia Volto:** Con un travestimento addosso cambia tutto attorno: viola notte e arancio zucca, ragnatele negli angoli, una fila di lumini che tremolano sotto la barra e qualche fantasmino che sale piano verso il soffitto. Se nel sistema avete chiesto meno animazioni, i fantasmi restano a casa e tutto il resto sta fermo.
+* **🕷️ Il Bug Maledetto:** Indossato un travestimento, il Golden Bug non è più dorato. Si catturano allo stesso modo e rendono lo stesso; cambia solo chi vi trovate davanti.
+* **🎵 Una Colonna Sonora in Costume:** Il tema di Espòòò Clicker ha la sua versione di Halloween. Parte da sola coi travestimenti, si sceglie dalla musica nelle impostazioni appena ne avete uno, e la trovate anche nel jukebox.
+* **🗓️ Finito l'Evento non Sparisce Niente:** Dopo il 2 novembre l'obiettivo si ritira, ma i travestimenti restano in negozio a prezzo pieno — **20 Token** l'Espostore, **25** gli altri due. Chi li ha presi li tiene per sempre. Nessuna skin di questo gioco si perde per essere arrivati tardi.
 
 ---
 
-### ⚖️ Formattazione e Bilanciamento
+### 🏷️ Una Rarità per Tutte le Feste
 
-* **💎 Q-Bit come Promesso:** I Q-bit annunciati dalla Formattazione calavano man mano che spendevate i Token nel negozio Promozione: capitava di vedersene promettere 10 e incassarne 3. Il conto ora si basa sui Token **guadagnati** nel ciclo, non su quelli che vi restano in tasca — spenderli non vi toglie più niente.
-* **🐛 Bug Bounty Ridimensionato:** Il potenziamento valeva +20% per livello **senza tetto**, e i Ticket Critici diventavano in fretta più redditizi di qualsiasi altra cosa: da soli bastavano a comprare i team di fine partita molto prima del previsto. Ora vale +10% per livello e si ferma a 10 livelli. Chi era già andato oltre tiene i suoi livelli, ma il moltiplicatore è più contenuto: la corsa ai Ticket Critici resta conveniente, non più decisiva.
-* **💰 Bug Bounty Costa di Più:** Il tetto sistemava il finale, non l'inizio: il primo livello si pagava con gli spiccioli delle prime Promozioni, e a quel punto il grosso del bonus era già in tasca. Il costo base passa da 75 a 250 Token. Non cambia quanto vale — sempre +10% per livello, sempre fino a 10 — cambia **quando** ve lo potete permettere: circa due Promozioni più in là, a ogni livello.
-* **☄️ Il Pulsante MADE IN HEAVEN si Vede Tutto:** L'icona finiva su una riga sua, schiacciata contro il bordo alto del pulsante. Ora sta accanto alla scritta, come sul pulsante Firma Contratto.
-* **👑 Il Fondatore Tiene TUTTE le Sue Skin:** Al lancio il Fondatore ne salvava solo **cinque**, scelte con un elenco a mano: chi ne aveva trenta se ne ritrovava sette. Il tetto non c'è più. Le skin sono pura estetica — non danno bonus né moltiplicatori — quindi non c'era nessun equilibrio da difendere, e toglierle era solo un dispiacere. Chi deve ancora rientrare si ritroverà il guardaroba **intero**; il reset di Season 1 resta dov'è giusto che sia, cioè su punteggi, classifica e obiettivi. E chi era già rientrato passando dal vecchio elenco, o non aveva mai ricevuto lo status di Fondatore pur avendo un account di prima del lancio, al prossimo accesso si ritrova quello che gli mancava, senza dover fare niente.
+* **🎁 Festiva, per Tutte le Stagioni:** Le skin legate a un periodo dell'anno stanno tutte sotto la rarità **Festiva**: i tre travestimenti di Halloween e, come già prima, Espo Natale. Nel guardaroba si filtrano insieme.
+* **🎨 Il Colore lo Decide la Festa:** Stessa rarità, colori diversi: arancio zucca per Halloween, rosso e fiocchi per Natale. Vale per la scheda nel guardaroba, per il bordo dell'avatar in classifica e tra gli amici, e per lo sfondo dietro a Espò.
 
 ---
 
-### 🔊 Volume degli Eventi Finalmente Uniforme
+### 🕹️ Sala Giochi: Anche Bug Invaders si Traveste
 
-* **📢 Basta Video Sussurrati:** Alcuni video evento si sentivano molto più bassi degli altri — il Rick Espley e le due versioni di Ricardo Milespo su tutti. Tutte le tracce sono state riportate allo stesso livello: passare da un evento all'altro non vi farà più correre alla manopola del volume.
-* **🎚️ Livelli in Ordine:** Sistemato anche il caso opposto, un video che nei punti più carichi rischiava di distorcere.
-
----
-
-### 🎯 Obiettivi Leggibili su Mobile
-
-* **📱 Titoli per Intero:** Sul telefono i nomi degli obiettivi più lunghi venivano tagliati a metà con i puntini di sospensione. Ora vanno a capo e si leggono tutti, per intero.
-* **📊 Percentuale Non Più Tagliata:** L'etichetta di avanzamento sbordava dalla scheda e ne restava visibile solo la coda: di «60% (3 / 5)» si leggeva «3 / 5)». Ora ci sta tutta.
+* **👻 Fantasmi, Zucche e Lapidi:** Per tutta la durata dell'evento lo sciame di Bug Invaders scende in costume: fantasmi nelle file alte, zucche intagliate in basso, lapidi al posto dei bunker e una luna piena a fare da sfondo.
+* **🎯 Cambia Solo l'Aspetto:** Velocità, colpi e punteggi sono quelli di sempre: un record fatto ad Halloween vale quanto gli altri.
 
 ---
 
-### 🎬 Eventi Video più Puliti
+### 🗂️ Una Scheda alla Volta
 
-* **✨ Schermo Davvero Libero:** Durante i video evento spariscono anche gli ultimi elementi decorativi che restavano sovrapposti al filmato. Ora lo schermo è pulito sul serio.
-
----
-
-### 🚪 Sala Giochi: Entrata, Uscita e Super Espò
-
-* **🪟 Si Apre Anche col Popup Bloccato:** La Sala Giochi si apre in una scheda nuova, e sul telefono capita spesso che il browser la blocchi. Quando succedeva non si apriva niente — e nessuno vi diceva perché. Ora ripiega sulla scheda corrente.
-* **🔇 Cabinati Davvero Spenti:** Uscendo dalla Sala Giochi alcuni giochi restavano a girare in sottofondo. Ora si fermano tutti.
-* **⭐ La Stella Non Lascia Trasparenti:** In Super Espò, presa una Super Stella subito dopo un colpo — mentre Espò lampeggiava ancora — il personaggio restava semitrasparente per tutti i dodici secondi di invincibilità. Ora torna pieno all'istante.
+* **🔒 Due Schede, una Sola che Salva:** Aprendo il gioco in due schede dello stesso browser, salvavano entrambe sullo stesso salvataggio, e quella rimasta indietro poteva riscrivere i progressi fatti nell'altra. Ora salva soltanto l'ultima che avete aperto; l'altra si mette in pausa e ve lo dice.
+* **▶️ Gioca Qui:** Per riprendere nella scheda in pausa basta un tocco su **Gioca qui**, o semplicemente tornarci sopra: si ricarica e riparte esattamente da dove eravate arrivati nell'altra.
+* **📱 E fra Dispositivi Diversi:** Telefono e computer non possono parlarsi così. Lì resta la rete della versione 3.1: se il cloud risulta più avanti per tre volte di fila, il gioco si ferma e ve lo dice, invece di continuare a riallinearsi.
 
 ---
 
-### ☁️ Progressi e Segnalazioni
+### ☁️ Salvataggi Cloud
 
-* **🔄 L'Avviso di Sincronizzazione Risponde:** Quando i progressi non arrivavano al cloud compariva un avviso che al tocco sembrava non fare niente e restava lì fisso. Ora dice cosa sta facendo e com'è andata — e se il problema è la sessione scaduta, vi porta direttamente al login.
-* **📮 Dove si Segnala:** Ogni tanto — al più una volta a settimana, e mai sopra alle note di rilascio — vi ricordiamo dov'è la scheda Segnala e cosa conviene scriverci. Metà delle correzioni qui sopra arriva da lì.
-* **😴 Il "Bentornato" Torna a Farsi Vedere:** Riaprendo il gioco sullo stesso browser, la finestra coi bug maturati mentre eravate via non compariva mai: spuntava solo cambiando dispositivo. Il team lavorava lo stesso, ma nessuno vi consegnava il conto — e dopo mezzo minuto andava perso. Ora al rientro c'è, con i suoi guadagni da riscattare: fino a 12 ore di assenza, al 30% (di più con Server Sempre Acceso).
-* **☁️ La Sincronizzazione Dice Che Ha Fatto:** All'accesso, la conferma del cloud arrivava solo quando c'era qualcosa da scaricare — cioè quasi mai. Ora compare anche nel caso normale, quando i progressi sono già allineati e vengono spinti su.
 * **🔢 Il Muro dei Numeri Grandi:** Questo non l'aveva ancora preso nessuno, e ora non lo prenderà. Superati i 309 zeri di punteggio, il server non riusciva più a leggere il numero e **i salvataggi cloud si sarebbero fermati per sempre** — senza un messaggio, senza un modo per uscirne. Insieme a quello, la classifica avrebbe mescolato le posizioni in cima e il controllo anti-rollback avrebbe dichiarato «pari» due punteggi lontanissimi. Ora tutti e tre confrontano i punteggi cifra per cifra, senza limiti di grandezza. Bonus per tutti, non solo per chi arriva lassù: il confronto è diventato esatto anche sui numeri di oggi, dove prima due punteggi a meno di 65.000 di distanza risultavano identici.
-* **🔁 Basta Giri a Vuoto col Cloud:** Un giocatore si è ritrovato «Progressi scaricati dal Cloud!» a ripetizione, incastrato fra il badge e la sincronizzazione. Due cause, entrambe nostre: il punteggio spedito alla classifica veniva letto un attimo *dopo* il salvataggio a cui viaggiava accanto — un pelo più alto — e al riallineamento successivo il server lo vedeva "più avanti" per sempre; e dopo ogni riallineamento il gioco rispingeva subito lo stesso stato, riaprendo il giro. Ora i due numeri nascono insieme, dopo un riallineamento non si rispinge nulla, e se il cloud risulta avanti per tre volte di fila il gioco si ferma e lo dice: quasi sempre è un'altra scheda o un altro dispositivo che sta salvando sullo stesso account.
-* **🛟 I Progressi Non Tornano Più Indietro:** Se la classifica sul server e il salvataggio nel cloud si erano disallineati, il gioco continuava a "riallinearsi" scaricando un salvataggio **più vecchio** di quello sul vostro dispositivo: ogni giro vi riportava indietro di qualche secondo di gioco senza risolvere niente, e l'avviso vi invitava a ritoccare per rifare lo stesso giro. Ora il gioco se ne accorge, **rifiuta** quel salvataggio, tiene il vostro e ve lo dice: i progressi restano al sicuro sul dispositivo e la classifica si rimette in pari da sola appena la produzione supera il numero rimasto lì.
-* **🔎 La Console Racconta:** I salvataggi respinti dal cloud, i problemi di sessione e i riallineamenti lasciano ora una riga leggibile nella console del browser anche senza modalità debug, coi numeri di entrambe le parti. Se ci scrivete, incollarla ci risparmia un giro di domande.
-* **📮 Il Promemoria Segnala al Ritmo Giusto:** Il popup qui sopra tornava anche quando non doveva: la Formattazione si dimenticava di averlo già mostrato e ve lo ripresentava al primo accesso dopo ogni Format. Ora ha un ritmo suo, una volta a settimana, e il Format non c'entra più. Chi entra da un browser nuovo, con il login, lo vede come tutti gli altri: prima lì non usciva affatto.
+* **🔎 Il Server Dice Contro Cosa:** Quando il cloud respinge un salvataggio perché risulta più avanti, la riga nella console del browser riporta ora anche i numeri del server: punteggio, Promozioni, Formattazioni e stagione con cui è stato fatto il confronto, e da quanto tempo. Se ci scrivete per un problema di sincronizzazione, incollarla ci dice tutto al primo colpo.
