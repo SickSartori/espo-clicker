@@ -360,17 +360,17 @@ call :r2_check_rclone
 if !ERRORLEVEL! NEQ 0 ( pause & goto menu )
 
 echo  [1/3] Sync assets/sounds...
-"!RCLONE_CMD!" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4 --s3-no-check-bucket
 if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Sounds fail & pause & goto menu )
 
 echo.
 echo  [2/3] Sync assets/video...
-"!RCLONE_CMD!" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4 --s3-no-check-bucket
 if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Video fail & pause & goto menu )
 
 echo.
 echo  [3/3] Sync music/songs...
-"!RCLONE_CMD!" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4 --s3-no-check-bucket
 if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Songs fail & pause & goto menu )
 
 echo.
@@ -387,7 +387,7 @@ echo ================================================================
 echo.
 call :r2_check_rclone
 if !ERRORLEVEL! NEQ 0 ( pause & goto menu )
-"!RCLONE_CMD!" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0assets\sounds" r2:espo-clicker-assets/assets/sounds -P --transfers 4 --s3-no-check-bucket
 echo.
 if !ERRORLEVEL! EQU 0 ( echo  [OK] Sounds sync OK ) else ( echo  [ERR] Sync fallito )
 pause
@@ -402,7 +402,7 @@ echo ================================================================
 echo.
 call :r2_check_rclone
 if !ERRORLEVEL! NEQ 0 ( pause & goto menu )
-"!RCLONE_CMD!" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0assets\video" r2:espo-clicker-assets/assets/video -P --transfers 4 --s3-no-check-bucket
 echo.
 if !ERRORLEVEL! EQU 0 ( echo  [OK] Video sync OK ) else ( echo  [ERR] Sync fallito )
 pause
@@ -417,7 +417,7 @@ echo ================================================================
 echo.
 call :r2_check_rclone
 if !ERRORLEVEL! NEQ 0 ( pause & goto menu )
-"!RCLONE_CMD!" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4
+"!RCLONE_CMD!" copy "%~dp0music\songs" r2:espo-clicker-assets/music/songs -P --transfers 4 --s3-no-check-bucket
 echo.
 if !ERRORLEVEL! EQU 0 (
     echo  [OK] Songs sync OK
