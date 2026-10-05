@@ -1,4 +1,23 @@
 (function () {
+    // --- GUARDIA PRODUZIONE (3.2) — PRIMA di qualunque altra riga ---
+    // Il loader (src/lib/backend-config.ts) inietta questo file solo in dev e il
+    // workflow di produzione lo cancella prima dell'FTP. Ma il file è pubblico
+    // nell'area /test/, sulla stessa origine: chiunque potrebbe iniettarlo da
+    // console nella pagina di PRODUZIONE, gonfiare il punteggio e mandarlo in
+    // classifica. Da qui la regola: lo script si rifiuta di partire se la pagina
+    // non è di sviluppo (stessa regola di src/lib/env.ts) o se il backend attivo
+    // non è quello di dev. Non tocca niente prima di questo controllo.
+    var _h = (location && location.hostname) || '';
+    var _p = (location && location.pathname) || '';
+    var _pageIsDev = _h === 'localhost' || _h === '127.0.0.1' || _h === '::1' ||
+        _h.slice(-6) === '.local' || _h.slice(-5) === '.test' || _p.indexOf('/test/') !== -1;
+    var _backendIsDev = !!(window.EspoBackend && window.EspoBackend.env === 'dev');
+    if (!_pageIsDev || !_backendIsDev) {
+        try { console.error('[Cheatboard] Bloccata: questa non è una pagina di sviluppo (' + _h + _p + ').'); } catch (e) { /* ignore */ }
+        window.__cheatboardBlocked = true;
+        return;
+    }
+
     // =====================================================================
     //  ADMIN CONSOLE / CHEATBOARD  (dev-only — rimossa in produzione)
     //  Layout: cruscotto live fisso in alto + tab a colori + ricerca.

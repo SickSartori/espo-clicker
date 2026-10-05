@@ -79,8 +79,15 @@ jobs:
         run: node scripts/generate-secrets.js
 
       # Step 3: Rimuovi file di sviluppo/cheat
+      # Prima delle 3.2 era un `rm -f` muto: se il path cambiava, il file partiva
+      # verso la produzione senza che nessuno se ne accorgesse. Ora si controlla
+      # che sia davvero sparito. (La cheatboard ha anche una guardia sua: rifiuta
+      # di partire fuori da una pagina di sviluppo — vedi js/cheatboard.js.)
       - name: 🗑️ Rimuovi file di debug (cheatboard.js)
-        run: rm -f js/cheatboard.js
+        run: |
+          rm -f js/cheatboard.js
+          if [ -e js/cheatboard.js ]; then echo "::error::js/cheatboard.js è ancora presente: il deploy si ferma"; exit 1; fi
+          echo "js/cheatboard.js rimosso"
 
       # Step 4: Caricamento FTP
       # ⚠️ PRODUZIONE va nella root FTP ("./"), NON in FTP_REMOTE_PATH.
@@ -140,3 +147,13 @@ jobs:
             php/r2-config.example.php
             php/trello-config.example.php
             php/r2-cors-policy.json
+
+      # Step 5: La cheatboard NON deve essere raggiungibile in produzione (3.2).
+      # L'FTP non cancella i file remoti che non ha caricato lui: se un giorno
+      # js/cheatboard.js finisse nella root a mano, il deploy non lo toglierebbe.
+      # Questo controllo lo fa saltare fuori. In /test/ invece c'è, ed è giusto.
+      - name: 🛡️ Verifica che la cheatboard non sia raggiungibile in produzione
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 30 "https://espooclicker.altervista.org/js/cheatboard.js")
+          echo "js/cheatboard.js in produzione -> HTTP $code"
+          if [ "$code" = "200" ]; then echo "::error::js/cheatboard.js è raggiungibile in produzione: va cancellato dal server"; exit 1; fi
