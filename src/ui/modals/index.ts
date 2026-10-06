@@ -14,6 +14,7 @@
  */
 import { store } from '../../state/store';
 import { SAVE_KEY, clearAccountStorage } from '../../core/save/keys';
+import { currentEnv } from '../../lib/env';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -230,7 +231,20 @@ export function initModals(): void {
                 }
             } catch (e) {}
 
-            const arcadeWin = window.open('arcade.php', 'espo-arcade',
+            // Stagione forzata per le prove (solo dev, `?stagione=`, vedi
+            // data/season.ts): vive nel sessionStorage di QUESTA scheda, e la Sala
+            // Giochi è un'altra finestra — se era già aperta non la eredita, e Bug
+            // Invaders restava classico a Halloween forzato. Gliela si passa
+            // nell'indirizzo, 'auto' compreso, così si riallinea a ogni apertura
+            // (window.open con lo stesso nome ricarica la finestra esistente).
+            // In produzione l'override non esiste e l'indirizzo resta quello.
+            let arcadeUrl = 'arcade.php';
+            if (currentEnv() === 'dev') {
+                let ov: string | null = null;
+                try { ov = sessionStorage.getItem('espoSeasonOverride'); } catch (e) { /* ignore */ }
+                arcadeUrl += '?stagione=' + encodeURIComponent(ov || 'auto');
+            }
+            const arcadeWin = window.open(arcadeUrl, 'espo-arcade',
                 'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
             if (arcadeWin && arcadeWin.focus) {
                 arcadeWin.focus();
@@ -241,7 +255,7 @@ export function initModals(): void {
                 // stessa scheda: arcade.php lo prevede già, il suo pulsante di
                 // chiusura fa window.close() e, se la scheda non si chiude,
                 // torna a index.php (vedi arcade.php:63).
-                window.location.href = 'arcade.php';
+                window.location.href = arcadeUrl;
                 return;
             }
 
