@@ -2325,8 +2325,11 @@ function setEmptyMessage(el: any, mode: any) {
 function equipSkin(skinId: any) {
     if (!store.gameState.skins.unlocked.includes(skinId)) return;
 
-    if (skinId === 'christmas' && typeof w.isChristmasSeason === 'function' && w.isChristmasSeason()) {
-        triggerChristmasOverlay();
+    // Skin di una stagione aperta: annuncio a schermo intero (Natale, Halloween…),
+    // una volta per sessione e per stagione — non a ogni cambio fra travestimenti.
+    const _season = store.gameData.skins[skinId] && store.gameData.skins[skinId].season;
+    if (_season && typeof w.isSeasonActive === 'function' && w.isSeasonActive(_season)) {
+        triggerSeasonOverlay(_season, skinId);
     }
 
     store.gameState.skins.current = skinId;
@@ -2355,6 +2358,48 @@ function _refreshEquippedState(newSkinId: any) {
     _setSkinBodyAttrs(store.gameData?.skins?.[newSkinId]);
     // Re-render unified grid
     updateSkinsUI();
+}
+
+// Stagioni già annunciate in questa sessione (vedi equipSkin).
+const _seasonOverlayShown = new Set<string>();
+
+function triggerSeasonOverlay(seasonId: string, skinId: string) {
+    if (_seasonOverlayShown.has(seasonId)) return;
+    _seasonOverlayShown.add(seasonId);
+    if (seasonId === 'christmas') { triggerChristmasOverlay(); return; }
+    if (seasonId === 'halloween') { triggerHalloweenOverlay(skinId); return; }
+}
+
+// Halloween: stesso schema dell'annuncio natalizio (4 s a schermo intero), ma
+// creato qui e con lo stile inline — il CSS del tema si sta caricando proprio
+// adesso, insieme alla skin. Il nome è quello della skin appena indossata.
+function triggerHalloweenOverlay(skinId: string) {
+    const isEn = w.APP_LANG === 'en';
+    const name = (store.gameData.skins[skinId] && store.gameData.skins[skinId].name) || '';
+    let overlay = document.getElementById('halloween-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'halloween-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;align-items:center;' +
+            'justify-content:center;text-align:center;padding:16px;color:#f5f0e6;font-family:Rajdhani,system-ui,sans-serif;' +
+            'background:radial-gradient(circle at 50% 55%, rgba(249,115,22,0.55) 0%, rgba(59,15,92,0.96) 55%, #120818 100%);';
+        const title = document.createElement('h1');
+        title.id = 'halloween-title';
+        title.style.cssText = 'font-size:clamp(2.2rem,7vw,4.5rem);margin:0 0 10px;letter-spacing:3px;color:#fb923c;text-shadow:0 0 22px rgba(249,115,22,0.7);';
+        const sub = document.createElement('p');
+        sub.id = 'halloween-subtitle';
+        sub.style.cssText = 'font-size:clamp(1.1rem,3.5vw,1.8rem);margin:0;opacity:0.92;';
+        overlay.append(title, sub);
+        document.body.appendChild(overlay);
+    }
+    (overlay.querySelector('#halloween-title') as HTMLElement).textContent = isEn ? '🎃 HAPPY HALLOWEEN! 🎃' : '🎃 BUON HALLOWEEN! 🎃';
+    (overlay.querySelector('#halloween-subtitle') as HTMLElement).textContent = isEn ? `Costume on: ${name}` : `Travestimento indossato: ${name}`;
+
+    const skinsModal = document.getElementById('skins-modal');
+    if (skinsModal) skinsModal.style.display = 'none';
+    overlay.style.display = 'flex';
+    if (typeof w.gsap !== 'undefined') w.gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
+    setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 4000);
 }
 
 function triggerChristmasOverlay() {
@@ -2500,6 +2545,9 @@ const VFXManager: any = {
 // Reveal del gioco (post login + intro): sblocca i VFX ambientali della skin
 // messi in coda durante login/intro. Esposto su window per modals.js.
 w.releaseAmbientVfx = function () {
+    // Istante del reveal: lo usa l'avviso stagionale (ui/season-announce.ts)
+    // per non comparire sopra login, intro o note di rilascio.
+    if (!w._gameRevealedAt) w._gameRevealedAt = Date.now();
     if (typeof VFXManager !== 'undefined') VFXManager.releaseAmbientVfx();
 };
 

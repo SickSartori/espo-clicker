@@ -87,32 +87,27 @@ test.describe('Integrazione gameplay', () => {
       { timeout: 15_000 },
     );
 
+    // Click VERO di Playwright (isTrusted=true). Fino alla 3.1 qui c'era un
+    // dispatchEvent(new MouseEvent('click', { detail: 1 })): un evento
+    // sintetico che superava il vecchio controllo — era esattamente il buco
+    // chiuso dall'anticheat 3.2 (vedi anticheat.spec.ts). Il valore del click
+    // si legge da _lastClickValue: lo score si muove anche coi BPS, il conto
+    // dei click no.
+    const before = await page.evaluate(() => {
+      const w = window as any;
+      w._lastClickValue = null;
+      return w.EspooClicker.getGameState().totalClicks;
+    });
+    // force: il volto ha un'animazione continua e Playwright aspetterebbe per
+    // sempre che sia 'stabile'. Il click resta vero (isTrusted).
+    await page.locator('#clicker-btn').click({ force: true });
     const r = await page.evaluate(() => {
       const w = window as any;
-      const gs = w.EspooClicker.getGameState();
-      const btn = document.getElementById('clicker-btn')!;
-
-      // Tutto sincrono in un solo evaluate → il game-loop (rAF) non si intromette
-      // tra prima/dopo, così il delta di score è esattamente il contributo del click.
-      const beforeClicks = gs.totalClicks;
-      const beforeScore = new w.Decimal(gs.score);
-
-      // MouseEvent con detail:1: supera il guard anti-autoclicker (detail===0 &&
-      // !isTrusted) e attiva il VERO handler bound → resolveBug.
-      btn.dispatchEvent(new MouseEvent('click', { detail: 1, bubbles: true }));
-
-      const afterClicks = gs.totalClicks;
-      const afterScore = new w.Decimal(gs.score);
-      return {
-        clickCounted: afterClicks === beforeClicks + 1,
-        scoreIncreased: afterScore.gt(beforeScore),
-        gained: afterScore.sub(beforeScore).toString(),
-      };
+      return { clicks: w.EspooClicker.getGameState().totalClicks, value: w._lastClickValue ? String(w._lastClickValue) : null };
     });
 
-    expect(r.clickCounted).toBe(true);
-    expect(r.scoreIncreased).toBe(true);
-    expect(Number(r.gained)).toBeGreaterThan(0);
+    expect(r.clicks).toBe(before + 1);
+    expect(Number(r.value)).toBeGreaterThan(0);
   });
 
   test('percorsi UI delegati (format/i18n/theme/toast/rules) reggono col solo ramo V3', async ({ page }) => {

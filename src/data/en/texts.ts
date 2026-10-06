@@ -92,6 +92,7 @@ export const texts: Record<string, any> = {
         memoryFull: "Memory full! Can't save locally.",
         bugCrit: "Critical Bug Fixed! +{amount} bugs!",
         bugCursed: "🕷️ Cursed Bug exorcised! +{amount} bugs!",
+        autoClickerPause: "🤖 Automatic clicks detected: clicking is paused for 10 seconds.",
         offlineClaim: "You claimed {amount} bugs!",
         settingsSaved: "Preferences Saved",
         audioReset: "Audio reset to default values",

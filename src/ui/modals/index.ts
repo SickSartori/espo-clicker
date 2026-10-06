@@ -14,6 +14,8 @@
  */
 import { store } from '../../state/store';
 import { SAVE_KEY, clearAccountStorage } from '../../core/save/keys';
+import { currentEnv } from '../../lib/env';
+import { capArcadeClaim } from '../../game/anticheat';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -230,7 +232,20 @@ export function initModals(): void {
                 }
             } catch (e) {}
 
-            const arcadeWin = window.open('arcade.php', 'espo-arcade',
+            // Stagione forzata per le prove (solo dev, `?stagione=`, vedi
+            // data/season.ts): vive nel sessionStorage di QUESTA scheda, e la Sala
+            // Giochi è un'altra finestra — se era già aperta non la eredita, e Bug
+            // Invaders restava classico a Halloween forzato. Gliela si passa
+            // nell'indirizzo, 'auto' compreso, così si riallinea a ogni apertura
+            // (window.open con lo stesso nome ricarica la finestra esistente).
+            // In produzione l'override non esiste e l'indirizzo resta quello.
+            let arcadeUrl = 'arcade.php';
+            if (currentEnv() === 'dev') {
+                let ov: string | null = null;
+                try { ov = sessionStorage.getItem('espoSeasonOverride'); } catch (e) { /* ignore */ }
+                arcadeUrl += '?stagione=' + encodeURIComponent(ov || 'auto');
+            }
+            const arcadeWin = window.open(arcadeUrl, 'espo-arcade',
                 'noopener=no,width=1280,height=800,resizable=yes,scrollbars=no');
             if (arcadeWin && arcadeWin.focus) {
                 arcadeWin.focus();
@@ -241,7 +256,7 @@ export function initModals(): void {
                 // stessa scheda: arcade.php lo prevede già, il suo pulsante di
                 // chiusura fa window.close() e, se la scheda non si chiude,
                 // torna a index.php (vedi arcade.php:63).
-                window.location.href = 'arcade.php';
+                window.location.href = arcadeUrl;
                 return;
             }
 
@@ -259,6 +274,8 @@ export function initModals(): void {
     }
 
     // Polling pending rewards da arcade tab (ogni 5s + on focus)
+    // Istante dell'ultimo incasso: il tetto anticheat cresce col tempo trascorso.
+    let _lastArcadeClaimAt = Date.now();
     function _claimArcadeRewards() {
         try {
             const raw = localStorage.getItem('espo_arcade_pending_rewards');
@@ -271,30 +288,36 @@ export function initModals(): void {
             const gs = Game.getGameState ? Game.getGameState() : null;
             if (!gs) return;
 
-            const reward = (typeof w.Decimal !== 'undefined') ? new w.Decimal(data.score) : parseFloat(data.score);
-            gs.score = gs.score.add ? gs.score.add(reward) : (gs.score + reward);
+            // Tetto anticheat (game/anticheat.ts): il valore arriva dal localStorage
+            // e si può riscrivere a mano. Si incassa al più quanto la Sala Giochi
+            // può aver generato dall'ultimo incasso, sui BPS VERI del gioco;
+            // l'eccedenza resta in attesa per i giri dopo. Illeggibile → scartato.
+            const _nowClaim = Date.now();
+            const claim = capArcadeClaim<any>(w.Decimal, data.score, store.bps, (_nowClaim - _lastArcadeClaimAt) / 1000);
+            if (!claim) { localStorage.removeItem('espo_arcade_pending_rewards'); return; }
+            _lastArcadeClaimAt = _nowClaim;
+            const reward = claim.grant;
+            if (claim.rest.gt(0)) console.warn('[arcade reward] incasso limitato dal tetto: in attesa ' + claim.rest.toString());
+            gs.score = gs.score.add(reward);
             if (Game.saveGame) Game.saveGame();
             if (Game.showToast) {
                 const fmt = (Game.formatNumber) ? Game.formatNumber(reward) : reward.toString();
                 Game.showToast(`🎮 ARCADE REWARD: +${fmt} BUG!`, 'reward');
             }
-            // Clear pending — ANTI-RACE: se il tab arcade ha scritto ALTRI reward tra
-            // la lettura e questo punto, sottrai solo quanto incassato invece di azzerare.
-            const cur = localStorage.getItem('espo_arcade_pending_rewards');
-            if (cur && cur !== raw && typeof w.Decimal !== 'undefined') {
-                try {
-                    const curData = JSON.parse(cur);
-                    const residue = new w.Decimal(curData.score || '0').sub(data.score);
-                    if (residue.gt(0)) {
-                        localStorage.setItem('espo_arcade_pending_rewards',
-                            JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
-                    } else {
-                        localStorage.removeItem('espo_arcade_pending_rewards');
-                    }
-                } catch (e2) { localStorage.removeItem('espo_arcade_pending_rewards'); }
-            } else {
-                localStorage.removeItem('espo_arcade_pending_rewards');
-            }
+            // Residuo = ciò che c'è ORA nel localStorage meno quanto incassato.
+            // Copre sia l'eccedenza oltre il tetto sia i premi che la scheda arcade
+            // ha scritto fra la lettura e questo punto (ANTI-RACE).
+            try {
+                const cur = localStorage.getItem('espo_arcade_pending_rewards');
+                const curScore = cur ? (JSON.parse(cur).score || '0') : '0';
+                const residue = new w.Decimal(curScore).sub(reward);
+                if (residue.gt(0)) {
+                    localStorage.setItem('espo_arcade_pending_rewards',
+                        JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
+                } else {
+                    localStorage.removeItem('espo_arcade_pending_rewards');
+                }
+            } catch (e2) { localStorage.removeItem('espo_arcade_pending_rewards'); }
             // Aggiorna il mirror del saldo letto dal wallet arcade (totale = mirror + pending).
             // Senza questo, all'incasso il totale arcade CALAVA del pending appena azzerato:
             // i bug guadagnati sembravano "apparire e poi tornare a 0".

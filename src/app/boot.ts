@@ -31,6 +31,7 @@ import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 import { feedbackIntroDue } from '../ui/rules/feedback-intro';
 import { TabGuard, tabChannelName } from './tab-guard';
 import { showTabPaused, showTabResuming } from '../ui/tab-paused';
+import { maybeShowSeasonAnnounce } from '../ui/season-announce';
 import { cloudTrace } from './cloud/trace';
 import { snapshotCloudMeta } from './cloud/snapshot';
 import { createCloudBadge } from './cloud/badge';
@@ -1200,6 +1201,7 @@ export function initBoot(): void {
         if (now - lastSlowTick > 1000) {
             w.checkAchievements();         // Controlla obiettivi
             w.checkTabNotifications();     // Controlla i pallini rossi sui tab
+            maybeShowSeasonAnnounce();     // «È arrivato Halloween!» (una volta per edizione)
 
             // Pulizia clickHistory spostata qui (1x/sec invece che 60x/sec)
             const clickNow = Date.now();
@@ -1674,7 +1676,14 @@ export function initBoot(): void {
                     if (hasSession) {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
-                        
+                        // F5 con sessione: niente intro (parte solo al login esplicito)
+                        // e il loader è appena sparito, quindi il gioco è a schermo.
+                        // Il reveal stava solo in coda al login cloud (ui/modals): se
+                        // l'accesso automatico non arrivava (rete, 429) neve/fantasmi
+                        // e avviso stagionale restavano in attesa per sempre. È
+                        // idempotente: il login, se arriva, lo ripete senza effetti.
+                        if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
+
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
@@ -1938,9 +1947,21 @@ export function initBoot(): void {
                 w.resolveBug(e);
             });
 
+            // 1b. TASTIERA: una pressione = un click. Con il bottone a fuoco, tenere
+            // premuto Invio ripeteva il click a ogni ripetizione del tasto (~30/s):
+            // un autoclicker gratis. Le ripetizioni si fermano qui; Spazio clicca
+            // già solo al rilascio. Premere e rilasciare resta valido (a11y).
+            clickerButton.addEventListener('keydown', (e: any) => {
+                if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault();
+            });
+
             // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
             clickerButton.addEventListener('touchstart', (e: any) => {
                 e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
+                // Il resolveBug qui sotto riceve un oggetto costruito a mano, senza
+                // isTrusted: il controllo va fatto ADESSO, sull'evento vero. Un
+                // TouchEvent creato da script arriva con isTrusted=false.
+                if (!e.isTrusted) return;
                 try { tryStart(); } catch (err) { console.warn('[click] tryStart best-effort:', err); }
                 
                 const touch = e.touches[0];
@@ -1950,7 +1971,8 @@ export function initBoot(): void {
                     detail: 1, 
                     clientX: touch.clientX, 
                     clientY: touch.clientY, 
-                    target: clickerButton
+                    target: clickerButton,
+                    timeStamp: e.timeStamp // istante vero del tocco, per l'anticheat
                 });
             }, { passive: false });
         }
@@ -2079,20 +2101,23 @@ export function initBoot(): void {
         const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
-                // Consenti l'attivazione da tastiera (detail 0 ma isTrusted true); blocca solo i .click() da script
-                if (e.detail === 0 && e.isTrusted === false) return;
+                // Solo eventi veri (mouse, touch, tastiera): un click sintetico da
+                // script si scarta qualunque sia detail — con detail:1 passava.
+                if (!e.isTrusted) return;
                 w.activateCrunchTime();
             });
         }
 
         if (goldenBug) {
             goldenBug.addEventListener('click', (e: any) => {
-                // Blocca solo i .click() sintetici da script; mouse e tastiera reali passano
-                if (e.detail === 0 && e.isTrusted === false) return;
+                // Solo eventi veri: mouse e tastiera reali passano, i click
+                // sintetici da script no (anche con detail:1, che prima passava).
+                if (!e.isTrusted) return;
                 w.clickGoldenBug();
             });
             // Il golden bug e' un <div role="button">: la tastiera non genera click nativo, lo gestiamo qui
             goldenBug.addEventListener('keydown', (e: any) => {
+                if (!e.isTrusted || e.repeat) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     w.clickGoldenBug();

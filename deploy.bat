@@ -251,21 +251,37 @@ echo ================================================================
 echo  PROMUOVI develop -^> test
 echo ================================================================
 echo.
-echo  Forza test = develop. Workflow test.yml partirà su GitHub.
+echo  Merge develop in test, SEMPRE con merge commit (--no-ff).
+echo  Workflow test.yml partirà su GitHub.
 echo.
-set /p confirm="  Confermi push develop -^> test? (s/N): "
+set /p confirm="  Confermi merge develop -^> test? (s/N): "
 if /i "!confirm!" NEQ "s" goto menu
 
+rem Regola (05/10/2026): ogni passaggio fra rami lascia il suo merge commit,
+rem "Merge branch 'develop' into test". Mai fast-forward, mai force push di
+rem develop su test (prima qui c'era: git push --force origin develop:test).
+rem I --ff-only allineano un ramo a SE STESSO su origin: se divergono, si ferma.
 echo.
-echo  Sync locale...
+echo  Sync locale develop...
 call git checkout develop
-call git pull origin develop
-if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Pull fallito & pause & goto menu )
+call git pull --ff-only origin develop
+if !ERRORLEVEL! NEQ 0 ( echo  [ERR] develop locale e origin divergono: sistemare a mano & pause & goto menu )
 
 echo.
-echo  Force push test = develop...
-call git push --force origin develop:test
-if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Push fallito & pause & goto menu )
+echo  Sync locale test...
+call git fetch origin test
+call git checkout test
+if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Checkout test fallito & pause & goto menu )
+call git merge --ff-only origin/test
+if !ERRORLEVEL! NEQ 0 ( echo  [ERR] test locale e origin divergono: sistemare a mano & call git checkout develop & pause & goto menu )
+
+echo.
+echo  Merge develop -^> test (--no-ff)...
+call git merge develop --no-ff -m "Merge branch 'develop' into test"
+if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Merge fallito: risolvere i conflitti su test & pause & goto menu )
+call git push origin test
+if !ERRORLEVEL! NEQ 0 ( echo  [ERR] Push fallito & call git checkout develop & pause & goto menu )
+call git checkout develop
 
 echo.
 echo  [OK] test aggiornato

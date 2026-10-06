@@ -63,7 +63,7 @@
         ['Errore 404', 'Error 404'], ['Video meme', 'Meme videos'], ['Attiva Espo Fury', 'Activate Espo Fury'], ['Azzera Cooldown', 'Reset Cooldown'],
         ['Ferma evento in corso', 'Stop current event'],
         ['Stagioni (ricarica la pagina)', 'Seasons (reloads the page)'], ['Nessuna stagione', 'No season'], ['Torna al calendario', 'Back to the calendar'],
-        ['> Natale<', '> Christmas<'], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
+        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
         ['Carica uno stato di test', 'Load a test state'], ['Nuovo giocatore', 'New player'], ['Stato pulito, early game', 'Clean state, early game'],
         ['Pronto 1° Prestige', 'Ready for 1st Prestige'], ['Score appena sopra soglia · Liv 0', 'Score just above threshold · Lv 0'],
         ['≈ Liv 5 · team e token medi', '≈ Lv 5 · medium teams & tokens'], ['Endgame / pre-Formattazione', 'Endgame / pre-Format'],
@@ -334,6 +334,7 @@
                     <div class="cb-gt">Stagioni (ricarica la pagina)</div>
                     <div class="cb-row"><span id="cb-season-label" style="opacity:.85;font-size:12px;">—</span></div>
                     <div class="cb-row"><button id="cb-season-halloween" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween</button><button id="cb-season-christmas" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale</button></div>
+                    <div class="cb-row"><button id="cb-season-halloween-skin" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween + skin</button><button id="cb-season-christmas-skin" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale + skin</button></div>
                     <div class="cb-row"><button id="cb-season-none" class="cb-btn"><i class="fa-solid fa-ban"></i> Nessuna stagione</button><button id="cb-season-auto" class="cb-btn cyan"><i class="fa-solid fa-calendar-days"></i> Torna al calendario</button></div>
                 </div>
             </section>
@@ -537,6 +538,36 @@
         u.searchParams.set('stagione', value);
         location.href = u.toString();
     }
+    // "+ skin": stagione forzata E skin dell'evento sbloccata e indossata, per
+    // vedere subito tema, musica e annuncio senza passare dall'obiettivo. La
+    // richiesta sopravvive al reload in sessionStorage e si esegue appena il
+    // salvataggio locale è caricato (window._espoGameReady).
+    const SEASON_EQUIP_KEY = 'cbSeasonEquip';
+    function setSeasonWithSkin(value) {
+        try { sessionStorage.setItem(SEASON_EQUIP_KEY, value); } catch (e) { /* ignore */ }
+        setSeason(value);
+    }
+    function applyPendingSeasonEquip() {
+        let season = null;
+        try { season = sessionStorage.getItem(SEASON_EQUIP_KEY); sessionStorage.removeItem(SEASON_EQUIP_KEY); } catch (e) { /* ignore */ }
+        if (!season) return;
+        let tries = 0;
+        const tick = () => {
+            if (!window._espoGameReady || !window.gameData || !gameState) {
+                if (++tries < 75) setTimeout(tick, 200);
+                return;
+            }
+            const ids = Object.keys(gameData.skins).filter((k) => gameData.skins[k].season === season);
+            if (!ids.length) { toast('Nessuna skin per la stagione ' + season); return; }
+            ids.forEach((k) => { if (!gameState.skins.unlocked.includes(k)) gameState.skins.unlocked.push(k); });
+            if (typeof equipSkin === 'function') equipSkin(ids[0]);
+            if (window.EspooClicker) window.EspooClicker.saveGame();
+            refreshUI();
+            toast((SEASON_NAMES[season] || season) + ': skin sbloccate e indossata ' + (gameData.skins[ids[0]].name || ids[0]));
+        };
+        tick();
+    }
+
     function updateSeasonUI() {
         const el = $('cb-season-label');
         if (!el) return;
@@ -972,6 +1003,8 @@
     on('cb-first-run', simulateFirstRun);
     on('cb-season-halloween', () => setSeason('halloween'));
     on('cb-season-christmas', () => setSeason('christmas'));
+    on('cb-season-halloween-skin', () => setSeasonWithSkin('halloween'));
+    on('cb-season-christmas-skin', () => setSeasonWithSkin('christmas'));
     on('cb-season-none', () => setSeason('nessuna'));
     on('cb-season-auto', () => setSeason('auto'));
 
@@ -980,6 +1013,7 @@
     updateDebugUI();
     updateComboMultUI();
     updateSeasonUI();
+    applyPendingSeasonEquip();
     applyHandlePos();
     applyLoginGate();
     updateDash();

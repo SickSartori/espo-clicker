@@ -12,6 +12,10 @@
 const w = window as any;
 import { store } from '../state/store';
 import { PRESTIGE_PERSISTENT_KEYS } from './prestige';
+import { ClickGuard } from './anticheat';
+
+// Un solo guardiano per pagina: i click sul volto di Espò passano tutti da qui.
+const clickGuard = new ClickGuard();
 
 // --- GESTIONE CONFLITTI EVENTI (SEMAFORO) ---
 let lastRicardoVideoId = null;
@@ -1648,9 +1652,27 @@ function calculateRawClickValue() {
 }
 
 function resolveBug(event: any) {
-    // Blocca solo i click sintetici da script (autoclicker): isTrusted=false.
-    // L'attivazione reale da tastiera (Enter/Spazio) ha detail===0 ma isTrusted===true → consentita (a11y).
-    if (event.detail === 0 && event.isTrusted === false) return;
+    // Click sintetici da script: isTrusted=false, QUALUNQUE sia detail. Prima si
+    // scartavano solo quelli con detail===0, e bastava
+    // dispatchEvent(new MouseEvent('click', { detail: 1 })) per passare. Il ramo
+    // touch passa un oggetto suo (senza isTrusted) dopo aver controllato
+    // l'evento vero; la tastiera reale ha isTrusted===true → consentita (a11y).
+    if (event && event.isTrusted === false) return;
+    // Autoclicker esterni (click "veri"): tetto di click al secondo e pausa se
+    // il ritmo è da macchina — vedi game/anticheat.ts. Il tempo è quello in cui
+    // il sistema ha ricevuto il click (event.timeStamp), non quello in cui il
+    // gestore gira: i ritardi del gioco (loop, rendering) sporcherebbero il
+    // ritmo e farebbero sembrare umano un autoclicker preciso.
+    const clickAt = (event && typeof event.timeStamp === 'number' && event.timeStamp > 0) ? event.timeStamp : performance.now();
+    const verdict = clickGuard.accept(clickAt);
+    if (verdict !== 'ok') {
+        if (verdict === 'machine') {
+            try {
+                w.EspooClicker.showToast(store.gameData.texts.toasts.autoClickerPause, 'warning');
+            } catch (err) { /* il toast è best-effort */ }
+        }
+        return;
+    }
     // Niente blur(): il focus da tastiera deve restare sul bottone per i click ripetuti.
     // Il focus del mouse e' gia' gestito dai listener mouseup/mouseleave/touchend.
 
@@ -2249,6 +2271,16 @@ function claimAchievementReward(key: any) {
     // Aggiorna UI
     if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
     if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
+
+    // Premio di un evento a calendario (Buon Natale, Dolcetto o Scherzetto): la
+    // skin si indossa subito. Senza, riscattare il premio non cambiava niente a
+    // schermo — il tema parte solo con la skin addosso — e l'evento sembrava
+    // non essere mai cominciato. equipSkin fa partire anche l'annuncio.
+    if (data.season && data.reward && data.reward.type === 'skin' &&
+        typeof w.isSeasonActive === 'function' && w.isSeasonActive(data.season) &&
+        typeof w.equipSkin === 'function') {
+        w.equipSkin(data.reward.id);
+    }
 }
 
 let goldenBugTimer: any;
