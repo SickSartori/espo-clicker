@@ -2545,6 +2545,9 @@ const VFXManager: any = {
 // Reveal del gioco (post login + intro): sblocca i VFX ambientali della skin
 // messi in coda durante login/intro. Esposto su window per modals.js.
 w.releaseAmbientVfx = function () {
+    // Istante del reveal: lo usa l'avviso stagionale (ui/season-announce.ts)
+    // per non comparire sopra login, intro o note di rilascio.
+    if (!w._gameRevealedAt) w._gameRevealedAt = Date.now();
     if (typeof VFXManager !== 'undefined') VFXManager.releaseAmbientVfx();
 };
 

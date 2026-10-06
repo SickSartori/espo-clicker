@@ -31,6 +31,7 @@ import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 import { feedbackIntroDue } from '../ui/rules/feedback-intro';
 import { TabGuard, tabChannelName } from './tab-guard';
 import { showTabPaused, showTabResuming } from '../ui/tab-paused';
+import { maybeShowSeasonAnnounce } from '../ui/season-announce';
 import { cloudTrace } from './cloud/trace';
 import { snapshotCloudMeta } from './cloud/snapshot';
 import { createCloudBadge } from './cloud/badge';
@@ -1200,6 +1201,7 @@ export function initBoot(): void {
         if (now - lastSlowTick > 1000) {
             w.checkAchievements();         // Controlla obiettivi
             w.checkTabNotifications();     // Controlla i pallini rossi sui tab
+            maybeShowSeasonAnnounce();     // «È arrivato Halloween!» (una volta per edizione)
 
             // Pulizia clickHistory spostata qui (1x/sec invece che 60x/sec)
             const clickNow = Date.now();
@@ -1674,7 +1676,14 @@ export function initBoot(): void {
                     if (hasSession) {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
-                        
+                        // F5 con sessione: niente intro (parte solo al login esplicito)
+                        // e il loader è appena sparito, quindi il gioco è a schermo.
+                        // Il reveal stava solo in coda al login cloud (ui/modals): se
+                        // l'accesso automatico non arrivava (rete, 429) neve/fantasmi
+                        // e avviso stagionale restavano in attesa per sempre. È
+                        // idempotente: il login, se arriva, lo ripete senza effetti.
+                        if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
+
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
