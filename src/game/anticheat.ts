@@ -82,3 +82,38 @@ export class ClickGuard {
         return Math.max(0, this.pausedUntil - t);
     }
 }
+
+/**
+ * Premio della Sala Giochi: la scheda arcade lo accumula nel localStorage
+ * ('espo_arcade_pending_rewards') e il gioco lo incassa ogni 5 s. Senza tetto
+ * bastava scriverci `{"score":"1e100"}`. Il premio vero è
+ * BPS × punti × 0,05 (Super Espò × livello): anche un esperto resta sotto le
+ * ~50 volte i BPS al secondo. Si incassa quindi al massimo
+ * ARCADE_REWARD_RATE × BPS (minimo 1, come fa Super Espò) per ogni secondo
+ * trascorso dall'ultimo incasso. L'eccedenza NON si perde: resta in attesa e
+ * passa ai giri successivi — chi gioca bene riceve tutto, al più in due giri.
+ */
+export const ARCADE_REWARD_RATE = 60;
+
+export interface ArcadeClaim<D> { grant: D; rest: D }
+
+/**
+ * PURA. `pending` è la stringa scritta dalla scheda arcade; `bps` i BPS VERI
+ * del gioco (non il mirror nel localStorage, che si può riscrivere).
+ * Ritorna null se il valore è illeggibile, non finito o non positivo: va
+ * scartato.
+ */
+export function capArcadeClaim<D>(DecimalCtor: any, pending: unknown, bps: any, elapsedSec: number): ArcadeClaim<D> | null {
+    let p: any;
+    try { p = new DecimalCtor(pending as any); } catch (e) { return null; }
+    // Leggibile = mantissa ed esponente finiti (break_infinity): "abc" dà NaN,
+    // mentre 1e400 è un premio valido anche se come Number sarebbe Infinity.
+    const readable = !!p && typeof p.gt === 'function' && Number.isFinite(p.mantissa) && Number.isFinite(p.exponent);
+    if (!readable || !p.gt(0)) return null;
+    let base: any;
+    try { base = new DecimalCtor(bps); } catch (e) { base = new DecimalCtor(0); }
+    if (!(base.gt(1))) base = new DecimalCtor(1);
+    const allowance = base.mul(ARCADE_REWARD_RATE).mul(Math.max(0, elapsedSec));
+    const grant = p.lt(allowance) ? p : allowance;
+    return { grant, rest: p.sub(grant) };
+}

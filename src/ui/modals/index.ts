@@ -15,6 +15,7 @@
 import { store } from '../../state/store';
 import { SAVE_KEY, clearAccountStorage } from '../../core/save/keys';
 import { currentEnv } from '../../lib/env';
+import { capArcadeClaim } from '../../game/anticheat';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -273,6 +274,8 @@ export function initModals(): void {
     }
 
     // Polling pending rewards da arcade tab (ogni 5s + on focus)
+    // Istante dell'ultimo incasso: il tetto anticheat cresce col tempo trascorso.
+    let _lastArcadeClaimAt = Date.now();
     function _claimArcadeRewards() {
         try {
             const raw = localStorage.getItem('espo_arcade_pending_rewards');
@@ -285,30 +288,36 @@ export function initModals(): void {
             const gs = Game.getGameState ? Game.getGameState() : null;
             if (!gs) return;
 
-            const reward = (typeof w.Decimal !== 'undefined') ? new w.Decimal(data.score) : parseFloat(data.score);
-            gs.score = gs.score.add ? gs.score.add(reward) : (gs.score + reward);
+            // Tetto anticheat (game/anticheat.ts): il valore arriva dal localStorage
+            // e si può riscrivere a mano. Si incassa al più quanto la Sala Giochi
+            // può aver generato dall'ultimo incasso, sui BPS VERI del gioco;
+            // l'eccedenza resta in attesa per i giri dopo. Illeggibile → scartato.
+            const _nowClaim = Date.now();
+            const claim = capArcadeClaim<any>(w.Decimal, data.score, store.bps, (_nowClaim - _lastArcadeClaimAt) / 1000);
+            if (!claim) { localStorage.removeItem('espo_arcade_pending_rewards'); return; }
+            _lastArcadeClaimAt = _nowClaim;
+            const reward = claim.grant;
+            if (claim.rest.gt(0)) console.warn('[arcade reward] incasso limitato dal tetto: in attesa ' + claim.rest.toString());
+            gs.score = gs.score.add(reward);
             if (Game.saveGame) Game.saveGame();
             if (Game.showToast) {
                 const fmt = (Game.formatNumber) ? Game.formatNumber(reward) : reward.toString();
                 Game.showToast(`🎮 ARCADE REWARD: +${fmt} BUG!`, 'reward');
             }
-            // Clear pending — ANTI-RACE: se il tab arcade ha scritto ALTRI reward tra
-            // la lettura e questo punto, sottrai solo quanto incassato invece di azzerare.
-            const cur = localStorage.getItem('espo_arcade_pending_rewards');
-            if (cur && cur !== raw && typeof w.Decimal !== 'undefined') {
-                try {
-                    const curData = JSON.parse(cur);
-                    const residue = new w.Decimal(curData.score || '0').sub(data.score);
-                    if (residue.gt(0)) {
-                        localStorage.setItem('espo_arcade_pending_rewards',
-                            JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
-                    } else {
-                        localStorage.removeItem('espo_arcade_pending_rewards');
-                    }
-                } catch (e2) { localStorage.removeItem('espo_arcade_pending_rewards'); }
-            } else {
-                localStorage.removeItem('espo_arcade_pending_rewards');
-            }
+            // Residuo = ciò che c'è ORA nel localStorage meno quanto incassato.
+            // Copre sia l'eccedenza oltre il tetto sia i premi che la scheda arcade
+            // ha scritto fra la lettura e questo punto (ANTI-RACE).
+            try {
+                const cur = localStorage.getItem('espo_arcade_pending_rewards');
+                const curScore = cur ? (JSON.parse(cur).score || '0') : '0';
+                const residue = new w.Decimal(curScore).sub(reward);
+                if (residue.gt(0)) {
+                    localStorage.setItem('espo_arcade_pending_rewards',
+                        JSON.stringify({ score: residue.toString(), scoreNum: parseFloat(residue.toString()), updated: Date.now() }));
+                } else {
+                    localStorage.removeItem('espo_arcade_pending_rewards');
+                }
+            } catch (e2) { localStorage.removeItem('espo_arcade_pending_rewards'); }
             // Aggiorna il mirror del saldo letto dal wallet arcade (totale = mirror + pending).
             // Senza questo, all'incasso il totale arcade CALAVA del pending appena azzerato:
             // i bug guadagnati sembravano "apparire e poi tornare a 0".

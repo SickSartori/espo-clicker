@@ -102,4 +102,37 @@ test.describe('Anticheat', () => {
     expect(r.counted).toBeGreaterThanOrEqual(55);
     expect(r.warned).toBe(false);
   });
+
+  test('premio arcade gonfiato a mano: incassa solo il tetto, il resto resta in attesa', async ({ page }) => {
+    await ready(page);
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      const before = new w.Decimal(gs.score);
+      localStorage.setItem('espo_arcade_pending_rewards', JSON.stringify({ score: '1e100', scoreNum: 1e100, updated: Date.now() }));
+      window.dispatchEvent(new Event('focus')); // l'incasso parte anche al focus
+      await new Promise((res) => setTimeout(res, 300));
+      const gained = new w.Decimal(gs.score).sub(before);
+      const left = JSON.parse(localStorage.getItem('espo_arcade_pending_rewards') || '{"score":"0"}').score;
+      return { gained: gained.toString(), gainedLt: gained.lt(new w.Decimal('1e30')), left };
+    });
+    expect(r.gainedLt, `incassato ${r.gained}`).toBe(true);
+    expect(Number(r.left), 'l\'eccedenza resta in attesa').toBeGreaterThan(1e99);
+  });
+
+  test('premio arcade illeggibile: scartato, senza toccare i bug', async ({ page }) => {
+    await ready(page);
+    const r = await page.evaluate(async () => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      // ferma i BPS per misurare solo l'incasso
+      const before = String(gs.score);
+      localStorage.setItem('espo_arcade_pending_rewards', JSON.stringify({ score: 'tanti', scoreNum: 1 }));
+      window.dispatchEvent(new Event('focus'));
+      await new Promise((res) => setTimeout(res, 200));
+      return { pending: localStorage.getItem('espo_arcade_pending_rewards'), same: new w.Decimal(gs.score).sub(new w.Decimal(before)).lt(new w.Decimal('1e12')) };
+    });
+    expect(r.pending).toBeNull();
+    expect(r.same).toBe(true);
+  });
 });

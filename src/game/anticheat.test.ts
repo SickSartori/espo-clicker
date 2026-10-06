@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import Decimal from 'break_infinity.js';
 import {
     ClickGuard, CLICK_CAP_PER_SEC, MACHINE_WINDOW, MACHINE_PAUSE_MS, stddev,
+    capArcadeClaim, ARCADE_REWARD_RATE,
 } from './anticheat';
 
 /** Generatore pseudo-casuale deterministico (i test non devono ballare). */
@@ -53,5 +54,32 @@ describe('game/anticheat — ClickGuard', () => {
         expect(stddev([])).toBe(0);
         expect(stddev([5, 5, 5])).toBe(0);
         expect(stddev([1, 3])).toBe(1);
+    });
+});
+
+describe('game/anticheat — capArcadeClaim', () => {
+    it('premio normale entro il tetto: si incassa tutto', () => {
+        const c = capArcadeClaim<any>(Decimal, '5000', new Decimal(100), 5)!;
+        expect(c.grant.toString()).toBe('5000');
+        expect(c.rest.toString()).toBe('0');
+    });
+    it('premio gonfiato: incassa solo il tetto, il resto resta in attesa', () => {
+        const c = capArcadeClaim<any>(Decimal, '1e100', new Decimal(100), 5)!;
+        expect(c.grant.toNumber()).toBe(100 * ARCADE_REWARD_RATE * 5);
+        expect(c.rest.gt(new Decimal('9.99e99'))).toBe(true);
+    });
+    it('BPS a zero: si conta almeno 1, come fa Super Espò', () => {
+        const c = capArcadeClaim<any>(Decimal, '1000000', new Decimal(0), 10)!;
+        expect(c.grant.toNumber()).toBe(ARCADE_REWARD_RATE * 10);
+    });
+    it('numeri oltre il range double restano leggibili', () => {
+        const c = capArcadeClaim<any>(Decimal, '1e400', new Decimal('1e398'), 1)!;
+        expect(c.grant.eq(new Decimal('1e398').mul(ARCADE_REWARD_RATE))).toBe(true);
+    });
+    it('valori illeggibili, zero o negativi: scartati', () => {
+        expect(capArcadeClaim(Decimal, 'abc', new Decimal(10), 5)).toBeNull();
+        expect(capArcadeClaim(Decimal, '0', new Decimal(10), 5)).toBeNull();
+        expect(capArcadeClaim(Decimal, '-50', new Decimal(10), 5)).toBeNull();
+        expect(capArcadeClaim(Decimal, undefined, new Decimal(10), 5)).toBeNull();
     });
 });
