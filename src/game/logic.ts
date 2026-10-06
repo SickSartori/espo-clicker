@@ -2249,6 +2249,16 @@ function claimAchievementReward(key: any) {
     // Aggiorna UI
     if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
     if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
+
+    // Premio di un evento a calendario (Buon Natale, Dolcetto o Scherzetto): la
+    // skin si indossa subito. Senza, riscattare il premio non cambiava niente a
+    // schermo — il tema parte solo con la skin addosso — e l'evento sembrava
+    // non essere mai cominciato. equipSkin fa partire anche l'annuncio.
+    if (data.season && data.reward && data.reward.type === 'skin' &&
+        typeof w.isSeasonActive === 'function' && w.isSeasonActive(data.season) &&
+        typeof w.equipSkin === 'function') {
+        w.equipSkin(data.reward.id);
+    }
 }
 
 let goldenBugTimer: any;
