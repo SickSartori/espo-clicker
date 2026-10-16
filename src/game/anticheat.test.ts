@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Decimal from 'break_infinity.js';
 import {
-    ClickGuard, CLICK_CAP_PER_SEC, MACHINE_WINDOW, MACHINE_PAUSE_MS, stddev,
+    ClickGuard, CLICK_CAP_PER_SEC, MIN_CLICK_GAP_MS, MACHINE_WINDOW, MACHINE_PAUSE_MS, stddev,
     capArcadeClaim, ARCADE_REWARD_RATE,
 } from './anticheat';
 
@@ -26,8 +26,8 @@ describe('game/anticheat — ClickGuard', () => {
 
     it('tetto: oltre 20 click nello stesso secondo, i successivi non contano', () => {
         const g = new ClickGuard(); const r = rng(3); let t = 0; const out: string[] = [];
-        // 30 click irregolari in ~600 ms (troppo veloci per un umano, ma non regolari)
-        for (let i = 0; i < 30; i++) { t += 10 + r() * 30; out.push(g.accept(t)); }
+        // 30 click in meno di un secondo (troppo veloci per un umano a lungo)
+        for (let i = 0; i < 30; i++) { t += 26 + r() * 6; out.push(g.accept(t)); }
         expect(out.filter((v) => v === 'ok')).toHaveLength(CLICK_CAP_PER_SEC);
         expect(out.slice(CLICK_CAP_PER_SEC).every((v) => v === 'cap')).toBe(true);
         // passato il secondo si torna a contare
@@ -42,6 +42,29 @@ describe('game/anticheat — ClickGuard', () => {
         expect(g.accept(t + 100)).toBe('paused');
         expect(g.pauseLeft(t + 100)).toBe(MACHINE_PAUSE_MS - 100);
         expect(g.accept(t + MACHINE_PAUSE_MS)).toBe('ok');
+    });
+
+    it('doppio click di sistema (Controllo puntatore, "+" del tastierino): conta una volta per pressione', () => {
+        const g = new ClickGuard(); const r = rng(11); let t = 0; const out: string[] = [];
+        // 40 pressioni umane da ~8/s, ognuna un doppio click a 0-5 ms
+        for (let i = 0; i < 40; i++) {
+            t += 125 + (r() - 0.5) * 60; out.push(g.accept(t));
+            out.push(g.accept(t + r() * 5));
+        }
+        expect(out.filter((v) => v === 'ok')).toHaveLength(40);
+        expect(out.filter((v) => v === 'double')).toHaveLength(40);
+    });
+
+    it('autoclicker a doppio click regolare: la coppia non nasconde il ritmo da macchina', () => {
+        const g = new ClickGuard(); let t = 0; const out: string[] = [];
+        for (let i = 0; i <= MACHINE_WINDOW; i++) { t += 100; out.push(g.accept(t)); out.push(g.accept(t + 2)); }
+        expect(out).toContain('machine');
+    });
+
+    it(`due click a ${MIN_CLICK_GAP_MS} ms o più: contano entrambi`, () => {
+        const g = new ClickGuard();
+        expect(g.accept(1000)).toBe('ok');
+        expect(g.accept(1000 + MIN_CLICK_GAP_MS)).toBe('ok');
     });
 
     it('un ritmo regolare ma LENTO (1 click al secondo) non è giudicato', () => {

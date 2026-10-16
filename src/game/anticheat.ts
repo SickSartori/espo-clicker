@@ -6,6 +6,7 @@
  * gli strumenti pronti all'uso, che erano i buchi veri:
  *
  *  - autoclicker esterni (click "veri" ma a ritmo da macchina) → ClickGuard;
+ *  - doppi click di sistema che contano due volte una pressione → ClickGuard;
  *  - premio della Sala Giochi gonfiato scrivendo il localStorage → capArcadeClaim.
  *
  * I click sintetici da script (isTrusted=false) e la ripetizione del tasto
@@ -16,6 +17,13 @@
 
 /** Click contati al massimo in un secondo. Nessun umano li regge a lungo. */
 export const CLICK_CAP_PER_SEC = 20;
+/**
+ * Intervallo minimo fra due click. Il doppio click di sistema (il "+" del
+ * tastierino con Controllo puntatore di Windows, i tasti "doppio click" dei
+ * mouse da gioco) spara due click a pochi millisecondi: raddoppiava ogni
+ * pressione. Un dito, anche col butterfly clicking, non scende sotto i ~35 ms.
+ */
+export const MIN_CLICK_GAP_MS = 25;
 /** Quanti intervalli fra click esamina la rilevazione del ritmo da macchina. */
 export const MACHINE_WINDOW = 30;
 /** Il ritmo si giudica solo se veloce: intervallo medio sotto questa soglia (≈ 7 click/s). */
@@ -28,6 +36,8 @@ export const MACHINE_PAUSE_MS = 10_000;
 export type ClickVerdict =
     /** Click valido: si conta. */
     | 'ok'
+    /** Secondo click di un doppio click di sistema (troppo vicino al primo): non si conta, in silenzio. */
+    | 'double'
     /** Oltre il tetto di click al secondo: non si conta, in silenzio. */
     | 'cap'
     /** Ritmo da macchina appena rilevato: parte la pausa (si avvisa una volta). */
@@ -53,9 +63,15 @@ export class ClickGuard {
     private accepted: number[] = [];
     private raw: number[] = [];
     private pausedUntil = 0;
+    private lastAt = -Infinity;
 
     accept(t: number): ClickVerdict {
         if (t < this.pausedUntil) return 'paused';
+        // Prima del ritmo: la coppia di un doppio click non deve entrare nella
+        // finestra, altrimenti gli intervalli alternati (2 ms / 100 ms) farebbero
+        // sembrare irregolare un autoclicker a doppio click.
+        if (t - this.lastAt < MIN_CLICK_GAP_MS) return 'double';
+        this.lastAt = t;
 
         this.raw.push(t);
         if (this.raw.length > MACHINE_WINDOW + 1) this.raw.shift();

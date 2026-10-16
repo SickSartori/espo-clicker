@@ -103,6 +103,26 @@ test.describe('Anticheat', () => {
     expect(r.warned).toBe(false);
   });
 
+  test('doppio click di sistema (Controllo puntatore, "+" del tastierino): una pressione = un click', async ({ page }) => {
+    await ready(page);
+    await page.evaluate(() => { (window as any).EspooClicker.getGameState().feedbackIntroAt = Date.now(); });
+    const box = (await page.locator('#clicker-btn').boundingBox())!;
+    const x = box.x + box.width / 2, y = box.y + box.height / 2;
+    const cdp = await page.context().newCDPSession(page);
+    const before = await clicks(page);
+    let t = Date.now() / 1000;
+    // 10 pressioni a ~150 ms; ognuna è un doppio click con la seconda metà a 3 ms
+    for (let i = 0; i < 10; i++) {
+      t += 0.15 + (i % 3) * 0.02;
+      for (const [dt, n] of [[0, 1], [0.003, 2]] as const) {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: n, timestamp: t + dt });
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: n, timestamp: t + dt + 0.0005 });
+      }
+    }
+    await page.waitForTimeout(200);
+    expect(await clicks(page) - before).toBe(10);
+  });
+
   test('premio arcade gonfiato a mano: incassa solo il tetto, il resto resta in attesa', async ({ page }) => {
     await ready(page);
     const r = await page.evaluate(async () => {
