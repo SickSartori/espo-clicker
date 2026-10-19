@@ -1,5 +1,5 @@
 import { Decimal } from './decimal';
-import { IS_XMAS_TIME } from './season';
+import { IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
 import { store } from '../state/store';
 
 // Le condition leggevano i globali bare del bundle (gameState, bps): in ESM
@@ -177,6 +177,17 @@ export const achievements: Record<string, any> = {
         season: 'christmas',
         reward: { type: 'skin', id: 'christmas' },
         condition: () => IS_XMAS_TIME
+    },
+    dolcettoScherzetto: {
+        name: 'Dolcetto o Scherzetto',
+        desc: 'Un travestimento tutto per te!',
+        flavor: 'Il bug più spaventoso è quello che si riproduce solo in produzione.',
+        type: 'custom',
+        target: 1,
+        isSecret: false,
+        season: 'halloween',
+        reward: { type: 'skin', id: 'espostore' },
+        condition: () => IS_HALLOWEEN_TIME
     },
 
     madeInHeaven: {

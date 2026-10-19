@@ -18,6 +18,7 @@ export const achievements: Record<string, any> = {
     waifuUnlock: { desc: "Own 100 AI Debuggers." },
     divinitaMouse: { name: "Mouse Deity", desc: "Buy the \"Divine Click\" upgrade." },
     natale: { name: "Merry Christmas", desc: "A special gift just for you!", flavor: "At Christmas we're all a little nicer (except the bugs)." },
+    dolcettoScherzetto: { name: "Trick or Treat", desc: "A costume just for you!", flavor: "The scariest bug is the one that only reproduces in production." },
     madeInHeaven: { desc: "Reboot the universe for the first time.", flavor: "Time accelerates toward a new beginning." },
     timeLord: { name: "Time Lord", desc: "Perform 5 system Reformats.", flavor: "You've seen the end and the beginning one too many times." },
     coscienzaEspansa: { name: "Expanded Consciousness", desc: "Own 1 Conscious Singularity." },

@@ -447,8 +447,11 @@ html body #skins-modal #skins-grid-modern.skins-unified-grid::after {
       rgba(23, 19, 11, 0.96) 100%);
 }
 
-/* CHRISTMAS — fiocchi + calore rosso/oro dal basso */
-.skin-card-v3.rarity-christmas {
+/* FESTIVE — una rarità per tutte le stagioni a calendario: il look lo decide
+   la stagione della skin (classe season-<id>, vedi src/data/season.ts). */
+
+/* FESTIVE · Natale — fiocchi + calore rosso/oro dal basso */
+.skin-card-v3.rarity-festive.season-christmas {
   background:
     radial-gradient(circle 1.5px at 18% 25%,
       rgba(250, 250, 255, 0.7) 50%, transparent 51%),
@@ -470,6 +473,30 @@ html body #skins-modal #skins-grid-modern.skins-unified-grid::after {
     linear-gradient(180deg,
       rgba(41, 12, 19, 0.85) 0%,
       rgba(21, 8, 11, 0.96) 100%);
+}
+
+/* FESTIVE · Halloween — bagliore da zucca dal basso, nebbia viola in alto,
+   qualche brace arancio sospesa */
+.skin-card-v3.rarity-festive.season-halloween {
+  background:
+    radial-gradient(circle 1.5px at 20% 30%,
+      rgba(251, 146, 60, 0.6) 50%, transparent 51%),
+    radial-gradient(circle 1px at 70% 22%,
+      rgba(251, 146, 60, 0.45) 50%, transparent 51%),
+    radial-gradient(circle 1px at 82% 58%,
+      rgba(192, 132, 252, 0.5) 50%, transparent 51%),
+    radial-gradient(circle 1.5px at 35% 68%,
+      rgba(251, 146, 60, 0.4) 50%, transparent 51%),
+    radial-gradient(ellipse 100% 50% at 50% 100%,
+      rgba(249, 115, 22, 0.2) 0%,
+      rgba(234, 88, 12, 0.08) 50%,
+      transparent 80%),
+    radial-gradient(ellipse 80% 45% at 50% 0%,
+      rgba(147, 51, 234, 0.12) 0%,
+      transparent 65%),
+    linear-gradient(180deg,
+      rgba(30, 12, 40, 0.88) 0%,
+      rgba(14, 7, 18, 0.96) 100%);
 }
 
 /* Hover: pattern intensifica leggermente */
@@ -637,10 +664,16 @@ body[data-current-skin-rarity="divine"] {
   --skin-rarity-accent: rgba(255, 232, 200, 0.65);
   --skin-rarity-base: #1f1d12;
 }
-body[data-current-skin-rarity="christmas"] {
+/* Festive: il default è quello di Natale; ogni altra stagione lo sovrascrive */
+body[data-current-skin-rarity="festive"] {
   --skin-rarity-glow: rgba(239, 68, 68, 0.32);
   --skin-rarity-accent: rgba(248, 113, 113, 0.65);
   --skin-rarity-base: #1f0608;
+}
+body[data-current-skin-rarity="festive"][data-current-skin-season="halloween"] {
+  --skin-rarity-glow: rgba(249, 115, 22, 0.32);
+  --skin-rarity-accent: rgba(251, 146, 60, 0.65);
+  --skin-rarity-base: #1a0a1f;
 }
 
 /* ════════════════════════════════════════════════

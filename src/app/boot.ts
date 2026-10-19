@@ -29,6 +29,13 @@ import { RIPARAZIONI_SKIN } from '../data/founder-grants';
 import { SAVE_KEY, LEGACY_BACKUP_KEY } from '../core/save/keys';
 import { saveBelongsToOtherUser } from '../core/save/anti-rollback';
 import { feedbackIntroDue } from '../ui/rules/feedback-intro';
+import { TabGuard, tabChannelName } from './tab-guard';
+import { showTabPaused, showTabResuming } from '../ui/tab-paused';
+import { maybeShowSeasonAnnounce } from '../ui/season-announce';
+import { cloudTrace } from './cloud/trace';
+import { snapshotCloudMeta } from './cloud/snapshot';
+import { createCloudBadge } from './cloud/badge';
+import { decideConflict, formatConflictTrace, CLOUD_MAX_AUTO_RESYNC } from './cloud/conflict';
 
 /**
  * Riparazioni skin una tantum (vedi `src/data/founder-grants.ts` per il perché
@@ -237,24 +244,102 @@ export function initBoot(): void {
         }
     })();
 
-    // --- RETE DI SICUREZZA SYNC CLOUD: avviso visibile se i progressi non vengono
-    //     salvati sul cloud per troppo tempo (es. token scaduto / conflitto). Puramente
-    //     additivo: non cambia la logica di salvataggio, segnala soltanto. ---
+    // --- GUARDIA ANTI DOPPIA SCHEDA (3.2, app/tab-guard.ts) ---
+    // Una sola scheda per volta salva. Questa si annuncia SUBITO, in parallelo al
+    // resto dell'avvio; loadGame aspetta l'esito prima di leggere il salvataggio,
+    // così legge quello che l'altra scheda ha appena scritto cedendo il comando.
+    // Una pagina che ha ceduto il comando anche una sola volta ha lo stato in
+    // memoria scaduto PER SEMPRE: non torna a salvare nemmeno quando si
+    // riprende il comando per ricaricarsi — il salvataggio di chiusura del
+    // reload scriverebbe il suo stato vecchio sopra quello appena ceduto
+    // dall'altra scheda. Solo la pagina ricaricata riparte pulita.
+    let _tabStateStale = false;
+    const TAB_CLAIM_FRESH_MS = 3000;
+    const tabSaveBlocked = () => _tabStateStale || tabGuard.isFollower();
+    const tabGuard = new TabGuard({
+        channel: typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(tabChannelName(SAVE_KEY)) : null,
+        flush: () => saveGame(),
+        // Nascosta = ha già salvato andando in secondo piano ed è ferma da allora;
+        // annuncio vecchio = eravamo congelati mentre l'altra giocava. In entrambi
+        // i casi scrivere peggiorerebbe il salvataggio (vedi tab-guard.ts).
+        canFlush: (claimAgeMs) => document.visibilityState === 'visible' && claimAgeMs < TAB_CLAIM_FRESH_MS,
+        onFollower: enterTabPause,
+        onLateRelease: reloadAfterLateRelease,
+    });
+    const _tabClaimStart = Date.now();
+    const tabGuardReady = tabGuard.claim()
+        .then((r) => { w._tabGuardBoot = { ...r, ms: Date.now() - _tabClaimStart }; })
+        .catch(() => undefined);
+    w._tabGuard = tabGuard; // debug/e2e
+
+    // Ceduto il comando: niente più salvataggi (le guardie in saveGame e alla
+    // chiusura), loop e audio fermi, avviso a schermo. Si riparte ricaricando.
+    function enterTabPause(info?: { claimAgeMs: number }) {
+        _tabStateStale = true;
+        try { if (w._espoScheduler) w._espoScheduler.stop(); } catch (e) { /* ignore */ }
+        try { if (w.Howler) w.Howler.mute(true); } catch (e) { /* ignore */ }
+        cloudTrace('[Schede] Il gioco è stato aperto in un\'altra scheda: qui è in pausa e non salva più.');
+        showTabPaused({ isEn: w.APP_LANG === 'en', onResume: resumeTabHere });
+        // Annuncio vecchio letto a scheda visibile: il browser ci ha appena
+        // risvegliati e il giocatore è QUI. Riprende da sola, come al ritorno su
+        // una scheda nascosta. (Con un annuncio fresco e due finestre affiancate,
+        // invece, si aspetta il bottone: riprendersi da soli farebbe ping-pong.)
+        if (info && info.claimAgeMs >= TAB_CLAIM_FRESH_MS && document.visibilityState === 'visible') resumeTabHere();
+    }
+
+    let _tabResuming = false;
+    async function resumeTabHere() {
+        if (_tabResuming) return;
+        _tabResuming = true;
+        showTabResuming(w.APP_LANG === 'en');
+        await tabGuard.claim().catch(() => undefined);
+        location.reload();
+    }
+
+    // L'altra scheda ha finito di salvare DOPO che il nostro avvio aveva già letto
+    // il salvataggio (scheda nascosta rallentata o congelata dal browser): lo stato
+    // caricato può essere più vecchio del suo. Appena aperti non si perde niente a
+    // ricaricare una volta; dopo 30 s il giocatore sta già giocando, e si lascia
+    // stare — resta la rete del conflitto cloud.
+    function reloadAfterLateRelease() {
+        if (Date.now() - _tabClaimStart > 30000) return;
+        cloudTrace('[Schede] L\'altra scheda ha salvato in ritardo: ricarico per partire dal suo stato.');
+        _tabStateStale = true; // il reload non deve salvare lo stato appena letto
+        location.reload();
+    }
+
+    // Tornare su una scheda in pausa vuol dire volerci giocare: riprende da sola.
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && _tabStateStale) resumeTabHere();
+    });
+
+    // --- CLOUD-SYNC: badge, stato, istantanea, conflitto → app/cloud/* (3.2) ---
+    // Qui resta la regia (saveGame, token, loadCloudData); i pezzi estratti
+    // ricevono da fuori le letture di window che prima facevano da soli.
+
+    // Rete di sicurezza: avviso visibile se i progressi non vengono salvati sul
+    // cloud per troppo tempo (es. token scaduto / conflitto). Puramente additivo:
+    // non cambia la logica di salvataggio, segnala soltanto.
     let lastCloudSaveOkAt = Date.now();
     const CLOUD_STALE_MS = 90 * 1000; // avvisa solo dopo 90s di fallimenti (niente flicker)
 
-    // Conflitti consecutivi oltre i quali l'auto-resync si ferma (vedi saveGame).
-    const CLOUD_MAX_AUTO_RESYNC = 3;
+    const cloudBadge = createCloudBadge({
+        isEn: () => w.APP_LANG === 'en',
+        saveGame: () => saveGame(),
+        isStaleServer: () => !!w._cloudStaleServer,
+        getResync: () => (typeof w._resyncFromCloud === 'function' ? () => w._resyncFromCloud() : null),
+        getTokenRefresh: () => (typeof w._silentTokenRefresh === 'function' ? () => w._silentTokenRefresh() : null),
+        getShowLogin: () => (typeof w._showLoginForTokenExpiry === 'function' ? () => w._showLoginForTokenExpiry() : null),
+        resetConflictStreak: () => { w._cloudConflictStreak = 0; },
+    });
+    const _setCloudBadge = (state: any, reason?: any) => cloudBadge.set(state, reason);
 
-    // Canale "sempre acceso" per la traccia di sincronizzazione. Il gioco
-    // zittisce console.log/warn senza DEBUG_MODE (lib/version.ts), quindi un
-    // push respinto dal cloud non lasciava una riga: la segnalazione "in
-    // console non dice mai niente" del 10/09/2026. Da qui passa solo ciò che
-    // serve a capire un salvataggio NON andato (respinto, token, rete) e un
-    // riallineamento dal cloud — non il rumore di ogni push riuscito.
-    function cloudTrace(msg: string) {
-        const orig = (w._console && typeof w._console.warn === 'function') ? w._console.warn : null;
-        if (orig) orig(msg); else console.error(msg);
+    // Fase di lancio (cloud ancora pre-wipe): il cloud pre-lancio risulta "più
+    // avanti" finché il season-wipe backend non è attivo. _cloudPreWipe (impostato
+    // da loadCloudData al login) copre anche le sessioni SUCCESSIVE alla
+    // migrazione, dove _launchMigrationDone è false.
+    function isCloudLaunchPhase(): boolean {
+        return !!(w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice));
     }
 
     function markCloudSaved() {
@@ -265,217 +350,19 @@ export function initBoot(): void {
         _setCloudBadge(false);
     }
     function markCloudUnsynced(reason: any) {
-        // Fase di lancio (cloud ancora pre-wipe): il cloud pre-lancio risulta
-        // "più avanti" finché il season-wipe backend non è attivo → niente badge
-        // allarmante durante questa fase (il locale, Season 1, è autoritativo).
-        // _cloudPreWipe (impostato da loadCloudData al login) copre anche le
-        // sessioni SUCCESSIVE alla migrazione, dove _launchMigrationDone è false.
-        if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) return;
+        // In fase di lancio niente badge allarmante: il locale, Season 1, è autoritativo.
+        if (isCloudLaunchPhase()) return;
         // Solo se loggati e il cloud è fermo da un po' (evita flash su blip transitori).
         if (!store.gameState || !store.gameState.user || !store.gameState.user.username) return;
         if (Date.now() - lastCloudSaveOkAt < CLOUD_STALE_MS) return;
         _setCloudBadge(true, reason);
     }
-    // --- BADGE CLOUD: stato esplicito ---
-    // Prima gli stati erano due e impliciti (visibile / nascosto) e l'unica via
-    // d'uscita era markCloudSaved(), cioè un push cloud riuscito. Al tap non
-    // cambiava nulla finché il salvataggio non andava a buon fine — e se non
-    // andava, mai: da qui la segnalazione QA "clicco e non succede niente, il
-    // messaggio resta fisso". Ora il ciclo è chiuso dal badge stesso:
-    //   problem → syncing → ok (si nasconde da solo) | failed (dice perché)
-    // La dismissione è quindi disaccoppiata dal push riuscito.
-    type CloudBadgeState = 'hidden' | 'problem' | 'syncing' | 'ok' | 'failed';
-    let _cloudBadgeReason: any = null;
-    let _cloudBadgeState: CloudBadgeState = 'hidden';
-    let _cloudBadgeHideTimer: any = null;
-
-    // Motivo tecnico -> cosa è successo, detto all'utente. Le chiavi sono gli
-    // esiti restituiti da _resyncFromCloud / _silentTokenRefresh.
-    function _cloudBadgeText(state: CloudBadgeState, reason: any, isEn: boolean) {
-        if (state === 'syncing') return isEn ? '⏳ Syncing with the cloud…' : '⏳ Sincronizzazione in corso…';
-        if (state === 'ok') return isEn ? '✓ Progress synced' : '✓ Progressi sincronizzati';
-        if (state === 'problem') {
-            // Conflitto che non si risolve da solo: il cloud viene riadottato e
-            // risulta di nuovo avanti al giro dopo. La causa è quasi sempre
-            // un'altra sessione dello stesso account, e va detto: "tocca per
-            // sincronizzare" da solo rimandava il giocatore nello stesso giro.
-            // Classifica e salvataggio cloud disallineati: il locale è la copia buona
-            // e non c'è niente da toccare. Si dice cosa succede, senza invitare a un
-            // gesto che riporterebbe indietro (vedi loadCloudData, ramo 'cloud-indietro').
-            if (reason === 'stale-cloud')
-                return isEn ? '✓ Progress safe on this device — the leaderboard catches up shortly'
-                            : '✓ Progressi al sicuro su questo dispositivo — la classifica si riallinea a breve';
-            // Si dice il FATTO, non la causa. La versione precedente affermava
-            // «un'altra scheda sta salvando»: per l'account T3tt3 (10/09/2026) era
-            // falso — finestra unica, il cloud era avanti per un difetto nostro —
-            // e mandava a caccia di una scheda che non esisteva.
-            if (reason === 'conflict-loop')
-                return isEn ? '⚠ The cloud stays ahead — close any other tab, then tap'
-                            : '⚠ Il cloud resta più avanti — se giochi in un\'altra scheda chiudila, poi tocca';
-            return reason === 'conflict'
-                ? (isEn ? '⚠ Progress behind the cloud — tap to sync'
-                        : '⚠ Progressi dietro al cloud — tocca per sincronizzare')
-                : (isEn ? '⚠ Progress not synced — tap to retry'
-                        : '⚠ Progressi non salvati — tocca per riprovare');
-        }
-        // failed: il motivo cambia l'azione utile, quindi va detto.
-        switch (reason) {
-            case 'stale-cloud':
-                return isEn ? '✓ Progress safe on this device — the leaderboard catches up shortly'
-                            : '✓ Progressi al sicuro su questo dispositivo — la classifica si riallinea a breve';
-            case 'nocreds':
-            case 'login':
-                return isEn ? '⚠ Sign in again to sync — tap' : '⚠ Rifai il login per sincronizzare — tocca';
-            case 'network':
-                return isEn ? '⚠ No connection — tap to retry' : '⚠ Connessione assente — tocca per riprovare';
-            case 'busy':
-                return isEn ? '⏳ Already syncing…' : '⏳ Sincronizzazione già in corso…';
-            case 'cheat':
-                return isEn ? '⚠ Sync off (dev console)' : '⚠ Sync disattivata (console dev)';
-            case 'noapi':
-                return isEn ? '⚠ Not ready yet — tap to retry' : '⚠ Non ancora pronto — tocca per riprovare';
-            default:
-                return isEn ? '⚠ Sync failed — tap to retry' : '⚠ Sincronizzazione fallita — tocca per riprovare';
-        }
-    }
-
-    function _cloudBadgeColor(state: CloudBadgeState, reason?: any) {
-        if (state === 'ok') return 'rgba(39,174,96,0.95)';
-        if (state === 'syncing') return 'rgba(41,128,185,0.95)';
-        // 'stale-cloud' non è un guaio del giocatore: i progressi sono salvi qui e
-        // la classifica rientra da sola. Rosso allarme sarebbe una bugia.
-        if (reason === 'stale-cloud') return 'rgba(39,174,96,0.95)';
-        return 'rgba(192,57,43,0.95)';
-    }
-
-    // Senza credenziali valide non c'è niente da ritentare: l'unica azione utile
-    // è il login. Vale sia quando lo si sa già (motivo del badge) sia quando lo
-    // si scopre dall'esito, altrimenti servirebbero DUE tap — il primo per
-    // scoprire il motivo, il secondo per agire — che è esattamente la sensazione
-    // di "non succede niente" che questo rifacimento toglie.
-    function _cloudBadgeNeedsLogin(reason: any) {
-        return reason === 'nocreds' || reason === 'login';
-    }
-    function _cloudBadgeGoToLogin(reason: any) {
-        if (typeof w._showLoginForTokenExpiry === 'function') {
-            _setCloudBadge('hidden');
-            w._showLoginForTokenExpiry();
-            return true;
-        }
-        // Senza il modale di login non si può fare nulla: meglio dirlo che
-        // lasciare il badge fermo su "sincronizzo…" per sempre.
-        _setCloudBadge('failed', reason);
-        return false;
-    }
-
-    // Il tap sceglie l'azione in base al motivo, aspetta l'esito e lo mostra.
-    async function _cloudBadgeRetry() {
-        if (_cloudBadgeState === 'syncing') return;
-        const wasReason = _cloudBadgeReason;
-        _setCloudBadge('syncing');
-
-        if (_cloudBadgeNeedsLogin(wasReason)) { _cloudBadgeGoToLogin(wasReason); return; }
-
-        let res: any = null;
-        try {
-            // Conflitto → adotta il cloud autoritativo; altrimenti (token/rete)
-            // → rinnova il token e ritenta. Il tocco è una scelta del giocatore
-            // (ha chiuso l'altra scheda?): riapre anche i tentativi automatici.
-            if (wasReason === 'stale-cloud') {
-                // Niente da riallineare: il cloud è indietro. L'unica mossa utile è
-                // ritentare il push — se nel frattempo la produzione ha superato la
-                // classifica, passa e tutto rientra.
-                await saveGame();
-                res = w._cloudStaleServer ? { ok: false, reason: 'stale-cloud' } : { ok: true, reason: 'push' };
-            } else if ((wasReason === 'conflict' || wasReason === 'conflict-loop') && typeof w._resyncFromCloud === 'function') {
-                w._cloudConflictStreak = 0;
-                res = await w._resyncFromCloud();
-            } else if (typeof w._silentTokenRefresh === 'function') {
-                res = await w._silentTokenRefresh();
-            }
-        } catch (e) {
-            res = { ok: false, reason: 'network' };
-        }
-
-        if (res && res.ok) { _setCloudBadge('ok'); return; }
-
-        const reason = (res && res.reason) || 'error';
-        if (_cloudBadgeNeedsLogin(reason)) { _cloudBadgeGoToLogin(reason); return; }
-        _setCloudBadge('failed', reason);
-    }
-
-    function _setCloudBadge(state: any, reason?: any) {
-        // Compatibilità con i due chiamanti storici: _setCloudBadge(false) e
-        // _setCloudBadge(true, reason).
-        if (state === false) state = 'hidden';
-        else if (state === true) state = 'problem';
-
-        let badge = document.getElementById('cloud-sync-badge');
-        if (_cloudBadgeHideTimer) { clearTimeout(_cloudBadgeHideTimer); _cloudBadgeHideTimer = null; }
-
-        _cloudBadgeState = state;
-        if (state === 'hidden') {
-            _cloudBadgeReason = null;
-            if (badge) badge.style.display = 'none';
-            return;
-        }
-        // 'syncing' e 'ok' sono transitori: non sovrascrivono il motivo, che
-        // serve ancora se poi il tentativo fallisce e si torna a 'problem'.
-        if (state === 'problem' || state === 'failed') _cloudBadgeReason = reason || null;
-
-        const isEn = w.APP_LANG === 'en';
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.id = 'cloud-sync-badge';
-            badge.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:11000;color:#fff;font:600 12px/1.2 system-ui,sans-serif;padding:8px 14px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,0.45);max-width:90vw;text-align:center;';
-            badge.addEventListener('click', () => { _cloudBadgeRetry(); });
-            document.body.appendChild(badge);
-        }
-
-        const _motivoMostrato = state === 'failed' ? reason : _cloudBadgeReason;
-        badge.textContent = _cloudBadgeText(state, _motivoMostrato, isEn);
-        badge.style.background = _cloudBadgeColor(state, _motivoMostrato);
-        // Durante il sync il tap non deve accodare un secondo tentativo. Con
-        // 'stale-cloud' non c'è nessun gesto utile: è un avviso, non un pulsante.
-        badge.style.cursor = (state === 'syncing' || state === 'ok' || _motivoMostrato === 'stale-cloud') ? 'default' : 'pointer';
-        badge.title = _cloudBadgeReason ? ('cloud: ' + _cloudBadgeReason) : '';
-        badge.style.display = 'block';
-
-        // Riuscito: si toglie da solo. È il punto della segnalazione — la
-        // scomparsa non dipende più da un push andato a buon fine.
-        if (state === 'ok') {
-            _cloudBadgeHideTimer = setTimeout(() => _setCloudBadge('hidden'), 2500);
-        }
-    }
-
-    // Istantanea dei campi del push cloud che il server confronta con la
-    // classifica e scrive accanto a save_data. Deve essere presa nello stesso
-    // tick della serializzazione del blob: vedi il commento in saveGame.
-    function snapshotCloudMeta() {
-        const gs = store.gameState;
-        let rawScore = new w.Decimal(gs.lifetimeScore);
-        if (rawScore.lt(0)) rawScore = new w.Decimal(0);
-        const season = gs.season || 1;
-        const unlocked = (gs.skins && Array.isArray(gs.skins.unlocked)) ? gs.skins.unlocked.slice() : [];
-        return {
-            score: rawScore.toFixed(0),
-            prestige: Math.floor(gs.totalResets || 0),
-            totalFormattazioni: gs.totalFormattazioni || 0,
-            season: season,
-            equippedSkin: gs.skins.current,
-            profile: {
-                totalClicks: Math.floor(gs.totalClicks || 0),
-                totalPlayTime: Math.floor(gs.totalPlayTime || 0),
-                longestCombo: Math.floor(gs.longestCombo || 0),
-                totalGolden: Math.floor(gs.totalGoldenBugsClicked || 0),
-                season: season,
-                skinsUnlocked: unlocked
-            }
-        };
-    }
 
     async function saveGame() {
         if (store.gameState.isDeleting) return;
+        // In pausa (o in ripresa verso il reload): comanda un'altra scheda, e
+        // questo stato è più vecchio del suo.
+        if (tabSaveBlocked()) return;
 
         // Sanitizzazione
         if (isNaN(store.gameState.score) || store.gameState.score === null) store.gameState.score = 0;
@@ -501,7 +388,7 @@ export function initBoot(): void {
         // conflitto auto-inflitto, che con produzione ferma non si sbloccava mai
         // (segnalazione del 10/09/2026: "Progressi scaricati dal Cloud!" a ripetizione).
         let snap: any = null;
-        try { snap = snapshotCloudMeta(); }
+        try { snap = snapshotCloudMeta(store.gameState, w.Decimal); }
         catch (e) { console.error('[Save✗ SNAPSHOT]', e); }
 
         // Serializza + comprimi UNA volta, riusa per IndexedDB / localStorage / cloud
@@ -628,64 +515,69 @@ export function initBoot(): void {
                             // senza i numeri di nessuna delle due parti.
                             w._cloudConflictStreak = (w._cloudConflictStreak || 0) + 1;
                             const streak = w._cloudConflictStreak;
-                            const ad = w._cloudLastAdopted;
-                            cloudTrace(`[Save✗ CONFLICT #${streak}] ${data.message} | inviato: score=${scoreToSend} prestige=${prestigeToSend} format=${snap.totalFormattazioni} season=${snap.season}` +
-                                (ad ? ` | ultimo cloud adottato ${Math.round((Date.now() - ad.at) / 1000)}s fa: score=${ad.score} prestige=${ad.prestige} format=${ad.totalFormattazioni} season=${ad.season}`
-                                    : ' | nessun cloud adottato in questa sessione'));
-                            // LANCIO: durante la fase pre-wipe il cloud pre-lancio è "più
-                            // avanti" solo perché il season-wipe backend non è ancora attivo.
-                            // NON riallineare (perderemmo la migrazione) e NON allarmare: il
-                            // locale è autoritativo, il push riuscirà a wipe avvenuto.
-                            if (w._launchMigrationDone || w._cloudPreWipe || (store.gameState && store.gameState.pendingFounderChoice)) {
+                            const _nowCf = Date.now();
+                            // 3.2: la EF restituisce anche la riga di classifica con cui la
+                            // RPC ha confrontato (assente con una EF vecchia).
+                            cloudTrace(formatConflictTrace({
+                                streak, message: data.message, now: _nowCf,
+                                sent: { score: scoreToSend, prestige: prestigeToSend, totalFormattazioni: snap.totalFormattazioni, season: snap.season },
+                                server: data.server, adopted: w._cloudLastAdopted,
+                            }));
+                            const decision = decideConflict({
+                                streak, now: _nowCf,
+                                launchPhase: isCloudLaunchPhase(),
+                                staleServer: !!w._cloudStaleServer,
+                                canResync: typeof w._resyncFromCloud === 'function',
+                                resyncing: !!w._resyncing,
+                                lastAutoResyncAt: w._lastAutoResyncAt || 0,
+                            });
+                            if (decision.action === 'ignore-launch') {
+                                // LANCIO: il cloud pre-lancio è "più avanti" solo perché il
+                                // season-wipe backend non è ancora attivo. NON riallineare
+                                // (perderemmo la migrazione) e NON allarmare: il locale è
+                                // autoritativo, il push riuscirà a wipe avvenuto.
                                 console.warn('[Cloud] Conflitto ignorato in fase di lancio (Season 1 autoritativa lato client).');
-                            } else if (w._cloudStaleServer) {
+                            } else if (decision.action === 'stale-cloud') {
                                 // Già accertato in questa sessione: la riga di classifica ha
                                 // preso il largo rispetto al salvataggio cloud, quindi
                                 // riallinearsi porterebbe solo indietro. Si continua a
                                 // pushare a ogni autosave — è così che si rientra, quando la
                                 // produzione supera quel numero — ma senza più resync.
                                 _setCloudBadge('problem', 'stale-cloud');
-                            } else if (streak > CLOUD_MAX_AUTO_RESYNC) {
+                            } else if (decision.action === 'brake') {
                                 // FRENO. Tre riallineamenti di fila e il server risponde ancora
-                                // "più avanti": non è un incidente, è un'altra sessione (scheda
-                                // o dispositivo) che salva sullo stesso account, e ogni resync
-                                // adotta il SUO stato per poi perderlo al giro dopo. Continuare
-                                // in automatico era "Progressi scaricati dal Cloud!" a ripetizione
-                                // (segnalazione del 10/09/2026). Si ferma, lo dice in console e
-                                // sul badge — scavalcando il filtro dei 90s di markCloudUnsynced,
-                                // perché qui l'ultimo push riuscito può essere di pochi secondi
-                                // fa — e lascia il riprova al tocco.
-                                if (streak === CLOUD_MAX_AUTO_RESYNC + 1) {
+                                // "più avanti": ogni resync adotta uno stato che al giro dopo è
+                                // di nuovo indietro. Continuare in automatico era "Progressi
+                                // scaricati dal Cloud!" a ripetizione (10/09/2026). Si ferma, lo
+                                // dice in console e sul badge — scavalcando il filtro dei 90s di
+                                // markCloudUnsynced, perché qui l'ultimo push riuscito può essere
+                                // di pochi secondi fa — e lascia il riprova al tocco.
+                                if (decision.firstBrake) {
                                     console.error(`[Cloud] Conflitto persistente: ${CLOUD_MAX_AUTO_RESYNC} riallineamenti dal cloud e il server risponde ancora "più avanti". ` +
                                         'Cause possibili: un\'altra scheda o dispositivo che salva su questo account, oppure la riga di ' +
                                         'classifica avanti al salvataggio che il server consegna (vedi i numeri nelle righe CONFLICT qui sopra). ' +
                                         'Auto-resync SOSPESO: si continua a salvare, il riallineamento riparte solo dal badge.');
                                 }
                                 _setCloudBadge('problem', 'conflict-loop');
-                            } else {
+                            } else if (decision.action === 'auto-resync') {
                                 // Auto-recovery SILENZIOSA: il cloud è più avanti (anti-rollback
                                 // Format>Prestige>Score) quindi lo adottiamo come autoritativo da
                                 // solo, senza chiedere nulla (prima serviva tap sul badge / reload).
-                                // Throttle 15s = niente loop se due dispositivi salvano in contesa;
-                                // se l'auto-resync è già in corso o appena fatto, mostro il badge.
-                                const _nowCf = Date.now();
-                                if (typeof w._resyncFromCloud === 'function' && !w._resyncing &&
-                                    _nowCf - (w._lastAutoResyncAt || 0) > 15000) {
-                                    w._lastAutoResyncAt = _nowCf;
-                                    cloudTrace(`[Cloud] Conflitto → auto-resync dal cloud (autoritativo), giro ${streak} di ${CLOUD_MAX_AUTO_RESYNC}…`);
-                                    Promise.resolve(w._resyncFromCloud()).then((r: any) => {
-                                        // Il cloud consegnato è più povero del nostro stato: non è
-                                        // stato adottato (loadCloudData l'ha rifiutato) e insistere
-                                        // non serve. Da qui in poi niente più resync per questa
-                                        // sessione, e il badge lo dice senza allarmare.
-                                        if (r && r.reason === 'stale-cloud') {
-                                            w._cloudStaleServer = true;
-                                            _setCloudBadge('problem', 'stale-cloud');
-                                        }
-                                    }).catch(() => { /* l'esito lo racconta comunque il badge */ });
-                                } else {
-                                    markCloudUnsynced('conflict');
-                                }
+                                w._lastAutoResyncAt = _nowCf;
+                                cloudTrace(`[Cloud] Conflitto → auto-resync dal cloud (autoritativo), giro ${streak} di ${CLOUD_MAX_AUTO_RESYNC}…`);
+                                Promise.resolve(w._resyncFromCloud()).then((r: any) => {
+                                    // Il cloud consegnato è più povero del nostro stato: non è
+                                    // stato adottato (loadCloudData l'ha rifiutato) e insistere
+                                    // non serve. Da qui in poi niente più resync per questa
+                                    // sessione, e il badge lo dice senza allarmare.
+                                    if (r && r.reason === 'stale-cloud') {
+                                        w._cloudStaleServer = true;
+                                        _setCloudBadge('problem', 'stale-cloud');
+                                    }
+                                }).catch(() => { /* l'esito lo racconta comunque il badge */ });
+                            } else {
+                                // Resync in corso o appena fatto (throttle 15s): solo il badge.
+                                markCloudUnsynced('conflict');
                             }
                         } else if (data.status === 'warning') {
                             cloudTrace(`[Save✗ WARNING] ${data.message}`);
@@ -944,6 +836,9 @@ export function initBoot(): void {
     }
 
     async function loadGame() {
+        // Prima si prende il comando: se un'altra scheda stava giocando, ha appena
+        // salvato cedendolo e leggiamo il SUO stato (≤ ~0,25 s se si è soli).
+        await tabGuardReady;
         // Carica da IndexedDB V9
         let savedState = await w.SaveDB.loadFromIndexedDB();
 
@@ -1306,6 +1201,7 @@ export function initBoot(): void {
         if (now - lastSlowTick > 1000) {
             w.checkAchievements();         // Controlla obiettivi
             w.checkTabNotifications();     // Controlla i pallini rossi sui tab
+            maybeShowSeasonAnnounce();     // «È arrivato Halloween!» (una volta per edizione)
 
             // Pulizia clickHistory spostata qui (1x/sec invece che 60x/sec)
             const clickNow = Date.now();
@@ -1412,6 +1308,9 @@ export function initBoot(): void {
 
         // Salvataggio alla chiusura
         const handleAppClose = () => {
+            // Scheda in pausa (guardia anti doppia scheda): non deve scrivere niente,
+            // nemmeno la copia sincrona in localStorage.
+            if (tabSaveBlocked()) return;
             // Forza un salvataggio sincrono in localStorage (sempre garantito)
             if (store.gameState && !store.gameState.isDeleting) {
                 // Non bumpare il riferimento offline se stiamo andando in background
@@ -1777,7 +1676,14 @@ export function initBoot(): void {
                     if (hasSession) {
                         w.EspooClicker.tryStartAudio();
                         startGameRoutines();
-                        
+                        // F5 con sessione: niente intro (parte solo al login esplicito)
+                        // e il loader è appena sparito, quindi il gioco è a schermo.
+                        // Il reveal stava solo in coda al login cloud (ui/modals): se
+                        // l'accesso automatico non arrivava (rete, 429) neve/fantasmi
+                        // e avviso stagionale restavano in attesa per sempre. È
+                        // idempotente: il login, se arriva, lo ripete senza effetti.
+                        if (typeof w.releaseAmbientVfx === 'function') w.releaseAmbientVfx();
+
                         // --- CONTROLLO MODALI DI AVVIO (A CASCATA) ---
                         if (w.triggerLaunchMigrationModal || (store.gameState && store.gameState.pendingFounderChoice)) {
                             setTimeout(() => {
@@ -2041,9 +1947,21 @@ export function initBoot(): void {
                 w.resolveBug(e);
             });
 
+            // 1b. TASTIERA: una pressione = un click. Con il bottone a fuoco, tenere
+            // premuto Invio ripeteva il click a ogni ripetizione del tasto (~30/s):
+            // un autoclicker gratis. Le ripetizioni si fermano qui; Spazio clicca
+            // già solo al rilascio. Premere e rilasciare resta valido (a11y).
+            clickerButton.addEventListener('keydown', (e: any) => {
+                if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault();
+            });
+
             // 2. GESTIONE TOUCH (Reattività estrema su Mobile)
             clickerButton.addEventListener('touchstart', (e: any) => {
                 e.preventDefault(); // Impedisce al browser di far partire anche un "click" finto (evita doppi colpi)
+                // Il resolveBug qui sotto riceve un oggetto costruito a mano, senza
+                // isTrusted: il controllo va fatto ADESSO, sull'evento vero. Un
+                // TouchEvent creato da script arriva con isTrusted=false.
+                if (!e.isTrusted) return;
                 try { tryStart(); } catch (err) { console.warn('[click] tryStart best-effort:', err); }
                 
                 const touch = e.touches[0];
@@ -2053,7 +1971,8 @@ export function initBoot(): void {
                     detail: 1, 
                     clientX: touch.clientX, 
                     clientY: touch.clientY, 
-                    target: clickerButton
+                    target: clickerButton,
+                    timeStamp: e.timeStamp // istante vero del tocco, per l'anticheat
                 });
             }, { passive: false });
         }
@@ -2182,20 +2101,23 @@ export function initBoot(): void {
         const crunchBtn = document.getElementById('skill-crunchTime');
         if (crunchBtn) {
             crunchBtn.addEventListener('click', (e) => {
-                // Consenti l'attivazione da tastiera (detail 0 ma isTrusted true); blocca solo i .click() da script
-                if (e.detail === 0 && e.isTrusted === false) return;
+                // Solo eventi veri (mouse, touch, tastiera): un click sintetico da
+                // script si scarta qualunque sia detail — con detail:1 passava.
+                if (!e.isTrusted) return;
                 w.activateCrunchTime();
             });
         }
 
         if (goldenBug) {
             goldenBug.addEventListener('click', (e: any) => {
-                // Blocca solo i .click() sintetici da script; mouse e tastiera reali passano
-                if (e.detail === 0 && e.isTrusted === false) return;
+                // Solo eventi veri: mouse e tastiera reali passano, i click
+                // sintetici da script no (anche con detail:1, che prima passava).
+                if (!e.isTrusted) return;
                 w.clickGoldenBug();
             });
             // Il golden bug e' un <div role="button">: la tastiera non genera click nativo, lo gestiamo qui
             goldenBug.addEventListener('keydown', (e: any) => {
+                if (!e.isTrusted || e.repeat) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     w.clickGoldenBug();
@@ -2798,7 +2720,8 @@ export function initBoot(): void {
         if (document.hidden) document.title = 'I bug si accumulano...';
         else document.title = originalTitle;
 
-        if (document.visibilityState === 'visible') {
+        // Scheda in pausa: al ritorno si ricarica (guardia anti doppia scheda), niente modale offline.
+        if (document.visibilityState === 'visible' && !tabSaveBlocked()) {
             lastFrameTime = Date.now(); // Resetta il timer per evitare salti
             checkOfflineProgress();       // Controlla se mostrare il modale offline
         }
@@ -2813,6 +2736,10 @@ export function initBoot(): void {
     Promise.resolve(initializeGame())
         .catch(e => console.error("Errore in initializeGame/loadGame:", e))
         .finally(() => {
+            // Flag leggibile anche a evento già passato (e2e): dal 3.2 loadGame
+            // aspetta la guardia anti doppia scheda, quindi "lo stato esiste" non
+            // vuol più dire "il salvataggio locale è stato caricato".
+            w._espoGameReady = true;
             document.dispatchEvent(new Event('EspoGameReady'));
             console.log("✅ Evento EspoGameReady inviato.");
         });

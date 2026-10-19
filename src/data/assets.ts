@@ -163,6 +163,17 @@ export const assets: Record<string, any> = {
             loop: true,
             defaultVol: 0.2
         },
+        // Tema Halloween (3.2): musica delle skin Festive di Halloween. Stesso
+        // brano del jukebox (music/songs/Espòòò Clicker - Halloween.mp3).
+        'halloween': {
+            id: 'sound-bg-halloween',
+            file: 'assets/sounds/music/bg-halloween.mp3',
+            name: 'Halloween',
+            type: 'music',
+            category: 'ambiente',
+            loop: true,
+            defaultVol: 0.3    // stesso volume medio di 8-Bit World (≈ -16 dB)
+        },
         'bluescreen': {
             id: 'sound-bluescreen',
             file: 'assets/sounds/music/bluescreen.mp3',

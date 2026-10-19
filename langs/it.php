@@ -207,7 +207,7 @@
 	$labels["skins_rarity_epic"] = "Epica";
 	$labels["skins_rarity_legendary"] = "Leggendaria";
 	$labels["skins_rarity_divine"] = "Divina";
-	$labels["skins_rarity_christmas"] = "Festiva";
+	$labels["skins_rarity_festive"] = "Festiva";
 	$labels["news_titolo"] = "Novità dell'Aggiornamento";
 	$labels["news_loading"] = "Caricamento novità...";
 

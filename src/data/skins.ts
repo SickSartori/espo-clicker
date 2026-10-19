@@ -1,5 +1,20 @@
 import { Decimal } from './decimal';
-import { IS_XMAS_TIME } from './season';
+import { IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
+
+/**
+ * Tema Halloween, condiviso dalle tre skin Festive della stagione. Il Golden
+ * Bug diventa il «Bug Maledetto»: ragno viola, e il toast di cattura standard
+ * letto da texts.toasts[goldenBugToast] invece di bugCrit.
+ */
+const HALLOWEEN_THEME = {
+    cssFile: 'halloween-theme.css',
+    vfx: 'ghosts',
+    specialMusic: 'sound-bg-halloween',
+    bodyClass: 'theme-halloween',
+    goldenBugIcon: 'fa-spider',
+    goldenBugColor: '#a855f7',
+    goldenBugToast: 'bugCursed'
+};
 
 export const skins: Record<string, any> = {
     default: {
@@ -32,13 +47,17 @@ export const skins: Record<string, any> = {
         rarity: "common",
         cost: new Decimal(0)
     },
+    // --- FESTIVE (stagioni a calendario, vedi season.ts) ---
+    // A finestra aperta: obiettivo stagionale o prezzo scontato. Fuori stagione:
+    // in negozio a prezzo pieno, così nessuna skin sparisce per sempre.
     christmas: {
         name: "Espo Natale",
         desc: "Risolviamo questi bug sotto l'albero.",
         img: "skins/esponatale.webp",
         imgClick: "skins/esponatale-click.webp",
-        rarity: "christmas",
-        unlockHint: IS_XMAS_TIME ? "Riscatta l'obiettivo 'Buon Natale'!" : "Disponibile nello Shop per 5 Token.",
+        rarity: "festive",
+        season: "christmas",
+        unlockHint: "Riscatta l'obiettivo 'Buon Natale'!",
         cost: IS_XMAS_TIME ? undefined : new Decimal(20),
         themeConfig: {
             cssFile: 'christmas-theme.css',
@@ -48,6 +67,37 @@ export const skins: Record<string, any> = {
             goldenBugIcon: 'fa-gift',
             goldenBugColor: '#e74c3c'
         }
+    },
+    espostore: {
+        name: "L'Espostore",
+        desc: "Tranquilli, sono io. Più o meno.",
+        img: "skins/espostore.webp",
+        imgClick: "skins/espostore-click.webp",
+        rarity: "festive",
+        season: "halloween",
+        unlockHint: "Riscatta l'obiettivo 'Dolcetto o Scherzetto'!",
+        cost: IS_HALLOWEEN_TIME ? undefined : new Decimal(20),
+        themeConfig: HALLOWEEN_THEME
+    },
+    frankenespo: {
+        name: "Frankenespò",
+        desc: "Assemblato con snippet copiati da Stack Overflow. Funziona, nessuno sa perché.",
+        img: "skins/frankenespo.webp",
+        imgClick: "skins/frankenespo-click.webp",
+        rarity: "festive",
+        season: "halloween",
+        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25),
+        themeConfig: HALLOWEEN_THEME
+    },
+    conteEspocula: {
+        name: "Conte Espòcula",
+        desc: "Non succhio sangue, succhio RAM.",
+        img: "skins/conte-espocula.webp",
+        imgClick: "skins/conte-espocula-click.webp",
+        rarity: "festive",
+        season: "halloween",
+        cost: new Decimal(IS_HALLOWEEN_TIME ? 10 : 25),
+        themeConfig: HALLOWEEN_THEME
     },
 
     // --- RARE ---

@@ -432,7 +432,7 @@
                     <option value="epic"><?php echo $labels["skins_rarity_epic"]; ?></option>
                     <option value="legendary"><?php echo $labels["skins_rarity_legendary"]; ?></option>
                     <option value="divine"><?php echo $labels["skins_rarity_divine"]; ?></option>
-                    <option value="christmas"><?php echo $labels["skins_rarity_christmas"]; ?></option>
+                    <option value="festive"><?php echo $labels["skins_rarity_festive"]; ?></option>
                 </select>
             </div>
         </div>

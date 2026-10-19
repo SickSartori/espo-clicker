@@ -30,7 +30,9 @@ async function boot(page: Page): Promise<void> {
   await page.clock.install();
   await page.goto('/index.php', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
-    () => !!(window as any).EspooClicker && !!(window as any).EspooClicker.getGameState(),
+    // _espoGameReady: il salvataggio locale è caricato (dal 3.2 loadGame aspetta la
+    // guardia anti doppia scheda: senza, il caricamento finiva DOPO il setup del test).
+    () => !!(window as any).EspooClicker && !!(window as any).EspooClicker.getGameState() && !!(window as any)._espoGameReady,
     undefined, { timeout: 15_000 },
   );
   await page.evaluate(() => {
@@ -202,6 +204,26 @@ test.describe('Loop di conflitto cloud', () => {
     // Era il carburante del loop: il push "di conferma" subito dopo l'adozione.
     expect(save, 'nessun push di conferma dopo il resync').toBe(0);
     expect(r.modale, 'niente guadagni offline su uno stato preso da un\'altra sessione').toBe('none');
+  });
+
+  test('la riga CONFLICT in console riporta anche i numeri del server (EF 3.2)', async ({ page }) => {
+    await boot(page);
+    const blob = await cloudBlob(page);
+    await page.route('**/login-register', loginRoute(blob, () => {}));
+    await page.route('**/save-progress', (route) => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'conflict', message: 'Cloud save is newer (Score). Please reload.', reason: 'Score',
+        server: { score: '987654321', prestige: 7, totalFormattazioni: 1, season: 1, updatedAt: new Date().toISOString() },
+      }),
+    }));
+    const righe: string[] = [];
+    page.on('console', (m) => { if (m.text().includes('[Save✗ CONFLICT')) righe.push(m.text()); });
+
+    await page.evaluate(async () => { await (window as any).EspooClicker.saveGame(); });
+    await expect.poll(() => righe.length, { timeout: 5_000 }).toBeGreaterThan(0);
+    expect(righe[0]).toContain('server: score=987654321 prestige=7 format=1 season=1');
+    expect(righe[0]).toContain('inviato: score=');
   });
 
   test('lo score inviato è quello dentro il blob spedito insieme', async ({ page }) => {

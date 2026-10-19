@@ -91,6 +91,8 @@ export const texts: Record<string, any> = {
         versionMismatch: "⚠️ Incompatible save version!",
         memoryFull: "Memory full! Can't save locally.",
         bugCrit: "Critical Bug Fixed! +{amount} bugs!",
+        bugCursed: "🕷️ Cursed Bug exorcised! +{amount} bugs!",
+        autoClickerPause: "🤖 Automatic clicks detected: clicking is paused for 10 seconds.",
         offlineClaim: "You claimed {amount} bugs!",
         settingsSaved: "Preferences Saved",
         audioReset: "Audio reset to default values",
@@ -233,6 +235,6 @@ export const texts: Record<string, any> = {
     },
     rarities: {
         common: "COMMON", rare: "RARE", epic: "EPIC",
-        legendary: "LEGENDARY", divine: "DIVINE", christmas: "FESTIVE"
+        legendary: "LEGENDARY", divine: "DIVINE", festive: "FESTIVE"
     }
 }

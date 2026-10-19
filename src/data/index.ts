@@ -15,7 +15,7 @@ import { clickUpgrades, prestigeUpgrades, buildingEnhancements, superUpgrades } 
 import { achievements } from './achievements';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
-import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
+import { isChristmasSeason, isHalloweenSeason, isSeasonActive, IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
 import { store } from '../state/store';
 
 export const gameData: Record<string, any> = {
@@ -39,6 +39,8 @@ export function installGameData(): void {
   (window as any).isChristmasSeason = isChristmasSeason;
   (window as any).isSeasonActive = isSeasonActive;
   (window as any).IS_XMAS_TIME = IS_XMAS_TIME;
+  (window as any).isHalloweenSeason = isHalloweenSeason;
+  (window as any).IS_HALLOWEEN_TIME = IS_HALLOWEEN_TIME;
   // store.gameData è la fonte diretta per i moduli V3. window.gameData resta
   // una proprietà bare (stessa referenza) solo per la cheatboard dev-only.
   store.gameData = gameData;

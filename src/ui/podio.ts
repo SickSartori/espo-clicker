@@ -11,6 +11,7 @@
  * a global legacy passano da `window.*` (alias `w`) perché un modulo strict non li vede.
  */
 import { store } from '../state/store';
+import { skinAccent } from './rarity';
 
 export function initPodio(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -123,11 +124,7 @@ export function initPodio(): void {
                     let avatarImg = skinData.img ? `assets/image/${skinData.img}` : 'assets/image/espo.webp';
 
                     // Colore del bordo in base alla rarità
-                    const rColors: Record<string, string> = {
-                        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
-                        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
-                    };
-                    let borderColor = rColors[skinData.rarity] || rColors['common'];
+                    let borderColor = skinAccent(skinData).color;
 
                     let avatarHTML = `<img src="${avatarImg}" class="leaderboard-avatar" style="border-color: ${borderColor};">`;
                     // ----------------------------------------

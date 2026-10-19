@@ -1,4 +1,23 @@
 (function () {
+    // --- GUARDIA PRODUZIONE (3.2) — PRIMA di qualunque altra riga ---
+    // Il loader (src/lib/backend-config.ts) inietta questo file solo in dev e il
+    // workflow di produzione lo cancella prima dell'FTP. Ma il file è pubblico
+    // nell'area /test/, sulla stessa origine: chiunque potrebbe iniettarlo da
+    // console nella pagina di PRODUZIONE, gonfiare il punteggio e mandarlo in
+    // classifica. Da qui la regola: lo script si rifiuta di partire se la pagina
+    // non è di sviluppo (stessa regola di src/lib/env.ts) o se il backend attivo
+    // non è quello di dev. Non tocca niente prima di questo controllo.
+    var _h = (location && location.hostname) || '';
+    var _p = (location && location.pathname) || '';
+    var _pageIsDev = _h === 'localhost' || _h === '127.0.0.1' || _h === '::1' ||
+        _h.slice(-6) === '.local' || _h.slice(-5) === '.test' || _p.indexOf('/test/') !== -1;
+    var _backendIsDev = !!(window.EspoBackend && window.EspoBackend.env === 'dev');
+    if (!_pageIsDev || !_backendIsDev) {
+        try { console.error('[Cheatboard] Bloccata: questa non è una pagina di sviluppo (' + _h + _p + ').'); } catch (e) { /* ignore */ }
+        window.__cheatboardBlocked = true;
+        return;
+    }
+
     // =====================================================================
     //  ADMIN CONSOLE / CHEATBOARD  (dev-only — rimossa in produzione)
     //  Layout: cruscotto live fisso in alto + tab a colori + ricerca.
@@ -43,6 +62,8 @@
         ['Pronto Formattazione (NG+)', 'Format ready (NG+)'], ['Aggiungi 1 Formattazione', 'Add 1 Format'],
         ['Errore 404', 'Error 404'], ['Video meme', 'Meme videos'], ['Attiva Espo Fury', 'Activate Espo Fury'], ['Azzera Cooldown', 'Reset Cooldown'],
         ['Ferma evento in corso', 'Stop current event'],
+        ['Stagioni (ricarica la pagina)', 'Seasons (reloads the page)'], ['Nessuna stagione', 'No season'], ['Torna al calendario', 'Back to the calendar'],
+        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
         ['Carica uno stato di test', 'Load a test state'], ['Nuovo giocatore', 'New player'], ['Stato pulito, early game', 'Clean state, early game'],
         ['Pronto 1° Prestige', 'Ready for 1st Prestige'], ['Score appena sopra soglia · Liv 0', 'Score just above threshold · Lv 0'],
         ['≈ Liv 5 · team e token medi', '≈ Lv 5 · medium teams & tokens'], ['Endgame / pre-Formattazione', 'Endgame / pre-Format'],
@@ -309,6 +330,13 @@
                     <div class="cb-gt">Controllo</div>
                     <div class="cb-row"><button id="cb-stop-evt" class="cb-btn red"><i class="fa-solid fa-stop"></i> Ferma evento in corso</button></div>
                 </div>
+                <div class="cb-group">
+                    <div class="cb-gt">Stagioni (ricarica la pagina)</div>
+                    <div class="cb-row"><span id="cb-season-label" style="opacity:.85;font-size:12px;">—</span></div>
+                    <div class="cb-row"><button id="cb-season-halloween" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween</button><button id="cb-season-christmas" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale</button></div>
+                    <div class="cb-row"><button id="cb-season-halloween-skin" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween + skin</button><button id="cb-season-christmas-skin" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale + skin</button></div>
+                    <div class="cb-row"><button id="cb-season-none" class="cb-btn"><i class="fa-solid fa-ban"></i> Nessuna stagione</button><button id="cb-season-auto" class="cb-btn cyan"><i class="fa-solid fa-calendar-days"></i> Torna al calendario</button></div>
+                </div>
             </section>
 
             <section class="cb-sec" data-tab="scenari">
@@ -500,6 +528,56 @@
     function evtStar() { const m = I('cb-evt-mult'); if (typeof triggerGameEvent === 'function') { triggerGameEvent('superStarMode', m); toast('Super Star (x' + m + ') attivata'); } }
     function resetCd() { crunchTimeCooldownEnd = 0; crunchTimeEndTime = 0; gameState.crunchTimeCooldownEnd = 0; gameState.crunchTimeEndTime = 0; refreshUI(); toast('Cooldown azzerati'); }
     function fury() { if (typeof crunchTimeCooldownEnd !== 'undefined') crunchTimeCooldownEnd = 0; if (typeof activateCrunchTime === 'function') { activateCrunchTime(); toast('Espo Fury attivata'); } else { toast('activateCrunchTime non disponibile'); } }
+    // --- Stagioni a calendario (src/data/season.ts) ---
+    // Il calendario si legge UNA volta all'import (costi e testi delle skin ne
+    // dipendono), quindi si cambia con l'override di prova `?stagione=` e un
+    // reload. L'override vive in sessionStorage finché non si torna al calendario.
+    const SEASON_NAMES = { halloween: 'Halloween', christmas: 'Natale' };
+    function setSeason(value) {
+        const u = new URL(location.href);
+        u.searchParams.set('stagione', value);
+        location.href = u.toString();
+    }
+    // "+ skin": stagione forzata E skin dell'evento sbloccata e indossata, per
+    // vedere subito tema, musica e annuncio senza passare dall'obiettivo. La
+    // richiesta sopravvive al reload in sessionStorage e si esegue appena il
+    // salvataggio locale è caricato (window._espoGameReady).
+    const SEASON_EQUIP_KEY = 'cbSeasonEquip';
+    function setSeasonWithSkin(value) {
+        try { sessionStorage.setItem(SEASON_EQUIP_KEY, value); } catch (e) { /* ignore */ }
+        setSeason(value);
+    }
+    function applyPendingSeasonEquip() {
+        let season = null;
+        try { season = sessionStorage.getItem(SEASON_EQUIP_KEY); sessionStorage.removeItem(SEASON_EQUIP_KEY); } catch (e) { /* ignore */ }
+        if (!season) return;
+        let tries = 0;
+        const tick = () => {
+            if (!window._espoGameReady || !window.gameData || !gameState) {
+                if (++tries < 75) setTimeout(tick, 200);
+                return;
+            }
+            const ids = Object.keys(gameData.skins).filter((k) => gameData.skins[k].season === season);
+            if (!ids.length) { toast('Nessuna skin per la stagione ' + season); return; }
+            ids.forEach((k) => { if (!gameState.skins.unlocked.includes(k)) gameState.skins.unlocked.push(k); });
+            if (typeof equipSkin === 'function') equipSkin(ids[0]);
+            if (window.EspooClicker) window.EspooClicker.saveGame();
+            refreshUI();
+            toast((SEASON_NAMES[season] || season) + ': skin sbloccate e indossata ' + (gameData.skins[ids[0]].name || ids[0]));
+        };
+        tick();
+    }
+
+    function updateSeasonUI() {
+        const el = $('cb-season-label');
+        if (!el) return;
+        const active = Object.keys(SEASON_NAMES).filter((id) => typeof window.isSeasonActive === 'function' && window.isSeasonActive(id));
+        let forced = null;
+        try { forced = sessionStorage.getItem('espoSeasonOverride'); } catch (e) { /* ignore */ }
+        const what = active.length ? active.map((id) => SEASON_NAMES[id]).join(' + ') : 'nessuna';
+        el.textContent = cbT('Ora: ' + what + ' · ' + (forced ? 'forzata' : 'calendario'));
+    }
+
     function stopEvt() {
         if (!window.currentActiveEvent) { toast('Nessun evento attivo'); return; }
         const evtName = window.currentActiveEvent;
@@ -923,11 +1001,19 @@
     on('cb-combo-mult', comboMultCycle);
     on('cb-v2', forceV2); on('cb-v3', forceV3); on('cb-hardreset', hardReset);
     on('cb-first-run', simulateFirstRun);
+    on('cb-season-halloween', () => setSeason('halloween'));
+    on('cb-season-christmas', () => setSeason('christmas'));
+    on('cb-season-halloween-skin', () => setSeasonWithSkin('halloween'));
+    on('cb-season-christmas-skin', () => setSeasonWithSkin('christmas'));
+    on('cb-season-none', () => setSeason('nessuna'));
+    on('cb-season-auto', () => setSeason('auto'));
 
     // --- 13. Init ---
     activate('risorse');
     updateDebugUI();
     updateComboMultUI();
+    updateSeasonUI();
+    applyPendingSeasonEquip();
     applyHandlePos();
     applyLoginGate();
     updateDash();

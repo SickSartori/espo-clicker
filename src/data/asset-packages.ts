@@ -98,6 +98,13 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/espoclown-click.webp',
             'skins/espoachi.webp',
             'skins/espoachi-click.webp',
+            // Festive Halloween (3.2): qui e non in SKINS_COMMON per non gonfiare il primo pacchetto
+            'skins/espostore.webp',
+            'skins/espostore-click.webp',
+            'skins/frankenespo.webp',
+            'skins/frankenespo-click.webp',
+            'skins/conte-espocula.webp',
+            'skins/conte-espocula-click.webp',
         ],
         // Dimensione stimata: ~297 KB
     },

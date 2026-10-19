@@ -1,0 +1,319 @@
+/* ============================================================
+   TEMA HALLOWEEN: ESPOSTORE, FRANKENESPÒ, CONTE ESPÒCULA
+   Scoped: si applica solo alla UI di gioco (Container e Navbar).
+   Caricato raw da loadThemeCSS quando è equipaggiata una skin Festiva di
+   Halloween (themeConfig in src/data/skins.ts). Stesso impianto del tema
+   natalizio: palette, container, navbar, card, sfondo del personaggio, VFX.
+   Il Golden Bug diventa il «Bug Maledetto» (icona e colore dal themeConfig,
+   toast da texts.toasts.bugCursed).
+   ============================================================ */
+
+/* --- PALETTE UNIFICATA --- */
+body.theme-halloween {
+    --hw-night: #120818;
+    --hw-purple-deep: #1e0b2b;
+    --hw-purple: #3b0f5c;
+    --hw-violet: #a855f7;
+    --hw-pumpkin: #f97316;
+    --hw-pumpkin-bright: #fb923c;
+    --hw-ember: #c2410c;
+    --hw-bone: #f5f0e6;
+}
+
+/* --- GAME CONTAINER --- */
+/* Viola notte trasparente, bordo zucca, ragnatele negli angoli alti e nebbia
+   bassa. Le decorazioni sono nel background del container → restano sempre
+   dietro al contenuto. */
+body.theme-halloween #game-container {
+    position: relative;
+    background-color: rgba(30, 11, 43, 0.92);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg%3E%3Cpath d='M0 0L124 0M0 0L115 47M0 0L88 88M0 0L47 115M0 0L0 124M34 0Q28 6 31 13Q24 16 24 24Q16 24 13 31Q6 28 0 34M68 0Q56 11 63 26Q48 32 48 48Q32 48 26 63Q11 56 0 68M102 0Q84 17 94 39Q72 48 72 72Q48 72 39 94Q17 84 0 102' fill='none' stroke='%23f5f0e6' stroke-opacity='.22' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg transform='translate(120 0) scale(-1 1)'%3E%3Cpath d='M0 0L124 0M0 0L115 47M0 0L88 88M0 0L47 115M0 0L0 124M34 0Q28 6 31 13Q24 16 24 24Q16 24 13 31Q6 28 0 34M68 0Q56 11 63 26Q48 32 48 48Q32 48 26 63Q11 56 0 68M102 0Q84 17 94 39Q72 48 72 72Q48 72 39 94Q17 84 0 102' fill='none' stroke='%23f5f0e6' stroke-opacity='.22' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(ellipse 60% 22% at 20% 100%, rgba(168, 85, 247, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 22% at 80% 100%, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+    background-repeat: no-repeat;
+    background-position: top left, top right, bottom left, bottom right;
+    border: 2px solid var(--hw-ember);
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.35);
+}
+
+/* --- LUMINI --- */
+/* Fila di lumini soffusi zucca/viola lungo la striscia bassa (vuota) della
+   navbar, come le luci natalizie. Tremolio lento, non un lampeggio.
+   NB: la navbar legacy è già position:fixed → contesto di posizionamento per
+   ::before. NON impostare qui `position` sulla navbar (vedi layout-shell.css). */
+body.theme-halloween #game-navbar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    pointer-events: none;
+    z-index: 2;
+    background:
+        radial-gradient(circle 3px at 12px 5px, var(--hw-pumpkin) 60%, transparent 62%),
+        radial-gradient(circle 3px at 36px 5px, var(--hw-violet) 60%, transparent 62%),
+        radial-gradient(circle 3px at 60px 5px, var(--hw-pumpkin-bright) 60%, transparent 62%),
+        radial-gradient(circle 3px at 84px 5px, var(--hw-bone) 55%, transparent 62%);
+    background-repeat: repeat-x;
+    background-size: 96px 10px;
+    animation: hwCandles 3.2s ease-in-out infinite;
+}
+
+@keyframes hwCandles {
+    0%, 100% {
+        filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.45));
+        opacity: 0.85;
+    }
+    35% {
+        filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.8));
+        opacity: 1;
+    }
+    60% {
+        filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.55));
+        opacity: 0.9;
+    }
+}
+
+/* Colonne laterali */
+body.theme-halloween #game-container .game-column {
+    border-right: 1px solid rgba(249, 115, 22, 0.22);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- NAVBAR --- */
+body.theme-halloween #game-navbar {
+    background: var(--hw-night);
+    border-bottom: 2px solid var(--hw-purple);
+}
+
+/* --- TITOLI SEZIONI --- */
+body.theme-halloween #game-container .store-section h2,
+body.theme-halloween #game-container .section-header h2 {
+    color: var(--hw-pumpkin-bright);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+}
+
+/* --- BOTTONI COMPRA (zucca con bordo viola) --- */
+body.theme-halloween #game-container .buy-btn:not(:disabled) {
+    background: linear-gradient(to bottom, var(--hw-pumpkin), var(--hw-ember));
+    border: 1px solid var(--hw-violet);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.theme-halloween #game-container .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, var(--hw-pumpkin-bright), var(--hw-pumpkin));
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.7);
+}
+
+/* --- PUNTEGGI --- */
+body.theme-halloween #game-container #score-display {
+    color: var(--hw-bone);
+    text-shadow: 2px 2px 0 #000, 0 0 10px rgba(249, 115, 22, 0.5);
+}
+
+body.theme-halloween #game-container #cps-display {
+    color: var(--hw-pumpkin-bright);
+}
+
+/* --- MAIN BUTTON BACKGROUND --- */
+/* Sfondo dietro al personaggio: alone di zucca che sfuma nel viola, con un
+   tremolio lento da candela dentro la zucca. */
+body.theme-halloween .bg-festive {
+    background: radial-gradient(circle, #fdba74 4%, var(--hw-pumpkin) 34%, var(--hw-purple) 78%, var(--hw-purple-deep) 100%);
+    box-shadow: 0 0 32px rgba(249, 115, 22, 0.45), inset 0 0 22px rgba(0, 0, 0, 0.35);
+    border: 4px solid rgba(245, 240, 230, 0.75);
+    animation: hwBgFlicker 4.2s ease-in-out infinite;
+}
+
+@keyframes hwBgFlicker {
+    0%, 100% {
+        box-shadow: 0 0 26px rgba(249, 115, 22, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.35);
+    }
+    40% {
+        box-shadow: 0 0 40px rgba(251, 146, 60, 0.55), inset 0 0 18px rgba(0, 0, 0, 0.3);
+    }
+    55% {
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 22px rgba(0, 0, 0, 0.38);
+    }
+}
+
+/* --- CARD MENU LATERALI (Potenziamenti / Auto / Lab / Teams) --- */
+/* Come nel tema natalizio: le card legacy blu-scure diventano viola caldo con
+   accento zucca a sinistra, costo zucca e hover viola — niente blu/ciano. */
+body.theme-halloween #game-container .click-upgrade,
+body.theme-halloween #game-container .enhancement-upgrade,
+body.theme-halloween #game-container .prestige-upgrade,
+body.theme-halloween #building-list-container .upgrade {
+    background: linear-gradient(150deg, rgba(40, 16, 52, 0.72) 0%, rgba(20, 9, 26, 0.64) 100%);
+    border: 1px solid rgba(249, 115, 22, 0.24);
+    border-left: 3px solid var(--hw-pumpkin);
+}
+
+body.theme-halloween #game-container .click-upgrade:hover,
+body.theme-halloween #game-container .enhancement-upgrade:hover,
+body.theme-halloween #game-container .prestige-upgrade:hover,
+body.theme-halloween #building-list-container .upgrade:hover:not(.locked-item) {
+    border-color: rgba(168, 85, 247, 0.45);
+    border-left-color: var(--hw-violet);
+    background: linear-gradient(150deg, rgba(52, 20, 68, 0.78) 0%, rgba(26, 11, 34, 0.68) 100%);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 16px rgba(168, 85, 247, 0.18);
+    transform: translateY(-1px);
+}
+
+/* Costo in zucca su tutte le card laterali */
+body.theme-halloween #game-container .upgrade-cost,
+body.theme-halloween #building-list-container .upgrade-cost {
+    color: var(--hw-pumpkin-bright);
+}
+
+/* Badge conteggio team: da blu → viola/zucca */
+body.theme-halloween #building-list-container .upgrade-count {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    color: var(--hw-pumpkin-bright);
+}
+
+/* --- BUG MALEDETTO --- */
+/* Il ragno (goldenBugIcon) prende un alone viola invece di quello dorato. */
+body.theme-halloween #golden-bug i {
+    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.85)) drop-shadow(0 0 2px rgba(249, 115, 22, 0.6));
+}
+
+/* --- COMPATIBILITÀ RICK ROLL --- */
+body.theme-halloween.rick-rolling #game-container {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+}
+
+body.theme-halloween.rick-rolling #game-navbar::before {
+    display: none;
+}
+
+body.theme-halloween.rick-rolling .game-column {
+    border: none;
+    background: transparent;
+}
+
+/* --- EFFETTO FANTASMI (Overlay Globale) --- */
+/* Generati da VFXManager.spawnGhosts dentro #snow-container (lo stesso layer
+   della neve, che stopAll già pulisce). Pochi, piccoli, semitrasparenti, e
+   salgono lenti ondeggiando: atmosfera, non spavento. Tre pattern di deriva
+   via :nth-child, come la neve. */
+body.theme-halloween .snow_container.ghost_container_block {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+    display: block;
+}
+
+.halloween-ghost {
+    position: absolute;
+    bottom: -40px;
+    color: var(--hw-bone, #f5f0e6);
+    pointer-events: none;
+    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.55));
+    animation-name: hwGhostRise;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+.halloween-ghost:nth-child(3n) {
+    animation-name: hwGhostRiseB;
+}
+
+.halloween-ghost:nth-child(3n + 1) {
+    animation-name: hwGhostRiseC;
+}
+
+@keyframes hwGhostRise {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    15% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    50% {
+        transform: translateY(-55vh) translateX(28px);
+    }
+    85% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    100% {
+        transform: translateY(-110vh) translateX(-10px);
+        opacity: 0;
+    }
+}
+
+@keyframes hwGhostRiseB {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    15% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    50% {
+        transform: translateY(-55vh) translateX(-30px);
+    }
+    85% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    100% {
+        transform: translateY(-110vh) translateX(12px);
+        opacity: 0;
+    }
+}
+
+@keyframes hwGhostRiseC {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    15% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    40% {
+        transform: translateY(-44vh) translateX(18px);
+    }
+    70% {
+        transform: translateY(-77vh) translateX(-16px);
+    }
+    85% {
+        opacity: var(--ghost-opacity, 0.35);
+    }
+    100% {
+        transform: translateY(-110vh) translateX(4px);
+        opacity: 0;
+    }
+}
+
+/* prefers-reduced-motion: niente animazioni del tema, e i fantasmi spariscono
+   (fermi a metà schermo sarebbero solo macchie). I :not(#_) alzano la
+   specificità come nel tema natalizio. */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-halloween:not(#_),
+    body.theme-halloween:not(#_)::before,
+    body.theme-halloween:not(#_)::after,
+    body.theme-halloween:not(#_) *:not(#_),
+    body.theme-halloween:not(#_) *:not(#_)::before,
+    body.theme-halloween:not(#_) *:not(#_)::after {
+        animation: none !important;
+    }
+
+    body.theme-halloween .snow_container.ghost_container_block {
+        display: none;
+    }
+}

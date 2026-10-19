@@ -15,6 +15,7 @@ import { store } from '../../state/store';
 // migrazione. Riscriverlo qui come letterale vorrebbe dire due numeri che possono
 // divergere — in questo repo è già successo con la formula dei Q-bit.
 import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
+import { RARITY_ORDER, skinAccent } from '../rarity';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
 const domCache = new Map<string, any>();
@@ -677,15 +678,7 @@ function updateSkinsUI() {
     // con fallback IT hardcoded se il dizionario non è disponibile.
     const rarityMap: any = (store.gameData.texts && store.gameData.texts.rarities) || {
         'common': 'COMUNE', 'rare': 'RARA', 'epic': 'EPICA',
-        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'christmas': 'FESTIVA'
-    };
-    const rColors: any = {
-        'common': '#bdc3c7', 'rare': '#3498db', 'epic': '#9b59b6',
-        'legendary': '#f1c40f', 'divine': '#ffee90', 'christmas': '#e74c3c'
-    };
-    const rGlows: any = {
-        'common': 'rgba(189,195,199,0.18)', 'rare': 'rgba(52,152,219,0.25)', 'epic': 'rgba(155,89,182,0.25)',
-        'legendary': 'rgba(241,196,15,0.3)', 'divine': 'rgba(255,238,144,0.4)', 'christmas': 'rgba(231,76,60,0.3)'
+        'legendary': 'LEGGENDARIA', 'divine': 'DIVINA', 'festive': 'FESTIVA'
     };
 
     const T = (store.gameData.texts && store.gameData.texts.ui) || {};
@@ -720,7 +713,6 @@ function updateSkinsUI() {
         }
     }
 
-    const rarityOrder: any = { 'common': 0, 'rare': 1, 'epic': 2, 'legendary': 3, 'divine': 4, 'christmas': 5 };
     const skinsArray: any[] = [];
     for (const key in store.gameData.skins) {
         const data = store.gameData.skins[key];
@@ -756,16 +748,17 @@ function updateSkinsUI() {
             ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
             : 'assets/image/ui/hidden.webp';
 
+        const accent = skinAccent(data);
         skinsArray.push({
             id: key, data, isUnlocked, isEquipped, isBuyable, canAfford, isFree, needsFormat,
             isSilhouette: !isUnlocked, showLock: !isUnlocked,
             rarityLabel: rarityMap[data.rarity] || rarityMap.common || 'COMUNE',
             requirement, baseText, imgSource,
-            color: rColors[data.rarity] || rColors['common'],
-            glow: rGlows[data.rarity] || rGlows['common']
+            color: accent.color,
+            glow: accent.glow
         });
     }
-    skinsArray.sort((a, b) => (rarityOrder[a.data.rarity] || 0) - (rarityOrder[b.data.rarity] || 0));
+    skinsArray.sort((a, b) => (RARITY_ORDER[a.data.rarity] || 0) - (RARITY_ORDER[b.data.rarity] || 0));
     modernSkinsArray = skinsArray;
 
     const equippedSkin = skinsArray.find(s => s.isEquipped) || skinsArray[0];
@@ -834,7 +827,7 @@ function updateSkinsUI() {
             : '';
 
         return `
-            <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'} ${stateClass}"
+            <div class="skin-card-v3 rarity-${skin.data.rarity || 'common'}${skin.data.season ? ' season-' + skin.data.season : ''} ${stateClass}"
                  style="--r-color:${skin.color};--r-glow:${skin.glow};"
                  onclick="showSkinPreview('${skin.id}')"
                  title="${skin.isUnlocked && !skin.isEquipped ? 'Click: dettagli — ▶ per equipaggiare' : 'Click per dettagli'}"
@@ -2332,8 +2325,11 @@ function setEmptyMessage(el: any, mode: any) {
 function equipSkin(skinId: any) {
     if (!store.gameState.skins.unlocked.includes(skinId)) return;
 
-    if (skinId === 'christmas' && typeof w.isChristmasSeason === 'function' && w.isChristmasSeason()) {
-        triggerChristmasOverlay();
+    // Skin di una stagione aperta: annuncio a schermo intero (Natale, Halloween…),
+    // una volta per sessione e per stagione — non a ogni cambio fra travestimenti.
+    const _season = store.gameData.skins[skinId] && store.gameData.skins[skinId].season;
+    if (_season && typeof w.isSeasonActive === 'function' && w.isSeasonActive(_season)) {
+        triggerSeasonOverlay(_season, skinId);
     }
 
     store.gameState.skins.current = skinId;
@@ -2348,14 +2344,62 @@ function equipSkin(skinId: any) {
     _refreshEquippedState(skinId);
 }
 
+// Rarità (e stagione, per le Festive) della skin attiva sul body: il CSS in-game
+// ne ricava tinta e accento (skins-modal.css, skin-ambient.css).
+function _setSkinBodyAttrs(skinData: any) {
+    if (!skinData || !skinData.rarity) return;
+    document.body.setAttribute('data-current-skin-rarity', skinData.rarity);
+    if (skinData.season) document.body.setAttribute('data-current-skin-season', skinData.season);
+    else document.body.removeAttribute('data-current-skin-season');
+}
+
 // Aggiorna stato equipped + sfondo dinamico body (rarità skin attiva)
 function _refreshEquippedState(newSkinId: any) {
-    // Set body data-attribute per CSS in-game tinted background
-    if (store.gameData?.skins?.[newSkinId]?.rarity) {
-        document.body.setAttribute('data-current-skin-rarity', store.gameData.skins[newSkinId].rarity);
-    }
+    _setSkinBodyAttrs(store.gameData?.skins?.[newSkinId]);
     // Re-render unified grid
     updateSkinsUI();
+}
+
+// Stagioni già annunciate in questa sessione (vedi equipSkin).
+const _seasonOverlayShown = new Set<string>();
+
+function triggerSeasonOverlay(seasonId: string, skinId: string) {
+    if (_seasonOverlayShown.has(seasonId)) return;
+    _seasonOverlayShown.add(seasonId);
+    if (seasonId === 'christmas') { triggerChristmasOverlay(); return; }
+    if (seasonId === 'halloween') { triggerHalloweenOverlay(skinId); return; }
+}
+
+// Halloween: stesso schema dell'annuncio natalizio (4 s a schermo intero), ma
+// creato qui e con lo stile inline — il CSS del tema si sta caricando proprio
+// adesso, insieme alla skin. Il nome è quello della skin appena indossata.
+function triggerHalloweenOverlay(skinId: string) {
+    const isEn = w.APP_LANG === 'en';
+    const name = (store.gameData.skins[skinId] && store.gameData.skins[skinId].name) || '';
+    let overlay = document.getElementById('halloween-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'halloween-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;align-items:center;' +
+            'justify-content:center;text-align:center;padding:16px;color:#f5f0e6;font-family:Rajdhani,system-ui,sans-serif;' +
+            'background:radial-gradient(circle at 50% 55%, rgba(249,115,22,0.55) 0%, rgba(59,15,92,0.96) 55%, #120818 100%);';
+        const title = document.createElement('h1');
+        title.id = 'halloween-title';
+        title.style.cssText = 'font-size:clamp(2.2rem,7vw,4.5rem);margin:0 0 10px;letter-spacing:3px;color:#fb923c;text-shadow:0 0 22px rgba(249,115,22,0.7);';
+        const sub = document.createElement('p');
+        sub.id = 'halloween-subtitle';
+        sub.style.cssText = 'font-size:clamp(1.1rem,3.5vw,1.8rem);margin:0;opacity:0.92;';
+        overlay.append(title, sub);
+        document.body.appendChild(overlay);
+    }
+    (overlay.querySelector('#halloween-title') as HTMLElement).textContent = isEn ? '🎃 HAPPY HALLOWEEN! 🎃' : '🎃 BUON HALLOWEEN! 🎃';
+    (overlay.querySelector('#halloween-subtitle') as HTMLElement).textContent = isEn ? `Costume on: ${name}` : `Travestimento indossato: ${name}`;
+
+    const skinsModal = document.getElementById('skins-modal');
+    if (skinsModal) skinsModal.style.display = 'none';
+    overlay.style.display = 'flex';
+    if (typeof w.gsap !== 'undefined') w.gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.4 });
+    setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 4000);
 }
 
 function triggerChristmasOverlay() {
@@ -2399,7 +2443,7 @@ const VFXManager: any = {
 
         // Pulisce il DOM
         const snow = document.getElementById('snow-container');
-        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block"); }
+        if (snow) { snow.innerHTML = ''; snow.classList.remove("snow_container_block", "ghost_container_block"); }
 
         const fire = document.getElementById('fire-particles-container');
         if (fire) { fire.innerHTML = ''; fire.style.display = 'none'; }
@@ -2425,6 +2469,7 @@ const VFXManager: any = {
         }
 
         if (effectType === 'snow') this.spawnSnow();
+        if (effectType === 'ghosts') this.spawnGhosts();
         if (effectType === 'fire') this.spawnFire();
         if (effectType === 'matrix') this.spawnMatrix();
     },
@@ -2458,6 +2503,26 @@ const VFXManager: any = {
         }
     },
 
+    // Tema Halloween: pochi fantasmini che salgono lenti. Stesso layer della neve
+    // (#snow-container), con classe propria: lo stile vive in halloween-theme.css.
+    spawnGhosts() {
+        const container = document.getElementById('snow-container');
+        if (!container) return;
+        container.classList.add("ghost_container_block");
+        if (container.children.length > 0) return; // Già generati
+
+        for (let i = 0; i < 12; i++) {
+            const ghost = document.createElement('i');
+            ghost.className = 'fa-solid fa-ghost halloween-ghost';
+            ghost.style.fontSize = (Math.random() * 12 + 12) + 'px';
+            ghost.style.left = Math.random() * 96 + 'vw';
+            ghost.style.animationDuration = (Math.random() * 10 + 16) + 's';
+            ghost.style.animationDelay = (Math.random() * -26) + 's';
+            ghost.style.setProperty('--ghost-opacity', String(Math.random() * 0.25 + 0.2));
+            container.appendChild(ghost);
+        }
+    },
+
     spawnFire() {
         const container = document.getElementById('fire-particles-container');
         if (!container) return;
@@ -2480,6 +2545,9 @@ const VFXManager: any = {
 // Reveal del gioco (post login + intro): sblocca i VFX ambientali della skin
 // messi in coda durante login/intro. Esposto su window per modals.js.
 w.releaseAmbientVfx = function () {
+    // Istante del reveal: lo usa l'avviso stagionale (ui/season-announce.ts)
+    // per non comparire sopra login, intro o note di rilascio.
+    if (!w._gameRevealedAt) w._gameRevealedAt = Date.now();
     if (typeof VFXManager !== 'undefined') VFXManager.releaseAmbientVfx();
 };
 
@@ -2490,9 +2558,7 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
     const theme = skinData.themeConfig || {};
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
-    if (skinData.rarity) {
-        document.body.setAttribute('data-current-skin-rarity', skinData.rarity);
-    }
+    _setSkinBodyAttrs(skinData);
 
     const photoNormal = document.getElementById('manager-photo-normal');
     const photoClicked = document.getElementById('manager-photo-clicked');

@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { gameData } from './index';
 import { en } from './en/index';
-import { isChristmasSeason, isSeasonActive, IS_XMAS_TIME } from './season';
+import {
+  isChristmasSeason, isHalloweenSeason, isSeasonActive, isSeasonActiveIn, IS_XMAS_TIME, IS_HALLOWEEN_TIME,
+  CALENDAR_SEASONS, isInSeasonWindow, activeSeasonsAt, parseSeasonOverride,
+} from './season';
 
 describe('data/achievements via store (reorg B4)', () => {
   it('ogni achievement ha una condition funzione', () => {
@@ -27,13 +30,102 @@ describe('data/season (fix B2)', () => {
     expect(isSeasonActive('christmas')).toBe(IS_XMAS_TIME);
     expect(isSeasonActive('')).toBe(true);
     expect(isSeasonActive('sconosciuta')).toBe(false);
+    expect(IS_HALLOWEEN_TIME).toBe(isHalloweenSeason());
+    expect(isSeasonActive('halloween')).toBe(IS_HALLOWEEN_TIME);
   });
-  it('unlockHint natalizio EN valorizzato da season (non undefined)', () => {
-    const hint = en.skins.christmas.unlockHint;
-    expect([
-      "Redeem the 'Merry Christmas' achievement!",
-      'Available in the Shop for 5 Tokens.',
-    ]).toContain(hint);
+  it('finestre a calendario: estremi inclusi, Natale scavalca il capodanno', () => {
+    const at = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12);
+    const { halloween, christmas } = CALENDAR_SEASONS;
+    expect(isInSeasonWindow(halloween, at(2026, 10, 23))).toBe(false);
+    expect(isInSeasonWindow(halloween, at(2026, 10, 24))).toBe(true);
+    expect(isInSeasonWindow(halloween, at(2026, 10, 31))).toBe(true);
+    expect(isInSeasonWindow(halloween, at(2026, 11, 2))).toBe(true);
+    expect(isInSeasonWindow(halloween, at(2026, 11, 3))).toBe(false);
+    expect(isInSeasonWindow(christmas, at(2026, 11, 30))).toBe(false);
+    expect(isInSeasonWindow(christmas, at(2026, 12, 1))).toBe(true);
+    expect(isInSeasonWindow(christmas, at(2026, 12, 31))).toBe(true);
+    expect(isInSeasonWindow(christmas, at(2027, 1, 8))).toBe(true);
+    expect(isInSeasonWindow(christmas, at(2027, 1, 9))).toBe(false);
+    // estremi del giorno: conta la data locale, non l'ora
+    expect(isInSeasonWindow(halloween, new Date(2026, 9, 24, 0, 0, 0))).toBe(true);
+    expect(isInSeasonWindow(halloween, new Date(2026, 10, 2, 23, 59, 59))).toBe(true);
+  });
+  it('activeSeasonsAt: nessuna, una, e mai due insieme nel calendario attuale', () => {
+    const at = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12);
+    expect(activeSeasonsAt(at(2026, 9, 29))).toEqual([]);
+    expect(activeSeasonsAt(at(2026, 10, 31))).toEqual(['halloween']);
+    expect(activeSeasonsAt(at(2026, 12, 25))).toEqual(['christmas']);
+    for (let t = new Date(2026, 0, 1); t.getFullYear() === 2026; t.setDate(t.getDate() + 1)) {
+      expect(activeSeasonsAt(t).length).toBeLessThanOrEqual(1);
+    }
+  });
+  it('isSeasonActiveIn: vuoto = non stagionale, id sconosciuto = spento', () => {
+    expect(isSeasonActiveIn('', [])).toBe(true);
+    expect(isSeasonActiveIn('halloween', ['halloween'])).toBe(true);
+    expect(isSeasonActiveIn('christmas', ['halloween'])).toBe(false);
+    expect(isSeasonActiveIn('sconosciuta', ['halloween'])).toBe(false);
+  });
+  it('parseSeasonOverride: auto/assente = calendario, nessuna = tutto spento, id ignoti scartati', () => {
+    expect(parseSeasonOverride(null)).toBeNull();
+    expect(parseSeasonOverride('')).toBeNull();
+    expect(parseSeasonOverride('auto')).toBeNull();
+    expect(parseSeasonOverride('nessuna')).toEqual([]);
+    expect(parseSeasonOverride('none')).toEqual([]);
+    expect(parseSeasonOverride('Halloween')).toEqual(['halloween']);
+    expect(parseSeasonOverride('halloween, christmas')).toEqual(['halloween', 'christmas']);
+    expect(parseSeasonOverride('pasqua,christmas')).toEqual(['christmas']);
+  });
+  it('ogni skin gatata da una stagione esiste in skins', () => {
+    for (const s of Object.values(CALENDAR_SEASONS)) {
+      for (const id of s.skins) expect(gameData.skins[id], `skin ${id} di ${s.id}`).toBeDefined();
+    }
+  });
+  it('unlockHint natalizio EN valorizzato (non undefined)', () => {
+    expect(en.skins.christmas.unlockHint).toBe("Redeem the 'Merry Christmas' achievement!");
+  });
+  it('rarità festive: ogni skin di stagione è festive con la sua season, e viceversa', () => {
+    for (const s of Object.values(CALENDAR_SEASONS)) {
+      for (const id of s.skins) {
+        expect(gameData.skins[id].rarity, `rarità di ${id}`).toBe('festive');
+        expect(gameData.skins[id].season, `season di ${id}`).toBe(s.id);
+      }
+    }
+    for (const [id, skin] of Object.entries<any>(gameData.skins)) {
+      if (skin.rarity !== 'festive') continue;
+      expect(CALENDAR_SEASONS[skin.season as keyof typeof CALENDAR_SEASONS]?.skins, `stagione di ${id}`).toContain(id);
+    }
+  });
+  it('skin festive: ottenibili sempre — obiettivo stagionale in finestra, negozio fuori', () => {
+    const rewarded = new Set(Object.values<any>(gameData.achievements)
+      .filter((a) => a.reward && a.reward.type === 'skin').map((a) => a.reward.id));
+    for (const [id, skin] of Object.entries<any>(gameData.skins)) {
+      if (skin.rarity !== 'festive') continue;
+      const open = isSeasonActive(skin.season);
+      if (skin.cost === undefined) {
+        expect(open, `${id} senza prezzo fuori stagione`).toBe(true);
+        expect(rewarded.has(id), `${id} senza prezzo né obiettivo`).toBe(true);
+      }
+    }
+    const trick = (gameData.achievements as any).dolcettoScherzetto;
+    expect(trick.season).toBe('halloween');
+    expect(trick.reward).toEqual({ type: 'skin', id: 'espostore' });
+    expect(trick.condition()).toBe(IS_HALLOWEEN_TIME);
+  });
+  it('tema Halloween: le skin della stagione lo portano, il CSS esiste e il Bug Maledetto ha i testi', async () => {
+    const { existsSync } = await import('node:fs');
+    for (const id of CALENDAR_SEASONS.halloween.skins) {
+      const theme = gameData.skins[id].themeConfig;
+      expect(theme?.bodyClass, `tema di ${id}`).toBe('theme-halloween');
+      expect(existsSync(`styles/themes/${theme.cssFile}`), `css di ${id}`).toBe(true);
+      expect(gameData.texts.toasts[theme.goldenBugToast], `toast IT di ${id}`).toContain('{amount}');
+      expect(en.texts.toasts[theme.goldenBugToast], `toast EN di ${id}`).toContain('{amount}');
+    }
+  });
+  it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
+    for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
+    expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');
+    expect(en.texts.rarities.festive).toBe('FESTIVE');
+    expect(gameData.texts.rarities.festive).toBe('FESTIVA');
   });
 });
 

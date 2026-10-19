@@ -47,7 +47,9 @@ export async function bootGame(page: Page): Promise<void> {
       typeof (window as any).EspooClicker.getGameState === 'function' &&
       !!(window as any).EspooClicker.getGameState() &&
       !!(window as any).EspoV3 &&
-      !!(window as any).EspoV3.economy,
+      !!(window as any).EspoV3.economy &&
+      // salvataggio locale caricato (loadGame aspetta la guardia anti doppia scheda)
+      !!(window as any)._espoGameReady,
     undefined,
     { timeout: 15_000 },
   );
