@@ -13,7 +13,8 @@ on:
 jobs:
   deploy-production:
     name: 🚀 Distribuzione Manuale FTP
-    runs-on: ubuntu-latest
+    # Fissato: ubuntu-latest passa a Ubuntu 26 dal 19/10/2026, mai provato con questo deploy.
+    runs-on: ubuntu-24.04
 
     steps:
       # Step 1: Scarica il codice dal branch selezionato nel menu a tendina
