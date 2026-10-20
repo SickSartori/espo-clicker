@@ -165,6 +165,94 @@ test.describe('Primo compleanno', () => {
     expect(s.mascotte).toContain('espo-v1.webp');
   });
 
+  test('numeri «alla v1»: interi coi punti a tema acceso, il formato di sempre da spento o con una skin a tema', async ({ page }) => {
+    await bootAt(page, '2026-11-20T12:00:00');
+    await expect.poll(async () => (await vistoDalGiocatore(page)).sbloccato).toBe(true);
+    await page.evaluate(() => (document.getElementById('open-achievements-btn') as HTMLElement).click());
+    await riscatta(page);
+    await expect(page.locator('body')).toHaveClass(/theme-vintage/);
+
+    // Il contatore del punteggio si muove con un'animazione: si legge con un poll.
+    const imposta = async () => page.evaluate(() => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.score = new gs.score.constructor('123456789');
+      w.updateUI();
+    });
+    const leggi = async () => page.evaluate(
+      () => (document.getElementById('score-display') as HTMLElement).textContent!.trim(),
+    );
+    const costo = async () => page.evaluate(() => (window as any).formatNumber('5000000'));
+
+    await imposta();
+    await expect.poll(leggi, { message: 'acceso: intero coi punti' }).toBe('123.456.789');
+    expect(await costo()).toBe('5.000.000');
+
+    // Oltre il tetto (1e11) tornano i suffissi: un intero da 400 cifre non entra in nessuna cella.
+    expect(await page.evaluate(() => (window as any).formatNumber('1e400'))).not.toMatch(/Infinity|NaN|\d{6,}/);
+
+    await rigaTema(page); // apre le Opzioni
+    await page.selectOption('#theme-select', 'modern');
+    await imposta();
+    await expect.poll(leggi, { message: 'spento: formato di sempre' }).toContain('M');
+    expect(await costo()).toContain('M');
+
+    // Skin con un tema suo: il Vintage aspetta e i numeri restano quelli di sempre.
+    await page.evaluate(() => {
+      const w = window as any;
+      const gs = w.EspooClicker.getGameState();
+      gs.user.vintageTheme = true;
+      if (!gs.skins.unlocked.includes('espobit')) gs.skins.unlocked.push('espobit');
+      w.equipSkin('espobit');
+    });
+    expect(await costo(), 'skin a tema: niente numeri v1').toContain('M');
+  });
+
+  test('icone in emoji come nella v1: a tema acceso, e solo allora', async ({ page }) => {
+    await bootAt(page, '2026-11-20T12:00:00');
+    await expect.poll(async () => (await vistoDalGiocatore(page)).sbloccato).toBe(true);
+    await page.evaluate(() => (document.getElementById('open-achievements-btn') as HTMLElement).click());
+    await riscatta(page);
+    await expect(page.locator('body')).toHaveClass(/theme-vintage/);
+
+    // Per ogni bottone: l'icona SVG è nascosta e ::before porta l'emoji.
+    const stato = async () => page.evaluate(() => {
+      const leggi = (id: string) => {
+        const b = document.getElementById(id) as HTMLElement;
+        const svg = b.querySelector(':scope > svg') as SVGElement | null;
+        return {
+          emoji: getComputedStyle(b, '::before').content.replace(/^"|"$/g, ''),
+          svgVisibile: !!svg && getComputedStyle(svg).display !== 'none',
+        };
+      };
+      const mute = document.querySelector('#quick-mute-btn i') as HTMLElement;
+      return {
+        obiettivi: leggi('open-achievements-btn'),
+        opzioni: leggi('open-settings-btn'),
+        statistiche: leggi('open-stats-btn'),
+        scheda: leggi('tab-click'),
+        mute: getComputedStyle(mute, '::before').content.replace(/^"|"$/g, ''),
+      };
+    });
+
+    let s = await stato();
+    expect(s.obiettivi).toEqual({ emoji: '🏆', svgVisibile: false });
+    expect(s.opzioni).toEqual({ emoji: '⚙️', svgVisibile: false });
+    expect(s.statistiche).toEqual({ emoji: '📈', svgVisibile: false });
+    expect(s.scheda).toEqual({ emoji: '👆', svgVisibile: false });
+    expect(s.mute).toBe('🔊');
+
+    // Spento: tornano le icone di sempre, nessuna emoji.
+    await rigaTema(page);
+    await page.selectOption('#theme-select', 'modern');
+    await expect(page.locator('body')).not.toHaveClass(/theme-vintage/);
+    s = await stato();
+    expect(s.obiettivi.svgVisibile, 'spento: icona SVG di nuovo visibile').toBe(true);
+    expect(s.obiettivi.emoji).not.toBe('🏆');
+    expect(s.scheda.svgVisibile).toBe(true);
+    expect(s.mute).not.toBe('🔊');
+  });
+
   test('vince la skin: con una skin a tema il Vintage aspetta, con le altre si vede', async ({ page }) => {
     await bootAt(page, '2026-11-20T12:00:00');
     await expect.poll(async () => (await vistoDalGiocatore(page)).sbloccato).toBe(true);

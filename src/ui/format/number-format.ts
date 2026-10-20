@@ -128,3 +128,27 @@ export function formatFullNumber(value: NumericInput, suffixes: readonly string[
   const str = (intDigits === '0' ? '' : sign) + intDigits;
   return str.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
+/**
+ * Esponente decimale (escluso) sotto cui il formato v1 scrive il numero intero:
+ * 11 → fino a 99.999.999.999, cioè 14 caratteri: quanto regge il portafoglio su
+ * 375px (a 15 toccava il bordo). Oltre, i suffissi: un intero da 400 cifre non
+ * entra in nessuna cella (e la v1, che passava da Number, scriveva «Infinity»).
+ */
+export const V1_MAX_EXPONENT = 11;
+
+/**
+ * «Alla v1» (tema Vintage): la prima versione scriveva tutto come intero con i
+ * punti, Math.floor(n).toLocaleString('it-IT'), senza suffissi. Qui: da 1000 in
+ * su l'intero completo (floor esatto, via formatFullNumber), ma fino a un tetto
+ * — oltre, il formato di sempre. Sotto 1000 resta il formato di sempre: un costo
+ * da 0,10 BPS non deve diventare «0».
+ */
+export function formatNumberV1(
+  value: NumericInput, suffixes: readonly string[], maxExponent: number = V1_MAX_EXPONENT,
+): string {
+  const p = parseInput(value);
+  if (!p) return '0';
+  if (p.exponent < 3 || p.exponent >= maxExponent) return formatNumber(value, suffixes);
+  return formatFullNumber(value, suffixes);
+}

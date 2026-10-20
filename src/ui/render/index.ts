@@ -51,9 +51,16 @@ function setTextIfChanged(elementId: any, newText: any) {
 
 // ---------  FUNZIONI DI FORMATTORE ---------
 
+// Col tema Vintage acceso i numeri si scrivono «alla v1» (interi coi punti, fino a un
+// tetto). Lo aggiorna applySkinVisuals: formatNumber gira a ogni frame, qui sta solo
+// un flag. Un solo punto: tutti i chiamanti passano da questa funzione.
+let _v1Numbers = false;
+
 function formatNumber(num: any) {
     // F5 -> F8: formattazione pura in EspoV3.format (suffissi localizzati da store.gameData).
-    return window.EspoV3.format.formatNumber(num, store.gameData.texts.format.suffixes);
+    const f = window.EspoV3.format;
+    const suffixes = store.gameData.texts.format.suffixes;
+    return _v1Numbers ? f.formatNumberV1(num, suffixes) : f.formatNumber(num, suffixes);
 }
 
 function formatFullNumber(num: any) {
@@ -2567,6 +2574,14 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
     // il premio è riscattato e la skin indossata non ne ha uno suo — se ce l'ha, vince lei.
     const vintage = vintageState(store.gameState, skinData);
     const theme: any = vintage.active ? VINTAGE_THEME : (skinData.themeConfig || {});
+    // Numeri «alla v1» solo a tema acceso; al cambio si ridisegna subito, senza aspettare il tick.
+    if (_v1Numbers !== vintage.active) {
+        _v1Numbers = vintage.active;
+        try {
+            if (typeof w.updateUI === 'function') w.updateUI();
+            if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+        } catch (e) { /* UI non ancora pronta: ci pensa il prossimo tick */ }
+    }
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
     _setSkinBodyAttrs(skinData);

@@ -276,7 +276,6 @@ html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-
 
 html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-center::before,
 html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-center::after,
-html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main::before,
 html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main::after {
     display: none;
 }
@@ -349,3 +348,107 @@ html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-
     color: #facc15;
     filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.7));
 }
+
+/* ============================================================
+   ICONE → EMOJI, come nella v1
+   La prima versione non aveva un set di icone: i pulsanti portavano un'emoji
+   davanti al nome («🏆 Obiettivi», «⚙️ Impostazioni», «🚀 Promozione»). Col
+   tema acceso le icone dell'interfaccia (lucide e FontAwesome) lasciano il
+   posto a un'emoji. Solo CSS, quindi regge ai ridisegni: le icone SVG si
+   nascondono e l'emoji sta su ::before del contenitore; quelle FontAwesome
+   cambiano carattere.
+   ⚠️ Chi aggiunge un'icona FontAwesome dentro uno dei contenitori qui sotto deve
+   aggiungere anche la sua emoji: col font cambiato un glifo non mappato
+   apparirebbe come un quadratino.
+   ============================================================ */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-help-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-help-btn::before { content: '❓'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-stats-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-stats-btn::before { content: '📈'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-arcade-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-arcade-btn::before { content: '🕹️'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-achievements-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-achievements-btn::before { content: '🏆'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-skins-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-skins-btn::before { content: '👕'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-leaderboard-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-leaderboard-btn::before { content: '🥇'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-user-hub-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-user-hub-btn::before { content: '👤'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-settings-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-settings-btn::before { content: '⚙️'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-prestige-hub-btn > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar #open-prestige-hub-btn::before { content: '🚀'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.35rem; line-height: 1; }
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-click > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-click::before { content: '👆'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.15rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-auto > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-auto::before { content: '🤖'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.15rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-prestige > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-prestige::before { content: '🚀'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.15rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-quantum > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #left-column #tab-quantum::before { content: '⚛️'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.15rem; line-height: 1; }
+
+/* Menu mobile ☰: stesse emoji, per data-opens */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-help-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-help-btn"]::before { content: '❓'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-stats-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-stats-btn"]::before { content: '📈'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-achievements-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-achievements-btn"]::before { content: '🏆'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-skins-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-skins-btn"]::before { content: '👕'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-leaderboard-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-leaderboard-btn"]::before { content: '🥇'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-settings-btn"] > .mm-icon { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) .mm-item[data-opens="open-settings-btn"]::before { content: '⚙️'; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 1.25rem; line-height: 1; }
+
+/* Intestazioni del punteggio e dei team */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main > svg,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label > svg,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #right-column .column-header-aligned h2 > svg { display: none; }
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main::before { content: '🐛'; display: inline; margin-right: 0.35em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #header-left-panel .header-label::before { content: '⚡'; margin-right: 0.3em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label:has(> svg.lucide-coins)::before { content: '🪙'; margin-right: 0.3em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #header-qbit-container .header-label::before { content: '⚛️'; margin-right: 0.3em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #right-column .column-header-aligned h2::before { content: '👥'; margin-right: 0.4em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+
+/* Icone FontAwesome: stesso glifo, in emoji */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2 i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #version-display i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #golden-bug i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #quick-mute-btn i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #mobile-nav-bar i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #achievements-modal h2 i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #stats-modal h2 i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #leaderboard-modal h2 i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #settings-modal h2 i,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #settings-modal h3 i { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-weight: 400; font-style: normal; }
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2 i.fa-arrow-pointer::before { content: '👆'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2 i.fa-microchip::before { content: '🔧'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2 i.fa-flask-vial::before { content: '🧪'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2 i.fa-atom::before { content: '⚛️'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #version-display i.fa-bullhorn::before { content: '📢'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #golden-bug i::before { content: '🐛'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #quick-mute-btn i.fa-volume-high::before { content: '🔊'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #quick-mute-btn i.fa-volume-xmark::before { content: '🔇'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #mobile-nav-bar i.fa-bolt::before { content: '⚡'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #mobile-nav-bar i.fa-gamepad::before { content: '🎮'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #mobile-nav-bar i.fa-users::before { content: '👥'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #mobile-nav-bar i.fa-ghost::before { content: '👻'; }
+
+/* Titoli delle finestre principali (restano nello stile attuale, con l'emoji davanti) */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #achievements-modal h2 i::before { content: '🏆'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #stats-modal h2 i::before { content: '📈'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #leaderboard-modal h2 i::before { content: '🥇'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #settings-modal h2 i::before { content: '⚙️'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #settings-modal h3 i.fa-palette::before { content: '🎨'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #settings-modal h3 i.fa-language::before { content: '🌐'; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #skins-modal h2 > svg,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #help-modal h2 > svg,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #prestige-hub-modal h2 > svg { display: none; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #skins-modal h2::before { content: '👕'; margin-right: 0.4em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #help-modal h2::before { content: '❓'; margin-right: 0.4em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #prestige-hub-modal h2::before { content: '🚀'; margin-right: 0.4em; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
