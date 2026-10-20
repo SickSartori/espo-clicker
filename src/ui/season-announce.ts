@@ -74,6 +74,12 @@ const TEXTS: Record<CalendarSeasonId, { it: [string, string]; en: [string, strin
 };
 
 const OVERLAY_ID = 'season-announce-overlay';
+
+/** L'invito a installare l'app è disponibile? La riga in Opzioni la mostra index.php solo se installabile. */
+export function installInviteAvailable(): boolean {
+    const r = document.getElementById('pwa-install-row');
+    return !!r && getComputedStyle(r).display !== 'none';
+}
 /** Quiete richiesta prima di comparire: dopo il reveal, e senza finestre a schermo. */
 const QUIET_AFTER_REVEAL_MS = 3000;
 const QUIET_NO_MODAL_MS = 2500;
@@ -179,7 +185,25 @@ function showSeasonAnnounce(seasonId: CalendarSeasonId, achievementId: string): 
     later.textContent = isEn ? 'Later' : 'Più tardi';
     later.addEventListener('click', close);
 
-    row.append(go, later);
+    row.append(go);
+    // Compleanno: l'app si può installare dal telefono o dal PC. L'invito c'è già in Opzioni,
+    // ma sepolto; qui compare una volta, solo se il browser la dà installabile (la riga
+    // in Opzioni, che lo script PWA di index.php mostra, è visibile) e non è già installata.
+    if (seasonId === 'birthday' && installInviteAvailable()) {
+        const inst = document.createElement('button');
+        inst.type = 'button';
+        inst.id = OVERLAY_ID + '-install';
+        inst.style.cssText = 'font:inherit;font-size:1.05rem;cursor:pointer;color:' + t.accent + ';background:transparent;' +
+            'border:1px solid ' + t.accent + ';border-radius:10px;padding:10px 20px;min-height:44px;';
+        inst.textContent = isEn ? 'Install the app' : "Installa l'app";
+        inst.addEventListener('click', () => {
+            close();
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.click();
+        });
+        row.append(inst);
+    }
+    row.append(later);
     box.append(h, p, row);
     el.append(box);
     el.addEventListener('click', (e) => { if (e.target === el) close(); });

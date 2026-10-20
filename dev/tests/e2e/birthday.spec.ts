@@ -208,6 +208,32 @@ test.describe('Primo compleanno', () => {
     expect(await costo(), 'skin a tema: niente numeri v1').toContain('M');
   });
 
+  test("l'avviso invita a installare l'app solo se il browser la dà installabile", async ({ page }) => {
+    // Senza beforeinstallprompt la riga in Opzioni resta nascosta: niente invito.
+    await bootAt(page, '2026-11-20T12:00:00');
+    await expect(page.locator(ANNOUNCE + '-title')).toContainText('Primo compleanno');
+    await expect(page.locator(ANNOUNCE + '-install')).toHaveCount(0);
+  });
+
+  test("con l'app installabile l'avviso offre «Installa l'app» e apre il prompt del browser", async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-11-20T12:00:00') });
+    await bootGame(page);
+    // Il browser dice «installabile»: lo script PWA di index.php mostra la riga in Opzioni.
+    await page.evaluate(() => {
+      const ev: any = new Event('beforeinstallprompt', { cancelable: true });
+      ev.prompt = () => { (window as any).__installPrompted = true; return Promise.resolve(); };
+      ev.userChoice = Promise.resolve({ outcome: 'dismissed' });
+      window.dispatchEvent(ev);
+    });
+    for (let i = 0; i < 9; i++) await page.clock.fastForward(1_000);
+
+    await expect(page.locator(ANNOUNCE + '-title')).toContainText('Primo compleanno');
+    await expect(page.locator(ANNOUNCE + '-install')).toBeVisible();
+    await page.click(ANNOUNCE + '-install');
+    await expect(page.locator(ANNOUNCE)).toHaveCount(0);
+    await expect.poll(async () => page.evaluate(() => !!(window as any).__installPrompted)).toBe(true);
+  });
+
   test('icone in emoji come nella v1: a tema acceso, e solo allora', async ({ page }) => {
     await bootAt(page, '2026-11-20T12:00:00');
     await expect.poll(async () => (await vistoDalGiocatore(page)).sbloccato).toBe(true);
