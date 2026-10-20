@@ -1192,6 +1192,19 @@ body.playing #arcade-fs-header::after {
 }
 html.touch-device body.playing #arcade-fs-body { padding-bottom: var(--arcade-pad-reserve, 232px); }
 
+/* Cabinati da un solo tocco (Flappy Espòòò): tutto il campo è il tasto, quindi niente pad
+   virtuale e niente riserva sotto al canvas (js/arcade-page.js scrive body[data-nopad]).
+   !important perché il pad si accende con regole per pointer:coarse e per html.touch-device. */
+body[data-nopad] #arcade-virtual-pad,
+body[data-nopad] #arcade-virtual-pad.active,
+html.touch-device body[data-nopad] #arcade-virtual-pad.active {
+    display: none !important;
+}
+body[data-nopad].playing #arcade-fs-body,
+html.touch-device body[data-nopad].playing #arcade-fs-body {
+    padding-bottom: 0 !important;
+}
+
 /* Caso più largo dell'header mobile: pending visibile (premio in attesa).
    Senza questo, a 360px la pill gialla collideva col titolo (−46px).
    Pill compatta + titolo senza icona e più stretto finché c'è il premio. */

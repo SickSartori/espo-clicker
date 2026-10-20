@@ -1151,6 +1151,7 @@ export function initModals(): void {
                     // Senza questa, chiudendo la sala giochi mentre giri su Stack
                     // Overflow il suo ciclo di disegno resta vivo in sottofondo.
                     if (typeof w.exitStackGame === 'function') w.exitStackGame();
+                    if (typeof w.exitFlappyGame === 'function') w.exitFlappyGame();
                 }
 
             }

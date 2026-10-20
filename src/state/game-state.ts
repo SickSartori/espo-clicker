@@ -21,7 +21,7 @@ function getInitialGameState() {
         // Season 1 e non passa mai dalla migrazione Fondatore (v2→v3).
         schemaVersion: 3,
         season: 1,
-        arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0, invaders: 0, centipede: 0, stack: 0 },
+        arcadeHighScores: { snake: 0, space: 0, superespo: 0, asteroids: 0, invaders: 0, centipede: 0, stack: 0, flappy: 0 },
         // Popup "come si segnala": timestamp dell'ultima apertura (0 = mai). Torna
         // almeno una volta a settimana (ui/rules/feedback-intro.ts). Sta nel save
         // (e non in localStorage) apposta: così viaggia col cloud e il conto non

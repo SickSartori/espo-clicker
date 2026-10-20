@@ -38,6 +38,7 @@ const ARCADE_CSS = [
   'arcade/invaders/css/invaders.css',
   'arcade/centipede/css/centipede.css',
   'arcade/stack/css/stack.css',
+  'arcade/flappy/css/flappy.css',
 ];
 
 // In dev locale (MAMP / localhost) usiamo Date.now() come cache-bust per
@@ -51,7 +52,7 @@ const _v = _isLocal
   ? Date.now()
   : (w.CACHE_VER || (w.GAME_VERSION ? w.GAME_VERSION.major + '.' + w.GAME_VERSION.minor : '3.0'));
 const PHASER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js';
-// I 6 giochi canvas NON dipendono da Phaser → si caricano subito, in parallelo.
+// I 7 giochi canvas NON dipendono da Phaser → si caricano subito, in parallelo.
 const CANVAS_GAMES = [
   'arcade/snake/js/snake.js?v=' + _v,
   'arcade/space/js/space.js?v=' + _v,
@@ -59,6 +60,7 @@ const CANVAS_GAMES = [
   'arcade/invaders/js/invaders.js?v=' + _v,
   'arcade/centipede/js/centipede.js?v=' + _v,
   'arcade/stack/js/stack.js?v=' + _v,
+  'arcade/flappy/js/flappy.js?v=' + _v,
 ];
 // Super Espò è l'UNICO che richiede Phaser.
 const SUPER_ESPO_JS = 'arcade/super-espo/js/super-espo.js?v=' + _v;

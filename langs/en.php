@@ -303,6 +303,7 @@
 	$labels["arcade_desc_superespo"] = "An endless platformer for true pros. Run, jump, stomp the Goomba-Bugs and survive the loops to farm tons of Bugs!";
 	$labels["arcade_desc_invaders"] = "Defend the bunkers, take down the swarm of alien-bugs before it reaches you.";
 	$labels["arcade_desc_centipede"] = "Destroy the centipede-bug in the mushroom field before it reaches you at the bottom.";
+	$labels["arcade_desc_flappy"] = "One tap, fifteen seconds. Fly between the server racks, grab the bugs and touch nothing.";
 	$labels["arcade_desc_stack"] = "Stack the code and ship the rows. Technical debt rises from below and bugs jam the rows: squash them with a click.";
 	$labels["arcade_keys_dir"] = "Arrow Keys:";
 	$labels["arcade_rotate"] = "Rotate / Thrust";
@@ -338,8 +339,19 @@
 	$labels["arcade_g_superespo_desc"] = "Endless platformer. Run, jump, stomp the Goomba-Bugs.";
 	$labels["arcade_g_invaders_desc"] = "Defend the bunkers, take down the swarm of alien-bugs.";
 	$labels["arcade_g_centipede_desc"] = "Destroy the centipede in the mushroom field.";
+	$labels["arcade_g_flappy_short"] = "One tap, 15 seconds";
+	$labels["arcade_g_flappy_desc"] = "One tap to fly between the server racks. You get fifteen seconds.";
 	$labels["arcade_g_stack_short"] = "Stack, ship, squash";
 	$labels["arcade_g_stack_desc"] = "Stack the code and ship the rows before the debt buries you.";
+
+	/* Flappy Espòòò — in-game texts */
+	$labels["arcade_flappy_tagline"] = "One tap to fly, fifteen seconds";
+	$labels["arcade_flappy_hint"] = "Tap (or SPACE) to fly. The clock starts on your first tap.";
+	$labels["arcade_flappy_tap"] = "TAP TO START";
+	$labels["arcade_flappy_gates"] = "GATES";
+	$labels["arcade_flappy_time_up"] = "TIME!";
+	$labels["arcade_flappy_crash"] = "CRASH!";
+	$labels["arcade_hint_flap"] = "Fly";
 
 	/* Stack Overflow — HUD and instructions */
 	$labels["arcade_stack_tagline"] = "Stack the code, ship the rows";

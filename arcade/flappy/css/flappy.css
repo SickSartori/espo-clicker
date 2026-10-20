@@ -1,0 +1,21 @@
+/* arcade/flappy/css/flappy.css — FLAPPY ESPÒÒÒ */
+
+/* Canvas a dimensione logica fissa (360x600), scalato da qui: così il gioco non
+   deve ricalcolare il layout su resize o rotazione. Come per Stack Overflow, il
+   max-height:100% limita il content box e il bordo di 3px si aggiunge dopo: si
+   tolgono i 6px qui, o la cornice verrebbe tranciata dal wrapper .crt-effect
+   (overflow:hidden). touch-action:none perché ogni tocco è un battito d'ala:
+   senza, il browser lo prenderebbe per uno scroll o uno zoom. */
+#flappy-canvas {
+    background-color: #17212b;
+    border: 3px solid #facc15;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.35);
+    display: block;
+    margin: 0 auto;
+    max-width: calc(100% - 6px);
+    max-height: calc(100% - 6px);
+    border-radius: 8px;
+    touch-action: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
