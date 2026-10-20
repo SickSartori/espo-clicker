@@ -63,7 +63,10 @@
         ['Errore 404', 'Error 404'], ['Video meme', 'Meme videos'], ['Attiva Espo Fury', 'Activate Espo Fury'], ['Azzera Cooldown', 'Reset Cooldown'],
         ['Ferma evento in corso', 'Stop current event'],
         ['Stagioni (ricarica la pagina)', 'Seasons (reloads the page)'], ['Nessuna stagione', 'No season'], ['Torna al calendario', 'Back to the calendar'],
-        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['Compleanno + tema', 'Birthday + theme'], ['> Compleanno<', '> Birthday<'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
+        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['Compleanno + tema', 'Birthday + theme'], ['Tema Vintage v1 (compleanno)', 'Vintage v1 theme (birthday)'],
+        ['Prima del 17/11', 'Before 11/17'], ['Dopo il 17/11', 'After 11/17'], ['Azzera premio', 'Reset reward'], ['Sblocca obiettivo', 'Unlock achievement'],
+        ['Riscatta + accendi', 'Claim + turn on'], ['Switch ON/OFF', 'Switch ON/OFF'], ['Rimostra avviso', 'Show notice again'],
+        ['Skin con tema (8bit)', 'Skin with theme (8bit)'], ['Skin base', 'Base skin'], ['> Compleanno<', '> Birthday<'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
         ['Carica uno stato di test', 'Load a test state'], ['Nuovo giocatore', 'New player'], ['Stato pulito, early game', 'Clean state, early game'],
         ['Pronto 1° Prestige', 'Ready for 1st Prestige'], ['Score appena sopra soglia · Liv 0', 'Score just above threshold · Lv 0'],
         ['≈ Liv 5 · team e token medi', '≈ Lv 5 · medium teams & tokens'], ['Endgame / pre-Formattazione', 'Endgame / pre-Format'],
@@ -338,6 +341,15 @@
                     <div class="cb-row"><button id="cb-season-birthday" class="cb-btn gold"><i class="fa-solid fa-cake-candles"></i> Compleanno</button><button id="cb-season-birthday-skin" class="cb-btn gold"><i class="fa-solid fa-cake-candles"></i> Compleanno + tema</button></div>
                     <div class="cb-row"><button id="cb-season-none" class="cb-btn"><i class="fa-solid fa-ban"></i> Nessuna stagione</button><button id="cb-season-auto" class="cb-btn cyan"><i class="fa-solid fa-calendar-days"></i> Torna al calendario</button></div>
                 </div>
+                <div class="cb-group">
+                    <div class="cb-gt">Tema Vintage v1 (compleanno)</div>
+                    <div class="cb-row"><span id="cb-theme-label" style="opacity:.85;font-size:12px;">—</span></div>
+                    <div class="cb-row"><button id="cb-th-before" class="cb-btn"><i class="fa-solid fa-lock"></i> Prima del 17/11</button><button id="cb-th-after" class="cb-btn gold"><i class="fa-solid fa-lock-open"></i> Dopo il 17/11</button></div>
+                    <div class="cb-row"><button id="cb-th-reset" class="cb-btn red"><i class="fa-solid fa-rotate-left"></i> Azzera premio</button><button id="cb-th-unlock" class="cb-btn cyan"><i class="fa-solid fa-trophy"></i> Sblocca obiettivo</button></div>
+                    <div class="cb-row"><button id="cb-th-claim" class="cb-btn gold"><i class="fa-solid fa-gift"></i> Riscatta + accendi</button><button id="cb-th-toggle" class="cb-btn"><i class="fa-solid fa-toggle-on"></i> Switch ON/OFF</button></div>
+                    <div class="cb-row"><button id="cb-th-announce" class="cb-btn"><i class="fa-solid fa-bullhorn"></i> Rimostra avviso</button><button id="cb-th-skin8" class="cb-btn chaos"><i class="fa-solid fa-gamepad"></i> Skin con tema (8bit)</button></div>
+                    <div class="cb-row"><button id="cb-th-base" class="cb-btn cyan"><i class="fa-solid fa-user"></i> Skin base</button></div>
+                </div>
             </section>
 
             <section class="cb-sec" data-tab="scenari">
@@ -588,6 +600,71 @@
         try { forced = sessionStorage.getItem('espoSeasonOverride'); } catch (e) { /* ignore */ }
         const what = active.length ? active.map((id) => SEASON_NAMES[id]).join(' + ') : 'nessuna';
         el.textContent = cbT('Ora: ' + what + ' · ' + (forced ? 'forzata' : 'calendario'));
+    }
+
+    // --- Tema Vintage v1 (compleanno): stato e azioni di prova -------------------------------
+    // «Prima/Dopo il 17/11» ricaricano con l'override di stagione (come le altre stagioni);
+    // le altre azioni agiscono subito sullo stato. Il premio si legge da
+    // achievements.primoCompleanno.claimed (ui/theme/vintage.ts): scrivere solo lo switch non basta.
+    const VINT_ACH = 'primoCompleanno';
+    const vintAch = () => (gameState.achievements && gameState.achievements[VINT_ACH]) || {};
+    function updateThemeUI() {
+        const el = $('cb-theme-label');
+        if (!el || typeof gameState === 'undefined' || !gameState) return;
+        const released = typeof window.isSeasonReleased === 'function' ? window.isSeasonReleased('birthday') : false;
+        const a = vintAch();
+        const premio = a.claimed ? 'riscattato' : (a.unlocked ? 'da riscattare' : 'bloccato');
+        const on = !!(gameState.user && gameState.user.vintageTheme);
+        const skinNome = gameState.skins ? gameState.skins.current : '?';
+        // Stessa regola di ui/theme/vintage.ts: premio riscattato + switch acceso + skin senza tema proprio.
+        // Si legge dallo stato e non dalla classe sul body, che arriva solo a CSS caricato.
+        const sk = gameData.skins && gameData.skins[skinNome];
+        const tc = sk && sk.themeConfig;
+        const skinConTema = !!(tc && (tc.bodyClass || tc.cssFile));
+        const attivo = !!a.claimed && on && !skinConTema;
+        el.textContent = cbT('Soglia: ' + (released ? 'uscita' : 'non uscita') + ' · Premio: ' + premio + ' · Switch: ' + (on ? 'ON' : 'OFF') +
+            ' · Tema: ' + (attivo ? 'attivo' : (on && a.claimed ? 'in attesa (skin con tema)' : 'spento')) + ' · Skin: ' + skinNome);
+    }
+    function afterTheme(msg) {
+        if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        if (typeof updateAchievementsUI === 'function') updateAchievementsUI();
+        updateThemeUI();
+        refreshUI();
+        toast(msg);
+    }
+    function themeReset() {
+        gameState.achievements[VINT_ACH] = { unlocked: false, claimed: false };
+        gameState.user.vintageTheme = false;
+        afterTheme('Premio azzerato' + (typeof window.isSeasonRewardOpen === 'function' && window.isSeasonRewardOpen('birthday') ? ' (a soglia uscita si risblocca da solo al prossimo tick)' : ''));
+    }
+    function themeUnlock() {
+        gameState.achievements[VINT_ACH] = Object.assign({}, vintAch(), { unlocked: true, claimed: false, unlockTime: Date.now() });
+        afterTheme('Obiettivo sbloccato: riscattalo dagli Obiettivi');
+    }
+    function themeClaim() {
+        gameState.achievements[VINT_ACH] = Object.assign({}, vintAch(), { unlocked: true, claimed: true });
+        gameState.user.vintageTheme = true;
+        afterTheme('Premio riscattato, tema Vintage acceso');
+    }
+    function themeToggle() {
+        gameState.user.vintageTheme = !gameState.user.vintageTheme;
+        afterTheme('Switch ' + (gameState.user.vintageTheme ? 'ON' : 'OFF') + (vintAch().claimed ? '' : ' (senza premio riscattato non ha effetto)'));
+    }
+    function themeAnnounce() {
+        const s = Object.assign({}, gameState.seasonAnnounced);
+        delete s['birthday-2026'];
+        gameState.seasonAnnounced = s;
+        if (window.EspooClicker) window.EspooClicker.saveGame();
+        toast('Avviso ripristinato: compare entro qualche secondo (serve la stagione compleanno, senza finestre aperte)');
+    }
+    function themeSkin(id) {
+        if (!gameData.skins[id]) { toast('Skin ' + id + ' non trovata'); return; }
+        if (!gameState.skins.unlocked.includes(id)) gameState.skins.unlocked.push(id);
+        if (typeof equipSkin === 'function') equipSkin(id);
+        updateThemeUI();
+        refreshUI();
+        toast('Skin indossata: ' + (gameData.skins[id].name || id));
     }
 
     function stopEvt() {
@@ -1020,6 +1097,15 @@
     on('cb-season-birthday', () => setSeason('birthday'));
     on('cb-season-birthday-skin', () => setSeasonWithSkin('birthday'));
     on('cb-season-none', () => setSeason('nessuna'));
+    on('cb-th-before', () => setSeason('nessuna'));
+    on('cb-th-after', () => setSeason('birthday'));
+    on('cb-th-reset', themeReset);
+    on('cb-th-unlock', themeUnlock);
+    on('cb-th-claim', themeClaim);
+    on('cb-th-toggle', themeToggle);
+    on('cb-th-announce', themeAnnounce);
+    on('cb-th-skin8', () => themeSkin('espobit'));
+    on('cb-th-base', () => themeSkin('default'));
     on('cb-season-auto', () => setSeason('auto'));
 
     // --- 13. Init ---
@@ -1027,6 +1113,8 @@
     updateDebugUI();
     updateComboMultUI();
     updateSeasonUI();
+    updateThemeUI();
+    setInterval(updateThemeUI, 1500);
     applyPendingSeasonEquip();
     applyHandlePos();
     applyLoginGate();
