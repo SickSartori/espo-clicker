@@ -279,6 +279,11 @@
 	$labels["opt_bg_music"] = "Musica di Sfondo";
 	$labels["opt_music_locked"] = "Bloccato dalla Skin attuale";
 	$labels["opt_install_app"] = "Installa App";
+	$labels["opt_theme_title"] = "Tema";
+	$labels["opt_theme_modern"] = "Moderno";
+	$labels["opt_theme_vintage"] = "Vintage v1 (primo compleanno)";
+	$labels["opt_theme_locked"] = "Riscatta «Primo Compleanno» negli Obiettivi";
+	$labels["opt_theme_skin_wins"] = "La skin attuale ha già un suo tema: il Vintage si vede con le altre skin";
 	$labels["prestige_titolo"] = "Promozione Aziendale";
 	$labels["prestige_sign"] = "Firma il contratto per diventare <b>Senior</b>.";
 	$labels["prestige_warning"] = "Perderai Bug, Teams e Upgrades, ma sbloccherai il Laboratorio per la ricerca avanzata.";

@@ -48,6 +48,14 @@ const RewardHandlers = {
         }
         return null;
     },
+    // Sblocca un tema (switch nelle Opzioni) e lo accende. Il tema si APPLICA a
+    // schermo in claimAchievementReward, a premio già segnato come riscattato:
+    // «sbloccato» si legge da lì (ui/theme/vintage.ts), e qui non lo è ancora.
+    theme: (themeId: any) => {
+        if (themeId !== 'vintage') return null;
+        store.gameState.user.vintageTheme = true;
+        return store.gameData.texts.toasts.themeVintage;
+    },
     multiplier: (value: any) => {
         return `Bonus BPS x${value} Attivo!`;
     },
@@ -2271,6 +2279,11 @@ function claimAchievementReward(key: any) {
     // Aggiorna UI
     if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
     if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
+
+    // Premio «tema»: ora che è riscattato lo si vede subito (come per le skin sotto).
+    if (data.reward && data.reward.type === 'theme' && typeof w.applySkinVisuals === 'function') {
+        w.applySkinVisuals(store.gameState.skins.current);
+    }
 
     // Premio di un evento a calendario (Buon Natale, Dolcetto o Scherzetto): la
     // skin si indossa subito. Senza, riscattare il premio non cambiava niente a

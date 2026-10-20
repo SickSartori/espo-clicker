@@ -1,0 +1,351 @@
+/* ============================================================
+   TEMA VINTAGE V1: «ESPÒ V1» — primo compleanno (17/11/2025 → 17/11/2026)
+   La veste della prima versione, ricostruita dal commit «Prima versione»
+   (css/style.css v1). Solo «pelle»: palette blu-ardesia, Inter, sfondo
+   carbonio col velo blu, mascotte tonda col bordo azzurro, bottoni piatti.
+   Il layout a tre colonne di allora non c'è più e non si ricostruisce.
+   Caricato raw da loadThemeCSS quando è equipaggiata la skin del compleanno
+   (themeConfig in src/data/skins.ts).
+
+   Specificità: il refresh desktop v3 usa `html body #id …` (spesso con
+   !important) e carica prima di questo file. Qui ogni regola parte da
+   `html body.theme-vintage:not(:is(<eventi>))`, che aggiunge una classe e vince a parità.
+   Ogni regola esclude gli eventi in corso (bluescreen, matrix, super star,
+   Fury, Rick Roll): hanno un aspetto proprio, e il tema caricato per ultimo con
+   specificità più alta lo seppellirebbe — è la trappola dello sfondo sepolto.
+   Durante un evento il tema semplicemente non si applica.
+   ============================================================ */
+
+/* Inter come nella v1 (allora arrivava da Google Fonts, oggi come Rajdhani). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+/* --- PALETTE DELLA V1 --- */
+body.theme-vintage {
+    --v1-slate: #2c3e50;
+    --v1-slate-deep: #273746;
+    --v1-card: #34495e;
+    --v1-card-hover: #4a6582;
+    --v1-line: #5d7c9a;
+    --v1-line-soft: rgba(74, 101, 130, 0.5);
+    --v1-text: #e0e0e0;
+    --v1-muted: #bdc3c7;
+    --v1-blue: #3498db;
+    --v1-blue-dark: #2980b9;
+    --v1-red: #ef4444;
+    --v1-gold: #f1c40f;
+    --v1-green: #2ecc71;
+    --v1-teal: #1abc9c;
+    --v1-purple: #8e44ad;
+}
+
+/* --- SFONDO: velo blu-ardesia sul carbonio --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) {
+    background:
+        linear-gradient(rgba(44, 62, 80, 0.8), rgba(39, 55, 70, 0.9)),
+        url("../../assets/image/ui/vintage-bg.webp") center / cover no-repeat fixed,
+        #1b2631 !important;
+    color: var(--v1-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Griglia cyber e riverbero ambientale non esistevano nella v1. */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling))::before,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling))::after {
+    display: none;
+}
+
+/* --- CONTENITORE E COLONNE --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container {
+    background: rgba(44, 62, 80, 0.85);
+    border: 1px solid var(--v1-line-soft);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .game-column {
+    border-right: 2px solid var(--v1-line-soft);
+    background: transparent;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .game-column:last-child {
+    border-right: none;
+}
+
+/* --- NAVBAR --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar {
+    background: var(--v1-slate);
+    border-bottom: 2px solid var(--v1-line-soft);
+    box-shadow: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item .nav-icon {
+    color: var(--v1-muted);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item:hover,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item:hover .nav-icon {
+    color: #fff;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item:hover {
+    background: var(--v1-card-hover);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-navbar .nav-item .nav-label {
+    font-family: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* --- TITOLI DELLE SEZIONI --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .section-header h2,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-aligned h2,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .store-section h2 {
+    color: #fff;
+    letter-spacing: 0;
+    text-shadow: none;
+    border-bottom: 2px solid var(--v1-line-soft);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #prestige-store .section-header h2 {
+    color: var(--v1-gold);
+    border-bottom-color: var(--v1-gold);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #enhancement-store .section-header h2 {
+    color: var(--v1-teal);
+    border-bottom-color: var(--v1-teal);
+}
+
+/* --- SCHEDE E FILTRO --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .tabs-header .tab-btn {
+    background: var(--v1-card);
+    border: 1px solid var(--v1-line);
+    color: var(--v1-muted);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .tabs-header .tab-btn.active {
+    background: var(--v1-blue);
+    border-color: var(--v1-blue);
+    color: #fff;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #global-filter-select {
+    background: var(--v1-card);
+    border: 1px solid var(--v1-line);
+    color: var(--v1-text);
+    border-radius: 6px;
+    font-family: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Fasce scure dei pannelli (schede, filtro, intestazione dei team, portafoglio
+   su mobile): nella v1 non c'erano, qui prendono la tinta ardesia. */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .tabs-header,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #global-filter-section {
+    background: rgba(39, 55, 70, 0.6);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #teams-sticky-header {
+    background: var(--v1-slate-deep);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .mobile-bug-wallet {
+    background: var(--v1-card);
+    border: 1px solid var(--v1-line);
+    box-shadow: none;
+}
+
+/* --- CARD: edifici blu-ardesia, click verdi, potenziamenti verde acqua, laboratorio viola --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .click-upgrade,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .enhancement-upgrade,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .prestige-upgrade {
+    background: var(--v1-card);
+    border: 1px solid var(--v1-line);
+    border-radius: 8px;
+    box-shadow: none;
+    transform: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade:hover:not(.locked-item),
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .click-upgrade:hover:not(.locked-item),
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .enhancement-upgrade:hover:not(.locked-item),
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .prestige-upgrade:hover:not(.locked-item) {
+    background: var(--v1-card-hover);
+    border-color: #7f9ebc;
+    box-shadow: none;
+    transform: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .click-upgrade {
+    background: #2c5a42;
+    border-color: #3e805d;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .click-upgrade:hover:not(.locked-item) {
+    background: #346b4e;
+    border-color: #4a9970;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .enhancement-upgrade {
+    background: #2c4a4a;
+    border-color: var(--v1-teal);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .enhancement-upgrade .upgrade-name {
+    color: var(--v1-teal);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .prestige-upgrade {
+    background: #4a3b66;
+    border-color: var(--v1-purple);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .prestige-upgrade .upgrade-name {
+    color: var(--v1-gold);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade-name {
+    color: #eee;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade-cost,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade-desc {
+    color: var(--v1-muted);
+    font-family: inherit;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade-bps {
+    color: #5dade2;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .upgrade-count {
+    background: transparent;
+    border: none;
+    color: var(--v1-muted);
+    font-family: inherit;
+}
+
+/* --- BOTTONI --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .buy-btn {
+    background: var(--v1-blue);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    box-shadow: none;
+    letter-spacing: 0;
+    text-transform: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .buy-btn:hover:not(:disabled) {
+    background: var(--v1-blue-dark);
+    box-shadow: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .buy-btn:disabled {
+    background: var(--v1-line);
+    color: #9cb3c9;
+    text-shadow: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .click-upgrade .buy-btn {
+    background: var(--v1-green);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .enhancement-upgrade .buy-btn {
+    background: var(--v1-teal);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .prestige-upgrade .buy-btn {
+    background: var(--v1-purple);
+}
+
+/* --- PUNTEGGIO: senza pannello, come nella v1 --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-center {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-center::before,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .column-header-center::after,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main::before,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main::after {
+    display: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container .header-label-main {
+    color: var(--v1-muted);
+    font-family: inherit;
+    font-size: 1.1rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #score-display {
+    color: var(--v1-red);
+    font-family: inherit;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #cps-display {
+    color: #ecf0f1;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-family: inherit;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #game-container #event-multiplier-display {
+    color: #facc15;
+    text-shadow: 0 0 8px #facc15;
+}
+
+/* --- MASCOTTE: tonda, bordo azzurro da 5px, ombra morbida --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-btn #manager-photo-normal,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-btn #manager-photo-clicked {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid var(--v1-blue);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+    background: #2a5d86;
+}
+
+/* Niente aure di rarità attorno alla foto né anelli orbitali: la v1 non li aveva.
+   Il velo rosso della Festiva stava su #clicker-section stessa (layout-shell.css). */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-ambient {
+    display: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-section {
+    background: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-section::before,
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #clicker-section::after {
+    display: none;
+}
+
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #version-display {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-family: inherit;
+}
+
+/* --- GOLDEN BUG --- */
+html body.theme-vintage:not(:is(.bluescreen-active, .matrix-active, .super-star-active, .crunch-active, .rick-rolling)) #golden-bug i {
+    color: #facc15;
+    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.7));
+}

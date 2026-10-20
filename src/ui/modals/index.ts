@@ -16,6 +16,7 @@ import { store } from '../../state/store';
 import { SAVE_KEY, clearAccountStorage } from '../../core/save/keys';
 import { currentEnv } from '../../lib/env';
 import { capArcadeClaim } from '../../game/anticheat';
+import { vintageState } from '../theme/vintage';
 
 export function initModals(): void {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1273,7 +1274,52 @@ export function initModals(): void {
             oldMusicSelect.parentNode!.replaceChild(newSelect, oldMusicSelect);
         }
 
+        setupThemeRow();
         openModal(settingsModal);
+    }
+
+    // Switch tema (3.3): «Moderno» o «Vintage v1». Prima del 17/11/2026 la riga non
+    // esiste; dopo è visibile ma bloccata finché non si riscatta il premio. Vince la
+    // skin: con una skin a tema (Halloween, Natale…) il Vintage resta in attesa.
+    function setupThemeRow() {
+        const group = document.getElementById('theme-group');
+        const select = document.getElementById('theme-select') as HTMLSelectElement | null;
+        const note = document.getElementById('theme-note');
+        const Game = getGameAPI();
+        if (!group || !select || !note || !Game) return;
+
+        if (typeof w.isSeasonReleased !== 'function' || !w.isSeasonReleased('birthday')) {
+            group.style.display = 'none';
+            return;
+        }
+        group.style.display = '';
+
+        const gs = Game.getGameState();
+        const st = vintageState(gs, store.gameData.skins[gs.skins.current]);
+        select.value = st.unlocked && st.on ? 'vintage' : 'modern';
+        select.disabled = !st.unlocked;
+        select.style.opacity = st.unlocked ? '1' : '0.5';
+
+        if (!st.unlocked) {
+            note.textContent = group.dataset.msgLocked || '';
+            note.style.color = '#e74c3c';
+            note.style.display = 'block';
+        } else if (st.on && st.blockedBySkin) {
+            note.textContent = group.dataset.msgSkin || '';
+            note.style.color = '#bdc3c7';
+            note.style.display = 'block';
+        } else {
+            note.style.display = 'none';
+        }
+
+        select.onchange = () => {
+            const cur = Game.getGameState();
+            cur.user.vintageTheme = select.value === 'vintage';
+            if (typeof w.applySkinVisuals === 'function') w.applySkinVisuals(cur.skins.current);
+            if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
+            Game.saveGame();
+            setupThemeRow();
+        };
     }
 
     function setupAudioControl(slider: any, display: any, key: any, isMusic = false) {

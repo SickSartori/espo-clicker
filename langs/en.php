@@ -277,6 +277,11 @@
 	$labels["opt_bg_music"] = "Background Music";
 	$labels["opt_music_locked"] = "Locked by the current Skin";
 	$labels["opt_install_app"] = "Install App";
+	$labels["opt_theme_title"] = "Theme";
+	$labels["opt_theme_modern"] = "Modern";
+	$labels["opt_theme_vintage"] = "Vintage v1 (first birthday)";
+	$labels["opt_theme_locked"] = "Claim «First Birthday» in Achievements";
+	$labels["opt_theme_skin_wins"] = "The current skin already has its own theme: Vintage shows with the other skins";
 	$labels["prestige_titolo"] = "Company Promotion";
 	$labels["prestige_sign"] = "Sign the contract to become a <b>Senior</b>.";
 	$labels["prestige_warning"] = "You'll lose Bugs, Teams and Upgrades, but you'll unlock the Laboratory for advanced research.";

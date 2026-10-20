@@ -63,7 +63,7 @@
         ['Errore 404', 'Error 404'], ['Video meme', 'Meme videos'], ['Attiva Espo Fury', 'Activate Espo Fury'], ['Azzera Cooldown', 'Reset Cooldown'],
         ['Ferma evento in corso', 'Stop current event'],
         ['Stagioni (ricarica la pagina)', 'Seasons (reloads the page)'], ['Nessuna stagione', 'No season'], ['Torna al calendario', 'Back to the calendar'],
-        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
+        ['> Natale<', '> Christmas<'], ['Natale + skin', 'Christmas + skin'], ['Compleanno + tema', 'Birthday + theme'], ['> Compleanno<', '> Birthday<'], ['skin sbloccate e indossata ', 'skins unlocked, wearing '], ['Nessuna skin per la stagione ', 'No skin for season '], ['Ora: ', 'Now: '], ['nessuna', 'none'], ['forzata', 'forced'], ['calendario', 'calendar'],
         ['Carica uno stato di test', 'Load a test state'], ['Nuovo giocatore', 'New player'], ['Stato pulito, early game', 'Clean state, early game'],
         ['Pronto 1° Prestige', 'Ready for 1st Prestige'], ['Score appena sopra soglia · Liv 0', 'Score just above threshold · Lv 0'],
         ['≈ Liv 5 · team e token medi', '≈ Lv 5 · medium teams & tokens'], ['Endgame / pre-Formattazione', 'Endgame / pre-Format'],
@@ -335,6 +335,7 @@
                     <div class="cb-row"><span id="cb-season-label" style="opacity:.85;font-size:12px;">—</span></div>
                     <div class="cb-row"><button id="cb-season-halloween" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween</button><button id="cb-season-christmas" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale</button></div>
                     <div class="cb-row"><button id="cb-season-halloween-skin" class="cb-btn chaos"><i class="fa-solid fa-ghost"></i> Halloween + skin</button><button id="cb-season-christmas-skin" class="cb-btn red"><i class="fa-solid fa-gift"></i> Natale + skin</button></div>
+                    <div class="cb-row"><button id="cb-season-birthday" class="cb-btn gold"><i class="fa-solid fa-cake-candles"></i> Compleanno</button><button id="cb-season-birthday-skin" class="cb-btn gold"><i class="fa-solid fa-cake-candles"></i> Compleanno + tema</button></div>
                     <div class="cb-row"><button id="cb-season-none" class="cb-btn"><i class="fa-solid fa-ban"></i> Nessuna stagione</button><button id="cb-season-auto" class="cb-btn cyan"><i class="fa-solid fa-calendar-days"></i> Torna al calendario</button></div>
                 </div>
             </section>
@@ -532,13 +533,13 @@
     // Il calendario si legge UNA volta all'import (costi e testi delle skin ne
     // dipendono), quindi si cambia con l'override di prova `?stagione=` e un
     // reload. L'override vive in sessionStorage finché non si torna al calendario.
-    const SEASON_NAMES = { halloween: 'Halloween', christmas: 'Natale' };
+    const SEASON_NAMES = { halloween: 'Halloween', christmas: 'Natale', birthday: 'Compleanno' };
     function setSeason(value) {
         const u = new URL(location.href);
         u.searchParams.set('stagione', value);
         location.href = u.toString();
     }
-    // "+ skin": stagione forzata E skin dell'evento sbloccata e indossata, per
+    // "+ skin" (per il compleanno "+ tema"): stagione forzata E premio dell'evento dato, per
     // vedere subito tema, musica e annuncio senza passare dall'obiettivo. La
     // richiesta sopravvive al reload in sessionStorage e si esegue appena il
     // salvataggio locale è caricato (window._espoGameReady).
@@ -555,6 +556,17 @@
         const tick = () => {
             if (!window._espoGameReady || !window.gameData || !gameState) {
                 if (++tries < 75) setTimeout(tick, 200);
+                return;
+            }
+            if (season === 'birthday') {
+                // Il compleanno non ha skin: il premio è il tema Vintage (switch nelle Opzioni).
+                // Qui si segna l'obiettivo come riscattato e si accende il tema, senza passare dagli Obiettivi.
+                gameState.achievements.primoCompleanno = Object.assign({}, gameState.achievements.primoCompleanno, { unlocked: true, claimed: true });
+                gameState.user.vintageTheme = true;
+                if (typeof applySkinVisuals === 'function') applySkinVisuals(gameState.skins.current);
+                if (window.EspooClicker) window.EspooClicker.saveGame();
+                refreshUI();
+                toast('Compleanno: premio riscattato, tema Vintage acceso');
                 return;
             }
             const ids = Object.keys(gameData.skins).filter((k) => gameData.skins[k].season === season);
@@ -1005,6 +1017,8 @@
     on('cb-season-christmas', () => setSeason('christmas'));
     on('cb-season-halloween-skin', () => setSeasonWithSkin('halloween'));
     on('cb-season-christmas-skin', () => setSeasonWithSkin('christmas'));
+    on('cb-season-birthday', () => setSeason('birthday'));
+    on('cb-season-birthday-skin', () => setSeasonWithSkin('birthday'));
     on('cb-season-none', () => setSeason('nessuna'));
     on('cb-season-auto', () => setSeason('auto'));
 

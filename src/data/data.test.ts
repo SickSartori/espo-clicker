@@ -163,6 +163,21 @@ describe('data/season (fix B2)', () => {
     expect(isSeasonRewardOpenIn('', [], [])).toBe(true);
     expect(isSeasonRewardOpenIn('sconosciuta', ['sconosciuta'], ['sconosciuta'])).toBe(false);
   });
+  it('compleanno: nessuna skin, il premio è lo switch del tema Vintage; obiettivo senza scadenza', async () => {
+    const { existsSync } = await import('node:fs');
+    // Nessuna skin del compleanno: il tema non appartiene a una skin.
+    expect(CALENDAR_SEASONS.birthday.skins).toEqual([]);
+    expect((gameData.skins as any).espoV1).toBeUndefined();
+    for (const skin of Object.values<any>(gameData.skins)) expect(skin.season).not.toBe('birthday');
+    const ach = (gameData.achievements as any).primoCompleanno;
+    expect(ach.season).toBe('birthday');
+    expect(ach.reward).toEqual({ type: 'theme', id: 'vintage' });
+    expect(en.achievements.primoCompleanno?.name).toBe('First Birthday');
+    expect(existsSync('styles/themes/vintage-theme.css')).toBe(true);
+    // i testi del toast di riscatto esistono nelle due lingue
+    expect(gameData.texts.toasts.themeVintage).toBeTruthy();
+    expect(en.texts.toasts.themeVintage).toBeTruthy();
+  });
   it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
     for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
     expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');

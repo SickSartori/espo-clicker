@@ -16,6 +16,7 @@ import { store } from '../../state/store';
 // divergere — in questo repo è già successo con la formula dei Q-bit.
 import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
 import { RARITY_ORDER, skinAccent } from '../rarity';
+import { vintageState, mascotArt, VINTAGE_THEME } from '../theme/vintage';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
 const domCache = new Map<string, any>();
@@ -744,8 +745,10 @@ function updateSkinsUI() {
         const needsFormat = isBuyable && data.requiresFormatting && (store.gameState.totalFormattazioni || 0) < 1;
         // NON possedute → SEMPRE silhouette-mistero + lucchetto, anche le comprabili:
         // così non si spoilera l'arte. Le info stanno nel chip (gratis/prezzo/formatta/obiettivo).
+        // Col tema Vintage acceso la skin base mostra l'arte della v1 (come sul clicker).
+        const cardImg = mascotArt(key, data, vintageState(store.gameState, store.gameData.skins[currentSkin]).active).img || data.img;
         const imgSource = isUnlocked
-            ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
+            ? (cardImg ? `assets/image/${cardImg}` : 'assets/image/skins/espo.webp')
             : 'assets/image/ui/hidden.webp';
 
         const accent = skinAccent(data);
@@ -1037,6 +1040,9 @@ function updateAchievementsUI() {
 
                 // Imposta il tooltip con il nome della skin
                 tooltipAttr = `data-tooltip="Sblocca: ${skinName}"`;
+            } else if (data.reward.type === 'theme') {
+                rewardText = "TEMA VINTAGE";
+                tooltipAttr = `data-tooltip="Sblocca: Tema Vintage v1"`;
             } else if (data.reward.type === 'prestige') {
                 rewardText = `+${data.reward.value} TOKEN`;
             }
@@ -2557,7 +2563,10 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
     if (!(applySkinVisuals as any)._token) (applySkinVisuals as any)._token = 0;
     const data = store.gameData.skins[skinId];
     const skinData = data || store.gameData.skins['default'];
-    const theme = skinData.themeConfig || {};
+    // Tema Vintage v1 (switch nelle Opzioni): non appartiene a una skin. Si accende se
+    // il premio è riscattato e la skin indossata non ne ha uno suo — se ce l'ha, vince lei.
+    const vintage = vintageState(store.gameState, skinData);
+    const theme: any = vintage.active ? VINTAGE_THEME : (skinData.themeConfig || {});
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
     _setSkinBodyAttrs(skinData);
@@ -2634,8 +2643,10 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
         element.classList.add(`bg-${skinData.rarity || 'common'}`);
     };
 
-    applyClasses(photoNormal, skinData.img);
-    applyClasses(photoClicked, skinData.imgClick);
+    // Col tema acceso la mascotte base mostra l'arte della v1 (fondo blu).
+    const art = mascotArt(skinId, skinData, vintage.active);
+    applyClasses(photoNormal, art.img);
+    applyClasses(photoClicked, art.imgClick);
 
     // Esposion: attiva/disattiva la skin dinamica (effetti combo->esplosione).
     if (typeof w.EsposionFX !== 'undefined') {
