@@ -47,6 +47,14 @@ export const skins: Record<string, any> = {
         rarity: "common",
         cost: new Decimal(0)
     },
+    ingegnespo: {
+        name: "Ingegnespo",
+        desc: "Casco allacciato, occhialoni giù: oggi si costruisce.",
+        img: "skins/ingegnespo.webp",
+        imgClick: "skins/ingegnespo-click.webp",
+        rarity: "common",
+        cost: new Decimal(6)
+    },
     // --- FESTIVE (stagioni a calendario, vedi season.ts) ---
     // A finestra aperta: obiettivo stagionale o prezzo scontato. Fuori stagione:
     // in negozio a prezzo pieno, così nessuna skin sparisce per sempre.
@@ -214,6 +222,14 @@ export const skins: Record<string, any> = {
         rarity: "epic",
         unlockHint: "Gioca per 24 ore totali."
     },
+    espostronauta: {
+        name: "Espostronauta",
+        desc: "Un piccolo click per Espò, un grande bug per l'umanità.",
+        img: "skins/espostronauta.webp",
+        imgClick: "skins/espostronauta-click.webp",
+        rarity: "epic",
+        cost: new Decimal(28)
+    },
 
     // --- LEGENDARY ---
     rick: {
@@ -250,6 +266,14 @@ export const skins: Record<string, any> = {
         themeConfig: {
             specialMusic: 'sound-bg-music-espory'
         }
+    },
+    espoleon: {
+        name: "Espoleon Bonaparte",
+        desc: "Impossibile? È solo un bug non ancora conquistato.",
+        img: "skins/espoleon-bonaparte.webp",
+        imgClick: "skins/espoleon-bonaparte-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(65)
     },
     britneyEspears: {
         name: "Britney Espears",

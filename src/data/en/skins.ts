@@ -8,6 +8,10 @@ export const skins: Record<string, any> = {
     espobit: {
         desc: "Insert coin. 1UP!"
     },
+    ingegnespo: {
+        name: "Espogineer",
+        desc: "Hard hat on, goggles down: today we build."
+    },
     christmas: {
         name: "Espo Claus",
         desc: "Let's squash these bugs under the tree.",
@@ -80,6 +84,10 @@ export const skins: Record<string, any> = {
         desc: "Plata o plomo... or pull request.",
         unlockHint: "Perform at least 1 Format and buy for 35 Token."
     },
+    espostronauta: {
+        name: "Espostronaut",
+        desc: "One small click for Espò, one giant bug for mankind."
+    },
     esposa: {
         name: "Espòsa",
         desc: "Till code do us part.",
@@ -100,6 +108,9 @@ export const skins: Record<string, any> = {
     },
     espory: {
         desc: "eeeeeeeespo"
+    },
+    espoleon: {
+        desc: "Impossible? Just a bug not yet conquered."
     },
     britneyEspears: {
         unlockHint: "Perform at least 1 Format and buy for 75 Token."

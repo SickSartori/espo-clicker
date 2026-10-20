@@ -178,6 +178,35 @@ describe('data/season (fix B2)', () => {
     expect(gameData.texts.toasts.themeVintage).toBeTruthy();
     expect(en.texts.toasts.themeVintage).toBeTruthy();
   });
+  it('ogni skin ha i suoi file immagine (normale e click) su disco', async () => {
+    const { existsSync } = await import('node:fs');
+    for (const [id, skin] of Object.entries<any>(gameData.skins)) {
+      expect(existsSync(`assets/image/${skin.img}`), `img di ${id}`).toBe(true);
+      expect(existsSync(`assets/image/${skin.imgClick}`), `imgClick di ${id}`).toBe(true);
+    }
+  });
+  it('skin della 3.3: Ingegnespo, Espostronauta ed Espoleon — prezzo in Token, rarità e overlay EN', () => {
+    const attese: Array<[string, string, number, string]> = [
+      ['ingegnespo', 'common', 6, 'Espogineer'],
+      ['espostronauta', 'epic', 28, 'Espostronaut'],
+      ['espoleon', 'legendary', 65, 'Espoleon Bonaparte'],
+    ];
+    const skins: Record<string, any> = gameData.skins;
+    for (const [id, rarita, costo, nomeEn] of attese) {
+      const s = skins[id];
+      expect(s, id).toBeDefined();
+      expect(s.rarity, `rarità di ${id}`).toBe(rarita);
+      expect(Number(s.cost.toString()), `costo di ${id}`).toBe(costo);
+      expect(s.themeConfig, `${id} non porta un tema: il Vintage si vede`).toBeUndefined();
+      expect(s.season, `${id} non è stagionale`).toBeUndefined();
+      expect((en.skins as any)[id]?.name ?? s.name, `nome EN di ${id}`).toBe(nomeEn);
+      expect((en.skins as any)[id]?.desc, `desc EN di ${id}`).toBeTruthy();
+    }
+    // La scala dei prezzi regge: ogni rarità costa più della precedente nel suo gruppo di Token.
+    const prezzo = (id: string) => Number(skins[id].cost.toString());
+    expect(prezzo('ingegnespo')).toBeLessThan(prezzo('espostronauta'));
+    expect(prezzo('espostronauta')).toBeLessThan(prezzo('espoleon'));
+  });
   it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
     for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
     expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');

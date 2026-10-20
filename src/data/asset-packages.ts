@@ -76,6 +76,8 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/esponatale-click.webp',
             'skins/initiale.webp',
             'skins/initiale-click.webp',
+            'skins/ingegnespo.webp',
+            'skins/ingegnespo-click.webp',
         ],
         // Dimensione stimata: ~358 KB
     },
@@ -131,6 +133,8 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/pabloespobar-click.webp',
             'skins/esposa.webp',
             'skins/esposa-click.webp',
+            'skins/espostronauta.webp',
+            'skins/espostronauta-click.webp',
         ],
         // Dimensione stimata: ~643 KB
     },
@@ -161,6 +165,8 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/leonsespedy-click.webp',
             'skins/espoclicker.webp',
             'skins/espoclicker-click.webp',
+            'skins/espoleon-bonaparte.webp',
+            'skins/espoleon-bonaparte-click.webp',
         ],
         // Dimensione stimata: ~955 KB
     },
