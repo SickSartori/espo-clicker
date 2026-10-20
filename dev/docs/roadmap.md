@@ -1,6 +1,6 @@
 # Roadmap post-3.0 — Espòòò Clicker
 
-> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1**.
+> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1** · **3.2 uscita il 20/10/2026; valutazione della 3.3 aperta lo stesso giorno** (sezione v3.3).
 > **Orizzonte**: fino alla **4.0** (aprile 2027). Le due date fisse sono il **17 novembre 2026** (primo compleanno) e **aprile 2027**.
 > **Regola arcade**: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne *(lezione Phaser/Super Espò)*.
 > **Dove si trova cosa**: le release future sono raggruppate per fase qui sotto; il consuntivo della 3.1 è in fondo, in Archivio.
@@ -56,9 +56,9 @@ Il piano precedente aveva due punti di rottura: **2,5 settimane** fra 3.3 e 3.4 
 
 Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: un tema è un `themeConfig` su una skin (`cssFile`, `bodyClass`, `vfx`, `specialMusic`, `goldenBugIcon`, `goldenBugColor`), caricato da `loadThemeCSS()` (`src/ui/render/index.ts:2526`). Halloween lo rileva, compleanno e Natale lo riusano: il secondo e il terzo tema costano meno del primo.
 
-### v3.2 — 20 ottobre 2026 · «Halloween» 🎃
+### v3.2 — ✅ uscita il 20 ottobre 2026 · «Halloween» 🎃
 
-*Live per la finestra 24 ottobre → 2 novembre.*
+*Live per la finestra 24 ottobre → 2 novembre. Consuntivo in Archivio; ciò che non è entrato è riportato nella sezione v3.3.*
 
 - **Tema Halloween**: palette arancio/viola, 2-3 skin a tempo, Golden Bug → **«Bug Maledetto»**
 - **Debutto del sistema stagioni** costruito in Fase 0: è la prima stagione a calendario che non sia Natale
@@ -72,12 +72,93 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 
 *Data fissa: un anno esatto dal commit «Prima versione» (17/11/2025).*
 
-- **Tema «Vintage v1»**: recupero di CSS e asset della prima versione dalla git history, impacchettato come tema equipaggiabile **permanente** — è un premio, non un evento a tempo
-- **Skin/badge celebrativo** + achievement anniversario
-- **Easter egg**: formattazione numeri "alla v1", suoni originali se esistono
-- ⚠️ **PWA — in gran parte già c'è** (verifica 10/09/2026): `manifest.json` esiste ed è linkato (`index.php:28`) con `display: standalone` e icone 192/512 `maskable` in `assets/image/icons/`; il service worker è registrato (`index.php:431`). **Il gioco è con ogni probabilità già installabile oggi.** Resta il solo `beforeinstallprompt` custom, cioè l'*invito* a installare — ~1 giorno, non una feature. Primo passo: provarlo da telefono, poi decidere se serve il prompt o basta comunicarlo come regalo di compleanno.
-- 🕹️ Arcade: **Flappy Espò** — un input, sessioni da 15 secondi, mobile-first (colma il buco: i cabinati attuali sono quasi tutti da tastiera). Grafica in tema v1 per l'occasione.
-- 🔧 Filo refactor: terza estrazione da `boot.ts`
+> 🔎 **Valutazione del 20/10/2026 — prima passata.** Fatta sul codice di `develop` (= `main` = produzione 3.2.0: `sw.js` in produzione serve `espo-v3.2.0`, `typecheck` pulito, 321 test verdi). Ogni voce del piano originale ha sotto il suo verdetto; poi i **punti da aggiungere**, il **taglio proposto** e le **decisioni aperte**. Il nucleo (stagione, tema v1 come switch nelle Opzioni, soglia) è implementato dal 20/10 — vedi «Stato di avanzamento»; il resto no.
+
+#### Stato di avanzamento (20/10/2026)
+
+✅ **Fatto — nucleo del compleanno**, nel working tree di `develop`: non committato, non promosso, senza il bump a 3.3.0. **Rivisto il 20/10**: il tema non è più legato a una skin ma è uno **switch nelle Opzioni**.
+
+- **Stagione `birthday`** (`src/data/season.ts`): edizione unica 2026 (`year`), finestra 17-30/11, premio che non scade (`keepsReward`), nessuna skin. Soglia di prima edizione: `isSeasonReleased` / `isSeasonRewardOpen`, con istantanea `RELEASED_SEASONS` come `ACTIVE_SEASONS`. Con `?stagione=` (solo dev) le edizioni uniche escono solo se nominate: `nessuna` permette di provare la soglia.
+- **Obiettivo «Primo Compleanno»** senza scadenza dal 17/11. Il premio è di tipo `theme`: sblocca lo switch e lo **accende** al riscatto (toast «Tema Vintage v1 acceso! Lo spegni dalle Opzioni»). **L'avviso** («🎂 Primo compleanno!») compare solo nella finestra e solo nel 2026.
+- **Switch «Tema» in Opzioni** (`includes/modals.php`, `ui/modals` → `setupThemeRow`): Moderno / Vintage v1. Prima del 17/11 la riga non esiste; dal 17/11 è visibile ma **bloccata finché non si riscatta il premio**, con la nota «Riscatta «Primo Compleanno» negli Obiettivi». Stato in `user.vintageTheme` (persiste alla Formattazione); «sbloccato» si legge dal premio riscattato, quindi scriversi il flag a mano non basta.
+- **Regole** (`src/ui/theme/vintage.ts`, pure e testate): **vince la skin** — con una skin che ha un tema suo (Halloween, Natale, 8bit, Super) il Vintage aspetta e le Opzioni lo spiegano; con le altre si vede. Con lo switch acceso la **skin base (Espòòò) mostra l'arte della v1** (fondo blu), sul clicker e nella sua card del Guardaroba; le altre skin tengono la propria. Nessuna skin nuova.
+- **Tema v1** (`styles/themes/vintage-theme.css`, 345 righe): solo «pelle» come deciso — palette ardesia, Inter, sfondo carbonio col velo blu (`ui/vintage-bg.webp`, 55 KB dai 2,2 MB originali), mascotte tonda col bordo azzurro, card e bottoni piatti. Verificato a 1440×900 (desktop) e 375×812 (console, upgrade, team); gli eventi in corso — bluescreen, Matrix, Super Star, Fury, Rick Roll — prevalgono sul tema, provati uno per uno. Le finestre modali restano nello stile attuale, come per Halloween.
+- Cheatboard (`Compleanno`, `Compleanno + tema`: segna il premio riscattato e accende lo switch), testi EN, test unitari (`vintage.test.ts`, `data.test.ts`, `season-announce.test.ts`) e `dev/tests/e2e/birthday.spec.ts` (6 test con orologio finto: prima del 17/11, switch bloccato, riscatto, spegni/riaccendi, vince la skin, finestra chiusa; la soglia è verificata al contrario).
+
+⏳ **Da fare nel nucleo** — easter egg dei numeri, rifinitura PWA; poi consegna (`release:minor`, note di rilascio IT/EN, annuncio, teaser).
+
+⚠️ **Da confermare**: (1) Inter si carica da Google Fonts a tema equipaggiato, come già Rajdhani — se si preferisce self-hostarlo serve il file del font; (2) la provenienza di `background.jpg` della v1 (non verificabile dal repo): se non è materiale proprio, lo sfondo va sostituito. La soglia si appoggia all'orologio del giocatore, come tutte le stagioni: chi lo sposta in avanti vede il regalo in anticipo.
+
+**Il quadro dei tempi.** Restano 28 giorni, e Halloween (live 24/10 → 2/11) ne occupa i giorni 4-13: la coda QA della 3.2 mangerà l'inizio, come questa roadmap dice da sempre. Per tararsi: la 3.2 sono stati 25 commit di lavoro in tre settimane (29/09 → 19/10), ma **tema e skin di Halloween sono stati 3 commit in un solo giorno** (29/09): il costo vero della release è stato l'infrastruttura (guardia schede, estrazione cloud, anticheat), non il contenuto stagionale. La 3.3 ha lo stesso profilo: il contenuto del compleanno è economico, il rischio sta nel resto.
+
+#### Piano originale — verdetti
+
+- **Tema «Vintage v1»** — 🔎 **È una reinterpretazione, non un recupero.**
+  - *Cosa si recupera davvero* dalla history (commit `4f30379`, 17/11/2025): la palette (`#2c3e50`/`#34495e`, bordi `rgba(74,101,130,.5)`, accenti `#1abc9c` `#f1c40f`), il font **Inter** (la v1 lo prendeva da Google Fonts; oggi il gioco usa Harabara in locale e Rajdhani da Google Fonts → Inter va self-hostato o caricato allo stesso modo), `background.jpg` (**2,2 MB**, va in webp), `bluescreen.jpg`, `espo.png` (784×784 contro i 512×512 di `skins/espo.webp`), `espo-click.png`, `bug.png`.
+  - *Cosa non si recupera*: i selettori. La v1 era a tre colonne (`#left-column` / `#center-column` / `#right-column`), il DOM di oggi no → il CSS non si ripristina, si **riscrive** sul binario `themeConfig`. Stima ~300 righe, come `halloween-theme.css` (319).
+  - ⚠️ **Sfondo a tutta pagina**: `styles/ui/desktop/layout-shell.css:27` mette `body { background: … !important }` da 769px in su, caricato per ultimo (è l’ordine di caricamento CSS: il refresh desktop v3 arriva per ultimo e ha già seppellito gli sfondi degli eventi legacy). Halloween non l'ha incontrata perché non tocca il `body` (solo `#game-container` e navbar); un tema v1 con `background.jpg` sì. Strada probabile: `html body.theme-vintage { background: … !important }` (specificità più alta, a parità di `!important`) — **non provata**, da verificare a viewport reale.
+  - *Portata*: proposta **solo «pelle»** (palette, font, sfondo, mascotte), niente rifacimento del layout a tre colonne — sul mobile, poi, ha già un suo layout (`styles.mobile`) e sarebbe un secondo progetto.
+  - ~~Il tema viaggia su una skin~~ — **superato il 20/10**: il tema è uno switch nelle Opzioni, staccato dalle skin (vedi «Stato di avanzamento»). L'`espo.png` originale non è una skin ma l'arte che la skin base assume col tema acceso.
+- **Skin/badge celebrativo + achievement anniversario** — 🔎 **Il motore c'è, costa quanto Halloween (~1 giorno).** Il compleanno può essere una `CalendarSeason`: un id in `CALENDAR_SEASONS` (`src/data/season.ts:46`) + un obiettivo con `season` e premio `skin` (come `achievements.ts:188`) — e si ereditano `season-announce.ts` (avviso al primo accesso, timbro nel save), `?stagione=…` in dev e il cheatboard.
+  - Da fare davvero: `CalendarSeasonId` è un'unione di due valori (`season.ts:21`) → estenderla; testi EN in `src/data/en/{achievements,skins}.ts`.
+  - ⚠️ **Soglia di prima edizione — codice nuovo, Halloween non ne aveva bisogno.** Le skin Festive costano poco in finestra e **fuori finestra stanno in negozio a prezzo pieno** (`skins.ts`): il compleanno non ha skin, ma il problema resta per obiettivo e switch — senza soglia comparirebbero (e si riscatterebbero) prima del 17/11. L'obiettivo con `season` è già nascosto fuori finestra (`render/index.ts`); uno che non scade come questo no. Serve una data di primo rilascio sotto cui obiettivo e riga nelle Opzioni non esistono: è `year` + `isSeasonReleased`.
+  - ⚠️ `season-announce` ragiona per «stagione e anno»: il compleanno è irripetibile, quindi l'anno prossimo la voce si riannuncerebbe da sola → o si toglie a mano o si dà un flag a una tantum.
+  - **«Badge»**: non ho trovato un'infrastruttura dedicata. I badge esistenti sono pillole della classifica (`podio.ts:149`, livello e formattazioni). Un badge «giocatore del primo anno» sul profilo/podio è **lavoro nuovo**, e lo stesso meccanismo serve al «veterano Season 1» della 3.5 → vale la pena progettarlo una volta sola, o rimandarlo.
+  - ✅ **Decisione A — presa il 20/10**: obiettivo senza scadenza dal 17/11, avviso solo nella finestra (modello `keepsReward`). **Rivista lo stesso giorno**: il premio non è una skin ma lo switch del tema Vintage nelle Opzioni, che l'obiettivo sblocca; il compleanno non passa mai in negozio.
+- **Easter egg: formattazione numeri «alla v1»** — 🔎 **Fattibile, con una trappola.** La v1 faceva `Math.floor(num).toLocaleString('it-IT')` (`js/script.js:285`): intero coi punti, mai suffissi. Replicata alla lettera su un Decimal grande dà `Infinity` o stringhe da 400 cifre — è il muro della 3.1.10.
+  - Si costruisce su `formatFullNumber` (`src/ui/format/number-format.ts`) **con un tetto** (oltre una soglia da decidere ricade sui suffissi), non su `Math.floor`.
+  - Punto d'innesto unico: il wrapper `formatNumber` in `src/ui/render/index.ts:53`, che delega a `EspoV3.format.formatNumber` — non i 66 punti di chiamata.
+  - ⚠️ Numeri full-width nelle celle strette (costi, bps) → overflow: da guardare a 375px prima di dire che regge.
+  - Attivazione: **solo col tema v1 equipaggiato**, niente impostazione nuova.
+- **«Suoni originali se esistono»** — 🔎 **Voce da togliere: i suoni originali sono già quelli di oggi.** I 4 file della v1 (`Click`, `Buy`, `Achievement`, `bluescreen`) hanno lo **stesso hash git** dei file attuali (blob `212a8d79`, `2f73350c`, `d7391386`, `3231fd0e`): non sono mai stati rifatti. Non c'è niente da recuperare, e una musica «v1» non è mai esistita.
+- **PWA** — 🔎 **La roadmap è in ritardo: l'invito a installare c'è già.** `index.php:~470-545` gestisce `beforeinstallprompt`, `appinstalled` e un ramo iOS con le istruzioni; il pulsante (`#pwa-install-row`, `includes/modals.php:176`) sta in **Opzioni**, nascosto finché il browser non emette l'evento. Quindi non c'è il «~1 giorno» da spendere. Quel che resta, letto dai file (**non provato su dispositivo**):
+  - `manifest.json`: ogni icona dichiara `"any maskable"` insieme — meglio separarle, con una `maskable` vera (margine di sicurezza);
+  - `<link rel="apple-touch-icon">` punta a un **SVG** (`index.php:29`): iOS vuole un PNG (180×180), quindi su iPhone l'icona in home sarebbe un ripiego;
+  - `"screenshots": []`: Chrome non mostra la scheda d'installazione estesa;
+  - l'invito è sepolto in Opzioni: l'unico pezzo «nuovo» sensato è un avviso una tantum, legato al compleanno.
+  - Stima: ~½ giornata. Il **test da telefono è manuale**: da questa sessione non si può fare.
+- **Arcade: Flappy Espò** — 🔎 **Fattibile (~3-4 giorni con test e mobile), ma con un nome da decidere e una lista di buchi già pagati.** Taglia: `stack.js` è 930 righe (il più complesso), `snake.js` 384; un cabinato da un solo input ne chiede 400-500.
+  - Registrazione: voce in `arcade.php` al posto dello slot `??? COMING SOON` (riga ~105; poi lo slot sparisce — decidere se rimetterne uno), `GAME_EXIT` in `js/arcade-page.js:511` **e** `exitXxxGame` (la 3.1 scoprì che dimenticarlo lascia vivo il ciclo di disegno: l'altra metà è `src/ui/modals/index.ts:1152`), etichette IT **e** EN (`langs/it.php:303,338` · `langs/en.php:301,336`).
+  - `includes/modals_arcade.php` è markup morto dalla 3.1 (incluso da `index.php:171`, mai mostrato): decidere se rimuoverlo **prima** di aggiungerci un'ottava voce.
+  - **Premio**: passa dal tetto `capArcadeClaim` (60 × BPS veri al secondo), che ferma le gonfiature da console ma **non la farmabilità**: con sessioni da 15 secondi serve decidere premio per sessione e un tetto per ora, non solo quello sui bps.
+  - **Mobile**: il pad virtuale (d-pad + un tasto azione, `arcade-page.js:463`, riserva `--arcade-pad-reserve`) è pensato per i cabinati da tastiera. Flappy è «tocca ovunque»: serve una modalità **senza pad**, canvas a dimensione logica fissa scalato dal CSS (la lezione di `snake.js`/Stack). Guardare `dev/docs/specs/2026-08-25-arcade-mobile-layout-design.md`.
+  - `arcade-fullscreen.css` è versionato con `$cacheVer`: senza bump di versione il CSS nuovo non arriva (il `release:minor` lo fa); test e2e sul modello di `stack-overflow.spec.ts` (8 test).
+  - ⚠️ **Il nome**: «Flappy» è anche il nome di un gioco il cui marchio oggi è di **Gametech Holdings** (rivendicato dal 2024, dopo che quello di Dong Nguyen è decaduto — fonti: [PCWorld](https://www.pcworld.com/article/2460270/flappy-bird-returns-in-a-tangled-web-of-crypto-shadiness.html), [Boing Boing](https://boingboing.net/2024/09/18/how-crypto-bros-took-flappy-bird-from-its-creator.html)). Non risultano cause contro i cloni, quindi il rischio **non è accertato** — ma la 3.1 ha fissato il metodo con Stack Overflow (tenersi lontani dal clone su più piani, non solo col nome). Proposta: un nome senza «Flappy» e almeno una meccanica propria; le sessioni da 15 secondi sono già una differenza. *(Una ricerca, non una consulenza legale.)*
+  - «Grafica in tema v1»: gli sprite (`espo.png`, `bug.png`) sono già in history, vedi il tema.
+- **Filo refactor: terza estrazione da `boot.ts`** — 🔎 **Siamo indietro di una estrazione, e i numeri della roadmap sono vecchi.**
+  - `boot.ts`: 2820 righe a `v3.1-Release` → **2747** oggi (il «2625» scritto sopra era stantio). La 3.2 ha tolto ~290 righe di cloud ma ne ha riaggiunte altrove (hook della guardia schede, anticheat, avvisi): −73 netto.
+  - Il piano voleva due estrazioni a fine 3.2: **ne è avvenuta una** (cloud: `app/cloud/{badge,conflict,snapshot,trace}.ts`, 30/09 — dentro la 3.2, non in Fase 0). `tab-guard.ts` è un modulo nuovo, non un'estrazione.
+  - ⚠️ `initBoot` è **una sola funzione di 2560 righe** (`boot.ts:188`): estrarre significa spostare blocchi che chiudono su variabili lessicali, e il costo dipende da **quante ne toccano** — da misurare per ogni candidato prima di sceglierlo. Confini già marcati nel file:
+    - **C — resto del cloud** (`boot.ts:316-607`, ~290 righe): stessa rete di test (`cloud-badge`, `cloud-conflict-loop`, `offline-return`), logica fresca. **Proposta per la 3.3.**
+    - **A — orchestratore migrazione Season 1/Fondatore** (`boot.ts:736-1167`, ~430 righe): codice di lancio con la rete `founder-riparazioni.spec.ts`, e **fa da stampo al rollover di Season 2** della 3.5 — estrarlo si ripaga due volte. Tocca il flusso login/cloud-load (`schemaVersion < 3`, `_cloudPreWipe`). Proposta per la 3.4.
+    - **B — loader UI** (marcatore a `boot.ts:1500`, l'«API globale» parte a `2161`): DOM puro, rischio minimo, ma il tratto è ~660 righe e non tutto è loader — da guardare.
+  - ⚠️ A questo ritmo (un'estrazione a release) a fine 3.4 restano ~2.000 righe: «a fine Fase 1 il grosso deve essere fuori» non regge. O si rivede l'obiettivo, o si dedica un blocco.
+
+#### Punti da aggiungere
+
+- **Anticheat lato server** — rimandato esplicitamente dalla 3.2 (`src/game/anticheat.ts:15`: «lì un errore bloccherebbe i salvataggi di tutti») e **mai entrato in roadmap**. Controllo di plausibilità sulla crescita del punteggio nella EF `save-progress`. Vive **fuori dal repo** e i connettori Supabase non sono autenticati in questa sessione: non valutabile da qui. Piano prudente: **prima solo log, nessun blocco**; confronto sulle **cifre**, non su `float8` (3.1.10); la soglia solo dopo aver visto i dati reali. Può scivolare in 3.3.x.
+- **Residui della Fase 0 / 3.2 mai chiusi** (verificati):
+  - **Skin future: 0 cablate su 7** (nessun nome in `skins.ts`). Non sono «a costo zero»: nella cartella c'è un solo PNG per skin, ognuna vuole il frame `-click` e la conversione webp. Sceglierne 2-3.
+  - `dev/docs/ui.md:98`: la voce P2 sulla navbar è ancora stantia (il menu ☰ esiste dalla 3.1).
+  - **Secrets**: il fallback sui due file storici è ancora in `php/secrets-load.php:74-75`. Da confermare (non è nel repo): `secrets.php` è su Altervista? la voce `labels` Trello è nel secrets dell'area di test? (non verificabile da qui).
+- **Voci aperte nella roadmap che in realtà sono chiuse o a metà** (verificato):
+  - ✅ **Numeri del server nel conflitto**: il client li legge già (`922cb2b`, `boot.ts` + test in `cloud-conflict-loop.spec.ts`). Resta solo da **confermare il deploy della EF** su dev e prod (fuori repo).
+  - ❌ **Campo `season` nella risposta di `get-leaderboard`**: ancora aperto — `podio.ts:58` legge `gameState.season`. Voce minore.
+  - ✅ **Obiettivi su mobile, titolo troncato**: già corretto (`styles/ui/mobile/achievements-modal.css`, `.trophy-title` va a capo) → la voce nell'archivio 3.1 si può chiudere.
+- **Lista di consegna della 3.3** (dagli inciampi della 3.2): `npm run release:minor` (tocca `package.json`, `version.ts`, `sw.js`, `config.php`); note di rilascio IT/EN; testi EN dell'overlay; cheatboard (stagione `compleanno` + travestimento); immagine d'annuncio in `dev/docs/`; **teaser pubblico `roadmap-teaser.pdf/png` da rifare se la roadmap cambia date o contenuti** (non rigenerato).
+
+#### Taglio proposto
+
+- **Entro il 17/11 — il nucleo, tutto gated dalla data:** stagione «compleanno» + obiettivo + skin e tema v1 + avviso al primo accesso + easter egg dei numeri + rifinitura PWA. Freeze **10/11**, una settimana di buffer come da ritmo.
+- **Può scivolare in una 3.3.x di fine novembre** (la 3.4 del 15/12 è già piena col completamento del tema Christmas): **Flappy Espò** (se nome e design non sono chiusi entro ~3/11), estrazione da `boot.ts`, anticheat server, skin future.
+- **Deploy anticipato — solo con la soglia di prima edizione** (vedi la voce skin/achievement): senza, obiettivo e switch comparirebbero prima del 17/11. Con la soglia il contenuto può stare in test e in produzione giorni prima senza che si veda nulla. L'unica cosa visibile sono le **note di rilascio**, che escono al cambio di versione (minor, a giudicare dal «Simula primo avvio versione» del cheatboard): per non spoilerare, durante l'anticipo si bumpa una patch e il 3.3.0 con le note esce il 17 mattina. **Da provare in test** prima di contarci.
+
+#### Decisioni aperte
+
+1. ~~Il premio del compleanno~~ ✅ **deciso il 20/10**: obiettivo senza scadenza dal 17/11, avviso solo nella finestra 17-30/11.
+2. **Portata del tema v1**: solo «pelle» (consigliato) o anche il layout a tre colonne?
+3. **Flappy**: nome nuovo, e resta in 3.3 o passa a una 3.3.x?
+4. **Il taglio**: va bene la linea fra «entro il 17/11» e «può scivolare»?
 
 ### v3.4 — 15 dicembre 2026 · «Natale» 🎄
 
@@ -127,7 +208,7 @@ Dalla 3.5 alla 4.0 restano ~8 settimane piene, su una base già ripulita dal ref
 |---|---|---|---|
 | 3.1 ✅ | 04 set 2026 | **Stack Overflow** | uscito — variante non-clone, ha riempito lo slot COMING SOON |
 | 3.2 | 20 ott 2026 | — | retint Halloween di Bug Invaders |
-| 3.3 | 17 nov 2026 | **Flappy Espò** | mobile-first, grafica v1 |
+| 3.3 | 17 nov 2026 | **Flappy Espò** *(nome da rivedere; può scivolare in 3.3.x)* | mobile-first, grafica v1 — vedi valutazione 20/10 |
 | 3.4 | 15 dic 2026 | — | retint natalizio di Snake |
 | 3.5 | feb 2027 | **Q\*Bert-like** + 🎮 **Click Duel 1v1** | Supabase Realtime, solo fra amici |
 | 4.0 | apr 2027 | **BUGDOOM** + Boss Bug 3D | compagni del mondo 3D |
@@ -145,6 +226,16 @@ Dalla 3.5 alla 4.0 restano ~8 settimane piene, su una base già ripulita dal ref
 ---
 
 # Archivio
+
+## v3.2 — ✅ USCITA il 20/10/2026 · «Dolcetto o debito tecnico»
+
+> **Consuntivo (20/10/2026).** Tag `v3.2-Release`; produzione `3.2.0` da stamattina (workflow `main.yml`, 06:25 UTC). Verificato end-to-end: `sw.js` in produzione serve `espo-v3.2.0`, e nell'HTML non c'è traccia di `cheatboard`. 25 commit di lavoro dal 29/09 al 19/10 (35 coi merge), uscita nella data prevista.
+>
+> **Fatto**: sistema stagioni generalizzato (`season.ts`: halloween accanto a natale, override `?stagione=` solo in dev) · tema Halloween con 3 skin Festive, Bug Maledetto, musica anche nel jukebox · rarità Festiva per tutte le skin di stagione (Espo Natale compreso) · retint Halloween di Bug Invaders · guardia anti doppia scheda (`app/tab-guard.ts`) · numeri del server nella riga `[Save✗ CONFLICT]` (lato client) · **prima estrazione da `boot.ts`**: cloud-sync in `app/cloud/*` · avviso d'inizio evento e premio indossato subito · cheatboard con stagioni e travestimento, che si rifiuta di partire fuori dallo sviluppo · **anticheat lato client**: niente click finti né tasto tenuto premuto, tetto e pausa per gli autoclicker, doppio click di sistema, tetto sul premio della Sala Giochi · deploy: `develop` entra in `test` con `merge --no-ff`, `main.yml` su ubuntu-24.04.
+>
+> **Non fatto, o fatto a metà** → riportato nella v3.3: **anticheat lato server** (rimandato di proposito, `anticheat.ts:15`) · **skin future** (0 su 7 cablate) · `dev/docs/ui.md` stantio · **debiti operativi dei secret** (non verificabili dal repo) · **seconda estrazione da `boot.ts`** (ne è uscita una sola: 2820 → 2747 righe).
+>
+> **Lezione di metodo**: tema e skin stagionali sono costati 3 commit in un giorno; la release l'hanno riempita l'infrastruttura (schede, cloud, anticheat) e il QA. Per la 3.3, che ha lo stesso profilo, si pianifica sul resto, non sul contenuto.
 
 ## v3.1 — ✅ USCITA il 04/09/2026 (3.1.6) · hotfix 3.1.7 e 3.1.8 il 10/09 (tag `v3.1-Release`, che segue l'ultimo merge in `main`) · «Migliorie e bugfix»
 
