@@ -12,6 +12,16 @@
     gap: clamp(15px, 3vh, 30px);
 }
 
+/* Sotto al clicker stanno, fissi sul viewport, il badge «Novità» (bottom: 58px) e il
+   link GitHub (bottom: 22px): la sezione riserva quella fascia, così su finestre basse
+   (≤ 720px d'altezza) il bottone Espo Fury non ci finisce sopra. Solo desktop: su
+   mobile la versione sta in flusso e il link GitHub è nascosto. */
+@media (min-width: 769px) {
+    #clicker-section {
+        padding-bottom: 96px;
+    }
+}
+
 /* Feedback (+1 click) */
 #click-feedback-container {
     position: absolute;
