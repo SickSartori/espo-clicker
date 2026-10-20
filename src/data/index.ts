@@ -15,7 +15,7 @@ import { clickUpgrades, prestigeUpgrades, buildingEnhancements, superUpgrades } 
 import { achievements } from './achievements';
 import { ASSET_PACKAGES } from './asset-packages';
 import { en } from './en/index';
-import { isChristmasSeason, isHalloweenSeason, isSeasonActive, IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
+import { isChristmasSeason, isHalloweenSeason, isSeasonActive, isSeasonReleased, isSeasonRewardOpen, IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
 import { store } from '../state/store';
 
 export const gameData: Record<string, any> = {
@@ -38,6 +38,8 @@ export function installGameData(): void {
   // core.js legacy (finché esiste) la ri-assegna con valori identici: innocuo.
   (window as any).isChristmasSeason = isChristmasSeason;
   (window as any).isSeasonActive = isSeasonActive;
+  (window as any).isSeasonReleased = isSeasonReleased;
+  (window as any).isSeasonRewardOpen = isSeasonRewardOpen;
   (window as any).IS_XMAS_TIME = IS_XMAS_TIME;
   (window as any).isHalloweenSeason = isHalloweenSeason;
   (window as any).IS_HALLOWEEN_TIME = IS_HALLOWEEN_TIME;

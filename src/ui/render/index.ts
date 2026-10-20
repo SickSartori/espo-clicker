@@ -963,7 +963,9 @@ function updateAchievementsUI() {
         const state = store.gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
 
-        if (data.season && !w.isSeasonActive(data.season) && !state.unlocked) {
+        // Obiettivo stagionale: visibile in finestra; per i premi che non scadono
+        // (compleanno) dal giorno d'uscita in poi — prima di allora non esiste.
+        if (data.season && !w.isSeasonRewardOpen(data.season) && !state.unlocked) {
             return; // Salta questo giro del ciclo
         }
 

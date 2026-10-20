@@ -4,6 +4,7 @@ import { en } from './en/index';
 import {
   isChristmasSeason, isHalloweenSeason, isSeasonActive, isSeasonActiveIn, IS_XMAS_TIME, IS_HALLOWEEN_TIME,
   CALENDAR_SEASONS, isInSeasonWindow, activeSeasonsAt, parseSeasonOverride,
+  isSeasonReleasedAt, releasedSeasonsAt, isSeasonReleasedIn, isSeasonRewardOpenIn,
 } from './season';
 
 describe('data/achievements via store (reorg B4)', () => {
@@ -120,6 +121,47 @@ describe('data/season (fix B2)', () => {
       expect(gameData.texts.toasts[theme.goldenBugToast], `toast IT di ${id}`).toContain('{amount}');
       expect(en.texts.toasts[theme.goldenBugToast], `toast EN di ${id}`).toContain('{amount}');
     }
+  });
+  it('compleanno: edizione unica, finestra 17-30/11/2026, premio che non scade', () => {
+    const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h);
+    const b = CALENDAR_SEASONS.birthday;
+    expect(b.year).toBe(2026);
+    expect(b.keepsReward).toBe(true);
+    expect(isInSeasonWindow(b, at(2026, 11, 16))).toBe(false);
+    expect(isInSeasonWindow(b, at(2026, 11, 17, 0))).toBe(true);
+    expect(isInSeasonWindow(b, at(2026, 11, 30, 23))).toBe(true);
+    expect(isInSeasonWindow(b, at(2026, 12, 1))).toBe(false);
+    // edizione unica: l'anno dopo la finestra non riapre
+    expect(isInSeasonWindow(b, at(2027, 11, 20))).toBe(false);
+    // mai insieme a Natale o Halloween nel 2026
+    for (let t = new Date(2026, 0, 1); t.getFullYear() === 2026; t.setDate(t.getDate() + 1)) {
+      expect(activeSeasonsAt(t).length).toBeLessThanOrEqual(1);
+    }
+    expect(activeSeasonsAt(at(2026, 11, 20))).toEqual(['birthday']);
+  });
+  it('soglia di prima edizione: prima del 17/11/2026 la stagione non è uscita, dopo sì per sempre', () => {
+    const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h);
+    const b = CALENDAR_SEASONS.birthday;
+    expect(isSeasonReleasedAt(b, at(2026, 10, 20))).toBe(false);
+    expect(isSeasonReleasedAt(b, at(2026, 11, 16, 23))).toBe(false);
+    expect(isSeasonReleasedAt(b, at(2026, 11, 17, 0))).toBe(true);
+    expect(isSeasonReleasedAt(b, at(2027, 11, 20))).toBe(true);
+    expect(isSeasonReleasedAt(b, at(2030, 1, 1))).toBe(true);
+    // le stagioni ricorrenti non hanno soglia: sono sempre uscite
+    expect(isSeasonReleasedAt(CALENDAR_SEASONS.halloween, at(2020, 1, 1))).toBe(true);
+    expect(releasedSeasonsAt(at(2026, 10, 20))).toEqual(['halloween', 'christmas']);
+    expect(releasedSeasonsAt(at(2026, 11, 17))).toEqual(['halloween', 'christmas', 'birthday']);
+    expect(isSeasonReleasedIn('', [])).toBe(true);
+    expect(isSeasonReleasedIn('birthday', ['halloween'])).toBe(false);
+  });
+  it('premio stagionale: il compleanno resta aperto a finestra chiusa, Halloween no', () => {
+    const released = ['halloween', 'christmas', 'birthday'];
+    expect(isSeasonRewardOpenIn('birthday', [], released)).toBe(true);
+    expect(isSeasonRewardOpenIn('birthday', [], ['halloween', 'christmas'])).toBe(false);
+    expect(isSeasonRewardOpenIn('halloween', [], released)).toBe(false);
+    expect(isSeasonRewardOpenIn('halloween', ['halloween'], released)).toBe(true);
+    expect(isSeasonRewardOpenIn('', [], [])).toBe(true);
+    expect(isSeasonRewardOpenIn('sconosciuta', ['sconosciuta'], ['sconosciuta'])).toBe(false);
   });
   it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
     for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();

@@ -1,5 +1,5 @@
 import { Decimal } from './decimal';
-import { IS_XMAS_TIME, IS_HALLOWEEN_TIME } from './season';
+import { IS_XMAS_TIME, IS_HALLOWEEN_TIME, IS_BIRTHDAY_OPEN } from './season';
 import { store } from '../state/store';
 
 // Le condition leggevano i globali bare del bundle (gameState, bps): in ESM
@@ -188,6 +188,21 @@ export const achievements: Record<string, any> = {
         season: 'halloween',
         reward: { type: 'skin', id: 'espostore' },
         condition: () => IS_HALLOWEEN_TIME
+    },
+    // Regalo di compleanno: a differenza degli eventi a tempo non scade. Il premio non
+    // è una skin ma lo switch «Tema Vintage v1» nelle Opzioni (ui/theme/vintage.ts).
+    // `season` lo lega all'avviso della finestra (17-30/11/2026) e lo tiene nascosto
+    // fino al 17/11.
+    primoCompleanno: {
+        name: 'Primo Compleanno',
+        desc: 'Un regalo da un anno di bug!',
+        flavor: 'Il 17 novembre 2025 il primo commit. Da allora, solo bug nuovi.',
+        type: 'custom',
+        target: 1,
+        isSecret: false,
+        season: 'birthday',
+        reward: { type: 'theme', id: 'vintage' },
+        condition: () => IS_BIRTHDAY_OPEN
     },
 
     madeInHeaven: {

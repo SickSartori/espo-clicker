@@ -2277,7 +2277,7 @@ function claimAchievementReward(key: any) {
     // schermo — il tema parte solo con la skin addosso — e l'evento sembrava
     // non essere mai cominciato. equipSkin fa partire anche l'annuncio.
     if (data.season && data.reward && data.reward.type === 'skin' &&
-        typeof w.isSeasonActive === 'function' && w.isSeasonActive(data.season) &&
+        typeof w.isSeasonRewardOpen === 'function' && w.isSeasonRewardOpen(data.season) &&
         typeof w.equipSkin === 'function') {
         w.equipSkin(data.reward.id);
     }

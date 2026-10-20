@@ -32,7 +32,7 @@ export interface SeasonAnnounce { seasonId: CalendarSeasonId; key: string; achie
 
 /**
  * PURA. Quale stagione annunciare adesso, o null. Una stagione si annuncia se
- * è aperta, ha un obiettivo che regala una skin, quell'obiettivo non è ancora
+ * è aperta, ha un obiettivo che regala una skin o un tema, quell'obiettivo non è ancora
  * riscattato e l'edizione di quest'anno non è già stata annunciata.
  */
 export function seasonAnnounceDue(
@@ -43,7 +43,7 @@ export function seasonAnnounceDue(
         const seasonId = id as CalendarSeasonId;
         const achievementId = Object.keys(achievements).find((k) => {
             const a = achievements[k];
-            return a && a.season === seasonId && a.reward && a.reward.type === 'skin';
+            return a && a.season === seasonId && a.reward && (a.reward.type === 'skin' || a.reward.type === 'theme');
         });
         if (!achievementId) continue;
         const st = gs && gs.achievements && gs.achievements[achievementId];
@@ -60,6 +60,11 @@ const TEXTS: Record<CalendarSeasonId, { it: [string, string]; en: [string, strin
         it: ['🎃 È arrivato Halloween!', 'Fino al 2 novembre l\'ufficio si traveste. Il tuo primo travestimento ti aspetta negli Obiettivi: riscattalo e indossalo.'],
         en: ['🎃 Halloween is here!', 'Until November 2 the office dresses up. Your first costume is waiting in Achievements: claim it and put it on.'],
         accent: '#fb923c', glow: 'rgba(249,115,22,0.35)',
+    },
+    birthday: {
+        it: ['🎂 Primo compleanno!', 'Un anno fa nasceva Espòòò Clicker. Il tuo regalo ti aspetta negli Obiettivi: riscattalo e il gioco torna come allora. Lo spegni quando vuoi dalle Opzioni.'],
+        en: ['🎂 First birthday!', 'One year ago Espòòò Clicker was born. Your gift is waiting in Achievements: claim it and the game goes back to how it looked then. Turn it off anytime in Settings.'],
+        accent: '#f1c40f', glow: 'rgba(241,196,15,0.35)',
     },
     christmas: {
         it: ['🎄 È arrivato il Natale!', 'Fino all\'8 gennaio si festeggia anche in ufficio. Espo Natale ti aspetta negli Obiettivi: riscattalo e indossalo.'],

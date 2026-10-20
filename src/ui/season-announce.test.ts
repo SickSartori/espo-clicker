@@ -14,6 +14,23 @@ describe('ui/season-announce — seasonEditionYear', () => {
     });
 });
 
+describe('ui/season-announce — compleanno', () => {
+    const ach = gameData.achievements;
+
+    it('si annuncia solo nella finestra, con la chiave del 2026', () => {
+        const due = seasonAnnounceDue({ achievements: {} }, ['birthday'], ach, at(2026, 11, 20));
+        expect(due).toEqual({ seasonId: 'birthday', key: 'birthday-2026', achievementId: 'primoCompleanno' });
+        // finestra chiusa: nessuna stagione aperta, nessun avviso — anche se il regalo c'è ancora
+        expect(seasonAnnounceDue({ achievements: {} }, [], ach, at(2026, 12, 10))).toBeNull();
+    });
+    it('regalo già riscattato o avviso già dato: niente', () => {
+        const claimed = { achievements: { primoCompleanno: { unlocked: true, claimed: true } } };
+        expect(seasonAnnounceDue(claimed, ['birthday'], ach, at(2026, 11, 20))).toBeNull();
+        const told = { achievements: {}, seasonAnnounced: { 'birthday-2026': 1 } };
+        expect(seasonAnnounceDue(told, ['birthday'], ach, at(2026, 11, 25))).toBeNull();
+    });
+});
+
 describe('ui/season-announce — seasonAnnounceDue', () => {
     const ach = gameData.achievements;
 
