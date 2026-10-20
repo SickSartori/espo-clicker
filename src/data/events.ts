@@ -64,5 +64,19 @@ export const events: Record<string, any> = {
         audioId: 'britney-espoars-video',
         toast: "🎤 OOPS I DEBUGGED AGAIN! (x{mult}) 🎤",
         toastType: "achievement"
+    },
+    // Albert Wespo (skin legendaria): 12,2 s di video, contro i 45-60 degli altri. A parità
+    // di resa un video quasi cinque volte più corto vuole un moltiplicatore più alto:
+    // x20-40 per 12 s (≈ 30 × 12 = 366 «moltiplicatore-secondi») contro x5-13 per 60 s (≈ 540).
+    wesker: {
+        name: 'Albert Wespo',
+        type: 'video',
+        videos: ['albert-wespo-video'],
+        duration: 12200,
+        minMult: 20,
+        maxMult: 40,
+        audioId: 'albert-wespo-video',
+        toast: "🕶️ SETTE TICKET CRITICI! (x{mult}) 🕶️",
+        toastType: "achievement"
     }
 }

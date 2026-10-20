@@ -1474,6 +1474,7 @@ export function initBoot(): void {
             { id: 'ricardo-metal-video', class: 'ricardo_metal_video', src: 'assets/video/ricardo-milespo-metal-video.mp4' },
             { id: 'ricardo-dota-video', class: 'ricardo_dota_video', src: 'assets/video/ricardo-milespo-dota-video.mp4' },
             { id: 'britney-espoars-video', class: 'britney_espoars_video', src: 'assets/video/britney-espoars-video.mp4' },
+            { id: 'albert-wespo-video', class: 'albert_wespo_video', src: 'assets/video/albert-wespo-video.mp4' },
             { id: 'video-bigbang', class: 'bigbang_video', src: 'assets/video/bigbang-espoclicker.mp4' }
         ];
 
@@ -1630,6 +1631,7 @@ export function initBoot(): void {
                 'assets/video/ricardo-milespo-metal-video.mp4',
                 'assets/video/ricardo-milespo-dota-video.mp4',
                 'assets/video/britney-espoars-video.mp4',
+                'assets/video/albert-wespo-video.mp4',
                 'assets/video/bigbang-espoclicker.mp4'
             );
             return w.CDN.prefetch(paths).catch((err: any) => {

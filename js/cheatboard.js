@@ -322,7 +322,7 @@
                 </div>
                 <div class="cb-group">
                     <div class="cb-gt">Video meme</div>
-                    <div class="cb-row"><button id="cb-evt-rick" class="cb-btn red">Rick Roll</button><button id="cb-evt-ricardo" class="cb-btn red">Ricardo</button><button id="cb-evt-britney" class="cb-btn red">Britney</button></div>
+                    <div class="cb-row"><button id="cb-evt-rick" class="cb-btn red">Rick Roll</button><button id="cb-evt-ricardo" class="cb-btn red">Ricardo</button><button id="cb-evt-britney" class="cb-btn red">Britney</button><button id="cb-evt-wesker" class="cb-btn red">Wespo</button></div>
                 </div>
                 <div class="cb-group">
                     <div class="cb-gt">Spawn & Buff</div>
@@ -536,6 +536,7 @@
     function evtMatrix() { const m = I('cb-evt-mult'); if (typeof triggerGameEvent === 'function') { triggerGameEvent('matrix', m); toast('Matrix forzato (x' + m + ')'); } }
     function evtRick() { if (typeof triggerGameEvent === 'function') triggerGameEvent('rickRoll'); }
     function evtRicardo() { if (typeof triggerGameEvent === 'function') triggerGameEvent('ricardo'); }
+    function evtWesker() { if (typeof triggerGameEvent === 'function') { triggerGameEvent('wesker'); toast('Albert Wespo (7 Ticket) attivato'); } }
     function evtBritney() { if (typeof triggerGameEvent === 'function') { triggerGameEvent('britneyEspears'); toast('Britney Espears attivata'); } }
     function evtGolden() { if (typeof spawnGoldenBug === 'function') { spawnGoldenBug(); toast('Golden Bug generato'); } }
     function evtStar() { const m = I('cb-evt-mult'); if (typeof triggerGameEvent === 'function') { triggerGameEvent('superStarMode', m); toast('Super Star (x' + m + ') attivata'); } }
@@ -671,7 +672,7 @@
         if (!window.currentActiveEvent) { toast('Nessun evento attivo'); return; }
         const evtName = window.currentActiveEvent;
         if (typeof stopBluescreenEffect === 'function') stopBluescreenEffect();
-        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video', 'britney-espoars-video', 'video-bigbang'].forEach(id => { const v = document.getElementById(id); if (v) { v.pause(); v.classList.add('video_display_none'); } });
+        ['rick-roll-video', 'ricardo-video', 'ricardo-metal-video', 'ricardo-dota-video', 'britney-espoars-video', 'albert-wespo-video', 'video-bigbang'].forEach(id => { const v = document.getElementById(id); if (v) { v.pause(); v.classList.add('video_display_none'); } });
         if (document.body.classList.contains('crunch-active')) {
             crunchTimeMultiplier = new Decimal(1); crunchTimeEndTime = 0; crunchTimeCooldownEnd = 0;
             gameState.crunchTimeEndTime = 0; gameState.crunchTimeCooldownEnd = 0;
@@ -1076,7 +1077,7 @@
     // Prestige
     on('cb-goto-level', gotoLevel); on('cb-set-format-btn', setFormat); on('cb-prestige-ready', prestigeReady); on('cb-max-lab', maxLab); on('cb-ngplus', ngPlus); on('cb-add-format', addFormat);
     // Eventi
-    on('cb-evt-404', evt404); on('cb-evt-matrix', evtMatrix); on('cb-evt-rick', evtRick); on('cb-evt-ricardo', evtRicardo); on('cb-evt-britney', evtBritney); on('cb-evt-golden', evtGolden); on('cb-evt-star', evtStar); on('cb-fury', fury); on('cb-reset-cd', resetCd); on('cb-stop-evt', stopEvt);
+    on('cb-evt-404', evt404); on('cb-evt-matrix', evtMatrix); on('cb-evt-rick', evtRick); on('cb-evt-ricardo', evtRicardo); on('cb-evt-britney', evtBritney); on('cb-evt-wesker', evtWesker); on('cb-evt-golden', evtGolden); on('cb-evt-star', evtStar); on('cb-fury', fury); on('cb-reset-cd', resetCd); on('cb-stop-evt', stopEvt);
     // Scenari
     on('cb-preset-new', () => loadPreset(presetNew, 'Nuovo giocatore'));
     on('cb-preset-prestige', () => loadPreset(presetPrestige, 'Pronto 1° Prestige'));

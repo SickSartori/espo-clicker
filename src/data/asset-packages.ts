@@ -167,6 +167,8 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/espoclicker-click.webp',
             'skins/espoleon-bonaparte.webp',
             'skins/espoleon-bonaparte-click.webp',
+            'skins/albert-wespo.webp',
+            'skins/albert-wespo-click.webp',
         ],
         // Dimensione stimata: ~955 KB
     },
@@ -183,6 +185,8 @@ export const ASSET_PACKAGES: Record<string, any> = {
             'skins/gespo-click.webp',
             'skins/founder.webp',        // Fondatore (esclusiva pre-lancio)
             'skins/founder-click.webp',
+            'skins/dio-efespo.webp',
+            'skins/dio-efespo-click.webp',
         ],
         // Dimensione stimata: ~300 KB
     },
@@ -230,11 +234,12 @@ export const ASSET_PACKAGES: Record<string, any> = {
     },
 
     // ===========================================================
-    // 📦 VIDEO_EVENTS — MAI pre-caricare (31 MB totali)
+    // 📦 VIDEO_EVENTS — MAI pre-caricare (41 MB totali)
     // Dichiarativo: i video vengono streamati on-demand.
     //
     //   assets/video/bigbang-espoclicker.mp4          11.2 MB
     //   assets/video/britney-espoars-video.mp4         7.6 MB
+    //   assets/video/albert-wespo-video.mp4            9.6 MB
     //   assets/video/rick-espley-video.mp4             4.3 MB
     //   assets/video/ricardo-milespo-metal-video.mp4   3.4 MB
     //   assets/video/ricardo-milespo-dota-video.mp4    2.6 MB

@@ -115,6 +115,11 @@ export const skins: Record<string, any> = {
     britneyEspears: {
         unlockHint: "Perform at least 1 Format and buy for 75 Token."
     },
+    wesker: {
+        name: "Albert Wespo",
+        desc: "Everything is proceeding according to the tickets.",
+        unlockHint: "Perform at least 1 Format and buy for 80 Token."
+    },
     espoKiss: {
         unlockHint: "Perform at least 1 Format and buy for 75 Token."
     },
@@ -144,6 +149,11 @@ export const skins: Record<string, any> = {
     },
 
     // --- FOUNDER (pre-launch exclusive) ---
+    efesto: {
+        name: "Hephaespo",
+        desc: "Forges bugs on the anvil of code.",
+        unlockHint: "Perform at least 1 Format and buy for 150 Token."
+    },
     founder: {
         name: "Founder Espò",
         desc: "You were here before launch. The code remembers.",

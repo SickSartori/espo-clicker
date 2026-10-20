@@ -1585,6 +1585,10 @@ function triggerBluescreen(multiplier: any) {
     if (store.gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
         return triggerGameEvent('britneyEspears');
     }
+    // Albert Wespo: 7 Ticket (video da 12 s)
+    if (store.gameState.skins.current === 'wesker' && Math.random() < 0.8) {
+        return triggerGameEvent('wesker');
+    }
     // 3. Priorità Skin Super Espò
     if (store.gameState.skins.current === 'superespo') {
         return triggerGameEvent('superStarMode', multiplier);

@@ -295,6 +295,16 @@ export const skins: Record<string, any> = {
         requiresFormatting: true,
         unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
     },
+    wesker: {
+        name: "Albert Wespo",
+        desc: "Tutto procede secondo i ticket.",
+        img: "skins/albert-wespo.webp",
+        imgClick: "skins/albert-wespo-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(80),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 80 Token."
+    },
     superespo: {
         name: "Super Espò",
         desc: "It's-a Me, Espò!",
@@ -357,6 +367,17 @@ export const skins: Record<string, any> = {
             goldenBugIcon: 'fa-sun',
             goldenBugColor: '#f1c40f'
         }
+    },
+
+    efesto: {
+        name: "Dio Efespo",
+        desc: "Forgia bug sull'incudine del codice.",
+        img: "skins/dio-efespo.webp",
+        imgClick: "skins/dio-efespo-click.webp",
+        rarity: "divine",
+        cost: new Decimal(150),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 150 Token."
     },
 
     // --- FONDATORE (esclusiva pre-lancio, non ottenibile dai nuovi) ---

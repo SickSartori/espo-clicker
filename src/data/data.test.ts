@@ -207,6 +207,58 @@ describe('data/season (fix B2)', () => {
     expect(prezzo('ingegnespo')).toBeLessThan(prezzo('espostronauta'));
     expect(prezzo('espostronauta')).toBeLessThan(prezzo('espoleon'));
   });
+  it('ogni evento video è cablato: asset, file, tag creato all\'avvio e classe CSS', async () => {
+    const { existsSync, readFileSync } = await import('node:fs');
+    const boot = readFileSync('src/app/boot.ts', 'utf8');
+    const css = readFileSync('styles/base/clicker.css', 'utf8');
+    const sounds = Object.values<any>((gameData as any).assets.videos);
+    for (const [key, ev] of Object.entries<any>(gameData.events)) {
+      if (ev.type !== 'video') continue;
+      for (const vid of ev.videos as string[]) {
+        const asset = sounds.find((s) => s.id === vid);
+        expect(asset, `asset audio/video di ${key}/${vid}`).toBeDefined();
+        expect(existsSync(`assets/video/${asset.file}`), `file video di ${vid}`).toBe(true);
+        // il tag <video> si crea in injectVideosLazily e il suo file si precarica da R2
+        expect(boot.includes(`id: '${vid}'`), `injectVideosLazily di ${vid}`).toBe(true);
+        expect(boot.includes(`assets/video/${asset.file}'`), `prefetch di ${vid}`).toBe(true);
+        // il video sta a schermo intero grazie a una classe con lo stesso nome (trattini → underscore)
+        expect(css.includes(`.${vid.replace(/-/g, '_')}`), `classe CSS di ${vid}`).toBe(true);
+      }
+    }
+  });
+  it('skin della 3.3 dai bozzetti: Albert Wespo (leggendaria, 80 Token) e Dio Efespo (divina, 150 Token)', () => {
+    const skins: Record<string, any> = gameData.skins;
+    const attese: Array<[string, string, number, string]> = [
+      ['wesker', 'legendary', 80, 'Albert Wespo'],
+      ['efesto', 'divine', 150, 'Hephaespo'],
+    ];
+    for (const [id, rarita, costo, nomeEn] of attese) {
+      const s = skins[id];
+      expect(s, id).toBeDefined();
+      expect(s.rarity, `rarità di ${id}`).toBe(rarita);
+      expect(Number(s.cost.toString()), `costo di ${id}`).toBe(costo);
+      expect(s.requiresFormatting, `${id} richiede una Formattazione`).toBe(true);
+      expect(s.unlockHint, `hint di ${id}`).toContain(String(costo));
+      expect((en.skins as any)[id]?.name, `nome EN di ${id}`).toBe(nomeEn);
+      expect((en.skins as any)[id]?.unlockHint, `hint EN di ${id}`).toContain(String(costo));
+    }
+  });
+  it('evento «7 Ticket»: video da 12,2 s con un moltiplicatore più alto degli altri video, a parità di resa', () => {
+    const ev: any = (gameData.events as any).wesker;
+    expect(ev.type).toBe('video');
+    expect(ev.videos).toEqual(['albert-wespo-video']);
+    expect(ev.duration).toBe(12200);
+    const altri = ['rickRoll', 'ricardo', 'britneyEspears'].map((k) => (gameData.events as any)[k]);
+    for (const o of altri) {
+      expect(ev.minMult, `più alto del minimo di ${o.name}`).toBeGreaterThan(o.minMult);
+      expect(ev.maxMult, `più alto del massimo di ${o.name}`).toBeGreaterThan(o.maxMult);
+    }
+    // resa attesa (moltiplicatore medio × secondi) paragonabile: almeno il 50% di quella di un video da 60 s
+    const resa = (e: any) => ((e.minMult + e.maxMult) / 2) * (e.duration / 1000);
+    expect(resa(ev)).toBeGreaterThan(0.5 * resa((gameData.events as any).rickRoll));
+    expect((en.events as any).wesker?.toast).toContain('{mult}');
+    expect((gameData.events as any).wesker.toast).toContain('{mult}');
+  });
   it('ogni skin, obiettivo e rarità festive ha il suo overlay EN', () => {
     for (const id of CALENDAR_SEASONS.halloween.skins) expect(en.skins[id]?.name, `EN ${id}`).toBeTruthy();
     expect(en.achievements.dolcettoScherzetto?.name).toBe('Trick or Treat');
