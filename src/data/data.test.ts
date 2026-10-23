@@ -207,6 +207,26 @@ describe('data/season (fix B2)', () => {
     expect(prezzo('ingegnespo')).toBeLessThan(prezzo('espostronauta'));
     expect(prezzo('espostronauta')).toBeLessThan(prezzo('espoleon'));
   });
+  it('skin della 3.3 dai bozzetti rimasti: Espo Rammstein (rara, 15 Token) e The Legend of Espo (epica, 32 Token)', () => {
+    const skins: Record<string, any> = gameData.skins;
+    const attese: Array<[string, string, number, string]> = [
+      ['espoRammstein', 'rare', 15, 'Espo Rammstein'],
+      ['legendEspo', 'epic', 32, 'The Legend of Espo'],
+    ];
+    for (const [id, rarita, costo, nomeEn] of attese) {
+      const s = skins[id];
+      expect(s, id).toBeDefined();
+      expect(s.rarity, `rarità di ${id}`).toBe(rarita);
+      expect(Number(s.cost.toString()), `costo di ${id}`).toBe(costo);
+      expect(s.themeConfig, `${id} non porta un tema: il Vintage si vede`).toBeUndefined();
+      expect((en.skins as any)[id]?.name ?? s.name, `nome EN di ${id}`).toBe(nomeEn);
+      expect((en.skins as any)[id]?.desc, `desc EN di ${id}`).toBeTruthy();
+    }
+    // la scala dei prezzi regge dentro la rarità: la rara nuova sta sopra le altre due a Token, l'epica fra le epiche
+    const prezzo = (id: string) => Number(skins[id].cost.toString());
+    expect(prezzo('espoRammstein')).toBeGreaterThan(prezzo('clown'));
+    expect(prezzo('legendEspo')).toBeGreaterThan(prezzo('espostronauta'));
+  });
   it('ogni evento video è cablato: asset, file, tag creato all\'avvio e classe CSS', async () => {
     const { existsSync, readFileSync } = await import('node:fs');
     const boot = readFileSync('src/app/boot.ts', 'utf8');

@@ -54,6 +54,9 @@ export const skins: Record<string, any> = {
         name: "Espoclown",
         desc: "Every crash is a show."
     },
+    espoRammstein: {
+        desc: "Du hast... a bug."
+    },
     mariachi: {
         name: "Espariachi",
         desc: "Ay ay ay, sing and compile.",
@@ -87,6 +90,9 @@ export const skins: Record<string, any> = {
     espostronauta: {
         name: "Espostronaut",
         desc: "One small click for Espò, one giant bug for mankind."
+    },
+    legendEspo: {
+        desc: "It's dangerous to go alone! Take this bug."
     },
     esposa: {
         name: "Espòsa",

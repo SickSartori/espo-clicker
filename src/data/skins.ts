@@ -150,6 +150,14 @@ export const skins: Record<string, any> = {
         rarity: "rare",
         cost: new Decimal(12)
     },
+    espoRammstein: {
+        name: "Espo Rammstein",
+        desc: "Du hast... un bug.",
+        img: "skins/espo-rammstein.webp",
+        imgClick: "skins/espo-rammstein-click.webp",
+        rarity: "rare",
+        cost: new Decimal(15)
+    },
     mariachi: {
         name: "Espariachi",
         desc: "Ay ay ay, canta e compila.",
@@ -229,6 +237,14 @@ export const skins: Record<string, any> = {
         imgClick: "skins/espostronauta-click.webp",
         rarity: "epic",
         cost: new Decimal(28)
+    },
+    legendEspo: {
+        name: "The Legend of Espo",
+        desc: "È pericoloso andare da soli: prendi questo bug.",
+        img: "skins/the-legend-of-espo.webp",
+        imgClick: "skins/the-legend-of-espo-click.webp",
+        rarity: "epic",
+        cost: new Decimal(32)
     },
 
     // --- LEGENDARY ---
