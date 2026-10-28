@@ -71,6 +71,10 @@ php/secrets.php
 # sul server esistono ancora, e finché ci sono vengono usati.
 php/r2-config.php
 php/trello-config.php
+
+# Export della board Trello e anteprima dell'import (scripts/trello-to-github.mjs):
+# contengono i nomi utente dei giocatori, non vanno nel repo pubblico.
+trello-export/
 presentation
 
 .superpowers/
