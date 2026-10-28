@@ -31,6 +31,7 @@ export const LABELS = [
   { name: 'segnalazione',   color: '64748b', description: 'Arrivata dal pulsante Segnala del gioco' },
   { name: 'test',           color: '94a3b8', description: 'Segnalazione di prova, fuori produzione' },
   { name: 'diritti',        color: 'ef4444', description: 'Da controllare: marchi, loghi o persone reali' },
+  { name: 'consegna',       color: '6366f1', description: 'Da fare per consegnare una release (prove, caricamenti, promozioni)' },
 ];
 
 /** Le date sono quelle del roadmap; v3.5 e v4.0 hanno solo «inizio febbraio» e «aprile»: niente data finché non è fissa. */
@@ -60,6 +61,7 @@ export const VIEWS = [
   { name: 'Funzioni',    layout: 'BOARD_LAYOUT',   filter: `label:nuova-funzione ${NOT_DISCARDED}` },
   { name: 'Migliorie',   layout: 'BOARD_LAYOUT',   filter: `label:miglioria ${NOT_DISCARDED}` },
   { name: 'Problemi',    layout: 'BOARD_LAYOUT',   filter: `label:bug ${NOT_DISCARDED}` },
+  { name: 'Consegna',    layout: 'BOARD_LAYOUT',   filter: `label:consegna ${NOT_DISCARDED}` },
   { name: 'Tabella',     layout: 'TABLE_LAYOUT',   filter: '' },
   { name: 'Roadmap',     layout: 'ROADMAP_LAYOUT', filter: NOT_DISCARDED },
 ];

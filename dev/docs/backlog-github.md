@@ -18,8 +18,8 @@ Su Trello le liste mescolavano il *tipo* e lo *stato*. Qui sono due cose separat
 
 - **Stato** (campo del Project): Da valutare → Pianificato → In corso → Fatto, più Scartato.
 - **Release**: una milestone per `v3.3`, `v3.4`, `v3.5`, `v4.0`, come nel roadmap. Senza milestone = backlog.
-- **Etichette di servizio**: `segnalazione` (arrivata dal pulsante Segnala del gioco), `test` (di prova, fuori produzione), `diritti` (marchi, loghi o persone reali da controllare: il caso Espostino).
-- **Viste del Project**: Lavagna, Da valutare, una lavagna per sezione (Skin, Temi, Musica, Funzioni, Migliorie, Problemi), Tabella, Roadmap. Ogni vista di sezione è un filtro per etichetta con le colonne dello Stato.
+- **Etichette di servizio**: `segnalazione` (arrivata dal pulsante Segnala del gioco), `test` (di prova, fuori produzione), `diritti` (marchi, loghi o persone reali da controllare: il caso Espostino), `consegna` (le cose da fare per consegnare una release: prove da telefono, caricamenti su R2, promozioni).
+- **Viste del Project**: Lavagna, Da valutare, una lavagna per sezione (Skin, Temi, Musica, Funzioni, Migliorie, Problemi), Consegna, Tabella, Roadmap. Ogni vista di sezione è un filtro per etichetta con le colonne dello Stato.
 - **Moduli** (`.github/ISSUE_TEMPLATE/`): uno per tipo, con i campi che servono (per la skin: rarità, arte, diritti, evento video; per la musica: dove suona, fonte e licenza). Mettono già l'etichetta giusta.
 
 Il commit resta «solo la riga di soggetto»: `v3.4: skin — Espostino (#12)` collega la issue, `closes #12` nell'oggetto la chiude quando il commit arriva su `main`, cioè al rilascio.
@@ -35,6 +35,12 @@ Il commit resta «solo la riga di soggetto»: `v3.4: skin — Espostino (#12)` c
    `node scripts/trello-to-github.mjs export.json --apply --project <numero del Project>`
    L'export e l'anteprima restano in `trello-export/`, ignorata da git: contengono i nomi utente dei giocatori.
 5. **Dopo**: archivia la board Trello (sola lettura) e tieni l'export in un posto privato.
+
+## Come l'import ha trattato il board (28/10/2026)
+
+Il board vero non aveva le sette sezioni ma NEW, BUG, IMPROVED e molte liste «Release vX» archiviate: 194 card, 155 archiviate. Sono state importate le **37 card aperte** (9 delle quali nate dalla separazione delle liste di idee «Skin», «OST» e «Arcade» in una issue per voce). Restano fuori, elencate nell'anteprima con il motivo: la storia archiviata, le note di rilascio e le card già fatte (verificate nel codice). Il tipo si decide da titolo, lista e prefisso, in quest'ordine; lo script `ALREADY_DONE` e `RULES` in `scripts/trello-to-github.mjs` dicono cosa è già fatto e cosa il roadmap ha già collocato (le skin di Natale sono in v3.4).
+
+⚠️ **La spunta di una checklist di Trello non vuol dire «fatto».** «Musica: Josespo Joestar» era spuntata e non lo era; «Musica: Halloween» non era spuntata ed era già uscita nella 3.2. Le voci nascono quindi sempre aperte, a Da valutare, con l'avviso di verificarle.
 
 ## Cosa l'import non porta
 
