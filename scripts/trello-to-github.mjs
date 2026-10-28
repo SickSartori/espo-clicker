@@ -12,6 +12,9 @@
 //   --include-archived      importa anche le card archiviate (come issue chiuse)
 //   --authors               scrive nei commenti il nome di chi li ha firmati (di default NO: il repo è pubblico)
 //   --out <cartella>        dove scrivere anteprima e mappa (default: trello-export/, ignorata da git)
+//   --fields                invece di importare, riempie le colonne del Project (versione, ambiente, lingua,
+//                           schermo, data su Trello) delle card già importate; richiede --project, senza --apply è un'anteprima
+//   --users all|nome,nome   con --fields, scrive anche «Segnalata da». Di default NO: il Project è pubblico
 //
 // L'export è il JSON della board: Menu → Stampa, esporta e condividi → Esporta in JSON.
 // Contiene i nomi utente dei giocatori e i nomi dei collaboratori: tienilo fuori dal repo.
@@ -21,7 +24,7 @@
 //   - il tipo si decide da titolo, lista e prefisso (NUOVO:/BUG:/MIGLIORIA:), in quest'ordine;
 //   - NON porta: card archiviate (la storia), note di rilascio, segnaposto vuoti, card già fatte
 //     (ALREADY_DONE) — tutte elencate nell'anteprima con il motivo, così niente sparisce in silenzio;
-//   - il nome utente del giocatore nelle segnalazioni dal gioco viene tolto.
+//   - il nome utente del giocatore nelle segnalazioni dal gioco viene tolto (dal corpo e, di default, dal Project).
 //
 // Sicuro da rilanciare: ogni issue porta nel corpo un marcatore <!-- trello:ID --> e le card
 // già importate vengono saltate. Non usa nessuna chiave: passa da `gh`, già autenticato.
@@ -30,7 +33,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { MILESTONES } from './github-backlog-setup.mjs';
+import { MILESTONES, PROJECT_FIELDS, REPORTER_FIELD, ensureProjectFields } from './github-backlog-setup.mjs';
 
 // ── Mappe ────────────────────────────────────────────────────
 
@@ -122,10 +125,66 @@ export function stripContext(desc) {
   const body = text
     .split(/\r?\n/)
     .filter((l) => !/^\s*-\s*👤\s*Utente:/.test(l))
+    // l'URL della pagina può portare parametri (es. lo sblocco dei tester): su un repo pubblico restano origine e percorso
+    .map((l) => l.replace(/^(\s*-\s*🌐\s*URL:\s*\S+?)[?#]\S*/, '$1'))
     .join('\n')
     .replace(/(\n\s*---\s*)?\n\*\*Contesto tecnico\*\* \(allegato automaticamente\)\s*$/, '')   // blocco rimasto senza righe
     .trim();
   return { body, fromGame };
+}
+
+const CONTEXT_KEYS = { Utente: 'utente', Versione: 'versione', Lingua: 'lingua', Schermo: 'schermo', URL: 'url', Ricevuto: 'ricevuto' };
+
+/**
+ * Il contesto che il pulsante «Segnala» allega alla card: versione, lingua, schermo, pagina, orario e utente.
+ * Si leggono solo le righe DOPO l'intestazione e solo queste chiavi: altre righe «- parola: …» (un «bonus: 12%»
+ * nella descrizione, i punti delle note di rilascio) non sono contesto.
+ */
+export function contextFields(desc) {
+  const text = String(desc || '');
+  const head = CONTEXT_HEADER.exec(text);
+  if (!head) return {};
+  const out = {};
+  for (const line of text.slice(head.index + head[0].length).split(/\r?\n/)) {
+    const m = /^\s*-\s*\S+\s+(Utente|Versione|Lingua|Schermo|URL|Ricevuto):\s*(.*?)\s*$/.exec(line);
+    if (m) out[CONTEXT_KEYS[m[1]]] = m[2].replace(/`/g, '').trim();
+  }
+  // Trello trasforma un URL incollato in un link markdown «[url](url "smartCard-inline")»
+  if (out.url) out.url = out.url.replace(/^\[[^\]]*\]\((\S+?)(?:\s+"[^"]*")?\)$/, '$1');
+  return out;
+}
+
+/** «/test/» (o la macchina locale) è l'area di prova; qualunque altra pagina del sito è produzione. Senza URL valido: niente. */
+export function ambienteFromUrl(url) {
+  try {
+    const u = new URL(url);
+    return /^\/test(\/|$)/.test(u.pathname) || /^(localhost|127\.0\.0\.1)$/.test(u.hostname) ? 'Test' : 'Produzione';
+  } catch { return null; }
+}
+
+/** Gli id di Trello sono ObjectId: i primi 8 caratteri esadecimali sono i secondi dalla creazione. Giorno italiano, come lo vede chi apre Trello. */
+export function createdFromId(id) {
+  const hex = String(id || '').slice(0, 8);
+  if (!/^[0-9a-f]{8}$/i.test(hex)) return null;
+  const d = new Date(parseInt(hex, 16) * 1000);
+  return d.getUTCFullYear() >= 2015 && d.getUTCFullYear() <= 2100 ? d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' }) : null;
+}
+
+/**
+ * Valori per le colonne del Project (nomi: PROJECT_FIELDS). `created` è la data di nascita su Trello, che GitHub non fa
+ * retrodatare; per le segnalazioni dal gioco vale l'orario di ricezione. Il nome di chi ha segnalato NON entra qui.
+ */
+export function projectFields(ctx, created) {
+  const f = {};
+  if (ctx.versione) f.Versione = ctx.versione;
+  if (ctx.lingua) f.Lingua = ctx.lingua;
+  if (ctx.schermo) f.Schermo = ctx.schermo;
+  const amb = ambienteFromUrl(ctx.url);
+  if (amb) f.Ambiente = amb;
+  const recv = /^(\d{4}-\d{2}-\d{2})/.exec(ctx.ricevuto || '');
+  const when = recv ? recv[1] : created;
+  if (when) f['Creata su Trello'] = when;
+  return f;
 }
 
 /** Un'etichetta Trello che sembra una versione (3.1, v3.2.0) diventa la milestone vX.Y, se esiste. */
@@ -225,6 +284,7 @@ export function buildAll(board, opts = {}) {
     if (/^release notes?\b/i.test(title)) { skip('note di rilascio'); continue; }
 
     const { body: desc, fromGame } = stripContext(card.desc);
+    const ctx = contextFields(card.desc);
     const atts = card.attachments || [];
     const cm = (comments.get(card.id) || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
     const cl = (checklists.get(card.id) || []).filter((c) => (c.checkItems || []).length);
@@ -263,6 +323,8 @@ export function buildAll(board, opts = {}) {
           state: 'open',
           stateReason: null,
           status: 'Da valutare',
+          // nata quando la voce è stata aggiunta alla checklist, non quando è nata l'elenco
+          fields: projectFields({}, createdFromId(it.id)),
           listName: `${list.name} › ${title}`,
           warnings: [...(mine.length ? [] : ['solo il nome: nessun commento su Trello']), ...(ticked ? ['spuntata su Trello: verificare se è davvero fatta'] : [])],
         });
@@ -341,6 +403,8 @@ export function buildAll(board, opts = {}) {
       state,
       stateReason: state === 'closed' ? (cls.done ? 'completed' : 'not_planned') : null,
       status: cls.done ? 'Fatto' : (archived ? 'Scartato' : ((rule && rule.status) || cls.status || 'Da valutare')),
+      fields: projectFields(ctx, createdFromId(card.id)),
+      reporter: ctx.utente || null,   // mai nel corpo né nei campi di default: vedi --users
       listName: list.name,
       warnings,
     });
@@ -437,11 +501,75 @@ function addToProject(ctx, nodeId, statusName) {
     { p: ctx.id, i: add.addProjectV2ItemById.item.id, f: ctx.fieldId, o: optionId });
 }
 
+/** `--users all` o `--users nome1,nome2`: chi può comparire nel campo «Segnalata da». Senza l'opzione, nessuno. */
+export function allowedReporters(opt) {
+  if (!opt) return () => false;
+  if (String(opt).toLowerCase() === 'all') return (name) => !!name;
+  const set = new Set(String(opt).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
+  return (name) => !!name && set.has(String(name).toLowerCase());
+}
+
+/** nodeId di ogni issue (per numero) → id dell'elemento nel Project. */
+function projectItems(projectId) {
+  const items = new Map();
+  let after = null;
+  for (;;) {
+    const page = gql(`query($p:ID!,$a:String){node(id:$p){... on ProjectV2{items(first:100,after:$a){nodes{id content{... on Issue{number}}} pageInfo{hasNextPage endCursor}}}}}`, { p: projectId, a: after }).node.items;
+    for (const n of page.nodes) if (n.content && n.content.number) items.set(n.content.number, n.id);
+    if (!page.pageInfo.hasNextPage) return items;
+    after = page.pageInfo.endCursor;
+  }
+}
+
+/**
+ * Riempie le colonne del Project dalle card già importate (mappa card → issue). Rilanciabile: riscrive gli stessi valori.
+ * Il nome di chi ha segnalato va nel Project (pubblico) solo se `--users` lo permette.
+ */
+function fillFields(issues, map, projectNumber, usersOpt, apply) {
+  const ctx = projectContext(projectNumber);
+  const mayShow = allowedReporters(usersOpt);
+  const wanted = usersOpt ? [...PROJECT_FIELDS, REPORTER_FIELD] : PROJECT_FIELDS;
+  console.log(`\nCampi del Project n. ${projectNumber}${apply ? '' : ' (anteprima)'}`);
+  const fields = ensureProjectFields(ctx.id, wanted, apply);
+  const items = apply ? projectItems(ctx.id) : new Map();
+
+  let touched = 0, hidden = 0, unmapped = 0;
+  for (const issue of issues) {
+    const number = map[issue.cardId];
+    if (!number) { unmapped++; continue; }
+    const values = { ...issue.fields };
+    if (issue.reporter) { if (mayShow(issue.reporter)) values[REPORTER_FIELD.name] = issue.reporter; else hidden++; }
+    // in anteprima i campi non esistono ancora: si mostra ciò che verrebbe scritto
+    const entries = Object.entries(values).filter(([name]) => (apply ? fields.has(name) : wanted.some((w) => w.name === name)));
+    if (!entries.length) continue;
+    console.log(`  #${number}  ${entries.map(([k, v]) => `${k}=${v}`).join('  ')}`);
+    if (!apply) continue;
+    const item = items.get(number);
+    if (!item) { console.log('    ! non è nel Project: salto'); continue; }
+    const vars = { p: ctx.id, i: item };
+    const decl = ['$p:ID!', '$i:ID!'];
+    const calls = [];
+    entries.forEach(([name, value], n) => {
+      const f = fields.get(name);
+      const v = f.type === 'DATE' ? { date: value } : f.type === 'SINGLE_SELECT' ? { singleSelectOptionId: f.options.get(value) } : { text: value };
+      if (f.type === 'SINGLE_SELECT' && !v.singleSelectOptionId) return;
+      vars[`f${n}`] = f.id; vars[`v${n}`] = v;
+      decl.push(`$f${n}:ID!`, `$v${n}:ProjectV2FieldValue!`);
+      calls.push(`s${n}:updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f${n},value:$v${n}}){projectV2Item{id}}`);
+    });
+    if (calls.length) gql(`mutation(${decl.join(',')}){${calls.join('\n')}}`, vars);
+    touched++;
+  }
+  console.log(`\n${apply ? `Compilate ${touched} schede.` : 'Anteprima soltanto: niente è stato scritto. Per scrivere, aggiungi --apply.'}`
+    + (unmapped ? ` ${unmapped} card non importate (senza issue): saltate.` : '')
+    + (hidden ? ` ${hidden} nomi di chi ha segnalato NON scritti: il Project è pubblico (--users per sceglierli).` : ''));
+}
+
 // ── main ────────────────────────────────────────────────────
 
 async function main() {
   const argv = process.argv.slice(2);
-  const WITH_VALUE = ['--repo', '--out', '--project'];
+  const WITH_VALUE = ['--repo', '--out', '--project', '--users'];
   const file = argv.find((a, i) => !a.startsWith('--') && !WITH_VALUE.includes(argv[i - 1]));
   if (!file || !existsSync(file)) { console.error('Serve il JSON esportato da Trello: node scripts/trello-to-github.mjs <export.json> [--apply]'); process.exit(1); }
   const flag = (n) => argv.includes(n);
@@ -459,6 +587,14 @@ async function main() {
   console.log('Non importate, per motivo:', summarizeSkipped(skipped));
   const warn = issues.filter((i) => i.warnings.length);
   console.log(`Con avvisi: ${warn.length}. Anteprima: ${csv}`);
+
+  if (flag('--fields')) {
+    const mapFile = join(out, 'trello-import-map.json');
+    if (!val('--project')) { console.error('--fields vuole --project <numero del Project>'); process.exit(1); }
+    if (!existsSync(mapFile)) { console.error(`Manca la mappa ${mapFile}: serve l'import fatto da questo script.`); process.exit(1); }
+    fillFields(issues, JSON.parse(readFileSync(mapFile, 'utf8')), Number(val('--project')), val('--users'), flag('--apply'));
+    return;
+  }
 
   if (!flag('--apply')) { console.log('\nAnteprima soltanto: niente è stato creato. Per importare, aggiungi --apply.'); return; }
 

@@ -51,20 +51,42 @@ export const STATUS_OPTIONS = [
 ];
 
 const NOT_DISCARDED = '-status:Scartato';
+// Le colonne che un Project nuovo nasconde. `show` le aggiunge a quelle già visibili: i nomi sono quelli di PROJECT_FIELDS
+// o dei campi di GitHub (Labels, Milestone). Le tabelle le mostrano tutte; le lavagne solo quelle che servono sulla scheda.
+const CONTEXT_COLUMNS = ['Versione', 'Ambiente', 'Lingua', 'Schermo', 'Creata su Trello'];
 /** L'ordine è quello delle schede in alto. Il filtro è quello del Project (stessa sintassi della barra di ricerca). */
 export const VIEWS = [
-  { name: 'Lavagna',     layout: 'BOARD_LAYOUT',   filter: NOT_DISCARDED },
-  { name: 'Da valutare', layout: 'TABLE_LAYOUT',   filter: 'status:"Da valutare"' },
+  { name: 'Lavagna',     layout: 'BOARD_LAYOUT',   filter: NOT_DISCARDED, show: ['Labels', 'Milestone'] },
+  { name: 'Da valutare', layout: 'TABLE_LAYOUT',   filter: 'status:"Da valutare"', show: ['Labels', 'Milestone', ...CONTEXT_COLUMNS, 'Segnalata da'] },
   { name: 'Skin',        layout: 'BOARD_LAYOUT',   filter: `label:skin ${NOT_DISCARDED}` },
   { name: 'Temi',        layout: 'BOARD_LAYOUT',   filter: `label:tema ${NOT_DISCARDED}` },
   { name: 'Musica',      layout: 'BOARD_LAYOUT',   filter: `label:musica ${NOT_DISCARDED}` },
   { name: 'Funzioni',    layout: 'BOARD_LAYOUT',   filter: `label:nuova-funzione ${NOT_DISCARDED}` },
   { name: 'Migliorie',   layout: 'BOARD_LAYOUT',   filter: `label:miglioria ${NOT_DISCARDED}` },
-  { name: 'Problemi',    layout: 'BOARD_LAYOUT',   filter: `label:bug ${NOT_DISCARDED}` },
+  { name: 'Problemi',    layout: 'BOARD_LAYOUT',   filter: `label:bug ${NOT_DISCARDED}`, show: ['Milestone', 'Versione', 'Ambiente'] },
   { name: 'Consegna',    layout: 'BOARD_LAYOUT',   filter: `label:consegna ${NOT_DISCARDED}` },
-  { name: 'Tabella',     layout: 'TABLE_LAYOUT',   filter: '' },
+  { name: 'Tabella',     layout: 'TABLE_LAYOUT',   filter: '', show: ['Labels', 'Milestone', ...CONTEXT_COLUMNS, 'Segnalata da'] },
   { name: 'Roadmap',     layout: 'ROADMAP_LAYOUT', filter: NOT_DISCARDED },
 ];
+
+/**
+ * Le colonne del Project che portano il contesto di una segnalazione (prima stava nella card di Trello).
+ * Il nome è anche la chiave con cui scripts/trello-to-github.mjs --fields le riempie.
+ * Il Project è pubblico: qui solo dati tecnici, mai il nome di chi ha segnalato (vedi REPORTER_FIELD).
+ */
+export const PROJECT_FIELDS = [
+  { name: 'Versione',         type: 'TEXT' },
+  { name: 'Ambiente',         type: 'SINGLE_SELECT', options: [
+    { name: 'Produzione', color: 'GREEN',  description: 'Il sito vero' },
+    { name: 'Test',       color: 'YELLOW', description: 'L\'area di prova (/test/)' },
+  ] },
+  { name: 'Lingua',           type: 'TEXT' },
+  { name: 'Schermo',          type: 'TEXT' },
+  { name: 'Creata su Trello', type: 'DATE' },
+];
+
+/** Si crea solo quando qualcuno decide di pubblicarlo: il Project è visibile a tutti. */
+export const REPORTER_FIELD = { name: 'Segnalata da', type: 'TEXT' };
 
 // ── gh ───────────────────────────────────────────────────────
 
@@ -122,6 +144,56 @@ function setupMilestones(repo, apply) {
 
 // ── Project ──────────────────────────────────────────────────
 
+/**
+ * Crea i campi che mancano (per nome) e restituisce tutti quelli richiesti: nome → { id, type, options }.
+ * Non tocca quelli già presenti. L'API non permette di mostrarli nelle viste: in una tabella si aggiungono
+ * dal «+» in fondo alle colonne, in una lavagna dal menu Fields della vista.
+ */
+export function ensureProjectFields(projectId, wanted, apply) {
+  const have = new Map(gql(`query($p:ID!){node(id:$p){... on ProjectV2{fields(first:50){nodes{
+      ... on ProjectV2FieldCommon{id name dataType} ... on ProjectV2SingleSelectField{options{id name}}}}}}}`, { p: projectId })
+    .node.fields.nodes.filter(Boolean).map((f) => [f.name, f]));
+  const out = new Map();
+  for (const want of wanted) {
+    let cur = have.get(want.name);
+    if (cur) {
+      log(false, 'ok', `campo ${want.name}`);
+    } else {
+      log(apply, 'crea', `campo ${want.name} (${want.type})`);
+      if (apply) {
+        cur = gql(`mutation($p:ID!,$n:String!,$t:ProjectV2CustomFieldType!,$o:[ProjectV2SingleSelectFieldOptionInput!]){
+            createProjectV2Field(input:{projectId:$p,name:$n,dataType:$t,singleSelectOptions:$o}){projectV2Field{
+              ... on ProjectV2FieldCommon{id name dataType} ... on ProjectV2SingleSelectField{options{id name}}}}}`,
+        { p: projectId, n: want.name, t: want.type, o: want.options || null }).createProjectV2Field.projectV2Field;
+      }
+    }
+    if (cur) out.set(want.name, { id: cur.id, type: cur.dataType, options: new Map((cur.options || []).map((o) => [o.name, o.id])) });
+  }
+  return out;
+}
+
+/** Rende visibili nelle viste le colonne di `show`, senza togliere quelle che ci sono già (l'API sostituisce l'elenco intero). */
+function setupViewColumns(projectId, apply) {
+  const p = gql(`query($p:ID!){node(id:$p){... on ProjectV2{
+      fields(first:50){nodes{... on ProjectV2FieldCommon{id name}}}
+      views(first:50){nodes{id name fields(first:50){nodes{... on ProjectV2FieldCommon{id name}}}}}}}}`, { p: projectId }).node;
+  const all = new Map(p.fields.nodes.filter(Boolean).map((f) => [f.name, f.id]));
+  for (const want of VIEWS.filter((v) => v.show)) {
+    const cur = p.views.nodes.find((v) => v.name === want.name);
+    if (!cur) continue;
+    const visible = cur.fields.nodes.filter(Boolean);
+    // «Segnalata da» è facoltativa: se nessuno l'ha creata, non c'è nulla da mostrare
+    const missing = want.show.filter((n) => !visible.some((f) => f.name === n) && (all.has(n) || n !== REPORTER_FIELD.name));
+    if (!missing.length) { log(false, 'ok', `colonne di ${want.name}`); continue; }
+    log(apply, 'mostra', `${want.name}: ${missing.join(', ')}`);
+    const ids = missing.map((n) => all.get(n)).filter(Boolean);
+    if (apply && ids.length) {
+      gql('mutation($v:ID!,$ids:[ID!]){updateProjectV2View(input:{viewId:$v,configuration:{visibleFieldIds:$ids}}){projectV2View{id}}}',
+        { v: cur.id, ids: [...visible.map((f) => f.id), ...ids] });
+    }
+  }
+}
+
 function hasProjectScope() {
   // Deve toccare un campo che il permesso protegge (nodes.id): `totalCount` da solo passa anche senza.
   try { gql('{viewer{projectsV2(first:1){nodes{id}}}}'); return true; } catch { return false; }
@@ -164,6 +236,9 @@ function setupProject(repo, title, apply) {
     log(false, 'ok', 'Stato');
   }
 
+  // Campi di contesto (versione, ambiente, lingua, schermo, data su Trello)
+  ensureProjectFields(project.id, PROJECT_FIELDS, apply);
+
   // Viste: la prima, creata col Project, si ribattezza invece di lasciarne una vuota
   const views = new Map(full.views.nodes.map((v) => [v.name, v]));
   const spare = full.views.nodes.find((v) => /^view \d+$/i.test(v.name) && !VIEWS.some((w) => w.name === v.name));
@@ -190,6 +265,7 @@ function setupProject(repo, title, apply) {
       log(false, 'ok', `vista ${want.name}`);
     }
   }
+  setupViewColumns(project.id, apply);
   console.log(`\n  Project: https://github.com/users/${base.viewer.login}/projects/${project.number}`);
 }
 

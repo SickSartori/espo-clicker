@@ -2,8 +2,9 @@
 import {
   classifyList, parseTitle, inferType, stripContext, labelToMilestone, safeText, assignComments,
   buildAll, buildIssues, toCsv, summarize, summarizeSkipped, marker, TYPE_LABELS,
+  contextFields, ambienteFromUrl, createdFromId, projectFields, allowedReporters,
 } from './trello-to-github.mjs';
-import { LABELS, MILESTONES, STATUS_OPTIONS, VIEWS } from './github-backlog-setup.mjs';
+import { LABELS, MILESTONES, STATUS_OPTIONS, VIEWS, PROJECT_FIELDS, REPORTER_FIELD } from './github-backlog-setup.mjs';
 
 describe('classifyList', () => {
   it.each([
@@ -85,6 +86,13 @@ describe('stripContext — il nome del giocatore non finisce su un repo pubblico
     const { body } = stripContext('Idea per l\'arcade.\n\n---\n**Contesto tecnico** (allegato automaticamente)\n- 👤 Utente: `Dario Moccia`\n');
     expect(body).toBe('Idea per l\'arcade.');
   });
+  it('l\'URL della pagina perde i parametri: ci può essere lo sblocco dei tester', () => {
+    const { body } = stripContext('Boh.\n\n---\n**Contesto tecnico** (allegato automaticamente)\n- 🎮 Versione: `3.2.0`\n- 🌐 URL: https://sito.example/test/?unlock=SEGRETO&stagione=christmas#x\n');
+    expect(body).toContain('- 🌐 URL: https://sito.example/test/');
+    expect(body).not.toContain('unlock');
+    expect(body).not.toContain('SEGRETO');
+    expect(body).not.toContain('stagione');
+  });
   it('una card scritta a mano passa intatta', () => {
     expect(stripContext('Idea: un tema primavera')).toEqual({ body: 'Idea: un tema primavera', fromGame: false });
   });
@@ -132,6 +140,83 @@ describe('assignComments', () => {
     const { byItem, orphans } = assignComments(items, [c('Ciao a tutti')]);
     expect(orphans).toHaveLength(1);
     for (const list of byItem.values()) expect(list).toHaveLength(0);
+  });
+});
+
+describe('contesto della segnalazione → colonne del Project', () => {
+  const game = 'Boh.\n\n---\n**Contesto tecnico** (allegato automaticamente)\n- 👤 Utente: `Mario123`\n- 🎮 Versione: `v3.2`\n- 🗣️ Lingua: `it`\n- 🖥️ Schermo: `1536x864`\n- 🌐 URL: https://www.espooclicker.altervista.org/test/?stagione=christmas\n- 🕒 Ricevuto: `2026-10-05 10:47:10 CEST`\n';
+
+  it('legge le righe dopo l\'intestazione, solo le chiavi note', () => {
+    expect(contextFields(game)).toEqual({
+      utente: 'Mario123', versione: 'v3.2', lingua: 'it', schermo: '1536x864',
+      url: 'https://www.espooclicker.altervista.org/test/?stagione=christmas', ricevuto: '2026-10-05 10:47:10 CEST',
+    });
+  });
+  it('una riga «- parola: …» fuori dal contesto non è contesto (bonus, note di rilascio)', () => {
+    expect(contextFields('- bonus: 12%\n- Versione: `9.9`\n')).toEqual({});
+    expect(contextFields('**Contesto tecnico** (allegato automaticamente)\n- 📱 UA: `Mozilla/5.0`\n- bonus: 12%\n')).toEqual({});
+  });
+  it('il link che Trello fa dell\'URL incollato torna un URL', () => {
+    const d = '**Contesto tecnico** (allegato automaticamente)\n- 🌐 URL: [https://sito.example/](https://sito.example/ "smartCard-inline")\n';
+    expect(contextFields(d).url).toBe('https://sito.example/');
+  });
+
+  it('ambiente: /test/ o macchina locale è Test, il resto del sito è Produzione, senza URL valido niente', () => {
+    expect(ambienteFromUrl('https://www.espooclicker.altervista.org/test/')).toBe('Test');
+    expect(ambienteFromUrl('https://www.espooclicker.altervista.org/test/?stagione=christmas')).toBe('Test');
+    expect(ambienteFromUrl('http://localhost:8888/Espo-Clicker/')).toBe('Test');
+    expect(ambienteFromUrl('https://espooclicker.altervista.org/')).toBe('Produzione');
+    expect(ambienteFromUrl('https://espooclicker.altervista.org/testimonial')).toBe('Produzione');
+    expect(ambienteFromUrl('')).toBeNull();
+    expect(ambienteFromUrl(undefined)).toBeNull();
+  });
+
+  it('la data di nascita sta nell\'id di Trello (secondi in esadecimale), nel giorno italiano', () => {
+    expect(createdFromId('6ac3640e58a020bb3021fa11')).toBe('2026-10-05');
+    // 22:30 UTC del 4 ottobre = 00:30 del 5 in Italia
+    expect(createdFromId((Date.UTC(2026, 9, 4, 22, 30) / 1000).toString(16) + '0000000000000000')).toBe('2026-10-05');
+  });
+  it('un id che non è un ObjectId non dà una data inventata', () => {
+    expect(createdFromId('a1')).toBeNull();
+    expect(createdFromId('')).toBeNull();
+    expect(createdFromId('zzzzzzzzzzzz')).toBeNull();
+    expect(createdFromId('00000001aaaaaaaaaaaaaaaa')).toBeNull();   // 1970
+  });
+
+  it('i campi: contesto tecnico e data; per le segnalazioni vale l\'ora di ricezione, mai l\'utente', () => {
+    const f = projectFields(contextFields(game), '2026-10-04');
+    expect(f).toEqual({ Versione: 'v3.2', Lingua: 'it', Schermo: '1536x864', Ambiente: 'Test', 'Creata su Trello': '2026-10-05' });
+    expect(JSON.stringify(f)).not.toContain('Mario123');
+    expect(projectFields({}, '2026-08-03')).toEqual({ 'Creata su Trello': '2026-08-03' });
+    expect(projectFields({}, null)).toEqual({});
+  });
+  it('ogni colonna scritta esiste fra quelle create dal setup', () => {
+    const names = new Set(PROJECT_FIELDS.map((f) => f.name));
+    const f = projectFields(contextFields(game), '2026-10-04');
+    for (const k of Object.keys(f)) expect(names.has(k)).toBe(true);
+    expect(names.has(REPORTER_FIELD.name)).toBe(false);   // «Segnalata da» non nasce da sola
+    const amb = PROJECT_FIELDS.find((x) => x.name === 'Ambiente');
+    expect(amb.options.map((o) => o.name)).toEqual(['Produzione', 'Test']);
+    expect(amb.options.every((o) => o.color && o.description)).toBe(true);   // l'API le vuole tutte e tre
+  });
+
+  it('le colonne che le viste mostrano esistono: o sono nostre o sono di GitHub', () => {
+    const known = new Set([...PROJECT_FIELDS.map((f) => f.name), REPORTER_FIELD.name, 'Labels', 'Milestone']);
+    const shown = VIEWS.filter((v) => v.show);
+    expect(shown.length).toBeGreaterThan(0);
+    for (const v of shown) for (const n of v.show) expect(known.has(n), `${v.name}: ${n}`).toBe(true);
+    // «Segnalata da» (facoltativa, nome di persone) solo nelle tabelle, mai sulle schede delle lavagne
+    for (const v of VIEWS) if ((v.show || []).includes(REPORTER_FIELD.name)) expect(v.layout).toBe('TABLE_LAYOUT');
+  });
+
+  it('--users: nessuno di default, «all», oppure una lista senza badare alle maiuscole', () => {
+    expect(allowedReporters(null)('Mario123')).toBe(false);
+    expect(allowedReporters('all')('Mario123')).toBe(true);
+    expect(allowedReporters('all')('')).toBe(false);
+    const own = allowedReporters('TheLonelyGodEspo, thelonelygodespodev');
+    expect(own('thelonelygodespo')).toBe(true);
+    expect(own('TheLonelyGodEspoDev')).toBe(true);
+    expect(own('Dario Moccia')).toBe(false);
   });
 });
 
@@ -201,6 +286,26 @@ describe('buildAll', () => {
     expect(i.body).toContain('Versione: `3.2.0`');
     expect(i.body).toContain('Etichette Trello: urgente, v3.0');   // la 3.0 non ha milestone: resta come nota
     expect(i.body).toContain('https://trello.com/c/a1');
+  });
+
+  it('ogni issue porta le colonne del Project; l\'utente resta a parte e fuori dai campi', () => {
+    const i = by(run().issues, 'a1');
+    expect(i.fields).toEqual({ Versione: '3.2.0' });   // la card di prova non ha id Trello veri, quindi niente data
+    expect(i.reporter).toBe('Mario123');
+    expect(JSON.stringify(i.fields)).not.toContain('Mario123');
+    expect(by(run().issues, 'b2').reporter).toBeNull();
+  });
+
+  it('una voce di checklist nasce quando è stata aggiunta, non quando è nato l\'elenco', () => {
+    const itemId = (Date.UTC(2026, 8, 30, 10) / 1000).toString(16) + 'aaaaaaaaaaaaaaaa';
+    const cardId = (Date.UTC(2025, 10, 26, 10) / 1000).toString(16) + 'bbbbbbbbbbbbbbbb';
+    const mini = {
+      lists: [{ id: 'L', name: 'NEW' }], labels: [], actions: [],
+      cards: [{ id: cardId, idList: 'L', pos: 1, name: 'Skin', desc: '', idLabels: [] }],
+      checklists: [{ id: 'k', idCard: cardId, name: 'Skin', checkItems: [{ id: itemId, name: 'Barone Esphura', state: 'incomplete', pos: 1 }] }],
+    };
+    const [i] = buildAll(mini).issues;
+    expect(i.fields).toEqual({ 'Creata su Trello': '2026-09-30' });
   });
 
   it('checklist, commenti e allegati arrivano nel corpo; menzioni neutralizzate; i nomi dei commentatori no, di default', () => {
