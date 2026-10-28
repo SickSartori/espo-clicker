@@ -228,7 +228,7 @@ That launch starts **Season 1**, and anyone with a real pre-launch save (at leas
 ## 📚 Docs
 
 - [Release notes (EN)](release-notes_en.md) · [(IT)](release-notes_it.md)
-- [Roadmap](dev/docs/roadmap.md) · [How the backlog is organised on GitHub](dev/docs/backlog-github.md)
+- [Roadmap](dev/docs/roadmap.md) · [The public backlog board](https://github.com/users/SickSartori/projects/2) · [How the backlog is organised](dev/docs/backlog-github.md)
 - [Product brief](PRODUCT.md) — who plays it, the tone, the anti-references
 - [UI conventions](dev/docs/ui.md) · [Supabase schema](dev/sql/supabase_schema.sql)
 
