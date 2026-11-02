@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import Decimal from 'break_eternity.js';
 import {
   goldenBugReward,
+  goldenBugSpot,
   dailyStreak,
   dailyReward,
   crunchDuration,
@@ -11,6 +12,53 @@ import {
 import type { DecimalCtor } from './economy';
 
 const D = Decimal as unknown as DecimalCtor;
+
+// Misure vere del gioco (02/11/2026): desktop 1280×720 e telefono 375×812
+describe('goldenBugSpot', () => {
+  const desk = { section: { left: 376, top: 169, right: 894, bottom: 736 }, pad: { top: 10, right: 20, bottom: 96, left: 20 } };
+  const content = (s: typeof desk.section, p: typeof desk.pad) =>
+    ({ left: s.left + p.left, top: s.top + p.top, right: s.right - p.right, bottom: s.bottom - p.bottom });
+  const corners: Array<[number, number]> = [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]];
+
+  it('desktop: mai nella fascia del badge «Novità» (fisso a 653–678, z-index 9000)', () => {
+    const visible = { left: 0, top: 0, right: 1280, bottom: 720 };
+    for (const [rx, ry] of corners) {
+      const p = goldenBugSpot(content(desk.section, desk.pad), visible, 64, 24, rx, ry)!;
+      expect(p.top + 64 + 20).toBeLessThan(653);   // anche col vagare dell'animazione (±20px)
+      expect(p.left).toBeGreaterThanOrEqual(376 + 20 + 24);
+      expect(p.left + 64).toBeLessThanOrEqual(894 - 20 - 24);
+    }
+  });
+
+  it('desktop: il bordo più basso possibile è il contenuto meno il margine', () => {
+    const p = goldenBugSpot(content(desk.section, desk.pad), { left: 0, top: 0, right: 1280, bottom: 720 }, 64, 24, 1, 1)!;
+    expect(p).toEqual({ left: 894 - 20 - 24 - 64, top: 736 - 96 - 24 - 64 });
+  });
+
+  it('telefono: mai sotto la barra delle schede (da 745), anche se la sezione arriva a 756', () => {
+    const section = { left: 0, top: 147, right: 375, bottom: 756 };
+    const pad = { top: 10, right: 20, bottom: 10, left: 20 };
+    const visible = { left: 0, top: 0, right: 375, bottom: 745 };
+    for (const [rx, ry] of corners) {
+      const p = goldenBugSpot(content(section, pad), visible, 64, 24, rx, ry)!;
+      expect(p.top + 64).toBeLessThanOrEqual(745 - 24);
+      expect(p.top).toBeGreaterThanOrEqual(147 + 10 + 24);   // sotto la barra in alto (fino a 55)
+    }
+  });
+
+  it('telefono con un\'altra colonna aperta: la sezione è 0×0 e il bug non compare (prima finiva a 24,24)', () => {
+    const zero = { left: 0, top: 0, right: 0, bottom: 0 };
+    const pad = { top: 10, right: 20, bottom: 10, left: 20 };
+    expect(goldenBugSpot(content(zero, pad), { left: 0, top: 0, right: 375, bottom: 745 }, 64, 24, 0, 0)).toBeNull();
+  });
+
+  it('spazio giusto per un bug: compare lì; un pixel in meno: niente', () => {
+    const fit = { left: 100, top: 100, right: 100 + 24 + 64 + 24, bottom: 100 + 24 + 64 + 24 };
+    const all = { left: 0, top: 0, right: 1000, bottom: 1000 };
+    expect(goldenBugSpot(fit, all, 64, 24, 0.7, 0.3)).toEqual({ left: 124, top: 124 });
+    expect(goldenBugSpot({ ...fit, bottom: fit.bottom - 1 }, all, 64, 24, 0.5, 0.5)).toBeNull();
+  });
+});
 
 describe('goldenBugReward', () => {
   const base = { bps: 100, clickValue: 50, globalMult: 1 };

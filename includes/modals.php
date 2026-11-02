@@ -109,6 +109,26 @@
                 </div>
             </div>
 
+            <!-- Tema (3.3): lo switch Vintage v1 esiste dal 17/11/2026 e si abilita riscattando
+                 l'obiettivo «Primo Compleanno». Nascosto prima (ui/modals: setupThemeRow). -->
+            <div id="theme-group" class="settings-group" style="display:none;"
+                 data-msg-locked="<?php echo htmlspecialchars($labels["opt_theme_locked"], ENT_QUOTES); ?>"
+                 data-msg-skin="<?php echo htmlspecialchars($labels["opt_theme_skin_wins"], ENT_QUOTES); ?>">
+                <h3 class="group-title">
+                    <i class="fa-solid fa-palette"></i> <?php echo $labels["opt_theme_title"]; ?>
+                </h3>
+                <div class="slider-row" style="margin-top: 15px;">
+                    <span class="slider-icon"><i class="fa-solid fa-paintbrush"></i></span>
+                    <div class="slider-wrapper" style="width: 100%;">
+                        <select id="theme-select" class="clean-input" style="width: 100%; padding: 5px; font-size: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid #4a6582; color: white; border-radius: 4px;">
+                            <option value="modern"><?php echo $labels["opt_theme_modern"]; ?></option>
+                            <option value="vintage"><?php echo $labels["opt_theme_vintage"]; ?></option>
+                        </select>
+                        <div id="theme-note" style="display:none; font-size: 0.7rem; margin-top: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="settings-group">
                 <h3 class="group-title">
 					<?php echo $labels["modals_opzioni_contenuto_audio"]; ?>

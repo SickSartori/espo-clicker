@@ -13,6 +13,7 @@ const w = window as any;
 import { store } from '../state/store';
 import { PRESTIGE_PERSISTENT_KEYS } from './prestige';
 import { ClickGuard } from './anticheat';
+import { goldenBugSpot } from './events';
 
 // Un solo guardiano per pagina: i click sul volto di Espò passano tutti da qui.
 const clickGuard = new ClickGuard();
@@ -47,6 +48,14 @@ const RewardHandlers = {
             return store.gameData.texts.toasts.skinUnlock.replace('{name}', skinName);
         }
         return null;
+    },
+    // Sblocca un tema (switch nelle Opzioni) e lo accende. Il tema si APPLICA a
+    // schermo in claimAchievementReward, a premio già segnato come riscattato:
+    // «sbloccato» si legge da lì (ui/theme/vintage.ts), e qui non lo è ancora.
+    theme: (themeId: any) => {
+        if (themeId !== 'vintage') return null;
+        store.gameState.user.vintageTheme = true;
+        return store.gameData.texts.toasts.themeVintage;
     },
     multiplier: (value: any) => {
         return `Bonus BPS x${value} Attivo!`;
@@ -1577,6 +1586,10 @@ function triggerBluescreen(multiplier: any) {
     if (store.gameState.skins.current === 'britneyEspears' && Math.random() < 0.8) {
         return triggerGameEvent('britneyEspears');
     }
+    // Albert Wespo: 7 Ticket (video da 12 s)
+    if (store.gameState.skins.current === 'wesker' && Math.random() < 0.8) {
+        return triggerGameEvent('wesker');
+    }
     // 3. Priorità Skin Super Espò
     if (store.gameState.skins.current === 'superespo') {
         return triggerGameEvent('superStarMode', multiplier);
@@ -2272,12 +2285,17 @@ function claimAchievementReward(key: any) {
     if (typeof w.updateAchievementsUI === 'function') w.updateAchievementsUI();
     if (typeof w.updateSkinsUI === 'function') w.updateSkinsUI();
 
+    // Premio «tema»: ora che è riscattato lo si vede subito (come per le skin sotto).
+    if (data.reward && data.reward.type === 'theme' && typeof w.applySkinVisuals === 'function') {
+        w.applySkinVisuals(store.gameState.skins.current);
+    }
+
     // Premio di un evento a calendario (Buon Natale, Dolcetto o Scherzetto): la
     // skin si indossa subito. Senza, riscattare il premio non cambiava niente a
     // schermo — il tema parte solo con la skin addosso — e l'evento sembrava
     // non essere mai cominciato. equipSkin fa partire anche l'annuncio.
     if (data.season && data.reward && data.reward.type === 'skin' &&
-        typeof w.isSeasonActive === 'function' && w.isSeasonActive(data.season) &&
+        typeof w.isSeasonRewardOpen === 'function' && w.isSeasonRewardOpen(data.season) &&
         typeof w.equipSkin === 'function') {
         w.equipSkin(data.reward.id);
     }
@@ -2291,29 +2309,29 @@ function scheduleGoldenBug() {
 }
 
 function spawnGoldenBug() {
-    // Reset stato pulito (anim residue, classi)
-    w.goldenBug.classList.remove('visible', 'despawning', 'clicked');
-
-    const bugWidth = 64;
-    const bugHeight = 64;
-    const padding = 24;
-
     const targetArea = document.getElementById('clicker-section');
     if (!targetArea) return;
 
+    // Solo il contenuto della sezione: il padding in basso su desktop è la fascia di badge «Novità» e link
+    // GitHub, fissi e sopra il bug. E solo la finestra libera dalla barra delle schede del telefono.
     const rect = targetArea.getBoundingClientRect();
+    const cs = getComputedStyle(targetArea);
+    const content = {
+        left: rect.left + parseFloat(cs.paddingLeft),
+        top: rect.top + parseFloat(cs.paddingTop),
+        right: rect.right - parseFloat(cs.paddingRight),
+        bottom: rect.bottom - parseFloat(cs.paddingBottom),
+    };
+    const tabBar = document.getElementById('mobile-nav-bar')?.getBoundingClientRect();
+    const visible = { left: 0, top: 0, right: w.innerWidth, bottom: tabBar && tabBar.height > 0 ? Math.min(w.innerHeight, tabBar.top) : w.innerHeight };
+    const spot = goldenBugSpot(content, visible, 64, 24, Math.random(), Math.random());
+    // Niente spazio (telefono con un'altra colonna aperta): salta questo giro, ne arriva un altro
+    if (!spot) { scheduleGoldenBug(); return false; }
 
-    const maxX = rect.width - bugWidth - (padding * 2);
-    const maxY = rect.height - bugHeight - (padding * 2);
-
-    const randomX = Math.max(0, Math.random() * maxX);
-    const randomY = Math.max(0, Math.random() * maxY);
-
-    const finalLeft = rect.left + w.scrollX + padding + randomX;
-    const finalTop = rect.top + w.scrollY + padding + randomY;
-
-    w.goldenBug.style.left = `${finalLeft}px`;
-    w.goldenBug.style.top = `${finalTop}px`;
+    // Reset stato pulito (anim residue, classi)
+    w.goldenBug.classList.remove('visible', 'despawning', 'clicked');
+    w.goldenBug.style.left = `${spot.left + w.scrollX}px`;
+    w.goldenBug.style.top = `${spot.top + w.scrollY}px`;
 
     // Varietà: scegli il tipo di bug (effetto "cosa mi esce?")
     //   standard 70% · lucky 18% (ricompensa ×8) · frenzy 12% (buff click ×7 15s)

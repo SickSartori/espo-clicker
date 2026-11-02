@@ -28,7 +28,7 @@ import { Decimal, installGlobalDecimal, gt, gte, eq } from './core/bignum';
 import { autoInitClickerParallax, enableClickerParallax } from './ui/interactions/clicker-parallax';
 import { autoInitLucide, renderLucideIcons } from './ui/icons/lucide-init';
 import { applyLanguage, deepOverlay, overlayById, I18N_COLLECTIONS } from './core/i18n/overlay';
-import { formatNumber, formatFullNumber } from './ui/format/number-format';
+import { formatNumber, formatFullNumber, formatNumberV1 } from './ui/format/number-format';
 import { formatTime } from './ui/format/time-format';
 import { createThemeCssLoader, ThemeCssLoader } from './ui/theme/css-loader';
 import { createToastQueue, ToastQueue } from './ui/toast/queue';
@@ -137,7 +137,7 @@ const EspoV3 = {
   bignum: { Decimal, gt, gte, eq },
   loop: { Scheduler },
   i18n: { applyLanguage, deepOverlay, overlayById, collections: I18N_COLLECTIONS },
-  format: { formatNumber, formatFullNumber, formatTime },
+  format: { formatNumber, formatFullNumber, formatNumberV1, formatTime },
   theme: { createCssLoader: createThemeCssLoader, ThemeCssLoader },
   economy: {
     applyBonusSoftcap,

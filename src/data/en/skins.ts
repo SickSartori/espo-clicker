@@ -8,6 +8,10 @@ export const skins: Record<string, any> = {
     espobit: {
         desc: "Insert coin. 1UP!"
     },
+    ingegnespo: {
+        name: "Espogineer",
+        desc: "Hard hat on, goggles down: today we build."
+    },
     christmas: {
         name: "Espo Claus",
         desc: "Let's squash these bugs under the tree.",
@@ -50,6 +54,9 @@ export const skins: Record<string, any> = {
         name: "Espoclown",
         desc: "Every crash is a show."
     },
+    espoRammstein: {
+        desc: "Du hast... a bug."
+    },
     mariachi: {
         name: "Espariachi",
         desc: "Ay ay ay, sing and compile.",
@@ -80,6 +87,13 @@ export const skins: Record<string, any> = {
         desc: "Plata o plomo... or pull request.",
         unlockHint: "Perform at least 1 Format and buy for 35 Token."
     },
+    espostronauta: {
+        name: "Espostronaut",
+        desc: "One small click for Espò, one giant bug for mankind."
+    },
+    legendEspo: {
+        desc: "It's dangerous to go alone! Take this bug."
+    },
     esposa: {
         name: "Espòsa",
         desc: "Till code do us part.",
@@ -101,8 +115,16 @@ export const skins: Record<string, any> = {
     espory: {
         desc: "eeeeeeeespo"
     },
+    espoleon: {
+        desc: "Impossible? Just a bug not yet conquered."
+    },
     britneyEspears: {
         unlockHint: "Perform at least 1 Format and buy for 75 Token."
+    },
+    wesker: {
+        name: "Albert Wespo",
+        desc: "Everything is proceeding according to the tickets.",
+        unlockHint: "Perform at least 1 Format and buy for 80 Token."
     },
     espoKiss: {
         unlockHint: "Perform at least 1 Format and buy for 75 Token."
@@ -133,6 +155,11 @@ export const skins: Record<string, any> = {
     },
 
     // --- FOUNDER (pre-launch exclusive) ---
+    efesto: {
+        name: "Hephaespo",
+        desc: "Forges bugs on the anvil of code.",
+        unlockHint: "Perform at least 1 Format and buy for 150 Token."
+    },
     founder: {
         name: "Founder Espò",
         desc: "You were here before launch. The code remembers.",

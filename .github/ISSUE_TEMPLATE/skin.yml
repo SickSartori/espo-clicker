@@ -1,0 +1,69 @@
+name: Skin proposta
+description: Un personaggio o un costume nuovo per Espò
+title: "Skin: "
+labels: ["skin"]
+body:
+  - type: input
+    id: nome
+    attributes:
+      label: Nome
+      description: "Il nome in gioco, anche provvisorio (le parodie vanno benissimo, come Britney Espears o Rick Espley)."
+      placeholder: "Es. Espo Rammstein"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: L'idea
+      description: Chi è, che aria ha, cosa fa quando clicca (il frame click deve avere una reazione sua).
+    validations:
+      required: true
+  - type: dropdown
+    id: rarita
+    attributes:
+      label: Rarità proposta
+      options:
+        - Non so
+        - Comune
+        - Rara
+        - Epica
+        - Leggendaria
+        - Divina
+    validations:
+      required: true
+  - type: dropdown
+    id: arte
+    attributes:
+      label: Arte
+      description: I bozzetti si tengono in `assets/image/future/`, divisi per rarità.
+      options:
+        - Nessuna
+        - Riferimento trovato
+        - Bozzetto pronto
+        - Frame normale e click pronti
+    validations:
+      required: true
+  - type: dropdown
+    id: diritti
+    attributes:
+      label: Diritti
+      description: Serve a decidere con calma, non a bloccare l'idea. Marchi e loghi veri sono il caso delicato (è già successo con Espostino).
+      options:
+        - Nessun marchio né persona reale
+        - Parodia di un personaggio o di una persona
+        - Porta loghi o marchi veri
+    validations:
+      required: true
+  - type: checkboxes
+    id: extra
+    attributes:
+      label: Porta con sé
+      options:
+        - label: Un evento con video (come 7 Ticket di Albert Wespo)
+        - label: Una musica sua (vedi la sezione Musica)
+        - label: Un tema suo
+  - type: input
+    id: riferimento
+    attributes:
+      label: Riferimento
+      description: Link o nome del file del bozzetto.

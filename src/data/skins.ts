@@ -47,6 +47,14 @@ export const skins: Record<string, any> = {
         rarity: "common",
         cost: new Decimal(0)
     },
+    ingegnespo: {
+        name: "Ingegnespo",
+        desc: "Casco allacciato, occhialoni giù: oggi si costruisce.",
+        img: "skins/ingegnespo.webp",
+        imgClick: "skins/ingegnespo-click.webp",
+        rarity: "common",
+        cost: new Decimal(6)
+    },
     // --- FESTIVE (stagioni a calendario, vedi season.ts) ---
     // A finestra aperta: obiettivo stagionale o prezzo scontato. Fuori stagione:
     // in negozio a prezzo pieno, così nessuna skin sparisce per sempre.
@@ -142,6 +150,14 @@ export const skins: Record<string, any> = {
         rarity: "rare",
         cost: new Decimal(12)
     },
+    espoRammstein: {
+        name: "Espo Rammstein",
+        desc: "Du hast... un bug.",
+        img: "skins/espo-rammstein.webp",
+        imgClick: "skins/espo-rammstein-click.webp",
+        rarity: "rare",
+        cost: new Decimal(15)
+    },
     mariachi: {
         name: "Espariachi",
         desc: "Ay ay ay, canta e compila.",
@@ -214,6 +230,22 @@ export const skins: Record<string, any> = {
         rarity: "epic",
         unlockHint: "Gioca per 24 ore totali."
     },
+    espostronauta: {
+        name: "Espostronauta",
+        desc: "Un piccolo click per Espò, un grande bug per l'umanità.",
+        img: "skins/espostronauta.webp",
+        imgClick: "skins/espostronauta-click.webp",
+        rarity: "epic",
+        cost: new Decimal(28)
+    },
+    legendEspo: {
+        name: "The Legend of Espo",
+        desc: "È pericoloso andare da soli: prendi questo bug.",
+        img: "skins/the-legend-of-espo.webp",
+        imgClick: "skins/the-legend-of-espo-click.webp",
+        rarity: "epic",
+        cost: new Decimal(32)
+    },
 
     // --- LEGENDARY ---
     rick: {
@@ -251,6 +283,14 @@ export const skins: Record<string, any> = {
             specialMusic: 'sound-bg-music-espory'
         }
     },
+    espoleon: {
+        name: "Espoleon Bonaparte",
+        desc: "Impossibile? È solo un bug non ancora conquistato.",
+        img: "skins/espoleon-bonaparte.webp",
+        imgClick: "skins/espoleon-bonaparte-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(65)
+    },
     britneyEspears: {
         name: "Britney Espears",
         desc: "Oops!... I debugged again.",
@@ -270,6 +310,16 @@ export const skins: Record<string, any> = {
         cost: new Decimal(75),
         requiresFormatting: true,
         unlockHint: "Esegui almeno 1 Formattazione e acquista con 75 Token."
+    },
+    wesker: {
+        name: "Albert Wespo",
+        desc: "Tutto procede secondo i ticket.",
+        img: "skins/albert-wespo.webp",
+        imgClick: "skins/albert-wespo-click.webp",
+        rarity: "legendary",
+        cost: new Decimal(80),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 80 Token."
     },
     superespo: {
         name: "Super Espò",
@@ -333,6 +383,17 @@ export const skins: Record<string, any> = {
             goldenBugIcon: 'fa-sun',
             goldenBugColor: '#f1c40f'
         }
+    },
+
+    efesto: {
+        name: "Dio Efespo",
+        desc: "Forgia bug sull'incudine del codice.",
+        img: "skins/dio-efespo.webp",
+        imgClick: "skins/dio-efespo-click.webp",
+        rarity: "divine",
+        cost: new Decimal(150),
+        requiresFormatting: true,
+        unlockHint: "Esegui almeno 1 Formattazione e acquista con 150 Token."
     },
 
     // --- FONDATORE (esclusiva pre-lancio, non ottenibile dai nuovi) ---

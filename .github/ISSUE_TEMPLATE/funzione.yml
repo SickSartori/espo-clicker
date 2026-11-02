@@ -1,0 +1,31 @@
+name: Nuova aggiunta
+description: Qualcosa che nel gioco ancora non c'è
+title: "Nuovo: "
+labels: ["nuova-funzione"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: L'idea
+      description: Cosa vorresti poter fare, e perché sarebbe bello.
+    validations:
+      required: true
+  - type: textarea
+    id: come
+    attributes:
+      label: Come dovrebbe funzionare
+      description: Anche a grandi linee. Un esempio concreto vale più di una descrizione.
+  - type: dropdown
+    id: dove
+    attributes:
+      label: Dove
+      options:
+        - Clicker e team
+        - Negozio e skin
+        - Sala giochi
+        - Amici e classifica
+        - Obiettivi, Prestige e Formattazione
+        - Opzioni e interfaccia
+        - Altro
+    validations:
+      required: true

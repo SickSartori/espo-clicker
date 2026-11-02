@@ -16,6 +16,7 @@ import { store } from '../../state/store';
 // divergere — in questo repo è già successo con la formula dei Q-bit.
 import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
 import { RARITY_ORDER, skinAccent } from '../rarity';
+import { vintageState, mascotArt, VINTAGE_THEME } from '../theme/vintage';
 
 // --- HELPER DI OTTIMIZZAZIONE (Cache & Text Check) ---
 const domCache = new Map<string, any>();
@@ -50,9 +51,16 @@ function setTextIfChanged(elementId: any, newText: any) {
 
 // ---------  FUNZIONI DI FORMATTORE ---------
 
+// Col tema Vintage acceso i numeri si scrivono «alla v1» (interi coi punti, fino a un
+// tetto). Lo aggiorna applySkinVisuals: formatNumber gira a ogni frame, qui sta solo
+// un flag. Un solo punto: tutti i chiamanti passano da questa funzione.
+let _v1Numbers = false;
+
 function formatNumber(num: any) {
     // F5 -> F8: formattazione pura in EspoV3.format (suffissi localizzati da store.gameData).
-    return window.EspoV3.format.formatNumber(num, store.gameData.texts.format.suffixes);
+    const f = window.EspoV3.format;
+    const suffixes = store.gameData.texts.format.suffixes;
+    return _v1Numbers ? f.formatNumberV1(num, suffixes) : f.formatNumber(num, suffixes);
 }
 
 function formatFullNumber(num: any) {
@@ -744,8 +752,10 @@ function updateSkinsUI() {
         const needsFormat = isBuyable && data.requiresFormatting && (store.gameState.totalFormattazioni || 0) < 1;
         // NON possedute → SEMPRE silhouette-mistero + lucchetto, anche le comprabili:
         // così non si spoilera l'arte. Le info stanno nel chip (gratis/prezzo/formatta/obiettivo).
+        // Col tema Vintage acceso la skin base mostra l'arte della v1 (come sul clicker).
+        const cardImg = mascotArt(key, data, vintageState(store.gameState, store.gameData.skins[currentSkin]).active).img || data.img;
         const imgSource = isUnlocked
-            ? (data.img ? `assets/image/${data.img}` : 'assets/image/skins/espo.webp')
+            ? (cardImg ? `assets/image/${cardImg}` : 'assets/image/skins/espo.webp')
             : 'assets/image/ui/hidden.webp';
 
         const accent = skinAccent(data);
@@ -963,7 +973,9 @@ function updateAchievementsUI() {
         const state = store.gameState.achievements[key] || { unlocked: false, claimed: false };
         if (state.claimed === undefined) state.claimed = false;
 
-        if (data.season && !w.isSeasonActive(data.season) && !state.unlocked) {
+        // Obiettivo stagionale: visibile in finestra; per i premi che non scadono
+        // (compleanno) dal giorno d'uscita in poi — prima di allora non esiste.
+        if (data.season && !w.isSeasonRewardOpen(data.season) && !state.unlocked) {
             return; // Salta questo giro del ciclo
         }
 
@@ -1035,6 +1047,9 @@ function updateAchievementsUI() {
 
                 // Imposta il tooltip con il nome della skin
                 tooltipAttr = `data-tooltip="Sblocca: ${skinName}"`;
+            } else if (data.reward.type === 'theme') {
+                rewardText = "TEMA VINTAGE";
+                tooltipAttr = `data-tooltip="Sblocca: Tema Vintage v1"`;
             } else if (data.reward.type === 'prestige') {
                 rewardText = `+${data.reward.value} TOKEN`;
             }
@@ -2555,7 +2570,18 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
     if (!(applySkinVisuals as any)._token) (applySkinVisuals as any)._token = 0;
     const data = store.gameData.skins[skinId];
     const skinData = data || store.gameData.skins['default'];
-    const theme = skinData.themeConfig || {};
+    // Tema Vintage v1 (switch nelle Opzioni): non appartiene a una skin. Si accende se
+    // il premio è riscattato e la skin indossata non ne ha uno suo — se ce l'ha, vince lei.
+    const vintage = vintageState(store.gameState, skinData);
+    const theme: any = vintage.active ? VINTAGE_THEME : (skinData.themeConfig || {});
+    // Numeri «alla v1» solo a tema acceso; al cambio si ridisegna subito, senza aspettare il tick.
+    if (_v1Numbers !== vintage.active) {
+        _v1Numbers = vintage.active;
+        try {
+            if (typeof w.updateUI === 'function') w.updateUI();
+            if (typeof w.refreshAllStores === 'function') w.refreshAllStores();
+        } catch (e) { /* UI non ancora pronta: ci pensa il prossimo tick */ }
+    }
 
     // v3: setta data-current-skin-rarity sul body per sfondo dinamico in-game
     _setSkinBodyAttrs(skinData);
@@ -2632,8 +2658,10 @@ function applySkinVisuals(skinId: any, forcePlayMusic = false) {
         element.classList.add(`bg-${skinData.rarity || 'common'}`);
     };
 
-    applyClasses(photoNormal, skinData.img);
-    applyClasses(photoClicked, skinData.imgClick);
+    // Col tema acceso la mascotte base mostra l'arte della v1 (fondo blu).
+    const art = mascotArt(skinId, skinData, vintage.active);
+    applyClasses(photoNormal, art.img);
+    applyClasses(photoClicked, art.imgClick);
 
     // Esposion: attiva/disattiva la skin dinamica (effetti combo->esplosione).
     if (typeof w.EsposionFX !== 'undefined') {

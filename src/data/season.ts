@@ -18,7 +18,7 @@
  */
 import { currentEnv } from '../lib/env';
 
-export type CalendarSeasonId = 'halloween' | 'christmas';
+export type CalendarSeasonId = 'halloween' | 'christmas' | 'birthday';
 
 /** Giorno dell'anno senza anno. `month` 1-12, come sul calendario. */
 export interface MonthDay {
@@ -41,6 +41,19 @@ export interface CalendarSeason {
   skins: string[];
   /** Colore della rarità Festiva per le skin di questa stagione (bordi, podio, amici). */
   accent: { color: string; glow: string };
+  /**
+   * Edizione unica: la finestra vale solo in questo anno (non può scavalcare il
+   * capodanno) e PRIMA del suo primo giorno la stagione non esiste — obiettivo e
+   * switch non sono visibili né ottenibili (vedi `isSeasonReleased`).
+   * Assente = ricorre ogni anno ed è sempre "uscita".
+   */
+  year?: number;
+  /**
+   * Il premio dell'obiettivo resta riscattabile anche a finestra chiusa:
+   * è un regalo, non un evento. Solo la finestra comanda l'avviso di inizio.
+   * Assente = obiettivo solo in finestra e skin in negozio a prezzo pieno dopo.
+   */
+  keepsReward?: boolean;
 }
 
 export const CALENDAR_SEASONS: Record<CalendarSeasonId, CalendarSeason> = {
@@ -58,6 +71,18 @@ export const CALENDAR_SEASONS: Record<CalendarSeasonId, CalendarSeason> = {
     skins: ['christmas'],
     accent: { color: '#e74c3c', glow: 'rgba(231,76,60,0.3)' },
   },
+  // Primo compleanno: il commit «Prima versione» è del 17/11/2025. Edizione
+  // unica: la finestra (avviso al primo accesso) dura due settimane, il premio
+  // — l'obiettivo che sblocca il tema Vintage v1 nelle Opzioni — no. Nessuna skin.
+  birthday: {
+    id: 'birthday',
+    start: { month: 11, day: 17 },
+    end: { month: 11, day: 30 },
+    skins: [],
+    accent: { color: '#f1c40f', glow: 'rgba(241,196,15,0.3)' },
+    year: 2026,
+    keepsReward: true,
+  },
 };
 
 const SEASON_IDS = Object.keys(CALENDAR_SEASONS) as CalendarSeasonId[];
@@ -73,12 +98,29 @@ function ordinal(md: MonthDay): number {
 
 /** PURA. La finestra di `season` comprende `date` (ora locale del giocatore)? */
 export function isInSeasonWindow(season: CalendarSeason, date: Date): boolean {
+  if (season.year !== undefined && date.getFullYear() !== season.year) return false;
   const today = ordinal({ month: date.getMonth() + 1, day: date.getDate() });
   const start = ordinal(season.start);
   const end = ordinal(season.end);
   return start <= end
     ? today >= start && today <= end
     : today >= start || today <= end; // scavalca il capodanno
+}
+
+/**
+ * PURA. La stagione è già "uscita" in `date`? Le ricorrenti sì, sempre. Un'edizione
+ * unica solo dal primo giorno della sua finestra (00:00 ora locale) in poi, e per
+ * sempre: è la soglia sotto cui obiettivo e switch non esistono per il giocatore.
+ */
+export function isSeasonReleasedAt(season: CalendarSeason, date: Date): boolean {
+  if (season.year === undefined) return true;
+  const first = new Date(season.year, season.start.month - 1, season.start.day);
+  return date.getTime() >= first.getTime();
+}
+
+/** PURA. Stagioni uscite in `date`, nell'ordine di CALENDAR_SEASONS. */
+export function releasedSeasonsAt(date: Date): CalendarSeasonId[] {
+  return SEASON_IDS.filter((id) => isSeasonReleasedAt(CALENDAR_SEASONS[id], date));
 }
 
 /** PURA. Stagioni aperte in `date`, nell'ordine di CALENDAR_SEASONS. */
@@ -117,9 +159,20 @@ function readSeasonOverride(): CalendarSeasonId[] | null {
   }
 }
 
+const SEASON_OVERRIDE = readSeasonOverride();
+
 /** Istantanea della sessione: calendario di oggi, o l'override di prova. */
 export const ACTIVE_SEASONS: readonly CalendarSeasonId[] =
-  readSeasonOverride() ?? activeSeasonsAt(new Date());
+  SEASON_OVERRIDE ?? activeSeasonsAt(new Date());
+
+/**
+ * Istantanea delle stagioni uscite. Con l'override di prova le edizioni uniche
+ * escono solo se nominate (`nessuna` le fa sparire: si prova la soglia); le
+ * ricorrenti restano sempre uscite.
+ */
+export const RELEASED_SEASONS: readonly CalendarSeasonId[] = SEASON_OVERRIDE
+  ? SEASON_IDS.filter((id) => CALENDAR_SEASONS[id].year === undefined || SEASON_OVERRIDE.includes(id))
+  : releasedSeasonsAt(new Date());
 
 /** PURA. Come `isSeasonActive`, ma su un elenco di stagioni aperte esplicito. */
 export function isSeasonActiveIn(seasonId: string, active: readonly string[]): boolean {
@@ -132,6 +185,35 @@ export function isSeasonActive(seasonId: string): boolean {
   return isSeasonActiveIn(seasonId, ACTIVE_SEASONS);
 }
 
+/** PURA. `''` = non stagionale → vero; id sconosciuto → falso. */
+export function isSeasonReleasedIn(seasonId: string, released: readonly string[]): boolean {
+  if (!seasonId) return true;
+  return released.includes(seasonId);
+}
+
+/** La stagione è uscita in questa sessione? Sotto la soglia, niente obiettivo né switch. */
+export function isSeasonReleased(seasonId: string): boolean {
+  return isSeasonReleasedIn(seasonId, RELEASED_SEASONS);
+}
+
+/**
+ * PURA. L'obiettivo della stagione è riscattabile adesso? Per chi tiene il premio
+ * (`keepsReward`) basta che la stagione sia uscita; per le altre serve la finestra.
+ */
+export function isSeasonRewardOpenIn(
+  seasonId: string, active: readonly string[], released: readonly string[],
+): boolean {
+  if (!seasonId) return true;
+  if (!isCalendarSeasonId(seasonId)) return false;
+  return CALENDAR_SEASONS[seasonId].keepsReward
+    ? isSeasonReleasedIn(seasonId, released)
+    : isSeasonActiveIn(seasonId, active);
+}
+
+export function isSeasonRewardOpen(seasonId: string): boolean {
+  return isSeasonRewardOpenIn(seasonId, ACTIVE_SEASONS, RELEASED_SEASONS);
+}
+
 export function isChristmasSeason(): boolean {
   return isSeasonActive('christmas');
 }
@@ -142,3 +224,5 @@ export function isHalloweenSeason(): boolean {
 
 export const IS_XMAS_TIME = isChristmasSeason();
 export const IS_HALLOWEEN_TIME = isHalloweenSeason();
+/** Premio del compleanno aperto: dal 17/11/2026 in poi, senza scadenza. */
+export const IS_BIRTHDAY_OPEN = isSeasonRewardOpen('birthday');

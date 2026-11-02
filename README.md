@@ -9,22 +9,23 @@ You click a manager's face. The bugs get fixed. The bugs come back.</p>
 
 ### [▶︎ Play it in the browser](https://espooclicker.altervista.org)
 
-<sub>Public launch 3 August 2026, 07:00 UTC. Until then that link serves a countdown page, honestly.</sub>
+<sub>In Italian and English · desktop and phone · installable as an app</sub>
 
+[![Release](https://img.shields.io/github/v/release/SickSartori/espo-clicker?label=release)](https://github.com/SickSartori/espo-clicker/releases)
 [![Quality](https://github.com/SickSartori/espo-clicker/actions/workflows/quality.yml/badge.svg)](https://github.com/SickSartori/espo-clicker/actions/workflows/quality.yml)
 [![E2E](https://github.com/SickSartori/espo-clicker/actions/workflows/e2e.yml/badge.svg)](https://github.com/SickSartori/espo-clicker/actions/workflows/e2e.yml)
 
-</div>
+<img src="dev/docs/readme-game.jpg" alt="The game on desktop: the bug counter, the manager's face in the middle, the teams shop on the right" width="640">
+<img src="dev/docs/readme-mobile.jpg" alt="The same game on a phone" width="190">
 
-<!-- TODO: gameplay screenshot goes here (index.php at 1280x800: bug counter + shop).
-     None exists in the repo yet; manifest.json "screenshots" is empty too. -->
+</div>
 
 ## What it is
 
 - A clicker game about the one thing every developer has infinite of. Every click resolves exactly one bug and pays you in **Bug Risolti** (Solved Bugs). Bug Risolti buy upgrades. Upgrades generate more bugs per second. The math checks out.
 - You are not a developer here, and you are not a QA specialist. You are **The Clicker**, a god-like entity whose sole purpose is to make the suffering of Espòòò — the permanently surprised manager — stop. (It will not stop.)
-- 11 teams, 89 upgrades, 29 skins, 45 achievements, 6 arcade minigames, 2 languages, 4 progression loops (two of which exist to delete the other two), and one Christmas skin that snows.
-- Under the hood: 67 strict TypeScript modules bundled by Vite, a PHP shell, Supabase Edge Functions for saves and leaderboard, an installable PWA, and a CI pipeline more serious than most people's day jobs.
+- 11 teams, 89 upgrades, 39 skins, 47 achievements, 8 arcade minigames, 2 languages, 4 progression loops (two of which exist to delete the other two), and one Christmas skin that snows.
+- Under the hood: 81 strict TypeScript modules bundled by Vite, a PHP shell, Supabase Edge Functions for saves and leaderboard, an installable PWA, and a CI pipeline more serious than most people's day jobs.
 
 ## ⚡ Quick start
 
@@ -46,7 +47,7 @@ You need a PHP server (**MAMP**/XAMPP) and **Node.js**. No local database — th
 
 Cloud saves and the leaderboard run on **Supabase Edge Functions**, and the environment (dev vs production) is auto-detected from the hostname — one build serves both. The public anon keys already live in `src/lib/backend-config.ts`, so there is nothing left to wire up.
 
-Locally you will be playing in Italian. Language lives in a cookie, there is no auto-detection, and switching it writes the cookie and reloads the page. There are exactly two languages, `it` and `en`, served by two completely separate systems: PHP labels for the static markup (250 keys per file, identical key sets) and a JS overlay that rewrites the game data in place.
+Locally you will be playing in Italian. Language lives in a cookie, there is no auto-detection, and switching it writes the cookie and reloads the page. There are exactly two languages, `it` and `en`, served by two completely separate systems: PHP labels for the static markup (291 keys per file, identical key sets) and a JS overlay that rewrites the game data in place.
 
 ### Scripts
 
@@ -59,6 +60,7 @@ Locally you will be playing in Italian. Language lives in a cookie, there is no 
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run budget` | Bundle size check against the declared budgets |
 | `npm run release` | Patch version bump + build |
+| `npm run release:minor` | Minor version bump + build (a new `x.y.0` release) |
 
 ## 🎯 The four loops
 
@@ -79,7 +81,7 @@ The permanent Promozione multiplier has a **softcap**: past +80 it goes square-r
 <summary><b>Everything that interrupts the grind</b> (click to expand)</summary>
 
 - **Ticket Critico (Golden Bug)** — spawns on a random 60–120 s timer and does not wait around. Three flavours: standard (70%), lucky (18%, ×8 reward), frenzy (12%, ×2 reward plus a ×7 click buff for 15 s). *Ticket Premium* multiplies the 60 s base spawn timer by 0.5; *Risonanza Aurea* (Golden Resonance) multiplies it by another 0.75. Buy both and the base falls to 22.5 s.
-- **Blue Screen & friends** — **not** on a timer. Every click has a 0.05% chance of firing an event, behind three gates: a 300 s cooldown, no other event already running, and at least 404 bugs on the counter. There are 6 events — three video ones (Rick Roll, Ricardo Flex, Britney Espears) and three CSS-only ones (System Error 404, Matrix Glitch, Super Star Mode). *Which* one you get depends on the skin you are wearing, which is the closest this game gets to a dress code.
+- **Blue Screen & friends** — **not** on a timer. Every click has a 0.05% chance of firing an event, behind three gates: a 300 s cooldown, no other event already running, and at least 404 bugs on the counter. There are 7 events — four video ones (Rick Roll, Ricardo Flex, Britney Espears, and Albert Wespo's 12-second *7 Tickets*, which pays more per second because it has fewer of them) and three CSS-only ones (System Error 404, Matrix Glitch, Super Star Mode). *Which* one you get depends on the skin you are wearing, which is the closest this game gets to a dress code.
 - **Espo Fury** — a 200-token Lab upgrade that multiplies BPS by 7 for 30 s (60 s with the *Overclock* super-upgrade). The cooldown counts from the *end* of the fury: 300 s minus 30 s per level of *Rete di Contatti* (Contact Network), floored at 60 s. Networking pays.
 - **Offline earnings** — count at most 12 hours and pay 30% of your BPS, rising +10% per level of *Server Always-On* up to 100%. Sleep is finally productive.
 - **Daily bonus** — a login streak that grows until day 7 and then politely stops. It lives in `localStorage`, not in the save, so cloud merges cannot eat it.
@@ -89,11 +91,13 @@ The permanent Promozione multiplier has a **softcap**: past +80 it goes square-r
 
 ## 🧩 Collection, competition, company
 
-**29 skins** across 6 rarities (3 common, 6 rare, 7 epic, 10 legendary, 2 divine, 1 Christmas). Rarity is *deliberately* cosmetic: it colours the borders, the **Podio** (leaderboard) and the ambient background, and touches none of the numbers. Eight of the 29 go further — they carry a `themeConfig` that swaps in a whole theme stylesheet, changes the background music, recolours the Golden Bug and switches on an ambient VFX. Still no numbers. Yes, the Christmas skin snows.
+**39 skins** across 6 rarities (4 common, 7 rare, 9 epic, 12 legendary, 3 divine, 4 festive). Rarity is *deliberately* cosmetic: it colours the borders, the **Podio** (leaderboard) and the ambient background, and touches none of the numbers. Eleven of the 39 go further — they carry a `themeConfig` that swaps in a whole theme stylesheet, changes the background music, recolours the Golden Bug and switches on an ambient VFX. Still no numbers. Yes, the Christmas skin snows.
 
-15 are bought with Token Lab (four of those also demand at least one Formattazione), 13 are achievement rewards, one is both, and two are never for sale: the default face you start with, and the Fondatore skin — see Season 1, below. One of them, **ESPOSION**, is a dynamic skin driven by your combo across 10 phases: the art cracks, then chars, then detonates. Purely decorative. Extremely worth it.
+24 are bought with Token Lab (six of those also demand at least one Formattazione), 14 are achievement rewards, one is both, and two are never for sale: the default face you start with, and the Fondatore skin — see Season 1, below. One of them, **ESPOSION**, is a dynamic skin driven by your combo across 10 phases: the art cracks, then chars, then detonates. Purely decorative. Extremely worth it.
 
-**45 achievements**, 6 of them secret. 15 give you nothing but dopamine; 13 hand over a skin, 10 pay in bugs, 4 in Token Lab, and 3 grant a permanent multiplier (+10%, +15%, +25%) — those three refuse to unlock until you have done your first Promozione.
+**47 achievements**, 6 of them secret. 15 give you nothing but dopamine; 14 hand over a skin, 10 pay in bugs, 4 in Token Lab, 3 grant a permanent multiplier (+10%, +15%, +25%) — those three refuse to unlock until you have done your first Promozione — and one, *First Birthday*, unlocks a theme.
+
+**Seasons.** Christmas, Halloween and the first birthday run on a calendar (`src/data/season.ts`). The birthday, on 17 November 2026, hands out a Settings switch that puts the whole game back to how it looked in 2025: the first version's palette, font, mascot and numbers, with emoji for icons. Skins that carry a theme of their own keep it.
 
 **Podio** — two scopes, global and friends-only, served by two different Edge Functions. It forces a save before reading, then waits 200 ms for the database to catch up, because distributed systems are a lie we tell ourselves.
 
@@ -101,7 +105,7 @@ The permanent Promozione multiplier has a **softcap**: past +80 it goes square-r
 
 ## 🕹️ The arcade (Sala Giochi)
 
-Six minigames on their own page (`arcade.php`), behind their own login gate, opened in a new window — the main game has enough to do. Scores convert to bugs at `bps × score × coefficient` and are handed back through `localStorage`; the main tab collects them on a 5 s poll and again whenever you focus it.
+Eight minigames on their own page (`arcade.php`), behind their own login gate, opened in a new window — the main game has enough to do. Scores convert to bugs at `bps × score × coefficient` and are handed back through `localStorage`; the main tab collects them on a 5 s poll and again whenever you focus it.
 
 | Game | Engine | Reward coefficient |
 |------|--------|--------------------|
@@ -110,11 +114,13 @@ Six minigames on their own page (`arcade.php`), behind their own login gate, ope
 | Espo-Roids — `arcade/asteroids` | Canvas 2D | 0.04 |
 | Bug Invaders — `arcade/invaders` | Canvas 2D | 0.04 |
 | Bug Crawler — `arcade/centipede` | Canvas 2D | 0.05 |
+| Stack Overflow — `arcade/stack` | Canvas 2D | 0.05 |
+| Flappy Espòòò — `arcade/flappy` | Canvas 2D | 0.05 |
 | Super Espò — `arcade/super-espo` | Phaser 3.60 (CDN, lazy) | scales with the level reached |
 
-Phaser is fetched on demand from a CDN and only Super Espò needs it, so it sits in its own promise chain: if the CDN falls over, the other five stay playable. Those five synthesize every sound they make in Web Audio from zero asset files — cheaper than shipping a single bleep. Super Espò is the only one with real audio, served from R2 behind pre-signed URLs.
+Phaser is fetched on demand from a CDN and only Super Espò needs it, so it sits in its own promise chain: if the CDN falls over, the other seven stay playable. Those seven synthesize every sound they make in Web Audio from zero asset files — cheaper than shipping a single bleep. Super Espò is the only one with real audio, served from R2 behind pre-signed URLs.
 
-Touch players get a shared on-screen pad that fires real `KeyboardEvent`s (plus haptics), reconfigured per game: Snake gets a bare d-pad, Bug Invaders gets left/right and FIRE, and Espo-Roids renames UP to BOOST, which is the entire extent of its flight model.
+Touch players get a shared on-screen pad that fires real `KeyboardEvent`s (plus haptics), reconfigured per game: Snake gets a bare d-pad, Bug Invaders gets left/right and FIRE, and Espo-Roids renames UP to BOOST, which is the entire extent of its flight model. Flappy Espòòò needs none of it: the whole field is the button, and the run lasts 15 seconds from the first flap.
 
 ## 🛠️ Stack
 
@@ -143,11 +149,11 @@ Touch players get a shared on-screen pad that fires real `KeyboardEvent`s (plus 
 
 ```
 espo-clicker/
-├─ index.php          # the app shell — 519 lines of PHP rendering the HTML
+├─ index.php          # the app shell — 531 lines of PHP rendering the HTML
 ├─ arcade.php         # the arcade, standalone page with its own login gate
 ├─ sw.js              # service worker: batched precache, three strategies
 ├─ manifest.json      # PWA
-├─ src/               # the game engine — 67 TypeScript modules + 22 test files
+├─ src/               # the game engine — 81 TypeScript modules + 32 test files
 │  ├─ app/            # boot + global error handling
 │  ├─ core/           # pure, tested logic: save codec/db, migrations, anti-rollback,
 │  │                  # scheduler, i18n overlay, crypto, bignum
@@ -158,13 +164,13 @@ espo-clicker/
 │  ├─ types/          # save schema
 │  ├─ ui/             # render, modals, podio, social, intro, fx, theme, toast, icons
 │  └─ workers/        # offline earnings + save compression
-├─ arcade/            # six minigames, one folder each
+├─ arcade/            # eight minigames, one folder each
 ├─ php/               # endpoints: launch gate, R2 signing, version, language, feedback
 ├─ includes/          # PHP partials for index.php
-├─ langs/             # it.php / en.php — 250 labels each, identical key sets
+├─ langs/             # it.php / en.php — 291 labels each, identical key sets
 ├─ styles/            # CSS source
 ├─ js/                # the last three classic scripts standing
-├─ scripts/           # build plugin, bundle budget, version bump, deploy console
+├─ scripts/           # build plugin, bundle budget, version bump, deploy console, Trello → GitHub import
 ├─ dev/               # sql/ (Supabase schema) · tests/ (E2E specs) · docs/
 ├─ assets/ · music/   # art locally; audio and video come from R2 in production
 └─ dist/              # build output (generated) — this is what ships
@@ -172,9 +178,9 @@ espo-clicker/
 
 ## ✅ Tests and quality gates
 
-- **218 unit tests** across 22 `src/**/*.test.ts` files (Vitest, jsdom — configured inside `vite.config.ts`; there is no separate `vitest.config`). The densest are the economy and anti-rollback suites, which is where bugs would hurt instead of amuse.
-- **17 E2E tests** across 5 Playwright specs, Chromium only, `workers: 1` and `fullyParallel: false` — the specs mutate a shared game state, so running them in parallel produces beautiful nonsense.
-- On every PR, **typecheck and unit tests are blocking**. The bundle budget is explicitly `continue-on-error`, which is convenient, because `dist/game.modules.js` currently ships at 399 KB raw / 113 KB gzip against a declared budget of 90 / 25 KB. We know. It's on the list. The list is long.
+- **382 unit tests** across 33 test files — `src/**/*.test.ts` plus the `scripts/` ones (Vitest, jsdom — configured inside `vite.config.ts`; there is no separate `vitest.config`). The densest are the economy and anti-rollback suites, which is where bugs would hurt instead of amuse.
+- **155 E2E tests** across 26 Playwright specs, Chromium only, `workers: 1` and `fullyParallel: false` — the specs mutate a shared game state, so running them in parallel produces beautiful nonsense.
+- On every PR, **typecheck and unit tests are blocking**. The bundle budget is explicitly `continue-on-error`, which is convenient, because `dist/game.modules.js` currently ships at 448 KB raw / 130 KB gzip against a declared budget of 90 / 25 KB. We know. It's on the list. The list is long.
 
 ## 🚀 Deploy
 
@@ -186,7 +192,7 @@ Deployment is FTP, and only half of it is automatic:
 | Branch | Role | What happens |
 |--------|------|--------------|
 | `develop` | where work happens | Quality + E2E run on every push and PR |
-| `test` | deploy mirror | force-pushed from `develop`; a push here auto-deploys to the test server |
+| `test` | deploy mirror | `develop` merged `--no-ff`, never force-pushed; a push here auto-deploys to the test server |
 | `main` | production | merged `--no-ff` from `test` and tagged `v<version>` |
 
 The two targets differ on purpose: the production job **deletes** the cheatboard script before uploading, while test keeps it. Runtime cache-busting ignores the version number entirely — it uses `filemtime()` on the built files and only falls back to the configured version if a file is missing.
@@ -203,7 +209,7 @@ If it is missing in production the failure is indirect and easy to misread: the 
 
 ## 📅 Project status
 
-**v3.1.0**, in development. The public launch happened on **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
+**v3.2.0** is live. **v3.3 — «Primo compleanno»** is in development, due on **17 November 2026**, a year to the day after the first commit; the plan for it and for every release after it is in the [roadmap](dev/docs/roadmap.md). The public launch happened on **3 August 2026, 07:00 UTC**, and the date is enforced *server-side* with PHP's `time()`: before launch, `index.php` and `arcade.php` include the countdown page and `exit`, so the game bundle is never even sent to the browser. The countdown screen also unregisters the service worker and clears every cache, so nobody ends up trapped in a cached waiting room.
 
 That launch starts **Season 1**, and anyone with a real pre-launch save (at least one Promozione, or one non-default skin) is migrated to **Fondatore** (Founder) status: an exclusive `divine` skin with no price and no achievement attached — permanently unobtainable for everyone who arrives after — plus up to 5 kept skins, with an interactive picker if they had more.
 
@@ -222,8 +228,13 @@ That launch starts **Season 1**, and anyone with a real pre-launch save (at leas
 ## 📚 Docs
 
 - [Release notes (EN)](release-notes_en.md) · [(IT)](release-notes_it.md)
+- [Roadmap](dev/docs/roadmap.md) · [The public backlog board](https://github.com/users/SickSartori/projects/2) · [How the backlog is organised](dev/docs/backlog-github.md)
 - [Product brief](PRODUCT.md) — who plays it, the tone, the anti-references
 - [UI conventions](dev/docs/ui.md) · [Supabase schema](dev/sql/supabase_schema.sql)
+
+## 💡 Got an idea?
+
+A skin, a theme, a track for the soundtrack, a new feature or something that should be better: [open an issue](https://github.com/SickSartori/espo-clicker/issues/new/choose) — there is a short form for each. Bugs are welcome too; the game is about them, after all.
 
 ## License
 

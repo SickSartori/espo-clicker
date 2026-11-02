@@ -1,0 +1,37 @@
+name: Musica (OST)
+description: Un brano per il gioco, per una skin o per un evento
+title: "Musica: "
+labels: ["musica"]
+body:
+  - type: input
+    id: brano
+    attributes:
+      label: Brano
+      description: Titolo e autore.
+      placeholder: "Es. Tema di Espò, versione Halloween"
+    validations:
+      required: true
+  - type: dropdown
+    id: dove
+    attributes:
+      label: Dove suona
+      options:
+        - Tema di una skin
+        - Evento (video o effetto)
+        - Jukebox
+        - Sala giochi
+        - Menu o schermata iniziale
+        - Non so
+    validations:
+      required: true
+  - type: textarea
+    id: licenza
+    attributes:
+      label: Fonte e licenza
+      description: Chi l'ha composta, dove la si ascolta, e a che titolo la possiamo usare (originale, libera, con permesso, da verificare). I file audio pesanti vanno su R2, non nel repo.
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link per ascoltarla

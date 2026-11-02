@@ -83,6 +83,7 @@ export const texts: Record<string, any> = {
         skinBought: "Skin Acquistata: {name}!",
         skinClaimed: "Skin Riscattata: {name}!",
         skinUnlock: "Nuova Skin: {name}!",
+        themeVintage: "Tema Vintage v1 acceso! Lo spegni dalle Opzioni.",
         achievementUnlock: "🏆 Sbloccato: {name}",
         rewardAvailable: " (Premio disponibile!)",
         rewardClaimed: "Riscattato: {message}",

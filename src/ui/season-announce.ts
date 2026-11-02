@@ -32,7 +32,7 @@ export interface SeasonAnnounce { seasonId: CalendarSeasonId; key: string; achie
 
 /**
  * PURA. Quale stagione annunciare adesso, o null. Una stagione si annuncia se
- * è aperta, ha un obiettivo che regala una skin, quell'obiettivo non è ancora
+ * è aperta, ha un obiettivo che regala una skin o un tema, quell'obiettivo non è ancora
  * riscattato e l'edizione di quest'anno non è già stata annunciata.
  */
 export function seasonAnnounceDue(
@@ -43,7 +43,7 @@ export function seasonAnnounceDue(
         const seasonId = id as CalendarSeasonId;
         const achievementId = Object.keys(achievements).find((k) => {
             const a = achievements[k];
-            return a && a.season === seasonId && a.reward && a.reward.type === 'skin';
+            return a && a.season === seasonId && a.reward && (a.reward.type === 'skin' || a.reward.type === 'theme');
         });
         if (!achievementId) continue;
         const st = gs && gs.achievements && gs.achievements[achievementId];
@@ -61,6 +61,11 @@ const TEXTS: Record<CalendarSeasonId, { it: [string, string]; en: [string, strin
         en: ['🎃 Halloween is here!', 'Until November 2 the office dresses up. Your first costume is waiting in Achievements: claim it and put it on.'],
         accent: '#fb923c', glow: 'rgba(249,115,22,0.35)',
     },
+    birthday: {
+        it: ['🎂 Primo compleanno!', 'Un anno fa nasceva Espòòò Clicker. Il tuo regalo ti aspetta negli Obiettivi: riscattalo e il gioco torna come allora. Lo spegni quando vuoi dalle Opzioni.'],
+        en: ['🎂 First birthday!', 'One year ago Espòòò Clicker was born. Your gift is waiting in Achievements: claim it and the game goes back to how it looked then. Turn it off anytime in Settings.'],
+        accent: '#f1c40f', glow: 'rgba(241,196,15,0.35)',
+    },
     christmas: {
         it: ['🎄 È arrivato il Natale!', 'Fino all\'8 gennaio si festeggia anche in ufficio. Espo Natale ti aspetta negli Obiettivi: riscattalo e indossalo.'],
         en: ['🎄 Christmas is here!', 'Until January 8 the office celebrates too. Espo Claus is waiting in Achievements: claim it and put it on.'],
@@ -69,6 +74,12 @@ const TEXTS: Record<CalendarSeasonId, { it: [string, string]; en: [string, strin
 };
 
 const OVERLAY_ID = 'season-announce-overlay';
+
+/** L'invito a installare l'app è disponibile? La riga in Opzioni la mostra index.php solo se installabile. */
+export function installInviteAvailable(): boolean {
+    const r = document.getElementById('pwa-install-row');
+    return !!r && getComputedStyle(r).display !== 'none';
+}
 /** Quiete richiesta prima di comparire: dopo il reveal, e senza finestre a schermo. */
 const QUIET_AFTER_REVEAL_MS = 3000;
 const QUIET_NO_MODAL_MS = 2500;
@@ -174,7 +185,25 @@ function showSeasonAnnounce(seasonId: CalendarSeasonId, achievementId: string): 
     later.textContent = isEn ? 'Later' : 'Più tardi';
     later.addEventListener('click', close);
 
-    row.append(go, later);
+    row.append(go);
+    // Compleanno: l'app si può installare dal telefono o dal PC. L'invito c'è già in Opzioni,
+    // ma sepolto; qui compare una volta, solo se il browser la dà installabile (la riga
+    // in Opzioni, che lo script PWA di index.php mostra, è visibile) e non è già installata.
+    if (seasonId === 'birthday' && installInviteAvailable()) {
+        const inst = document.createElement('button');
+        inst.type = 'button';
+        inst.id = OVERLAY_ID + '-install';
+        inst.style.cssText = 'font:inherit;font-size:1.05rem;cursor:pointer;color:' + t.accent + ';background:transparent;' +
+            'border:1px solid ' + t.accent + ';border-radius:10px;padding:10px 20px;min-height:44px;';
+        inst.textContent = isEn ? 'Install the app' : "Installa l'app";
+        inst.addEventListener('click', () => {
+            close();
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.click();
+        });
+        row.append(inst);
+    }
+    row.append(later);
     box.append(h, p, row);
     el.append(box);
     el.addEventListener('click', (e) => { if (e.target === el) close(); });

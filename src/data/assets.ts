@@ -477,6 +477,14 @@ export const assets: Record<string, any> = {
             name: 'Video: Britney Espears',
             category: 'eventi',
             defaultVol: 1.0
+        },
+        // Già a -16,1 LUFS (target dei video, vedi roadmap 3.1): nessun ritocco di guadagno.
+        'albert-wespo-video': {
+            id: 'albert-wespo-video',
+            file: 'albert-wespo-video.mp4',
+            name: 'Video: Albert Wespo (7 Ticket)',
+            category: 'eventi',
+            defaultVol: 1.0
         }
     }
 };

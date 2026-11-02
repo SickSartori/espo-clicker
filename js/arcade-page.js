@@ -151,7 +151,7 @@
             var host = document.getElementById('arcade-active-game-container');
             if (!host) return;
 
-            var GAME_COLORS = { snake: '#2ecc71', space: '#e74c3c', asteroids: '#e67e22', superespo: '#9b59b6', invaders: '#2ecc71', centipede: '#f472b6' };
+            var GAME_COLORS = { snake: '#2ecc71', space: '#e74c3c', asteroids: '#e67e22', superespo: '#9b59b6', invaders: '#2ecc71', centipede: '#f472b6', stack: '#00d9ff', flappy: '#facc15' };
             var icons = { reward: '▸', achievement: '★', info: '◆', error: '✕', warning: '⚠' };
             var color = GAME_COLORS[window._arcadeActiveGame] || '#00d9ff';
             var icon = icons[type] || icons.info;
@@ -469,7 +469,10 @@
         centipede: { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'FIRE' } },
         // Stack Overflow: ▲ ruota, ▼ scende, SPAZIO tuffo. I bug si schiacciano
         // toccandoli direttamente sul campo, non serve un tasto sul pad.
-        stack:     { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'DROP', up: 'RUOTA' } }
+        stack:     { dpad: ['up','down','left','right'], actions: ['fire'],                    labels: { fire: 'DROP', up: 'RUOTA' } },
+        // Flappy Espòòò: un solo tocco, e il bersaglio è TUTTO il campo. Niente pad
+        // (noPad → body[data-nopad], che lo nasconde e azzera la riserva sotto al canvas).
+        flappy:    { dpad: [], actions: [], noPad: true, labels: {} }
     };
 
     // Legenda comandi da TASTIERA per la tabella desktop (a sinistra).
@@ -482,7 +485,8 @@
         superespo: [['◀ ▶', _h.run || 'Corri'], ['▲', _h.jump || 'Salta'], ['▼', _h.crouch || 'Abbassati'], ['X / F', _h.fireball || 'Palla di fuoco']],
         invaders:  [['◀ ▶', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
         centipede: [['◀ ▲ ▶ ▼', _h.move || 'Muovi'], [_sp, _h.fire || 'Spara']],
-        stack:     [['◀ ▶', _h.move || 'Muovi'], ['▲', _h.rotate || 'Ruota'], ['▼', _h.softDrop || 'Scendi'], [_sp, _h.hardDrop || 'Tuffo'], ['CLICK', _h.squash || 'Schiaccia i bug']]
+        stack:     [['◀ ▶', _h.move || 'Muovi'], ['▲', _h.rotate || 'Ruota'], ['▼', _h.softDrop || 'Scendi'], [_sp, _h.hardDrop || 'Tuffo'], ['CLICK', _h.squash || 'Schiaccia i bug']],
+        flappy:    [['TOCCO / ' + _sp, _h.flap || 'Vola']]
     };
 
     // Popola/aggiorna la tabella comandi (desktop). La visibilità è gestita via CSS
@@ -506,9 +510,9 @@
     window._arcadeRunningGame = null;    // gioco effettivamente avviato
 
     // Mappe funzioni per-gioco: build (costruisce schermo) + run (avvia) + exit (chiude)
-    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame', stack: 'initStackGame' };
-    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun', stack: 'startStackRun' };
-    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame', stack: 'exitStackGame' };
+    const GAME_BUILD = { snake: 'initSnakeGame', space: 'initSpaceGame', asteroids: 'startAsteroidsGame', superespo: 'startSuperEspoGame', invaders: 'startInvadersGame', centipede: 'startCentipedeGame', stack: 'initStackGame', flappy: 'initFlappyGame' };
+    const GAME_RUN   = { snake: 'startSnakeRun', space: 'startSpaceRun', asteroids: 'startAsteroidsRun', superespo: 'startSuperEspoRun', invaders: 'startInvadersRun', centipede: 'startCentipedeRun', stack: 'startStackRun', flappy: 'startFlappyRun' };
+    const GAME_EXIT  = { snake: 'exitSnakeGame', space: 'exitSpaceGame', asteroids: 'exitAsteroidsGame', superespo: 'exitSuperEspoGame', invaders: 'exitInvadersGame', centipede: 'exitCentipedeGame', stack: 'exitStackGame', flappy: 'exitFlappyGame' };
 
     // Chiude il gioco attualmente in esecuzione (se presente).
     window.exitArcadeCurrentGame = function () {
@@ -572,6 +576,11 @@
         if (!pad) return;
         const cfg = GAME_CONTROLS[gameKey];
         if (!cfg) return;
+
+        // Cabinati senza pad (un solo tocco): il token lo legge il CSS (body[data-nopad]) e
+        // nasconde il pad insieme alla riserva sotto al canvas.
+        if (cfg.noPad) document.body.dataset.nopad = '1';
+        else delete document.body.dataset.nopad;
 
         const dpadMap = { up: '.vp-up', down: '.vp-down', left: '.vp-left', right: '.vp-right' };
         Object.keys(dpadMap).forEach(dir => {
@@ -674,6 +683,7 @@
             window._arcadeRunningGame = null;
             // …e la forma del D-pad, che vale per il gioco che se n'è andato.
             delete document.body.dataset.dpad;
+            delete document.body.dataset.nopad;
         }
 
         // Keep selector visible (games try to hide it) — toggle preview instead
@@ -879,6 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.arcadeSfx = {
         shoot: function () { tone(880, 0.06, 'square', 0.07, 440); },
+        // Battito d'ala di Flappy Espòòò: un «pip» breve che sale.
+        flap: function () { tone(420, 0.07, 'triangle', 0.05, 700); },
         hit: function () { tone(200, 0.15, 'sawtooth', 0.09, 60); },
         explode: function () {
             const c = ctx(); if (!c) return;

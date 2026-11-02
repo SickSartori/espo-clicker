@@ -492,8 +492,10 @@
 
     /* Proporzioni allineate al desktop: il bottone era troppo stretto (~137px).
        Size stabile in tutti gli stati (anche cooldown) per evitare salti. */
+    /* min-width: sui telefoni stretti (320px) 210px andavano a toccare il pulsante mute,
+       fisso a sinistra (14px + 44px): si lascia ~62px per lato. */
     #skill-crunchTime {
-        min-width: 210px;
+        min-width: min(210px, calc(100vw - 132px));
         width: auto;
         padding: 14px 32px;
         font-size: 0.95rem;
@@ -1257,6 +1259,14 @@ button img {
     html body #version-display:hover {
         transform: none;
         box-shadow: none;
+    }
+
+    /* Telefoni bassi (≤ 620px d'altezza): il badge della versione, in flusso in fondo alla
+       colonna, finiva sotto la barra di navigazione. È un'informazione di contorno: sparisce. */
+    @media (max-height: 620px) {
+        html body #version-display {
+            display: none;
+        }
     }
 
     /* ---------------------------------------------------

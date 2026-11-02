@@ -1,0 +1,40 @@
+name: Tema
+description: Un aspetto nuovo per il gioco (stagionale, di una skin o globale)
+title: "Tema: "
+labels: ["tema"]
+body:
+  - type: input
+    id: nome
+    attributes:
+      label: Nome
+      placeholder: "Es. Primavera in ufficio"
+    validations:
+      required: true
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Che tipo di tema
+      options:
+        - Stagionale, a calendario (come Natale, Halloween, Compleanno)
+        - Legato a una skin (come Espobit)
+        - Globale, scelto dalle Opzioni (come il Vintage v1)
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Com'è fatto
+      description: Palette, font, sfondo, icone, mascotte. Quello che si vede.
+    validations:
+      required: true
+  - type: input
+    id: quando
+    attributes:
+      label: Quando
+      description: Per i temi stagionali, la finestra di date.
+      placeholder: "Es. 20 marzo – 5 aprile"
+  - type: input
+    id: riferimento
+    attributes:
+      label: Riferimento
+      description: Link o immagini di ispirazione.

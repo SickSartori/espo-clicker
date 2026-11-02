@@ -79,6 +79,7 @@ export const texts: Record<string, any> = {
         skinBought: "Skin Purchased: {name}!",
         skinClaimed: "Skin Claimed: {name}!",
         skinUnlock: "New Skin: {name}!",
+        themeVintage: "Vintage v1 theme on! Turn it off in Settings.",
         achievementUnlock: "🏆 Unlocked: {name}",
         rewardAvailable: " (Reward available!)",
         rewardClaimed: "Claimed: {message}",

@@ -104,8 +104,16 @@ body.theme-8bit #game-container {
     border: 2px solid #34495e;
     background-color: rgba(13, 17, 23, 0.95);
     box-shadow: 0 0 0 4px #000;
-    height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
+}
+
+/* L'altezza a misura della barra da 70px vale per il desktop. Sui telefoni la decide il
+   layout base (barra in alto 55px + barra in basso): lasciarla qui allungava il contenitore
+   sotto la barra di navigazione. */
+@media (min-width: 769px) {
+    body.theme-8bit #game-container {
+        height: calc(100vh - 70px);
+        max-height: calc(100vh - 70px);
+    }
 }
 
 /* Clicker button: quadrato con pseudo-elements */
@@ -344,7 +352,21 @@ body.theme-8bit #golden-bug {
     body.theme-8bit {
         padding-top: 55px;
     }
+}
 
+/* L'altezza ridotta vale solo da tablet in su. Sui telefoni (≤ 768px) il layout base sa già
+   quanto spazio lasciare alla barra di navigazione in basso: forzare qui calc(100vh - 55px)
+   allungava il contenitore di ~56px sotto la barra, e il bottone Espo Fury e il badge
+   della versione ci finivano sotto. */
+/* Sui telefoni la barra in alto è alta 55px come nel layout base (il body le lascia esattamente
+   quel posto): i 70px del tema la facevano scendere sul contenuto e rubavano 15px alla colonna. */
+@media screen and (max-width: 768px) {
+    body.theme-8bit #game-navbar {
+        height: 55px;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
     body.theme-8bit #game-container {
         height: calc(100vh - 55px);
         max-height: calc(100vh - 55px);

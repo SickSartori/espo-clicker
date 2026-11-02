@@ -26,7 +26,7 @@ if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
 		<meta name="msapplication-TileColor" content="#050505">
 		<meta name="msapplication-TileImage" content="assets/image/ico.svg">
 		<link rel="manifest" href="manifest.json">
-		<link rel="apple-touch-icon" href="assets/image/ico.svg">
+		<link rel="apple-touch-icon" sizes="180x180" href="assets/image/icons/apple-touch-icon.png">
 		<link rel="icon" type="image/svg+xml" href="assets/image/ico.svg">
 
 		<title>

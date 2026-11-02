@@ -1,0 +1,40 @@
+name: Problema
+description: Qualcosa non funziona come dovrebbe
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: cosa
+    attributes:
+      label: Cosa succede
+    validations:
+      required: true
+  - type: textarea
+    id: passi
+    attributes:
+      label: Come ci si arriva
+      description: I passaggi, dal più semplice.
+      placeholder: |
+        1. …
+        2. …
+  - type: textarea
+    id: atteso
+    attributes:
+      label: Cosa dovrebbe succedere
+  - type: input
+    id: versione
+    attributes:
+      label: Versione
+      description: Il numero in basso nel gioco (es. 3.3.0).
+  - type: input
+    id: dispositivo
+    attributes:
+      label: Dispositivo e browser
+      placeholder: "Es. iPhone 15, Safari — oppure PC, Chrome"
+  - type: dropdown
+    id: lingua
+    attributes:
+      label: Lingua del gioco
+      options:
+        - Italiano
+        - English
