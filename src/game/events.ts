@@ -48,6 +48,27 @@ export function goldenBugReward(D: DecimalCtor, input: GoldenBugInput): GoldenBu
   return { bonus };
 }
 
+// --- Golden Bug: dove compare ---
+export interface Box { left: number; top: number; right: number; bottom: number }
+
+/**
+ * Punto (in coordinate della finestra) dove far comparire il Ticket Critico, o null se non c'è spazio.
+ * `content` è il riquadro del contenuto di #clicker-section, cioè senza il padding: su desktop il padding
+ * in basso è la fascia del badge «Novità» e del link GitHub, fissi e sopra il bug. `visible` è la parte di
+ * finestra libera da barre fisse (su telefono la barra delle schede in basso). Il margine copre anche il
+ * vagare dell'animazione (±20px). Su telefono, con un'altra colonna aperta, la sezione misura 0×0: null,
+ * altrimenti il bug finirebbe nell'angolo in alto, sotto la barra.
+ * @param rx, ry  numeri fra 0 e 1 (Math.random)
+ */
+export function goldenBugSpot(content: Box, visible: Box, size: number, margin: number, rx: number, ry: number): { left: number; top: number } | null {
+  const left = Math.max(content.left, visible.left) + margin;
+  const top = Math.max(content.top, visible.top) + margin;
+  const spanX = Math.min(content.right, visible.right) - margin - size - left;
+  const spanY = Math.min(content.bottom, visible.bottom) - margin - size - top;
+  if (spanX < 0 || spanY < 0) return null;
+  return { left: left + rx * spanX, top: top + ry * spanY };
+}
+
 // --- Bonus giornaliero (login streak) ---
 /**
  * Nuovo streak: +1 se l'ultima riscossione era ieri, altrimenti riparte da 1.

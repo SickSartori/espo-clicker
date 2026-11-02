@@ -13,6 +13,7 @@ const w = window as any;
 import { store } from '../state/store';
 import { PRESTIGE_PERSISTENT_KEYS } from './prestige';
 import { ClickGuard } from './anticheat';
+import { goldenBugSpot } from './events';
 
 // Un solo guardiano per pagina: i click sul volto di Espò passano tutti da qui.
 const clickGuard = new ClickGuard();
@@ -2308,29 +2309,29 @@ function scheduleGoldenBug() {
 }
 
 function spawnGoldenBug() {
-    // Reset stato pulito (anim residue, classi)
-    w.goldenBug.classList.remove('visible', 'despawning', 'clicked');
-
-    const bugWidth = 64;
-    const bugHeight = 64;
-    const padding = 24;
-
     const targetArea = document.getElementById('clicker-section');
     if (!targetArea) return;
 
+    // Solo il contenuto della sezione: il padding in basso su desktop è la fascia di badge «Novità» e link
+    // GitHub, fissi e sopra il bug. E solo la finestra libera dalla barra delle schede del telefono.
     const rect = targetArea.getBoundingClientRect();
+    const cs = getComputedStyle(targetArea);
+    const content = {
+        left: rect.left + parseFloat(cs.paddingLeft),
+        top: rect.top + parseFloat(cs.paddingTop),
+        right: rect.right - parseFloat(cs.paddingRight),
+        bottom: rect.bottom - parseFloat(cs.paddingBottom),
+    };
+    const tabBar = document.getElementById('mobile-nav-bar')?.getBoundingClientRect();
+    const visible = { left: 0, top: 0, right: w.innerWidth, bottom: tabBar && tabBar.height > 0 ? Math.min(w.innerHeight, tabBar.top) : w.innerHeight };
+    const spot = goldenBugSpot(content, visible, 64, 24, Math.random(), Math.random());
+    // Niente spazio (telefono con un'altra colonna aperta): salta questo giro, ne arriva un altro
+    if (!spot) { scheduleGoldenBug(); return false; }
 
-    const maxX = rect.width - bugWidth - (padding * 2);
-    const maxY = rect.height - bugHeight - (padding * 2);
-
-    const randomX = Math.max(0, Math.random() * maxX);
-    const randomY = Math.max(0, Math.random() * maxY);
-
-    const finalLeft = rect.left + w.scrollX + padding + randomX;
-    const finalTop = rect.top + w.scrollY + padding + randomY;
-
-    w.goldenBug.style.left = `${finalLeft}px`;
-    w.goldenBug.style.top = `${finalTop}px`;
+    // Reset stato pulito (anim residue, classi)
+    w.goldenBug.classList.remove('visible', 'despawning', 'clicked');
+    w.goldenBug.style.left = `${spot.left + w.scrollX}px`;
+    w.goldenBug.style.top = `${spot.top + w.scrollY}px`;
 
     // Varietà: scegli il tipo di bug (effetto "cosa mi esce?")
     //   standard 70% · lucky 18% (ricompensa ×8) · frenzy 12% (buff click ×7 15s)
