@@ -4,6 +4,9 @@ require_once("php/check_version.php");
 require_once("php/launch-gate.php");
 // Gate lancio v3.0: prima del lancio, in produzione, serve SOLO il countdown.
 if (espo_countdown_active()) { include "includes/countdown.php"; exit; }
+// Area di test: sotto /test/ si entra solo con un account creato dall'admin (in produzione non fa niente).
+require_once("php/test-gate.php");
+espo_test_gate();
 // Cache-bust locale: in dev (localhost) usa timestamp per forzare il reload
 // degli asset arcade in iterazione (CSS/JS dedicati). In produzione resta la
 // versione stabile ($cacheVer) per sfruttare cache HTTP/SW.
