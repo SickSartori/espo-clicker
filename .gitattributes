@@ -1,0 +1,5 @@
+# Script Node in scripts/: sempre LF, anche su Windows.
+# Con core.autocrlf il cambio di ramo li riscriveva in CRLF, e con «#!/usr/bin/env node»
+# seguito da \r Vitest non li caricava più («Invalid or unexpected token» alla riga 1).
+scripts/*.mjs text eol=lf
+scripts/*.js  text eol=lf
