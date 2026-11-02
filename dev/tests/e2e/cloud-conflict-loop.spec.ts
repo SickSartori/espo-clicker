@@ -28,7 +28,9 @@ const badge = '#cloud-sync-badge';
 
 async function boot(page: Page): Promise<void> {
   await page.clock.install();
-  await page.goto('/index.php', { waitUntil: 'domcontentloaded' });
+  // Stagione spenta: l'avviso d'inizio evento («È arrivato Halloween!», il compleanno…)
+  // salva da solo appena compare, e un push in più falsa i conteggi di questi test.
+  await page.goto('/index.php?stagione=nessuna', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
     // _espoGameReady: il salvataggio locale è caricato (dal 3.2 loadGame aspetta la
     // guardia anti doppia scheda: senza, il caricamento finiva DOPO il setup del test).
