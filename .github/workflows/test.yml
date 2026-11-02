@@ -54,6 +54,9 @@ jobs:
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
           TRELLO_KEY:    ${{ secrets.TRELLO_KEY }}
           TRELLO_TOKEN:  ${{ secrets.TRELLO_TOKEN }}
+          # Admin dell'area di test (php/test-gate.php): facoltativi, senza /test/ resta chiuso.
+          TEST_ADMIN_USER:     ${{ secrets.TEST_ADMIN_USER }}
+          TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
         run: node scripts/generate-secrets.js
 
       # Step 2: Caricamento FTP
