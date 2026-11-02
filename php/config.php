@@ -18,7 +18,7 @@
 return [
     "instanceName" => "dev", // 'dev' o 'production'
     "prodHost" => "espooclicker.altervista.org", // dominio prod: dev-mode (errori/cheatboard) disattivato qui anche se instanceName='dev'. Aggiornare se si migra dominio.
-    "devVersion" => "3.2.0",
-    "prodVersion" => "3.2.0"
+    "devVersion" => "3.3.0",
+    "prodVersion" => "3.3.0"
 ];
 ?>
