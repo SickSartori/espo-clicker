@@ -1,8 +1,8 @@
-# Release notes 3.3 — bozza (non pubblicata)
+# Release notes 3.3 — bozza (applicata il 02/11/2026)
 
-> **Questa pagina non è letta dal gioco.** `release-notes_it.md` e `release-notes_en.md` alla radice non sono stati toccati.
+> **Applicata.** Il 02/11/2026 le note sono passate in `release-notes_it.md` e `release-notes_en.md` alla radice, con il bump a 3.3.0 e la promozione su test (come per la 3.2: note, bump, test). Da qui in poi **la fonte sono i file alla radice**; questa pagina resta per le note di lavoro qui sotto. Rispetto al testo qui sotto, i file alla radice hanno in più la riga del Ticket Critico sempre cliccabile (#28).
 >
-> **Come usarla.** I file alla radice contengono solo l'ultima versione (titolo `# 💥 … 💥` + un blocco `## Versione …`). A rilascio si sostituisce il blocco con uno dei due qui sotto, **nello stesso commit del bump** (`npm run release:minor`): dopo il deploy le note si leggono subito da «Note di rilascio», quindi incollarle prima sarebbe uno spoiler.
+> **Come usarla (prima).** I file alla radice contengono solo l'ultima versione (titolo `# 💥 … 💥` + un blocco `## Versione …`). A rilascio si sostituisce il blocco con uno dei due qui sotto, **nello stesso commit del bump** (`npm run release:minor`): dopo il deploy le note si leggono subito da «Note di rilascio», quindi incollarle prima sarebbe uno spoiler.
 >
 > **Da decidere / ricontrollare prima di incollare**
 > - Il **titolo**: proposto «Un Anno di Bug»; alternative «Candeline e Debito Tecnico», «Buon Compleanno, Bug».

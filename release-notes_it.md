@@ -1,24 +1,37 @@
 # 💥 Espòòò Clicker - Release Notes Ufficiali 💥
 
-## Versione 3.2: Dolcetto o Debito Tecnico? 🎃
+## Versione 3.3: Un Anno di Bug 🎂
 
-Halloween arriva in ufficio, dal 24 ottobre al 2 novembre.
+Il 17 novembre 2026 Espòòò Clicker compie un anno. Il regalo ti aspetta negli Obiettivi.
 
 ---
 
-### 🎃 Halloween in Ufficio
+### 🎂 Il Primo Compleanno
 
-* **🎭 Tre Travestimenti:** L'Espostore (gratis con l'obiettivo *Dolcetto o Scherzetto*), Frankenespò e il Conte Espòcula (10 Token durante l'evento).
-* **🕯️ Tema Nuovo:** zucche, ragnatele, lumini e qualche fantasma.
-* **🕷️ Il Bug Maledetto:** il Golden Bug si traveste anche lui.
-* **🎵 Musica Nuova:** il tema di Espò in versione Halloween, anche nel jukebox.
-* **🗓️ Non Sparisce Niente:** dopo l'evento i travestimenti restano in negozio a prezzo pieno.
+* **🎁 Il Regalo:** l'obiettivo *Primo Compleanno* si riscatta dal 17 novembre e non scade.
+* **📼 Tema Vintage v1:** nelle Opzioni, alla voce *Tema*, il gioco torna com'era: colori, font, sfondo e mascotte della prima versione, numeri alla v1 e icone in emoji. Lo spegni quando vuoi.
+* **🎭 Skin Con Il Loro Tema:** quelle che ne hanno già uno (come Espobit) restano come sono. Il Vintage si vede con tutte le altre.
+* **🔔 Un Annuncio Solo:** dal 17 al 30 novembre. Il regalo resta riscattabile anche dopo.
+
+---
+
+### 🧑‍🎤 Sette Nuove Skin
+
+* **🦺 Ingegnespo** (comune), **🎸 Espo Rammstein** (rara), **🚀 Espostronauta** e **🧝 The Legend of Espo** (epiche), **👑 Espoleon Bonaparte** e **🕶️ Albert Wespo** (leggendarie), **🔨 Dio Efespo** (divina).
+* **😱 Ognuna Reagisce:** ogni skin ha il suo frame click: scintille, uno scarabeo sulla visiera, occhi rossi, urla.
+* **🎫 7 Ticket:** con Albert Wespo l'Errore 404 può diventare un video da 12 secondi con moltiplicatore da x20 a x40.
+* **🪙 Prezzi:** dai 6 Token di Ingegnespo ai 150 di Dio Efespo. Albert Wespo e Dio Efespo chiedono almeno una Formattazione.
+
+---
+
+### 🕹️ Sala Giochi
+
+* **🐦 Flappy Espòòò:** un tocco (o SPAZIO), quindici secondi che partono dal primo battito. Vola fra i rack dei server, raccogli i bug e non toccare niente. Premio in bug come gli altri cabinati, e il record resta tuo.
 
 ---
 
 ### ✨ Anche
 
-* **🕹️ Bug Invaders** si traveste: fantasmi, zucche e lapidi.
-* **🏷️ Rarità Festiva** per tutte le skin delle feste, Espo Natale compreso.
-* **🗂️ Due Schede Aperte?** Ora ne salva una sola: l'altra va in pausa e riprende con un tocco.
-* **☁️ Salvataggi Cloud** più solidi, anche con punteggi enormi.
+* **📲 Si Installa Meglio:** icone adattive su Android, l'icona giusta su iPhone, schermate nel pannello di installazione e un invito a installare l'app nell'annuncio del compleanno.
+* **🧩 Bottoni Al Loro Posto:** Espo Fury, il badge Novità e il link GitHub non si sovrappongono più, nemmeno su finestre basse o nel tema 8-bit.
+* **🎯 Ticket Critico Sempre Cliccabile:** non compare più sotto il badge Novità, il link GitHub o le barre del telefono.
