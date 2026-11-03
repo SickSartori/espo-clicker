@@ -229,8 +229,8 @@ async function createTester(page: Page, name: string) {
   return (await page.locator('code.secret').textContent())!.trim();
 }
 
-/** Primo accesso di un tester (password scelta) e password di gioco che il login unico gli passerebbe. */
-async function gamePasswordOf(browser: any, name: string, temp: string) {
+/** Primo accesso di un tester (password scelta): il suo contesto e la password di gioco che il login unico gli passerebbe. */
+async function firstAccess(browser: any, name: string, temp: string) {
   const ctx: BrowserContext = await browser.newContext();
   await noBackend(ctx);
   const page = await ctx.newPage();
@@ -239,20 +239,23 @@ async function gamePasswordOf(browser: any, name: string, temp: string) {
   await page.fill('#tg-conf', name + '-pass-nuova');
   await Promise.all([page.waitForNavigation(), page.getByRole('button', { name: 'Salva e continua' }).click()]);
   const js = await (await ctx.request.get(BASE + '/php/test-access.php?seed=1', { headers: { 'Sec-Fetch-Site': 'same-origin' } })).text();
-  await ctx.close();
-  return /var P = "([^"]+)"/.exec(js)?.[1] ?? '';
+  return { ctx, game: /var P = "([^"]+)"/.exec(js)?.[1] ?? '' };
 }
 
-test('un tester eliminato e ricreato con lo stesso nome non ritrova l\'account di gioco di prima', async ({ page, browser }) => {
+test('un tester eliminato e ricreato con lo stesso nome: il vecchio non rientra e il nuovo non ritrova l\'account di gioco di prima', async ({ page, browser }) => {
   await login(page, ADMIN.user, ADMIN.pass);
-  const prima = await gamePasswordOf(browser, 'Luca', await createTester(page, 'Luca'));
+  const prima = await firstAccess(browser, 'Luca', await createTester(page, 'Luca'));
   page.once('dialog', (d) => d.accept());
   await page.goto(BASE + '/php/test-access.php');
   await Promise.all([page.waitForNavigation(), page.locator('tr', { hasText: 'Luca' }).getByRole('button', { name: 'Elimina' }).click()]);
-  const dopo = await gamePasswordOf(browser, 'Luca', await createTester(page, 'Luca'));
-  expect(prima.length).toBeGreaterThanOrEqual(8);
-  expect(dopo.length).toBeGreaterThanOrEqual(8);
-  expect(dopo).not.toBe(prima);
+  const dopo = await firstAccess(browser, 'Luca', await createTester(page, 'Luca'));
+  // stesso nome e, dopo il primo cambio password, stessa versione: il cookie di prima non deve valere
+  expect((await prima.ctx.request.get(BASE + '/index.php')).status(), 'cookie del Luca eliminato').toBe(401);
+  expect((await dopo.ctx.request.get(BASE + '/index.php')).status(), 'cookie del Luca nuovo').toBe(200);
+  expect(prima.game.length).toBeGreaterThanOrEqual(8);
+  expect(dopo.game).not.toBe(prima.game);
+  await prima.ctx.close();
+  await dopo.ctx.close();
 });
 
 test('senza il token del form un\'azione non passa', async ({ page }) => {

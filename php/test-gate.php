@@ -197,7 +197,7 @@ function tg_bootstrap(array &$st)
     if (isset($st['users'][$key]) && hash_equals((string) $st['admin_fp'], $fp)) {
         return;
     }
-    $user = $st['users'][$key] ?? array('name' => $cfg['user'], 'created' => time(), 'created_by' => 'deploy', 'ver' => 0, 'game_salt' => tg_new_game_salt());
+    $user = $st['users'][$key] ?? array('name' => $cfg['user'], 'created' => time(), 'created_by' => 'deploy', 'ver' => 0, 'game_salt' => tg_new_game_salt(), 'uid' => tg_new_game_salt());
     $user['hash'] = password_hash($cfg['password'], PASSWORD_DEFAULT);
     $user['role'] = 'admin';
     $user['must_change'] = false;
@@ -251,10 +251,15 @@ function tg_setcookie($name, $value, $expires)
     ));
 }
 
+/**
+ * Il cookie porta nome, versione e un id casuale dell'utente: senza l'id, un tester eliminato e
+ * ricreato con lo stesso nome ripartirebbe dalla stessa versione, e il cookie di chi c'era prima
+ * tornerebbe valido. Gli utenti creati prima del 03/11 non hanno id: vale come vuoto da entrambe le parti.
+ */
 function tg_login_cookie(array $st, $key)
 {
     $exp = time() + TG_TTL;
-    $payload = tg_b64(json_encode(array('u' => $key, 'v' => (int) $st['users'][$key]['ver'], 'e' => $exp)));
+    $payload = tg_b64(json_encode(array('u' => $key, 'v' => (int) $st['users'][$key]['ver'], 'i' => (string) ($st['users'][$key]['uid'] ?? ''), 'e' => $exp)));
     tg_setcookie(TG_COOKIE, $payload . '.' . hash_hmac('sha256', "auth|$payload", $st['secret']), $exp);
 }
 
@@ -275,6 +280,7 @@ function tg_current(array $st)
     $key = (string) ($data['u'] ?? '');
     $user = $st['users'][$key] ?? null;
     if (!$user || !empty($user['disabled']) || (int) $user['ver'] !== (int) ($data['v'] ?? -1)) return null;
+    if (!hash_equals((string) ($user['uid'] ?? ''), (string) ($data['i'] ?? ''))) return null;
     return array('key' => $key, 'user' => $user);
 }
 

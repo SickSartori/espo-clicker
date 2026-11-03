@@ -306,7 +306,7 @@ function tga_admin_action($action, array $me)
                 $st['users'][$target] = array(
                     'name' => $name, 'role' => 'tester', 'hash' => password_hash($temp, PASSWORD_DEFAULT),
                     'must_change' => true, 'disabled' => false, 'ver' => 1,
-                    'created' => time(), 'created_by' => $me['user']['name'], 'game_salt' => tg_new_game_salt(),
+                    'created' => time(), 'created_by' => $me['user']['name'], 'game_salt' => tg_new_game_salt(), 'uid' => tg_new_game_salt(),
                 );
                 return array('temp' => $temp, 'for' => $name, 'msg' => 'Creato «' . $name . '».');
             case 'reset':
