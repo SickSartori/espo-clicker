@@ -22,6 +22,8 @@ let server: ChildProcess;
 let dir: string;
 
 test.describe.configure({ mode: 'serial' });
+// Movimento ridotto: le pagine del cancello spengono animazioni e transizioni, e i click non aspettano che il pulsante smetta di muoversi.
+test.use({ reducedMotion: 'reduce' });
 
 /** Server PHP col cancello acceso; `env` sceglie admin e archivio. Risolve quando risponde. */
 async function startServer(port: number, env: Record<string, string>): Promise<ChildProcess> {
@@ -50,7 +52,12 @@ test.beforeAll(async () => {
 // Mai una chiamata vera al backend: col login unico il gioco farebbe login-register sul progetto
 // Supabase di sviluppo vero, e ci creerebbe gli account dei test. Vale per ogni contesto dello spec;
 // le risposte finte di gameRoutes stanno sopra (le route della pagina vincono su quelle del contesto).
-const noBackend = (ctx: BrowserContext) => ctx.route('**/functions/v1/**', (r) => r.abort());
+// Font e icone delle pagine del cancello vengono da fuori (Google Fonts, Font Awesome): qui non servono
+// e ogni pagina li aspetterebbe. Le librerie del gioco (gsap, howler) restano.
+const noBackend = async (ctx: BrowserContext) => {
+  await ctx.route('**/functions/v1/**', (r) => r.abort());
+  await ctx.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|\/font-awesome\//, (r) => r.abort());
+};
 test.beforeEach(async ({ context }) => { await noBackend(context); });
 
 test.afterAll(async () => {
@@ -107,7 +114,7 @@ test('l\'admin entra, crea un tester e ne vede la password temporanea una volta 
 });
 
 test('il tester al primo accesso deve cambiare password, poi entra nel gioco', async ({ browser }) => {
-  testerCtx = await browser.newContext();
+  testerCtx = await browser.newContext({ reducedMotion: 'reduce' });
   await noBackend(testerCtx);
   const page = await testerCtx.newPage();
   await login(page, 'mario', tempPassword, '/index.php');   // il nome non bada alle maiuscole
@@ -231,7 +238,7 @@ async function createTester(page: Page, name: string) {
 
 /** Primo accesso di un tester (password scelta): il suo contesto e la password di gioco che il login unico gli passerebbe. */
 async function firstAccess(browser: any, name: string, temp: string) {
-  const ctx: BrowserContext = await browser.newContext();
+  const ctx: BrowserContext = await browser.newContext({ reducedMotion: 'reduce' });
   await noBackend(ctx);
   const page = await ctx.newPage();
   await login(page, name, temp);
@@ -279,7 +286,7 @@ test('disattivato: non entra nemmeno con la password giusta', async ({ page, bro
   await login(page, ADMIN.user, ADMIN.pass);
   await Promise.all([page.waitForNavigation(), page.locator('tr', { hasText: 'Mario' }).getByRole('button', { name: 'Disattiva' }).click()]);
   await expect(page.locator('tr', { hasText: 'Mario' })).toContainText('disattivato');
-  const otherCtx = await browser.newContext();
+  const otherCtx = await browser.newContext({ reducedMotion: 'reduce' });
   await noBackend(otherCtx);
   const other = await otherCtx.newPage();
   await login(other, 'mario', tempPassword);
