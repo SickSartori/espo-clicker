@@ -57,7 +57,13 @@ export function formatNumber(value: NumericInput, suffixes: readonly string[]): 
   if (p.exponent < 3) {
     const val = p.mantissa * Math.pow(10, p.exponent);
     if (Number.isInteger(val)) return val.toLocaleString('it-IT');
-    return val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // Due decimali solo se dicono qualcosa: il punteggio cresce a frazioni di bug, e
+    // 461,003 diventava «461,00» (si vedeva col tema Vintage, dove il numero non passa
+    // dall'animazione che tronca). «0,10 BPS» e «999,50» restano come sono.
+    const fixed = val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (!fixed.endsWith(',00')) return fixed;
+    const whole = fixed.slice(0, -3);
+    return whole === '-0' ? '0' : whole;
   }
 
   // Suffisso disponibile (k, M, B, T, ...)

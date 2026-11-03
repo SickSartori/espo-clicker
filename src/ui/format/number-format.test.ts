@@ -23,6 +23,14 @@ describe('formatNumber', () => {
     expect(formatNumber(0.5, SUFFIXES)).toBe('0,50');
   });
 
+  it('decimali che a due cifre fanno «,00» → niente decimali (il punteggio cresce a frazioni)', () => {
+    expect(formatNumber(461.003, SUFFIXES)).toBe('461');
+    expect(formatNumber(0.001, SUFFIXES)).toBe('0');
+    expect(formatNumber(-0.001, SUFFIXES)).toBe('0');
+    expect(formatNumber(12.999, SUFFIXES)).toBe('13');
+    expect(formatNumber(0.1, SUFFIXES)).toBe('0,10');   // i decimali veri restano
+  });
+
   it('suffissi a gruppi di 3 ordini', () => {
     expect(formatNumber(1000, SUFFIXES)).toBe('1,00 k');
     expect(formatNumber(1234, SUFFIXES)).toBe('1,23 k');
@@ -87,6 +95,7 @@ describe('formatNumberV1 — formato «alla v1» del tema Vintage', () => {
     expect(formatNumberV1(163, SUFFIXES)).toBe('163');
     expect(formatNumberV1(0.1, SUFFIXES)).toBe('0,10');
     expect(formatNumberV1(999.5, SUFFIXES)).toBe('999,50');
+    expect(formatNumberV1(461.003, SUFFIXES), 'il punteggio del tema Vintage: niente «,00»').toBe('461');
     expect(formatNumberV1(-5, SUFFIXES)).toBe('-5');
   });
   it('da 1000 in su: intero completo coi punti, floor, senza suffissi', () => {

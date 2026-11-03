@@ -210,6 +210,43 @@ test.describe('Flappy Espòòò', () => {
     await expect(page.locator('#flappy-overlay')).toContainText('TEMPO');
   });
 
+  /** Mette un orologio sulla traiettoria di Espò e fa un passo: lo raccoglie. */
+  const prendiOrologio = (page: Page) => page.evaluate(() => {
+    const d = (window as any).__flappyDebug;
+    const s = d.state();
+    d.setGates([{ x: s.playerX - 10, gapY: s.y + 10, gap: 220, clock: true }]);
+    d.setY(d.state().y, 0);
+    d.step(0.02);
+    d.setGates([]);   // via il varco: il resto della partita è aria libera
+  });
+
+  test('OROLOGIO: dà +3 secondi, e la partita va oltre i 15 e finisce a 18', async ({ page }) => {
+    await bootFlappy(page);
+    await page.keyboard.press('Space');
+    await prendiOrologio(page);
+    let s = await stato(page);
+    expect(s.clocks, 'orologio raccolto').toBe(1);
+    expect(s.extra).toBe(3);
+    expect(s.score, 'l\'orologio non dà punti').toBe(0);
+    await avanza(page, 15.3);
+    s = await stato(page);
+    expect(s.phase, 'oltre i 15 secondi si gioca ancora').toBe('playing');
+    await avanza(page, 2.9);
+    s = await stato(page);
+    expect(s.phase).toBe('over');
+    expect(s.reason).toBe('time');
+    expect(s.t).toBeCloseTo(18, 5);
+  });
+
+  test('OROLOGIO: il tempo in più si ferma a 30 secondi', async ({ page }) => {
+    await bootFlappy(page);
+    await page.keyboard.press('Space');
+    for (let i = 0; i < 12; i++) await prendiOrologio(page);
+    const s = await stato(page);
+    expect(s.clocks).toBe(12);
+    expect(s.extra, '12 orologi da 3 secondi, ma il tetto è 30').toBe(30);
+  });
+
   test('il tempo NON scorre prima del primo tocco, nemmeno col ciclo che gira', async ({ page }) => {
     await bootFlappy(page, { live: true });
     await page.waitForTimeout(700);   // il ciclo rAF gira davvero

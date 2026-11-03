@@ -305,7 +305,7 @@
 	$labels["arcade_desc_superespo"] = "Un endless platformer per veri pro. Corri, salta, schiaccia i Goomba-Bug e sopravvivi ai loop per farmare tonnellate di Bug!";
 	$labels["arcade_desc_invaders"] = "Difendi i bunker, abbatti lo sciame di alieni-bug prima che ti raggiunga.";
 	$labels["arcade_desc_centipede"] = "Distruggi il centopiedi-bug nel campo dei funghi prima che ti raggiunga al suolo.";
-	$labels["arcade_desc_flappy"] = "Un solo tocco, quindici secondi. Vola fra i rack dei server, raccogli i bug e non toccare niente.";
+	$labels["arcade_desc_flappy"] = "Un solo tocco, quindici secondi, e gli orologi per averne di più. Vola fra i rack dei server, raccogli i bug e non toccare niente.";
 	$labels["arcade_desc_stack"] = "Impila il codice e spedisci le righe. Il debito tecnico risale dal fondo e i bug bloccano le righe: schiacciali col click.";
 	$labels["arcade_keys_dir"] = "Tasti Direzionali:";
 	$labels["arcade_rotate"] = "Ruota / Accelera";
@@ -341,14 +341,14 @@
 	$labels["arcade_g_superespo_desc"] = "Endless platformer. Corri, salta, schiaccia i Goomba-Bug.";
 	$labels["arcade_g_invaders_desc"] = "Difendi i bunker, abbatti lo sciame di alieni-bug.";
 	$labels["arcade_g_centipede_desc"] = "Distruggi il centopiedi nel campo dei funghi.";
-	$labels["arcade_g_flappy_short"] = "Un tocco, 15 secondi";
-	$labels["arcade_g_flappy_desc"] = "Un solo tocco per volare fra i rack dei server. Hai quindici secondi.";
+	$labels["arcade_g_flappy_short"] = "Un tocco, 15 secondi + orologi";
+	$labels["arcade_g_flappy_desc"] = "Un solo tocco per volare fra i rack dei server. Hai quindici secondi, e ogni orologio ne aggiunge tre.";
 	$labels["arcade_g_stack_short"] = "Impila, spedisci, schiaccia";
 	$labels["arcade_g_stack_desc"] = "Impila il codice e spedisci le righe, prima che il debito ti sommerga.";
 
 	/* Flappy Espòòò — testi in partita */
-	$labels["arcade_flappy_tagline"] = "Un tocco per volare, quindici secondi";
-	$labels["arcade_flappy_hint"] = "Tocca (o SPAZIO) per volare. Il tempo parte al primo tocco.";
+	$labels["arcade_flappy_tagline"] = "Un tocco per volare, quindici secondi: gli orologi ne danno altri";
+	$labels["arcade_flappy_hint"] = "Tocca (o SPAZIO) per volare. Il tempo parte al primo tocco; ogni orologio vale +3 secondi.";
 	$labels["arcade_flappy_tap"] = "TOCCA PER INIZIARE";
 	$labels["arcade_flappy_gates"] = "VARCHI";
 	$labels["arcade_flappy_time_up"] = "TEMPO!";

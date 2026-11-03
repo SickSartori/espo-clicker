@@ -25,7 +25,7 @@ On November 17, 2026 Espòòò Clicker turns one. To celebrate, the game goes ba
 
 ### 🕹️ Arcade
 
-* **🐦 Flappy Espòòò:** one tap (or SPACE), fifteen seconds that start on your first flap. Fly between the server racks, grab the bugs and touch nothing. Bug rewards like the other cabinets, and the record stays yours.
+* **🐦 Flappy Espòòò:** one tap (or SPACE), fifteen seconds that start on your first flap, and every clock in the gaps adds three more. Fly between the server racks, grab the bugs and touch nothing. Bug rewards like the other cabinets, and the record stays yours.
 
 ---
 
