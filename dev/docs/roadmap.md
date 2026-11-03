@@ -1,6 +1,6 @@
 # Roadmap post-3.0 — Espòòò Clicker
 
-> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1** · **3.2 uscita il 20/10/2026; valutazione della 3.3 aperta lo stesso giorno** (sezione v3.3).
+> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1** · **3.2 uscita il 20/10/2026; valutazione della 3.3 aperta lo stesso giorno** (sezione v3.3) · **valutazione della 4.0 il 03/11/2026**: quattro proposte nuove, taglio e decisioni (sezione v4.0).
 > **Orizzonte**: fino alla **4.0** (aprile 2027). Le due date fisse sono il **17 novembre 2026** (primo compleanno) e **aprile 2027**.
 > **Regola arcade**: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne *(lezione Phaser/Super Espò)*.
 > **Dove si trova cosa**: le release future sono raggruppate per fase qui sotto; il consuntivo della 3.1 è in fondo, in Archivio.
@@ -211,6 +211,179 @@ Dalla 3.5 alla 4.0 restano ~8 settimane piene, su una base già ripulita dal ref
   2. **Fallback 2D sempre disponibile**: la vista 3D è un tab/toggle opzionale, il gioco resta identico senza
   3. three.js **bundlato con Vite**, mai da CDN *(lezione Phaser/Super Espò)*
   4. Scope: **low-poly, 11 stadi e basta**. Animazioni della mascotte, meteo, personalizzazione dell'ufficio → 4.x
+
+> 🔎 **Valutazione del 03/11/2026 — quattro proposte nuove, sommate al piano.** Fatta sul codice di `develop` (`5cfa67b`). Le proposte: **bilanciamento e classifica**, **librerie e meno ripetizione**, **migrazione da Altervista**, **ridisegno multi-dispositivo**. Sopra restano intatte le voci già decise (ufficio 3D, bug 3D, Boss Bug, BUGDOOM, vincoli). Per ogni proposta c'è il verdetto; poi il **taglio** e le **decisioni aperte**. In breve: delle quattro, **solo il ridisegno sta bene nella 4.0**. Il bilanciamento appartiene al cambio di stagione e ha un pezzo urgente da fare subito; librerie e hosting sono fili che attraversano più release.
+
+#### 1. Bilanciamento e classifica — «si arriva sul podio in poco»
+
+🔎 **Le cause sono tre, e solo una è la curva.**
+
+- 🔴 **a) La chiave principale della classifica non è verificata dal server.** Va corretto adesso, nella 3.3 o in una 3.3.x, non nella 4.0. *I dettagli stanno fuori dal repo, che è pubblico.*
+  - `get-leaderboard` (EF, fuori repo) ordina per `total_formattazioni`, poi `prestige_level`, poi `score`: una formattazione in più batte qualunque punteggio. Ed è proprio la chiave meno controllata.
+  - Il lavoro ha due parti:
+    - **guardie lato client**, dentro le funzioni che spendono e non solo nella UI: è la stessa classe del bug `maxLevel` della 3.1. ✅ **Fatte il 03/11**: la regola vive in `game/prestige.ts` (`canPromote`, `canFormat`, `FORMAT_MIN_RESETS`), la leggono sia la UI che la logica, ed è protetta da `prestige-guard.spec.ts` (3 test, verificato al contrario);
+    - una **verifica di plausibilità lato server**: formattazioni e promozioni devono essere coerenti col punteggio, e il punteggio coerente col tempo trascorso.
+  - **Prima solo log**, come già deciso per l'anticheat server (sezione 3.3). Questo punto lo **anticipa e lo riordina**: l'anticheat della 3.3 guarda lo `score`, che è la terza chiave della classifica; la prima va protetta prima.
+- **b) La metrica premia chi resetta per primo.** Con l'ordine Format > Prestige > Score la gara è «chi formatta per primo», non «chi gioca meglio». In più Season 1 ha **21 giocatori in classifica**, e **solo 5 hanno mai formattato** (dati del 03/11, sotto): con così pochi giocatori il podio costa poco con qualunque curva. Due difetti tecnici da sistemare comunque:
+  - `score` è `TEXT`, quindi il DB non lo sa ordinare. L'EF ordina in JS **dopo** il `limit(100)`: oltre le 100 righe, il taglio fra chi ha le stesse formattazioni e promozioni è arbitrario.
+  - `parseFloat` oltre 1,8e308 dà `Infinity`. È un problema per l'«economia inflazionata» prevista dalla 3.5.
+- **c) La curva oggi non si misura.** Ogni ritocco è stato una reazione a una segnalazione: Bug Bounty e Q-bit il 07/08, la base del Bug Bounty il 25/08. La simulazione «wrap06» citata in `logic.ts:1026` non è nel repo. Le formule però sono già pure, con Decimal iniettato (`src/game/economy.ts`, `prestige.ts`).
+  - **Simulatore headless**: un bot che compra per miglior rendimento, clicca a ritmo umano e prende gli eventi nella media. Misura il tempo alla 1ª promozione, alla 20ª e alla 1ª formattazione.
+  - Serve a due cose: tarare su **obiettivi scritti** (es. «la 1ª formattazione non prima di X ore di gioco attivo») e fare da **test vitest** che fallisce se una modifica sfonda quel tetto. Oggi questa guardia manca.
+  - Stima ~3-4 giorni.
+  - ⚠️ `logic.ts:1042` ha **la sua copia** di `applyBonusSoftcap`, gemella di quella in `economy.ts`. Il simulatore deve usare le funzioni che usa il gioco: prima si unificano.
+- 📊 **I dati di produzione** (03/11, Season 1, aggregati e senza nomi).
+  - **21 giocatori in classifica.** 14 non hanno mai promosso, e 12 hanno giocato meno di 20 minuti. Solo 7 hanno almeno una promozione, e 5 almeno una formattazione.
+  - **Il podio si prende con 2 formattazioni**: la gara vera è fra 5 persone. È la causa (b) più di ogni altra.
+  - **La curva.** Chi gioca attivamente a ritmo umano (1-3 click al secondo di media) va a **~9-16 minuti per promozione** di gioco attivo (contando almeno 20 promozioni per formattazione). Una prima formattazione è arrivata in **meno di 6 ore di gioco attivo, a 3 giorni dal lancio**. Per un idle con stagioni da 6 mesi è corto: il finale di Season 1 si raggiunge in un fine settimana.
+  - **Il click scala coi BPS, quindi la velocità di click moltiplica il progresso.** Mano Bionica aggiunge l'1-2% dei BPS a ogni click, e la combo vale fino a +100%. A 2-3 click/s è un ritocco; con un autoclicker diventa più di un BPS in più al secondo. I passi più rapidi nei dati si spiegano così, oppure col gioco idle (accessi brevi e progresso offline). Il ClickGuard della 3.2 taglia i ritmi da macchina e i click sopra i 20/s, **ma un autoclicker con ritmo irregolare sotto i 20/s passa ancora**, ed è ~7 volte la media umana. Due leve da valutare col simulatore:
+    - un tetto **sostenuto**, misurato su un minuto, più basso del tetto istantaneo di 20/s;
+    - un bonus di Mano Bionica che non cresce in linea con la frequenza dei click. È la causa (c), e il numero da cui partono gli obiettivi da scrivere.
+  - ⚠️ «Ore di gioco» (`totalPlayTime`) conta solo il tempo col gioco aperto. Il progresso offline (fino a 12 h per assenza, resa dal 30% al 100%) fa salire il punteggio ma non le ore: il passo per ora di gioco è un **limite superiore**, non la velocità vera.
+  - Il simulatore serve anche al server: il passo più veloce che un giocatore ottimale può tenere è la soglia naturale per la verifica di plausibilità del punto (a).
+- **Quando.** La correzione (a) va fatta subito. Metrica e curva (b, c) vanno nella **3.5**, dove ci sono già il wipe di Season 2 e l'«economia ritoccata». La 4.0 di aprile cade **a metà Season 2**: cambiare regole a stagione in corso è ingiusto per chi è in classifica. Quindi questo punto **esce dalla 4.0**, a meno di spostare il wipe; l'alternativa è Season 3, ad agosto 2027. Il simulatore deve essere pronto prima della 3.5, cioè a gennaio.
+
+#### 2. Librerie e meno ripetizione
+
+🔎 **Il numero di file è il bersaglio sbagliato.**
+
+- **I numeri.** Su 521 file tracciati, ~208 sono binari (immagini, audio, video) e 60 sono test. Il taglio realistico è di **~32-35 file (~7%)**. E il filo del refactor di `boot.ts` i file li **aumenta**: spezzare file da 2.700 righe è la cosa che migliora di più la manutenzione.
+- **Il vero bersaglio**: meno **codice duplicato** e meno **sistemi paralleli**. Contati così, i margini sono di ~1.500-1.800 righe.
+- **Moduli interni, non dipendenze nuove.** La regola resta la stessa: tutto bundlato con Vite, zero CDN.
+
+In ordine di resa:
+
+1. **Kit arcade e registro unico dei giochi.**
+   - Ogni cabinato riscrive 140-180 righe di ciclo di vita (~1.275 in tutto): schermata d'avvio, uscita, game over col premio BPS × punteggio × 5%, record, HUD, limitatore a 60 FPS. In `arcade/*/js` ci sono 348 righe identiche.
+   - La lista dei giochi è ripetuta in **9 posti**: `arcade-loader.ts`, sei tabelle in `arcade-page.js`, `arcade.php`, `modals_arcade.php` e il test di coerenza. Il `GIOCHI` di `arcade-consistency.test.ts:21` è già indietro: **6 cabinati su 8**.
+   - ~26 `playSound` nei giochi non suonano, perché lo stub di `arcade-page.js` li ignora.
+   - Resa stimata **~−700 righe nette**.
+   - ⚠️ Il premio di Super Espò si moltiplica per il livello, quindi il kit deve accettare una funzione premio.
+   - ⚠️ asteroids, centipede e invaders dimensionano il canvas da `innerWidth`. Uniformarli cambia il gioco e rende i record non più confrontabili: decisione del proprietario.
+   - ⚠️ `arcade/**` è servito raw e versionato con `$cacheVer`: un file condiviso nuovo arriva solo con il bump.
+   - **Il momento giusto**: prima di Q\*Bert (3.5) e BUGDOOM (4.0), così i due cabinati nuovi nascono sul kit invece di copiare il boilerplate.
+2. **Il modale arcade morto e il CSS arcade.**
+   - `#arcade-modal` non lo apre più nessuno: il pulsante fa `window.open('arcade.php')`. Si possono togliere `includes/modals_arcade.php` (già segnalato nella 3.3), ~80 righe in `ui/modals/index.ts` e 16 selettori `:not(#arcade-modal)`.
+   - `styles/base/modals-arcade.css` (406 righe) **arriva a ogni visitatore di `index.php`**.
+   - Gli 8 CSS per gioco si fondono in uno: −8 richieste. Prima però vanno spostati `.arcade-btn` e `.arcade-ui-overlay`, che oggi vivono solo in `snake.css`.
+   - Rischio basso.
+3. **i18n: oggi i sistemi sono quattro.**
+   - PHP `$labels` (292 chiavi × 2 lingue);
+   - l'italiano dentro `src/data/*.ts`, con l'overlay `src/data/en/` (7 file);
+   - `ARCADE_TXT` scritto a mano in `arcade.php:173`, più 48 ripieghi in italiano nei giochi;
+   - ~22 ternari `isEn ?` sparsi.
+   
+   In più, `arcade-page.js` ha una **copia** di `formatNumber`, con una sua tabella di suffissi. **Unificarli è lo stesso lavoro che stacca il frontend dal PHP** (punto 3): un dizionario unico, letto al build. Una sola libreria i18n paga due proposte.
+4. **CSS: il debito è la specificità, non la ripetizione dei temi.**
+   - I numeri: **1.146 `!important`** (1.009 in `styles/ui/desktop`), 931 prefissi `html body`, 222 selettori definiti in più strati, `#clicker-btn` stilato in 11 file.
+   - `tokens.css` dichiara che i temi cambiano solo variabili, ma nessuno lo fa: 75 delle sue 95 variabili non sono mai usate.
+   - Una «libreria di temi» invece **non serve**: 165 selettori su ~214 sono propri di un solo tema.
+   - È il lavoro del punto 4: si fa col ridisegno.
+5. **PHP.**
+   - ~17 copie di errore → `json_encode` → `exit`;
+   - una catena di bootstrap di 4 file (101 righe) che legge `config.php` due volte;
+   - 4 `tab_*.php` quasi identici;
+   - i due template di config legacy.
+   
+   Fanno −9/−11 file, ma **se si migra l'hosting il PHP sparisce comunque**: qui vanno fatte solo le cancellazioni, senza investire in helper.
+6. **Asset doppi.** **7 tracce** di `music/songs/` sono identiche, byte per byte, a quelle di `assets/sounds/music/` (verificato con md5 il 03/11: Divine, V1, V2, Freddy Espory, Halloween, 8 Bit, Super Espò). A queste si aggiungono `music/ico.svg` e il suono di game over dell'arcade. ⚠️ Espofy ricava i nomi mostrati e le chiavi R2 dai nomi dei file.
+7. **e2e.**
+   - 12 spec su 27 non usano `helpers.ts`;
+   - il boot dell'arcade è copiato in 5 spec, quello di `index.php` in 7.
+   
+   Bastano `bootArcade(page, gioco)`, un `bootGame` con opzioni e `waitCrtSettled`: ~−130 righe.
+8. **Lo strato `window`.**
+   - I numeri: 117 assegnazioni `w.X =`, 1.048 letture, 165 guardie `typeof … === 'function'`, e lo shim «TEMPORANEI» di `logic.ts:2481`, che espone su `window` ~40 funzioni di gioco anche in produzione.
+   - Chiuderlo è il seguito naturale del refactor di `boot.ts`, ma il rischio è alto. E il contratto `window.EspooClicker` verso `arcade/` e `js/` (191 riferimenti) resta comunque.
+   - Pezzi piccoli e sicuri: esportare `openModal`/`closeModal`, oggi riscritti in `boot.ts` e `logic.ts` (~−60 righe); il blocco chiamata → json → stato → avviso ripetuto 6 volte in `ui/modals/index.ts`.
+
+**Non vale la pena**:
+- **Sprite sheet delle skin** (47 coppie normale/click): `imgClick` è usato in 9 file TS e in molte regole CSS. Meglio ricavare dagli id di `skins.ts` gli 89 percorsi elencati a mano in `asset-packages.ts` (~−120 righe).
+- **Atlas di Super Espò**: le immagini sono usate una per una dal CSS del tema.
+
+**Quando.**
+- **3.4** (nessun cabinato nuovo, retint di Snake): kit arcade, modale morto, CSS arcade unico.
+- **3.5**: i18n unica, insieme allo stacco dal PHP.
+- **4.0**: CSS, col ridisegno.
+- Lo strato `window` resta nel filo del refactor.
+
+#### 3. Migrazione da Altervista
+
+🔎 **Il guadagno c'è ma è soprattutto operativo, e il prezzo sta tutto nel PHP che fa da template.**
+
+- **Cosa si guadagna:**
+  - niente più TTFB di `index.php` fra 63 ms e 4,4 s (`sw.js:263`), né `ERR_CONNECTION_RESET` aggirati con lotti da 2 (`sw.js:12`, `asset-manager.ts:19-27`, che dice già «rilassare al cutover»);
+  - deploy atomici al posto dell'FTP, che non cancella mai i file remoti;
+  - un'anteprima per ramo al posto di `/test/`;
+  - header veri (CSP, HSTS), che oggi non ci sono;
+  - lo stesso account di R2.
+- **Cosa si paga:**
+  - i18n e template in PHP (13 file, 292 etichette × 2 lingue) da spostare al build;
+  - il gate di `/test/`, l'unico PHP con stato;
+  - la firma R2 (`get_asset_urls.php`, `music/get_songs.php`) e `trello-submit.php` da portare su funzioni;
+  - `manifest.json` e `sw.js` che puntano a `index.php`;
+  - le origini Altervista scritte in `config.php`, nella CORS di R2 e in `main.yml:158`;
+  - il server degli e2e, che oggi è PHP.
+  - ⚠️ Su un host statico un `.php` finito per sbaglio nell'output si serve **come sorgente**: si pubblica una cartella di build curata, non la radice.
+- **Dove andare:**
+  - **Cloudflare Pages** è il candidato naturale, perché R2 è già lì. Le richieste agli asset statici non si contano; le Functions consumano la quota gratuita dei Workers (100.000 richieste al giorno, 10 ms di CPU per invocazione).
+  - **Netlify** è passato ai crediti (aprile 2026), e sul piano gratuito il sito **si mette in pausa** quando finiscono: non va bene per un gioco.
+  - **GitHub Pages** non ha funzioni né header.
+  - *Limiti da riverificare al momento del passaggio.*
+- **Già fatto:** routing R2 slegato dall'host (`840fa51`, `src/lib/host-env.ts`), scelta di Supabase in JS (`src/lib/env.ts`), cheatboard decisa in `backend-config.ts`, `base: ''` in Vite. **Manca il pezzo grosso**: l'i18n fuori dal PHP, che è già il «filo» della 3.5.
+- **Pulizie che valgono a prescindere:**
+  - `php/launch-gate.php` è inerte dal 03/08 e si può togliere;
+  - il segreto del bypass sta in un file tracciato di un repo pubblico: va via insieme al gate;
+  - `README.md:204`, `secrets-load.php` e questa roadmap (Fase 0) dicono ancora che `secrets.php` si carica a mano, ma lo genera la CI.
+- **Quando.** **Mai insieme a una release di contenuti.** È un passaggio a sé, da fare dopo che la 3.5 ha staccato l'i18n dal PHP: fra 3.5 e 4.0 se avanza tempo, altrimenti in una 4.0.x.
+
+#### 4. Ridisegno multi-dispositivo
+
+🔎 **I layout oggi sono due, non tre, e fra i due c'è un buco.**
+
+- **Telefono ≤768, desktop ≥769.**
+  - `styles/mobile.css` è scritto per ≤1024 (`:2`), ma è caricato con `media="(max-width: 768px)"` (`index.php:68`).
+  - Il JS invece ragiona a 1024: `boot.ts:2006` e `:2047`, `logic.ts:1278`.
+  - Fra 769 e 1024 il JS è quindi in modalità telefono e il CSS in modalità desktop, con la barra mobile nascosta. Le tre colonne chiedono 920 px minimi: fra 769 e ~919 la colonna destra probabilmente si taglia (*letto dal codice, non renderizzato*). È il «buco breakpoint tablet» di `ui.md:99`.
+- **Il resto:**
+  - un telefono in orizzontale riceve il layout desktop a 13 px (solo l'arcade ha regole di orientamento);
+  - sopra i 1920 px non c'è nessuna regola;
+  - 0 container query;
+  - **1.145 `!important`** in `styles/`, di cui 182 in super-theme, 148 in account-modal, 141 in settings e 132 in skins.
+- **Test.** Playwright ha un solo progetto, Desktop Chrome. `layout-overlap.spec.ts` salta ciò che è fuori schermo, quindi un taglio non lo vede. Non coprono tablet, 1024×768, sopra 1440, orizzontale o WebKit.
+- **Proposta:**
+  - **una sola fonte per le soglie**, condivisa da CSS e JS (oggi convivono 768, 900 e 1024);
+  - **tre layout**: telefono, tablet/orizzontale (due colonne, o una colonna più la barra) e desktop con contenitore massimo;
+  - font di `:root` con `clamp()` al posto dei gradini in altezza;
+  - progetti Playwright tablet, orizzontale, wide e WebKit, con un'asserzione di overflow orizzontale.
+  - È anche il momento giusto per il P1 di `ui.md` (custom properties al posto della guerra di `!important`): rifare i fogli e poi riconsolidarli sarebbe due volte lo stesso lavoro.
+- **Legame col 3D.** L'ufficio 3D ha bisogno di spazio: sul telefono è una vista a tutto schermo, su tablet e desktop un pannello. Va progettato **insieme al ridisegno o dopo**, mai prima: incastrato nelle tre colonne di oggi, andrebbe rifatto.
+- **Quando.** **Nella 4.0**: è l'unica delle quattro proposte che ci sta per natura. Insieme al 3D, però, non entra nelle ~8 settimane: vedi il taglio.
+
+#### Taglio proposto
+
+| Quando | Cosa |
+|---|---|
+| **3.3 / 3.3.x** (novembre) | 🔴 Guardie lato client + verifica di plausibilità lato server sulla classifica (solo log); via il launch-gate e il suo segreto |
+| **3.4 → gennaio** | Simulatore dell'economia (con unificazione di `applyBonusSoftcap`); kit arcade + registro unico dei giochi, via il modale arcade morto, CSS arcade unico |
+| **3.5** | Metrica di classifica e curva di Season 2 tarate col simulatore; **i18n unica e fuori dal PHP** (già nel filo «staccare il frontend dai PHP includes»); Q\*Bert sul kit |
+| *fra 3.5 e 4.0, o 4.0.x* | Migrazione dell'hosting, da sola |
+| **4.0** (aprile) | **Ridisegno multi-dispositivo + ufficio 3D, progettati insieme**, col consolidamento CSS dentro il ridisegno; BUGDOOM sul kit. **Boss Bug 3D → 4.x**: è una funzione di backend condivisa (barra vita globale), non un pezzo del mondo 3D, e si appoggia bene sul Realtime rodato dal Click Duel |
+
+Sul piano di partenza, la 4.0 guadagna il ridisegno e cede il Boss Bug. Se il ridisegno più il 3D non ci stanno lo stesso, la leva successiva sono i **bug 3D interattivi**: il Golden Bug può restare 2D sopra la scena.
+
+#### Decisioni
+
+1. **Cos'è la 4.0.** «Il Mondo di Espo» col ridisegno sotto (proposta), oppure una 4.0 «Espo ovunque» (ridisegno, hosting, librerie) col 3D spostato in una 4.1?
+2. **La metrica di classifica di Season 2.** Le opzioni:
+   - un **punteggio di stagione unico**, numerico e ordinabile nel DB (es. il logaritmo della produzione cumulata, più un bonus per formattazione);
+   - **leghe**, con un podio per lega;
+   - **più classifiche** (settimanale che riparte il lunedì, formattazioni, arcade);
+   - podio solo per chi è stato **attivo negli ultimi N giorni**.
+   
+   Si possono combinare.
+3. **Obiettivi della curva**, da scrivere prima di tarare: dopo quante ore di gioco attivo arrivano la 1ª promozione, la 20ª e la 1ª formattazione?
+4. **Boss Bug 3D**: spostarlo a una 4.x? (proposta)
 
 ---
 

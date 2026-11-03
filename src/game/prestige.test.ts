@@ -7,6 +7,9 @@ import {
   prestigeStartingBugs,
   prestigeTeamCarryover,
   formatQbitsEarned,
+  canPromote,
+  canFormat,
+  FORMAT_MIN_RESETS,
 } from './prestige';
 import type { DecimalCtor } from './economy';
 
@@ -33,6 +36,24 @@ describe('prestigeGained', () => {
   it('scala con la radice dello score utile', () => {
     // 100M utile → sqrt(400) = 20
     expect(prestigeGained(D, { totalScore: '100000000', threshold }).toString()).toBe('20');
+  });
+});
+
+describe('canPromote / canFormat', () => {
+  const threshold = '50000000';
+
+  it('promozione solo da soglia in su', () => {
+    expect(canPromote(D, { totalScore: '0', threshold })).toBe(false);
+    expect(canPromote(D, { totalScore: '49999999', threshold })).toBe(false);
+    expect(canPromote(D, { totalScore: threshold, threshold })).toBe(true);
+  });
+
+  it('formattazione dalla 20ª promozione', () => {
+    expect(FORMAT_MIN_RESETS).toBe(20);
+    expect(canFormat(0)).toBe(false);
+    expect(canFormat(19)).toBe(false);
+    expect(canFormat(20)).toBe(true);
+    expect(canFormat(undefined as unknown as number)).toBe(false);
   });
 });
 

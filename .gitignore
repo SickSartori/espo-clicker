@@ -72,6 +72,10 @@ php/secrets.php
 php/r2-config.php
 php/trello-config.php
 
+# Area di test (php/test-gate.php): utenti, password cifrate e chiave di firma.
+# Nasce sul server al primo accesso e lì resta: mai in git, mai nell'FTP.
+php/data/
+
 # Export della board Trello e anteprima dell'import (scripts/trello-to-github.mjs):
 # contengono i nomi utente dei giocatori, non vanno nel repo pubblico.
 trello-export/

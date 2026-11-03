@@ -32,7 +32,9 @@ const GIOCHI = [
 async function apriEAvvia(page: any, key: string, sel: string) {
   await page.route('**/functions/v1/**', () => {});
   await page.addInitScript(() => { try { sessionStorage.setItem('espooUser', 'E2ETester'); } catch (e) {} });
-  await page.goto('/arcade.php', { waitUntil: 'domcontentloaded' });
+  // Stagione spenta: i controlli di Invaders riconoscono alieni e bunker dai colori della
+  // palette classica, e a Halloween (24/10-2/11) lo sciame cambia colore e i test non vedono niente.
+  await page.goto('/arcade.php?stagione=nessuna', { waitUntil: 'domcontentloaded' });
   // I giochi sono lazy: si chiede il caricamento ma NON si aspetta la promise
   // (dentro c'e' la CDN di Phaser, che serve solo a Super Espo').
   await page.evaluate(() => { const w = window as any; if (w.ArcadeLoader) w.ArcadeLoader.load(); });

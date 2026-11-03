@@ -35,6 +35,14 @@ const SEGNAPOSTO = [
     ['INSERISCI_TRELLO_TOKEN_QUI',      'TRELLO_TOKEN'],
 ];
 
+// Facoltativi: se il secret manca il segnaposto resta, e secrets_is_placeholder()
+// lo legge come «non configurato». L'admin dell'area di test serve solo a test.yml:
+// renderlo obbligatorio fermerebbe anche il deploy di produzione.
+const FACOLTATIVI = [
+    ['INSERISCI_TEST_ADMIN_USER_QUI',     'TEST_ADMIN_USER'],
+    ['INSERISCI_TEST_ADMIN_PASSWORD_QUI', 'TEST_ADMIN_PASSWORD'],
+];
+
 function errore(msg) {
     // ::error:: lo evidenzia nel riepilogo del workflow.
     console.error(`::error::${msg}`);
@@ -60,6 +68,25 @@ for (const [segnaposto, secret] of SEGNAPOSTO) {
 if (mancanti.length) {
     errore(`secret mancanti nel repository: ${mancanti.join(', ')}. `
         + 'Impostarli in Settings > Secrets and variables > Actions.');
+}
+
+const assenti = [];
+for (const [segnaposto, secret] of FACOLTATIVI) {
+    const valore = process.env[secret];
+    if (!valore) { assenti.push(secret); continue; }
+    // Questi li sceglie una persona (una password può contenere apici): escape per la
+    // stringa PHP fra apici singoli, altrimenti secrets.php non si caricherebbe più.
+    contenuto = contenuto.split(segnaposto).join(valore.replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+}
+if (assenti.length) {
+    console.log(`::notice::secret facoltativi assenti: ${assenti.join(', ')} (l'area di test resta chiusa finché non ci sono).`);
+}
+// Le stesse regole di php/test-gate.php: un admin non valido lascia /test/ chiuso, meglio saperlo qui.
+if (process.env.TEST_ADMIN_USER && !/^[A-Za-z0-9][A-Za-z0-9_.-]{2,23}$/.test(process.env.TEST_ADMIN_USER)) {
+    console.log('::warning::TEST_ADMIN_USER non valido (3-24 caratteri fra lettere, numeri, . _ -): /test/ resterà chiuso.');
+}
+if (process.env.TEST_ADMIN_PASSWORD && process.env.TEST_ADMIN_PASSWORD.length < 10) {
+    console.log('::warning::TEST_ADMIN_PASSWORD sotto i 10 caratteri: /test/ resterà chiuso.');
 }
 
 // Nessun segnaposto deve sopravvivere. Fermare il deploy qui è meglio che

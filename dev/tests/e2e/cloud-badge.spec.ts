@@ -27,7 +27,9 @@ async function bootStale(page: Page): Promise<void> {
   // badge non compariva. Senza credenziali all'avvio l'auto-login non parte,
   // e le funzioni di recovery rileggono sessionStorage al momento della
   // chiamata, quindi impostarle dopo basta.
-  await page.goto('/index.php', { waitUntil: 'domcontentloaded' });
+  // Stagione spenta: l'avviso d'inizio evento salva da solo appena compare e
+  // si infilerebbe fra i passi del badge.
+  await page.goto('/index.php?stagione=nessuna', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(
     // _espoGameReady: il salvataggio locale è caricato (dal 3.2 loadGame aspetta la
     // guardia anti doppia scheda: senza, il caricamento finiva DOPO il setup del test).

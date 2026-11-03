@@ -1,3 +1,8 @@
+<?php
+// Area di test: sotto /test/ si entra solo con un account creato dall'admin (in produzione non fa niente).
+require_once __DIR__ . '/../php/test-gate.php';
+espo_test_gate();
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>

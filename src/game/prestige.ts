@@ -37,6 +37,23 @@ export function prestigeGained(D: DecimalCtor, input: PrestigeGainInput): Big {
   return effectiveScore.div(base).sqrt().floor();
 }
 
+// --- Requisiti di Promozione e Formattazione ---
+/** Promozioni necessarie per formattare (NG+). */
+export const FORMAT_MIN_RESETS = 20;
+
+/**
+ * Promozione possibile: score sopra soglia e almeno 1 token. È la regola della
+ * card dell'hub; sta qui perché la controlla anche executePrestige, dove si
+ * spende — la UI da sola non basta (vedi game/logic.ts).
+ */
+export function canPromote(D: DecimalCtor, input: PrestigeGainInput): boolean {
+  return new D(input.totalScore).gte(input.threshold) && prestigeGained(D, input).gte(1);
+}
+
+export function canFormat(totalResets: number): boolean {
+  return (totalResets || 0) >= FORMAT_MIN_RESETS;
+}
+
 /** Replicatore di Token: +20% floored — stessa formula nei due call-site legacy. */
 export function applyTokenDuplicator(gained: Big, purchased: boolean): Big {
   if (!purchased) return gained;
