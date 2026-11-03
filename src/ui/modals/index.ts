@@ -1489,6 +1489,17 @@ export function initModals(): void {
                 try { await w.SaveDB.clearIndexedDB(); } catch (e) { console.warn('IndexedDB clear failed:', e); }
             }
             localStorage.removeItem(SAVE_KEY);
+            // Area di test: si esce anche dal cancello, altrimenti al ricaricamento il login unico rientrerebbe da solo
+            const gate = w.ESPO_TEST_GATE;
+            if (gate && gate.logout) {
+                try {
+                    await fetch(gate.logout.url, {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'action=logout&csrf=' + encodeURIComponent(gate.logout.csrf),
+                    });
+                } catch (e) { console.warn('Uscita dall\'area di test non riuscita:', e); }
+            }
             location.reload();
         }
     });
@@ -1763,7 +1774,24 @@ export function initModals(): void {
                     Game.showToast(store.gameData.texts.toasts.serverBusy, 'warning');
                 }
             } else {
-                alert(data.message);
+                // Login automatico (sessione salvata o area di test) rifiutato: prima il giocatore
+                // restava senza finestra di login, e a ogni ricarica si riprovava. Si toglie la
+                // sessione e si apre il login col nome già scritto.
+                const gate = w.ESPO_TEST_GATE;
+                if (hadSession) {
+                    try {
+                        sessionStorage.removeItem('espooUser');
+                        sessionStorage.removeItem('espooPass');
+                        // area di test: in questa scheda non si risemina (php/test-access.php)
+                        if (gate) sessionStorage.setItem('espoTestGateFailed', u);
+                    } catch (e) {}
+                    loginInput.value = u;
+                    loginPasswordInput.value = '';
+                    openModal(loginModal);
+                }
+                alert(hadSession && gate
+                    ? `Nel gioco di test esiste già un account «${u}» con un'altra password: inseriscila una volta per entrare.`
+                    : data.message);
             }
         } catch (e) { console.error(e); }
         loginButton.disabled = false;

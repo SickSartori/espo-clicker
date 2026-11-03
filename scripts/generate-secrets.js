@@ -82,8 +82,8 @@ if (assenti.length) {
     console.log(`::notice::secret facoltativi assenti: ${assenti.join(', ')} (l'area di test resta chiusa finché non ci sono).`);
 }
 // Le stesse regole di php/test-gate.php: un admin non valido lascia /test/ chiuso, meglio saperlo qui.
-if (process.env.TEST_ADMIN_USER && !/^[A-Za-z0-9][A-Za-z0-9_.-]{2,23}$/.test(process.env.TEST_ADMIN_USER)) {
-    console.log('::warning::TEST_ADMIN_USER non valido (3-24 caratteri fra lettere, numeri, . _ -): /test/ resterà chiuso.');
+if (process.env.TEST_ADMIN_USER && !/^[A-Za-z0-9][A-Za-z0-9_.-]{2,19}$/.test(process.env.TEST_ADMIN_USER)) {
+    console.log('::warning::TEST_ADMIN_USER non valido (3-20 caratteri fra lettere, numeri, . _ -): /test/ resterà chiuso.');
 }
 if (process.env.TEST_ADMIN_PASSWORD && process.env.TEST_ADMIN_PASSWORD.length < 10) {
     console.log('::warning::TEST_ADMIN_PASSWORD sotto i 10 caratteri: /test/ resterà chiuso.');
