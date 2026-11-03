@@ -34,8 +34,10 @@ function tga_redirect($to)
 
 function tga_forbidden()
 {
-    tg_page('Non permesso', '<main><h1>Non permesso</h1><p class="dim">Questa azione è riservata all\'admin.</p>'
-        . '<a class="btn ghost" href="' . tg_h(tg_access_url()) . '">Indietro</a></main>', 403);
+    tg_page('Non permesso', tg_hud('<h1>Non permesso</h1>'
+        . '<p class="tg-tagline"><span class="pp">&gt;</span>azione riservata all\'admin</p>'
+        . '<a class="btn ghost" style="width:100%" href="' . tg_h(tg_access_url()) . '"><i class="fa-solid fa-arrow-left"></i>Indietro</a>'
+        . tg_foot(), 'area di test'), 403);
     exit;
 }
 
@@ -131,7 +133,8 @@ function tga_seed_js()
   var style = document.createElement('style');
   style.textContent = '.espo-test-gate-who{margin:4px 0 10px}'
     + '.espo-test-gate-actions{display:flex;flex-direction:column;gap:8px}'
-    + '.espo-test-gate-actions a{display:block;text-align:center;text-decoration:none}'
+    // link e non <button>: senza border-box la larghezza al 100% più padding e bordo esce dal riquadro
+    + '.espo-test-gate-actions a{display:block;box-sizing:border-box;width:100%;text-align:center;text-decoration:none}'
     + '.espo-test-gate-note{font-size:.85em;opacity:.7;margin:10px 0 0}';
   (document.head || document.documentElement).appendChild(style);
 
@@ -352,48 +355,49 @@ function tga_render_panel(array $st, array $me, $flash, $error)
 {
     $csrf = tg_csrf_token();
     $isAdmin = ($me['user']['role'] ?? '') === 'admin';
-    $form = function ($action, $label, $class, $user = null, $confirm = '') use ($csrf) {
+    $form = function ($action, $label, $class, $icon, $user = null, $confirm = '') use ($csrf) {
         return '<form method="post" action="' . tg_h(tg_access_url()) . '"'
             . ($confirm !== '' ? ' onsubmit="return confirm(' . tg_h(json_encode($confirm)) . ')"' : '') . '>'
             . tg_hidden('action', $action) . tg_hidden('csrf', $csrf) . ($user !== null ? tg_hidden('username', $user) : '')
-            . '<button type="submit" class="' . $class . '">' . tg_h($label) . '</button></form>';
+            . '<button type="submit" class="btn ' . $class . '"><i class="fa-solid ' . $icon . '"></i>' . tg_h($label) . '</button></form>';
     };
 
-    $body = '<main class="wide"><h1>Area di test</h1>'
-        . '<p class="dim">Sei dentro come <strong>' . tg_h($me['user']['name']) . '</strong>' . ($isAdmin ? ' (admin)' : '') . '.</p>'
-        . '<div class="bar"><a class="btn" href="' . tg_h(tg_base()) . '">Vai al gioco</a>'
-        . '<a class="btn ghost" href="' . tg_h(tg_access_url('cambia=1')) . '">Cambia la mia password</a>'
-        . $form('logout', 'Esci', 'ghost') . '</div>'
-        . ($error !== '' ? '<div class="err" role="alert">' . tg_h($error) . '</div>' : '') . $flash;
+    $inner = '<div class="tg-head">' . tg_logo() . '<div><h1>Area di test</h1>'
+        . '<p class="dim">Sei dentro come <strong>' . tg_h($me['user']['name']) . '</strong>' . ($isAdmin ? ' (admin)' : '') . '.</p></div></div>'
+        . '<div class="bar"><a class="btn" href="' . tg_h(tg_base()) . '"><i class="fa-solid fa-gamepad"></i>Vai al gioco</a>'
+        . '<a class="btn ghost" href="' . tg_h(tg_access_url('cambia=1')) . '"><i class="fa-solid fa-key"></i>Cambia la mia password</a>'
+        . $form('logout', 'Esci', 'ghost', 'fa-right-from-bracket') . '</div>'
+        . ($error !== '' ? '<div class="err" role="alert" style="margin-top:14px">' . tg_h($error) . '</div>' : '')
+        . ($flash !== '' ? '<div style="margin-top:14px">' . $flash . '</div>' : '');
 
     if ($isAdmin) {
-        $body .= '<section class="card"><h2 style="font-size:1.05rem;margin:0 0 4px">Nuovo tester</h2>'
+        $inner .= '<section class="card"><h2>Nuovo tester</h2>'
             . '<p class="dim">Ricevi una password temporanea da passargli: al primo accesso la cambia.</p>'
             . '<p class="dim">Il nome è anche quello nel gioco di test. Per fargli ritrovare i progressi di un account che ha già, scrivilo identico, maiuscole comprese; altrimenti usa un nome nuovo.</p>'
             . '<form method="post" action="' . tg_h(tg_access_url()) . '">' . tg_hidden('action', 'create') . tg_hidden('csrf', $csrf)
-            . '<label for="tg-newuser">Nome utente</label><input id="tg-newuser" type="text" name="username" autocapitalize="none" spellcheck="false" maxlength="20" required>'
-            . '<button type="submit">Crea tester</button></form></section>';
+            . tg_field('tg-newuser', 'Nome utente', 'fa-user-plus', 'type="text" name="username" autocapitalize="none" spellcheck="false" maxlength="20" required')
+            . '<button type="submit" class="btn"><i class="fa-solid fa-user-plus"></i>Crea tester</button></form></section>';
 
         $rows = '';
         $users = $st['users'];
         uasort($users, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
         foreach ($users as $key => $u) {
             $state = !empty($u['disabled']) ? '<span class="tag off">disattivato</span>'
-                : (!empty($u['must_change']) ? '<span class="tag warn">primo accesso</span>' : '<span class="tag">attivo</span>');
+                : (!empty($u['must_change']) ? '<span class="tag warn">primo accesso</span>' : '<span class="tag on">attivo</span>');
             $actions = '';
             if ($key !== $me['key']) {
-                $actions = $form('reset', 'Reimposta password', 'small ghost', $key, 'Reimpostare la password di ' . $u['name'] . '? Le sue sessioni aperte si chiudono.')
-                    . (!empty($u['disabled']) ? $form('enable', 'Riattiva', 'small ghost', $key) : $form('disable', 'Disattiva', 'small ghost', $key))
-                    . $form('delete', 'Elimina', 'small danger', $key, 'Eliminare ' . $u['name'] . '?');
+                $actions = $form('reset', 'Reimposta password', 'small ghost', 'fa-rotate', $key, 'Reimpostare la password di ' . $u['name'] . '? Le sue sessioni aperte si chiudono.')
+                    . (!empty($u['disabled']) ? $form('enable', 'Riattiva', 'small ghost', 'fa-play', $key) : $form('disable', 'Disattiva', 'small ghost', 'fa-pause', $key))
+                    . $form('delete', 'Elimina', 'small danger', 'fa-trash', $key, 'Eliminare ' . $u['name'] . '?');
             } else {
                 $actions = '<span class="dim">sei tu</span>';
             }
             $rows .= '<tr><td><strong>' . tg_h($u['name']) . '</strong></td><td>' . tg_h($u['role'] === 'admin' ? 'admin' : 'tester') . '</td><td>' . $state . '</td>'
                 . '<td class="hide dim">' . tg_h(date('d/m/Y', (int) ($u['created'] ?? 0))) . '</td><td class="actions">' . $actions . '</td></tr>';
         }
-        $body .= '<section class="card"><h2 style="font-size:1.05rem;margin:0 0 8px">Utenti (' . count($users) . ')</h2>'
+        $inner .= '<section class="card"><h2>Utenti (' . count($users) . ')</h2>'
             . '<table><thead><tr><th>Nome</th><th>Ruolo</th><th>Stato</th><th class="hide">Creato</th><th>Azioni</th></tr></thead><tbody>' . $rows . '</tbody></table></section>';
     }
-    $body .= '</main>';
-    tg_page('Area di test', $body, 200);
+    $inner .= tg_foot();
+    tg_page('Area di test', tg_hud($inner, $isAdmin ? 'pannello admin' : 'area di test', true, false), 200);
 }
