@@ -126,9 +126,24 @@ function tg_store(callable $fn)
 
 // ── Utenti ───────────────────────────────────────────────────
 
+/**
+ * 3-20 caratteri fra lettere, numeri, . _ -: il nome è anche quello dell'account di gioco, e
+ * login-register (Supabase dev) accetta al massimo 20 caratteri. Niente spazi né accenti,
+ * che il gioco accetterebbe: nomi semplici da scrivere e da passare in giro.
+ */
 function tg_valid_name($name)
 {
-    return is_string($name) && preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{2,23}$/', $name) === 1;
+    return is_string($name) && preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{2,19}$/', $name) === 1;
+}
+
+/**
+ * Password dell'account di gioco collegato al tester (login unico). Deriva dalla chiave
+ * dell'archivio e dal nome ESATTO (login-register distingue le maiuscole): non si salva da
+ * nessuna parte e resta la stessa a ogni accesso. Se l'archivio si perde cambia per tutti.
+ */
+function tg_game_password(array $st, $name)
+{
+    return 'Tg' . substr(tg_b64(hash_hmac('sha256', 'game|' . $name, $st['secret'], true)), 0, 22);
 }
 
 /** Admin dai secret; in locale col flag anche da ESPO_TEST_ADMIN_USER / _PASSWORD. Null se manca o non è valido. */
@@ -147,7 +162,7 @@ function tg_admin_config()
     }
     // Valori presenti ma non validi: /test/ resta chiuso, e il log del server dice perché
     if (!tg_valid_name($user)) {
-        error_log('[test-gate] admin dei secret ignorato: il nome deve avere 3-24 caratteri fra lettere, numeri, . _ -');
+        error_log('[test-gate] admin dei secret ignorato: il nome deve avere 3-20 caratteri fra lettere, numeri, . _ -');
         return null;
     }
     if (strlen($pass) < TG_MIN_PASSWORD) {
@@ -446,4 +461,16 @@ function espo_test_gate()
     // Le pagine non vanno in cache del browser: un accesso revocato deve valere al prossimo caricamento.
     header('Cache-Control: no-store');
     if (!defined('ESPO_TEST_GATE_USER')) define('ESPO_TEST_GATE_USER', $me['user']['name']);
+}
+
+/**
+ * Tag dello script del login unico, da mettere in <head> prima degli script del gioco.
+ * Fuori dall'area di test (o senza utente) non stampa niente. Lo script sta in php/ e
+ * non nella pagina: il service worker mette in cache le pagine, mai quello che sta in php/,
+ * e dentro c'è la password dell'account di gioco.
+ */
+function espo_test_gate_seed_tag()
+{
+    if (!defined('ESPO_TEST_GATE_USER')) return '';
+    return '<script src="' . tg_h(tg_access_url('seed=1')) . '"></script>';
 }

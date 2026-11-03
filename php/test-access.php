@@ -50,6 +50,10 @@ function tga_get()
         return;
     }
     $me = tg_current($st);
+    if (isset($_GET['seed'])) {
+        tga_seed($st, $me);
+        return;
+    }
     if (!$me) {
         tg_render_login('', tg_access_url());
         return;
@@ -63,6 +67,124 @@ function tga_get()
         return;
     }
     tga_render_panel($st, $me, '', '');
+}
+
+/**
+ * Script del login unico, incluso in testa a index.php e arcade.php (espo_test_gate_seed_tag).
+ * Passa al gioco nome e password dell'account di gioco del tester, che login-register crea da
+ * solo al primo accesso, e aggiunge al profilo la sezione «Area di test». Senza utente valido
+ * non manda niente (204). Mai in cache: contiene la password dell'account di gioco.
+ */
+function tga_seed(array $st, $me)
+{
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    // Solo dalla stessa origine. Un <script> su un altro sito non porta il cookie (SameSite=Lax),
+    // ma un altro sottodominio di altervista.org conterebbe come «stesso sito» e lo porterebbe:
+    // senza questo controllo leggerebbe la password dell'account di gioco. I browser che non
+    // mandano Sec-Fetch-Site restano coperti dal solo SameSite.
+    $site = $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '';
+    if ($site !== '' && $site !== 'same-origin') {
+        http_response_code(403);
+        return;
+    }
+    if (!$me || !empty($me['user']['must_change'])) {
+        http_response_code(204);
+        return;
+    }
+    $name = $me['user']['name'];
+    $gate = array(
+        'user'   => $name,
+        'admin'  => ($me['user']['role'] ?? '') === 'admin',
+        'panel'  => tg_access_url(),
+        'change' => tg_access_url('cambia=1'),
+        'logout' => array('url' => tg_access_url(), 'csrf' => tg_csrf_token()),
+    );
+    $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP;
+    header('Content-Type: application/javascript; charset=UTF-8');
+    echo strtr(tga_seed_js(), array(
+        '__GATE__'     => json_encode($gate, $flags),
+        '__PASSWORD__' => json_encode(tg_game_password($st, $name), $flags),
+    ));
+}
+
+// Funzione e non costante: le funzioni esistono da subito, una const in fondo al file no.
+function tga_seed_js()
+{
+    return <<<'JS'
+/* Area di test: login unico e sezione «Area di test» nel profilo (php/test-access.php). */
+(function () {
+  var G = __GATE__;
+  var P = __PASSWORD__;
+  window.ESPO_TEST_GATE = G;
+  var seeded = false;
+  try {
+    // Se in questa scheda il login automatico è già fallito (il nome esiste nel gioco di test con
+    // un'altra password), non si risemina: il giocatore entra a mano, una volta.
+    if (sessionStorage.getItem('espoTestGateFailed') !== G.user && sessionStorage.getItem('espooUser') !== G.user) {
+      sessionStorage.setItem('espooUser', G.user);
+      sessionStorage.setItem('espooPass', P);
+    }
+    seeded = sessionStorage.getItem('espooUser') === G.user && sessionStorage.getItem('espooPass') === P;
+  } catch (e) {}
+
+  var style = document.createElement('style');
+  style.textContent = '.espo-test-gate-who{margin:4px 0 10px}'
+    + '.espo-test-gate-actions{display:flex;flex-direction:column;gap:8px}'
+    + '.espo-test-gate-actions a{display:block;text-align:center;text-decoration:none}'
+    + '.espo-test-gate-note{font-size:.85em;opacity:.7;margin:10px 0 0}';
+  (document.head || document.documentElement).appendChild(style);
+
+  function link(href, text, icon) {
+    var a = document.createElement('a');
+    a.href = href;
+    a.className = 'buy-btn ghost-btn full-width';
+    a.innerHTML = '<i class="fa-solid ' + icon + '"></i> ';
+    a.appendChild(document.createTextNode(text));
+    return a;
+  }
+
+  function setup() {
+    var pane = document.querySelector('[data-hubpane="account"]');
+    if (!pane || pane.querySelector('.espo-test-gate')) return;
+    // Nome e password dell'account di gioco li decide l'area di test: cambiarli dal gioco
+    // romperebbe il collegamento, ed eliminarlo lo ricreerebbe vuoto al prossimo accesso.
+    ['change-username-btn', 'change-password-btn'].forEach(function (id) {
+      var el = document.getElementById(id);
+      var section = el && el.closest('.form-section');
+      if (section) section.style.display = 'none';
+    });
+    var divider = pane.querySelector('.profile-divider');
+    if (divider) divider.style.display = 'none';
+    var del = document.getElementById('delete-save-btn');
+    if (del) del.style.display = 'none';
+    // Il reset dei progressi chiede la password del gioco, che il tester non conosce: la si mette qui.
+    if (seeded) {
+      var dz = document.getElementById('danger-zone-password');
+      if (dz) {
+        dz.value = P;
+        var wrap = dz.closest('.input-group-modern');
+        if (wrap) wrap.style.display = 'none';
+      }
+    }
+    var box = document.createElement('div');
+    box.className = 'form-section espo-test-gate';
+    box.innerHTML = '<label class="section-label">Area di test</label><p class="espo-test-gate-who"></p>'
+      + '<div class="espo-test-gate-actions"></div><p class="espo-test-gate-note"></p>';
+    box.querySelector('.espo-test-gate-who').textContent = 'Sei entrato come ' + G.user + (G.admin ? ' (admin).' : '.');
+    box.querySelector('.espo-test-gate-note').textContent = 'Nome e password si cambiano da qui. «Esci» chiude anche l\'area di test.';
+    var actions = box.querySelector('.espo-test-gate-actions');
+    if (G.admin) actions.appendChild(link(G.panel, 'Gestisci tester', 'fa-users-gear'));
+    actions.appendChild(link(G.change, 'Cambia password', 'fa-key'));
+    var logout = document.getElementById('logout-btn');
+    if (logout && logout.parentNode === pane) logout.insertAdjacentElement('afterend', box);
+    else pane.insertBefore(box, pane.firstChild);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+  else setup();
+})();
+JS;
 }
 
 function tga_post()
@@ -178,7 +300,7 @@ function tga_admin_action($action, array $me)
         switch ($action) {
             case 'create':
                 $name = trim((string) ($_POST['username'] ?? ''));
-                if (!tg_valid_name($name)) return array('error' => 'Nome non valido: da 3 a 24 caratteri fra lettere, numeri, punto, trattino e trattino basso.');
+                if (!tg_valid_name($name)) return array('error' => 'Nome non valido: da 3 a 20 caratteri fra lettere, numeri, punto, trattino e trattino basso. È anche il nome nel gioco.');
                 if ($exists) return array('error' => 'Esiste già un utente «' . $name . '».');
                 $temp = tg_temp_password();
                 $st['users'][$target] = array(
@@ -247,8 +369,9 @@ function tga_render_panel(array $st, array $me, $flash, $error)
     if ($isAdmin) {
         $body .= '<section class="card"><h2 style="font-size:1.05rem;margin:0 0 4px">Nuovo tester</h2>'
             . '<p class="dim">Ricevi una password temporanea da passargli: al primo accesso la cambia.</p>'
+            . '<p class="dim">Il nome è anche quello nel gioco di test. Per fargli ritrovare i progressi di un account che ha già, scrivilo identico, maiuscole comprese; altrimenti usa un nome nuovo.</p>'
             . '<form method="post" action="' . tg_h(tg_access_url()) . '">' . tg_hidden('action', 'create') . tg_hidden('csrf', $csrf)
-            . '<label for="tg-newuser">Nome utente</label><input id="tg-newuser" type="text" name="username" autocapitalize="none" spellcheck="false" maxlength="24" required>'
+            . '<label for="tg-newuser">Nome utente</label><input id="tg-newuser" type="text" name="username" autocapitalize="none" spellcheck="false" maxlength="20" required>'
             . '<button type="submit">Crea tester</button></form></section>';
 
         $rows = '';

@@ -17,6 +17,7 @@ $arcadeAssetVer = preg_match('/(localhost|127\.0\.0\.1|::1|192\.168\.)/', ($_SER
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <?php /* Area di test: login unico, prima del controllo «sala giochi riservata» (fuori da /test/ non stampa niente) */ echo espo_test_gate_seed_tag(); ?>
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#050505">
     <link rel="icon" type="image/svg+xml" href="assets/image/ico.svg">

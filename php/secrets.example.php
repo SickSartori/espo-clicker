@@ -105,8 +105,9 @@ return [
 
     // ── Area di test (php/test-gate.php) ───────────────────────────────
     // Admin iniziale di /test/ (secret TEST_ADMIN_USER e TEST_ADMIN_PASSWORD,
-    // facoltativi: senza, /test/ resta chiuso con un avviso). Nome: 3-24
-    // caratteri fra lettere, numeri, . _ -; password: almeno 10 caratteri.
+    // facoltativi: senza, /test/ resta chiuso con un avviso). Nome: 3-20
+    // caratteri fra lettere, numeri, . _ - (è anche il nome nel gioco);
+    // password: almeno 10 caratteri.
     // Cambiare il secret reimposta l'admin al primo accesso dopo il deploy:
     // è la via di recupero se la password si perde. In produzione è ignorata.
     'test_gate' => [

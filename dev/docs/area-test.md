@@ -16,11 +16,22 @@ Su `/test/` il gioco si apre solo dopo un login. Chi ci arriva per sbaglio vede 
 - **Admin**: entra con le credenziali dei secret. Dal pannello (`/test/php/test-access.php`) crea i tester, reimposta le password, disattiva, riattiva ed elimina. Non può disattivare o eliminare se stesso, e deve restare almeno un admin attivo.
 - **Tester**: riceve dall'admin una password temporanea, che il pannello mostra una volta sola e non salva in chiaro. Al primo accesso deve sceglierne una sua (almeno 10 caratteri), prima di poter aprire il gioco. Se la dimentica, solo l'admin può reimpostarla.
 
-Il login del gioco resta quello di sempre (account del progetto Supabase di sviluppo): il cancello decide chi può aprire la pagina, non chi è il giocatore.
+## Login unico
+
+Dopo il cancello il gioco entra da solo: un login, non due.
+
+- **Come**: `index.php` e `arcade.php` caricano in testa `php/test-access.php?seed`, uno script che passa al gioco nome e password del suo account di gioco (progetto Supabase di sviluppo). Il nome è quello del cancello, scritto esattamente così (`login-register` distingue le maiuscole). La password deriva dalla chiave dell'archivio e non si salva da nessuna parte. Al primo accesso `login-register` crea l'account da sé.
+- **Perché in `php/`**: il service worker mette in cache le pagine, mai quello che sta in `php/`; e lo script contiene la password dell'account di gioco. Arriva sempre `no-store`.
+- **Profilo**: nella scheda Account compare «Area di test», con chi sei, «Gestisci tester» (solo admin) e «Cambia password». Il cambio di nome e di password del gioco e «Elimina account» sono nascosti: romperebbero il collegamento. Il reset dei progressi resta, con la password del gioco già inserita.
+- **Esci**: l'«Esci» del gioco chiude anche l'area di test.
+- **Nome già usato su dev**: se un tester ha lo stesso nome di un account di gioco che esiste già con un'altra password, il login automatico fallisce. Il gioco lo dice una volta e apre il login col nome già scritto: il tester inserisce la password di quell'account e in quella scheda non si riprova da solo. Niente viene sovrascritto. Su dev i nomi distinguono le maiuscole (indice unico su `username` così com'è): «Mario» e «mario» sono due account diversi, e un nome scritto diverso porta a un account nuovo e vuoto. Per ritrovare i progressi di un account esistente il nome nel cancello va scritto identico; altrimenti conviene un nome nuovo, anche perché `login-register` blocca un indirizzo dopo 10 password sbagliate in 15 minuti, e da un ufficio con un solo indirizzo i tester si bloccherebbero a vicenda. Collegare in automatico un account esistente richiederebbe una funzione sul progetto dev e un secret condiviso: per ora no.
+- **Se si perde l'archivio** (`php/data/`), cambia la chiave e con lei tutte le password derivate: gli account di gioco creati dal login unico non si aprono più. Si rimedia cancellandoli dal progetto dev (tabelle `users` e `sessions`), così vengono ricreati vuoti, o reimpostando a mano la loro password.
+- **Nomi**: da 3 a 20 caratteri fra lettere, numeri, `.` `_` `-`, perché sono anche i nomi nel gioco.
+- **Intro**: col login automatico l'intro cinematica non parte, come dopo un F5.
 
 ## Accenderlo su test
 
-1. In GitHub → Settings → Secrets and variables → Actions, creare **`TEST_ADMIN_USER`** (3-24 caratteri fra lettere, numeri, `.` `_` `-`) e **`TEST_ADMIN_PASSWORD`** (almeno 10 caratteri).
+1. In GitHub → Settings → Secrets and variables → Actions, creare **`TEST_ADMIN_USER`** (3-20 caratteri fra lettere, numeri, `.` `_` `-`) e **`TEST_ADMIN_PASSWORD`** (almeno 10 caratteri).
 2. Promuovere su test. `scripts/generate-secrets.js` li scrive in `php/secrets.php`. Se mancano il deploy prosegue lo stesso e `/test/` resta chiuso con l'avviso «Area di test chiusa»; se ci sono ma non rispettano le regole, il workflow lo segnala con un avviso e il server lo scrive nel suo log.
 3. Entrare su `/test/` con quelle credenziali e creare i tester dal pannello.
 

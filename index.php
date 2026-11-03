@@ -13,6 +13,7 @@ espo_test_gate();
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<?php /* Area di test: login unico, prima degli script del gioco (fuori da /test/ non stampa niente) */ echo espo_test_gate_seed_tag(); ?>
 		<!-- v3 a11y: rimossi maximum-scale=1.0 e user-scalable=no (WCAG 1.4.4) -->
 
 		<!-- color-scheme dichiarato → riduce flash su prefers-color-scheme cambio -->
