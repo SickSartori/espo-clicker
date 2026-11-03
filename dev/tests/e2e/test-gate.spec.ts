@@ -302,6 +302,35 @@ test('l\'admin non può disattivare o eliminare se stesso', async ({ page }) => 
   expect(await res.text()).toContain('Non puoi eliminare te stesso');
 });
 
+test('l\'admin cambia il ruolo: promossa usa il pannello, riportata a tester no; il proprio ruolo non si cambia', async ({ page, browser }) => {
+  await login(page, ADMIN.user, ADMIN.pass);
+  const sara = await firstAccess(browser, 'Sara', await createTester(page, 'Sara'));
+  const tryCreate = async (name: string) => sara.ctx.request.post(BASE + '/php/test-access.php', {
+    form: { action: 'create', csrf: await csrf(sara.ctx), username: name },
+  });
+  const row = () => page.locator('tr').filter({ has: page.locator('strong', { hasText: /^Sara$/ }) });
+  expect((await tryCreate('DaSaraUno')).status(), 'da tester').toBe(403);
+
+  await page.goto(BASE + '/php/test-access.php');
+  page.once('dialog', (d) => d.accept());
+  await Promise.all([page.waitForNavigation(), row().getByRole('button', { name: 'Rendi admin' }).click()]);
+  await expect(row()).toContainText('admin');
+  const created = await tryCreate('DaSaraDue');
+  expect(created.status(), 'da admin, subito: il ruolo vale senza rientrare').toBe(200);
+  expect(await created.text()).toContain('DaSaraDue');
+
+  page.once('dialog', (d) => d.accept());
+  await Promise.all([page.waitForNavigation(), row().getByRole('button', { name: 'Rendi tester' }).click()]);
+  await expect(row()).toContainText('tester');
+  expect((await tryCreate('DaSaraTre')).status(), 'riportata a tester').toBe(403);
+
+  const self = await page.context().request.post(BASE + '/php/test-access.php', {
+    form: { action: 'role', to: 'tester', csrf: await csrf(page.context()), username: ADMIN.user },
+  });
+  expect(await self.text()).toContain('Non puoi cambiare il tuo ruolo');
+  await sara.ctx.close();
+});
+
 test('fuori dall\'area di test il cancello non c\'è', async ({ request }) => {
   // server di playwright.config.ts, senza flag: come la produzione
   expect((await request.get('/php/test-access.php')).status()).toBe(404);

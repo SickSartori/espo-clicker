@@ -13,7 +13,7 @@ Su `/test/` il gioco si apre solo dopo un login. Chi ci arriva per sbaglio vede 
 
 ## Ruoli
 
-- **Admin**: entra con le credenziali dei secret. Dal pannello (`/test/php/test-access.php`) crea i tester, reimposta le password, disattiva, riattiva ed elimina. Non può disattivare o eliminare se stesso, e deve restare almeno un admin attivo.
+- **Admin**: entra con le credenziali dei secret. Dal pannello (`/test/php/test-access.php`) crea i tester, reimposta le password, cambia il ruolo (tester ↔ admin), disattiva, riattiva ed elimina. Le azioni di ogni riga sono icone: il nome completo compare passandoci sopra. Il cambio di ruolo vale subito, senza far rientrare nessuno. Un admin non può cambiare il proprio ruolo, disattivarsi o eliminarsi, e deve restare almeno un admin attivo. L'admin dei secret, se qualcuno lo riporta a tester, torna admin solo cambiando il secret.
 - **Tester**: riceve dall'admin una password temporanea, che il pannello mostra una volta sola e non salva in chiaro. Al primo accesso deve sceglierne una sua (almeno 10 caratteri), prima di poter aprire il gioco. Se la dimentica, solo l'admin può reimpostarla.
 
 ## Login unico
