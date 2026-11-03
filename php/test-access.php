@@ -81,10 +81,10 @@ function tga_seed(array $st, $me)
     header('X-Content-Type-Options: nosniff');
     // Solo dalla stessa origine. Un <script> su un altro sito non porta il cookie (SameSite=Lax),
     // ma un altro sottodominio di altervista.org conterebbe come «stesso sito» e lo porterebbe:
-    // senza questo controllo leggerebbe la password dell'account di gioco. I browser che non
-    // mandano Sec-Fetch-Site restano coperti dal solo SameSite.
-    $site = $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '';
-    if ($site !== '' && $site !== 'same-origin') {
+    // senza questo controllo leggerebbe la password dell'account di gioco. Chiuso anche quando
+    // l'intestazione manca (browser vecchi, es. Safari prima della 16.4): lì il login unico non
+    // parte e il gioco chiede il suo login, come prima.
+    if (($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '') !== 'same-origin') {
         http_response_code(403);
         return;
     }
@@ -104,7 +104,7 @@ function tga_seed(array $st, $me)
     header('Content-Type: application/javascript; charset=UTF-8');
     echo strtr(tga_seed_js(), array(
         '__GATE__'     => json_encode($gate, $flags),
-        '__PASSWORD__' => json_encode(tg_game_password($st, $name), $flags),
+        '__PASSWORD__' => json_encode(tg_game_password($st, $me['key']), $flags),
     ));
 }
 
@@ -306,7 +306,7 @@ function tga_admin_action($action, array $me)
                 $st['users'][$target] = array(
                     'name' => $name, 'role' => 'tester', 'hash' => password_hash($temp, PASSWORD_DEFAULT),
                     'must_change' => true, 'disabled' => false, 'ver' => 1,
-                    'created' => time(), 'created_by' => $me['user']['name'],
+                    'created' => time(), 'created_by' => $me['user']['name'], 'game_salt' => tg_new_game_salt(), 'uid' => tg_new_game_salt(),
                 );
                 return array('temp' => $temp, 'for' => $name, 'msg' => 'Creato «' . $name . '».');
             case 'reset':

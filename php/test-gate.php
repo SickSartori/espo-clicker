@@ -138,12 +138,22 @@ function tg_valid_name($name)
 
 /**
  * Password dell'account di gioco collegato al tester (login unico). Deriva dalla chiave
- * dell'archivio e dal nome ESATTO (login-register distingue le maiuscole): non si salva da
- * nessuna parte e resta la stessa a ogni accesso. Se l'archivio si perde cambia per tutti.
+ * dell'archivio, dal nome ESATTO (login-register distingue le maiuscole) e da un valore casuale
+ * dell'utente: non si salva da nessuna parte e resta la stessa a ogni accesso. Il valore casuale
+ * fa sì che un tester eliminato e ricreato con lo stesso nome non ritrovi l'account di gioco di
+ * prima (chi c'era prima potrebbe conoscerne la password). Chi non lo ha (creato prima del 03/11)
+ * tiene la password di allora. Se l'archivio si perde cambia per tutti.
  */
-function tg_game_password(array $st, $name)
+function tg_game_password(array $st, $key)
 {
-    return 'Tg' . substr(tg_b64(hash_hmac('sha256', 'game|' . $name, $st['secret'], true)), 0, 22);
+    $user = $st['users'][$key];
+    $salt = (string) ($user['game_salt'] ?? '');
+    return 'Tg' . substr(tg_b64(hash_hmac('sha256', 'game|' . $user['name'] . ($salt !== '' ? '|' . $salt : ''), $st['secret'], true)), 0, 22);
+}
+
+function tg_new_game_salt()
+{
+    return bin2hex(random_bytes(8));
 }
 
 /** Admin dai secret; in locale col flag anche da ESPO_TEST_ADMIN_USER / _PASSWORD. Null se manca o non è valido. */
@@ -187,7 +197,7 @@ function tg_bootstrap(array &$st)
     if (isset($st['users'][$key]) && hash_equals((string) $st['admin_fp'], $fp)) {
         return;
     }
-    $user = $st['users'][$key] ?? array('name' => $cfg['user'], 'created' => time(), 'created_by' => 'deploy', 'ver' => 0);
+    $user = $st['users'][$key] ?? array('name' => $cfg['user'], 'created' => time(), 'created_by' => 'deploy', 'ver' => 0, 'game_salt' => tg_new_game_salt(), 'uid' => tg_new_game_salt());
     $user['hash'] = password_hash($cfg['password'], PASSWORD_DEFAULT);
     $user['role'] = 'admin';
     $user['must_change'] = false;
@@ -241,10 +251,15 @@ function tg_setcookie($name, $value, $expires)
     ));
 }
 
+/**
+ * Il cookie porta nome, versione e un id casuale dell'utente: senza l'id, un tester eliminato e
+ * ricreato con lo stesso nome ripartirebbe dalla stessa versione, e il cookie di chi c'era prima
+ * tornerebbe valido. Gli utenti creati prima del 03/11 non hanno id: vale come vuoto da entrambe le parti.
+ */
 function tg_login_cookie(array $st, $key)
 {
     $exp = time() + TG_TTL;
-    $payload = tg_b64(json_encode(array('u' => $key, 'v' => (int) $st['users'][$key]['ver'], 'e' => $exp)));
+    $payload = tg_b64(json_encode(array('u' => $key, 'v' => (int) $st['users'][$key]['ver'], 'i' => (string) ($st['users'][$key]['uid'] ?? ''), 'e' => $exp)));
     tg_setcookie(TG_COOKIE, $payload . '.' . hash_hmac('sha256', "auth|$payload", $st['secret']), $exp);
 }
 
@@ -265,6 +280,7 @@ function tg_current(array $st)
     $key = (string) ($data['u'] ?? '');
     $user = $st['users'][$key] ?? null;
     if (!$user || !empty($user['disabled']) || (int) $user['ver'] !== (int) ($data['v'] ?? -1)) return null;
+    if (!hash_equals((string) ($user['uid'] ?? ''), (string) ($data['i'] ?? ''))) return null;
     return array('key' => $key, 'user' => $user);
 }
 

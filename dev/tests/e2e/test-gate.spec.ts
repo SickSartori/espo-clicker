@@ -178,8 +178,10 @@ test('login unico: il gioco entra da solo, col nome esatto del cancello, e il pr
   // la pagina del login unico non va mai in cache
   const seed = await testerCtx.request.get(BASE + '/php/test-access.php?seed=1');
   expect(seed.headers()['cache-control']).toContain('no-store');
-  // e la legge solo la stessa origine: un <script> da un altro sito (o da un altro *.altervista.org) riceve 403
-  for (const site of ['cross-site', 'same-site']) {
+  // e la legge solo la stessa origine: un <script> da un altro sito (o da un altro *.altervista.org)
+  // riceve 403, e così chi non dice da dove arriva (browser vecchi: il gioco chiede il suo login)
+  expect(seed.status(), 'senza Sec-Fetch-Site').toBe(403);
+  for (const site of ['cross-site', 'same-site', 'none']) {
     const res = await testerCtx.request.get(BASE + '/php/test-access.php?seed=1', { headers: { 'Sec-Fetch-Site': site } });
     expect(res.status(), site).toBe(403);
     expect(await res.text(), site).not.toContain('Mario');
@@ -217,6 +219,43 @@ test('l\'admin vede «Gestisci tester» nel profilo, e «Esci» dal gioco chiude
   await Promise.all([page.waitForNavigation(), page.evaluate(() => (document.getElementById('logout-btn') as HTMLButtonElement).click())]);
   await expect(page.locator('#tg-user')).toBeVisible();
   expect((await page.context().request.get(BASE + '/index.php')).status()).toBe(401);
+});
+
+/** Crea un tester dal pannello e restituisce la password temporanea. */
+async function createTester(page: Page, name: string) {
+  await page.goto(BASE + '/php/test-access.php');
+  await page.fill('#tg-newuser', name);
+  await Promise.all([page.waitForNavigation(), page.getByRole('button', { name: 'Crea tester' }).click()]);
+  return (await page.locator('code.secret').textContent())!.trim();
+}
+
+/** Primo accesso di un tester (password scelta): il suo contesto e la password di gioco che il login unico gli passerebbe. */
+async function firstAccess(browser: any, name: string, temp: string) {
+  const ctx: BrowserContext = await browser.newContext();
+  await noBackend(ctx);
+  const page = await ctx.newPage();
+  await login(page, name, temp);
+  await page.fill('#tg-new', name + '-pass-nuova');
+  await page.fill('#tg-conf', name + '-pass-nuova');
+  await Promise.all([page.waitForNavigation(), page.getByRole('button', { name: 'Salva e continua' }).click()]);
+  const js = await (await ctx.request.get(BASE + '/php/test-access.php?seed=1', { headers: { 'Sec-Fetch-Site': 'same-origin' } })).text();
+  return { ctx, game: /var P = "([^"]+)"/.exec(js)?.[1] ?? '' };
+}
+
+test('un tester eliminato e ricreato con lo stesso nome: il vecchio non rientra e il nuovo non ritrova l\'account di gioco di prima', async ({ page, browser }) => {
+  await login(page, ADMIN.user, ADMIN.pass);
+  const prima = await firstAccess(browser, 'Luca', await createTester(page, 'Luca'));
+  page.once('dialog', (d) => d.accept());
+  await page.goto(BASE + '/php/test-access.php');
+  await Promise.all([page.waitForNavigation(), page.locator('tr', { hasText: 'Luca' }).getByRole('button', { name: 'Elimina' }).click()]);
+  const dopo = await firstAccess(browser, 'Luca', await createTester(page, 'Luca'));
+  // stesso nome e, dopo il primo cambio password, stessa versione: il cookie di prima non deve valere
+  expect((await prima.ctx.request.get(BASE + '/index.php')).status(), 'cookie del Luca eliminato').toBe(401);
+  expect((await dopo.ctx.request.get(BASE + '/index.php')).status(), 'cookie del Luca nuovo').toBe(200);
+  expect(prima.game.length).toBeGreaterThanOrEqual(8);
+  expect(dopo.game).not.toBe(prima.game);
+  await prima.ctx.close();
+  await dopo.ctx.close();
 });
 
 test('senza il token del form un\'azione non passa', async ({ page }) => {
