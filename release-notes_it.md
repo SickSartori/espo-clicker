@@ -2,16 +2,15 @@
 
 ## Versione 3.3: Un Anno di Bug 🎂
 
-Il 17 novembre 2026 Espòòò Clicker compie un anno. Il regalo ti aspetta negli Obiettivi.
+Il 17 novembre 2026 Espòòò Clicker compie un anno. Per festeggiare, il gioco torna com'era il primo giorno.
 
 ---
 
 ### 🎂 Il Primo Compleanno
 
-* **🎁 Il Regalo:** l'obiettivo *Primo Compleanno* si riscatta dal 17 novembre e non scade.
-* **📼 Tema Vintage v1:** nelle Opzioni, alla voce *Tema*, il gioco torna com'era: colori, font, sfondo e mascotte della prima versione, numeri alla v1 e icone in emoji. Lo spegni quando vuoi.
-* **🎭 Skin Con Il Loro Tema:** quelle che ne hanno già uno (come Espobit) restano come sono. Il Vintage si vede con tutte le altre.
-* **🔔 Un Annuncio Solo:** dal 17 al 30 novembre. Il regalo resta riscattabile anche dopo.
+* **🎁 Il Regalo:** dal 17 novembre l'obiettivo *Primo Compleanno* sblocca il **Tema Vintage v1**. Si riscatta quando vuoi: non scade.
+* **📼 Com'Era All'Inizio:** colori, font, sfondo e mascotte della prima versione, numeri alla v1 e icone in emoji.
+* **🎛️ Acceso Quando Vuoi:** si accende e si spegne dalle Opzioni, alla voce *Tema*. Le skin che hanno già un tema loro, come Espobit, restano come sono.
 
 ---
 

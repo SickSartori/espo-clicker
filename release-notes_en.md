@@ -2,16 +2,15 @@
 
 ## Version 3.3: A Year of Bugs 🎂
 
-On November 17, 2026 Espòòò Clicker turns one. Your gift is waiting in Achievements.
+On November 17, 2026 Espòòò Clicker turns one. To celebrate, the game goes back to how it looked on day one.
 
 ---
 
 ### 🎂 The First Birthday
 
-* **🎁 The Gift:** the *First Birthday* achievement can be claimed from November 17 and never expires.
-* **📼 Vintage v1 Theme:** in Settings, under *Theme*, the game goes back to how it looked: the first version's colors, font, background and mascot, v1 numbers and emoji icons. Turn it off anytime.
-* **🎭 Skins With Their Own Theme:** the ones that already have one (like Espobit) stay as they are. Vintage shows with all the others.
-* **🔔 One Announcement:** from November 17 to 30. The gift stays claimable afterwards.
+* **🎁 The Gift:** from November 17 the *First Birthday* achievement unlocks the **Vintage v1 Theme**. Claim it whenever you like: it never expires.
+* **📼 The Way It Was:** the first version's colors, font, background and mascot, v1 numbers and emoji icons.
+* **🎛️ On When You Want:** turn it on and off in Settings, under *Theme*. Skins that already have a theme of their own, like Espobit, stay as they are.
 
 ---
 
