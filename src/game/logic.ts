@@ -11,7 +11,7 @@
  */
 const w = window as any;
 import { store } from '../state/store';
-import { PRESTIGE_PERSISTENT_KEYS } from './prestige';
+import { PRESTIGE_PERSISTENT_KEYS, canPromote, canFormat } from './prestige';
 import { ClickGuard } from './anticheat';
 import { goldenBugSpot } from './events';
 
@@ -1815,6 +1815,12 @@ function openPrestigeHub() {
 }
 
 async function executePrestige() {
+    // Il requisito si controlla QUI, dove si spende, e non solo nella card dell'hub:
+    // la funzione sta su window (shim in fondo al file), quindi chiamata da fuori
+    // scavalcava la UI e faceva salire totalResets anche a 0 token. Stessa lezione
+    // di buyPrestigeUpgrade e maxLevel (3.1).
+    if (!canPromote(w.Decimal, { totalScore: store.gameState.totalScore, threshold: getPrestigeThreshold() })) return;
+
     const overlay = document.getElementById('prestige-transition-overlay');
     const modal = document.getElementById('prestige-hub-modal');
     const bar = document.getElementById('prestige-progress-bar');
@@ -1979,6 +1985,9 @@ async function executePrestige() {
 }
 
 function executeFormattingSequence() {
+    // Requisito controllato dove si spende, come in executePrestige.
+    if (!canFormat(store.gameState.totalResets)) return;
+
     // 1. Chiusura Interfaccia
     document.querySelectorAll<HTMLElement>('.modal-backdrop').forEach(m => m.style.display = 'none');
     document.body.classList.remove('modal-open');

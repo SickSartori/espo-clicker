@@ -15,6 +15,7 @@ import { store } from '../../state/store';
 // migrazione. Riscriverlo qui come letterale vorrebbe dire due numeri che possono
 // divergere — in questo repo è già successo con la formula dei Q-bit.
 import { MAX_FOUNDER_KEPT_SKINS } from '../../core/migrations/v2-to-v3';
+import { FORMAT_MIN_RESETS } from '../../game/prestige';
 import { RARITY_ORDER, skinAccent } from '../rarity';
 import { vintageState, mascotArt, VINTAGE_THEME } from '../theme/vintage';
 
@@ -1969,7 +1970,7 @@ function renderPrestigeHubCards() {
         totalFormattazioni: store.gameState.totalFormattazioni || 0,
         qBits: String(store.gameState.qBits || 0),
     });
-    const canFormat = resets >= 20;
+    const canFormat = resets >= FORMAT_MIN_RESETS;
 
     setCardState(formatCard, canFormat ? 'is-ready' : (isQ ? 'is-locked' : 'is-mystery'));
 
@@ -2230,7 +2231,7 @@ function updatePrestigeVisuals() {
     //   'promo'    → solo promo            → oro   (.promotion-ready)
     //   'progress' → nessuna azionabile    → grigio spento + % (apre comunque l'hub)
     // resets >= 20 implica Quantum sbloccato (ramo OR della regola).
-    const canFormat = resets >= 20;
+    const canFormat = resets >= FORMAT_MIN_RESETS;
 
     // Preload del video Big Bang appena la formattazione è raggiungibile.
     // L'mp4 (~11 MB) è faststart (remux 2026-07): il 1° frame parte subito,
