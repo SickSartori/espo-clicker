@@ -25,7 +25,7 @@ Il 17 novembre 2026 Espòòò Clicker compie un anno. Per festeggiare, il gioco 
 
 ### 🕹️ Sala Giochi
 
-* **🐦 Flappy Espòòò:** un tocco (o SPAZIO), quindici secondi che partono dal primo battito. Vola fra i rack dei server, raccogli i bug e non toccare niente. Premio in bug come gli altri cabinati, e il record resta tuo.
+* **🐦 Flappy Espòòò:** un tocco (o SPAZIO), quindici secondi che partono dal primo battito, e ogni orologio nei varchi ne aggiunge tre. Vola fra i rack dei server, raccogli i bug e non toccare niente. Premio in bug come gli altri cabinati, e il record resta tuo.
 
 ---
 

@@ -120,7 +120,7 @@ Eight minigames on their own page (`arcade.php`), behind their own login gate, o
 
 Phaser is fetched on demand from a CDN and only Super Espò needs it, so it sits in its own promise chain: if the CDN falls over, the other seven stay playable. Those seven synthesize every sound they make in Web Audio from zero asset files — cheaper than shipping a single bleep. Super Espò is the only one with real audio, served from R2 behind pre-signed URLs.
 
-Touch players get a shared on-screen pad that fires real `KeyboardEvent`s (plus haptics), reconfigured per game: Snake gets a bare d-pad, Bug Invaders gets left/right and FIRE, and Espo-Roids renames UP to BOOST, which is the entire extent of its flight model. Flappy Espòòò needs none of it: the whole field is the button, and the run lasts 15 seconds from the first flap.
+Touch players get a shared on-screen pad that fires real `KeyboardEvent`s (plus haptics), reconfigured per game: Snake gets a bare d-pad, Bug Invaders gets left/right and FIRE, and Espo-Roids renames UP to BOOST, which is the entire extent of its flight model. Flappy Espòòò needs none of it: the whole field is the button, and the run lasts 15 seconds from the first flap, plus 3 for every clock you grab in the gaps.
 
 ## 🛠️ Stack
 

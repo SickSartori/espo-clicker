@@ -10,7 +10,8 @@
 //     fondo blu), non un uccellino.
 //   - Gli ostacoli sono RACK di server con i led che lampeggiano, non tubi verdi.
 //   - La partita dura QUINDICI SECONDI dal primo tocco: finito il tempo, finisce
-//     — anche senza schiantarsi. È una sessione da telefono, non una maratona.
+//     — anche senza schiantarsi. Gli OROLOGI nei varchi danno +3 secondi (al massimo
+//     30 in più): chi vola bene gioca di più, ma resta una sessione da telefono.
 //   - Nei varchi compaiono a volte dei BUG da raccogliere (+2): il verbo del gioco
 //     principale dentro il cabinato, e un motivo per non puntare sempre al centro.
 //   - La palette è quella della prima versione (ardesia e azzurro), per il compleanno.
@@ -42,12 +43,15 @@
     var GAP_MARGIN = 38;                              // aria fra il varco e soffitto/terra
     var MAX_GAP_SHIFT = 140;                          // salto massimo fra due varchi: sempre raggiungibile
     var BUG_CHANCE = 0.4, BUG_R = 12, BUG_POINTS = 2;
+    // Orologi: in un varco su ~5-6 al posto del bug, +3 s ciascuno. Il tetto tiene la partita
+    // sotto i 45 s anche prendendoli tutti (in pratica si arriva sui 25-30).
+    var CLOCK_CHANCE = 0.18, CLOCK_R = 12, TIME_BONUS = 3, MAX_EXTRA = 30;
 
     var COLORS = {
         bgTop: '#2c3e50', bgBottom: '#17212b', grid: 'rgba(93, 124, 154, 0.16)',
         rack: '#34495e', rackEdge: '#5d7c9a', rackDark: '#243342',
         ground: '#34495e', groundLine: '#5d7c9a',
-        accent: '#facc15', player: '#3498db'
+        accent: '#facc15', player: '#3498db', time: '#7dd3fc'
     };
 
     // ---- Stato --------------------------------------------------------------
@@ -55,6 +59,8 @@
     var phase = 'idle';          // idle | ready | playing | over
     var reason = '';             // time | crash
     var t = 0;                   // secondi di gioco (dal primo tocco)
+    var extra = 0;               // secondi guadagnati con gli orologi
+    var clocksTaken = 0;
     var clock = 0;               // secondi totali, per le animazioni
     var py = 0, vy = 0;          // posizione e velocità del giocatore
     var gates = [];
@@ -158,9 +164,9 @@
         }
         line('FLAPPY ESPÒÒÒ', "font-family:'Press Start 2P',monospace;font-size:1.25rem;color:" + COLORS.accent +
             ";text-shadow:0 0 12px rgba(250,204,21,0.7),0 0 30px rgba(250,204,21,0.25);margin-bottom:20px;letter-spacing:2px;text-align:center;");
-        line(T('flappyTagline', 'Un tocco per volare, quindici secondi'),
+        line(T('flappyTagline', 'Un tocco per volare, quindici secondi: gli orologi ne danno altri'),
             "font-family:'Rajdhani',sans-serif;font-size:1rem;color:#9aa8b5;margin-bottom:8px;text-align:center;");
-        line(T('flappyHint', 'Tocca (o SPAZIO) per volare. Il tempo parte al primo tocco.'),
+        line(T('flappyHint', 'Tocca (o SPAZIO) per volare. Il tempo parte al primo tocco; ogni orologio vale +3 secondi.'),
             "font-family:'Rajdhani',sans-serif;font-size:0.95rem;color:#3498db;margin-bottom:24px;text-align:center;");
         var startBtn = document.createElement('button');
         startBtn.className = 'arcade-btn';
@@ -206,7 +212,7 @@
 
     function resetState() {
         phase = 'idle'; reason = '';
-        t = 0; clock = 0;
+        t = 0; clock = 0; extra = 0; clocksTaken = 0;
         py = H * 0.42; vy = 0;
         score = 0; gatesPassed = 0; bugsTaken = 0;
         pops = []; bgX = 0;
@@ -255,7 +261,10 @@
             center = a + Math.random() * (b - a);
         }
         center = Math.max(lo, Math.min(hi, center));
-        gates.push({ x: x, gapY: center, gap: gap, passed: false, bug: Math.random() < BUG_CHANCE ? { taken: false } : null });
+        // un varco porta al massimo una cosa: un orologio, un bug o niente
+        var roll = Math.random();
+        var hasClock = roll < CLOCK_CHANCE, hasBug = !hasClock && roll < CLOCK_CHANCE + BUG_CHANCE;
+        gates.push({ x: x, gapY: center, gap: gap, passed: false, bug: hasBug ? { taken: false } : null, clock: hasClock ? { taken: false } : null });
     }
 
     function flap() {
@@ -310,6 +319,17 @@
                     updateScoreUI();
                 }
             }
+            if (g.clock && !g.clock.taken) {
+                var cx = g.x + GATE_W / 2, cy = g.gapY;
+                var ex = cx - PLAYER_X, ey = cy - py;
+                if (ex * ex + ey * ey < (PLAYER_R + CLOCK_R) * (PLAYER_R + CLOCK_R)) {
+                    g.clock.taken = true;
+                    clocksTaken++;
+                    extra = Math.min(MAX_EXTRA, extra + TIME_BONUS);
+                    addPop('+' + TIME_BONUS + 's', cx, cy - 18, COLORS.time);
+                    if (window.arcadeSfx && window.arcadeSfx.powerup) window.arcadeSfx.powerup();
+                }
+            }
         }
 
         // Schianto: terra o rack
@@ -324,7 +344,7 @@
             if (pops[p].age > 0.8) pops.splice(p, 1);
         }
 
-        if (t >= RUN_SECONDS) { t = RUN_SECONDS; gameOver('time'); }
+        if (t >= RUN_SECONDS + extra) { t = RUN_SECONDS + extra; gameOver('time'); }
     }
 
     function hitsGate(g) {
@@ -413,6 +433,27 @@
             ctx.beginPath(); ctx.moveTo(-2, -9); ctx.lineTo(-5, -13); ctx.moveTo(2, -9); ctx.lineTo(5, -13); ctx.stroke();
             ctx.restore();
         }
+        if (gt.clock && !gt.clock.taken) {
+            // orologio: quadrante azzurro con le lancette, che pulsa per farsi notare
+            var cx = gt.x + GATE_W / 2, cy = gt.gapY + Math.sin(clock * 4 + gt.x * 0.05) * 3;
+            var pulse = 1 + 0.08 * Math.sin(clock * 8);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(pulse, pulse);
+            ctx.shadowColor = COLORS.time; ctx.shadowBlur = 12;
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = COLORS.time; ctx.lineWidth = 2.4;
+            ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = COLORS.time;
+            ctx.fillRect(-2.5, -15, 5, 4);                     // corona
+            ctx.strokeStyle = '#17212b'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+            var a = clock * 3;                                  // la lancetta lunga gira
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.sin(a) * 7, -Math.cos(a) * 7);
+            ctx.moveTo(0, 0); ctx.lineTo(0, -4.5); ctx.stroke();
+            ctx.restore();
+        }
     }
 
     // Un rack da server: corpo ardesia, unità orizzontali con led che lampeggiano.
@@ -492,9 +533,10 @@
     }
 
     function drawHud() {
-        // Barra del tempo: si svuota dal primo tocco; diventa rossa negli ultimi 4 secondi
-        var left = Math.max(0, RUN_SECONDS - t);
-        var ratio = left / RUN_SECONDS;
+        // Barra del tempo: si svuota dal primo tocco; diventa rossa negli ultimi 4 secondi.
+        // Gli orologi la riempiono di nuovo, mai oltre il pieno dei 15 secondi.
+        var left = Math.max(0, RUN_SECONDS + extra - t);
+        var ratio = Math.min(1, left / RUN_SECONDS);
         var bx = 14, by = 12, bw = W - 28, bh = 10;
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(bx, by, bw, bh);
@@ -543,10 +585,10 @@
         if (why === 'crash' && window.arcadeSfx) window.arcadeSfx.hit();
         else if (window.arcadeSfx) window.arcadeSfx.gameover();
 
-        // Stesso premio degli altri cabinati: BPS veri × punteggio × 5%. Con sessioni da
-        // quindici secondi non serve altro tetto: a punteggio pieno (~12) e ripartenze
-        // immediate rende meno al minuto di una partita media di Stack Overflow, e il
-        // tetto sul premio in sospeso (60 × BPS al secondo, src/game/anticheat.ts) vale lo stesso.
+        // Stesso premio degli altri cabinati: BPS veri × punteggio × 5%. Non serve altro tetto:
+        // anche coi 45 secondi massimi concessi dagli orologi il punteggio resta sotto i ~50
+        // (2,5 × BPS di premio), e il tetto sul premio in sospeso (60 × BPS al secondo,
+        // src/game/anticheat.ts) vale lo stesso.
         var reward = 0;
         var rewardStr = '0';
         if (typeof bps !== 'undefined' && typeof Decimal !== 'undefined') {
@@ -591,9 +633,9 @@
     window.__flappyDebug = {
         state: function () {
             return {
-                phase: phase, reason: reason, t: t, left: RUN_SECONDS - t, y: py, vy: vy,
-                score: score, gates: gatesPassed, bugs: bugsTaken,
-                list: gates.map(function (g) { return { x: g.x, gapY: g.gapY, gap: g.gap, passed: g.passed, bug: !!(g.bug && !g.bug.taken) }; }),
+                phase: phase, reason: reason, t: t, left: RUN_SECONDS + extra - t, extra: extra, y: py, vy: vy,
+                score: score, gates: gatesPassed, bugs: bugsTaken, clocks: clocksTaken,
+                list: gates.map(function (g) { return { x: g.x, gapY: g.gapY, gap: g.gap, passed: g.passed, bug: !!(g.bug && !g.bug.taken), clock: !!(g.clock && !g.clock.taken) }; }),
                 w: W, h: H, groundY: GROUND_Y, playerX: PLAYER_X, r: PLAYER_R, gateW: GATE_W, runSeconds: RUN_SECONDS
             };
         },
@@ -602,7 +644,7 @@
         // Ferma il ciclo rAF: così step() è l'UNICA fonte di tempo e la prova è deterministica.
         freeze: stopLoop,
         setGates: function (list) {
-            gates = list.map(function (g) { return { x: g.x, gapY: g.gapY, gap: g.gap || 150, passed: !!g.passed, bug: g.bug ? { taken: false } : null }; });
+            gates = list.map(function (g) { return { x: g.x, gapY: g.gapY, gap: g.gap || 150, passed: !!g.passed, bug: g.bug ? { taken: false } : null, clock: g.clock ? { taken: false } : null }; });
         },
         noSpawn: function (b) { spawnOn = !b; },
         setY: function (y, v) { py = y; vy = v || 0; }
