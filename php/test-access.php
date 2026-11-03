@@ -336,15 +336,25 @@ function tga_admin_action($action, array $me)
                 $name = $st['users'][$target]['name'];
                 unset($st['users'][$target]);
                 return array('msg' => 'Eliminato «' . $name . '».');
+            case 'role':
+                // Il ruolo si legge dall'archivio a ogni richiesta: vale subito, senza chiudere sessioni.
+                $to = (string) ($_POST['to'] ?? '');
+                if ($to !== 'admin' && $to !== 'tester') return array('error' => 'Ruolo sconosciuto.');
+                if (!$exists) return array('error' => 'Utente non trovato.');
+                if ($target === $me['key']) return array('error' => 'Non puoi cambiare il tuo ruolo.');
+                $was = $st['users'][$target]['role'] ?? 'tester';
+                if ($was === $to) return array('msg' => '«' . $st['users'][$target]['name'] . '» è già ' . $to . '.');
+                if ($was === 'admin' && empty($st['users'][$target]['disabled']) && tg_admins($st) <= 1) return array('error' => 'Serve almeno un admin attivo.');
+                $st['users'][$target]['role'] = $to;
+                return array('msg' => '«' . $st['users'][$target]['name'] . '» ora è ' . $to . '.');
         }
         return array('error' => 'Azione sconosciuta.');
     });
     $st = tg_store(function (array &$st) { return $st; });
     $flash = '';
     if (isset($res['temp'])) {
-        $flash = '<div class="ok" role="status"><p>' . tg_h($res['msg']) . ' Password temporanea di <strong>' . tg_h($res['for']) . '</strong>:</p>'
-            . '<p><code class="secret">' . tg_h($res['temp']) . '</code></p>'
-            . '<p class="dim">Si vede solo adesso: copiala e passala al tester. Al primo accesso dovrà sceglierne una sua.</p></div>';
+        $flash = '<div class="ok tg-temp" role="status"><span>' . tg_h($res['msg']) . ' Password temporanea di <strong>' . tg_h($res['for']) . '</strong>, visibile solo ora:</span>'
+            . '<code class="secret">' . tg_h($res['temp']) . '</code></div>';
     } elseif (isset($res['msg'])) {
         $flash = '<div class="ok" role="status">' . tg_h($res['msg']) . '</div>';
     }
@@ -355,26 +365,31 @@ function tga_render_panel(array $st, array $me, $flash, $error)
 {
     $csrf = tg_csrf_token();
     $isAdmin = ($me['user']['role'] ?? '') === 'admin';
-    $form = function ($action, $label, $class, $icon, $user = null, $confirm = '') use ($csrf) {
+    // $icon solo: pulsante compatto con l'etichetta completa come suggerimento e per i lettori di schermo
+    $form = function ($action, $label, $class, $icon, $user = null, $confirm = '', array $extra = array(), $iconOnly = false) use ($csrf) {
+        $fields = '';
+        foreach ($extra as $k => $v) $fields .= tg_hidden($k, $v);
         return '<form method="post" action="' . tg_h(tg_access_url()) . '"'
             . ($confirm !== '' ? ' onsubmit="return confirm(' . tg_h(json_encode($confirm)) . ')"' : '') . '>'
-            . tg_hidden('action', $action) . tg_hidden('csrf', $csrf) . ($user !== null ? tg_hidden('username', $user) : '')
-            . '<button type="submit" class="btn ' . $class . '"><i class="fa-solid ' . $icon . '"></i>' . tg_h($label) . '</button></form>';
+            . tg_hidden('action', $action) . tg_hidden('csrf', $csrf) . ($user !== null ? tg_hidden('username', $user) : '') . $fields
+            . ($iconOnly
+                ? '<button type="submit" class="btn icon ' . $class . '" title="' . tg_h($label) . '" aria-label="' . tg_h($label) . '"><i class="fa-solid ' . $icon . '"></i></button>'
+                : '<button type="submit" class="btn ' . $class . '"><i class="fa-solid ' . $icon . '"></i>' . tg_h($label) . '</button>')
+            . '</form>';
     };
 
     $inner = '<div class="tg-head">' . tg_logo() . '<div><h1>Area di test</h1>'
         . '<p class="dim">Sei dentro come <strong>' . tg_h($me['user']['name']) . '</strong>' . ($isAdmin ? ' (admin)' : '') . '.</p></div></div>'
-        . '<div class="bar"><a class="btn" href="' . tg_h(tg_base()) . '"><i class="fa-solid fa-gamepad"></i>Vai al gioco</a>'
-        . '<a class="btn ghost" href="' . tg_h(tg_access_url('cambia=1')) . '"><i class="fa-solid fa-key"></i>Cambia la mia password</a>'
+        . '<div class="bar"><a class="btn" href="' . tg_h(tg_base()) . '"><i class="fa-solid fa-gamepad"></i>Gioco</a>'
+        . '<a class="btn ghost" href="' . tg_h(tg_access_url('cambia=1')) . '" title="Cambia la mia password" aria-label="Cambia la mia password"><i class="fa-solid fa-key"></i>Password</a>'
         . $form('logout', 'Esci', 'ghost', 'fa-right-from-bracket') . '</div>'
         . ($error !== '' ? '<div class="err" role="alert" style="margin-top:14px">' . tg_h($error) . '</div>' : '')
         . ($flash !== '' ? '<div style="margin-top:14px">' . $flash . '</div>' : '');
 
     if ($isAdmin) {
         $inner .= '<section class="card"><h2>Nuovo tester</h2>'
-            . '<p class="dim">Ricevi una password temporanea da passargli: al primo accesso la cambia.</p>'
-            . '<p class="dim">Il nome è anche quello nel gioco di test. Per fargli ritrovare i progressi di un account che ha già, scrivilo identico, maiuscole comprese; altrimenti usa un nome nuovo.</p>'
-            . '<form method="post" action="' . tg_h(tg_access_url()) . '">' . tg_hidden('action', 'create') . tg_hidden('csrf', $csrf)
+            . '<p class="dim">Riceve una password temporanea da cambiare al primo accesso. Il nome vale anche nel gioco: per ritrovare un account che ha già, scrivilo identico.</p>'
+            . '<form class="tg-inline" method="post" action="' . tg_h(tg_access_url()) . '">' . tg_hidden('action', 'create') . tg_hidden('csrf', $csrf)
             . tg_field('tg-newuser', 'Nome utente', 'fa-user-plus', 'type="text" name="username" autocapitalize="none" spellcheck="false" maxlength="20" required')
             . '<button type="submit" class="btn"><i class="fa-solid fa-user-plus"></i>Crea tester</button></form></section>';
 
@@ -384,15 +399,19 @@ function tga_render_panel(array $st, array $me, $flash, $error)
         foreach ($users as $key => $u) {
             $state = !empty($u['disabled']) ? '<span class="tag off">disattivato</span>'
                 : (!empty($u['must_change']) ? '<span class="tag warn">primo accesso</span>' : '<span class="tag on">attivo</span>');
+            $admin = ($u['role'] ?? '') === 'admin';
             $actions = '';
             if ($key !== $me['key']) {
-                $actions = $form('reset', 'Reimposta password', 'small ghost', 'fa-rotate', $key, 'Reimpostare la password di ' . $u['name'] . '? Le sue sessioni aperte si chiudono.')
-                    . (!empty($u['disabled']) ? $form('enable', 'Riattiva', 'small ghost', 'fa-play', $key) : $form('disable', 'Disattiva', 'small ghost', 'fa-pause', $key))
-                    . $form('delete', 'Elimina', 'small danger', 'fa-trash', $key, 'Eliminare ' . $u['name'] . '?');
+                $actions = $form('reset', 'Reimposta password', 'small ghost', 'fa-rotate', $key, 'Reimpostare la password di ' . $u['name'] . '? Le sue sessioni aperte si chiudono.', array(), true)
+                    . ($admin
+                        ? $form('role', 'Rendi tester', 'small ghost', 'fa-user', $key, 'Togliere a ' . $u['name'] . ' il ruolo di admin?', array('to' => 'tester'), true)
+                        : $form('role', 'Rendi admin', 'small ghost', 'fa-user-shield', $key, 'Rendere admin ' . $u['name'] . '? Potrà creare, reimpostare ed eliminare gli utenti.', array('to' => 'admin'), true))
+                    . (!empty($u['disabled']) ? $form('enable', 'Riattiva', 'small ghost', 'fa-play', $key, '', array(), true) : $form('disable', 'Disattiva', 'small ghost', 'fa-pause', $key, '', array(), true))
+                    . $form('delete', 'Elimina', 'small danger', 'fa-trash', $key, 'Eliminare ' . $u['name'] . '?', array(), true);
             } else {
                 $actions = '<span class="dim">sei tu</span>';
             }
-            $rows .= '<tr><td><strong>' . tg_h($u['name']) . '</strong></td><td>' . tg_h($u['role'] === 'admin' ? 'admin' : 'tester') . '</td><td>' . $state . '</td>'
+            $rows .= '<tr><td><strong>' . tg_h($u['name']) . '</strong></td><td><span class="tag' . ($admin ? ' warn' : '') . '">' . ($admin ? 'admin' : 'tester') . '</span></td><td>' . $state . '</td>'
                 . '<td class="hide dim">' . tg_h(date('d/m/Y', (int) ($u['created'] ?? 0))) . '</td><td class="actions">' . $actions . '</td></tr>';
         }
         $inner .= '<section class="card"><h2>Utenti (' . count($users) . ')</h2>'

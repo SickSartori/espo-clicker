@@ -444,6 +444,11 @@ button.ghost i,.btn.ghost i{filter:none}
 .tg-plain{display:block;width:100%;margin-top:10px;background:transparent;border:0;color:var(--dim);font:600 10px var(--mono);letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px}
 .tg-plain:hover{color:var(--a)}
 button.small{height:30px;padding:0 10px;font-size:10px;letter-spacing:1.5px;margin:0}
+.btn.icon{width:34px;padding:0;gap:0;letter-spacing:0;font-size:12px}
+.tg-inline{display:flex;gap:10px;align-items:stretch;margin-top:8px}
+.tg-inline .tg-input{flex:1;margin:0}
+.card form.tg-inline .btn{margin:0;height:auto}
+.tg-temp{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
 button.danger{background:transparent;border-color:rgba(248,113,113,.6);color:var(--danger);box-shadow:none;text-shadow:none}
 button.danger i{color:var(--danger);filter:none}
 .tg-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,176,32,.12);
@@ -473,7 +478,8 @@ td.actions{display:flex;gap:6px;flex-wrap:wrap}td.actions form{margin:0}
   /* tabella a schede: nome, ruolo e stato su una riga, le azioni sotto */
   table,tbody{display:block}thead{display:none}
   tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:12px 0;border-bottom:1px solid rgba(255,176,32,.1)}
-  td{border:0;padding:0}td.hide{display:none}td.actions{flex-basis:100%}}
+  td{border:0;padding:0}td.hide{display:none}td.actions{flex-basis:100%}
+  .tg-inline{flex-direction:column}.card form.tg-inline .btn{height:44px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 CSS;
 }
