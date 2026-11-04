@@ -1,6 +1,6 @@
 # Roadmap post-3.0 — Espòòò Clicker
 
-> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1** · **3.2 uscita il 20/10/2026; valutazione della 3.3 aperta lo stesso giorno** (sezione v3.3) · **valutazione della 4.0 il 03/11/2026**: quattro proposte nuove, taglio e decisioni (sezione v4.0).
+> **Stato**: concordata il 21/07/2026 · riverificata il 03/08/2026 · **riorganizzata in fasi il 10/09/2026, dopo l'uscita della 3.1** · **3.2 uscita il 20/10/2026; valutazione della 3.3 aperta lo stesso giorno** (sezione v3.3) · **valutazione della 4.0 il 03/11/2026**: quattro proposte nuove, taglio e decisioni (sezione v4.0) · **stato della 3.3 aggiornato il 04/11/2026**: 3.3.1 in test, produzione ancora 3.2.
 > **Orizzonte**: fino alla **4.0** (aprile 2027). Le due date fisse sono il **17 novembre 2026** (primo compleanno) e **aprile 2027**.
 > **Regola arcade**: massimo un cabinato nuovo per release, sempre vanilla JS + canvas, zero CDN esterne *(lezione Phaser/Super Espò)*.
 > **Dove si trova cosa**: le release future sono raggruppate per fase qui sotto; il consuntivo della 3.1 è in fondo, in Archivio.
@@ -74,9 +74,40 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 
 > 🔎 **Valutazione del 20/10/2026 — prima passata.** Fatta sul codice di `develop` (= `main` = produzione 3.2.0: `sw.js` in produzione serve `espo-v3.2.0`, `typecheck` pulito, 321 test verdi). Ogni voce del piano originale ha sotto il suo verdetto; poi i **punti da aggiungere**, il **taglio proposto** e le **decisioni aperte**. Il nucleo (stagione, tema v1 come switch nelle Opzioni, soglia) è implementato dal 20/10 — vedi «Stato di avanzamento»; il resto no.
 
+#### Stato al 04/11/2026 — a 6 giorni dal freeze
+
+> Verificato sui rami: `main` = produzione **3.2.0**; `test` = **3.3.1** (`98d2489`, sette merge da `develop` fra il 2 e il 3/11); `develop` allineato a `origin`. 44 commit di lavoro dalla 3.2, 425 test unitari verdi.
+
+✅ **Fatto e in test**
+- Tutto il nucleo descritto qui sotto («Stato di avanzamento», 20/10): compleanno, Tema Vintage, numeri e icone alla v1, PWA, 7 skin, evento «7 Ticket», Flappy Espòòò, sovrapposizioni. Committato fra il 20 e il 23/10.
+- Rifiniture del 02-03/11: in Flappy gli orologi nei varchi danno +3 secondi, fino a 30 in più; The Legend of Espo riallineato alle altre skin (occhi e frame click); niente «,00» nei numeri quando i decimali non dicono niente (si vedeva col Vintage).
+- **Note di rilascio IT/EN** in `release-notes_it.md` / `release-notes_en.md`: il regalo raccontato è il Tema Vintage, senza dettagli tecnici.
+- **Bump** a 3.3.0 (02/11) e 3.3.1 (03/11).
+- ☁️ **Video di Wespo su R2**: verificato il 04/11 con `rclone check --checksum`. `assets/video` (7 file), `assets/sounds` (48) e `music/songs` (10) combaciano col repo, 0 differenze.
+
+➕ **Entrato fuori piano**
+- **Area di test con login unico** (#40): admin preso dai secret, tester con password temporanea da cambiare al primo accesso, login unico col gioco solo dalla stessa origine, cookie legato al singolo tester, cambio ruolo dal pannello, accesso nello stile del login del gioco.
+- **Backlog pubblico**: moduli delle issue e GitHub Project con import da Trello (colonne di contesto, vista Consegna), linkato dal README.
+- **Ticket Critico** (#28): compare solo dove si può cliccare, fuori dal badge Novità e dalle barre del telefono.
+- **Classifica**: promozione e formattazione controllano i requisiti dentro le funzioni, non solo nella UI (`prestige-guard.spec.ts`). È la metà lato client della voce «Anticheat lato server» più sotto.
+- README aggiornato; script di `scripts/` sempre in LF; e2e con la stagione spenta dove Halloween cambiava i colori.
+
+⏳ **Manca prima del 17/11**
+- 📱 **Collaudo da telefono**: installazione della PWA, sensazione e difficoltà di Flappy. Da una sessione al computer non si fa.
+- 🖼️ **Immagine d'annuncio**: in `dev/docs/` c'è solo `annuncio-3.3-test.png`, non tracciata.
+- 🗺️ **Teaser pubblico** (`roadmap-teaser.png/pdf`, fermo al 10/09): le date non cambiano; da rifare solo se le decisioni della 4.0 ne cambiano i contenuti.
+- 🚀 **Promozione** `test → main` e deploy di produzione, con verifica end-to-end (versione servita da `sw.js`, nessuna traccia di `cheatboard`). Finché `main` resta alla 3.2, skin, Wespo e Flappy debuttano il giorno della promozione: promuovere il 17/11 chiude la decisione 6.
+
+🔁 **Verso la 3.3.x** (dal taglio qui sotto, con lo stato di oggi)
+- Verifica di plausibilità lato server in `save-progress`: fuori dal repo, prima solo log.
+- Via `php/launch-gate.php`, ancora incluso da `index.php:4`, e il suo segreto.
+- Estrazione da `boot.ts`: **ferma**, 2749 righe contro le 2747 del 20/10.
+- Campo `season` nella risposta di `get-leaderboard`.
+- Espostino, se si decide (decisione 7).
+
 #### Stato di avanzamento (20/10/2026)
 
-✅ **Fatto — nucleo del compleanno**, nel working tree di `develop`: non committato, non promosso, senza il bump a 3.3.0. **Rivisto il 20/10**: il tema non è più legato a una skin ma è uno **switch nelle Opzioni**.
+✅ **Fatto — nucleo del compleanno**: committato fra il 20 e il 23/10, in test con la 3.3.0 dal 02/11 (stato aggiornato qui sopra). **Rivisto il 20/10**: il tema non è più legato a una skin ma è uno **switch nelle Opzioni**.
 
 - **Stagione `birthday`** (`src/data/season.ts`): edizione unica 2026 (`year`), finestra 17-30/11, premio che non scade (`keepsReward`), nessuna skin. Soglia di prima edizione: `isSeasonReleased` / `isSeasonRewardOpen`, con istantanea `RELEASED_SEASONS` come `ACTIVE_SEASONS`. Con `?stagione=` (solo dev) le edizioni uniche escono solo se nominate: `nessuna` permette di provare la soglia.
 - **Obiettivo «Primo Compleanno»** senza scadenza dal 17/11. Il premio è di tipo `theme`: sblocca lo switch e lo **accende** al riscatto (toast «Tema Vintage v1 acceso! Lo spegni dalle Opzioni»). **L'avviso** («🎂 Primo compleanno!») compare solo nella finestra e solo nel 2026.
@@ -93,11 +124,11 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 - **Sovrapposizioni dei controlli** (segnalate dal vivo: Espo Fury sotto il badge «Novità»): cercate a 20 dimensioni di finestra × 6 temi, corrette e bloccate da `layout-overlap.spec.ts` (9 casi, verificato al contrario). Le cause: badge e link GitHub fissi sul viewport contro un bottone in flusso su finestre alte ≤ 720px (`#clicker-section` ora riserva la fascia); il bottone Fury da 210px minimi contro il pulsante mute sui 320px; e nel tema 8-bit il contenitore da `calc(100vh - 70px)`, pensato per il desktop, che sui telefoni scendeva sotto la barra in basso.
 - **Cheatboard — gruppo «Tema Vintage v1 (compleanno)»**: etichetta live (soglia, premio, switch, tema, skin) e azioni per attraversare tutto il flusso — prima/dopo il 17/11, azzera premio, sblocca obiettivo, riscatta + accendi, switch ON/OFF, rimostra avviso, skin con tema (8bit), skin base (`cheatboard-tema.spec.ts`, 3 test). ℹ️ Lo switch oggi non si vede in locale perché, prima del 17/11, la soglia di prima edizione lo nasconde: è voluto. Per provarlo, `?stagione=birthday` o «Dopo il 17/11» dal cheatboard.
 
-⏳ **Da fare** — la consegna (`npm run release:minor`, note di rilascio IT/EN, immagine d'annuncio, teaser pubblico), il **caricamento su R2 del video di Wespo** e il **collaudo da telefono**: PWA, sensazione e difficoltà di Flappy. ⚠️ A differenza del compleanno, le skin nuove, Wespo e Flappy **non sono gated dalla data**: compaiono appena si fa il deploy. Per farli debuttare il 17/11 si deploya quel giorno, oppure si dà loro una data (come `year` per il compleanno).
+⏳ ~~**Da fare**~~ — superato dallo «Stato al 04/11» qui sopra: bump, note di rilascio e video di Wespo su R2 sono fatti; restano immagine d'annuncio, teaser e collaudo da telefono. ⚠️ Vale ancora: a differenza del compleanno, le skin nuove, Wespo e Flappy **non sono gated dalla data**: compaiono appena si fa il deploy. Per farli debuttare il 17/11 si deploya quel giorno, oppure si dà loro una data (come `year` per il compleanno).
 
-⚠️ **Da confermare**: (1) Inter si carica da Google Fonts a tema equipaggiato, come già Rajdhani — se si preferisce self-hostarlo serve il file del font; (2) la provenienza di `background.jpg` della v1 (non verificabile dal repo): se non è materiale proprio, lo sfondo va sostituito. La soglia si appoggia all'orologio del giocatore, come tutte le stagioni: chi lo sposta in avanti vede il regalo in anticipo.
+✅ ~~**Da confermare**~~ Inter da Google Fonts e `background.jpg` materiale proprio: decisi (vedi «Decisioni», 5). Resta vero che la soglia si appoggia all'orologio del giocatore, come tutte le stagioni: chi lo sposta in avanti vede il regalo in anticipo.
 
-**Il quadro dei tempi.** Restano 28 giorni, e Halloween (live 24/10 → 2/11) ne occupa i giorni 4-13: la coda QA della 3.2 mangerà l'inizio, come questa roadmap dice da sempre. Per tararsi: la 3.2 sono stati 25 commit di lavoro in tre settimane (29/09 → 19/10), ma **tema e skin di Halloween sono stati 3 commit in un solo giorno** (29/09): il costo vero della release è stato l'infrastruttura (guardia schede, estrazione cloud, anticheat), non il contenuto stagionale. La 3.3 ha lo stesso profilo: il contenuto del compleanno è economico, il rischio sta nel resto.
+**Il quadro dei tempi (al 20/10).** Restavano 28 giorni, e Halloween (live 24/10 → 2/11) ne occupa i giorni 4-13: la coda QA della 3.2 mangerà l'inizio, come questa roadmap dice da sempre. Per tararsi: la 3.2 sono stati 25 commit di lavoro in tre settimane (29/09 → 19/10), ma **tema e skin di Halloween sono stati 3 commit in un solo giorno** (29/09): il costo vero della release è stato l'infrastruttura (guardia schede, estrazione cloud, anticheat), non il contenuto stagionale. La 3.3 ha lo stesso profilo: il contenuto del compleanno è economico, il rischio sta nel resto.
 
 #### Piano originale — verdetti
 
@@ -145,7 +176,7 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 
 #### Punti da aggiungere
 
-- **Anticheat lato server** — rimandato esplicitamente dalla 3.2 (`src/game/anticheat.ts:15`: «lì un errore bloccherebbe i salvataggi di tutti») e **mai entrato in roadmap**. Controllo di plausibilità sulla crescita del punteggio nella EF `save-progress`. Vive **fuori dal repo** e i connettori Supabase non sono autenticati in questa sessione: non valutabile da qui. Piano prudente: **prima solo log, nessun blocco**; confronto sulle **cifre**, non su `float8` (3.1.10); la soglia solo dopo aver visto i dati reali. Può scivolare in 3.3.x.
+- **Anticheat lato server** — rimandato esplicitamente dalla 3.2 (`src/game/anticheat.ts:15`: «lì un errore bloccherebbe i salvataggi di tutti») e **mai entrato in roadmap**. Controllo di plausibilità sulla crescita del punteggio nella EF `save-progress`. Vive **fuori dal repo** e i connettori Supabase non sono autenticati in questa sessione: non valutabile da qui. Piano prudente: **prima solo log, nessun blocco**; confronto sulle **cifre**, non su `float8` (3.1.10); la soglia solo dopo aver visto i dati reali. Può scivolare in 3.3.x. **Aggiornamento 03/11**: la metà lato client è fatta (requisiti di promozione e formattazione controllati dentro le funzioni); quella lato server resta da fare, con il dettaglio nella valutazione della 4.0, punto 1.
 - **Residui della Fase 0 / 3.2 mai chiusi** (verificati):
   - **Skin future: 6 cablate su 7**, più Albert Wespo dal materiale Wesker (vedi «Stato di avanzamento»). Resta solo Espostino: serve rifare i tre loghi (berretto, giacca, borsa) con un nome di fantasia, oppure lasciarlo fuori; poi il frame `-click` e la conversione webp.
   - `dev/docs/ui.md:98`: la voce P2 sulla navbar è ancora stantia (il menu ☰ esiste dalla 3.1).
@@ -154,7 +185,7 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
   - ✅ **Numeri del server nel conflitto**: il client li legge già (`922cb2b`, `boot.ts` + test in `cloud-conflict-loop.spec.ts`). Resta solo da **confermare il deploy della EF** su dev e prod (fuori repo).
   - ❌ **Campo `season` nella risposta di `get-leaderboard`**: ancora aperto — `podio.ts:58` legge `gameState.season`. Voce minore.
   - ✅ **Obiettivi su mobile, titolo troncato**: già corretto (`styles/ui/mobile/achievements-modal.css`, `.trophy-title` va a capo) → la voce nell'archivio 3.1 si può chiudere.
-- **Lista di consegna della 3.3** (dagli inciampi della 3.2): `npm run release:minor` (tocca `package.json`, `version.ts`, `sw.js`, `config.php`); note di rilascio IT/EN; testi EN dell'overlay; cheatboard (stagione `compleanno` + travestimento); immagine d'annuncio in `dev/docs/`; **teaser pubblico `roadmap-teaser.pdf/png` da rifare se la roadmap cambia date o contenuti** (non rigenerato).
+- **Lista di consegna della 3.3** (dagli inciampi della 3.2): `npm run release:minor` (tocca `package.json`, `version.ts`, `sw.js`, `config.php`); note di rilascio IT/EN; testi EN dell'overlay; cheatboard (stagione `compleanno` + travestimento); immagine d'annuncio in `dev/docs/`; **teaser pubblico `roadmap-teaser.pdf/png` da rifare se la roadmap cambia date o contenuti** (non rigenerato). **Al 04/11**: bump ✅, note di rilascio IT/EN ✅, gruppo del compleanno nel cheatboard ✅; immagine d'annuncio e teaser ⏳.
 
 #### Taglio proposto
 
@@ -169,7 +200,7 @@ Tre temi in tre release. Girano tutti sullo **stesso binario già esistente**: u
 3. ~~Flappy~~ ✅ **«Flappy Espòòò», nella 3.3** (rischio sul marchio accettato).
 4. ~~`dev/wesker/`~~ ✅ skin Albert Wespo + evento «7 Ticket» (video da 12 s: moltiplicatore x20-40); più Dio Efespo dai bozzetti.
 5. ~~Font Inter~~ ✅ da Google Fonts, come Rajdhani; ~~sfondo `background.jpg`~~ ✅ materiale proprio.
-6. **Aperto — la data di debutto di skin, Wespo e Flappy**: il 17/11 (si deploya quel giorno) o prima (compaiono subito)?
+6. **Aperto — la data di debutto di skin, Wespo e Flappy**: il 17/11 (si deploya quel giorno) o prima (compaiono subito)? *Al 04/11 sono solo in test: finché `main` resta alla 3.2, il debutto coincide col giorno della promozione.*
 7. **Aperto — Espostino**: il bozzetto porta i loghi di Poste Italiane (berretto, giacca, borsa). Opzioni: **a)** sostituirli con una scritta di fantasia (es. «Posteespo») e cablarlo; **b)** lasciarlo fuori. A differenza delle altre parodie, qui il marchio di un'azienda reale è l'elemento centrale dell'immagine, e il pubblico italiano è quello che lo riconosce.
 
 ### v3.4 — 15 dicembre 2026 · «Natale» 🎄
